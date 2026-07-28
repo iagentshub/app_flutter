@@ -2,20 +2,47 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/router/route_names.dart';
+import '../../features/auth/repositories/auth_repository.dart';
 import '../state/session_controller.dart';
 import 'terminal_view_transition.dart';
 
 class AppShell extends StatelessWidget {
   const AppShell({
     required this.sessionController,
+    required this.authRepository,
     required this.location,
     required this.child,
     super.key,
   });
 
   final SessionController sessionController;
+  final AuthRepository authRepository;
   final String location;
   final Widget child;
+
+  Future<void> _logout(BuildContext context) async {
+    Navigator.of(context).pop();
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cerrar sesión'),
+        content: const Text('¿Seguro que quieres cerrar sesión?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancelar')),
+          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Cerrar sesión')),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    final token = sessionController.gaToken;
+    if (token != null && token.isNotEmpty) {
+      await authRepository.logout(token);
+    }
+    await sessionController.logout();
+    if (!context.mounted) return;
+    context.go(RouteNames.login);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,41 +54,53 @@ class AppShell extends StatelessWidget {
       ),
       drawer: Drawer(
         child: SafeArea(
-          child: ListView(
+          child: Column(
             children: [
+              Expanded(
+                child: ListView(
+                  children: [
+                    ListTile(
+                      title: Text(sessionController.user?.username ?? 'Usuario'),
+                      subtitle: Text(sessionController.user?.role ?? 'user'),
+                      leading: const Icon(Icons.account_circle_outlined),
+                    ),
+                    const Divider(),
+                    ..._mainItems.map(
+                      (item) => _NavItemTile(
+                        icon: item.icon,
+                        label: item.label,
+                        route: item.route,
+                        selected: location == item.route,
+                      ),
+                    ),
+                    const Divider(),
+                    ..._secondaryItems.map(
+                      (item) => _NavItemTile(
+                        icon: item.icon,
+                        label: item.label,
+                        route: item.route,
+                        selected: location == item.route,
+                      ),
+                    ),
+                    if (isAdmin) const Divider(),
+                    if (isAdmin)
+                      ..._adminItems.map(
+                        (item) => _NavItemTile(
+                          icon: item.icon,
+                          label: item.label,
+                          route: item.route,
+                          selected: location == item.route,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
               ListTile(
-                title: Text(sessionController.user?.username ?? 'Usuario'),
-                subtitle: Text(sessionController.user?.role ?? 'user'),
-                leading: const Icon(Icons.account_circle_outlined),
+                leading: const Icon(Icons.logout),
+                title: const Text('Cerrar sesión'),
+                onTap: () => _logout(context),
               ),
-              const Divider(),
-              ..._mainItems.map(
-                (item) => _NavItemTile(
-                  icon: item.icon,
-                  label: item.label,
-                  route: item.route,
-                  selected: location == item.route,
-                ),
-              ),
-              const Divider(),
-              ..._secondaryItems.map(
-                (item) => _NavItemTile(
-                  icon: item.icon,
-                  label: item.label,
-                  route: item.route,
-                  selected: location == item.route,
-                ),
-              ),
-              if (isAdmin) const Divider(),
-              if (isAdmin)
-                ..._adminItems.map(
-                  (item) => _NavItemTile(
-                    icon: item.icon,
-                    label: item.label,
-                    route: item.route,
-                    selected: location == item.route,
-                  ),
-                ),
             ],
           ),
         ),

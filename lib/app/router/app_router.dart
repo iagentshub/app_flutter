@@ -150,6 +150,7 @@ GoRouter createRouter({
       ShellRoute(
         builder: (context, state, child) => AppShell(
           sessionController: sessionController,
+          authRepository: authRepository,
           location: state.matchedLocation,
           child: child,
         ),
@@ -161,6 +162,7 @@ GoRouter createRouter({
               sessionController: sessionController,
               authRepository: authRepository,
               dashboardRepository: dashboardRepository,
+              apiClient: apiClient,
             ),
           ),
           GoRoute(
