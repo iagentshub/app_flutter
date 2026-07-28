@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/router/route_names.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/profile/profile_models.dart';
@@ -8,6 +10,19 @@ import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../widgets/profile_groups_section.dart';
+
+/// Mismo listado fijo de idiomas que _ALL_LANGS en profile.js (frontend_vanilla).
+const _languageOptions = [
+  ('es', 'Español', '🇪🇸'),
+  ('en', 'English', '🇬🇧'),
+  ('fr', 'Français', '🇫🇷'),
+  ('de', 'Deutsch', '🇩🇪'),
+  ('pt', 'Português', '🇵🇹'),
+  ('it', 'Italiano', '🇮🇹'),
+  ('zh', '中文', '🇨🇳'),
+  ('ja', '日本語', '🇯🇵'),
+  ('ar', 'العربية', '🇸🇦'),
+];
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({
@@ -42,7 +57,7 @@ class _ProfilePageState extends State<ProfilePage> {
   final _emailPublicController = TextEditingController();
   final _githubController = TextEditingController();
   final _cvController = TextEditingController();
-  final _languagesController = TextEditingController();
+  Set<String> _selectedLanguages = {};
   final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
 
@@ -70,7 +85,6 @@ class _ProfilePageState extends State<ProfilePage> {
     _emailPublicController.dispose();
     _githubController.dispose();
     _cvController.dispose();
-    _languagesController.dispose();
     _currentPasswordController.dispose();
     _newPasswordController.dispose();
     _t.removeListener(_onTextsChanged);
@@ -106,7 +120,7 @@ class _ProfilePageState extends State<ProfilePage> {
         _emailPublicController.text = bundle.social.emailPublic ?? '';
         _githubController.text = bundle.social.github ?? '';
         _cvController.text = bundle.social.cv ?? '';
-        _languagesController.text = bundle.social.languages.join(', ');
+        _selectedLanguages = bundle.social.languages.toSet();
         _loading = false;
       });
       widget.localeController.syncFromBackend(bundle.settings.language);
@@ -158,19 +172,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
     setState(() => _savingProfile = true);
     try {
-      final languages = _languagesController.text
-          .split(',')
-          .map((item) => item.trim())
-          .where((item) => item.isNotEmpty)
-          .toList();
-
       await _repository.updateSocialProfile(
         token,
         bio: _bioController.text.trim(),
         emailPublic: _emailPublicController.text.trim(),
         github: _githubController.text.trim(),
         cv: _cvController.text.trim(),
-        languages: languages,
+        languages: _selectedLanguages.toList(),
       );
       _showMessage('Perfil público actualizado');
       await _load();
@@ -342,7 +350,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   padding: const EdgeInsets.all(16),
                   children: [
                     switch (_section) {
-                      'social' => _buildSocialSection(),
+                      'social' => _buildSocialSection(bundle),
                       'preferences' => _buildPreferencesSection(),
                       'groups' => _buildGroupsSection(bundle),
                       'security' => _buildSecuritySection(),
@@ -529,55 +537,89 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildSocialSection() {
+  Widget _buildSocialSection(ProfileBundle bundle) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionHeader(Icons.public_outlined, _tx('profile.tab_social', 'Perfil público')),
-        const SizedBox(height: 8),
-        Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        Row(
           children: [
-            TextFormField(
-              controller: _bioController,
-              minLines: 2,
-              maxLines: 4,
-              decoration: InputDecoration(labelText: _tx('profile.bio_label', 'Bio')),
-            ),
-            const SizedBox(height: 10),
-            TextFormField(
-              controller: _emailPublicController,
-              decoration: InputDecoration(labelText: _tx('profile.email_public_label', 'Email público')),
-            ),
-            const SizedBox(height: 10),
-            TextFormField(
-              controller: _githubController,
-              decoration: InputDecoration(labelText: _tx('profile.github_label', 'GitHub (https://...)')),
-            ),
-            const SizedBox(height: 10),
-            TextFormField(
-              controller: _languagesController,
-              decoration: InputDecoration(labelText: _tx('profile.languages_label', 'Idiomas (coma separada, ej: es,en,fr)')),
-            ),
-            const SizedBox(height: 10),
-            TextFormField(
-              controller: _cvController,
-              minLines: 3,
-              maxLines: 6,
-              decoration: InputDecoration(labelText: _tx('profile.cv_label', 'CV / Resumen profesional')),
-            ),
-            const SizedBox(height: 12),
-            FilledButton.icon(
-              onPressed: _savingProfile ? null : _savePublicProfile,
-              icon: const Icon(Icons.save_as_outlined),
-              label: Text(_savingProfile ? _tx('profile.saving', 'Guardando...') : _tx('profile.save_social', 'Guardar perfil público')),
+            Expanded(child: _sectionHeader(Icons.public_outlined, _tx('profile.tab_social', 'Perfil público'))),
+            TextButton.icon(
+              onPressed: () => context.push('${RouteNames.publicProfilePrefix}${bundle.session.username}'),
+              icon: const Icon(Icons.open_in_new, size: 16),
+              label: Text(_tx('profile.view_public_profile', 'Ver mi perfil')),
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 8),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextFormField(
+                  controller: _bioController,
+                  minLines: 2,
+                  maxLines: 4,
+                  maxLength: 500,
+                  decoration: InputDecoration(labelText: _tx('profile.bio_label', 'Bio')),
+                ),
+                const SizedBox(height: 6),
+                Text(_tx('profile.languages_label', 'Idiomas'), style: Theme.of(context).textTheme.labelMedium),
+                const SizedBox(height: 4),
+                Text(
+                  _tx('profile.languages_hint', 'Elige los idiomas en los que puedes trabajar.'),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _languageOptions.map((option) {
+                    final (id, label, flag) = option;
+                    final selected = _selectedLanguages.contains(id);
+                    return FilterChip(
+                      label: Text('$flag $label'),
+                      selected: selected,
+                      onSelected: (value) {
+                        setState(() {
+                          if (value) {
+                            _selectedLanguages = {..._selectedLanguages, id};
+                          } else {
+                            _selectedLanguages = {..._selectedLanguages}..remove(id);
+                          }
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _emailPublicController,
+                  decoration: InputDecoration(labelText: _tx('profile.email_public_label', 'Email público')),
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: _githubController,
+                  decoration: InputDecoration(labelText: _tx('profile.github_label', 'GitHub (https://...)')),
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: _cvController,
+                  minLines: 3,
+                  maxLines: 6,
+                  decoration: InputDecoration(labelText: _tx('profile.cv_label', 'CV / Resumen profesional')),
+                ),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: _savingProfile ? null : _savePublicProfile,
+                  icon: const Icon(Icons.save_as_outlined),
+                  label: Text(_savingProfile ? _tx('profile.saving', 'Guardando...') : _tx('profile.save_social', 'Guardar perfil público')),
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );
