@@ -174,7 +174,7 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       final me = await widget.authRepository.me(token);
-      await widget.sessionController.login(token: token, user: me);
+      await widget.sessionController.login(token: token, user: me, remember: _rememberAccount);
       await _persistRememberedAccount();
 
       if (!mounted) return;
@@ -208,7 +208,7 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       final me = await widget.authRepository.me(token);
-      await widget.sessionController.login(token: token, user: me);
+      await widget.sessionController.login(token: token, user: me, remember: false);
       if (!mounted) return;
       final destination = safeRedirect(widget.redirectTo);
       context.go(destination);

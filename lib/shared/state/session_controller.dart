@@ -34,18 +34,29 @@ class SessionController extends ChangeNotifier {
   String? get gaToken => _gaToken;
   SessionUser? get user => _user;
 
+  /// [remember] controla si la sesión sobrevive a reiniciar la app. Si es
+  /// false (invitado, o "recordar cuenta" desmarcado en login), la sesión
+  /// vive solo en memoria durante esta ejecución y se limpia cualquier
+  /// sesión persistida anteriormente para evitar reutilizarla por error.
   Future<void> login({
     required String token,
     required SessionUser user,
+    bool remember = true,
   }) async {
     _gaToken = token;
     _user = user;
     _isLoggedIn = true;
 
     final prefs = await LocalStore.instance();
-    await prefs.setString(_tokenKey, token);
-    await prefs.setString(_usernameKey, user.username);
-    await prefs.setString(_roleKey, user.role);
+    if (remember) {
+      await prefs.setString(_tokenKey, token);
+      await prefs.setString(_usernameKey, user.username);
+      await prefs.setString(_roleKey, user.role);
+    } else {
+      await prefs.remove(_tokenKey);
+      await prefs.remove(_usernameKey);
+      await prefs.remove(_roleKey);
+    }
 
     notifyListeners();
   }

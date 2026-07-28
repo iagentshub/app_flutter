@@ -49,7 +49,6 @@ GoRouter createRouter({
       RouteNames.resetPassword,
       RouteNames.verify,
       RouteNames.backendConfig,
-      '/login',
     };
     return publicPaths.contains(path);
   }
@@ -67,8 +66,7 @@ GoRouter createRouter({
         return '${RouteNames.login}?redirect=$redirect';
       }
 
-      if (sessionController.isLoggedIn &&
-          (location == RouteNames.login || location == '/login' || location == RouteNames.home)) {
+      if (sessionController.isLoggedIn && (location == RouteNames.login || location == RouteNames.home)) {
         return safeRedirect(state.uri.queryParameters['redirect']);
       }
 
@@ -103,17 +101,6 @@ GoRouter createRouter({
       GoRoute(path: RouteNames.pricing, redirect: (context, state) => RouteNames.home),
       GoRoute(path: RouteNames.pricingEn, redirect: (context, state) => RouteNames.home),
       GoRoute(path: RouteNames.checkout, redirect: (context, state) => RouteNames.home),
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => TerminalViewTransition(
-          child: LoginPage(
-            backendController: backendController,
-            sessionController: sessionController,
-            authRepository: authRepository,
-            redirectTo: state.uri.queryParameters['redirect'],
-          ),
-        ),
-      ),
       GoRoute(
         path: RouteNames.login,
         builder: (context, state) => TerminalViewTransition(
@@ -298,16 +285,19 @@ class _NotFoundPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Página no encontrada'),
-            const SizedBox(height: 8),
-            FilledButton(
-              onPressed: () => context.go(RouteNames.login),
-              child: const Text('Ir al inicio'),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Página no encontrada'),
+              const SizedBox(height: 8),
+              FilledButton(
+                onPressed: () => context.go(RouteNames.login),
+                child: const Text('Ir al inicio'),
+              ),
+            ],
+          ),
         ),
       ),
     );
