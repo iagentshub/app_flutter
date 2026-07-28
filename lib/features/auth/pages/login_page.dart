@@ -216,40 +216,44 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Stack(
-          children: [
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final wide = constraints.maxWidth >= 900;
-                final formCard = Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 420),
-                      child: _buildFormCard(context),
-                    ),
-                  ),
-                );
-
-                if (!wide) return formCard;
-
-                return Row(
-                  children: [
-                    Expanded(child: _buildHeroPanel(context)),
-                    Expanded(child: formCard),
-                  ],
-                );
-              },
-            ),
-            Positioned(
-              top: 8,
-              right: 8,
-              child: TextButton(
-                onPressed: _toggleLanguage,
-                child: Text(_isEnglish ? 'ES' : 'EN'),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final wide = constraints.maxWidth >= 900;
+            final formArea = Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 64, 24, 24),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: _buildFormCard(context),
+                ),
               ),
-            ),
-          ],
+            );
+
+            final body = wide
+                ? Row(
+                    children: [
+                      Expanded(child: _buildHeroPanel(context)),
+                      Expanded(child: formArea),
+                    ],
+                  )
+                : formArea;
+
+            return Stack(
+              children: [
+                body,
+                if (!wide)
+                  const Positioned(top: 12, left: 16, child: _BrandMark()),
+                Positioned(
+                  top: 8,
+                  right: 16,
+                  child: TextButton(
+                    onPressed: _toggleLanguage,
+                    child: Text(_isEnglish ? 'ES' : 'EN'),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -344,8 +348,6 @@ class _LoginPageState extends State<LoginPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // -- Encabezado ---------------------------------------------------
-                  const Center(child: _BrandMark()),
-                  const SizedBox(height: 14),
                   Center(
                     child: Text(cardTitle, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
                   ),
