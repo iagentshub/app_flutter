@@ -6,6 +6,7 @@ import '../features/auth/repositories/auth_repository.dart';
 import '../features/dashboard/repositories/dashboard_repository.dart';
 import '../shared/state/backend_controller.dart';
 import '../shared/state/dashboard_edit_state.dart';
+import '../shared/state/locale_controller.dart';
 import '../shared/state/session_controller.dart';
 import 'router/app_router.dart';
 import 'theme/app_theme.dart';
@@ -14,11 +15,13 @@ class App extends StatefulWidget {
   const App({
     required this.backendController,
     required this.sessionController,
+    required this.localeController,
     super.key,
   });
 
   final BackendController backendController;
   final SessionController sessionController;
+  final LocaleController localeController;
 
   @override
   State<App> createState() => _AppState();
@@ -41,11 +44,20 @@ class _AppState extends State<App> {
     _router = createRouter(
       backendController: widget.backendController,
       sessionController: widget.sessionController,
+      localeController: widget.localeController,
       authRepository: _authRepository,
       dashboardRepository: _dashboardRepository,
       apiClient: _apiClient,
       dashboardEditState: _dashboardEditState,
     );
+    _syncLanguageFromBackend();
+  }
+
+  Future<void> _syncLanguageFromBackend() async {
+    final token = widget.sessionController.gaToken;
+    if (token == null || token.isEmpty) return;
+    final language = await _authRepository.getLanguage(token);
+    await widget.localeController.syncFromBackend(language);
   }
 
   @override

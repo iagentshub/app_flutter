@@ -105,4 +105,15 @@ class AuthRepository {
     );
     return response.json['code'] as String? ?? '';
   }
+
+  /// Idioma guardado en las preferencias del usuario ('es'/'en'), o null si
+  /// no se pudo obtener (sesión inválida, backend caído, etc.).
+  Future<String?> getLanguage(String gaToken) async {
+    try {
+      final response = await _apiClient.get('/api/settings', gaToken: gaToken);
+      return response.json['language'] as String?;
+    } catch (_) {
+      return null;
+    }
+  }
 }

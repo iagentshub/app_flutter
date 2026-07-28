@@ -1,0 +1,23 @@
+{
+  "dashboard": "Dashboard",
+  "explore": "Explorar",
+  "agents": "Agentes",
+  "workflows": "Orquestación",
+  "knowledge": "Conocimiento",
+  "connections": "Conexiones",
+  "labels": "Etiquetas",
+  "profile": "Perfil",
+  "admin": "Admin",
+  "admin_metadata": "Sistema",
+  "admin_centinel": "Centinel",
+  "admin_logs": "Logs",
+  "logout": "Cerrar sesión",
+  "logout_confirm_title": "Cerrar sesión",
+  "logout_confirm_body": "¿Seguro que quieres cerrar sesión?",
+  "cancel": "Cancelar",
+  "app_title": "iAgents Hub",
+  "public_profile": "Perfil público",
+  "customize_dashboard": "Personalizar dashboard",
+  "customize_hint": "Toca un widget para añadirlo al dashboard.",
+  "customize_empty": "Ya has añadido todos los widgets disponibles."
+}

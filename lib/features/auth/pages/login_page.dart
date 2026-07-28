@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -9,6 +11,7 @@ import '../../../shared/i18n/locale_loader.dart';
 import '../repositories/auth_repository.dart';
 import '../../../shared/state/backend_controller.dart';
 import '../../../shared/state/boot_platform_cache.dart';
+import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../utils/safe_redirect.dart';
 import '../../../utils/validators.dart';
@@ -17,6 +20,7 @@ class LoginPage extends StatefulWidget {
   const LoginPage({
     required this.backendController,
     required this.sessionController,
+    required this.localeController,
     required this.authRepository,
     this.redirectTo,
     super.key,
@@ -24,6 +28,7 @@ class LoginPage extends StatefulWidget {
 
   final BackendController backendController;
   final SessionController sessionController;
+  final LocaleController localeController;
   final AuthRepository authRepository;
   final String? redirectTo;
 
@@ -37,7 +42,6 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   bool _loading = false;
   bool _showPassword = false;
-  bool _isEnglish = false;
   bool _rememberAccount = false;
   String? _errorMessage;
   late Future<Map<String, dynamic>> _authTextsFuture;
@@ -51,12 +55,20 @@ class _LoginPageState extends State<LoginPage> {
 
   static const _rememberedEmailKey = 'remembered_email';
 
+  bool get _isEnglish => widget.localeController.isEnglish;
+
   @override
   void initState() {
     super.initState();
     _authTextsFuture = LocaleLoader.load(isEnglish: _isEnglish, namespace: 'auth');
+    widget.localeController.addListener(_onLocaleChanged);
     _loadPlatformSettings();
     _loadRememberedAccount();
+  }
+
+  void _onLocaleChanged() {
+    if (!mounted) return;
+    setState(() => _authTextsFuture = LocaleLoader.load(isEnglish: _isEnglish, namespace: 'auth'));
   }
 
   Future<void> _loadRememberedAccount() async {
@@ -80,6 +92,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void dispose() {
+    widget.localeController.removeListener(_onLocaleChanged);
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -134,10 +147,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _toggleLanguage() {
-    setState(() {
-      _isEnglish = !_isEnglish;
-      _authTextsFuture = LocaleLoader.load(isEnglish: _isEnglish, namespace: 'auth');
-    });
+    widget.localeController.setEnglish(!_isEnglish);
   }
 
   String _txt(Map<String, dynamic> bundle, String path, String fallback) {
@@ -176,6 +186,9 @@ class _LoginPageState extends State<LoginPage> {
       final me = await widget.authRepository.me(token);
       await widget.sessionController.login(token: token, user: me, remember: _rememberAccount);
       await _persistRememberedAccount();
+      unawaited(
+        widget.authRepository.getLanguage(token).then(widget.localeController.syncFromBackend),
+      );
 
       if (!mounted) return;
       final destination = safeRedirect(widget.redirectTo);

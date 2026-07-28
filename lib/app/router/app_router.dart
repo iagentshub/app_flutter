@@ -28,6 +28,7 @@ import '../../features/public/pages/public_profile_page.dart';
 import '../../features/workflows/pages/workflows_page.dart';
 import '../../shared/state/backend_controller.dart';
 import '../../shared/state/dashboard_edit_state.dart';
+import '../../shared/state/locale_controller.dart';
 import '../../shared/state/session_controller.dart';
 import '../../shared/widgets/app_shell.dart';
 import '../../shared/widgets/terminal_view_transition.dart';
@@ -37,6 +38,7 @@ import 'route_names.dart';
 GoRouter createRouter({
   required BackendController backendController,
   required SessionController sessionController,
+  required LocaleController localeController,
   required AuthRepository authRepository,
   required DashboardRepository dashboardRepository,
   required ApiClient apiClient,
@@ -85,6 +87,7 @@ GoRouter createRouter({
           child: LoginPage(
             backendController: backendController,
             sessionController: sessionController,
+            localeController: localeController,
             authRepository: authRepository,
             redirectTo: state.uri.queryParameters['redirect'],
           ),
@@ -109,6 +112,7 @@ GoRouter createRouter({
           child: LoginPage(
             backendController: backendController,
             sessionController: sessionController,
+            localeController: localeController,
             authRepository: authRepository,
             redirectTo: state.uri.queryParameters['redirect'],
           ),
@@ -154,6 +158,7 @@ GoRouter createRouter({
           sessionController: sessionController,
           authRepository: authRepository,
           dashboardEditState: dashboardEditState,
+          localeController: localeController,
           location: state.matchedLocation,
           child: child,
         ),
@@ -231,6 +236,7 @@ GoRouter createRouter({
             builder: (context, state) => ProfilePage(
               apiClient: apiClient,
               sessionController: sessionController,
+              localeController: localeController,
             ),
           ),
           GoRoute(

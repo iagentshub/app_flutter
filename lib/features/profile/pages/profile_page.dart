@@ -6,17 +6,20 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/profile/profile_models.dart';
 import '../repositories/profile_repository.dart';
+import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({
     required this.apiClient,
     required this.sessionController,
+    required this.localeController,
     super.key,
   });
 
   final ApiClient apiClient;
   final SessionController sessionController;
+  final LocaleController localeController;
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -94,6 +97,7 @@ class _ProfilePageState extends State<ProfilePage> {
         _languagesController.text = bundle.social.languages.join(', ');
         _loading = false;
       });
+      widget.localeController.syncFromBackend(bundle.settings.language);
     } on ApiError catch (error) {
       if (!mounted) return;
       setState(() {
@@ -125,6 +129,7 @@ class _ProfilePageState extends State<ProfilePage> {
         _theme = updated.theme;
         _language = updated.language;
       });
+      widget.localeController.syncFromBackend(updated.language);
       _showMessage('Preferencias guardadas');
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
