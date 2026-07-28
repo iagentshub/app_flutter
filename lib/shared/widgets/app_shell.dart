@@ -11,7 +11,7 @@ import '../state/locale_controller.dart';
 import '../state/session_controller.dart';
 import 'terminal_view_transition.dart';
 
-class AppShell extends StatelessWidget {
+class AppShell extends StatefulWidget {
   const AppShell({
     required this.sessionController,
     required this.authRepository,
@@ -31,112 +31,133 @@ class AppShell extends StatelessWidget {
   final String location;
   final Widget child;
 
-  Future<void> _logout(BuildContext context, Map<String, dynamic> t) async {
+  @override
+  State<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends State<AppShell> {
+  Map<String, dynamic> _texts = const {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTexts();
+    widget.localeController.addListener(_onLocaleChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.localeController.removeListener(_onLocaleChanged);
+    super.dispose();
+  }
+
+  void _onLocaleChanged() => _loadTexts();
+
+  Future<void> _loadTexts() async {
+    final texts = await LocaleLoader.load(isEnglish: widget.localeController.isEnglish, namespace: 'nav');
+    if (!mounted) return;
+    setState(() => _texts = texts);
+  }
+
+  String _tx(String key, String fallback) => LocaleLoader.text(_texts, key, fallback: fallback);
+
+  Future<void> _logout(BuildContext context) async {
     Navigator.of(context).pop();
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(LocaleLoader.text(t, 'logout_confirm_title', fallback: 'Cerrar sesión')),
-        content: Text(
-          LocaleLoader.text(t, 'logout_confirm_body', fallback: '¿Seguro que quieres cerrar sesión?'),
-        ),
+        title: Text(_tx('logout_confirm_title', 'Cerrar sesión')),
+        content: Text(_tx('logout_confirm_body', '¿Seguro que quieres cerrar sesión?')),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(LocaleLoader.text(t, 'cancel', fallback: 'Cancelar')),
+            child: Text(_tx('cancel', 'Cancelar')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(LocaleLoader.text(t, 'logout', fallback: 'Cerrar sesión')),
+            child: Text(_tx('logout', 'Cerrar sesión')),
           ),
         ],
       ),
     );
     if (confirm != true) return;
 
-    final token = sessionController.gaToken;
+    final token = widget.sessionController.gaToken;
     if (token != null && token.isNotEmpty) {
-      await authRepository.logout(token);
+      await widget.authRepository.logout(token);
     }
-    await sessionController.logout();
-    apiClient.invalidateCache();
+    await widget.sessionController.logout();
+    widget.apiClient.invalidateCache();
     if (!context.mounted) return;
     context.go(RouteNames.login);
   }
 
   @override
   Widget build(BuildContext context) {
-    final isAdmin = sessionController.user?.role == 'admin';
+    final isAdmin = widget.sessionController.user?.role == 'admin';
+    final location = widget.location;
 
     return ListenableBuilder(
-      listenable: Listenable.merge([dashboardEditState, localeController]),
+      listenable: widget.dashboardEditState,
       builder: (context, _) {
-        return FutureBuilder<Map<String, dynamic>>(
-          future: LocaleLoader.load(isEnglish: localeController.isEnglish, namespace: 'nav'),
-          builder: (context, snapshot) {
-            final t = snapshot.data ?? const <String, dynamic>{};
-            String tx(String key, String fallback) => LocaleLoader.text(t, key, fallback: fallback);
-
-            return Scaffold(
-              appBar: AppBar(title: Text(_titleForLocation(location, t))),
-              drawer: Drawer(
-                child: SafeArea(
-                  child: dashboardEditState.editing
-                      ? _WidgetPickerDrawerContent(state: dashboardEditState, t: t)
-                      : Column(
-                          children: [
-                            Expanded(
-                              child: ListView(
-                                children: [
-                                  ListTile(
-                                    title: Text(sessionController.user?.username ?? 'Usuario'),
-                                    subtitle: Text(sessionController.user?.role ?? 'user'),
-                                    leading: const Icon(Icons.account_circle_outlined),
-                                  ),
-                                  const Divider(),
-                                  ..._mainItems.map(
-                                    (item) => _NavItemTile(
-                                      icon: item.icon,
-                                      label: tx(item.labelKey, item.labelKey),
-                                      route: item.route,
-                                      selected: location == item.route,
-                                    ),
-                                  ),
-                                  const Divider(),
-                                  ..._secondaryItems.map(
-                                    (item) => _NavItemTile(
-                                      icon: item.icon,
-                                      label: tx(item.labelKey, item.labelKey),
-                                      route: item.route,
-                                      selected: location == item.route,
-                                    ),
-                                  ),
-                                  if (isAdmin) const Divider(),
-                                  if (isAdmin)
-                                    ..._adminItems.map(
-                                      (item) => _NavItemTile(
-                                        icon: item.icon,
-                                        label: tx(item.labelKey, item.labelKey),
-                                        route: item.route,
-                                        selected: location == item.route,
-                                      ),
-                                    ),
-                                ],
+        return Scaffold(
+          appBar: AppBar(title: Text(_titleForLocation(location, _texts))),
+          drawer: Drawer(
+            child: SafeArea(
+              child: widget.dashboardEditState.editing
+                  ? _WidgetPickerDrawerContent(state: widget.dashboardEditState, t: _texts)
+                  : Column(
+                      children: [
+                        Expanded(
+                          child: ListView(
+                            children: [
+                              ListTile(
+                                title: Text(widget.sessionController.user?.username ?? 'Usuario'),
+                                subtitle: Text(widget.sessionController.user?.role ?? 'user'),
+                                leading: const Icon(Icons.account_circle_outlined),
                               ),
-                            ),
-                            const Divider(height: 1),
-                            ListTile(
-                              leading: const Icon(Icons.logout),
-                              title: Text(tx('logout', 'Cerrar sesión')),
-                              onTap: () => _logout(context, t),
-                            ),
-                          ],
+                              const Divider(),
+                              ..._mainItems.map(
+                                (item) => _NavItemTile(
+                                  icon: item.icon,
+                                  label: _tx(item.labelKey, item.labelKey),
+                                  route: item.route,
+                                  selected: location == item.route,
+                                ),
+                              ),
+                              const Divider(),
+                              ..._secondaryItems.map(
+                                (item) => _NavItemTile(
+                                  icon: item.icon,
+                                  label: _tx(item.labelKey, item.labelKey),
+                                  route: item.route,
+                                  selected: location == item.route,
+                                ),
+                              ),
+                              if (isAdmin) const Divider(),
+                              if (isAdmin)
+                                ..._adminItems.map(
+                                  (item) => _NavItemTile(
+                                    icon: item.icon,
+                                    label: _tx(item.labelKey, item.labelKey),
+                                    route: item.route,
+                                    selected: location == item.route,
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
-                ),
-              ),
-              body: TerminalViewTransition(key: ValueKey(location), child: child),
-            );
-          },
+                        const Divider(height: 1),
+                        ListTile(
+                          leading: const Icon(Icons.logout),
+                          title: Text(_tx('logout', 'Cerrar sesión')),
+                          onTap: () => _logout(context),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
+          body: TerminalViewTransition(key: ValueKey(location), child: widget.child),
         );
       },
     );

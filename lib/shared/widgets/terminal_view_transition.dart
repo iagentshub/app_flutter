@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class TerminalViewTransition extends StatefulWidget {
   const TerminalViewTransition({
     required this.child,
-    this.duration = const Duration(milliseconds: 220),
+    this.duration = const Duration(milliseconds: 150),
     this.scanline = true,
     super.key,
   });
