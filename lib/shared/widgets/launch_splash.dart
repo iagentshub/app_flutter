@@ -18,16 +18,23 @@ class LaunchSplash extends StatefulWidget {
   State<LaunchSplash> createState() => _LaunchSplashState();
 }
 
+enum _Phase { typingAi, erasingAi, typingBrand, done }
+
 class _LaunchSplashState extends State<LaunchSplash> {
-  static const _initialPause = Duration(milliseconds: 120);
-  static const _typeStep = Duration(milliseconds: 42);
-  static const _finalPause = Duration(milliseconds: 320);
+  static const _initialPause = Duration(milliseconds: 100);
+  static const _typeStep = Duration(milliseconds: 65);
+  static const _aiHoldPause = Duration(milliseconds: 220);
+  static const _eraseStep = Duration(milliseconds: 45);
+  static const _brandTypeStep = Duration(milliseconds: 40);
+  static const _finalPause = Duration(milliseconds: 300);
+
+  static const _ai = 'AI';
   static const _brand = 'iAgentsHUB';
 
   Timer? _cursorTimer;
   bool _showCursor = false;
   String _visibleText = '';
-  bool _done = false;
+  _Phase _phase = _Phase.typingAi;
 
   @override
   void initState() {
@@ -57,15 +64,36 @@ class _LaunchSplashState extends State<LaunchSplash> {
   Future<void> _runSequence() async {
     await Future<void>.delayed(_initialPause);
     if (mounted) setState(() => _showCursor = true);
-    for (var i = 1; i <= _brand.length; i++) {
-      if (!mounted) return;
-      setState(() => _visibleText = _brand.substring(0, i));
-      await Future<void>.delayed(_typeStep);
-    }
-    if (mounted) setState(() => _done = true);
+
+    await _typeText(_ai, _typeStep);
+    await Future<void>.delayed(_aiHoldPause);
+
+    if (mounted) setState(() => _phase = _Phase.erasingAi);
+    await _eraseText(_eraseStep);
+
+    if (mounted) setState(() => _phase = _Phase.typingBrand);
+    await _typeText(_brand, _brandTypeStep);
+
+    if (mounted) setState(() => _phase = _Phase.done);
     await Future<void>.delayed(_finalPause);
     if (!mounted) return;
     widget.onFinished();
+  }
+
+  Future<void> _typeText(String fullText, Duration step) async {
+    for (var i = _visibleText.length + 1; i <= fullText.length; i++) {
+      if (!mounted) return;
+      setState(() => _visibleText = fullText.substring(0, i));
+      await Future<void>.delayed(step);
+    }
+  }
+
+  Future<void> _eraseText(Duration step) async {
+    for (var i = _visibleText.length - 1; i >= 0; i--) {
+      if (!mounted) return;
+      setState(() => _visibleText = _visibleText.substring(0, i));
+      await Future<void>.delayed(step);
+    }
   }
 
   void _startCursorBlink() {
@@ -77,7 +105,7 @@ class _LaunchSplashState extends State<LaunchSplash> {
 
   @override
   Widget build(BuildContext context) {
-    final cursor = _showCursor && !_done ? '|' : '';
+    final cursor = _showCursor && _phase != _Phase.done ? '|' : '';
 
     return Scaffold(
       body: Container(
@@ -94,6 +122,21 @@ class _LaunchSplashState extends State<LaunchSplash> {
   }
 
   Widget _buildBrandLine(String cursor) {
+    final isBrandPhase = _phase == _Phase.typingBrand || _phase == _Phase.done;
+
+    if (!isBrandPhase) {
+      return Text(
+        '$_visibleText$cursor',
+        style: GoogleFonts.inter(
+          color: const Color(0xFFFF5A73),
+          fontSize: 44,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.6,
+          shadows: const [Shadow(color: Color(0xAA7A0C1C), blurRadius: 20)],
+        ),
+      );
+    }
+
     final prefixLen = _visibleText.length <= 7 ? _visibleText.length : 7;
     final prefix = _visibleText.substring(0, prefixLen);
     final suffix = _visibleText.length > 7 ? _visibleText.substring(7) : '';
