@@ -33,6 +33,7 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   late final ExploreRepository _exploreRepository;
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   DashboardData? _data;
   List<String> _layout = kDefaultDashboardLayout;
@@ -105,6 +106,17 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
+  void _toggleEditing() {
+    setState(() => _editing = !_editing);
+    if (_editing) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _scaffoldKey.currentState?.openEndDrawer(),
+      );
+    } else {
+      _scaffoldKey.currentState?.closeEndDrawer();
+    }
+  }
+
   void _addWidget(String id) {
     setState(() => _layout = [..._layout, id]);
     _persistLayout();
@@ -147,76 +159,170 @@ class _DashboardPageState extends State<DashboardPage> {
           children: [
             Text(_error ?? 'Sin datos'),
             const SizedBox(height: 12),
-            FilledButton.icon(onPressed: _load, icon: const Icon(Icons.refresh), label: const Text('Reintentar')),
+            FilledButton.icon(
+              onPressed: _load,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Reintentar'),
+            ),
           ],
         ),
       );
     }
 
     final data = _data!;
-    final missing = kDashboardWidgetIds.where((id) => !_layout.contains(id)).toList();
 
-    return Align(
-      alignment: Alignment.topCenter,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 900),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  if (_editing)
-                    PopupMenuButton<String>(
-                      enabled: missing.isNotEmpty,
-                      tooltip: 'Añadir widget',
-                      icon: const Icon(Icons.add_circle_outline),
-                      itemBuilder: (context) =>
-                          missing.map((id) => PopupMenuItem(value: id, child: Text(dashboardWidgetTitle(id)))).toList(),
-                      onSelected: _addWidget,
+    return Scaffold(
+      key: _scaffoldKey,
+      endDrawer: Drawer(child: _buildAddWidgetDrawer()),
+      onEndDrawerChanged: (isOpen) {
+        if (!isOpen && _editing) setState(() => _editing = false);
+      },
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 900),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton.icon(
+                      onPressed: _toggleEditing,
+                      icon: Icon(_editing ? Icons.check : Icons.tune),
+                      label: Text(_editing ? 'Listo' : 'Personalizar'),
                     ),
-                  TextButton.icon(
-                    onPressed: () => setState(() => _editing = !_editing),
-                    icon: Icon(_editing ? Icons.check : Icons.tune),
-                    label: Text(_editing ? 'Listo' : 'Personalizar'),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _load,
-                child: _layout.isEmpty
-                    ? ListView(
-                        padding: const EdgeInsets.all(16),
-                        children: const [
-                          Padding(
-                            padding: EdgeInsets.symmetric(vertical: 40),
-                            child: Center(child: Text('No hay widgets. Pulsa "Personalizar" para añadir alguno.')),
-                          ),
-                        ],
-                      )
-                    : _editing
-                        ? ReorderableListView.builder(
-                            padding: const EdgeInsets.all(16),
-                            buildDefaultDragHandles: false,
-                            itemCount: _layout.length,
-                            onReorder: _reorder,
-                            itemBuilder: (context, index) => _buildCard(_layout[index], data, index: index),
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.all(16),
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            itemCount: _layout.length,
-                            itemBuilder: (context, index) => _buildCard(_layout[index], data),
-                          ),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _load,
+                  child: _layout.isEmpty
+                      ? ListView(
+                          padding: const EdgeInsets.all(16),
+                          children: const [
+                            Padding(
+                              padding: EdgeInsets.symmetric(vertical: 40),
+                              child: Center(
+                                child: Text(
+                                  'No hay widgets. Pulsa "Personalizar" para añadir alguno.',
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : _editing
+                      ? ReorderableListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          buildDefaultDragHandles: false,
+                          itemCount: _layout.length,
+                          onReorder: _reorder,
+                          itemBuilder: (context, index) =>
+                              _buildCard(_layout[index], data, index: index),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          itemCount: _layout.length,
+                          itemBuilder: (context, index) =>
+                              _buildCard(_layout[index], data),
+                        ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  Widget _buildAddWidgetDrawer() {
+    final missing = kDashboardWidgetIds
+        .where((id) => !_layout.contains(id))
+        .toList();
+    return SafeArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Personalizar dashboard',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                FilledButton(
+                  onPressed: _toggleEditing,
+                  child: const Text('Listo'),
+                ),
+              ],
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              'Toca un widget para añadirlo al dashboard. Arrastra las cards para reordenarlas y usa el engranaje para configurarlas.',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: missing.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text(
+                      'Ya has añadido todos los widgets disponibles.',
+                    ),
+                  )
+                : ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    children: missing.map((id) {
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () => _addWidget(id),
+                          child: Padding(
+                            padding: const EdgeInsets.all(14),
+                            child: Row(
+                              children: [
+                                Expanded(child: Text(dashboardWidgetTitle(id))),
+                                Chip(
+                                  label: Text(_widgetSizeLabel(id)),
+                                  visualDensity: VisualDensity.compact,
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                const SizedBox(width: 4),
+                                const Icon(Icons.add, size: 18),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _widgetSizeLabel(String id) {
+    switch (id) {
+      case 'token-usage':
+      case 'feed':
+        return 'Mediano';
+      case 'composition':
+        return 'Pequeño';
+      default:
+        return 'Grande';
+    }
   }
 
   Widget _buildCard(String id, DashboardData data, {int index = 0}) {
@@ -234,10 +340,19 @@ class _DashboardPageState extends State<DashboardPage> {
                 if (_editing)
                   ReorderableDragStartListener(
                     index: index,
-                    child: const Padding(padding: EdgeInsets.only(right: 10), child: Icon(Icons.drag_handle)),
+                    child: const Padding(
+                      padding: EdgeInsets.only(right: 10),
+                      child: Icon(Icons.drag_handle),
+                    ),
                   ),
                 Expanded(
-                  child: Text(dashboardWidgetTitle(id), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                  child: Text(
+                    dashboardWidgetTitle(id),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
                 if (_editing && id != 'composition')
                   IconButton(
@@ -349,14 +464,27 @@ class _SummaryBody extends StatelessWidget {
               padding: const EdgeInsets.all(14),
               child: Row(
                 children: [
-                  Icon(icons[item] ?? Icons.circle_outlined, size: 22, color: Theme.of(context).colorScheme.primary),
+                  Icon(
+                    icons[item] ?? Icons.circle_outlined,
+                    size: 22,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                   const SizedBox(width: 10),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text('${counts[item] ?? 0}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-                      Text(summaryItemLabel(item), style: Theme.of(context).textTheme.bodySmall),
+                      Text(
+                        '${counts[item] ?? 0}',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      Text(
+                        summaryItemLabel(item),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                     ],
                   ),
                 ],
@@ -381,13 +509,19 @@ class _ActivityBody extends StatelessWidget {
     final all = data.tokenDaily;
     final daily = all.length > days ? all.sublist(all.length - days) : all;
     final total = daily.fold<int>(0, (sum, item) => sum + item.tokens);
-    final max = daily.fold<int>(0, (m, item) => item.tokens > m ? item.tokens : m);
+    final max = daily.fold<int>(
+      0,
+      (m, item) => item.tokens > m ? item.tokens : m,
+    );
 
     if (daily.isEmpty) return const Text('Sin actividad todavía');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Total: $total tokens ($days días)', style: Theme.of(context).textTheme.bodyMedium),
+        Text(
+          'Total: $total tokens ($days días)',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
         const SizedBox(height: 10),
         SizedBox(
           height: 90,
@@ -406,7 +540,9 @@ class _ActivityBody extends StatelessWidget {
                       child: Container(
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.primary,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(3),
+                          ),
                         ),
                       ),
                     ),
@@ -420,7 +556,10 @@ class _ActivityBody extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(daily.first.day, style: Theme.of(context).textTheme.labelSmall),
+            Text(
+              daily.first.day,
+              style: Theme.of(context).textTheme.labelSmall,
+            ),
             Text(daily.last.day, style: Theme.of(context).textTheme.labelSmall),
           ],
         ),
@@ -451,31 +590,41 @@ class _TokenUsageBody extends StatelessWidget {
       final agents = data.agents.where((a) {
         if (scope != 'personal') return true;
         final connId = a['connection_id']?.toString();
-        return connId == null || connId.isEmpty || personalConnectionIds.contains(connId);
+        return connId == null ||
+            connId.isEmpty ||
+            personalConnectionIds.contains(connId);
       });
-      rows = agents
-          .map((a) {
-            final tokensIn = (a['tokens_in'] as num?)?.toInt() ?? 0;
-            final tokensOut = (a['tokens_out'] as num?)?.toInt() ?? 0;
-            final name = a['name']?.toString() ?? 'Agente';
-            return MapEntry(name, tokensIn + tokensOut);
-          })
-          .where((e) => e.value > 0)
-          .toList()
-        ..sort((a, b) => b.value.compareTo(a.value));
+      rows =
+          agents
+              .map((a) {
+                final tokensIn = (a['tokens_in'] as num?)?.toInt() ?? 0;
+                final tokensOut = (a['tokens_out'] as num?)?.toInt() ?? 0;
+                final name = a['name']?.toString() ?? 'Agente';
+                return MapEntry(name, tokensIn + tokensOut);
+              })
+              .where((e) => e.value > 0)
+              .toList()
+            ..sort((a, b) => b.value.compareTo(a.value));
     } else {
-      final connections =
-          scope == 'personal' ? data.connections.where((c) => personalConnectionIds.contains(c['id'])) : data.connections;
-      rows = connections
-          .map((c) {
-            final tokensIn = (c['tokens_in'] as num?)?.toInt() ?? 0;
-            final tokensOut = (c['tokens_out'] as num?)?.toInt() ?? 0;
-            final name = c['name']?.toString() ?? c['type']?.toString() ?? 'Conexión';
-            return MapEntry(name, tokensIn + tokensOut);
-          })
-          .where((e) => e.value > 0)
-          .toList()
-        ..sort((a, b) => b.value.compareTo(a.value));
+      final connections = scope == 'personal'
+          ? data.connections.where(
+              (c) => personalConnectionIds.contains(c['id']),
+            )
+          : data.connections;
+      rows =
+          connections
+              .map((c) {
+                final tokensIn = (c['tokens_in'] as num?)?.toInt() ?? 0;
+                final tokensOut = (c['tokens_out'] as num?)?.toInt() ?? 0;
+                final name =
+                    c['name']?.toString() ??
+                    c['type']?.toString() ??
+                    'Conexión';
+                return MapEntry(name, tokensIn + tokensOut);
+              })
+              .where((e) => e.value > 0)
+              .toList()
+            ..sort((a, b) => b.value.compareTo(a.value));
     }
     rows = rows.take(limit).toList();
     final max = rows.isEmpty ? 1 : rows.first.value;
@@ -491,7 +640,9 @@ class _TokenUsageBody extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(child: Text(entry.key, overflow: TextOverflow.ellipsis)),
+                  Expanded(
+                    child: Text(entry.key, overflow: TextOverflow.ellipsis),
+                  ),
                   Text('${entry.value}'),
                 ],
               ),
@@ -501,7 +652,9 @@ class _TokenUsageBody extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: entry.value / max,
                   minHeight: 6,
-                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHighest,
                 ),
               ),
             ],
@@ -538,7 +691,9 @@ class _ConnectionStatusBodyState extends State<_ConnectionStatusBody> {
   List<Map<String, dynamic>> get _connections {
     final scope = widget.config.scope ?? 'all';
     if (scope != 'personal') return widget.data.connections;
-    return widget.data.connections.where((c) => c['_personal_key'] == true || c['scope'] == 'personal').toList();
+    return widget.data.connections
+        .where((c) => c['_personal_key'] == true || c['scope'] == 'personal')
+        .toList();
   }
 
   @override
@@ -570,17 +725,27 @@ class _ConnectionStatusBodyState extends State<_ConnectionStatusBody> {
     final resultsById = {for (final r in _results) r.id: r};
     final okCount = _results.where((r) => r.ok).length;
 
-    if (connections.isEmpty) return const Text('No hay conexiones configuradas');
+    if (connections.isEmpty) {
+      return const Text('No hay conexiones configuradas');
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(_tested ? '$okCount / ${connections.length} operativas' : 'Comprobando…'),
+            Text(
+              _tested
+                  ? '$okCount / ${connections.length} operativas'
+                  : 'Comprobando…',
+            ),
             IconButton(
               icon: _testing
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Icon(Icons.refresh, size: 20),
               onPressed: _testing ? null : _runTest,
             ),
@@ -588,9 +753,14 @@ class _ConnectionStatusBodyState extends State<_ConnectionStatusBody> {
         ),
         ...connections.take(pageSize).map((conn) {
           final id = conn['id']?.toString() ?? '';
-          final name = conn['name']?.toString() ?? conn['type']?.toString() ?? 'Conexión';
+          final name =
+              conn['name']?.toString() ??
+              conn['type']?.toString() ??
+              'Conexión';
           final result = resultsById[id];
-          final color = result == null ? Colors.grey : (result.ok ? Colors.green.shade600 : Colors.red.shade600);
+          final color = result == null
+              ? Colors.grey
+              : (result.ok ? Colors.green.shade600 : Colors.red.shade600);
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 3),
             child: Row(
@@ -626,7 +796,9 @@ class _RecentAgentsBody extends StatelessWidget {
           dense: true,
           leading: const Icon(Icons.smart_toy_outlined),
           title: Text(agent['name']?.toString() ?? 'Agente'),
-          subtitle: agent['model'] != null ? Text(agent['model'].toString()) : null,
+          subtitle: agent['model'] != null
+              ? Text(agent['model'].toString())
+              : null,
           onTap: () => context.go(RouteNames.agents),
         );
       }).toList(),
@@ -660,7 +832,8 @@ class _CompositionBody extends StatelessWidget {
       final key = model.toLowerCase().split(RegExp('[-/]')).first;
       counts[key] = (counts[key] ?? 0) + 1;
     }
-    final rows = counts.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    final rows = counts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
     final top = rows.take(6).toList();
     if (top.isEmpty) return const Text('Sin datos suficientes todavía');
     final max = top.first.value;
@@ -675,10 +848,7 @@ class _CompositionBody extends StatelessWidget {
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(top[i].key),
-                    Text('${top[i].value}'),
-                  ],
+                  children: [Text(top[i].key), Text('${top[i].value}')],
                 ),
                 const SizedBox(height: 4),
                 ClipRRect(
@@ -686,8 +856,12 @@ class _CompositionBody extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: top[i].value / max,
                     minHeight: 6,
-                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                    valueColor: AlwaysStoppedAnimation(_colors[i % _colors.length]),
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerHighest,
+                    valueColor: AlwaysStoppedAnimation(
+                      _colors[i % _colors.length],
+                    ),
                   ),
                 ),
               ],
@@ -748,9 +922,17 @@ class _FeedBodyState extends State<_FeedBody> {
     final starred = _starredOverride[key] ?? item['starred'] == true;
     try {
       if (starred) {
-        await widget.exploreRepository.unstar(widget.token, resourceType: type, resourceId: id);
+        await widget.exploreRepository.unstar(
+          widget.token,
+          resourceType: type,
+          resourceId: id,
+        );
       } else {
-        await widget.exploreRepository.star(widget.token, resourceType: type, resourceId: id);
+        await widget.exploreRepository.star(
+          widget.token,
+          resourceType: type,
+          resourceId: id,
+        );
       }
       if (!mounted) return;
       setState(() => _starredOverride[key] = !starred);
@@ -761,8 +943,17 @@ class _FeedBodyState extends State<_FeedBody> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()));
-    if (_items.isEmpty) return const Text('No hay actividad reciente de la comunidad');
+    if (_loading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    if (_items.isEmpty) {
+      return const Text('No hay actividad reciente de la comunidad');
+    }
 
     return Column(
       children: _items.map((item) {
@@ -774,11 +965,20 @@ class _FeedBodyState extends State<_FeedBody> {
         return ListTile(
           contentPadding: EdgeInsets.zero,
           dense: true,
-          leading: CircleAvatar(radius: 16, child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?')),
+          leading: CircleAvatar(
+            radius: 16,
+            child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?'),
+          ),
           title: Text(name),
-          subtitle: Text('$type${item['owner'] != null ? ' · @${item['owner']}' : ''}'),
+          subtitle: Text(
+            '$type${item['owner'] != null ? ' · @${item['owner']}' : ''}',
+          ),
           trailing: IconButton(
-            icon: Icon(starred ? Icons.star : Icons.star_border, color: starred ? Colors.amber : null, size: 20),
+            icon: Icon(
+              starred ? Icons.star : Icons.star_border,
+              color: starred ? Colors.amber : null,
+              size: 20,
+            ),
             onPressed: () => _toggleStar(item),
           ),
         );
@@ -812,8 +1012,14 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
       title: Text('Configurar: ${dashboardWidgetTitle(widget.widgetId)}'),
       content: SizedBox(width: 420, child: _buildFields()),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
-        FilledButton(onPressed: () => Navigator.of(context).pop(_draft), child: const Text('Guardar')),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(_draft),
+          child: const Text('Guardar'),
+        ),
       ],
     );
   }
@@ -832,13 +1038,26 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _pillRow('Agrupar por', {'connection': 'Conexión', 'agent': 'Agente'}, _draft.groupBy ?? 'connection',
-                (v) => setState(() => _draft = _draft.copyWith(groupBy: v))),
+            _pillRow(
+              'Agrupar por',
+              {'connection': 'Conexión', 'agent': 'Agente'},
+              _draft.groupBy ?? 'connection',
+              (v) => setState(() => _draft = _draft.copyWith(groupBy: v)),
+            ),
             const SizedBox(height: 12),
-            _pillRow('Conexiones', {'all': 'Todas', 'personal': 'Personales'}, _draft.scope ?? 'all',
-                (v) => setState(() => _draft = _draft.copyWith(scope: v))),
+            _pillRow(
+              'Conexiones',
+              {'all': 'Todas', 'personal': 'Personales'},
+              _draft.scope ?? 'all',
+              (v) => setState(() => _draft = _draft.copyWith(scope: v)),
+            ),
             const SizedBox(height: 12),
-            _numberRow('Cantidad', [3, 5, 10], _draft.limit ?? 5, (v) => setState(() => _draft = _draft.copyWith(limit: v))),
+            _numberRow(
+              'Cantidad',
+              [3, 5, 10],
+              _draft.limit ?? 5,
+              (v) => setState(() => _draft = _draft.copyWith(limit: v)),
+            ),
           ],
         );
       case 'conn-status':
@@ -846,19 +1065,35 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _pillRow('Conexiones', {'all': 'Todas', 'personal': 'Personales'}, _draft.scope ?? 'all',
-                (v) => setState(() => _draft = _draft.copyWith(scope: v))),
+            _pillRow(
+              'Conexiones',
+              {'all': 'Todas', 'personal': 'Personales'},
+              _draft.scope ?? 'all',
+              (v) => setState(() => _draft = _draft.copyWith(scope: v)),
+            ),
             const SizedBox(height: 12),
-            _numberRow('Cantidad', [2, 4, 6, 8], _draft.pageSize ?? 4,
-                (v) => setState(() => _draft = _draft.copyWith(pageSize: v))),
+            _numberRow(
+              'Cantidad',
+              [2, 4, 6, 8],
+              _draft.pageSize ?? 4,
+              (v) => setState(() => _draft = _draft.copyWith(pageSize: v)),
+            ),
           ],
         );
       case 'recent':
         return _numberRow(
-            'Cantidad', [2, 4, 6, 8], _draft.pageSize ?? 4, (v) => setState(() => _draft = _draft.copyWith(pageSize: v)));
+          'Cantidad',
+          [2, 4, 6, 8],
+          _draft.pageSize ?? 4,
+          (v) => setState(() => _draft = _draft.copyWith(pageSize: v)),
+        );
       case 'activity':
         return _numberRow(
-            'Periodo (días)', [7, 14, 30], _draft.days ?? 14, (v) => setState(() => _draft = _draft.copyWith(days: v)));
+          'Periodo (días)',
+          [7, 14, 30],
+          _draft.days ?? 14,
+          (v) => setState(() => _draft = _draft.copyWith(days: v)),
+        );
       case 'feed':
         return Column(
           mainAxisSize: MainAxisSize.min,
@@ -872,7 +1107,11 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
             ),
             const SizedBox(height: 12),
             _numberRow(
-                'Cantidad', [4, 8, 15, 25], _draft.limit ?? 8, (v) => setState(() => _draft = _draft.copyWith(limit: v))),
+              'Cantidad',
+              [4, 8, 15, 25],
+              _draft.limit ?? 8,
+              (v) => setState(() => _draft = _draft.copyWith(limit: v)),
+            ),
           ],
         );
       default:
@@ -880,7 +1119,12 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
     }
   }
 
-  Widget _checklist(List<String> options, List<String> selected, String Function(String) label, void Function(List<String>) onChanged) {
+  Widget _checklist(
+    List<String> options,
+    List<String> selected,
+    String Function(String) label,
+    void Function(List<String>) onChanged,
+  ) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -902,7 +1146,12 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
     );
   }
 
-  Widget _pillRow(String label, Map<String, String> options, String value, void Function(String) onChanged) {
+  Widget _pillRow(
+    String label,
+    Map<String, String> options,
+    String value,
+    void Function(String) onChanged,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -922,7 +1171,12 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
     );
   }
 
-  Widget _numberRow(String label, List<int> options, int value, void Function(int) onChanged) {
+  Widget _numberRow(
+    String label,
+    List<int> options,
+    int value,
+    void Function(int) onChanged,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
