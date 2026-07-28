@@ -11,6 +11,7 @@ import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/action_icon_button.dart';
+import '../../../shared/widgets/label_chips_row.dart';
 
 class ExplorePage extends StatefulWidget {
   const ExplorePage({
@@ -439,20 +440,37 @@ class _ExplorePageState extends State<ExplorePage> {
               ],
             ),
             const SizedBox(height: 6),
-            Text('por ${item.owner} · ⭐ ${item.stars}'),
+            Row(
+              children: [
+                Icon(Icons.person_outline, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    item.owner,
+                    style: Theme.of(context).textTheme.bodySmall,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Icon(Icons.star, size: 14, color: Colors.amber.shade600),
+                const SizedBox(width: 4),
+                Text('${item.stars}', style: Theme.of(context).textTheme.bodySmall),
+              ],
+            ),
             if (item.description.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(item.description, maxLines: 3, overflow: TextOverflow.ellipsis),
             ],
-            if (item.tags.isNotEmpty || item.labels.isNotEmpty) ...[
+            if (item.labels.isNotEmpty) ...[
               const SizedBox(height: 8),
+              LabelChipsRow(labels: item.labels),
+            ],
+            if (item.tags.isNotEmpty) ...[
+              const SizedBox(height: 6),
               Wrap(
                 spacing: 6,
                 runSpacing: 6,
-                children: [
-                  ...item.tags.take(4).map((tag) => _miniChip('#$tag')),
-                  ...item.labels.take(4).map((label) => _miniChip(label)),
-                ],
+                children: item.tags.take(6).map((tag) => _miniChip('#$tag')).toList(),
               ),
             ],
             const SizedBox(height: 10),

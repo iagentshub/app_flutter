@@ -7,6 +7,7 @@ import '../../explore/repositories/explore_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/widgets/label_chips_row.dart';
 
 class LabelsPage extends StatefulWidget {
   const LabelsPage({
@@ -292,11 +293,31 @@ class _LabelsPageState extends State<LabelsPage> {
                             ..._filtered.map(
                               (item) => Card(
                                 margin: const EdgeInsets.only(bottom: 10),
-                                child: ListTile(
-                                  title: Text(item.name),
-                                  subtitle: Text('${item.resourceType} · ${item.owner} · ⭐ ${item.stars}'),
-                                  trailing: item.labels.isEmpty ? null : Text(item.labels.join(', '), maxLines: 1),
+                                child: InkWell(
                                   onTap: () => _showMessage(item.description.isEmpty ? 'Sin descripción' : item.description),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(item.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            Text('${item.resourceType} · ${item.owner}', style: Theme.of(context).textTheme.bodySmall),
+                                            const SizedBox(width: 10),
+                                            Icon(Icons.star, size: 13, color: Colors.amber.shade600),
+                                            const SizedBox(width: 3),
+                                            Text('${item.stars}', style: Theme.of(context).textTheme.bodySmall),
+                                          ],
+                                        ),
+                                        if (item.labels.isNotEmpty) ...[
+                                          const SizedBox(height: 8),
+                                          LabelChipsRow(labels: item.labels),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),

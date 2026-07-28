@@ -8,6 +8,7 @@ import '../../../models/explore/explore_models.dart';
 import '../../explore/repositories/explore_repository.dart';
 import '../repositories/public_profile_repository.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/widgets/action_icon_button.dart';
 
 class PublicProfilePage extends StatefulWidget {
   const PublicProfilePage({
@@ -268,11 +269,19 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                     margin: const EdgeInsets.only(bottom: 10),
                     child: ListTile(
                       title: Text(item.name),
-                      subtitle: Text('${item.resourceType} · ${item.category} · ⭐ ${item.stars}'),
-                      trailing: OutlinedButton.icon(
+                      subtitle: Row(
+                        children: [
+                          Text('${item.resourceType} · ${item.category}', style: Theme.of(context).textTheme.bodySmall),
+                          const SizedBox(width: 10),
+                          Icon(Icons.star, size: 13, color: Colors.amber.shade600),
+                          const SizedBox(width: 3),
+                          Text('${item.stars}', style: Theme.of(context).textTheme.bodySmall),
+                        ],
+                      ),
+                      trailing: ActionIconButton(
+                        icon: Icons.visibility_outlined,
+                        tooltip: 'Vista previa',
                         onPressed: () => _preview(item),
-                        icon: const Icon(Icons.visibility_outlined),
-                        label: const Text('Preview'),
                       ),
                     ),
                   ),
