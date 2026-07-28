@@ -9,7 +9,6 @@ class DashboardEditState extends ChangeNotifier {
   bool _editing = false;
   List<String> _missing = const [];
   void Function(String id)? _onAdd;
-  void Function()? _onDone;
 
   bool get editing => _editing;
   List<String> get missing => _missing;
@@ -17,12 +16,10 @@ class DashboardEditState extends ChangeNotifier {
   void startEditing({
     required List<String> missing,
     required void Function(String id) onAdd,
-    required void Function() onDone,
   }) {
     _editing = true;
     _missing = missing;
     _onAdd = onAdd;
-    _onDone = onDone;
     notifyListeners();
   }
 
@@ -36,11 +33,8 @@ class DashboardEditState extends ChangeNotifier {
     _editing = false;
     _missing = const [];
     _onAdd = null;
-    _onDone = null;
     notifyListeners();
   }
 
   void addWidget(String id) => _onAdd?.call(id);
-
-  void done() => _onDone?.call();
 }

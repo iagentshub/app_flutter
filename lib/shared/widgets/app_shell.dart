@@ -214,24 +214,11 @@ class _WidgetPickerDrawerContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Personalizar dashboard',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                ),
-              ),
-              FilledButton(
-                onPressed: () {
-                  state.done();
-                  Navigator.of(context).pop();
-                },
-                child: const Text('Listo'),
-              ),
-            ],
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Text(
+            'Personalizar dashboard',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
         ),
         const Padding(

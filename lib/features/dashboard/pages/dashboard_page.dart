@@ -120,14 +120,7 @@ class _DashboardPageState extends State<DashboardPage> {
   void _toggleEditing() {
     setState(() => _editing = !_editing);
     if (_editing) {
-      widget.dashboardEditState.startEditing(
-        missing: _missingWidgets,
-        onAdd: _addWidget,
-        onDone: () {
-          if (mounted) setState(() => _editing = false);
-          widget.dashboardEditState.stopEditing();
-        },
-      );
+      widget.dashboardEditState.startEditing(missing: _missingWidgets, onAdd: _addWidget);
     } else {
       widget.dashboardEditState.stopEditing();
     }
