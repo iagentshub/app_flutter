@@ -12,6 +12,7 @@ import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/action_icon_button.dart';
 import '../../../shared/widgets/filter_chips_row.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
+import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 
 class KnowledgePage extends StatefulWidget {
@@ -42,6 +43,7 @@ class _KnowledgePageState extends State<KnowledgePage> {
   bool _skillsLoading = true;
   String? _skillsError;
   String? _activeGroupId;
+  bool _groupsVisible = false;
 
   @override
   void initState() {
@@ -368,21 +370,36 @@ class _KnowledgePageState extends State<KnowledgePage> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          child: SegmentedButton<String>(
-            segments: const [
-              ButtonSegment(value: 'knowledge', label: Text('Conocimiento'), icon: Icon(Icons.menu_book_outlined)),
-              ButtonSegment(value: 'skills', label: Text('Skills'), icon: Icon(Icons.auto_awesome_outlined)),
-              ButtonSegment(value: 'memory', label: Text('Memoria'), icon: Icon(Icons.memory_outlined)),
+          child: Row(
+            children: [
+              Expanded(
+                child: SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(value: 'knowledge', label: Text('Conocimiento'), icon: Icon(Icons.menu_book_outlined)),
+                    ButtonSegment(value: 'skills', label: Text('Skills'), icon: Icon(Icons.auto_awesome_outlined)),
+                    ButtonSegment(value: 'memory', label: Text('Memoria'), icon: Icon(Icons.memory_outlined)),
+                  ],
+                  selected: {_section},
+                  onSelectionChanged: (selection) => setState(() => _section = selection.first),
+                ),
+              ),
+              if (_section != 'memory') ...[
+                const SizedBox(width: 8),
+                IconButton.outlined(
+                  onPressed: () => setState(() => _groupsVisible = !_groupsVisible),
+                  icon: const Icon(Icons.groups_outlined),
+                  tooltip: 'Grupos',
+                  isSelected: _groupsVisible,
+                ),
+              ],
             ],
-            selected: {_section},
-            onSelectionChanged: (selection) => setState(() => _section = selection.first),
           ),
         ),
         Expanded(child: _buildSection()),
       ],
     );
 
-    if (_section == 'memory') return content;
+    if (_section == 'memory' || !_groupsVisible) return content;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -637,6 +654,8 @@ class _KnowledgePageState extends State<KnowledgePage> {
               const SizedBox(height: 8),
               Text(item.description, maxLines: 3, overflow: TextOverflow.ellipsis),
             ],
+            const SizedBox(height: 8),
+            LabelChipsRow(labels: item.labels),
             const SizedBox(height: 10),
             Row(
               children: [

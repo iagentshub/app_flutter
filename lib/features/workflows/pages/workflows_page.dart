@@ -8,6 +8,7 @@ import '../../../models/workflows/workflow_models.dart';
 import '../repositories/workflows_repository.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/action_icon_button.dart';
+import '../../../shared/widgets/label_chips_row.dart';
 import 'workflow_editor_page.dart';
 
 class WorkflowsPage extends StatefulWidget {
@@ -274,9 +275,6 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
 
   Widget _buildWorkflowCard(WorkflowItem item) {
     final meta = <String>['${item.nodes.length} pasos', '${item.edges.length} conexiones'];
-    if (item.labels.isNotEmpty) {
-      meta.add('labels: ${item.labels.join(', ')}');
-    }
 
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
@@ -303,6 +301,8 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
               const SizedBox(height: 8),
               Text(item.description, maxLines: 3, overflow: TextOverflow.ellipsis),
             ],
+            const SizedBox(height: 8),
+            LabelChipsRow(labels: item.labels),
             const SizedBox(height: 10),
             Row(
               children: [

@@ -244,44 +244,62 @@ class _ExplorePageState extends State<ExplorePage> {
                         onChanged: (value) => setState(() => _type = value),
                       ),
                       const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          SizedBox(
-                            width: 220,
-                            child: TextField(
-                              controller: _queryController,
-                              decoration: const InputDecoration(
-                                labelText: 'Buscar',
-                                prefixIcon: Icon(Icons.search, size: 20),
-                              ),
-                              onSubmitted: (_) => _load(),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final searchField = TextField(
+                            controller: _queryController,
+                            decoration: const InputDecoration(
+                              labelText: 'Buscar',
+                              prefixIcon: Icon(Icons.search, size: 20),
                             ),
-                          ),
-                          SizedBox(
-                            width: 160,
-                            child: TextField(
-                              controller: _categoryController,
-                              decoration: const InputDecoration(labelText: 'Categoría'),
-                              onSubmitted: (_) => _load(),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 160,
-                            child: TextField(
-                              controller: _labelController,
-                              decoration: const InputDecoration(labelText: 'Label'),
-                              onSubmitted: (_) => _load(),
-                            ),
-                          ),
-                          FilledButton.icon(
+                            onSubmitted: (_) => _load(),
+                          );
+                          final categoryField = TextField(
+                            controller: _categoryController,
+                            decoration: const InputDecoration(labelText: 'Categoría'),
+                            onSubmitted: (_) => _load(),
+                          );
+                          final labelField = TextField(
+                            controller: _labelController,
+                            decoration: const InputDecoration(labelText: 'Label'),
+                            onSubmitted: (_) => _load(),
+                          );
+                          final filterButton = FilledButton.icon(
                             onPressed: _load,
                             icon: const Icon(Icons.search),
                             label: const Text('Filtrar'),
-                          ),
-                        ],
+                          );
+
+                          if (constraints.maxWidth < 620) {
+                            return Column(
+                              children: [
+                                searchField,
+                                const SizedBox(height: 10),
+                                Row(
+                                  children: [
+                                    Expanded(child: categoryField),
+                                    const SizedBox(width: 10),
+                                    Expanded(child: labelField),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                SizedBox(width: double.infinity, child: filterButton),
+                              ],
+                            );
+                          }
+
+                          return Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              SizedBox(width: 220, child: searchField),
+                              SizedBox(width: 160, child: categoryField),
+                              SizedBox(width: 160, child: labelField),
+                              filterButton,
+                            ],
+                          );
+                        },
                       ),
                     ],
                   ),

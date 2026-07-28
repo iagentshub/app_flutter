@@ -7,6 +7,7 @@ import '../repositories/agents_repository.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/action_icon_button.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
+import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 import 'chat_page.dart';
 
@@ -32,6 +33,7 @@ class _AgentsPageState extends State<AgentsPage> {
   String? _error;
   String _query = '';
   String? _activeGroupId;
+  bool _groupsVisible = false;
 
   List<AgentItem> get _filteredAgents {
     final query = _query.trim().toLowerCase();
@@ -275,9 +277,20 @@ class _AgentsPageState extends State<AgentsPage> {
                     icon: const Icon(Icons.refresh),
                     label: const Text('Actualizar'),
                   ),
+                  IconButton.outlined(
+                    onPressed: () => setState(() => _groupsVisible = !_groupsVisible),
+                    icon: const Icon(Icons.groups_outlined),
+                    tooltip: 'Grupos',
+                    isSelected: _groupsVisible,
+                  ),
+                  if (_activeGroupId != null)
+                    ActionChip(
+                      label: const Text('Grupo activo ✕'),
+                      onPressed: () => _onGroupSelect(null),
+                    ),
                 ],
               ),
-              if (!wide) ...[
+              if (_groupsVisible && !wide) ...[
                 const SizedBox(height: 12),
                 groupPanel,
               ],
@@ -309,7 +322,7 @@ class _AgentsPageState extends State<AgentsPage> {
         if (!wide) return list;
         return Row(
           children: [
-            groupPanel,
+            if (_groupsVisible) groupPanel,
             Expanded(child: list),
           ],
         );
@@ -347,6 +360,8 @@ class _AgentsPageState extends State<AgentsPage> {
               const SizedBox(height: 8),
               Text(item.description, maxLines: 3, overflow: TextOverflow.ellipsis),
             ],
+            const SizedBox(height: 8),
+            LabelChipsRow(labels: item.labels),
             const SizedBox(height: 10),
             Row(
               children: [

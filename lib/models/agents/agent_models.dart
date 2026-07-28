@@ -14,4 +14,10 @@ class AgentItem {
   bool get shared => raw['_shared'] == true;
 
   bool get readOnly => scope == 'public' || shared;
+
+  List<String> get labels {
+    final value = raw['labels'];
+    if (value is List) return value.map((item) => item.toString()).toList();
+    return const ['private'];
+  }
 }

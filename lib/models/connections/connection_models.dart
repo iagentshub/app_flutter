@@ -12,6 +12,12 @@ class ConnectionItem {
   bool get shared => raw['_shared'] == true;
   bool get personalKey => raw['_personal_key'] == true;
   bool get isVirtual => id.contains('::');
+
+  List<String> get labels {
+    final value = raw['labels'];
+    if (value is List) return value.map((item) => item.toString()).toList();
+    return const ['private'];
+  }
 }
 
 class ProviderFieldOption {
