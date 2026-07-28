@@ -8,6 +8,7 @@ import '../../../core/storage/local_store.dart';
 import '../../../shared/i18n/locale_loader.dart';
 import '../repositories/auth_repository.dart';
 import '../../../shared/state/backend_controller.dart';
+import '../../../shared/state/boot_platform_cache.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../utils/safe_redirect.dart';
 import '../../../utils/validators.dart';
@@ -85,6 +86,12 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _loadPlatformSettings() async {
+    final cached = BootPlatformCache.consume();
+    if (cached != null) {
+      _applyPlatformResult(cached.platform, cached.reachable);
+      return;
+    }
+
     if (mounted) {
       setState(() {
         _platformLoaded = false;
@@ -93,8 +100,15 @@ class _LoginPageState extends State<LoginPage> {
     }
     try {
       final platform = await widget.authRepository.platformPublic();
-      if (!mounted) return;
+      _applyPlatformResult(platform, true);
+    } catch (_) {
+      _applyPlatformResult(null, false);
+    }
+  }
 
+  void _applyPlatformResult(Map<String, dynamic>? platform, bool reachable) {
+    if (!mounted) return;
+    if (reachable && platform != null) {
       final registration = (platform['registration'] ?? '').toString();
       final billingEnabled = platform['billing_enabled'] == true;
       setState(() {
@@ -106,8 +120,7 @@ class _LoginPageState extends State<LoginPage> {
         _oauthAppleEnabled = platform['oauth_apple_enabled'] != false;
         _oauthMicrosoftEnabled = platform['oauth_microsoft_enabled'] != false;
       });
-    } catch (_) {
-      if (!mounted) return;
+    } else {
       setState(() {
         _platformLoaded = true;
         _backendStatus = _BackendStatus.down;
