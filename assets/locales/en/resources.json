@@ -1,0 +1,80 @@
+{
+  "common": {
+    "edit": "Edit",
+    "delete": "Delete",
+    "share_group": "Share with group",
+    "search": "Search",
+    "update": "Refresh",
+    "cancel": "Cancel",
+    "save": "Save",
+    "create": "Create",
+    "retry": "Retry",
+    "no_session": "No active session"
+  },
+  "groups": {
+    "title": "GROUPS",
+    "all": "All",
+    "new_group": "New group",
+    "empty": "You don't belong to any group.",
+    "toggle_tooltip": "Groups",
+    "active_clear": "Active group ✕",
+    "dialog_title": "New group",
+    "dialog_name_label": "Group name",
+    "share_dialog_title": "Share with group",
+    "share_remove": "Remove from any group",
+    "share_empty": "You don't belong to any group yet.",
+    "share_success": "Resource shared",
+    "share_error": "Couldn't share the resource",
+    "create_error": "Couldn't create the group"
+  },
+  "agents": {
+    "new": "New agent",
+    "search_hint": "Search agent",
+    "count_label": "Agents",
+    "empty": "No agents available.",
+    "empty_search": "No results for that search.",
+    "error_title": "Error loading agents",
+    "error_generic": "Couldn't load agents"
+  },
+  "connections": {
+    "new": "New connection",
+    "search_hint": "Search connection",
+    "test": "Test",
+    "mass_test": "Mass test",
+    "testing": "Testing...",
+    "count_label": "Connections",
+    "providers_label": "Providers",
+    "empty": "No connections yet. Create the first one.",
+    "empty_search": "No results for that search.",
+    "error_title": "Error loading connections",
+    "error_generic": "Couldn't load connections"
+  },
+  "explore": {
+    "search_hint": "Search",
+    "type_label": "Type",
+    "category_label": "Category",
+    "label_label": "Label",
+    "type_all": "All",
+    "type_agents": "Agents",
+    "type_skills": "Skills",
+    "type_knowledge": "Knowledge",
+    "type_workflows": "Workflows",
+    "option_all": "All",
+    "results": "Results",
+    "empty": "No results for that filter.",
+    "error_title": "Error loading Explore"
+  },
+  "labels": {
+    "type_label": "Resource type",
+    "active_label": "Active label",
+    "none": "- none -",
+    "clear": "Clear",
+    "detected": "Detected labels",
+    "empty_detected": "No labels available",
+    "resources": "Resources",
+    "empty_resources": "No resources for this label/filter.",
+    "error_title": "Error loading Labels",
+    "error_generic": "Couldn't load labels",
+    "filter_error": "Couldn't apply filter"
+  }
+}

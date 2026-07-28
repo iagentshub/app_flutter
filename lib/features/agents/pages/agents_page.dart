@@ -4,6 +4,8 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/agents/agent_models.dart';
 import '../repositories/agents_repository.dart';
+import '../../../shared/i18n/translated_texts.dart';
+import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/action_icon_button.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
@@ -15,11 +17,13 @@ class AgentsPage extends StatefulWidget {
   const AgentsPage({
     required this.apiClient,
     required this.sessionController,
+    required this.localeController,
     super.key,
   });
 
   final ApiClient apiClient;
   final SessionController sessionController;
+  final LocaleController localeController;
 
   @override
   State<AgentsPage> createState() => _AgentsPageState();
@@ -27,6 +31,7 @@ class AgentsPage extends StatefulWidget {
 
 class _AgentsPageState extends State<AgentsPage> {
   late final AgentsRepository _repository;
+  late final TranslatedTexts _t;
   final TextEditingController _queryController = TextEditingController();
   List<AgentItem> _agents = const [];
   bool _loading = true;
@@ -34,6 +39,8 @@ class _AgentsPageState extends State<AgentsPage> {
   String _query = '';
   String? _activeGroupId;
   bool _groupsVisible = false;
+
+  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
   List<AgentItem> get _filteredAgents {
     final query = _query.trim().toLowerCase();
@@ -49,12 +56,20 @@ class _AgentsPageState extends State<AgentsPage> {
   void initState() {
     super.initState();
     _repository = AgentsRepository(apiClient: widget.apiClient);
+    _t = TranslatedTexts(localeController: widget.localeController, namespace: 'resources')
+      ..addListener(_onTextsChanged);
     _load();
+  }
+
+  void _onTextsChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
     _queryController.dispose();
+    _t.removeListener(_onTextsChanged);
+    _t.dispose();
     super.dispose();
   }
 
@@ -64,7 +79,7 @@ class _AgentsPageState extends State<AgentsPage> {
     final token = _token;
     if (token == null || token.isEmpty) {
       setState(() {
-        _error = 'No hay sesión activa';
+        _error = _tx('common.no_session', 'No hay sesión activa');
         _loading = false;
       });
       return;
@@ -91,7 +106,7 @@ class _AgentsPageState extends State<AgentsPage> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'No se pudieron cargar los agentes';
+        _error = _tx('agents.error_generic', 'No se pudieron cargar los agentes');
         _loading = false;
       });
     }
@@ -111,6 +126,7 @@ class _AgentsPageState extends State<AgentsPage> {
       token: token,
       resourceType: 'agent',
       resourceId: item.id,
+      localeController: widget.localeController,
       onShared: _load,
     );
   }
@@ -229,14 +245,14 @@ class _AgentsPageState extends State<AgentsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Error cargando agentes', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(_tx('agents.error_title', 'Error cargando agentes'), style: const TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   Text(_error!),
                   const SizedBox(height: 12),
                   FilledButton.icon(
                     onPressed: _load,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Reintentar'),
+                    label: Text(_tx('common.retry', 'Reintentar')),
                   ),
                 ],
               ),
@@ -254,6 +270,7 @@ class _AgentsPageState extends State<AgentsPage> {
           token: _token ?? '',
           activeGroupId: _activeGroupId,
           onSelect: _onGroupSelect,
+          localeController: widget.localeController,
           vertical: wide,
         );
 
@@ -270,22 +287,22 @@ class _AgentsPageState extends State<AgentsPage> {
                   FilledButton.icon(
                     onPressed: _openCreateDialog,
                     icon: const Icon(Icons.add),
-                    label: const Text('Nuevo agente'),
+                    label: Text(_tx('agents.new', 'Nuevo agente')),
                   ),
                   OutlinedButton.icon(
                     onPressed: _load,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Actualizar'),
+                    label: Text(_tx('common.update', 'Actualizar')),
                   ),
                   IconButton.outlined(
                     onPressed: () => setState(() => _groupsVisible = !_groupsVisible),
                     icon: const Icon(Icons.groups_outlined),
-                    tooltip: 'Grupos',
+                    tooltip: _tx('groups.toggle_tooltip', 'Grupos'),
                     isSelected: _groupsVisible,
                   ),
                   if (_activeGroupId != null)
                     ActionChip(
-                      label: const Text('Grupo activo ✕'),
+                      label: Text(_tx('groups.active_clear', 'Grupo activo ✕')),
                       onPressed: () => _onGroupSelect(null),
                     ),
                 ],
@@ -297,20 +314,24 @@ class _AgentsPageState extends State<AgentsPage> {
               const SizedBox(height: 12),
               TextField(
                 controller: _queryController,
-                decoration: const InputDecoration(
-                  labelText: 'Buscar agente',
-                  prefixIcon: Icon(Icons.search, size: 20),
+                decoration: InputDecoration(
+                  labelText: _tx('agents.search_hint', 'Buscar agente'),
+                  prefixIcon: const Icon(Icons.search, size: 20),
                 ),
                 onChanged: (value) => setState(() => _query = value),
               ),
               const SizedBox(height: 12),
-              Text('Agentes: ${_filteredAgents.length}', style: Theme.of(context).textTheme.bodyMedium),
+              Text('${_tx('agents.count_label', 'Agentes')}: ${_filteredAgents.length}', style: Theme.of(context).textTheme.bodyMedium),
               const SizedBox(height: 12),
               if (_filteredAgents.isEmpty)
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
-                    child: Text(_agents.isEmpty ? 'No hay agentes disponibles.' : 'Sin resultados para esa búsqueda.'),
+                    child: Text(
+                      _agents.isEmpty
+                          ? _tx('agents.empty', 'No hay agentes disponibles.')
+                          : _tx('agents.empty_search', 'Sin resultados para esa búsqueda.'),
+                    ),
                   ),
                 )
               else
@@ -373,17 +394,17 @@ class _AgentsPageState extends State<AgentsPage> {
                 const Spacer(),
                 ActionIconButton(
                   icon: Icons.group_add_outlined,
-                  tooltip: 'Compartir con grupo',
+                  tooltip: _tx('common.share_group', 'Compartir con grupo'),
                   onPressed: () => _shareAgent(item),
                 ),
                 ActionIconButton(
                   icon: Icons.edit_outlined,
-                  tooltip: 'Editar',
+                  tooltip: _tx('common.edit', 'Editar'),
                   onPressed: () => _openEditDialog(item),
                 ),
                 ActionIconButton(
                   icon: Icons.delete_outline,
-                  tooltip: 'Eliminar',
+                  tooltip: _tx('common.delete', 'Eliminar'),
                   danger: true,
                   onPressed: () => _deleteAgent(item),
                 ),

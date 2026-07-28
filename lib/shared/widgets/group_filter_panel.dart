@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../core/network/api_client.dart';
 import '../../features/manager/repositories/manager_repository.dart';
 import '../../models/manager/workspace_models.dart';
+import '../i18n/translated_texts.dart';
+import '../state/locale_controller.dart';
 
 /// Panel de filtro por "grupo" (workspace), equivalente a GroupPanel en
 /// frontend_vanilla (`assets/components/group-panel`). Los workspaces del
@@ -16,6 +18,7 @@ class GroupFilterPanel extends StatefulWidget {
     required this.token,
     required this.activeGroupId,
     required this.onSelect,
+    required this.localeController,
     this.vertical = true,
     super.key,
   });
@@ -24,6 +27,7 @@ class GroupFilterPanel extends StatefulWidget {
   final String token;
   final String? activeGroupId;
   final ValueChanged<String?> onSelect;
+  final LocaleController localeController;
   final bool vertical;
 
   @override
@@ -32,6 +36,7 @@ class GroupFilterPanel extends StatefulWidget {
 
 class _GroupFilterPanelState extends State<GroupFilterPanel> {
   late final ManagerRepository _repository;
+  late final TranslatedTexts _t;
   List<WorkspaceItem> _groups = const [];
   bool _loading = true;
 
@@ -39,8 +44,23 @@ class _GroupFilterPanelState extends State<GroupFilterPanel> {
   void initState() {
     super.initState();
     _repository = ManagerRepository(apiClient: widget.apiClient);
+    _t = TranslatedTexts(localeController: widget.localeController, namespace: 'resources')
+      ..addListener(_onTextsChanged);
     _load();
   }
+
+  void _onTextsChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _t.removeListener(_onTextsChanged);
+    _t.dispose();
+    super.dispose();
+  }
+
+  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
   Future<void> _load() async {
     setState(() => _loading = true);
@@ -62,17 +82,17 @@ class _GroupFilterPanelState extends State<GroupFilterPanel> {
     final name = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Nuevo grupo'),
+        title: Text(_tx('groups.dialog_title', 'Nuevo grupo')),
         content: TextField(
           controller: controller,
           autofocus: true,
-          decoration: const InputDecoration(labelText: 'Nombre del grupo'),
+          decoration: InputDecoration(labelText: _tx('groups.dialog_name_label', 'Nombre del grupo')),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(_tx('common.cancel', 'Cancelar'))),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-            child: const Text('Crear'),
+            child: Text(_tx('common.create', 'Crear')),
           ),
         ],
       ),
@@ -87,7 +107,7 @@ class _GroupFilterPanelState extends State<GroupFilterPanel> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se pudo crear el grupo')),
+        SnackBar(content: Text(_tx('groups.create_error', 'No se pudo crear el grupo'))),
       );
     }
   }
@@ -112,7 +132,7 @@ class _GroupFilterPanelState extends State<GroupFilterPanel> {
               children: [
                 Expanded(
                   child: Text(
-                    'GRUPOS',
+                    _tx('groups.title', 'GRUPOS'),
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -123,7 +143,7 @@ class _GroupFilterPanelState extends State<GroupFilterPanel> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.add, size: 16),
-                  tooltip: 'Nuevo grupo',
+                  tooltip: _tx('groups.new_group', 'Nuevo grupo'),
                   onPressed: _createGroup,
                   visualDensity: VisualDensity.compact,
                   constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
@@ -137,12 +157,12 @@ class _GroupFilterPanelState extends State<GroupFilterPanel> {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               children: [
-                _item(context, null, 'Todos'),
+                _item(context, null, _tx('groups.all', 'Todos')),
                 if (!_loading && _groups.isEmpty)
                   Padding(
                     padding: const EdgeInsets.all(10),
                     child: Text(
-                      'No perteneces a ningún grupo.',
+                      _tx('groups.empty', 'No perteneces a ningún grupo.'),
                       style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ),
@@ -194,7 +214,7 @@ class _GroupFilterPanelState extends State<GroupFilterPanel> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: ChoiceChip(
-              label: const Text('Todos'),
+              label: Text(_tx('groups.all', 'Todos')),
               selected: widget.activeGroupId == null,
               onSelected: (_) => widget.onSelect(null),
             ),
@@ -213,7 +233,7 @@ class _GroupFilterPanelState extends State<GroupFilterPanel> {
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: ActionChip(
               avatar: const Icon(Icons.add, size: 16),
-              label: const Text('Grupo'),
+              label: Text(_tx('groups.new_group', 'Nuevo grupo')),
               onPressed: _createGroup,
             ),
           ),

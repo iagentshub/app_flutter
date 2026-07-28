@@ -4,17 +4,21 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/explore/explore_models.dart';
 import '../../explore/repositories/explore_repository.dart';
+import '../../../shared/i18n/translated_texts.dart';
+import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 
 class LabelsPage extends StatefulWidget {
   const LabelsPage({
     required this.apiClient,
     required this.sessionController,
+    required this.localeController,
     super.key,
   });
 
   final ApiClient apiClient;
   final SessionController sessionController;
+  final LocaleController localeController;
 
   @override
   State<LabelsPage> createState() => _LabelsPageState();
@@ -22,6 +26,7 @@ class LabelsPage extends StatefulWidget {
 
 class _LabelsPageState extends State<LabelsPage> {
   late final ExploreRepository _repository;
+  late final TranslatedTexts _t;
   List<ExploreItem> _all = const [];
   List<ExploreItem> _filtered = const [];
   bool _loading = true;
@@ -29,11 +34,26 @@ class _LabelsPageState extends State<LabelsPage> {
   String _selectedType = 'all';
   String _selectedLabel = '';
 
+  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+
   @override
   void initState() {
     super.initState();
     _repository = ExploreRepository(apiClient: widget.apiClient);
+    _t = TranslatedTexts(localeController: widget.localeController, namespace: 'resources')
+      ..addListener(_onTextsChanged);
     _loadBase();
+  }
+
+  void _onTextsChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _t.removeListener(_onTextsChanged);
+    _t.dispose();
+    super.dispose();
   }
 
   String? get _token => widget.sessionController.gaToken;
@@ -42,7 +62,7 @@ class _LabelsPageState extends State<LabelsPage> {
     final token = _token;
     if (token == null || token.isEmpty) {
       setState(() {
-        _error = 'No hay sesión activa';
+        _error = _tx('common.no_session', 'No hay sesión activa');
         _loading = false;
       });
       return;
@@ -70,7 +90,7 @@ class _LabelsPageState extends State<LabelsPage> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'No se pudieron cargar labels';
+        _error = _tx('labels.error_generic', 'No se pudieron cargar labels');
         _loading = false;
       });
     }
@@ -106,7 +126,7 @@ class _LabelsPageState extends State<LabelsPage> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'No se pudo aplicar filtro';
+        _error = _tx('labels.filter_error', 'No se pudo aplicar filtro');
         _loading = false;
       });
     }
@@ -141,12 +161,12 @@ class _LabelsPageState extends State<LabelsPage> {
     );
   }
 
-  static const _typeOptions = [
-    DropdownMenuItem(value: 'all', child: Text('Todos')),
-    DropdownMenuItem(value: 'agent', child: Text('Agentes')),
-    DropdownMenuItem(value: 'skill', child: Text('Skills')),
-    DropdownMenuItem(value: 'knowledge', child: Text('Knowledge')),
-    DropdownMenuItem(value: 'workflow', child: Text('Workflows')),
+  List<DropdownMenuItem<String>> get _typeOptions => [
+    DropdownMenuItem(value: 'all', child: Text(_tx('explore.type_all', 'Todos'))),
+    DropdownMenuItem(value: 'agent', child: Text(_tx('explore.type_agents', 'Agentes'))),
+    DropdownMenuItem(value: 'skill', child: Text(_tx('explore.type_skills', 'Skills'))),
+    DropdownMenuItem(value: 'knowledge', child: Text(_tx('explore.type_knowledge', 'Knowledge'))),
+    DropdownMenuItem(value: 'workflow', child: Text(_tx('explore.type_workflows', 'Workflows'))),
   ];
 
   @override
@@ -161,14 +181,14 @@ class _LabelsPageState extends State<LabelsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Error cargando Labels', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(_tx('labels.error_title', 'Error cargando Labels'), style: const TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   Text(_error!),
                   const SizedBox(height: 12),
                   FilledButton.icon(
                     onPressed: _loadBase,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Reintentar'),
+                    label: Text(_tx('common.retry', 'Reintentar')),
                   ),
                 ],
               ),
@@ -199,7 +219,7 @@ class _LabelsPageState extends State<LabelsPage> {
                         width: 200,
                         child: DropdownButtonFormField<String>(
                           initialValue: _selectedType,
-                          decoration: const InputDecoration(labelText: 'Tipo de recurso'),
+                          decoration: InputDecoration(labelText: _tx('labels.type_label', 'Tipo de recurso')),
                           items: _typeOptions,
                           onChanged: (value) {
                             if (value == null) return;
@@ -209,7 +229,9 @@ class _LabelsPageState extends State<LabelsPage> {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: Text('Label activo: ${_selectedLabel.isEmpty ? '- ninguno -' : _selectedLabel}'),
+                        child: Text(
+                          '${_tx('labels.active_label', 'Label activo')}: ${_selectedLabel.isEmpty ? _tx('labels.none', '- ninguno -') : _selectedLabel}',
+                        ),
                       ),
                       TextButton.icon(
                         onPressed: () async {
@@ -217,7 +239,7 @@ class _LabelsPageState extends State<LabelsPage> {
                           await _loadBase();
                         },
                         icon: const Icon(Icons.clear_all, size: 18),
-                        label: const Text('Limpiar'),
+                        label: Text(_tx('labels.clear', 'Limpiar')),
                       ),
                     ],
                   ),
@@ -239,10 +261,10 @@ class _LabelsPageState extends State<LabelsPage> {
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.all(16),
                         children: [
-                          const Text('Etiquetas detectadas', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          Text(_tx('labels.detected', 'Etiquetas detectadas'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 8),
                           if (labels.isEmpty)
-                            const Text('No hay etiquetas disponibles')
+                            Text(_tx('labels.empty_detected', 'No hay etiquetas disponibles'))
                           else
                             Wrap(
                               spacing: 8,
@@ -257,13 +279,13 @@ class _LabelsPageState extends State<LabelsPage> {
                                   .toList(),
                             ),
                           const SizedBox(height: 16),
-                          Text('Recursos: ${_filtered.length}', style: Theme.of(context).textTheme.bodyMedium),
+                          Text('${_tx('labels.resources', 'Recursos')}: ${_filtered.length}', style: Theme.of(context).textTheme.bodyMedium),
                           const SizedBox(height: 10),
                           if (_filtered.isEmpty)
-                            const Card(
+                            Card(
                               child: Padding(
-                                padding: EdgeInsets.all(16),
-                                child: Text('No hay recursos para este label/filtro.'),
+                                padding: const EdgeInsets.all(16),
+                                child: Text(_tx('labels.empty_resources', 'No hay recursos para este label/filtro.')),
                               ),
                             )
                           else

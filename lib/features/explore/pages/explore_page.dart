@@ -6,18 +6,22 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/explore/explore_models.dart';
 import '../repositories/explore_repository.dart';
+import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/labels/label_catalog.dart';
+import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 
 class ExplorePage extends StatefulWidget {
   const ExplorePage({
     required this.apiClient,
     required this.sessionController,
+    required this.localeController,
     super.key,
   });
 
   final ApiClient apiClient;
   final SessionController sessionController;
+  final LocaleController localeController;
 
   @override
   State<ExplorePage> createState() => _ExplorePageState();
@@ -25,7 +29,10 @@ class ExplorePage extends StatefulWidget {
 
 class _ExplorePageState extends State<ExplorePage> {
   late final ExploreRepository _repository;
+  late final TranslatedTexts _t;
   final TextEditingController _queryController = TextEditingController();
+
+  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
   List<ExploreItem> _items = const [];
   bool _loading = true;
@@ -48,12 +55,20 @@ class _ExplorePageState extends State<ExplorePage> {
   void initState() {
     super.initState();
     _repository = ExploreRepository(apiClient: widget.apiClient);
+    _t = TranslatedTexts(localeController: widget.localeController, namespace: 'resources')
+      ..addListener(_onTextsChanged);
     _load();
+  }
+
+  void _onTextsChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
     _queryController.dispose();
+    _t.removeListener(_onTextsChanged);
+    _t.dispose();
     super.dispose();
   }
 
@@ -65,7 +80,7 @@ class _ExplorePageState extends State<ExplorePage> {
     final token = _token;
     if (token == null || token.isEmpty) {
       setState(() {
-        _error = 'No hay sesión activa';
+        _error = _tx('common.no_session', 'No hay sesión activa');
         _loading = false;
       });
       return;
@@ -101,7 +116,7 @@ class _ExplorePageState extends State<ExplorePage> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'No se pudo cargar Explore';
+        _error = _tx('explore.error_title', 'No se pudo cargar Explore');
         _loading = false;
       });
     }
@@ -196,12 +211,12 @@ class _ExplorePageState extends State<ExplorePage> {
     );
   }
 
-  static const _typeOptions = [
-    ('all', 'Todos'),
-    ('agent', 'Agentes'),
-    ('skill', 'Skills'),
-    ('knowledge', 'Knowledge'),
-    ('workflow', 'Workflows'),
+  List<(String, String)> get _typeOptions => [
+    ('all', _tx('explore.type_all', 'Todos')),
+    ('agent', _tx('explore.type_agents', 'Agentes')),
+    ('skill', _tx('explore.type_skills', 'Skills')),
+    ('knowledge', _tx('explore.type_knowledge', 'Knowledge')),
+    ('workflow', _tx('explore.type_workflows', 'Workflows')),
   ];
 
   Widget _dropdown({
@@ -236,14 +251,14 @@ class _ExplorePageState extends State<ExplorePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Error cargando Explore', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(_tx('explore.error_title', 'Error cargando Explore'), style: const TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   Text(_error!),
                   const SizedBox(height: 12),
                   FilledButton.icon(
                     onPressed: _load,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Reintentar'),
+                    label: Text(_tx('common.retry', 'Reintentar')),
                   ),
                 ],
               ),
@@ -253,8 +268,9 @@ class _ExplorePageState extends State<ExplorePage> {
       );
     }
 
-    final categoryOptions = [('', 'Todas'), ..._categoryOptions.map((c) => (c, c))];
-    final labelOptions = [('', 'Todas'), ...kLabelKeys.map((l) => (l, l))];
+    final optionAll = _tx('explore.option_all', 'Todas');
+    final categoryOptions = [('', optionAll), ..._categoryOptions.map((c) => (c, c))];
+    final labelOptions = [('', optionAll), ...kLabelKeys.map((l) => (l, l))];
 
     return Column(
       children: [
@@ -271,14 +287,14 @@ class _ExplorePageState extends State<ExplorePage> {
                     builder: (context, constraints) {
                       final searchField = TextField(
                         controller: _queryController,
-                        decoration: const InputDecoration(
-                          labelText: 'Buscar',
-                          prefixIcon: Icon(Icons.search, size: 20),
+                        decoration: InputDecoration(
+                          labelText: _tx('explore.search_hint', 'Buscar'),
+                          prefixIcon: const Icon(Icons.search, size: 20),
                         ),
                         onSubmitted: (_) => _load(),
                       );
                       final typeDropdown = _dropdown(
-                        label: 'Tipo',
+                        label: _tx('explore.type_label', 'Tipo'),
                         value: _type,
                         options: _typeOptions,
                         onChanged: (v) {
@@ -287,7 +303,7 @@ class _ExplorePageState extends State<ExplorePage> {
                         },
                       );
                       final categoryDropdown = _dropdown(
-                        label: 'Categoría',
+                        label: _tx('explore.category_label', 'Categoría'),
                         value: _category,
                         options: categoryOptions,
                         onChanged: (v) {
@@ -296,7 +312,7 @@ class _ExplorePageState extends State<ExplorePage> {
                         },
                       );
                       final labelDropdown = _dropdown(
-                        label: 'Label',
+                        label: _tx('explore.label_label', 'Label'),
                         value: _label,
                         options: labelOptions,
                         onChanged: (v) {
@@ -354,13 +370,13 @@ class _ExplorePageState extends State<ExplorePage> {
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.all(16),
                         children: [
-                          Text('Resultados: ${_items.length}', style: Theme.of(context).textTheme.bodyMedium),
+                          Text('${_tx('explore.results', 'Resultados')}: ${_items.length}', style: Theme.of(context).textTheme.bodyMedium),
                           const SizedBox(height: 12),
                           if (_items.isEmpty)
-                            const Card(
+                            Card(
                               child: Padding(
-                                padding: EdgeInsets.all(16),
-                                child: Text('No hay resultados para ese filtro.'),
+                                padding: const EdgeInsets.all(16),
+                                child: Text(_tx('explore.empty', 'No hay resultados para ese filtro.')),
                               ),
                             )
                           else

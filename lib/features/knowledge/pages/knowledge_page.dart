@@ -8,6 +8,8 @@ import '../../../models/knowledge/knowledge_models.dart';
 import '../../../models/skills/skill_models.dart';
 import '../repositories/knowledge_repository.dart';
 import '../repositories/skills_repository.dart';
+import '../../../shared/i18n/translated_texts.dart';
+import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/action_icon_button.dart';
 import '../../../shared/widgets/filter_chips_row.dart';
@@ -19,11 +21,13 @@ class KnowledgePage extends StatefulWidget {
   const KnowledgePage({
     required this.apiClient,
     required this.sessionController,
+    required this.localeController,
     super.key,
   });
 
   final ApiClient apiClient;
   final SessionController sessionController;
+  final LocaleController localeController;
 
   @override
   State<KnowledgePage> createState() => _KnowledgePageState();
@@ -32,6 +36,7 @@ class KnowledgePage extends StatefulWidget {
 class _KnowledgePageState extends State<KnowledgePage> {
   late final KnowledgeRepository _repository;
   late final SkillsRepository _skillsRepository;
+  late final TranslatedTexts _t;
   List<KnowledgeItem> _items = const [];
   bool _loading = true;
   bool _uploading = false;
@@ -45,13 +50,28 @@ class _KnowledgePageState extends State<KnowledgePage> {
   String? _activeGroupId;
   bool _groupsVisible = false;
 
+  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+
   @override
   void initState() {
     super.initState();
     _repository = KnowledgeRepository(apiClient: widget.apiClient);
     _skillsRepository = SkillsRepository(apiClient: widget.apiClient);
+    _t = TranslatedTexts(localeController: widget.localeController, namespace: 'resources')
+      ..addListener(_onTextsChanged);
     _load();
     _loadSkills();
+  }
+
+  void _onTextsChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _t.removeListener(_onTextsChanged);
+    _t.dispose();
+    super.dispose();
   }
 
   String? get _token => widget.sessionController.gaToken;
@@ -347,6 +367,7 @@ class _KnowledgePageState extends State<KnowledgePage> {
       token: token,
       resourceType: 'knowledge',
       resourceId: item.id,
+      localeController: widget.localeController,
       onShared: _load,
     );
   }
@@ -360,6 +381,7 @@ class _KnowledgePageState extends State<KnowledgePage> {
       token: token,
       resourceType: 'skill',
       resourceId: item.id,
+      localeController: widget.localeController,
       onShared: _loadSkills,
     );
   }
@@ -388,7 +410,7 @@ class _KnowledgePageState extends State<KnowledgePage> {
                 IconButton.outlined(
                   onPressed: () => setState(() => _groupsVisible = !_groupsVisible),
                   icon: const Icon(Icons.groups_outlined),
-                  tooltip: 'Grupos',
+                  tooltip: _tx('groups.toggle_tooltip', 'Grupos'),
                   isSelected: _groupsVisible,
                 ),
               ],
@@ -409,6 +431,7 @@ class _KnowledgePageState extends State<KnowledgePage> {
           token: _token ?? '',
           activeGroupId: _activeGroupId,
           onSelect: _onGroupSelect,
+          localeController: widget.localeController,
           vertical: wide,
         );
 
@@ -662,17 +685,17 @@ class _KnowledgePageState extends State<KnowledgePage> {
                 const Spacer(),
                 ActionIconButton(
                   icon: Icons.group_add_outlined,
-                  tooltip: 'Compartir con grupo',
+                  tooltip: _tx('common.share_group', 'Compartir con grupo'),
                   onPressed: () => _shareSkill(item),
                 ),
                 ActionIconButton(
                   icon: Icons.edit_outlined,
-                  tooltip: 'Editar',
+                  tooltip: _tx('common.edit', 'Editar'),
                   onPressed: () => _openEditSkillDialog(item),
                 ),
                 ActionIconButton(
                   icon: Icons.delete_outline,
-                  tooltip: 'Eliminar',
+                  tooltip: _tx('common.delete', 'Eliminar'),
                   danger: true,
                   onPressed: () => _deleteSkill(item),
                 ),
@@ -726,12 +749,12 @@ class _KnowledgePageState extends State<KnowledgePage> {
                 const Spacer(),
                 ActionIconButton(
                   icon: Icons.group_add_outlined,
-                  tooltip: 'Compartir con grupo',
+                  tooltip: _tx('common.share_group', 'Compartir con grupo'),
                   onPressed: () => _shareItem(item),
                 ),
                 ActionIconButton(
                   icon: Icons.delete_outline,
-                  tooltip: 'Eliminar',
+                  tooltip: _tx('common.delete', 'Eliminar'),
                   danger: true,
                   onPressed: () => _deleteItem(item),
                 ),

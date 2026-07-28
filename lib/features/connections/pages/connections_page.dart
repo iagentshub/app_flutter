@@ -4,6 +4,8 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/connections/connection_models.dart';
 import '../repositories/connections_repository.dart';
+import '../../../shared/i18n/translated_texts.dart';
+import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/action_icon_button.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
@@ -14,11 +16,13 @@ class ConnectionsPage extends StatefulWidget {
   const ConnectionsPage({
     required this.apiClient,
     required this.sessionController,
+    required this.localeController,
     super.key,
   });
 
   final ApiClient apiClient;
   final SessionController sessionController;
+  final LocaleController localeController;
 
   @override
   State<ConnectionsPage> createState() => _ConnectionsPageState();
@@ -26,6 +30,7 @@ class ConnectionsPage extends StatefulWidget {
 
 class _ConnectionsPageState extends State<ConnectionsPage> {
   late final ConnectionsRepository _repository;
+  late final TranslatedTexts _t;
   final TextEditingController _queryController = TextEditingController();
   List<ConnectionItem> _connections = const [];
   List<ConnectionProvider> _providers = const [];
@@ -35,6 +40,8 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
   String _query = '';
   String? _activeGroupId;
   bool _groupsVisible = false;
+
+  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
   List<ConnectionItem> get _filteredConnections {
     final query = _query.trim().toLowerCase();
@@ -50,12 +57,20 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
   void initState() {
     super.initState();
     _repository = ConnectionsRepository(apiClient: widget.apiClient);
+    _t = TranslatedTexts(localeController: widget.localeController, namespace: 'resources')
+      ..addListener(_onTextsChanged);
     _load();
+  }
+
+  void _onTextsChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
     _queryController.dispose();
+    _t.removeListener(_onTextsChanged);
+    _t.dispose();
     super.dispose();
   }
 
@@ -65,7 +80,7 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
     final token = _token;
     if (token == null || token.isEmpty) {
       setState(() {
-        _error = 'No hay sesión activa';
+        _error = _tx('common.no_session', 'No hay sesión activa');
         _loading = false;
       });
       return;
@@ -97,7 +112,7 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'No se pudieron cargar las conexiones';
+        _error = _tx('connections.error_generic', 'No se pudieron cargar las conexiones');
         _loading = false;
       });
     }
@@ -117,6 +132,7 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
       token: token,
       resourceType: 'connection',
       resourceId: item.id,
+      localeController: widget.localeController,
       onShared: _load,
     );
   }
@@ -313,14 +329,14 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Error cargando conexiones', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(_tx('connections.error_title', 'Error cargando conexiones'), style: const TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   Text(_error!),
                   const SizedBox(height: 12),
                   FilledButton.icon(
                     onPressed: _load,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Reintentar'),
+                    label: Text(_tx('common.retry', 'Reintentar')),
                   ),
                 ],
               ),
@@ -338,6 +354,7 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
           token: _token ?? '',
           activeGroupId: _activeGroupId,
           onSelect: _onGroupSelect,
+          localeController: widget.localeController,
           vertical: wide,
         );
 
@@ -354,27 +371,27 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
                   FilledButton.icon(
                     onPressed: _providers.isEmpty ? null : _openCreateDialog,
                     icon: const Icon(Icons.add),
-                    label: const Text('Nueva conexión'),
+                    label: Text(_tx('connections.new', 'Nueva conexión')),
                   ),
                   OutlinedButton.icon(
                     onPressed: _load,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Actualizar'),
+                    label: Text(_tx('common.update', 'Actualizar')),
                   ),
                   OutlinedButton.icon(
                     onPressed: _testingAll ? null : _testAll,
                     icon: const Icon(Icons.play_circle_outline),
-                    label: Text(_testingAll ? 'Probando...' : 'Test masivo'),
+                    label: Text(_testingAll ? _tx('connections.testing', 'Probando...') : _tx('connections.mass_test', 'Test masivo')),
                   ),
                   IconButton.outlined(
                     onPressed: () => setState(() => _groupsVisible = !_groupsVisible),
                     icon: const Icon(Icons.groups_outlined),
-                    tooltip: 'Grupos',
+                    tooltip: _tx('groups.toggle_tooltip', 'Grupos'),
                     isSelected: _groupsVisible,
                   ),
                   if (_activeGroupId != null)
                     ActionChip(
-                      label: const Text('Grupo activo ✕'),
+                      label: Text(_tx('groups.active_clear', 'Grupo activo ✕')),
                       onPressed: () => _onGroupSelect(null),
                     ),
                 ],
@@ -386,15 +403,15 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
               const SizedBox(height: 12),
               TextField(
                 controller: _queryController,
-                decoration: const InputDecoration(
-                  labelText: 'Buscar conexión',
-                  prefixIcon: Icon(Icons.search, size: 20),
+                decoration: InputDecoration(
+                  labelText: _tx('connections.search_hint', 'Buscar conexión'),
+                  prefixIcon: const Icon(Icons.search, size: 20),
                 ),
                 onChanged: (value) => setState(() => _query = value),
               ),
               const SizedBox(height: 12),
               Text(
-                'Conexiones: ${_filteredConnections.length} | Proveedores: ${_providers.length}',
+                '${_tx('connections.count_label', 'Conexiones')}: ${_filteredConnections.length} | ${_tx('connections.providers_label', 'Proveedores')}: ${_providers.length}',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 12),
@@ -403,7 +420,9 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Text(
-                      _connections.isEmpty ? 'No hay conexiones todavía. Crea la primera.' : 'Sin resultados para esa búsqueda.',
+                      _connections.isEmpty
+                          ? _tx('connections.empty', 'No hay conexiones todavía. Crea la primera.')
+                          : _tx('connections.empty_search', 'Sin resultados para esa búsqueda.'),
                     ),
                   ),
                 )
@@ -460,22 +479,22 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
                 OutlinedButton.icon(
                   onPressed: item.isVirtual ? null : () => _testConnection(item),
                   icon: const Icon(Icons.health_and_safety_outlined),
-                  label: const Text('Test'),
+                  label: Text(_tx('connections.test', 'Test')),
                 ),
                 const Spacer(),
                 ActionIconButton(
                   icon: Icons.group_add_outlined,
-                  tooltip: 'Compartir con grupo',
+                  tooltip: _tx('common.share_group', 'Compartir con grupo'),
                   onPressed: item.isVirtual ? null : () => _shareConnection(item),
                 ),
                 ActionIconButton(
                   icon: Icons.edit_outlined,
-                  tooltip: 'Editar',
+                  tooltip: _tx('common.edit', 'Editar'),
                   onPressed: () => _openEditDialog(item),
                 ),
                 ActionIconButton(
                   icon: Icons.delete_outline,
-                  tooltip: 'Eliminar',
+                  tooltip: _tx('common.delete', 'Eliminar'),
                   danger: true,
                   onPressed: () => _deleteConnection(item),
                 ),

@@ -183,6 +183,7 @@ GoRouter createRouter({
               child: AgentsPage(
                 apiClient: apiClient,
                 sessionController: sessionController,
+                localeController: localeController,
               ),
             ),
           ),
@@ -202,6 +203,7 @@ GoRouter createRouter({
               child: ConnectionsPage(
                 apiClient: apiClient,
                 sessionController: sessionController,
+                localeController: localeController,
               ),
             ),
           ),
@@ -220,6 +222,7 @@ GoRouter createRouter({
               child: KnowledgePage(
                 apiClient: apiClient,
                 sessionController: sessionController,
+                localeController: localeController,
               ),
             ),
           ),
@@ -229,6 +232,7 @@ GoRouter createRouter({
               child: ExplorePage(
                 apiClient: apiClient,
                 sessionController: sessionController,
+                localeController: localeController,
               ),
             ),
           ),
@@ -238,6 +242,7 @@ GoRouter createRouter({
               child: LabelsPage(
                 apiClient: apiClient,
                 sessionController: sessionController,
+                localeController: localeController,
               ),
             ),
           ),

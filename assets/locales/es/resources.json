@@ -1,0 +1,80 @@
+{
+  "common": {
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "share_group": "Compartir con grupo",
+    "search": "Buscar",
+    "update": "Actualizar",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "create": "Crear",
+    "retry": "Reintentar",
+    "no_session": "No hay sesión activa"
+  },
+  "groups": {
+    "title": "GRUPOS",
+    "all": "Todos",
+    "new_group": "Nuevo grupo",
+    "empty": "No perteneces a ningún grupo.",
+    "toggle_tooltip": "Grupos",
+    "active_clear": "Grupo activo ✕",
+    "dialog_title": "Nuevo grupo",
+    "dialog_name_label": "Nombre del grupo",
+    "share_dialog_title": "Compartir con grupo",
+    "share_remove": "Quitar de cualquier grupo",
+    "share_empty": "No perteneces a ningún grupo todavía.",
+    "share_success": "Recurso compartido",
+    "share_error": "No se pudo compartir el recurso",
+    "create_error": "No se pudo crear el grupo"
+  },
+  "agents": {
+    "new": "Nuevo agente",
+    "search_hint": "Buscar agente",
+    "count_label": "Agentes",
+    "empty": "No hay agentes disponibles.",
+    "empty_search": "Sin resultados para esa búsqueda.",
+    "error_title": "Error cargando agentes",
+    "error_generic": "No se pudieron cargar los agentes"
+  },
+  "connections": {
+    "new": "Nueva conexión",
+    "search_hint": "Buscar conexión",
+    "test": "Test",
+    "mass_test": "Test masivo",
+    "testing": "Probando...",
+    "count_label": "Conexiones",
+    "providers_label": "Proveedores",
+    "empty": "No hay conexiones todavía. Crea la primera.",
+    "empty_search": "Sin resultados para esa búsqueda.",
+    "error_title": "Error cargando conexiones",
+    "error_generic": "No se pudieron cargar las conexiones"
+  },
+  "explore": {
+    "search_hint": "Buscar",
+    "type_label": "Tipo",
+    "category_label": "Categoría",
+    "label_label": "Label",
+    "type_all": "Todos",
+    "type_agents": "Agentes",
+    "type_skills": "Skills",
+    "type_knowledge": "Knowledge",
+    "type_workflows": "Workflows",
+    "option_all": "Todas",
+    "results": "Resultados",
+    "empty": "No hay resultados para ese filtro.",
+    "error_title": "Error cargando Explore"
+  },
+  "labels": {
+    "type_label": "Tipo de recurso",
+    "active_label": "Label activo",
+    "none": "- ninguno -",
+    "clear": "Limpiar",
+    "detected": "Etiquetas detectadas",
+    "empty_detected": "No hay etiquetas disponibles",
+    "resources": "Recursos",
+    "empty_resources": "No hay recursos para este label/filtro.",
+    "error_title": "Error cargando Labels",
+    "error_generic": "No se pudieron cargar labels",
+    "filter_error": "No se pudo aplicar filtro"
+  }
+}
