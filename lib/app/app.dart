@@ -5,6 +5,7 @@ import '../core/network/api_client.dart';
 import '../features/auth/repositories/auth_repository.dart';
 import '../features/dashboard/repositories/dashboard_repository.dart';
 import '../shared/state/backend_controller.dart';
+import '../shared/state/dashboard_edit_state.dart';
 import '../shared/state/session_controller.dart';
 import 'router/app_router.dart';
 import 'theme/app_theme.dart';
@@ -28,6 +29,7 @@ class _AppState extends State<App> {
   late final ApiClient _apiClient;
   late final AuthRepository _authRepository;
   late final DashboardRepository _dashboardRepository;
+  late final DashboardEditState _dashboardEditState;
 
   @override
   void initState() {
@@ -35,18 +37,21 @@ class _AppState extends State<App> {
     _apiClient = ApiClient(widget.backendController);
     _authRepository = AuthRepository(_apiClient);
     _dashboardRepository = DashboardRepository(_apiClient);
+    _dashboardEditState = DashboardEditState();
     _router = createRouter(
       backendController: widget.backendController,
       sessionController: widget.sessionController,
       authRepository: _authRepository,
       dashboardRepository: _dashboardRepository,
       apiClient: _apiClient,
+      dashboardEditState: _dashboardEditState,
     );
   }
 
   @override
   void dispose() {
     _router.dispose();
+    _dashboardEditState.dispose();
     super.dispose();
   }
 

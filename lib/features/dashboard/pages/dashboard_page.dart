@@ -9,6 +9,7 @@ import '../../auth/repositories/auth_repository.dart';
 import '../../explore/repositories/explore_repository.dart';
 import '../repositories/dashboard_repository.dart';
 import '../../../shared/state/backend_controller.dart';
+import '../../../shared/state/dashboard_edit_state.dart';
 import '../../../shared/state/session_controller.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -18,6 +19,7 @@ class DashboardPage extends StatefulWidget {
     required this.authRepository,
     required this.dashboardRepository,
     required this.apiClient,
+    required this.dashboardEditState,
     super.key,
   });
 
@@ -26,6 +28,7 @@ class DashboardPage extends StatefulWidget {
   final AuthRepository authRepository;
   final DashboardRepository dashboardRepository;
   final ApiClient apiClient;
+  final DashboardEditState dashboardEditState;
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -33,7 +36,6 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   late final ExploreRepository _exploreRepository;
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   DashboardData? _data;
   List<String> _layout = kDefaultDashboardLayout;
@@ -47,6 +49,12 @@ class _DashboardPageState extends State<DashboardPage> {
     super.initState();
     _exploreRepository = ExploreRepository(apiClient: widget.apiClient);
     _load();
+  }
+
+  @override
+  void dispose() {
+    if (_editing) widget.dashboardEditState.stopEditing();
+    super.dispose();
   }
 
   String? get _token => widget.sessionController.gaToken;
@@ -106,24 +114,34 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
+  List<String> get _missingWidgets =>
+      kDashboardWidgetIds.where((id) => !_layout.contains(id)).toList();
+
   void _toggleEditing() {
     setState(() => _editing = !_editing);
     if (_editing) {
-      WidgetsBinding.instance.addPostFrameCallback(
-        (_) => _scaffoldKey.currentState?.openEndDrawer(),
+      widget.dashboardEditState.startEditing(
+        missing: _missingWidgets,
+        onAdd: _addWidget,
+        onDone: () {
+          if (mounted) setState(() => _editing = false);
+          widget.dashboardEditState.stopEditing();
+        },
       );
     } else {
-      _scaffoldKey.currentState?.closeEndDrawer();
+      widget.dashboardEditState.stopEditing();
     }
   }
 
   void _addWidget(String id) {
     setState(() => _layout = [..._layout, id]);
+    widget.dashboardEditState.updateMissing(_missingWidgets);
     _persistLayout();
   }
 
   void _removeWidget(String id) {
     setState(() => _layout = _layout.where((w) => w != id).toList());
+    widget.dashboardEditState.updateMissing(_missingWidgets);
     _persistLayout();
   }
 
@@ -171,158 +189,73 @@ class _DashboardPageState extends State<DashboardPage> {
 
     final data = _data!;
 
-    return Scaffold(
-      key: _scaffoldKey,
-      endDrawer: Drawer(child: _buildAddWidgetDrawer()),
-      onEndDrawerChanged: (isOpen) {
-        if (!isOpen && _editing) setState(() => _editing = false);
-      },
-      body: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 900),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton.icon(
-                      onPressed: _toggleEditing,
-                      icon: Icon(_editing ? Icons.check : Icons.tune),
-                      label: Text(_editing ? 'Listo' : 'Personalizar'),
-                    ),
-                  ],
-                ),
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 900),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  if (_editing)
+                    const Expanded(
+                      child: Text(
+                        'Abre el menú (☰) para añadir widgets',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    )
+                  else
+                    const Spacer(),
+                  TextButton.icon(
+                    onPressed: _toggleEditing,
+                    icon: Icon(_editing ? Icons.check : Icons.tune),
+                    label: Text(_editing ? 'Listo' : 'Personalizar'),
+                  ),
+                ],
               ),
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: _load,
-                  child: _layout.isEmpty
-                      ? ListView(
-                          padding: const EdgeInsets.all(16),
-                          children: const [
-                            Padding(
-                              padding: EdgeInsets.symmetric(vertical: 40),
-                              child: Center(
-                                child: Text(
-                                  'No hay widgets. Pulsa "Personalizar" para añadir alguno.',
-                                ),
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _load,
+                child: _layout.isEmpty
+                    ? ListView(
+                        padding: const EdgeInsets.all(16),
+                        children: const [
+                          Padding(
+                            padding: EdgeInsets.symmetric(vertical: 40),
+                            child: Center(
+                              child: Text(
+                                'No hay widgets. Pulsa "Personalizar" y abre el menú para añadir alguno.',
                               ),
                             ),
-                          ],
-                        )
-                      : _editing
-                      ? ReorderableListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          buildDefaultDragHandles: false,
-                          itemCount: _layout.length,
-                          onReorder: _reorder,
-                          itemBuilder: (context, index) =>
-                              _buildCard(_layout[index], data, index: index),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          itemCount: _layout.length,
-                          itemBuilder: (context, index) =>
-                              _buildCard(_layout[index], data),
-                        ),
-                ),
+                          ),
+                        ],
+                      )
+                    : _editing
+                    ? ReorderableListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        buildDefaultDragHandles: false,
+                        itemCount: _layout.length,
+                        onReorder: _reorder,
+                        itemBuilder: (context, index) =>
+                            _buildCard(_layout[index], data, index: index),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        itemCount: _layout.length,
+                        itemBuilder: (context, index) =>
+                            _buildCard(_layout[index], data),
+                      ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
-  }
-
-  Widget _buildAddWidgetDrawer() {
-    final missing = kDashboardWidgetIds
-        .where((id) => !_layout.contains(id))
-        .toList();
-    return SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Personalizar dashboard',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                  ),
-                ),
-                FilledButton(
-                  onPressed: _toggleEditing,
-                  child: const Text('Listo'),
-                ),
-              ],
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              'Toca un widget para añadirlo al dashboard. Arrastra las cards para reordenarlas y usa el engranaje para configurarlas.',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: missing.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text(
-                      'Ya has añadido todos los widgets disponibles.',
-                    ),
-                  )
-                : ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    children: missing.map((id) {
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: () => _addWidget(id),
-                          child: Padding(
-                            padding: const EdgeInsets.all(14),
-                            child: Row(
-                              children: [
-                                Expanded(child: Text(dashboardWidgetTitle(id))),
-                                Chip(
-                                  label: Text(_widgetSizeLabel(id)),
-                                  visualDensity: VisualDensity.compact,
-                                  materialTapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                ),
-                                const SizedBox(width: 4),
-                                const Icon(Icons.add, size: 18),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _widgetSizeLabel(String id) {
-    switch (id) {
-      case 'token-usage':
-      case 'feed':
-        return 'Mediano';
-      case 'composition':
-        return 'Pequeño';
-      default:
-        return 'Grande';
-    }
   }
 
   Widget _buildCard(String id, DashboardData data, {int index = 0}) {

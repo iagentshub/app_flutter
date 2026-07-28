@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/router/route_names.dart';
 import '../../features/auth/repositories/auth_repository.dart';
+import '../../models/dashboard/dashboard_widget_config.dart';
+import '../state/dashboard_edit_state.dart';
 import '../state/session_controller.dart';
 import 'terminal_view_transition.dart';
 
@@ -10,6 +12,7 @@ class AppShell extends StatelessWidget {
   const AppShell({
     required this.sessionController,
     required this.authRepository,
+    required this.dashboardEditState,
     required this.location,
     required this.child,
     super.key,
@@ -17,6 +20,7 @@ class AppShell extends StatelessWidget {
 
   final SessionController sessionController;
   final AuthRepository authRepository;
+  final DashboardEditState dashboardEditState;
   final String location;
   final Widget child;
 
@@ -28,8 +32,14 @@ class AppShell extends StatelessWidget {
         title: const Text('Cerrar sesión'),
         content: const Text('¿Seguro que quieres cerrar sesión?'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Cerrar sesión')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Cerrar sesión'),
+          ),
         ],
       ),
     );
@@ -49,66 +59,73 @@ class AppShell extends StatelessWidget {
     final isAdmin = sessionController.user?.role == 'admin';
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_titleForLocation(location)),
-      ),
+      appBar: AppBar(title: Text(_titleForLocation(location))),
       drawer: Drawer(
         child: SafeArea(
-          child: Column(
-            children: [
-              Expanded(
-                child: ListView(
-                  children: [
-                    ListTile(
-                      title: Text(sessionController.user?.username ?? 'Usuario'),
-                      subtitle: Text(sessionController.user?.role ?? 'user'),
-                      leading: const Icon(Icons.account_circle_outlined),
-                    ),
-                    const Divider(),
-                    ..._mainItems.map(
-                      (item) => _NavItemTile(
-                        icon: item.icon,
-                        label: item.label,
-                        route: item.route,
-                        selected: location == item.route,
-                      ),
-                    ),
-                    const Divider(),
-                    ..._secondaryItems.map(
-                      (item) => _NavItemTile(
-                        icon: item.icon,
-                        label: item.label,
-                        route: item.route,
-                        selected: location == item.route,
-                      ),
-                    ),
-                    if (isAdmin) const Divider(),
-                    if (isAdmin)
-                      ..._adminItems.map(
-                        (item) => _NavItemTile(
-                          icon: item.icon,
-                          label: item.label,
-                          route: item.route,
-                          selected: location == item.route,
+          child: ListenableBuilder(
+            listenable: dashboardEditState,
+            builder: (context, _) {
+              if (dashboardEditState.editing) {
+                return _WidgetPickerDrawerContent(state: dashboardEditState);
+              }
+              return Column(
+                children: [
+                  Expanded(
+                    child: ListView(
+                      children: [
+                        ListTile(
+                          title: Text(
+                            sessionController.user?.username ?? 'Usuario',
+                          ),
+                          subtitle: Text(
+                            sessionController.user?.role ?? 'user',
+                          ),
+                          leading: const Icon(Icons.account_circle_outlined),
                         ),
-                      ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-              ListTile(
-                leading: const Icon(Icons.logout),
-                title: const Text('Cerrar sesión'),
-                onTap: () => _logout(context),
-              ),
-            ],
+                        const Divider(),
+                        ..._mainItems.map(
+                          (item) => _NavItemTile(
+                            icon: item.icon,
+                            label: item.label,
+                            route: item.route,
+                            selected: location == item.route,
+                          ),
+                        ),
+                        const Divider(),
+                        ..._secondaryItems.map(
+                          (item) => _NavItemTile(
+                            icon: item.icon,
+                            label: item.label,
+                            route: item.route,
+                            selected: location == item.route,
+                          ),
+                        ),
+                        if (isAdmin) const Divider(),
+                        if (isAdmin)
+                          ..._adminItems.map(
+                            (item) => _NavItemTile(
+                              icon: item.icon,
+                              label: item.label,
+                              route: item.route,
+                              selected: location == item.route,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.logout),
+                    title: const Text('Cerrar sesión'),
+                    onTap: () => _logout(context),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),
-      body: TerminalViewTransition(
-        key: ValueKey(location),
-        child: child,
-      ),
+      body: TerminalViewTransition(key: ValueKey(location), child: child),
     );
   }
 }
@@ -178,6 +195,89 @@ String _titleForLocation(String location) {
   for (final item in [..._mainItems, ..._secondaryItems, ..._adminItems]) {
     if (location == item.route) return item.label;
   }
-  if (location.startsWith(RouteNames.publicProfilePrefix)) return 'Public Profile';
+  if (location.startsWith(RouteNames.publicProfilePrefix)) {
+    return 'Public Profile';
+  }
   return 'iAgents Hub';
+}
+
+/// Sustituye la navegación normal del drawer mientras el dashboard está en
+/// modo "Personalizar": aquí se listan los widgets todavía no añadidos.
+class _WidgetPickerDrawerContent extends StatelessWidget {
+  const _WidgetPickerDrawerContent({required this.state});
+
+  final DashboardEditState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final missing = state.missing;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Personalizar dashboard',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                ),
+              ),
+              FilledButton(
+                onPressed: () {
+                  state.done();
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Listo'),
+              ),
+            ],
+          ),
+        ),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            'Toca un widget para añadirlo al dashboard.',
+            style: TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: missing.isEmpty
+              ? const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text('Ya has añadido todos los widgets disponibles.'),
+                )
+              : ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  children: missing.map((id) {
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () => state.addWidget(id),
+                        child: Padding(
+                          padding: const EdgeInsets.all(14),
+                          child: Row(
+                            children: [
+                              Expanded(child: Text(dashboardWidgetTitle(id))),
+                              Chip(
+                                label: Text(dashboardWidgetSizeLabel(id)),
+                                visualDensity: VisualDensity.compact,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(Icons.add, size: 18),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+        ),
+      ],
+    );
+  }
 }

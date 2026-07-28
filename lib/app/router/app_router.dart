@@ -27,6 +27,7 @@ import '../../features/profile/pages/profile_page.dart';
 import '../../features/public/pages/public_profile_page.dart';
 import '../../features/workflows/pages/workflows_page.dart';
 import '../../shared/state/backend_controller.dart';
+import '../../shared/state/dashboard_edit_state.dart';
 import '../../shared/state/session_controller.dart';
 import '../../shared/widgets/app_shell.dart';
 import '../../shared/widgets/terminal_view_transition.dart';
@@ -39,6 +40,7 @@ GoRouter createRouter({
   required AuthRepository authRepository,
   required DashboardRepository dashboardRepository,
   required ApiClient apiClient,
+  required DashboardEditState dashboardEditState,
 }) {
   bool isPublicPath(String path) {
     const publicPaths = {
@@ -151,6 +153,7 @@ GoRouter createRouter({
         builder: (context, state, child) => AppShell(
           sessionController: sessionController,
           authRepository: authRepository,
+          dashboardEditState: dashboardEditState,
           location: state.matchedLocation,
           child: child,
         ),
@@ -163,6 +166,7 @@ GoRouter createRouter({
               authRepository: authRepository,
               dashboardRepository: dashboardRepository,
               apiClient: apiClient,
+              dashboardEditState: dashboardEditState,
             ),
           ),
           GoRoute(

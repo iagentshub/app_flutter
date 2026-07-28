@@ -53,6 +53,18 @@ String summaryItemLabel(String item) {
   }
 }
 
+String dashboardWidgetSizeLabel(String id) {
+  switch (id) {
+    case 'token-usage':
+    case 'feed':
+      return 'Mediano';
+    case 'composition':
+      return 'Pequeño';
+    default:
+      return 'Grande';
+  }
+}
+
 String feedTypeLabel(String type) {
   switch (type) {
     case 'agent':
