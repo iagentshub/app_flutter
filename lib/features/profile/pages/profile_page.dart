@@ -52,9 +52,12 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStateMixin {
   late final ProfileRepository _repository;
   late final TranslatedTexts _t;
+  late final TabController _tabController;
+
+  static const _sectionIds = ['account', 'social', 'groups', 'security'];
 
   ProfileBundle? _bundle;
   bool _loading = true;
@@ -65,7 +68,6 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _requestingDeletion = false;
   bool _uploadingAvatar = false;
   int _avatarVersion = 0;
-  String _section = 'account';
 
   final _bioController = TextEditingController();
   final _emailPublicController = TextEditingController();
@@ -84,12 +86,17 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     _repository = ProfileRepository(apiClient: widget.apiClient);
+    _tabController = TabController(length: _sectionIds.length, vsync: this)..addListener(_onTabChanged);
     _t = TranslatedTexts(localeController: widget.localeController, namespace: 'resources')
       ..addListener(_onTextsChanged);
     _load();
   }
 
   void _onTextsChanged() {
+    if (mounted) setState(() {});
+  }
+
+  void _onTabChanged() {
     if (mounted) setState(() {});
   }
 
@@ -101,6 +108,8 @@ class _ProfilePageState extends State<ProfilePage> {
     _cvController.dispose();
     _currentPasswordController.dispose();
     _newPasswordController.dispose();
+    _tabController.removeListener(_onTabChanged);
+    _tabController.dispose();
     _t.removeListener(_onTextsChanged);
     _t.dispose();
     super.dispose();
@@ -413,32 +422,23 @@ class _ProfilePageState extends State<ProfilePage> {
       return const Center(child: Text('No hay datos de perfil disponibles'));
     }
 
-    final tabs = <(String, String)>[
-      ('account', _tx('profile.tab_account', 'Mi cuenta')),
-      ('social', _tx('profile.tab_social', 'Perfil público')),
-      ('groups', _tx('profile.tab_groups', 'Grupos')),
-      ('security', _tx('profile.tab_security', 'Seguridad')),
+    final tabLabels = <String>[
+      _tx('profile.tab_account', 'Mi cuenta'),
+      _tx('profile.tab_social', 'Perfil público'),
+      _tx('profile.tab_groups', 'Grupos'),
+      _tx('profile.tab_security', 'Seguridad'),
     ];
+    final section = _sectionIds[_tabController.index];
 
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          child: SizedBox(
-            height: 40,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: tabs.length,
-              separatorBuilder: (context, _) => const SizedBox(width: 8),
-              itemBuilder: (context, index) {
-                final (id, label) = tabs[index];
-                return ChoiceChip(
-                  label: Text(label),
-                  selected: _section == id,
-                  onSelected: (_) => setState(() => _section = id),
-                );
-              },
-            ),
+        Material(
+          color: Colors.transparent,
+          child: TabBar(
+            controller: _tabController,
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            tabs: tabLabels.map((label) => Tab(text: label)).toList(),
           ),
         ),
         Expanded(
@@ -452,7 +452,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.all(16),
                   children: [
-                    switch (_section) {
+                    switch (section) {
                       'social' => _buildSocialSection(bundle),
                       'groups' => _buildGroupsSection(bundle),
                       'security' => _buildSecuritySection(),

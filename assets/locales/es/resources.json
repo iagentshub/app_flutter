@@ -138,7 +138,15 @@
     "new_title": "Nuevo agente",
     "edit_title": "Editar agente",
     "name_required": "El nombre es obligatorio",
-    "chat_no_connection": "Configura una conexión para este agente"
+    "chat_no_connection": "Configura una conexión para este agente",
+    "tab_knowledge": "Conocimiento",
+    "field_use_memory": "Usar memoria",
+    "field_memory_file": "Archivo de memoria",
+    "pick_existing": "Elegir existente",
+    "field_skills": "Skills",
+    "no_skills": "No hay skills disponibles.",
+    "field_knowledge": "Conocimiento",
+    "no_knowledge": "No hay contenido de conocimiento disponible."
   },
   "connections": {
     "new": "Nueva conexión",
@@ -184,6 +192,9 @@
     "empty_resources": "No hay recursos para este label/filtro.",
     "error_title": "Error cargando Labels",
     "error_generic": "No se pudieron cargar labels",
-    "filter_error": "No se pudo aplicar filtro"
+    "filter_error": "No se pudo aplicar filtro",
+    "group_visibility": "Visibilidad",
+    "group_environment": "Entorno",
+    "group_status": "Estado"
   }
 }

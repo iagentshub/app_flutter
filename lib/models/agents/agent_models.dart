@@ -13,7 +13,9 @@ class AgentItem {
   String get connectionId => raw['connection_id'] as String? ?? '';
   bool get shared => raw['_shared'] == true;
 
-  bool get readOnly => scope == 'public' || shared;
+  /// Solo es de solo-lectura si llegó vía workspace share (no soy el dueño).
+  /// Ser público (scope == 'public') no impide editar lo que es mío.
+  bool get readOnly => shared;
 
   List<String> get labels {
     final value = raw['labels'];

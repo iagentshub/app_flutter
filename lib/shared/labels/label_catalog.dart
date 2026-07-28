@@ -37,3 +37,40 @@ const List<String> kLabelKeys = [
   'archived',
   'delete',
 ];
+
+/// Los 3 grupos de GROUPS en frontend_vanilla son excluyentes entre sí
+/// (algo no puede ser "private" y "public" a la vez). `required` marca si
+/// el grupo siempre debe tener exactamente una selección (visibilidad) o
+/// puede quedar vacío (entorno). "Estado" no es excluyente: un recurso
+/// puede llevar varias labels de estado a la vez.
+class LabelGroupDef {
+  const LabelGroupDef({required this.titleKey, required this.fallbackTitle, required this.keys, required this.exclusive, this.required = false});
+
+  final String titleKey;
+  final String fallbackTitle;
+  final List<String> keys;
+  final bool exclusive;
+  final bool required;
+}
+
+const kLabelGroups = [
+  LabelGroupDef(
+    titleKey: 'labels.group_visibility',
+    fallbackTitle: 'Visibilidad',
+    keys: ['private', 'public'],
+    exclusive: true,
+    required: true,
+  ),
+  LabelGroupDef(
+    titleKey: 'labels.group_environment',
+    fallbackTitle: 'Entorno',
+    keys: ['production', 'staging', 'development', 'test'],
+    exclusive: true,
+  ),
+  LabelGroupDef(
+    titleKey: 'labels.group_status',
+    fallbackTitle: 'Estado',
+    keys: ['favorite', 'draft', 'review', 'deprecated', 'quarantine', 'archived', 'delete'],
+    exclusive: false,
+  ),
+];

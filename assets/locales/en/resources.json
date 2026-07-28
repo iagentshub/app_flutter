@@ -138,7 +138,15 @@
     "new_title": "New agent",
     "edit_title": "Edit agent",
     "name_required": "Name is required",
-    "chat_no_connection": "Set up a connection for this agent"
+    "chat_no_connection": "Set up a connection for this agent",
+    "tab_knowledge": "Knowledge",
+    "field_use_memory": "Use memory",
+    "field_memory_file": "Memory file",
+    "pick_existing": "Pick existing",
+    "field_skills": "Skills",
+    "no_skills": "No skills available.",
+    "field_knowledge": "Knowledge",
+    "no_knowledge": "No knowledge content available."
   },
   "connections": {
     "new": "New connection",
@@ -184,6 +192,9 @@
     "empty_resources": "No resources for this label/filter.",
     "error_title": "Error loading Labels",
     "error_generic": "Couldn't load labels",
-    "filter_error": "Couldn't apply filter"
+    "filter_error": "Couldn't apply filter",
+    "group_visibility": "Visibility",
+    "group_environment": "Environment",
+    "group_status": "Status"
   }
 }
