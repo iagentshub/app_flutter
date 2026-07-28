@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/router/route_names.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/profile/profile_models.dart';
@@ -295,6 +297,17 @@ class _ProfilePageState extends State<ProfilePage> {
               subtitle: Text(
                 'Rol: ${bundle.session.role} · Workspace: ${bundle.session.workspaceName ?? bundle.session.workspaceId ?? '-'}',
               ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.groups_outlined),
+              title: const Text('Workspaces'),
+              subtitle: const Text('Gestionar espacios de trabajo, miembros e invitaciones'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push(RouteNames.manager),
             ),
           ),
           const SizedBox(height: 12),

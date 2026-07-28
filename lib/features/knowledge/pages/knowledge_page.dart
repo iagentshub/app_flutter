@@ -3,6 +3,7 @@ import 'package:file_picker/file_picker.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
+import '../../../features/memory/pages/memory_page.dart';
 import '../../../models/knowledge/knowledge_models.dart';
 import '../../../models/skills/skill_models.dart';
 import '../repositories/knowledge_repository.dart';
@@ -334,14 +335,23 @@ class _KnowledgePageState extends State<KnowledgePage> {
             segments: const [
               ButtonSegment(value: 'knowledge', label: Text('Conocimiento'), icon: Icon(Icons.menu_book_outlined)),
               ButtonSegment(value: 'skills', label: Text('Skills'), icon: Icon(Icons.auto_awesome_outlined)),
+              ButtonSegment(value: 'memory', label: Text('Memoria'), icon: Icon(Icons.memory_outlined)),
             ],
             selected: {_section},
             onSelectionChanged: (selection) => setState(() => _section = selection.first),
           ),
         ),
-        Expanded(child: _section == 'knowledge' ? _buildKnowledgeSection() : _buildSkillsSection()),
+        Expanded(child: _buildSection()),
       ],
     );
+  }
+
+  Widget _buildSection() {
+    return switch (_section) {
+      'skills' => _buildSkillsSection(),
+      'memory' => MemoryPage(apiClient: widget.apiClient, sessionController: widget.sessionController),
+      _ => _buildKnowledgeSection(),
+    };
   }
 
   Widget _buildKnowledgeSection() {

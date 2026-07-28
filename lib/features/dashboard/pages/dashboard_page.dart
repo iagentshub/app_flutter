@@ -210,8 +210,8 @@ class _SummaryGrid extends StatelessWidget {
       ('Agentes', data.agents.length, RouteNames.agents, Icons.smart_toy_outlined),
       ('Conexiones', data.connections.length, RouteNames.connections, Icons.cable_outlined),
       ('Knowledge', data.knowledge.length, RouteNames.knowledge, Icons.menu_book_outlined),
-      ('Skills', data.skills.length, null, Icons.auto_awesome_outlined),
-      ('Memoria', data.memory.length, RouteNames.memory, Icons.description_outlined),
+      ('Skills', data.skills.length, RouteNames.knowledge, Icons.auto_awesome_outlined),
+      ('Memoria', data.memory.length, RouteNames.knowledge, Icons.description_outlined),
       ('Workflows', data.workflows.length, RouteNames.orchestrations, Icons.account_tree_outlined),
     ];
 

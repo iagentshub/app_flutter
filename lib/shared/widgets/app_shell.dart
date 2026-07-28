@@ -43,6 +43,15 @@ class AppShell extends StatelessWidget {
                   selected: location == item.route,
                 ),
               ),
+              const Divider(),
+              ..._secondaryItems.map(
+                (item) => _NavItemTile(
+                  icon: item.icon,
+                  label: item.label,
+                  route: item.route,
+                  selected: location == item.route,
+                ),
+              ),
               if (isAdmin) const Divider(),
               if (isAdmin)
                 ..._adminItems.map(
@@ -100,6 +109,9 @@ class _NavItem {
   final IconData icon;
 }
 
+// Mismos 6 items primarios que frontend_react/frontend_vanilla (main-nav).
+// Memory y Skills viven dentro de Knowledge (son pestañas, no nav propio);
+// Manager no aparece en el nav web (se llega desde Profile > Workspaces).
 const _mainItems = [
   _NavItem(RouteNames.dashboard, 'Dashboard', Icons.dashboard_outlined),
   _NavItem(RouteNames.explore, 'Explore', Icons.travel_explore_outlined),
@@ -107,9 +119,12 @@ const _mainItems = [
   _NavItem(RouteNames.orchestrations, 'Workflows', Icons.hub_outlined),
   _NavItem(RouteNames.knowledge, 'Knowledge', Icons.school_outlined),
   _NavItem(RouteNames.connections, 'Connections', Icons.cable_outlined),
-  _NavItem(RouteNames.memory, 'Memory', Icons.memory_outlined),
+];
+
+// Accesos que en web viven en la fila de iconos del footer / avatar del nav,
+// no en la lista principal.
+const _secondaryItems = [
   _NavItem(RouteNames.labels, 'Labels', Icons.label_outline),
-  _NavItem(RouteNames.manager, 'Manager', Icons.manage_accounts_outlined),
   _NavItem(RouteNames.profile, 'Profile', Icons.person_outline),
 ];
 
@@ -121,7 +136,7 @@ const _adminItems = [
 ];
 
 String _titleForLocation(String location) {
-  for (final item in [..._mainItems, ..._adminItems]) {
+  for (final item in [..._mainItems, ..._secondaryItems, ..._adminItems]) {
     if (location == item.route) return item.label;
   }
   if (location.startsWith(RouteNames.publicProfilePrefix)) return 'Public Profile';
