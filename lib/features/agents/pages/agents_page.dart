@@ -372,8 +372,6 @@ class _AgentsPageState extends State<AgentsPage> {
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                   ),
                 ),
-                _chip(item.scope),
-                if (item.shared) _chip('shared'),
               ],
             ),
             const SizedBox(height: 6),
@@ -423,18 +421,6 @@ class _AgentsPageState extends State<AgentsPage> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _chip(String text) {
-    return Container(
-      margin: const EdgeInsets.only(left: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(text, style: const TextStyle(fontSize: 12)),
     );
   }
 }

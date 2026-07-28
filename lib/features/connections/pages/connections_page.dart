@@ -465,16 +465,17 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                   ),
                 ),
-                if (item.shared) _chip('Shared'),
-                if (item.personalKey) _chip('Personal'),
-                if (item.isVirtual) _chip('Virtual'),
               ],
             ),
             const SizedBox(height: 6),
             Text(metaParts.join(' · ')),
             const SizedBox(height: 8),
             LabelChipsRow(
-              labels: item.labels,
+              labels: [
+                ...item.labels,
+                if (item.personalKey) 'Personal',
+                if (item.isVirtual) 'Virtual',
+              ],
               leading: [
                 OriginBadge(
                   shared: item.shared,
@@ -516,17 +517,6 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
     );
   }
 
-  Widget _chip(String text) {
-    return Container(
-      margin: const EdgeInsets.only(left: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(text, style: const TextStyle(fontSize: 12)),
-    );
-  }
 }
 
 class _ConnectionFormDialog extends StatefulWidget {
