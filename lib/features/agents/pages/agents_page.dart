@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
+import '../../../features/connections/repositories/connections_repository.dart';
 import '../../../models/agents/agent_models.dart';
+import '../../../models/connections/connection_models.dart';
 import '../repositories/agents_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
+import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/action_icon_button.dart';
@@ -133,9 +136,11 @@ class _AgentsPageState extends State<AgentsPage> {
   }
 
   Future<void> _openCreateDialog() async {
+    final token = _token;
+    if (token == null || token.isEmpty) return;
     final payload = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) => const _AgentFormDialog(),
+      builder: (context) => _AgentFormDialog(apiClient: widget.apiClient, token: token, tx: _tx),
     );
     if (payload == null) return;
     await _saveAgent(payload);
@@ -158,7 +163,7 @@ class _AgentsPageState extends State<AgentsPage> {
     if (!mounted) return;
     final payload = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) => _AgentFormDialog(initial: initial),
+      builder: (context) => _AgentFormDialog(apiClient: widget.apiClient, token: token, initial: initial, tx: _tx),
     );
     if (payload == null) return;
     payload['id'] = item.id;
@@ -394,10 +399,13 @@ class _AgentsPageState extends State<AgentsPage> {
             const SizedBox(height: 10),
             Row(
               children: [
-                FilledButton.icon(
-                  onPressed: () => _openChat(item),
-                  icon: const Icon(Icons.chat_bubble_outline),
-                  label: const Text('Chat'),
+                Tooltip(
+                  message: item.connectionId.isEmpty ? _tx('agents.chat_no_connection', 'Configura una conexión para este agente') : '',
+                  child: FilledButton.icon(
+                    onPressed: item.connectionId.isEmpty ? null : () => _openChat(item),
+                    icon: const Icon(Icons.chat_bubble_outline),
+                    label: const Text('Chat'),
+                  ),
                 ),
                 const Spacer(),
                 ActionIconButton(
@@ -426,8 +434,16 @@ class _AgentsPageState extends State<AgentsPage> {
 }
 
 class _AgentFormDialog extends StatefulWidget {
-  const _AgentFormDialog({this.initial});
+  const _AgentFormDialog({
+    required this.apiClient,
+    required this.token,
+    required this.tx,
+    this.initial,
+  });
 
+  final ApiClient apiClient;
+  final String token;
+  final String Function(String path, String fallback) tx;
   final Map<String, dynamic>? initial;
 
   @override
@@ -439,34 +455,53 @@ class _AgentFormDialogState extends State<_AgentFormDialog> {
   late final TextEditingController _nameController;
   late final TextEditingController _descriptionController;
   late final TextEditingController _modelController;
-  late final TextEditingController _connectionIdController;
   late final TextEditingController _promptController;
-  late final TextEditingController _temperatureController;
-  late final TextEditingController _labelsController;
+  late final ConnectionsRepository _connectionsRepository;
 
+  List<ConnectionItem> _connections = const [];
+  bool _loadingConnections = true;
+  String? _connectionId;
+  double _temperature = 0.7;
+  Set<String> _selectedLabels = {};
   String _scope = 'private';
   String _agentType = 'generic';
+
+  String get _title => widget.initial == null ? widget.tx('agents.new_title', 'Nuevo agente') : widget.tx('agents.edit_title', 'Editar agente');
 
   @override
   void initState() {
     super.initState();
+    _connectionsRepository = ConnectionsRepository(apiClient: widget.apiClient);
     final initial = widget.initial;
     _nameController = TextEditingController(text: initial?['name']?.toString() ?? '');
     _descriptionController = TextEditingController(text: initial?['description']?.toString() ?? '');
     _modelController = TextEditingController(text: initial?['model']?.toString() ?? '');
-    _connectionIdController = TextEditingController(text: initial?['connection_id']?.toString() ?? '');
     _promptController = TextEditingController(text: initial?['system_prompt']?.toString() ?? '');
-    _temperatureController = TextEditingController(text: initial?['temperature']?.toString() ?? '0.7');
+
+    final connId = initial?['connection_id']?.toString() ?? '';
+    _connectionId = connId.isEmpty ? null : connId;
+    _temperature = (num.tryParse(initial?['temperature']?.toString() ?? '0.7') ?? 0.7).toDouble().clamp(0.0, 1.0);
 
     final labelsRaw = initial?['labels'];
-    if (labelsRaw is List) {
-      _labelsController = TextEditingController(text: labelsRaw.join(', '));
-    } else {
-      _labelsController = TextEditingController(text: 'private');
-    }
+    _selectedLabels = labelsRaw is List ? labelsRaw.map((e) => e.toString()).toSet() : {'private'};
 
     _scope = (initial?['scope'] as String?) ?? 'private';
     _agentType = (initial?['agent_type'] as String?) ?? 'generic';
+    _loadConnections();
+  }
+
+  Future<void> _loadConnections() async {
+    try {
+      final list = await _connectionsRepository.listConnections(widget.token);
+      if (!mounted) return;
+      setState(() {
+        _connections = list;
+        _loadingConnections = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loadingConnections = false);
+    }
   }
 
   @override
@@ -474,21 +509,12 @@ class _AgentFormDialogState extends State<_AgentFormDialog> {
     _nameController.dispose();
     _descriptionController.dispose();
     _modelController.dispose();
-    _connectionIdController.dispose();
     _promptController.dispose();
-    _temperatureController.dispose();
-    _labelsController.dispose();
     super.dispose();
   }
 
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-
-    final labels = _labelsController.text
-        .split(',')
-        .map((item) => item.trim())
-        .where((item) => item.isNotEmpty)
-        .toList();
 
     final payload = <String, dynamic>{
       'name': _nameController.text.trim(),
@@ -496,10 +522,10 @@ class _AgentFormDialogState extends State<_AgentFormDialog> {
       'scope': _scope,
       'agent_type': _agentType,
       'model': _modelController.text.trim(),
-      'connection_id': _connectionIdController.text.trim(),
+      'connection_id': _connectionId ?? '',
       'system_prompt': _promptController.text.trim(),
-      'temperature': num.tryParse(_temperatureController.text.trim()) ?? 0.7,
-      'labels': labels,
+      'temperature': _temperature,
+      'labels': _selectedLabels.toList(),
     };
 
     Navigator.of(context).pop(payload);
@@ -507,94 +533,186 @@ class _AgentFormDialogState extends State<_AgentFormDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(widget.initial == null ? 'Nuevo agente' : 'Editar agente'),
-      content: SizedBox(
-        width: 580,
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            shrinkWrap: true,
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Nombre'),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) return 'El nombre es obligatorio';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 10),
-              DropdownButtonFormField<String>(
-                initialValue: _scope,
-                decoration: const InputDecoration(labelText: 'Scope'),
-                items: const [
-                  DropdownMenuItem(value: 'private', child: Text('private')),
-                  DropdownMenuItem(value: 'public', child: Text('public')),
-                ],
-                onChanged: (value) {
-                  if (value == null) return;
-                  setState(() => _scope = value);
-                },
-              ),
-              const SizedBox(height: 10),
-              DropdownButtonFormField<String>(
-                initialValue: _agentType,
-                decoration: const InputDecoration(labelText: 'Tipo de agente'),
-                items: const [
-                  DropdownMenuItem(value: 'generic', child: Text('generic')),
-                  DropdownMenuItem(value: 'claude', child: Text('claude')),
-                  DropdownMenuItem(value: 'openai', child: Text('openai')),
-                  DropdownMenuItem(value: 'github', child: Text('github')),
-                ],
-                onChanged: (value) {
-                  if (value == null) return;
-                  setState(() => _agentType = value);
-                },
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _descriptionController,
-                minLines: 2,
-                maxLines: 4,
-                decoration: const InputDecoration(labelText: 'Descripción'),
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _modelController,
-                decoration: const InputDecoration(labelText: 'Modelo'),
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _connectionIdController,
-                decoration: const InputDecoration(labelText: 'Connection ID'),
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _temperatureController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Temperatura'),
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _labelsController,
-                decoration: const InputDecoration(labelText: 'Labels (coma separada)'),
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _promptController,
-                minLines: 4,
-                maxLines: 8,
-                decoration: const InputDecoration(labelText: 'System prompt'),
-              ),
-            ],
+    return DefaultTabController(
+      length: 3,
+      child: AlertDialog(
+        title: Text(_title),
+        contentPadding: const EdgeInsets.fromLTRB(0, 16, 0, 8),
+        content: SizedBox(
+          width: 580,
+          height: 460,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                TabBar(
+                  tabs: [
+                    Tab(text: widget.tx('agents.tab_basic', 'Básico')),
+                    Tab(text: widget.tx('agents.tab_connection', 'Conexión')),
+                    Tab(text: widget.tx('agents.tab_advanced', 'Avanzado')),
+                  ],
+                ),
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      _buildBasicTab(),
+                      _buildConnectionTab(),
+                      _buildAdvancedTab(),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(widget.tx('common.cancel', 'Cancelar'))),
+          FilledButton(onPressed: _submit, child: Text(widget.tx('common.save', 'Guardar'))),
+        ],
       ),
-      actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
-        FilledButton(onPressed: _submit, child: const Text('Guardar')),
-      ],
+    );
+  }
+
+  Widget _buildBasicTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextFormField(
+            controller: _nameController,
+            decoration: InputDecoration(labelText: widget.tx('agents.field_name', 'Nombre')),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) return widget.tx('agents.name_required', 'El nombre es obligatorio');
+              return null;
+            },
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _descriptionController,
+            minLines: 2,
+            maxLines: 4,
+            decoration: InputDecoration(labelText: widget.tx('agents.field_description', 'Descripción')),
+          ),
+          const SizedBox(height: 12),
+          Text(widget.tx('agents.field_labels', 'Etiquetas'), style: Theme.of(context).textTheme.labelMedium),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: kLabelKeys.map((key) {
+              final selected = _selectedLabels.contains(key);
+              return FilterChip(
+                label: Text(key),
+                selected: selected,
+                onSelected: (value) {
+                  setState(() {
+                    if (value) {
+                      _selectedLabels = {..._selectedLabels, key};
+                    } else {
+                      _selectedLabels = {..._selectedLabels}..remove(key);
+                    }
+                  });
+                },
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _promptController,
+            minLines: 5,
+            maxLines: 10,
+            decoration: InputDecoration(labelText: widget.tx('agents.field_prompt', 'System prompt')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConnectionTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _loadingConnections
+              ? const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: LinearProgressIndicator(minHeight: 2),
+                )
+              : DropdownButtonFormField<String>(
+                  initialValue: _connectionId,
+                  isExpanded: true,
+                  decoration: InputDecoration(labelText: widget.tx('agents.field_connection', 'Conexión LLM')),
+                  items: [
+                    DropdownMenuItem<String>(value: null, child: Text(widget.tx('agents.no_connection', '-- Sin conexión --'))),
+                    ..._connections.map(
+                      (conn) => DropdownMenuItem<String>(
+                        value: conn.id,
+                        child: Text('${conn.name} (${conn.type})', overflow: TextOverflow.ellipsis),
+                      ),
+                    ),
+                  ],
+                  onChanged: (value) => setState(() => _connectionId = value),
+                ),
+          const SizedBox(height: 20),
+          Text(
+            '${widget.tx('agents.field_temperature', 'Temperatura')}: ${_temperature.toStringAsFixed(2)}',
+            style: Theme.of(context).textTheme.labelMedium,
+          ),
+          Slider(
+            value: _temperature,
+            min: 0,
+            max: 1,
+            divisions: 20,
+            label: _temperature.toStringAsFixed(2),
+            onChanged: (value) => setState(() => _temperature = value),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAdvancedTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          DropdownButtonFormField<String>(
+            initialValue: _scope,
+            decoration: InputDecoration(labelText: widget.tx('agents.field_scope', 'Visibilidad')),
+            items: const [
+              DropdownMenuItem(value: 'private', child: Text('private')),
+              DropdownMenuItem(value: 'public', child: Text('public')),
+            ],
+            onChanged: (value) {
+              if (value == null) return;
+              setState(() => _scope = value);
+            },
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            initialValue: _agentType,
+            decoration: InputDecoration(labelText: widget.tx('agents.field_type', 'Tipo de agente')),
+            items: const [
+              DropdownMenuItem(value: 'generic', child: Text('generic')),
+              DropdownMenuItem(value: 'claude', child: Text('claude')),
+              DropdownMenuItem(value: 'openai', child: Text('openai')),
+              DropdownMenuItem(value: 'github', child: Text('github')),
+            ],
+            onChanged: (value) {
+              if (value == null) return;
+              setState(() => _agentType = value);
+            },
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _modelController,
+            decoration: InputDecoration(labelText: widget.tx('agents.field_model', 'Modelo (opcional)')),
+          ),
+        ],
+      ),
     );
   }
 }
