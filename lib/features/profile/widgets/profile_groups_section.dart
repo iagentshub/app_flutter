@@ -473,88 +473,180 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
     }
   }
 
+  Widget _sectionLabel(BuildContext context, IconData icon, String text, {Color? color}) {
+    final resolvedColor = color ?? Theme.of(context).colorScheme.onSurfaceVariant;
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: resolvedColor),
+        const SizedBox(width: 6),
+        Text(
+          text,
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.3, color: resolvedColor),
+        ),
+      ],
+    );
+  }
+
+  Widget _panel({required Widget child, Color? borderColor, Color? background}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: background,
+        border: Border.all(color: borderColor ?? Theme.of(context).dividerColor),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return AlertDialog(
       title: Text(widget.group.name),
+      contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
       content: SizedBox(
-        width: 480,
+        width: 520,
         child: _loading
-            ? const SizedBox(height: 120, child: Center(child: CircularProgressIndicator()))
+            ? const SizedBox(height: 160, child: Center(child: CircularProgressIndicator()))
             : SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(widget.tx('groups.members', 'Miembros'), style: const TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 6),
-                    ..._members.map((m) {
-                      final username = (m['username'] ?? '').toString();
-                      final role = (m['role'] ?? 'member').toString();
-                      final canRemove = _canManage && role != 'owner' && username != widget.currentUsername;
-                      return ListTile(
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(username),
-                        subtitle: Text(role),
-                        trailing: canRemove
-                            ? ActionIconButton(
-                                icon: Icons.person_remove_outlined,
-                                tooltip: widget.tx('common.delete', 'Eliminar'),
-                                danger: true,
-                                onPressed: () => _removeMember(username),
-                              )
-                            : null,
-                      );
-                    }),
-                    if (_canManage) ...[
-                      const SizedBox(height: 12),
-                      Row(
+                    _sectionLabel(context, Icons.group_outlined, widget.tx('groups.members', 'Miembros').toUpperCase()),
+                    const SizedBox(height: 8),
+                    _panel(
+                      child: Column(
                         children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _inviteController,
-                              decoration: InputDecoration(labelText: widget.tx('groups.invite_username', 'Invitar por usuario')),
-                              onSubmitted: (_) => _invite(),
+                          for (var i = 0; i < _members.length; i++) ...[
+                            if (i > 0) const Divider(height: 20),
+                            Builder(
+                              builder: (context) {
+                                final m = _members[i];
+                                final username = (m['username'] ?? '').toString();
+                                final role = (m['role'] ?? 'member').toString();
+                                final canRemove = _canManage && role != 'owner' && username != widget.currentUsername;
+                                return Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 14,
+                                      child: Text(username.isNotEmpty ? username[0].toUpperCase() : '?', style: const TextStyle(fontSize: 12)),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(username, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: scheme.surfaceContainerHighest,
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(role, style: Theme.of(context).textTheme.bodySmall),
+                                    ),
+                                    if (canRemove) ...[
+                                      const SizedBox(width: 4),
+                                      ActionIconButton(
+                                        icon: Icons.person_remove_outlined,
+                                        tooltip: widget.tx('common.delete', 'Eliminar'),
+                                        danger: true,
+                                        onPressed: () => _removeMember(username),
+                                      ),
+                                    ],
+                                  ],
+                                );
+                              },
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          FilledButton(onPressed: _invite, child: Text(widget.tx('common.create', 'Crear'))),
+                          ],
                         ],
                       ),
-                      if (_invitations.isNotEmpty) ...[
-                        const SizedBox(height: 12),
-                        Text(widget.tx('groups.pending_invitations', 'Invitaciones pendientes'), style: const TextStyle(fontWeight: FontWeight.bold)),
-                        ..._invitations.map((inv) {
-                          final username = (inv['username'] ?? '').toString();
-                          return ListTile(
-                            dense: true,
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(username),
-                            trailing: ActionIconButton(
-                              icon: Icons.close,
-                              tooltip: widget.tx('common.cancel', 'Cancelar'),
-                              onPressed: () => _cancelInvitation((inv['id'] ?? '').toString()),
+                    ),
+                    if (_canManage) ...[
+                      const SizedBox(height: 24),
+                      _sectionLabel(context, Icons.person_add_alt_outlined, widget.tx('groups.invite_username', 'Invitar por usuario').toUpperCase()),
+                      const SizedBox(height: 8),
+                      _panel(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _inviteController,
+                                decoration: const InputDecoration(isDense: true),
+                                onSubmitted: (_) => _invite(),
+                              ),
                             ),
-                          );
-                        }),
+                            const SizedBox(width: 10),
+                            FilledButton(onPressed: _invite, child: Text(widget.tx('common.create', 'Crear'))),
+                          ],
+                        ),
+                      ),
+                      if (_invitations.isNotEmpty) ...[
+                        const SizedBox(height: 24),
+                        _sectionLabel(context, Icons.mail_outline, widget.tx('groups.pending_invitations', 'Invitaciones pendientes').toUpperCase()),
+                        const SizedBox(height: 8),
+                        _panel(
+                          child: Column(
+                            children: [
+                              for (var i = 0; i < _invitations.length; i++) ...[
+                                if (i > 0) const Divider(height: 20),
+                                Builder(
+                                  builder: (context) {
+                                    final inv = _invitations[i];
+                                    final username = (inv['username'] ?? '').toString();
+                                    return Row(
+                                      children: [
+                                        Expanded(child: Text(username)),
+                                        ActionIconButton(
+                                          icon: Icons.close,
+                                          tooltip: widget.tx('common.cancel', 'Cancelar'),
+                                          onPressed: () => _cancelInvitation((inv['id'] ?? '').toString()),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
                       ],
                     ],
                     if (_isOwner) ...[
-                      const SizedBox(height: 16),
-                      const Divider(),
-                      Text(widget.tx('groups.danger_zone', 'Zona de peligro'), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                      const SizedBox(height: 24),
+                      _sectionLabel(context, Icons.warning_amber_outlined, widget.tx('groups.danger_zone', 'Zona de peligro').toUpperCase(), color: Colors.red),
                       const SizedBox(height: 8),
-                      OutlinedButton.icon(
-                        onPressed: _deleteGroup,
-                        icon: const Icon(Icons.delete_outline, color: Colors.red),
-                        label: Text(widget.tx('groups.delete_group', 'Eliminar grupo'), style: const TextStyle(color: Colors.red)),
+                      _panel(
+                        borderColor: Colors.red.withValues(alpha: 0.35),
+                        background: Colors.red.withValues(alpha: 0.06),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                widget.tx('groups.delete_confirm_body', '¿Seguro que quieres eliminar este grupo? Esta acción no se puede deshacer.'),
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            OutlinedButton.icon(
+                              onPressed: _deleteGroup,
+                              icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
+                              label: Text(widget.tx('groups.delete_group', 'Eliminar grupo'), style: const TextStyle(color: Colors.red)),
+                              style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.red)),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
+                    const SizedBox(height: 8),
                   ],
                 ),
               ),
       ),
+      actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+      actionsAlignment: MainAxisAlignment.spaceBetween,
       actions: [
         TextButton.icon(
           onPressed: _leave,
