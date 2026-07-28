@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -11,18 +12,29 @@ import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../widgets/profile_groups_section.dart';
 
-/// Mismo listado fijo de idiomas que _ALL_LANGS en profile.js (frontend_vanilla).
+/// Idiomas disponibles para el perfil público. Por ahora la plataforma solo
+/// soporta Español e Inglés (a diferencia del listado más amplio de
+/// frontend_vanilla, aún no habilitado aquí).
 const _languageOptions = [
   ('es', 'Español', '🇪🇸'),
   ('en', 'English', '🇬🇧'),
-  ('fr', 'Français', '🇫🇷'),
-  ('de', 'Deutsch', '🇩🇪'),
-  ('pt', 'Português', '🇵🇹'),
-  ('it', 'Italiano', '🇮🇹'),
-  ('zh', '中文', '🇨🇳'),
-  ('ja', '日本語', '🇯🇵'),
-  ('ar', 'العربية', '🇸🇦'),
 ];
+
+/// El backend exige que `github` sea una URL https:// completa, pero pedirle
+/// eso al usuario es peor UX que un campo "usuario de GitHub" con prefijo
+/// fijo `github.com/` — se convierte en los dos sentidos aquí.
+String _githubUsernameFromUrl(String? url) {
+  if (url == null || url.isEmpty) return '';
+  final match = RegExp(r'github\.com/([^/\s]+)', caseSensitive: false).firstMatch(url);
+  return match?.group(1) ?? url;
+}
+
+String? _githubUrlFromUsername(String input) {
+  final trimmed = input.trim().replaceAll(RegExp(r'^@'), '');
+  if (trimmed.isEmpty) return null;
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+  return 'https://github.com/$trimmed';
+}
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({
@@ -51,6 +63,8 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _savingProfile = false;
   bool _changingPassword = false;
   bool _requestingDeletion = false;
+  bool _uploadingAvatar = false;
+  int _avatarVersion = 0;
   String _section = 'account';
 
   final _bioController = TextEditingController();
@@ -118,7 +132,7 @@ class _ProfilePageState extends State<ProfilePage> {
         _language = bundle.settings.language;
         _bioController.text = bundle.social.bio ?? '';
         _emailPublicController.text = bundle.social.emailPublic ?? '';
-        _githubController.text = bundle.social.github ?? '';
+        _githubController.text = _githubUsernameFromUrl(bundle.social.github);
         _cvController.text = bundle.social.cv ?? '';
         _selectedLanguages = bundle.social.languages.toSet();
         _loading = false;
@@ -176,7 +190,7 @@ class _ProfilePageState extends State<ProfilePage> {
         token,
         bio: _bioController.text.trim(),
         emailPublic: _emailPublicController.text.trim(),
-        github: _githubController.text.trim(),
+        github: _githubUrlFromUsername(_githubController.text) ?? '',
         cv: _cvController.text.trim(),
         languages: _selectedLanguages.toList(),
       );
@@ -189,6 +203,96 @@ class _ProfilePageState extends State<ProfilePage> {
     } finally {
       if (mounted) setState(() => _savingProfile = false);
     }
+  }
+
+  String? get _avatarUrl {
+    final username = _bundle?.session.username;
+    if (username == null || username.isEmpty) return null;
+    final base = widget.apiClient.backendController.effectiveBaseUrl;
+    return '$base/api/users/${Uri.encodeComponent(username)}/avatar?v=$_avatarVersion';
+  }
+
+  Future<void> _pickAndUploadAvatar() async {
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+
+    final result = await FilePicker.platform.pickFiles(
+      withData: true,
+      type: FileType.custom,
+      allowedExtensions: const ['jpg', 'jpeg', 'png', 'webp'],
+    );
+    if (result == null || result.files.isEmpty) return;
+
+    final file = result.files.first;
+    final bytes = file.bytes;
+    if (bytes == null || bytes.isEmpty) {
+      _showMessage(_tx('profile.avatar_error', 'No se pudo actualizar la foto'), isError: true);
+      return;
+    }
+    if (bytes.length > 2 * 1024 * 1024) {
+      _showMessage(_tx('profile.avatar_too_large', 'La imagen no puede superar 2 MB'), isError: true);
+      return;
+    }
+
+    setState(() => _uploadingAvatar = true);
+    try {
+      await widget.apiClient.postMultipart(
+        '/api/auth/me/avatar',
+        fieldName: 'avatar',
+        fileName: file.name,
+        fileBytes: bytes,
+        gaToken: token,
+      );
+      if (!mounted) return;
+      setState(() => _avatarVersion++);
+      _showMessage(_tx('profile.avatar_updated', 'Foto de perfil actualizada'));
+    } on ApiError catch (error) {
+      _showMessage(error.message, isError: true);
+    } catch (_) {
+      _showMessage(_tx('profile.avatar_error', 'No se pudo actualizar la foto'), isError: true);
+    } finally {
+      if (mounted) setState(() => _uploadingAvatar = false);
+    }
+  }
+
+  Future<void> _openLanguagesDialog() async {
+    var draft = {..._selectedLanguages};
+    final result = await showDialog<Set<String>>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(_tx('profile.manage_languages', 'Gestionar idiomas')),
+          content: SizedBox(
+            width: 320,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: _languageOptions.map((option) {
+                final (id, label, flag) = option;
+                return CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: draft.contains(id),
+                  title: Text('$flag $label'),
+                  onChanged: (value) {
+                    setDialogState(() {
+                      if (value == true) {
+                        draft = {...draft, id};
+                      } else {
+                        draft = {...draft}..remove(id);
+                      }
+                    });
+                  },
+                );
+              }).toList(),
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(_tx('common.cancel', 'Cancelar'))),
+            FilledButton(onPressed: () => Navigator.of(context).pop(draft), child: Text(_tx('common.save', 'Guardar'))),
+          ],
+        ),
+      ),
+    );
+    if (result != null) setState(() => _selectedLanguages = result);
   }
 
   Future<void> _changePassword() async {
@@ -312,7 +416,6 @@ class _ProfilePageState extends State<ProfilePage> {
     final tabs = <(String, String)>[
       ('account', _tx('profile.tab_account', 'Mi cuenta')),
       ('social', _tx('profile.tab_social', 'Perfil público')),
-      ('preferences', _tx('profile.tab_preferences', 'Preferencias')),
       ('groups', _tx('profile.tab_groups', 'Grupos')),
       ('security', _tx('profile.tab_security', 'Seguridad')),
     ];
@@ -351,7 +454,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   children: [
                     switch (_section) {
                       'social' => _buildSocialSection(bundle),
-                      'preferences' => _buildPreferencesSection(),
                       'groups' => _buildGroupsSection(bundle),
                       'security' => _buildSecuritySection(),
                       _ => _buildAccountSection(bundle),
@@ -402,6 +504,61 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Widget _buildAvatar(String initial) {
+    final token = _token;
+    final url = _avatarUrl;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        ClipOval(
+          child: SizedBox(
+            width: 64,
+            height: 64,
+            child: (url != null && token != null)
+                ? Image.network(
+                    url,
+                    headers: {'Cookie': 'ga_token=$token'},
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stack) => _avatarFallback(initial),
+                    loadingBuilder: (context, child, progress) => progress == null ? child : _avatarFallback(initial),
+                  )
+                : _avatarFallback(initial),
+          ),
+        ),
+        Positioned(
+          right: -2,
+          bottom: -2,
+          child: InkWell(
+            onTap: _uploadingAvatar ? null : _pickAndUploadAvatar,
+            borderRadius: BorderRadius.circular(14),
+            child: Container(
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary,
+                shape: BoxShape.circle,
+                border: Border.all(color: Theme.of(context).cardColor, width: 2),
+              ),
+              child: _uploadingAvatar
+                  ? const Padding(
+                      padding: EdgeInsets.all(5),
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(Icons.camera_alt, size: 13, color: Colors.white),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _avatarFallback(String initial) {
+    return CircleAvatar(
+      radius: 32,
+      child: Text(initial, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
+    );
+  }
+
   Widget _buildAccountSection(ProfileBundle bundle) {
     final username = bundle.session.username;
     final initial = username.isNotEmpty ? username[0].toUpperCase() : '?';
@@ -417,10 +574,7 @@ class _ProfilePageState extends State<ProfilePage> {
             padding: const EdgeInsets.all(20),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 32,
-                  child: Text(initial, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
-                ),
+                _buildAvatar(initial),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
@@ -462,37 +616,6 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
         const SizedBox(height: 24),
-        _sectionHeader(Icons.warning_amber_outlined, _tx('profile.account_zone_title', 'Zona de cuenta'), color: Colors.red),
-        const SizedBox(height: 8),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  bundle.deletion.scheduled
-                      ? '${_tx('profile.deletion_scheduled', 'Eliminación programada para')}: ${bundle.deletion.deletionDate ?? '-'}'
-                      : _tx('profile.no_deletion_scheduled', 'No hay eliminación programada'),
-                ),
-                const SizedBox(height: 10),
-                OutlinedButton.icon(
-                  onPressed: _requestingDeletion || bundle.deletion.scheduled ? null : _requestDeletion,
-                  icon: const Icon(Icons.warning_amber_outlined),
-                  label: Text(_requestingDeletion ? _tx('profile.scheduling', 'Programando...') : _tx('profile.request_deletion', 'Solicitar eliminación de cuenta')),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPreferencesSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
         _sectionHeader(Icons.tune_outlined, _tx('profile.tab_preferences', 'Preferencias')),
         const SizedBox(height: 8),
         Card(
@@ -533,6 +656,30 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
         ),
+        const SizedBox(height: 24),
+        _sectionHeader(Icons.warning_amber_outlined, _tx('profile.account_zone_title', 'Zona de cuenta'), color: Colors.red),
+        const SizedBox(height: 8),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  bundle.deletion.scheduled
+                      ? '${_tx('profile.deletion_scheduled', 'Eliminación programada para')}: ${bundle.deletion.deletionDate ?? '-'}'
+                      : _tx('profile.no_deletion_scheduled', 'No hay eliminación programada'),
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: _requestingDeletion || bundle.deletion.scheduled ? null : _requestDeletion,
+                  icon: const Icon(Icons.warning_amber_outlined),
+                  label: Text(_requestingDeletion ? _tx('profile.scheduling', 'Programando...') : _tx('profile.request_deletion', 'Solicitar eliminación de cuenta')),
+                ),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -563,53 +710,72 @@ class _ProfilePageState extends State<ProfilePage> {
                   minLines: 2,
                   maxLines: 4,
                   maxLength: 500,
-                  decoration: InputDecoration(labelText: _tx('profile.bio_label', 'Bio')),
-                ),
-                const SizedBox(height: 6),
-                Text(_tx('profile.languages_label', 'Idiomas'), style: Theme.of(context).textTheme.labelMedium),
-                const SizedBox(height: 4),
-                Text(
-                  _tx('profile.languages_hint', 'Elige los idiomas en los que puedes trabajar.'),
-                  style: Theme.of(context).textTheme.bodySmall,
+                  decoration: InputDecoration(
+                    labelText: _tx('profile.bio_label', 'Bio'),
+                    alignLabelWithHint: true,
+                  ),
                 ),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _languageOptions.map((option) {
-                    final (id, label, flag) = option;
-                    final selected = _selectedLanguages.contains(id);
-                    return FilterChip(
-                      label: Text('$flag $label'),
-                      selected: selected,
-                      onSelected: (value) {
-                        setState(() {
-                          if (value) {
-                            _selectedLanguages = {..._selectedLanguages, id};
-                          } else {
-                            _selectedLanguages = {..._selectedLanguages}..remove(id);
-                          }
-                        });
-                      },
-                    );
-                  }).toList(),
+                Text(_tx('profile.languages_label', 'Idiomas'), style: Theme.of(context).textTheme.labelMedium),
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: _selectedLanguages.isEmpty
+                          ? Text(
+                              _tx('profile.languages_empty', 'Sin idiomas seleccionados'),
+                              style: Theme.of(context).textTheme.bodySmall,
+                            )
+                          : Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: _languageOptions
+                                  .where((option) => _selectedLanguages.contains(option.$1))
+                                  .map((option) => Chip(label: Text('${option.$3} ${option.$2}')))
+                                  .toList(),
+                            ),
+                    ),
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      onPressed: _openLanguagesDialog,
+                      icon: const Icon(Icons.tune, size: 16),
+                      label: Text(_tx('profile.manage_languages', 'Gestionar idiomas')),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _emailPublicController,
-                  decoration: InputDecoration(labelText: _tx('profile.email_public_label', 'Email público')),
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    labelText: _tx('profile.email_public_label', 'Email público'),
+                    prefixIcon: const Icon(Icons.alternate_email, size: 20),
+                  ),
                 ),
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: _githubController,
-                  decoration: InputDecoration(labelText: _tx('profile.github_label', 'GitHub (https://...)')),
+                  decoration: InputDecoration(
+                    labelText: _tx('profile.github_label', 'Usuario de GitHub'),
+                    prefixIcon: const Icon(Icons.code, size: 20),
+                    prefixText: 'github.com/',
+                  ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 16),
+                Text(_tx('profile.cv_label', 'Resumen profesional'), style: Theme.of(context).textTheme.labelMedium),
+                const SizedBox(height: 4),
+                Text(
+                  _tx('profile.cv_hint', 'Soporta Markdown. Aparecerá en tu perfil público.'),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 8),
                 TextFormField(
                   controller: _cvController,
-                  minLines: 3,
-                  maxLines: 6,
-                  decoration: InputDecoration(labelText: _tx('profile.cv_label', 'CV / Resumen profesional')),
+                  minLines: 6,
+                  maxLines: 12,
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+                  decoration: const InputDecoration(isDense: true),
                 ),
                 const SizedBox(height: 12),
                 FilledButton.icon(

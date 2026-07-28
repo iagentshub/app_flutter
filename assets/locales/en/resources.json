@@ -87,11 +87,14 @@
     "social_title": "Public profile",
     "bio_label": "Bio",
     "email_public_label": "Public email",
-    "github_label": "GitHub (https://...)",
+    "github_label": "GitHub username",
     "languages_label": "Languages",
     "languages_hint": "Choose the languages you can work in.",
+    "languages_empty": "No languages selected",
+    "manage_languages": "Manage languages",
+    "cv_hint": "Supports Markdown. Will appear on your public profile.",
     "view_public_profile": "View my profile",
-    "cv_label": "CV / Professional summary",
+    "cv_label": "Professional summary",
     "save_social": "Save public profile",
     "security_title": "Security",
     "current_password_label": "Current password",
@@ -106,7 +109,10 @@
     "plan_label": "Plan",
     "plan_free": "Free",
     "member_since": "Member since",
-    "identity_title": "Identity"
+    "identity_title": "Identity",
+    "avatar_updated": "Profile photo updated",
+    "avatar_error": "Couldn't update the photo",
+    "avatar_too_large": "The image can't be larger than 2 MB"
   },
   "agents": {
     "new": "New agent",
