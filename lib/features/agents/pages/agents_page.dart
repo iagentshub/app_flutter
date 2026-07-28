@@ -5,6 +5,9 @@ import '../../../core/network/api_error.dart';
 import '../../../models/agents/agent_models.dart';
 import '../repositories/agents_repository.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/widgets/action_icon_button.dart';
+import '../../../shared/widgets/group_filter_panel.dart';
+import '../../../shared/widgets/share_to_group_dialog.dart';
 import 'chat_page.dart';
 
 class AgentsPage extends StatefulWidget {
@@ -23,15 +26,34 @@ class AgentsPage extends StatefulWidget {
 
 class _AgentsPageState extends State<AgentsPage> {
   late final AgentsRepository _repository;
+  final TextEditingController _queryController = TextEditingController();
   List<AgentItem> _agents = const [];
   bool _loading = true;
   String? _error;
+  String _query = '';
+  String? _activeGroupId;
+
+  List<AgentItem> get _filteredAgents {
+    final query = _query.trim().toLowerCase();
+    if (query.isEmpty) return _agents;
+    return _agents.where((item) {
+      return item.name.toLowerCase().contains(query) ||
+          item.agentType.toLowerCase().contains(query) ||
+          item.model.toLowerCase().contains(query);
+    }).toList();
+  }
 
   @override
   void initState() {
     super.initState();
     _repository = AgentsRepository(apiClient: widget.apiClient);
     _load();
+  }
+
+  @override
+  void dispose() {
+    _queryController.dispose();
+    super.dispose();
   }
 
   String? get _token => widget.sessionController.gaToken;
@@ -52,7 +74,7 @@ class _AgentsPageState extends State<AgentsPage> {
     });
 
     try {
-      final agents = await _repository.listAgents(token);
+      final agents = await _repository.listAgents(token, groupId: _activeGroupId);
       if (!mounted) return;
       setState(() {
         _agents = agents;
@@ -71,6 +93,24 @@ class _AgentsPageState extends State<AgentsPage> {
         _loading = false;
       });
     }
+  }
+
+  void _onGroupSelect(String? groupId) {
+    setState(() => _activeGroupId = groupId);
+    _load();
+  }
+
+  Future<void> _shareAgent(AgentItem item) async {
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+    await showShareToGroupDialog(
+      context: context,
+      apiClient: widget.apiClient,
+      token: token,
+      resourceType: 'agent',
+      resourceId: item.id,
+      onShared: _load,
+    );
   }
 
   Future<void> _openCreateDialog() async {
@@ -204,42 +244,76 @@ class _AgentsPageState extends State<AgentsPage> {
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: _load,
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        children: [
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 700;
+        final groupPanel = GroupFilterPanel(
+          apiClient: widget.apiClient,
+          token: _token ?? '',
+          activeGroupId: _activeGroupId,
+          onSelect: _onGroupSelect,
+          vertical: wide,
+        );
+
+        final list = RefreshIndicator(
+          onRefresh: _load,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
             children: [
-              FilledButton.icon(
-                onPressed: _openCreateDialog,
-                icon: const Icon(Icons.add),
-                label: const Text('Nuevo agente'),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilledButton.icon(
+                    onPressed: _openCreateDialog,
+                    icon: const Icon(Icons.add),
+                    label: const Text('Nuevo agente'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _load,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Actualizar'),
+                  ),
+                ],
               ),
-              OutlinedButton.icon(
-                onPressed: _load,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Actualizar'),
+              if (!wide) ...[
+                const SizedBox(height: 12),
+                groupPanel,
+              ],
+              const SizedBox(height: 12),
+              TextField(
+                controller: _queryController,
+                decoration: const InputDecoration(
+                  labelText: 'Buscar agente',
+                  prefixIcon: Icon(Icons.search, size: 20),
+                ),
+                onChanged: (value) => setState(() => _query = value),
               ),
+              const SizedBox(height: 12),
+              Text('Agentes: ${_filteredAgents.length}', style: Theme.of(context).textTheme.bodyMedium),
+              const SizedBox(height: 12),
+              if (_filteredAgents.isEmpty)
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(_agents.isEmpty ? 'No hay agentes disponibles.' : 'Sin resultados para esa búsqueda.'),
+                  ),
+                )
+              else
+                ..._filteredAgents.map(_buildAgentCard),
             ],
           ),
-          const SizedBox(height: 12),
-          Text('Agentes: ${_agents.length}', style: Theme.of(context).textTheme.bodyMedium),
-          const SizedBox(height: 12),
-          if (_agents.isEmpty)
-            const Card(
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Text('No hay agentes disponibles.'),
-              ),
-            )
-          else
-            ..._agents.map(_buildAgentCard),
-        ],
-      ),
+        );
+
+        if (!wide) return list;
+        return Row(
+          children: [
+            groupPanel,
+            Expanded(child: list),
+          ],
+        );
+      },
     );
   }
 
@@ -274,24 +348,29 @@ class _AgentsPageState extends State<AgentsPage> {
               Text(item.description, maxLines: 3, overflow: TextOverflow.ellipsis),
             ],
             const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+            Row(
               children: [
                 FilledButton.icon(
                   onPressed: () => _openChat(item),
                   icon: const Icon(Icons.chat_bubble_outline),
                   label: const Text('Chat'),
                 ),
-                OutlinedButton.icon(
-                  onPressed: () => _openEditDialog(item),
-                  icon: const Icon(Icons.edit_outlined),
-                  label: const Text('Editar'),
+                const Spacer(),
+                ActionIconButton(
+                  icon: Icons.group_add_outlined,
+                  tooltip: 'Compartir con grupo',
+                  onPressed: () => _shareAgent(item),
                 ),
-                OutlinedButton.icon(
+                ActionIconButton(
+                  icon: Icons.edit_outlined,
+                  tooltip: 'Editar',
+                  onPressed: () => _openEditDialog(item),
+                ),
+                ActionIconButton(
+                  icon: Icons.delete_outline,
+                  tooltip: 'Eliminar',
+                  danger: true,
                   onPressed: () => _deleteAgent(item),
-                  icon: const Icon(Icons.delete_outline),
-                  label: const Text('Eliminar'),
                 ),
               ],
             ),

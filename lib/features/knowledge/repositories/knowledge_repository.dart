@@ -6,8 +6,11 @@ class KnowledgeRepository {
 
   final ApiClient apiClient;
 
-  Future<List<KnowledgeItem>> listItems(String token, {String? type}) async {
-    final query = type == null || type.isEmpty ? '' : '?type=${Uri.encodeQueryComponent(type)}';
+  Future<List<KnowledgeItem>> listItems(String token, {String? type, String? groupId}) async {
+    final params = <String>[];
+    if (type != null && type.isNotEmpty) params.add('type=${Uri.encodeQueryComponent(type)}');
+    if (groupId != null && groupId.isNotEmpty) params.add('group_id=${Uri.encodeQueryComponent(groupId)}');
+    final query = params.isEmpty ? '' : '?${params.join('&')}';
     final response = await apiClient.get('/api/knowledge$query', gaToken: token, cache: true);
     final payload = response.body;
     if (payload is! List) return const [];

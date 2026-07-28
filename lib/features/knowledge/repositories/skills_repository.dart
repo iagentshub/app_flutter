@@ -6,8 +6,9 @@ class SkillsRepository {
 
   final ApiClient apiClient;
 
-  Future<List<SkillItem>> listSkills(String token, {String scope = 'all'}) async {
-    final response = await apiClient.get('/api/skills?scope=$scope', gaToken: token, cache: true);
+  Future<List<SkillItem>> listSkills(String token, {String scope = 'all', String? groupId}) async {
+    final query = groupId == null || groupId.isEmpty ? '' : '&group_id=${Uri.encodeQueryComponent(groupId)}';
+    final response = await apiClient.get('/api/skills?scope=$scope$query', gaToken: token, cache: true);
     final payload = response.body;
     if (payload is! List) return const [];
     return payload.whereType<Map<String, dynamic>>().map((item) => SkillItem(raw: item)).toList();

@@ -6,8 +6,9 @@ class AgentsRepository {
 
   final ApiClient apiClient;
 
-  Future<List<AgentItem>> listAgents(String token) async {
-    final response = await apiClient.get('/api/agents?scope=all', gaToken: token, cache: true);
+  Future<List<AgentItem>> listAgents(String token, {String? groupId}) async {
+    final query = groupId == null || groupId.isEmpty ? '' : '&group_id=${Uri.encodeComponent(groupId)}';
+    final response = await apiClient.get('/api/agents?scope=all$query', gaToken: token, cache: true);
     final payload = response.body;
     if (payload is! List) return const [];
     return payload

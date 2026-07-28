@@ -23,6 +23,8 @@ abstract final class AppTheme {
 
     const cardColor = _white;
     const pageBackground = Color(0xFFF5F5F7);
+    const surface2 = Color(0xFFF0F0F2);
+    const line = Color(0x14000000);
 
     return ThemeData(
       colorScheme: scheme,
@@ -34,8 +36,27 @@ abstract final class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: Color(0x14000000)),
+          side: const BorderSide(color: line),
         ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: surface2,
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: line),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: line),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: _red, width: 1.4),
+        ),
+        labelStyle: const TextStyle(color: Color(0x8A000000)),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: _black,
@@ -84,6 +105,8 @@ abstract final class AppTheme {
     );
 
     const cardColor = Color(0xFF141414);
+    const surface2 = Color(0xFF1C1C1C);
+    const line = Color(0x14FFFFFF);
 
     return ThemeData(
       brightness: Brightness.dark,
@@ -96,8 +119,27 @@ abstract final class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: Color(0x14FFFFFF)),
+          side: const BorderSide(color: line),
         ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: surface2,
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: line),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: line),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: _red, width: 1.4),
+        ),
+        labelStyle: const TextStyle(color: Color(0x8AFFFFFF)),
       ),
       textTheme: ThemeData.dark(useMaterial3: true)
           .textTheme
@@ -118,6 +160,13 @@ abstract final class AppTheme {
           foregroundColor: _white,
           side: const BorderSide(color: _white),
         ),
+      ),
+      chipTheme: const ChipThemeData(
+        backgroundColor: Color(0x1FFF3B30),
+        selectedColor: Color(0x38FF3B30),
+        side: BorderSide(color: Color(0x59FF3B30)),
+        labelStyle: TextStyle(color: _white),
+        shape: StadiumBorder(),
       ),
       snackBarTheme: const SnackBarThemeData(
         backgroundColor: _white,

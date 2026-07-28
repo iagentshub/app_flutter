@@ -9,6 +9,10 @@ import '../../../models/skills/skill_models.dart';
 import '../repositories/knowledge_repository.dart';
 import '../repositories/skills_repository.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/widgets/action_icon_button.dart';
+import '../../../shared/widgets/filter_chips_row.dart';
+import '../../../shared/widgets/group_filter_panel.dart';
+import '../../../shared/widgets/share_to_group_dialog.dart';
 
 class KnowledgePage extends StatefulWidget {
   const KnowledgePage({
@@ -37,6 +41,7 @@ class _KnowledgePageState extends State<KnowledgePage> {
   List<SkillItem> _skills = const [];
   bool _skillsLoading = true;
   String? _skillsError;
+  String? _activeGroupId;
 
   @override
   void initState() {
@@ -63,7 +68,7 @@ class _KnowledgePageState extends State<KnowledgePage> {
       _skillsError = null;
     });
     try {
-      final skills = await _skillsRepository.listSkills(token);
+      final skills = await _skillsRepository.listSkills(token, groupId: _activeGroupId);
       if (!mounted) return;
       setState(() {
         _skills = skills;
@@ -179,7 +184,7 @@ class _KnowledgePageState extends State<KnowledgePage> {
 
     try {
       final type = _filter == 'all' ? null : _filter;
-      final items = await _repository.listItems(token, type: type);
+      final items = await _repository.listItems(token, type: type, groupId: _activeGroupId);
       if (!mounted) return;
       setState(() {
         _items = items;
@@ -325,9 +330,41 @@ class _KnowledgePageState extends State<KnowledgePage> {
     );
   }
 
+  void _onGroupSelect(String? groupId) {
+    setState(() => _activeGroupId = groupId);
+    _load();
+    _loadSkills();
+  }
+
+  Future<void> _shareItem(KnowledgeItem item) async {
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+    await showShareToGroupDialog(
+      context: context,
+      apiClient: widget.apiClient,
+      token: token,
+      resourceType: 'knowledge',
+      resourceId: item.id,
+      onShared: _load,
+    );
+  }
+
+  Future<void> _shareSkill(SkillItem item) async {
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+    await showShareToGroupDialog(
+      context: context,
+      apiClient: widget.apiClient,
+      token: token,
+      resourceType: 'skill',
+      resourceId: item.id,
+      onShared: _loadSkills,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Column(
+    final content = Column(
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -343,6 +380,39 @@ class _KnowledgePageState extends State<KnowledgePage> {
         ),
         Expanded(child: _buildSection()),
       ],
+    );
+
+    if (_section == 'memory') return content;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 700;
+        final groupPanel = GroupFilterPanel(
+          apiClient: widget.apiClient,
+          token: _token ?? '',
+          activeGroupId: _activeGroupId,
+          onSelect: _onGroupSelect,
+          vertical: wide,
+        );
+
+        if (!wide) {
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: groupPanel,
+              ),
+              Expanded(child: content),
+            ],
+          );
+        }
+        return Row(
+          children: [
+            groupPanel,
+            Expanded(child: content),
+          ],
+        );
+      },
     );
   }
 
@@ -421,31 +491,31 @@ class _KnowledgePageState extends State<KnowledgePage> {
                 ],
               ),
               const SizedBox(height: 12),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 220,
-                    child: DropdownButtonFormField<String>(
-                      initialValue: _filter,
-                      decoration: const InputDecoration(labelText: 'Filtrar tipo'),
-                      items: const [
-                        DropdownMenuItem(value: 'all', child: Text('Todos')),
-                        DropdownMenuItem(value: 'text', child: Text('Texto')),
-                        DropdownMenuItem(value: 'url', child: Text('URL')),
-                        DropdownMenuItem(value: 'document', child: Text('Documento')),
-                      ],
-                      onChanged: (value) {
-                        if (value == null) return;
-                        setState(() => _filter = value);
-                        _load();
-                      },
-                    ),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: FilterChipsRow(
+                          options: const [
+                            ('all', 'Todos'),
+                            ('text', 'Texto'),
+                            ('url', 'URL'),
+                            ('document', 'Documento'),
+                          ],
+                          value: _filter,
+                          onChanged: (value) {
+                            setState(() => _filter = value);
+                            _load();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text('${_items.length}', style: Theme.of(context).textTheme.bodyMedium),
+                    ],
                   ),
-                  Text('Items: ${_items.length}', style: Theme.of(context).textTheme.bodyMedium),
-                ],
+                ),
               ),
               const SizedBox(height: 12),
               if (_items.isEmpty)
@@ -568,19 +638,24 @@ class _KnowledgePageState extends State<KnowledgePage> {
               Text(item.description, maxLines: 3, overflow: TextOverflow.ellipsis),
             ],
             const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+            Row(
               children: [
-                OutlinedButton.icon(
-                  onPressed: () => _openEditSkillDialog(item),
-                  icon: const Icon(Icons.edit_outlined),
-                  label: const Text('Editar'),
+                const Spacer(),
+                ActionIconButton(
+                  icon: Icons.group_add_outlined,
+                  tooltip: 'Compartir con grupo',
+                  onPressed: () => _shareSkill(item),
                 ),
-                OutlinedButton.icon(
+                ActionIconButton(
+                  icon: Icons.edit_outlined,
+                  tooltip: 'Editar',
+                  onPressed: () => _openEditSkillDialog(item),
+                ),
+                ActionIconButton(
+                  icon: Icons.delete_outline,
+                  tooltip: 'Eliminar',
+                  danger: true,
                   onPressed: () => _deleteSkill(item),
-                  icon: const Icon(Icons.delete_outline),
-                  label: const Text('Eliminar'),
                 ),
               ],
             ),
@@ -627,14 +702,19 @@ class _KnowledgePageState extends State<KnowledgePage> {
               Text(item.preview.trim(), maxLines: 4, overflow: TextOverflow.ellipsis),
             ],
             const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+            Row(
               children: [
-                OutlinedButton.icon(
+                const Spacer(),
+                ActionIconButton(
+                  icon: Icons.group_add_outlined,
+                  tooltip: 'Compartir con grupo',
+                  onPressed: () => _shareItem(item),
+                ),
+                ActionIconButton(
+                  icon: Icons.delete_outline,
+                  tooltip: 'Eliminar',
+                  danger: true,
                   onPressed: () => _deleteItem(item),
-                  icon: const Icon(Icons.delete_outline),
-                  label: const Text('Eliminar'),
                 ),
               ],
             ),

@@ -5,6 +5,7 @@ import '../../../core/network/api_error.dart';
 import '../../../models/memory/memory_models.dart';
 import '../repositories/memory_repository.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/widgets/action_icon_button.dart';
 
 class MemoryPage extends StatefulWidget {
   const MemoryPage({
@@ -255,19 +256,19 @@ class _MemoryPageState extends State<MemoryPage> {
             const SizedBox(height: 6),
             Text('Tamaño: ${file.size} chars${file.updatedAt.isEmpty ? '' : ' · ${file.updatedAt}'}'),
             const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+            Row(
               children: [
-                OutlinedButton.icon(
+                const Spacer(),
+                ActionIconButton(
+                  icon: Icons.edit_outlined,
+                  tooltip: 'Editar',
                   onPressed: () => _editFile(file),
-                  icon: const Icon(Icons.edit_outlined),
-                  label: const Text('Editar'),
                 ),
-                OutlinedButton.icon(
+                ActionIconButton(
+                  icon: Icons.delete_outline,
+                  tooltip: 'Eliminar',
+                  danger: true,
                   onPressed: () => _deleteFile(file),
-                  icon: const Icon(Icons.delete_outline),
-                  label: const Text('Eliminar'),
                 ),
               ],
             ),

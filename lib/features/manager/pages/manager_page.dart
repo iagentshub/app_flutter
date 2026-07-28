@@ -5,6 +5,7 @@ import '../../../core/network/api_error.dart';
 import '../../../models/manager/workspace_models.dart';
 import '../repositories/manager_repository.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/widgets/action_icon_button.dart';
 
 class ManagerPage extends StatefulWidget {
   const ManagerPage({
@@ -421,24 +422,24 @@ class _ManagerPageState extends State<ManagerPage> {
             const SizedBox(height: 8),
             Text('ID: ${item.id}'),
             const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+            Row(
               children: [
                 OutlinedButton.icon(
                   onPressed: item.active || switching ? null : () => _switchWorkspace(item),
                   icon: const Icon(Icons.swap_horiz_outlined),
                   label: Text(switching ? 'Cambiando...' : 'Activar'),
                 ),
-                OutlinedButton.icon(
+                const Spacer(),
+                ActionIconButton(
+                  icon: Icons.edit_outlined,
+                  tooltip: 'Renombrar',
                   onPressed: item.isPersonal ? null : () => _renameWorkspace(item),
-                  icon: const Icon(Icons.edit_outlined),
-                  label: const Text('Renombrar'),
                 ),
-                OutlinedButton.icon(
+                ActionIconButton(
+                  icon: Icons.delete_outline,
+                  tooltip: 'Eliminar',
+                  danger: true,
                   onPressed: item.isPersonal ? null : () => _deleteWorkspace(item),
-                  icon: const Icon(Icons.delete_outline),
-                  label: const Text('Eliminar'),
                 ),
               ],
             ),
@@ -506,9 +507,11 @@ class _ManagerPageState extends State<ManagerPage> {
                   dense: true,
                   title: Text(username),
                   subtitle: Text('Rol: $role'),
-                  trailing: OutlinedButton(
+                  trailing: ActionIconButton(
+                    icon: Icons.person_remove_outlined,
+                    tooltip: 'Quitar',
+                    danger: true,
                     onPressed: canManage ? () => _removeMember(username) : null,
-                    child: const Text('Quitar'),
                   ),
                 );
               }),
@@ -542,9 +545,11 @@ class _ManagerPageState extends State<ManagerPage> {
                   dense: true,
                   title: Text(username.isEmpty ? id : username),
                   subtitle: Text('id: $id${createdAt.isEmpty ? '' : ' · $createdAt'}'),
-                  trailing: OutlinedButton(
+                  trailing: ActionIconButton(
+                    icon: Icons.close,
+                    tooltip: 'Cancelar',
+                    danger: true,
                     onPressed: () => _cancelInvitation(id),
-                    child: const Text('Cancelar'),
                   ),
                 );
               }),

@@ -5,6 +5,7 @@ import '../../../core/network/api_error.dart';
 import '../../../models/explore/explore_models.dart';
 import '../../explore/repositories/explore_repository.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/widgets/filter_chips_row.dart';
 
 class LabelsPage extends StatefulWidget {
   const LabelsPage({
@@ -185,39 +186,42 @@ class _LabelsPageState extends State<LabelsPage> {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(16),
             children: [
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 220,
-                    child: DropdownButtonFormField<String>(
-                      initialValue: _selectedType,
-                      decoration: const InputDecoration(labelText: 'Tipo de recurso'),
-                      items: const [
-                        DropdownMenuItem(value: 'all', child: Text('all')),
-                        DropdownMenuItem(value: 'agent', child: Text('agent')),
-                        DropdownMenuItem(value: 'skill', child: Text('skill')),
-                        DropdownMenuItem(value: 'knowledge', child: Text('knowledge')),
-                        DropdownMenuItem(value: 'workflow', child: Text('workflow')),
-                      ],
-                      onChanged: (value) {
-                        if (value == null) return;
-                        _onTypeChange(value);
-                      },
-                    ),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      FilterChipsRow(
+                        options: const [
+                          ('all', 'Todos'),
+                          ('agent', 'Agentes'),
+                          ('skill', 'Skills'),
+                          ('knowledge', 'Knowledge'),
+                          ('workflow', 'Workflows'),
+                        ],
+                        value: _selectedType,
+                        onChanged: _onTypeChange,
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text('Label activo: ${_selectedLabel.isEmpty ? '- ninguno -' : _selectedLabel}'),
+                          ),
+                          TextButton.icon(
+                            onPressed: () async {
+                              setState(() => _selectedLabel = '');
+                              await _loadBase();
+                            },
+                            icon: const Icon(Icons.clear_all, size: 18),
+                            label: const Text('Limpiar'),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  OutlinedButton.icon(
-                    onPressed: () async {
-                      setState(() => _selectedLabel = '');
-                      await _loadBase();
-                    },
-                    icon: const Icon(Icons.clear_all),
-                    label: const Text('Limpiar filtro'),
-                  ),
-                  Text('Label activo: ${_selectedLabel.isEmpty ? '- ninguno -' : _selectedLabel}'),
-                ],
+                ),
               ),
               const SizedBox(height: 14),
               const Text('Etiquetas detectadas', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),

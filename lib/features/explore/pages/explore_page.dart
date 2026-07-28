@@ -7,6 +7,7 @@ import '../../../core/network/api_error.dart';
 import '../../../models/explore/explore_models.dart';
 import '../repositories/explore_repository.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/widgets/filter_chips_row.dart';
 
 class ExplorePage extends StatefulWidget {
   const ExplorePage({
@@ -225,56 +226,66 @@ class _ExplorePageState extends State<ExplorePage> {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(16),
             children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 200,
-                    child: DropdownButtonFormField<String>(
-                      initialValue: _type,
-                      decoration: const InputDecoration(labelText: 'Tipo'),
-                      items: const [
-                        DropdownMenuItem(value: 'all', child: Text('all')),
-                        DropdownMenuItem(value: 'agent', child: Text('agent')),
-                        DropdownMenuItem(value: 'skill', child: Text('skill')),
-                        DropdownMenuItem(value: 'knowledge', child: Text('knowledge')),
-                        DropdownMenuItem(value: 'workflow', child: Text('workflow')),
-                      ],
-                      onChanged: (value) {
-                        if (value == null) return;
-                        setState(() => _type = value);
-                      },
-                    ),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      FilterChipsRow(
+                        options: const [
+                          ('all', 'Todos'),
+                          ('agent', 'Agentes'),
+                          ('skill', 'Skills'),
+                          ('knowledge', 'Knowledge'),
+                          ('workflow', 'Workflows'),
+                        ],
+                        value: _type,
+                        onChanged: (value) => setState(() => _type = value),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 220,
+                            child: TextField(
+                              controller: _queryController,
+                              decoration: const InputDecoration(
+                                labelText: 'Buscar',
+                                prefixIcon: Icon(Icons.search, size: 20),
+                              ),
+                              onSubmitted: (_) => _load(),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 160,
+                            child: TextField(
+                              controller: _categoryController,
+                              decoration: const InputDecoration(labelText: 'Categoría'),
+                              onSubmitted: (_) => _load(),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 160,
+                            child: TextField(
+                              controller: _labelController,
+                              decoration: const InputDecoration(labelText: 'Label'),
+                              onSubmitted: (_) => _load(),
+                            ),
+                          ),
+                          FilledButton.icon(
+                            onPressed: _load,
+                            icon: const Icon(Icons.search),
+                            label: const Text('Filtrar'),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  SizedBox(
-                    width: 220,
-                    child: TextField(
-                      controller: _queryController,
-                      decoration: const InputDecoration(labelText: 'Buscar (q)'),
-                    ),
-                  ),
-                  SizedBox(
-                    width: 180,
-                    child: TextField(
-                      controller: _categoryController,
-                      decoration: const InputDecoration(labelText: 'Categoría'),
-                    ),
-                  ),
-                  SizedBox(
-                    width: 180,
-                    child: TextField(
-                      controller: _labelController,
-                      decoration: const InputDecoration(labelText: 'Label'),
-                    ),
-                  ),
-                  FilledButton.icon(
-                    onPressed: _load,
-                    icon: const Icon(Icons.search),
-                    label: const Text('Filtrar'),
-                  ),
-                ],
+                ),
               ),
               const SizedBox(height: 12),
               Text('Resultados: ${_items.length}', style: Theme.of(context).textTheme.bodyMedium),

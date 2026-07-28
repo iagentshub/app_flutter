@@ -5,6 +5,9 @@ import '../../../core/network/api_error.dart';
 import '../../../models/connections/connection_models.dart';
 import '../repositories/connections_repository.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/widgets/action_icon_button.dart';
+import '../../../shared/widgets/group_filter_panel.dart';
+import '../../../shared/widgets/share_to_group_dialog.dart';
 
 class ConnectionsPage extends StatefulWidget {
   const ConnectionsPage({
@@ -22,17 +25,36 @@ class ConnectionsPage extends StatefulWidget {
 
 class _ConnectionsPageState extends State<ConnectionsPage> {
   late final ConnectionsRepository _repository;
+  final TextEditingController _queryController = TextEditingController();
   List<ConnectionItem> _connections = const [];
   List<ConnectionProvider> _providers = const [];
   bool _loading = true;
   bool _testingAll = false;
   String? _error;
+  String _query = '';
+  String? _activeGroupId;
+
+  List<ConnectionItem> get _filteredConnections {
+    final query = _query.trim().toLowerCase();
+    if (query.isEmpty) return _connections;
+    return _connections.where((item) {
+      return item.name.toLowerCase().contains(query) ||
+          item.type.toLowerCase().contains(query) ||
+          item.model.toLowerCase().contains(query);
+    }).toList();
+  }
 
   @override
   void initState() {
     super.initState();
     _repository = ConnectionsRepository(apiClient: widget.apiClient);
     _load();
+  }
+
+  @override
+  void dispose() {
+    _queryController.dispose();
+    super.dispose();
   }
 
   String? get _token => widget.sessionController.gaToken;
@@ -54,7 +76,7 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
 
     try {
       final results = await Future.wait([
-        _repository.listConnections(token),
+        _repository.listConnections(token, groupId: _activeGroupId),
         _repository.listProviders(token),
       ]);
 
@@ -77,6 +99,24 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
         _loading = false;
       });
     }
+  }
+
+  void _onGroupSelect(String? groupId) {
+    setState(() => _activeGroupId = groupId);
+    _load();
+  }
+
+  Future<void> _shareConnection(ConnectionItem item) async {
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+    await showShareToGroupDialog(
+      context: context,
+      apiClient: widget.apiClient,
+      token: token,
+      resourceType: 'connection',
+      resourceId: item.id,
+      onShared: _load,
+    );
   }
 
   Future<void> _openCreateDialog() async {
@@ -288,50 +328,86 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: _load,
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        children: [
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 700;
+        final groupPanel = GroupFilterPanel(
+          apiClient: widget.apiClient,
+          token: _token ?? '',
+          activeGroupId: _activeGroupId,
+          onSelect: _onGroupSelect,
+          vertical: wide,
+        );
+
+        final list = RefreshIndicator(
+          onRefresh: _load,
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
             children: [
-              FilledButton.icon(
-                onPressed: _providers.isEmpty ? null : _openCreateDialog,
-                icon: const Icon(Icons.add),
-                label: const Text('Nueva conexión'),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilledButton.icon(
+                    onPressed: _providers.isEmpty ? null : _openCreateDialog,
+                    icon: const Icon(Icons.add),
+                    label: const Text('Nueva conexión'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _load,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Actualizar'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _testingAll ? null : _testAll,
+                    icon: const Icon(Icons.play_circle_outline),
+                    label: Text(_testingAll ? 'Probando...' : 'Test masivo'),
+                  ),
+                ],
               ),
-              OutlinedButton.icon(
-                onPressed: _load,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Actualizar'),
+              if (!wide) ...[
+                const SizedBox(height: 12),
+                groupPanel,
+              ],
+              const SizedBox(height: 12),
+              TextField(
+                controller: _queryController,
+                decoration: const InputDecoration(
+                  labelText: 'Buscar conexión',
+                  prefixIcon: Icon(Icons.search, size: 20),
+                ),
+                onChanged: (value) => setState(() => _query = value),
               ),
-              OutlinedButton.icon(
-                onPressed: _testingAll ? null : _testAll,
-                icon: const Icon(Icons.play_circle_outline),
-                label: Text(_testingAll ? 'Probando...' : 'Test masivo'),
+              const SizedBox(height: 12),
+              Text(
+                'Conexiones: ${_filteredConnections.length} | Proveedores: ${_providers.length}',
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
+              const SizedBox(height: 12),
+              if (_filteredConnections.isEmpty)
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      _connections.isEmpty ? 'No hay conexiones todavía. Crea la primera.' : 'Sin resultados para esa búsqueda.',
+                    ),
+                  ),
+                )
+              else
+                ..._filteredConnections.map(_buildConnectionCard),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            'Conexiones: ${_connections.length} | Proveedores: ${_providers.length}',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 12),
-          if (_connections.isEmpty)
-            const Card(
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Text('No hay conexiones todavía. Crea la primera.'),
-              ),
-            )
-          else
-            ..._connections.map(_buildConnectionCard),
-        ],
-      ),
+        );
+
+        if (!wide) return list;
+        return Row(
+          children: [
+            groupPanel,
+            Expanded(child: list),
+          ],
+        );
+      },
     );
   }
 
@@ -364,24 +440,29 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
             const SizedBox(height: 6),
             Text(metaParts.join(' · ')),
             const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+            Row(
               children: [
                 OutlinedButton.icon(
                   onPressed: item.isVirtual ? null : () => _testConnection(item),
                   icon: const Icon(Icons.health_and_safety_outlined),
                   label: const Text('Test'),
                 ),
-                OutlinedButton.icon(
-                  onPressed: () => _openEditDialog(item),
-                  icon: const Icon(Icons.edit_outlined),
-                  label: const Text('Editar'),
+                const Spacer(),
+                ActionIconButton(
+                  icon: Icons.group_add_outlined,
+                  tooltip: 'Compartir con grupo',
+                  onPressed: item.isVirtual ? null : () => _shareConnection(item),
                 ),
-                OutlinedButton.icon(
+                ActionIconButton(
+                  icon: Icons.edit_outlined,
+                  tooltip: 'Editar',
+                  onPressed: () => _openEditDialog(item),
+                ),
+                ActionIconButton(
+                  icon: Icons.delete_outline,
+                  tooltip: 'Eliminar',
+                  danger: true,
                   onPressed: () => _deleteConnection(item),
-                  icon: const Icon(Icons.delete_outline),
-                  label: const Text('Eliminar'),
                 ),
               ],
             ),

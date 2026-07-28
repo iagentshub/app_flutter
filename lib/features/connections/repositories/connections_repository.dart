@@ -6,9 +6,10 @@ class ConnectionsRepository {
 
   final ApiClient apiClient;
 
-  Future<List<ConnectionItem>> listConnections(String token) async {
+  Future<List<ConnectionItem>> listConnections(String token, {String? groupId}) async {
+    final query = groupId == null || groupId.isEmpty ? '' : '?group_id=${Uri.encodeComponent(groupId)}';
     final response = await apiClient.get(
-      '/api/connections',
+      '/api/connections$query',
       gaToken: token,
       cache: true,
     );

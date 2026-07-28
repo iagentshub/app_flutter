@@ -7,6 +7,7 @@ import '../../../core/network/api_error.dart';
 import '../../../models/workflows/workflow_models.dart';
 import '../repositories/workflows_repository.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/widgets/action_icon_button.dart';
 import 'workflow_editor_page.dart';
 
 class WorkflowsPage extends StatefulWidget {
@@ -303,24 +304,24 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
               Text(item.description, maxLines: 3, overflow: TextOverflow.ellipsis),
             ],
             const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+            Row(
               children: [
                 OutlinedButton.icon(
                   onPressed: () => _runWorkflow(item),
                   icon: const Icon(Icons.play_arrow_outlined),
                   label: const Text('Ejecutar'),
                 ),
-                OutlinedButton.icon(
+                const Spacer(),
+                ActionIconButton(
+                  icon: Icons.edit_outlined,
+                  tooltip: 'Editar',
                   onPressed: () => _openEditDialog(item),
-                  icon: const Icon(Icons.edit_outlined),
-                  label: const Text('Editar'),
                 ),
-                OutlinedButton.icon(
+                ActionIconButton(
+                  icon: Icons.delete_outline,
+                  tooltip: 'Eliminar',
+                  danger: true,
                   onPressed: () => _deleteWorkflow(item),
-                  icon: const Icon(Icons.delete_outline),
-                  label: const Text('Eliminar'),
                 ),
               ],
             ),
