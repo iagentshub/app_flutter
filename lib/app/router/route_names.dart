@@ -33,6 +33,7 @@ abstract final class RouteNames {
   static const admin = '/admin/';
   static const adminMetadata = '/admin/metadata/';
   static const adminCentinel = '/admin/centinel/';
+  static const adminLogs = '/admin/logs/';
 
   static const publicProfilePrefix = '/u/';
 }

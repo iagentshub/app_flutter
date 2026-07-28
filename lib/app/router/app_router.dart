@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/network/api_client.dart';
 import '../../features/admin/pages/admin_page.dart';
 import '../../features/admin/pages/centinel_page.dart';
+import '../../features/admin/pages/logs_page.dart';
 import '../../features/admin/pages/metadata_page.dart';
 import '../../features/agents/pages/agents_page.dart';
 import '../../features/auth/pages/forgot_password_page.dart';
@@ -257,6 +258,13 @@ GoRouter createRouter({
           GoRoute(
             path: RouteNames.adminCentinel,
             builder: (context, state) => CentinelPage(
+              apiClient: apiClient,
+              sessionController: sessionController,
+            ),
+          ),
+          GoRoute(
+            path: RouteNames.adminLogs,
+            builder: (context, state) => LogsPageView(
               apiClient: apiClient,
               sessionController: sessionController,
             ),

@@ -117,6 +117,7 @@ const _adminItems = [
   _NavItem(RouteNames.admin, 'Admin', Icons.admin_panel_settings_outlined),
   _NavItem(RouteNames.adminMetadata, 'Metadata', Icons.table_rows_outlined),
   _NavItem(RouteNames.adminCentinel, 'Centinel', Icons.security_outlined),
+  _NavItem(RouteNames.adminLogs, 'Logs', Icons.receipt_long_outlined),
 ];
 
 String _titleForLocation(String location) {
