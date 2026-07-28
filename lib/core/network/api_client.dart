@@ -56,6 +56,38 @@ class ApiClient {
     return _request('DELETE', path, body: body, gaToken: gaToken);
   }
 
+  /// Envía un POST y expone la respuesta como flujo de líneas crudas
+  /// (Server-Sent Events: `data: {...}`). Usado por streaming de chat.
+  Stream<String> postStream(String path, {Map<String, dynamic>? body, String? gaToken}) async* {
+    final headers = <String, String>{'Accept': 'text/event-stream'};
+    if (gaToken != null && gaToken.isNotEmpty) {
+      headers['Cookie'] = 'ga_token=$gaToken';
+    }
+    if (body != null) headers['Content-Type'] = 'application/json';
+
+    final request = http.Request('POST', _uri(path));
+    request.headers.addAll(headers);
+    if (body != null) request.body = jsonEncode(body);
+
+    final streamed = await _client.send(request);
+    if (streamed.statusCode < 200 || streamed.statusCode >= 300) {
+      final raw = await streamed.stream.bytesToString();
+      final parsed = _parseBody(raw);
+      throw _toApiError(ApiResponse(statusCode: streamed.statusCode, headers: streamed.headers, body: parsed));
+    }
+
+    var buffer = '';
+    await for (final chunk in streamed.stream.transform(utf8.decoder)) {
+      buffer += chunk;
+      final lines = buffer.split('\n');
+      buffer = lines.removeLast();
+      for (final line in lines) {
+        yield line;
+      }
+    }
+    if (buffer.isNotEmpty) yield buffer;
+  }
+
   Future<ApiResponse> postMultipart(
     String path, {
     required String fieldName,

@@ -5,6 +5,7 @@ import '../../../core/network/api_error.dart';
 import '../../../models/agents/agent_models.dart';
 import '../repositories/agents_repository.dart';
 import '../../../shared/state/session_controller.dart';
+import 'chat_page.dart';
 
 class AgentsPage extends StatefulWidget {
   const AgentsPage({
@@ -151,6 +152,18 @@ class _AgentsPageState extends State<AgentsPage> {
     }
   }
 
+  void _openChat(AgentItem item) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ChatPage(
+          agent: item,
+          apiClient: widget.apiClient,
+          sessionController: widget.sessionController,
+        ),
+      ),
+    );
+  }
+
   void _showMessage(String text, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -265,6 +278,11 @@ class _AgentsPageState extends State<AgentsPage> {
               spacing: 8,
               runSpacing: 8,
               children: [
+                FilledButton.icon(
+                  onPressed: () => _openChat(item),
+                  icon: const Icon(Icons.chat_bubble_outline),
+                  label: const Text('Chat'),
+                ),
                 OutlinedButton.icon(
                   onPressed: () => _openEditDialog(item),
                   icon: const Icon(Icons.edit_outlined),
