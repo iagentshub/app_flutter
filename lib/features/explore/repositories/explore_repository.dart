@@ -21,7 +21,7 @@ class ExploreRepository {
       if (label.trim().isNotEmpty) 'label': label.trim(),
     };
     final uri = Uri(path: '/api/explore', queryParameters: params);
-    final response = await apiClient.get(uri.toString(), gaToken: token);
+    final response = await apiClient.get(uri.toString(), gaToken: token, cache: true);
     final payload = response.body;
     if (payload is! List) return const [];
     return payload
@@ -47,6 +47,7 @@ class ExploreRepository {
       '/api/${Uri.encodeComponent(resourceType)}/${Uri.encodeComponent(resourceId)}/star',
       gaToken: token,
     );
+    apiClient.invalidateCache('/api/explore');
     final payload = response.json;
     final stars = payload['stars'];
     if (stars is int) return stars;
@@ -59,6 +60,7 @@ class ExploreRepository {
       '/api/${Uri.encodeComponent(resourceType)}/${Uri.encodeComponent(resourceId)}/star',
       gaToken: token,
     );
+    apiClient.invalidateCache('/api/explore');
     final payload = response.json;
     final stars = payload['stars'];
     if (stars is int) return stars;

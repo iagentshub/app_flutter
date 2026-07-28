@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/router/route_names.dart';
+import '../../core/network/api_client.dart';
 import '../../features/auth/repositories/auth_repository.dart';
 import '../../models/dashboard/dashboard_widget_config.dart';
 import '../i18n/locale_loader.dart';
@@ -16,6 +17,7 @@ class AppShell extends StatelessWidget {
     required this.authRepository,
     required this.dashboardEditState,
     required this.localeController,
+    required this.apiClient,
     required this.location,
     required this.child,
     super.key,
@@ -25,6 +27,7 @@ class AppShell extends StatelessWidget {
   final AuthRepository authRepository;
   final DashboardEditState dashboardEditState;
   final LocaleController localeController;
+  final ApiClient apiClient;
   final String location;
   final Widget child;
 
@@ -56,6 +59,7 @@ class AppShell extends StatelessWidget {
       await authRepository.logout(token);
     }
     await sessionController.logout();
+    apiClient.invalidateCache();
     if (!context.mounted) return;
     context.go(RouteNames.login);
   }

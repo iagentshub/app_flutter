@@ -7,7 +7,7 @@ class MemoryRepository {
   final ApiClient apiClient;
 
   Future<List<MemoryFileItem>> listFiles(String token) async {
-    final response = await apiClient.get('/api/memory', gaToken: token);
+    final response = await apiClient.get('/api/memory', gaToken: token, cache: true);
     final payload = response.body;
     if (payload is! List) return const [];
     return payload

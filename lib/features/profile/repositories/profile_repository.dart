@@ -7,9 +7,9 @@ class ProfileRepository {
   final ApiClient apiClient;
 
   Future<ProfileBundle> fetchBundle(String token) async {
-    final sessionResponse = await apiClient.get('/api/auth/me', gaToken: token);
-    final settingsResponse = await apiClient.get('/api/settings', gaToken: token);
-    final deletionResponse = await apiClient.get('/api/auth/me/deletion-status', gaToken: token);
+    final sessionResponse = await apiClient.get('/api/auth/me', gaToken: token, cache: true);
+    final settingsResponse = await apiClient.get('/api/settings', gaToken: token, cache: true);
+    final deletionResponse = await apiClient.get('/api/auth/me/deletion-status', gaToken: token, cache: true);
 
     final session = ProfileSession.fromJson(sessionResponse.json);
     final settings = ProfileSettings.fromJson(settingsResponse.json);
@@ -24,6 +24,7 @@ class ProfileRepository {
       final socialResponse = await apiClient.get(
         '/api/users/${Uri.encodeComponent(session.username)}',
         gaToken: token,
+        cache: true,
       );
       social = SocialProfile.fromJson(socialResponse.json);
     }

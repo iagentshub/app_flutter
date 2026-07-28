@@ -184,6 +184,7 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       final me = await widget.authRepository.me(token);
+      widget.authRepository.clearCache();
       await widget.sessionController.login(token: token, user: me, remember: _rememberAccount);
       await _persistRememberedAccount();
       unawaited(

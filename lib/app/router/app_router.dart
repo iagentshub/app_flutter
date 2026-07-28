@@ -159,6 +159,7 @@ GoRouter createRouter({
           authRepository: authRepository,
           dashboardEditState: dashboardEditState,
           localeController: localeController,
+          apiClient: apiClient,
           location: state.matchedLocation,
           child: child,
         ),

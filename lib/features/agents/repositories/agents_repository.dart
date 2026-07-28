@@ -7,7 +7,7 @@ class AgentsRepository {
   final ApiClient apiClient;
 
   Future<List<AgentItem>> listAgents(String token) async {
-    final response = await apiClient.get('/api/agents?scope=all', gaToken: token);
+    final response = await apiClient.get('/api/agents?scope=all', gaToken: token, cache: true);
     final payload = response.body;
     if (payload is! List) return const [];
     return payload

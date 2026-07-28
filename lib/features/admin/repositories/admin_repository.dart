@@ -28,7 +28,7 @@ class AdminRepository {
   final ApiClient apiClient;
 
   Future<AdminStats> getStats(String token) async {
-    final response = await apiClient.get('/api/admin/stats', gaToken: token);
+    final response = await apiClient.get('/api/admin/stats', gaToken: token, cache: true);
     return AdminStats(raw: response.json);
   }
 
@@ -46,7 +46,7 @@ class AdminRepository {
       if (verified.trim().isNotEmpty) 'verified': verified.trim(),
     };
     final path = Uri(path: '/api/admin/users', queryParameters: params).toString();
-    final response = await apiClient.get(path, gaToken: token);
+    final response = await apiClient.get(path, gaToken: token, cache: true);
     final payload = response.body;
     if (payload is! List) return const [];
     return payload.whereType<Map<String, dynamic>>().toList();
@@ -61,7 +61,7 @@ class AdminRepository {
   }
 
   Future<List<Map<String, dynamic>>> listWorkspaces(String token) async {
-    final response = await apiClient.get('/api/admin/workspaces', gaToken: token);
+    final response = await apiClient.get('/api/admin/workspaces', gaToken: token, cache: true);
     final payload = response.body;
     if (payload is! List) return const [];
     return payload.whereType<Map<String, dynamic>>().toList();

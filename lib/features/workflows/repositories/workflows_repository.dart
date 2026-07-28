@@ -9,7 +9,7 @@ class WorkflowsRepository {
   final ApiClient apiClient;
 
   Future<List<WorkflowItem>> listWorkflows(String token) async {
-    final response = await apiClient.get('/api/workflows', gaToken: token);
+    final response = await apiClient.get('/api/workflows', gaToken: token, cache: true);
     final payload = response.body;
     if (payload is! List) return const [];
     return payload

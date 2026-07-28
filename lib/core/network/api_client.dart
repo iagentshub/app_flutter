@@ -25,10 +25,18 @@ class ApiResponse {
 }
 
 class ApiClient {
-  ApiClient(this.backendController, {http.Client? client}) : _client = client ?? http.Client();
+  ApiClient(this.backendController, {http.Client? client})
+    : _client = client ?? http.Client();
 
   final BackendController backendController;
   final http.Client _client;
+
+  /// Caché en memoria de respuestas GET, igual de espíritu que el staleTime
+  /// de react-query en el frontend: evita repetir la misma consulta de
+  /// listado cada vez que se revisita una vista, y se invalida sola cuando
+  /// una mutación (POST/PUT/PATCH/DELETE) toca el mismo recurso.
+  final Map<String, ({DateTime at, ApiResponse response})> _cache = {};
+  static const _defaultCacheTtl = Duration(seconds: 60);
 
   Uri _uri(String path) {
     final base = backendController.effectiveBaseUrl;
@@ -36,29 +44,104 @@ class ApiClient {
     return Uri.parse('$base$normalizedPath');
   }
 
-  Future<ApiResponse> get(String path, {String? gaToken}) {
-    return _request('GET', path, gaToken: gaToken);
+  /// [cache]: si es true, sirve una respuesta reciente (< [ttl]) desde
+  /// memoria en vez de golpear la red. Pensado para listados que se
+  /// recargan cada vez que se entra a una vista.
+  Future<ApiResponse> get(
+    String path, {
+    String? gaToken,
+    bool cache = false,
+    Duration? ttl,
+  }) async {
+    if (cache) {
+      final cached = _cache[path];
+      if (cached != null &&
+          DateTime.now().difference(cached.at) < (ttl ?? _defaultCacheTtl)) {
+        return cached.response;
+      }
+    }
+    final response = await _request('GET', path, gaToken: gaToken);
+    if (cache) _cache[path] = (at: DateTime.now(), response: response);
+    return response;
   }
 
-  Future<ApiResponse> post(String path, {Map<String, dynamic>? body, String? gaToken}) {
-    return _request('POST', path, body: body, gaToken: gaToken);
+  Future<ApiResponse> post(
+    String path, {
+    Map<String, dynamic>? body,
+    String? gaToken,
+  }) async {
+    final response = await _request('POST', path, body: body, gaToken: gaToken);
+    _invalidateForMutation(path);
+    return response;
   }
 
-  Future<ApiResponse> put(String path, {Map<String, dynamic>? body, String? gaToken}) {
-    return _request('PUT', path, body: body, gaToken: gaToken);
+  Future<ApiResponse> put(
+    String path, {
+    Map<String, dynamic>? body,
+    String? gaToken,
+  }) async {
+    final response = await _request('PUT', path, body: body, gaToken: gaToken);
+    _invalidateForMutation(path);
+    return response;
   }
 
-  Future<ApiResponse> patch(String path, {Map<String, dynamic>? body, String? gaToken}) {
-    return _request('PATCH', path, body: body, gaToken: gaToken);
+  Future<ApiResponse> patch(
+    String path, {
+    Map<String, dynamic>? body,
+    String? gaToken,
+  }) async {
+    final response = await _request(
+      'PATCH',
+      path,
+      body: body,
+      gaToken: gaToken,
+    );
+    _invalidateForMutation(path);
+    return response;
   }
 
-  Future<ApiResponse> delete(String path, {Map<String, dynamic>? body, String? gaToken}) {
-    return _request('DELETE', path, body: body, gaToken: gaToken);
+  Future<ApiResponse> delete(
+    String path, {
+    Map<String, dynamic>? body,
+    String? gaToken,
+  }) async {
+    final response = await _request(
+      'DELETE',
+      path,
+      body: body,
+      gaToken: gaToken,
+    );
+    _invalidateForMutation(path);
+    return response;
+  }
+
+  /// Borra toda la caché (p. ej. al cerrar sesión, para no arrastrar datos
+  /// de una cuenta a otra) o solo las entradas de un recurso concreto.
+  void invalidateCache([String? pathPrefix]) {
+    if (pathPrefix == null) {
+      _cache.clear();
+      return;
+    }
+    _cache.removeWhere((key, _) => key.startsWith(pathPrefix));
+  }
+
+  void _invalidateForMutation(String path) {
+    final withoutQuery = path.split('?').first;
+    final segments = withoutQuery
+        .split('/')
+        .where((s) => s.isNotEmpty)
+        .toList();
+    final root = segments.length >= 2 ? '/${segments[0]}/${segments[1]}' : path;
+    invalidateCache(root);
   }
 
   /// Envía un POST y expone la respuesta como flujo de líneas crudas
   /// (Server-Sent Events: `data: {...}`). Usado por streaming de chat.
-  Stream<String> postStream(String path, {Map<String, dynamic>? body, String? gaToken}) async* {
+  Stream<String> postStream(
+    String path, {
+    Map<String, dynamic>? body,
+    String? gaToken,
+  }) async* {
     final headers = <String, String>{'Accept': 'text/event-stream'};
     if (gaToken != null && gaToken.isNotEmpty) {
       headers['Cookie'] = 'ga_token=$gaToken';
@@ -73,7 +156,13 @@ class ApiClient {
     if (streamed.statusCode < 200 || streamed.statusCode >= 300) {
       final raw = await streamed.stream.bytesToString();
       final parsed = _parseBody(raw);
-      throw _toApiError(ApiResponse(statusCode: streamed.statusCode, headers: streamed.headers, body: parsed));
+      throw _toApiError(
+        ApiResponse(
+          statusCode: streamed.statusCode,
+          headers: streamed.headers,
+          body: parsed,
+        ),
+      );
     }
 
     var buffer = '';
@@ -106,7 +195,9 @@ class ApiClient {
       request.fields.addAll(fields);
     }
 
-    request.files.add(http.MultipartFile.fromBytes(fieldName, fileBytes, filename: fileName));
+    request.files.add(
+      http.MultipartFile.fromBytes(fieldName, fileBytes, filename: fileName),
+    );
 
     final streamed = await _client.send(request);
     final response = await http.Response.fromStream(streamed);
@@ -121,6 +212,7 @@ class ApiClient {
       throw _toApiError(apiResponse);
     }
 
+    _invalidateForMutation(path);
     return apiResponse;
   }
 
@@ -176,7 +268,8 @@ class ApiClient {
         return ApiError(statusCode: response.statusCode, message: detail);
       }
       if (detail is Map<String, dynamic>) {
-        final message = detail['message'] as String? ?? 'Error ${response.statusCode}';
+        final message =
+            detail['message'] as String? ?? 'Error ${response.statusCode}';
         return ApiError(
           statusCode: response.statusCode,
           message: message,
@@ -184,7 +277,10 @@ class ApiClient {
         );
       }
     }
-    return ApiError(statusCode: response.statusCode, message: 'Error ${response.statusCode}');
+    return ApiError(
+      statusCode: response.statusCode,
+      message: 'Error ${response.statusCode}',
+    );
   }
 
   String? extractGaToken(Map<String, String> headers) {

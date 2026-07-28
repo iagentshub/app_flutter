@@ -9,7 +9,7 @@ class DashboardRepository {
 
   Future<List<Map<String, dynamic>>> _safeList(String path, String gaToken) async {
     try {
-      final response = await _apiClient.get(path, gaToken: gaToken);
+      final response = await _apiClient.get(path, gaToken: gaToken, cache: true);
       final body = response.body;
       if (body is List) return body.whereType<Map<String, dynamic>>().toList();
       if (body is Map<String, dynamic> && body['data'] is List) {
@@ -104,7 +104,7 @@ class DashboardRepository {
       queryParameters: {'limit': '$fetchLimit', 'type': ?single},
     ).toString();
     try {
-      final response = await _apiClient.get(path, gaToken: gaToken);
+      final response = await _apiClient.get(path, gaToken: gaToken, cache: true);
       final body = response.body;
       if (body is! List) return const [];
       return body.whereType<Map<String, dynamic>>().toList();

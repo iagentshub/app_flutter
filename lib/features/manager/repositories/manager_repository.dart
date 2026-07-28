@@ -7,7 +7,7 @@ class ManagerRepository {
   final ApiClient apiClient;
 
   Future<List<WorkspaceItem>> listWorkspaces(String token) async {
-    final response = await apiClient.get('/api/workspaces', gaToken: token);
+    final response = await apiClient.get('/api/workspaces', gaToken: token, cache: true);
     final payload = response.body;
     if (payload is! List) return const [];
     return payload

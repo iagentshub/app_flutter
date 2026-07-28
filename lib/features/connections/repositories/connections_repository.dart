@@ -7,7 +7,11 @@ class ConnectionsRepository {
   final ApiClient apiClient;
 
   Future<List<ConnectionItem>> listConnections(String token) async {
-    final response = await apiClient.get('/api/connections', gaToken: token);
+    final response = await apiClient.get(
+      '/api/connections',
+      gaToken: token,
+      cache: true,
+    );
     final payload = response.body;
     if (payload is! List) return const [];
     return payload
@@ -17,12 +21,20 @@ class ConnectionsRepository {
   }
 
   Future<Map<String, dynamic>> getConnection(String token, String id) async {
-    final response = await apiClient.get('/api/connections/${Uri.encodeComponent(id)}', gaToken: token);
+    final response = await apiClient.get(
+      '/api/connections/${Uri.encodeComponent(id)}',
+      gaToken: token,
+    );
     return response.json;
   }
 
   Future<List<ConnectionProvider>> listProviders(String token) async {
-    final response = await apiClient.get('/api/connections/providers', gaToken: token);
+    final response = await apiClient.get(
+      '/api/connections/providers',
+      gaToken: token,
+      cache: true,
+      ttl: const Duration(minutes: 10),
+    );
     final payload = response.body;
     if (payload is! List) return const [];
     return payload
@@ -31,23 +43,45 @@ class ConnectionsRepository {
         .toList();
   }
 
-  Future<Map<String, dynamic>> saveConnection(String token, Map<String, dynamic> payload) async {
-    final response = await apiClient.post('/api/connections', gaToken: token, body: payload);
+  Future<Map<String, dynamic>> saveConnection(
+    String token,
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await apiClient.post(
+      '/api/connections',
+      gaToken: token,
+      body: payload,
+    );
     return response.json;
   }
 
   Future<void> deleteConnection(String token, String id) async {
-    await apiClient.delete('/api/connections/${Uri.encodeComponent(id)}', gaToken: token);
+    await apiClient.delete(
+      '/api/connections/${Uri.encodeComponent(id)}',
+      gaToken: token,
+    );
   }
 
   Future<ConnectionTestResult> testConnection(String token, String id) async {
-    final response = await apiClient.post('/api/connections/${Uri.encodeComponent(id)}/test', gaToken: token);
+    final response = await apiClient.post(
+      '/api/connections/${Uri.encodeComponent(id)}/test',
+      gaToken: token,
+    );
     return ConnectionTestResult.fromJson(response.json);
   }
 
-  Future<List<ConnectionTestResult>> testAllConnections(String token, {List<String>? ids}) async {
-    final body = ids == null || ids.isEmpty ? null : <String, dynamic>{'ids': ids};
-    final response = await apiClient.post('/api/connections/test-all', gaToken: token, body: body);
+  Future<List<ConnectionTestResult>> testAllConnections(
+    String token, {
+    List<String>? ids,
+  }) async {
+    final body = ids == null || ids.isEmpty
+        ? null
+        : <String, dynamic>{'ids': ids};
+    final response = await apiClient.post(
+      '/api/connections/test-all',
+      gaToken: token,
+      body: body,
+    );
     final payload = response.body;
     if (payload is! List) return const [];
     return payload

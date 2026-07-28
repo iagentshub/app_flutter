@@ -116,4 +116,8 @@ class AuthRepository {
       return null;
     }
   }
+
+  /// Limpia la caché de peticiones (ver ApiClient) — se llama tras iniciar
+  /// sesión por si se cambió de cuenta sin reiniciar la app.
+  void clearCache() => _apiClient.invalidateCache();
 }

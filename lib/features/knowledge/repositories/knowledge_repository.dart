@@ -8,7 +8,7 @@ class KnowledgeRepository {
 
   Future<List<KnowledgeItem>> listItems(String token, {String? type}) async {
     final query = type == null || type.isEmpty ? '' : '?type=${Uri.encodeQueryComponent(type)}';
-    final response = await apiClient.get('/api/knowledge$query', gaToken: token);
+    final response = await apiClient.get('/api/knowledge$query', gaToken: token, cache: true);
     final payload = response.body;
     if (payload is! List) return const [];
     return payload

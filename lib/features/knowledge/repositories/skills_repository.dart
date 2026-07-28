@@ -7,7 +7,7 @@ class SkillsRepository {
   final ApiClient apiClient;
 
   Future<List<SkillItem>> listSkills(String token, {String scope = 'all'}) async {
-    final response = await apiClient.get('/api/skills?scope=$scope', gaToken: token);
+    final response = await apiClient.get('/api/skills?scope=$scope', gaToken: token, cache: true);
     final payload = response.body;
     if (payload is! List) return const [];
     return payload.whereType<Map<String, dynamic>>().map((item) => SkillItem(raw: item)).toList();
