@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../app/router/route_names.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/profile/profile_models.dart';
 import '../repositories/profile_repository.dart';
+import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
+import '../widgets/profile_groups_section.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({
@@ -27,6 +27,7 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   late final ProfileRepository _repository;
+  late final TranslatedTexts _t;
 
   ProfileBundle? _bundle;
   bool _loading = true;
@@ -35,6 +36,7 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _savingProfile = false;
   bool _changingPassword = false;
   bool _requestingDeletion = false;
+  String _section = 'account';
 
   final _bioController = TextEditingController();
   final _emailPublicController = TextEditingController();
@@ -47,11 +49,19 @@ class _ProfilePageState extends State<ProfilePage> {
   String _theme = 'dark-red';
   String _language = 'es';
 
+  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+
   @override
   void initState() {
     super.initState();
     _repository = ProfileRepository(apiClient: widget.apiClient);
+    _t = TranslatedTexts(localeController: widget.localeController, namespace: 'resources')
+      ..addListener(_onTextsChanged);
     _load();
+  }
+
+  void _onTextsChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
@@ -63,6 +73,8 @@ class _ProfilePageState extends State<ProfilePage> {
     _languagesController.dispose();
     _currentPasswordController.dispose();
     _newPasswordController.dispose();
+    _t.removeListener(_onTextsChanged);
+    _t.dispose();
     super.dispose();
   }
 
@@ -72,7 +84,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final token = _token;
     if (token == null || token.isEmpty) {
       setState(() {
-        _error = 'No hay sesión activa';
+        _error = _tx('common.no_session', 'No hay sesión activa');
         _loading = false;
       });
       return;
@@ -274,7 +286,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   FilledButton.icon(
                     onPressed: _load,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Reintentar'),
+                    label: Text(_tx('common.retry', 'Reintentar')),
                   ),
                 ],
               ),
@@ -289,182 +301,230 @@ class _ProfilePageState extends State<ProfilePage> {
       return const Center(child: Text('No hay datos de perfil disponibles'));
     }
 
-    return RefreshIndicator(
-      onRefresh: _load,
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
+    final tabs = <(String, String)>[
+      ('account', _tx('profile.tab_account', 'Mi cuenta')),
+      ('social', _tx('profile.tab_social', 'Perfil público')),
+      ('preferences', _tx('profile.tab_preferences', 'Preferencias')),
+      ('groups', _tx('profile.tab_groups', 'Grupos')),
+      ('security', _tx('profile.tab_security', 'Seguridad')),
+    ];
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: SizedBox(
+            height: 40,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: tabs.length,
+              separatorBuilder: (context, _) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final (id, label) = tabs[index];
+                return ChoiceChip(
+                  label: Text(label),
+                  selected: _section == id,
+                  onSelected: (_) => setState(() => _section = id),
+                );
+              },
+            ),
+          ),
+        ),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: _load,
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 700),
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    switch (_section) {
+                      'social' => _buildSocialSection(),
+                      'preferences' => _buildPreferencesSection(),
+                      'groups' => _buildGroupsSection(bundle),
+                      'security' => _buildSecuritySection(),
+                      _ => _buildAccountSection(bundle),
+                    },
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAccountSection(ProfileBundle bundle) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.account_circle_outlined),
+            title: Text(bundle.session.username),
+            subtitle: Text(
+              '${_tx('profile.role_label', 'Rol')}: ${bundle.session.role} · ${_tx('profile.active_group_label', 'Grupo activo')}: ${bundle.session.workspaceName ?? bundle.session.workspaceId ?? '-'}',
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(_tx('profile.account_zone_title', 'Zona de cuenta'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  bundle.deletion.scheduled
+                      ? '${_tx('profile.deletion_scheduled', 'Eliminación programada para')}: ${bundle.deletion.deletionDate ?? '-'}'
+                      : _tx('profile.no_deletion_scheduled', 'No hay eliminación programada'),
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: _requestingDeletion || bundle.deletion.scheduled ? null : _requestDeletion,
+                  icon: const Icon(Icons.warning_amber_outlined),
+                  label: Text(_requestingDeletion ? _tx('profile.scheduling', 'Programando...') : _tx('profile.request_deletion', 'Solicitar eliminación de cuenta')),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPreferencesSection() {
+    return Card(
+      child: Padding(
         padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.account_circle_outlined),
-              title: Text(bundle.session.username),
-              subtitle: Text(
-                'Rol: ${bundle.session.role} · Workspace: ${bundle.session.workspaceName ?? bundle.session.workspaceId ?? '-'}',
-              ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            DropdownButtonFormField<String>(
+              initialValue: _theme,
+              decoration: InputDecoration(labelText: _tx('profile.theme_label', 'Tema')),
+              items: _themes.map((theme) => DropdownMenuItem<String>(value: theme, child: Text(theme))).toList(),
+              onChanged: (value) {
+                if (value == null) return;
+                setState(() => _theme = value);
+              },
             ),
-          ),
-          const SizedBox(height: 12),
-
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.groups_outlined),
-              title: const Text('Workspaces'),
-              subtitle: const Text('Gestionar espacios de trabajo, miembros e invitaciones'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.push(RouteNames.manager),
+            const SizedBox(height: 10),
+            DropdownButtonFormField<String>(
+              initialValue: _language,
+              decoration: InputDecoration(labelText: _tx('profile.language_label', 'Idioma')),
+              items: const [
+                DropdownMenuItem(value: 'es', child: Text('Español')),
+                DropdownMenuItem(value: 'en', child: Text('English')),
+              ],
+              onChanged: (value) {
+                if (value == null) return;
+                setState(() => _language = value);
+              },
             ),
-          ),
-          const SizedBox(height: 12),
-
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Preferencias', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    initialValue: _theme,
-                    decoration: const InputDecoration(labelText: 'Tema'),
-                    items: _themes
-                        .map((theme) => DropdownMenuItem<String>(value: theme, child: Text(theme)))
-                        .toList(),
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() => _theme = value);
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  DropdownButtonFormField<String>(
-                    initialValue: _language,
-                    decoration: const InputDecoration(labelText: 'Idioma'),
-                    items: const [
-                      DropdownMenuItem(value: 'es', child: Text('Español')),
-                      DropdownMenuItem(value: 'en', child: Text('English')),
-                    ],
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() => _language = value);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  FilledButton.icon(
-                    onPressed: _savingSettings ? null : _saveSettings,
-                    icon: const Icon(Icons.save_outlined),
-                    label: Text(_savingSettings ? 'Guardando...' : 'Guardar preferencias'),
-                  ),
-                ],
-              ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _savingSettings ? null : _saveSettings,
+              icon: const Icon(Icons.save_outlined),
+              label: Text(_savingSettings ? _tx('profile.saving', 'Guardando...') : _tx('profile.save_preferences', 'Guardar preferencias')),
             ),
-          ),
-          const SizedBox(height: 12),
-
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Perfil público', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _bioController,
-                    minLines: 2,
-                    maxLines: 4,
-                    decoration: const InputDecoration(labelText: 'Bio'),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _emailPublicController,
-                    decoration: const InputDecoration(labelText: 'Email público'),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _githubController,
-                    decoration: const InputDecoration(labelText: 'GitHub (https://...)'),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _languagesController,
-                    decoration: const InputDecoration(labelText: 'Idiomas (coma separada, ej: es,en,fr)'),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _cvController,
-                    minLines: 3,
-                    maxLines: 6,
-                    decoration: const InputDecoration(labelText: 'CV / Resumen profesional'),
-                  ),
-                  const SizedBox(height: 12),
-                  FilledButton.icon(
-                    onPressed: _savingProfile ? null : _savePublicProfile,
-                    icon: const Icon(Icons.save_as_outlined),
-                    label: Text(_savingProfile ? 'Guardando...' : 'Guardar perfil público'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Seguridad', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _currentPasswordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(labelText: 'Contraseña actual'),
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _newPasswordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(labelText: 'Nueva contraseña'),
-                  ),
-                  const SizedBox(height: 12),
-                  FilledButton.icon(
-                    onPressed: _changingPassword ? null : _changePassword,
-                    icon: const Icon(Icons.lock_reset_outlined),
-                    label: Text(_changingPassword ? 'Actualizando...' : 'Cambiar contraseña'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Zona de cuenta', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Text(
-                    bundle.deletion.scheduled
-                        ? 'Eliminación programada para: ${bundle.deletion.deletionDate ?? '-'}'
-                        : 'No hay eliminación programada',
-                  ),
-                  const SizedBox(height: 10),
-                  OutlinedButton.icon(
-                    onPressed: _requestingDeletion || bundle.deletion.scheduled ? null : _requestDeletion,
-                    icon: const Icon(Icons.warning_amber_outlined),
-                    label: Text(_requestingDeletion ? 'Programando...' : 'Solicitar eliminación de cuenta'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildSocialSection() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextFormField(
+              controller: _bioController,
+              minLines: 2,
+              maxLines: 4,
+              decoration: InputDecoration(labelText: _tx('profile.bio_label', 'Bio')),
+            ),
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: _emailPublicController,
+              decoration: InputDecoration(labelText: _tx('profile.email_public_label', 'Email público')),
+            ),
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: _githubController,
+              decoration: InputDecoration(labelText: _tx('profile.github_label', 'GitHub (https://...)')),
+            ),
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: _languagesController,
+              decoration: InputDecoration(labelText: _tx('profile.languages_label', 'Idiomas (coma separada, ej: es,en,fr)')),
+            ),
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: _cvController,
+              minLines: 3,
+              maxLines: 6,
+              decoration: InputDecoration(labelText: _tx('profile.cv_label', 'CV / Resumen profesional')),
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _savingProfile ? null : _savePublicProfile,
+              icon: const Icon(Icons.save_as_outlined),
+              label: Text(_savingProfile ? _tx('profile.saving', 'Guardando...') : _tx('profile.save_social', 'Guardar perfil público')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSecuritySection() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextFormField(
+              controller: _currentPasswordController,
+              obscureText: true,
+              decoration: InputDecoration(labelText: _tx('profile.current_password_label', 'Contraseña actual')),
+            ),
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: _newPasswordController,
+              obscureText: true,
+              decoration: InputDecoration(labelText: _tx('profile.new_password_label', 'Nueva contraseña')),
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _changingPassword ? null : _changePassword,
+              icon: const Icon(Icons.lock_reset_outlined),
+              label: Text(_changingPassword ? _tx('profile.updating', 'Actualizando...') : _tx('profile.change_password', 'Cambiar contraseña')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGroupsSection(ProfileBundle bundle) {
+    final token = _token;
+    if (token == null || token.isEmpty) return const SizedBox.shrink();
+    return ProfileGroupsSection(
+      apiClient: widget.apiClient,
+      token: token,
+      currentUsername: bundle.session.username,
+      localeController: widget.localeController,
     );
   }
 }

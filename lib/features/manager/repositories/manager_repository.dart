@@ -103,4 +103,35 @@ class ManagerRepository {
       gaToken: token,
     );
   }
+
+  /// Invitaciones que YO he recibido (pendientes de aceptar/rechazar),
+  /// distintas de las que un grupo ha enviado a otros usuarios.
+  Future<List<Map<String, dynamic>>> listMyInvitations(String token) async {
+    final response = await apiClient.get('/api/workspaces/my-invitations', gaToken: token);
+    final payload = response.body;
+    if (payload is! List) return const [];
+    return payload.whereType<Map<String, dynamic>>().toList();
+  }
+
+  Future<void> acceptInvitation(String token, String invitationId) async {
+    await apiClient.post(
+      '/api/workspaces/invitations/${Uri.encodeComponent(invitationId)}/accept',
+      gaToken: token,
+    );
+  }
+
+  Future<void> rejectInvitation(String token, String invitationId) async {
+    await apiClient.post(
+      '/api/workspaces/invitations/${Uri.encodeComponent(invitationId)}/reject',
+      gaToken: token,
+    );
+  }
+
+  Future<void> transferOwnership(String token, String workspaceId, String username) async {
+    await apiClient.post(
+      '/api/workspaces/${Uri.encodeComponent(workspaceId)}/transfer-ownership',
+      gaToken: token,
+      body: {'username': username},
+    );
+  }
 }
