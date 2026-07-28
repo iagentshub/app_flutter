@@ -19,3 +19,21 @@ const Map<String, Color> _labelColors = {
 };
 
 Color labelColor(String key) => _labelColors[key] ?? const Color(0xFF64748B);
+
+/// Claves de label conocidas por el catálogo, en el mismo orden que
+/// GROUPS en frontend_vanilla (visibilidad, entorno, estado).
+const List<String> kLabelKeys = [
+  'private',
+  'public',
+  'production',
+  'staging',
+  'development',
+  'test',
+  'favorite',
+  'draft',
+  'review',
+  'deprecated',
+  'quarantine',
+  'archived',
+  'delete',
+];

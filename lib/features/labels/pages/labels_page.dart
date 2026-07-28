@@ -5,7 +5,6 @@ import '../../../core/network/api_error.dart';
 import '../../../models/explore/explore_models.dart';
 import '../../explore/repositories/explore_repository.dart';
 import '../../../shared/state/session_controller.dart';
-import '../../../shared/widgets/filter_chips_row.dart';
 
 class LabelsPage extends StatefulWidget {
   const LabelsPage({
@@ -142,9 +141,16 @@ class _LabelsPageState extends State<LabelsPage> {
     );
   }
 
+  static const _typeOptions = [
+    DropdownMenuItem(value: 'all', child: Text('Todos')),
+    DropdownMenuItem(value: 'agent', child: Text('Agentes')),
+    DropdownMenuItem(value: 'skill', child: Text('Skills')),
+    DropdownMenuItem(value: 'knowledge', child: Text('Knowledge')),
+    DropdownMenuItem(value: 'workflow', child: Text('Workflows')),
+  ];
+
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Center(child: CircularProgressIndicator());
     if (_error != null) {
       return ListView(
         padding: const EdgeInsets.all(16),
@@ -176,97 +182,109 @@ class _LabelsPageState extends State<LabelsPage> {
     final labels = labelCounts.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
-    return RefreshIndicator(
-      onRefresh: _loadBase,
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1180),
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            children: [
-              Card(
+    return Column(
+      children: [
+        Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1180),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: Card(
                 child: Padding(
                   padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
-                      FilterChipsRow(
-                        options: const [
-                          ('all', 'Todos'),
-                          ('agent', 'Agentes'),
-                          ('skill', 'Skills'),
-                          ('knowledge', 'Knowledge'),
-                          ('workflow', 'Workflows'),
-                        ],
-                        value: _selectedType,
-                        onChanged: _onTypeChange,
+                      SizedBox(
+                        width: 200,
+                        child: DropdownButtonFormField<String>(
+                          initialValue: _selectedType,
+                          decoration: const InputDecoration(labelText: 'Tipo de recurso'),
+                          items: _typeOptions,
+                          onChanged: (value) {
+                            if (value == null) return;
+                            _onTypeChange(value);
+                          },
+                        ),
                       ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text('Label activo: ${_selectedLabel.isEmpty ? '- ninguno -' : _selectedLabel}'),
-                          ),
-                          TextButton.icon(
-                            onPressed: () async {
-                              setState(() => _selectedLabel = '');
-                              await _loadBase();
-                            },
-                            icon: const Icon(Icons.clear_all, size: 18),
-                            label: const Text('Limpiar'),
-                          ),
-                        ],
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text('Label activo: ${_selectedLabel.isEmpty ? '- ninguno -' : _selectedLabel}'),
+                      ),
+                      TextButton.icon(
+                        onPressed: () async {
+                          setState(() => _selectedLabel = '');
+                          await _loadBase();
+                        },
+                        icon: const Icon(Icons.clear_all, size: 18),
+                        label: const Text('Limpiar'),
                       ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 14),
-              const Text('Etiquetas detectadas', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              if (labels.isEmpty)
-                const Text('No hay etiquetas disponibles')
-              else
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: labels
-                      .map(
-                        (entry) => ActionChip(
-                          label: Text('${entry.key} (${entry.value})'),
-                          onPressed: () => _applyFilter(entry.key),
-                        ),
-                      )
-                      .toList(),
-                ),
-              const SizedBox(height: 16),
-              Text('Recursos: ${_filtered.length}', style: Theme.of(context).textTheme.bodyMedium),
-              const SizedBox(height: 10),
-              if (_filtered.isEmpty)
-                const Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text('No hay recursos para este label/filtro.'),
-                  ),
-                )
-              else
-                ..._filtered.map(
-                  (item) => Card(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    child: ListTile(
-                      title: Text(item.name),
-                      subtitle: Text('${item.resourceType} · ${item.owner} · ⭐ ${item.stars}'),
-                      trailing: item.labels.isEmpty ? null : Text(item.labels.join(', '), maxLines: 1),
-                      onTap: () => _showMessage(item.description.isEmpty ? 'Sin descripción' : item.description),
+            ),
+          ),
+        ),
+        Expanded(
+          child: _loading
+              ? const Center(child: CircularProgressIndicator())
+              : RefreshIndicator(
+                  onRefresh: _loadBase,
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1180),
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.all(16),
+                        children: [
+                          const Text('Etiquetas detectadas', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 8),
+                          if (labels.isEmpty)
+                            const Text('No hay etiquetas disponibles')
+                          else
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: labels
+                                  .map(
+                                    (entry) => ActionChip(
+                                      label: Text('${entry.key} (${entry.value})'),
+                                      onPressed: () => _applyFilter(entry.key),
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
+                          const SizedBox(height: 16),
+                          Text('Recursos: ${_filtered.length}', style: Theme.of(context).textTheme.bodyMedium),
+                          const SizedBox(height: 10),
+                          if (_filtered.isEmpty)
+                            const Card(
+                              child: Padding(
+                                padding: EdgeInsets.all(16),
+                                child: Text('No hay recursos para este label/filtro.'),
+                              ),
+                            )
+                          else
+                            ..._filtered.map(
+                              (item) => Card(
+                                margin: const EdgeInsets.only(bottom: 10),
+                                child: ListTile(
+                                  title: Text(item.name),
+                                  subtitle: Text('${item.resourceType} · ${item.owner} · ⭐ ${item.stars}'),
+                                  trailing: item.labels.isEmpty ? null : Text(item.labels.join(', '), maxLines: 1),
+                                  onTap: () => _showMessage(item.description.isEmpty ? 'Sin descripción' : item.description),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-            ],
-          ),
         ),
-      ),
+      ],
     );
   }
 }

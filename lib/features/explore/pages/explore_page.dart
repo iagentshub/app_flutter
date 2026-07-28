@@ -6,8 +6,8 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/explore/explore_models.dart';
 import '../repositories/explore_repository.dart';
+import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/session_controller.dart';
-import '../../../shared/widgets/filter_chips_row.dart';
 
 class ExplorePage extends StatefulWidget {
   const ExplorePage({
@@ -26,14 +26,23 @@ class ExplorePage extends StatefulWidget {
 class _ExplorePageState extends State<ExplorePage> {
   late final ExploreRepository _repository;
   final TextEditingController _queryController = TextEditingController();
-  final TextEditingController _categoryController = TextEditingController();
-  final TextEditingController _labelController = TextEditingController();
 
   List<ExploreItem> _items = const [];
   bool _loading = true;
   String? _error;
   String _type = 'all';
+  String _category = '';
+  String _label = '';
   final Set<String> _busyKeys = <String>{};
+
+  List<String> get _categoryOptions {
+    final set = <String>{};
+    for (final item in _items) {
+      if (item.category.isNotEmpty) set.add(item.category);
+    }
+    final list = set.toList()..sort();
+    return list;
+  }
 
   @override
   void initState() {
@@ -45,8 +54,6 @@ class _ExplorePageState extends State<ExplorePage> {
   @override
   void dispose() {
     _queryController.dispose();
-    _categoryController.dispose();
-    _labelController.dispose();
     super.dispose();
   }
 
@@ -74,13 +81,16 @@ class _ExplorePageState extends State<ExplorePage> {
         token,
         type: _type,
         query: _queryController.text,
-        category: _categoryController.text,
-        label: _labelController.text,
+        category: _category,
+        label: _label,
       );
       if (!mounted) return;
       setState(() {
         _items = items;
         _loading = false;
+        if (_category.isNotEmpty && !_categoryOptions.contains(_category)) {
+          _category = '';
+        }
       });
     } on ApiError catch (error) {
       if (!mounted) return;
@@ -186,9 +196,36 @@ class _ExplorePageState extends State<ExplorePage> {
     );
   }
 
+  static const _typeOptions = [
+    ('all', 'Todos'),
+    ('agent', 'Agentes'),
+    ('skill', 'Skills'),
+    ('knowledge', 'Knowledge'),
+    ('workflow', 'Workflows'),
+  ];
+
+  Widget _dropdown({
+    required String label,
+    required String value,
+    required List<(String, String)> options,
+    required ValueChanged<String> onChanged,
+  }) {
+    return DropdownButtonFormField<String>(
+      initialValue: value,
+      decoration: InputDecoration(labelText: label),
+      isExpanded: true,
+      items: options
+          .map((opt) => DropdownMenuItem(value: opt.$1, child: Text(opt.$2, overflow: TextOverflow.ellipsis)))
+          .toList(),
+      onChanged: (next) {
+        if (next == null) return;
+        onChanged(next);
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Center(child: CircularProgressIndicator());
     if (_error != null) {
       return ListView(
         padding: const EdgeInsets.all(16),
@@ -216,111 +253,131 @@ class _ExplorePageState extends State<ExplorePage> {
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: _load,
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1180),
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            children: [
-              Card(
+    final categoryOptions = [('', 'Todas'), ..._categoryOptions.map((c) => (c, c))];
+    final labelOptions = [('', 'Todas'), ...kLabelKeys.map((l) => (l, l))];
+
+    return Column(
+      children: [
+        Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1180),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: Card(
                 child: Padding(
                   padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      FilterChipsRow(
-                        options: const [
-                          ('all', 'Todos'),
-                          ('agent', 'Agentes'),
-                          ('skill', 'Skills'),
-                          ('knowledge', 'Knowledge'),
-                          ('workflow', 'Workflows'),
-                        ],
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final searchField = TextField(
+                        controller: _queryController,
+                        decoration: const InputDecoration(
+                          labelText: 'Buscar',
+                          prefixIcon: Icon(Icons.search, size: 20),
+                        ),
+                        onSubmitted: (_) => _load(),
+                      );
+                      final typeDropdown = _dropdown(
+                        label: 'Tipo',
                         value: _type,
-                        onChanged: (value) => setState(() => _type = value),
-                      ),
-                      const SizedBox(height: 10),
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          final searchField = TextField(
-                            controller: _queryController,
-                            decoration: const InputDecoration(
-                              labelText: 'Buscar',
-                              prefixIcon: Icon(Icons.search, size: 20),
-                            ),
-                            onSubmitted: (_) => _load(),
-                          );
-                          final categoryField = TextField(
-                            controller: _categoryController,
-                            decoration: const InputDecoration(labelText: 'Categoría'),
-                            onSubmitted: (_) => _load(),
-                          );
-                          final labelField = TextField(
-                            controller: _labelController,
-                            decoration: const InputDecoration(labelText: 'Label'),
-                            onSubmitted: (_) => _load(),
-                          );
-                          final filterButton = FilledButton.icon(
-                            onPressed: _load,
-                            icon: const Icon(Icons.search),
-                            label: const Text('Filtrar'),
-                          );
-
-                          if (constraints.maxWidth < 620) {
-                            return Column(
-                              children: [
-                                searchField,
-                                const SizedBox(height: 10),
-                                Row(
-                                  children: [
-                                    Expanded(child: categoryField),
-                                    const SizedBox(width: 10),
-                                    Expanded(child: labelField),
-                                  ],
-                                ),
-                                const SizedBox(height: 10),
-                                SizedBox(width: double.infinity, child: filterButton),
-                              ],
-                            );
-                          }
-
-                          return Wrap(
-                            spacing: 10,
-                            runSpacing: 10,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            children: [
-                              SizedBox(width: 220, child: searchField),
-                              SizedBox(width: 160, child: categoryField),
-                              SizedBox(width: 160, child: labelField),
-                              filterButton,
-                            ],
-                          );
+                        options: _typeOptions,
+                        onChanged: (v) {
+                          setState(() => _type = v);
+                          _load();
                         },
-                      ),
-                    ],
+                      );
+                      final categoryDropdown = _dropdown(
+                        label: 'Categoría',
+                        value: _category,
+                        options: categoryOptions,
+                        onChanged: (v) {
+                          setState(() => _category = v);
+                          _load();
+                        },
+                      );
+                      final labelDropdown = _dropdown(
+                        label: 'Label',
+                        value: _label,
+                        options: labelOptions,
+                        onChanged: (v) {
+                          setState(() => _label = v);
+                          _load();
+                        },
+                      );
+
+                      if (constraints.maxWidth < 620) {
+                        return Column(
+                          children: [
+                            searchField,
+                            const SizedBox(height: 10),
+                            typeDropdown,
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Expanded(child: categoryDropdown),
+                                const SizedBox(width: 10),
+                                Expanded(child: labelDropdown),
+                              ],
+                            ),
+                          ],
+                        );
+                      }
+
+                      return Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          SizedBox(width: 220, child: searchField),
+                          SizedBox(width: 160, child: typeDropdown),
+                          SizedBox(width: 160, child: categoryDropdown),
+                          SizedBox(width: 160, child: labelDropdown),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
-              Text('Resultados: ${_items.length}', style: Theme.of(context).textTheme.bodyMedium),
-              const SizedBox(height: 12),
-              if (_items.isEmpty)
-                const Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text('No hay resultados para ese filtro.'),
-                  ),
-                )
-              else
-                ..._items.map(_buildItemCard),
-            ],
+            ),
           ),
         ),
-      ),
+        Expanded(
+          child: _loading
+              ? const Center(child: CircularProgressIndicator())
+              : RefreshIndicator(
+                  onRefresh: _load,
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1180),
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.all(16),
+                        children: [
+                          Text('Resultados: ${_items.length}', style: Theme.of(context).textTheme.bodyMedium),
+                          const SizedBox(height: 12),
+                          if (_items.isEmpty)
+                            const Card(
+                              child: Padding(
+                                padding: EdgeInsets.all(16),
+                                child: Text('No hay resultados para ese filtro.'),
+                              ),
+                            )
+                          else
+                            Wrap(
+                              spacing: 12,
+                              runSpacing: 12,
+                              children: _items.map((item) {
+                                return SizedBox(width: 360, child: _buildItemCard(item));
+                              }).toList(),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+        ),
+      ],
     );
   }
 
@@ -329,7 +386,7 @@ class _ExplorePageState extends State<ExplorePage> {
     final busy = _busyKeys.contains(key);
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
