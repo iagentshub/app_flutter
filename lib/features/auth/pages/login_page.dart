@@ -434,8 +434,10 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    runSpacing: 4,
                     children: [
                       InkWell(
                         onTap: () => setState(() => _rememberAccount = !_rememberAccount),
@@ -454,7 +456,14 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ),
                               const SizedBox(width: 6),
-                              Text(rememberAccount, style: Theme.of(context).textTheme.bodySmall),
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 160),
+                                child: Text(
+                                  rememberAccount,
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -496,8 +505,9 @@ class _LoginPageState extends State<LoginPage> {
                     _OauthDivider(text: divider),
                     const SizedBox(height: 14),
                     if (_showAnyOauth)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        runSpacing: 8,
                         children: [
                           if (_oauthGoogleEnabled)
                             const _OauthButton(label: 'Google', icon: FaIcon(FontAwesomeIcons.google, size: 17)),
