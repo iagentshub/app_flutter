@@ -193,6 +193,7 @@ GoRouter createRouter({
               child: WorkflowsPage(
                 apiClient: apiClient,
                 sessionController: sessionController,
+                localeController: localeController,
               ),
             ),
           ),

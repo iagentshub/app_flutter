@@ -15,6 +15,7 @@ import '../../../shared/widgets/action_icon_button.dart';
 import '../../../shared/widgets/filter_chips_row.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
 import '../../../shared/widgets/label_chips_row.dart';
+import '../../../shared/widgets/origin_badge.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 
 class KnowledgePage extends StatefulWidget {
@@ -678,7 +679,16 @@ class _KnowledgePageState extends State<KnowledgePage> {
               Text(item.description, maxLines: 3, overflow: TextOverflow.ellipsis),
             ],
             const SizedBox(height: 8),
-            LabelChipsRow(labels: item.labels),
+            LabelChipsRow(
+              labels: item.labels,
+              leading: [
+                OriginBadge(
+                  shared: item.shared,
+                  ownerLabel: _tx('common.owner', 'Propietario'),
+                  linkedLabel: _tx('common.linked', 'Enlazado'),
+                ),
+              ],
+            ),
             const SizedBox(height: 10),
             Row(
               children: [
@@ -734,7 +744,6 @@ class _KnowledgePageState extends State<KnowledgePage> {
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                   ),
                 ),
-                if (item.shared) _chip('shared'),
               ],
             ),
             const SizedBox(height: 6),
@@ -743,6 +752,12 @@ class _KnowledgePageState extends State<KnowledgePage> {
               const SizedBox(height: 8),
               Text(item.preview.trim(), maxLines: 4, overflow: TextOverflow.ellipsis),
             ],
+            const SizedBox(height: 8),
+            OriginBadge(
+              shared: item.shared,
+              ownerLabel: _tx('common.owner', 'Propietario'),
+              linkedLabel: _tx('common.linked', 'Enlazado'),
+            ),
             const SizedBox(height: 10),
             Row(
               children: [

@@ -10,6 +10,7 @@ import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/action_icon_button.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
 import '../../../shared/widgets/label_chips_row.dart';
+import '../../../shared/widgets/origin_badge.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 import 'chat_page.dart';
 
@@ -382,7 +383,16 @@ class _AgentsPageState extends State<AgentsPage> {
               Text(item.description, maxLines: 3, overflow: TextOverflow.ellipsis),
             ],
             const SizedBox(height: 8),
-            LabelChipsRow(labels: item.labels),
+            LabelChipsRow(
+              labels: item.labels,
+              leading: [
+                OriginBadge(
+                  shared: item.shared,
+                  ownerLabel: _tx('common.owner', 'Propietario'),
+                  linkedLabel: _tx('common.linked', 'Enlazado'),
+                ),
+              ],
+            ),
             const SizedBox(height: 10),
             Row(
               children: [

@@ -9,7 +9,9 @@
     "save": "Guardar",
     "create": "Crear",
     "retry": "Reintentar",
-    "no_session": "No hay sesión activa"
+    "no_session": "No hay sesión activa",
+    "owner": "Propietario",
+    "linked": "Enlazado"
   },
   "groups": {
     "title": "GRUPOS",
@@ -62,7 +64,12 @@
     "option_all": "Todas",
     "results": "Resultados",
     "empty": "No hay resultados para ese filtro.",
-    "error_title": "Error cargando Explore"
+    "error_title": "Error cargando Explore",
+    "preview": "Vista previa",
+    "link": "Enlazar",
+    "linked_tooltip": "Ya enlazado",
+    "star": "Añadir a favoritos",
+    "unstar": "Quitar de favoritos"
   },
   "labels": {
     "type_label": "Tipo de recurso",

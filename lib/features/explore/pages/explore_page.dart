@@ -10,6 +10,7 @@ import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/widgets/action_icon_button.dart';
 
 class ExplorePage extends StatefulWidget {
   const ExplorePage({
@@ -41,6 +42,8 @@ class _ExplorePageState extends State<ExplorePage> {
   String _category = '';
   String _label = '';
   final Set<String> _busyKeys = <String>{};
+  final Set<String> _linkedKeys = <String>{};
+  final Set<String> _starredKeys = <String>{};
 
   List<String> get _categoryOptions {
     final set = <String>{};
@@ -154,6 +157,7 @@ class _ExplorePageState extends State<ExplorePage> {
     final token = _token;
     if (token == null || token.isEmpty) return;
     final key = _itemKey(item);
+    if (_linkedKeys.contains(key)) return;
     setState(() => _busyKeys.add(key));
     try {
       final result = await _repository.linkResource(
@@ -161,6 +165,7 @@ class _ExplorePageState extends State<ExplorePage> {
         resourceType: item.resourceType,
         resourceId: item.resourceId,
       );
+      if (mounted) setState(() => _linkedKeys.add(key));
       _showMessage('Recurso enlazado: ${result['name'] ?? item.name}');
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
@@ -171,10 +176,11 @@ class _ExplorePageState extends State<ExplorePage> {
     }
   }
 
-  Future<void> _star(ExploreItem item, {required bool remove}) async {
+  Future<void> _toggleStar(ExploreItem item) async {
     final token = _token;
     if (token == null || token.isEmpty) return;
     final key = _itemKey(item);
+    final remove = _starredKeys.contains(key);
     setState(() => _busyKeys.add(key));
     try {
       final stars = remove
@@ -189,6 +195,11 @@ class _ExplorePageState extends State<ExplorePage> {
         );
         if (idx >= 0) {
           _items[idx].raw['stars_count'] = stars;
+        }
+        if (remove) {
+          _starredKeys.remove(key);
+        } else {
+          _starredKeys.add(key);
         }
       });
       _showMessage(remove ? 'Star removido' : 'Star añadido');
@@ -397,9 +408,16 @@ class _ExplorePageState extends State<ExplorePage> {
     );
   }
 
+  static const _linkableTypes = {'agent', 'skill', 'knowledge', 'workflow'};
+
   Widget _buildItemCard(ExploreItem item) {
     final key = _itemKey(item);
     final busy = _busyKeys.contains(key);
+    final myUsername = widget.sessionController.user?.username ?? '';
+    final isOwn = myUsername.isNotEmpty && item.owner == myUsername;
+    final isLinkable = !isOwn && _linkableTypes.contains(item.resourceType);
+    final linked = _linkedKeys.contains(key);
+    final starred = _starredKeys.contains(key);
 
     return Card(
       margin: EdgeInsets.zero,
@@ -438,29 +456,24 @@ class _ExplorePageState extends State<ExplorePage> {
               ),
             ],
             const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+            Row(
               children: [
-                OutlinedButton.icon(
+                ActionIconButton(
+                  icon: Icons.visibility_outlined,
+                  tooltip: _tx('explore.preview', 'Vista previa'),
                   onPressed: busy ? null : () => _preview(item),
-                  icon: const Icon(Icons.visibility_outlined),
-                  label: const Text('Preview'),
                 ),
-                OutlinedButton.icon(
-                  onPressed: busy ? null : () => _link(item),
-                  icon: const Icon(Icons.link_outlined),
-                  label: const Text('Link'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: busy ? null : () => _star(item, remove: false),
-                  icon: const Icon(Icons.star_outline),
-                  label: const Text('Star'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: busy ? null : () => _star(item, remove: true),
-                  icon: const Icon(Icons.star_border_purple500_outlined),
-                  label: const Text('Unstar'),
+                if (isLinkable)
+                  ActionIconButton(
+                    icon: linked ? Icons.link : Icons.link_outlined,
+                    tooltip: linked ? _tx('explore.linked_tooltip', 'Ya enlazado') : _tx('explore.link', 'Enlazar'),
+                    onPressed: (busy || linked) ? null : () => _link(item),
+                  ),
+                const Spacer(),
+                ActionIconButton(
+                  icon: starred ? Icons.star : Icons.star_outline,
+                  tooltip: starred ? _tx('explore.unstar', 'Quitar de favoritos') : _tx('explore.star', 'Añadir a favoritos'),
+                  onPressed: busy ? null : () => _toggleStar(item),
                 ),
               ],
             ),

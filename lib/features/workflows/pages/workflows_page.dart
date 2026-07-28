@@ -6,20 +6,25 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/workflows/workflow_models.dart';
 import '../repositories/workflows_repository.dart';
+import '../../../shared/i18n/translated_texts.dart';
+import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/action_icon_button.dart';
 import '../../../shared/widgets/label_chips_row.dart';
+import '../../../shared/widgets/origin_badge.dart';
 import 'workflow_editor_page.dart';
 
 class WorkflowsPage extends StatefulWidget {
   const WorkflowsPage({
     required this.apiClient,
     required this.sessionController,
+    required this.localeController,
     super.key,
   });
 
   final ApiClient apiClient;
   final SessionController sessionController;
+  final LocaleController localeController;
 
   @override
   State<WorkflowsPage> createState() => _WorkflowsPageState();
@@ -27,15 +32,31 @@ class WorkflowsPage extends StatefulWidget {
 
 class _WorkflowsPageState extends State<WorkflowsPage> {
   late final WorkflowsRepository _repository;
+  late final TranslatedTexts _t;
   List<WorkflowItem> _workflows = const [];
   bool _loading = true;
   String? _error;
+
+  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
   @override
   void initState() {
     super.initState();
     _repository = WorkflowsRepository(apiClient: widget.apiClient);
+    _t = TranslatedTexts(localeController: widget.localeController, namespace: 'resources')
+      ..addListener(_onTextsChanged);
     _load();
+  }
+
+  void _onTextsChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _t.removeListener(_onTextsChanged);
+    _t.dispose();
+    super.dispose();
   }
 
   String? get _token => widget.sessionController.gaToken;
@@ -302,7 +323,16 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
               Text(item.description, maxLines: 3, overflow: TextOverflow.ellipsis),
             ],
             const SizedBox(height: 8),
-            LabelChipsRow(labels: item.labels),
+            LabelChipsRow(
+              labels: item.labels,
+              leading: [
+                OriginBadge(
+                  shared: item.shared,
+                  ownerLabel: _tx('common.owner', 'Propietario'),
+                  linkedLabel: _tx('common.linked', 'Enlazado'),
+                ),
+              ],
+            ),
             const SizedBox(height: 10),
             Row(
               children: [
