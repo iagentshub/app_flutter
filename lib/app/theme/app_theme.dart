@@ -21,11 +21,22 @@ abstract final class AppTheme {
       onInverseSurface: _white,
     );
 
+    const cardColor = _white;
+    const pageBackground = Color(0xFFF5F5F7);
+
     return ThemeData(
       colorScheme: scheme,
-      scaffoldBackgroundColor: _white,
-      cardColor: _white,
+      scaffoldBackgroundColor: pageBackground,
+      cardColor: cardColor,
       useMaterial3: true,
+      cardTheme: CardThemeData(
+        color: cardColor,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0x14000000)),
+        ),
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: _black,
         foregroundColor: _white,
@@ -72,12 +83,22 @@ abstract final class AppTheme {
       surfaceTint: _red,
     );
 
+    const cardColor = Color(0xFF141414);
+
     return ThemeData(
       brightness: Brightness.dark,
       colorScheme: scheme,
       scaffoldBackgroundColor: _black,
-      cardColor: const Color(0xFF161616),
+      cardColor: cardColor,
       useMaterial3: true,
+      cardTheme: CardThemeData(
+        color: cardColor,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0x14FFFFFF)),
+        ),
+      ),
       textTheme: ThemeData.dark(useMaterial3: true)
           .textTheme
           .apply(bodyColor: _white, displayColor: _white),
