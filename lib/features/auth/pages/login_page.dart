@@ -4,6 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../app/router/route_names.dart';
 import '../../../core/network/api_error.dart';
+import '../../../core/storage/local_store.dart';
 import '../../../shared/i18n/locale_loader.dart';
 import '../repositories/auth_repository.dart';
 import '../../../shared/state/backend_controller.dart';
@@ -36,6 +37,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _loading = false;
   bool _showPassword = false;
   bool _isEnglish = false;
+  bool _rememberAccount = false;
   String? _errorMessage;
   late Future<Map<String, dynamic>> _authTextsFuture;
   bool _platformLoaded = false;
@@ -45,11 +47,33 @@ class _LoginPageState extends State<LoginPage> {
   bool _oauthAppleEnabled = false;
   bool _oauthMicrosoftEnabled = false;
 
+  static const _rememberedEmailKey = 'remembered_email';
+
   @override
   void initState() {
     super.initState();
     _authTextsFuture = LocaleLoader.load(isEnglish: _isEnglish, namespace: 'auth');
     _loadPlatformSettings();
+    _loadRememberedAccount();
+  }
+
+  Future<void> _loadRememberedAccount() async {
+    final prefs = await LocalStore.instance();
+    final rememberedEmail = prefs.getString(_rememberedEmailKey);
+    if (!mounted || rememberedEmail == null || rememberedEmail.isEmpty) return;
+    setState(() {
+      _emailController.text = rememberedEmail;
+      _rememberAccount = true;
+    });
+  }
+
+  Future<void> _persistRememberedAccount() async {
+    final prefs = await LocalStore.instance();
+    if (_rememberAccount) {
+      await prefs.setString(_rememberedEmailKey, _emailController.text.trim());
+    } else {
+      await prefs.remove(_rememberedEmailKey);
+    }
   }
 
   @override
@@ -125,6 +149,7 @@ class _LoginPageState extends State<LoginPage> {
 
       final me = await widget.authRepository.me(token);
       await widget.sessionController.login(token: token, user: me);
+      await _persistRememberedAccount();
 
       if (!mounted) return;
       final destination = safeRedirect(widget.redirectTo);
@@ -207,6 +232,7 @@ class _LoginPageState extends State<LoginPage> {
                     final loginBtn = _txt(t, 'login_btn', _isEnglish ? 'Sign in' : 'Entrar');
                     final loginBtnLoading = _txt(t, 'login_btn_loading', _isEnglish ? 'Signing in…' : 'Entrando…');
                     final forgotPassword = _txt(t, 'forgot_password', _isEnglish ? 'Forgot your password?' : '¿Olvidaste tu contraseña?');
+                    final rememberAccount = _txt(t, 'remember_account', _isEnglish ? 'Remember my account' : 'Recordar mi cuenta');
                     final divider = _txt(t, 'divider', _isEnglish ? 'or' : 'o');
                     final guestLogin = _txt(t, 'guest_login', _isEnglish ? 'Access as guest' : 'Acceder como invitado');
                     final guestLoading = _txt(t, 'guest_entering', _isEnglish ? 'Entering…' : 'Entrando…');
@@ -270,20 +296,44 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 14),
+                            const SizedBox(height: 4),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                InkWell(
+                                  onTap: () => setState(() => _rememberAccount = !_rememberAccount),
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 4),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        SizedBox(
+                                          width: 24,
+                                          height: 24,
+                                          child: Checkbox(
+                                            value: _rememberAccount,
+                                            onChanged: (value) => setState(() => _rememberAccount = value ?? false),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(rememberAccount, style: Theme.of(context).textTheme.bodySmall),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () => context.go(RouteNames.forgotPassword),
+                                  child: Text(forgotPassword),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
                             SizedBox(
                               width: double.infinity,
                               child: FilledButton(
                                 onPressed: _loading ? null : _submit,
                                 child: Text(_loading ? loginBtnLoading : loginBtn),
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton(
-                                onPressed: () => context.go(RouteNames.forgotPassword),
-                                child: Text(forgotPassword),
                               ),
                             ),
                             if (_errorMessage != null) ...[
