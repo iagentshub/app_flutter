@@ -96,4 +96,13 @@ class AuthRepository {
     final response = await _apiClient.get('/api/settings/platform/public');
     return response.json;
   }
+
+  Future<String> authorizeVsCode(String gaToken, {required String state}) async {
+    final response = await _apiClient.post(
+      '/api/auth/vscode/authorize',
+      gaToken: gaToken,
+      body: {'state': state},
+    );
+    return response.json['code'] as String? ?? '';
+  }
 }

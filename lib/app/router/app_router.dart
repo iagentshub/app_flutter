@@ -240,7 +240,15 @@ GoRouter createRouter({
               sessionController: sessionController,
             ),
           ),
-          GoRoute(path: RouteNames.vscodeAuth, builder: (context, state) => const VsCodeAuthPage()),
+          GoRoute(
+            path: RouteNames.vscodeAuth,
+            builder: (context, state) => VsCodeAuthPage(
+              authRepository: authRepository,
+              sessionController: sessionController,
+              state: state.uri.queryParameters['state'],
+              callback: state.uri.queryParameters['callback'],
+            ),
+          ),
           GoRoute(
             path: RouteNames.admin,
             builder: (context, state) => AdminPage(
