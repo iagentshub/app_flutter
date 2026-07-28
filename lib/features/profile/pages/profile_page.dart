@@ -358,21 +358,103 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Widget _sectionHeader(IconData icon, String text, {Color? color}) {
+    final resolvedColor = color ?? Theme.of(context).colorScheme.onSurfaceVariant;
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: resolvedColor),
+        const SizedBox(width: 6),
+        Text(
+          text.toUpperCase(),
+          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.4, color: resolvedColor),
+        ),
+      ],
+    );
+  }
+
+  Widget _badge(String text, {required Color color}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(20)),
+      child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+    );
+  }
+
+  Widget _infoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
+          const SizedBox(width: 12),
+          Expanded(child: Text(label, style: Theme.of(context).textTheme.bodyMedium)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAccountSection(ProfileBundle bundle) {
+    final username = bundle.session.username;
+    final initial = username.isNotEmpty ? username[0].toUpperCase() : '?';
+    final planTier = bundle.license.tier;
+    final planLabel = planTier == 'free' ? _tx('profile.plan_free', 'Gratuito') : planTier;
+    final memberSince = bundle.social.createdAt;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Card(
-          child: ListTile(
-            leading: const Icon(Icons.account_circle_outlined),
-            title: Text(bundle.session.username),
-            subtitle: Text(
-              '${_tx('profile.role_label', 'Rol')}: ${bundle.session.role} · ${_tx('profile.active_group_label', 'Grupo activo')}: ${bundle.session.workspaceName ?? bundle.session.workspaceId ?? '-'}',
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 32,
+                  child: Text(initial, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(username, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: [
+                          _badge(bundle.session.role, color: Theme.of(context).colorScheme.primary),
+                          _badge(planLabel, color: const Color(0xFF0891B2)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ),
-        const SizedBox(height: 16),
-        Text(_tx('profile.account_zone_title', 'Zona de cuenta'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 20),
+        _sectionHeader(Icons.badge_outlined, _tx('profile.identity_title', 'Identidad')),
+        const SizedBox(height: 8),
+        Card(
+          child: Column(
+            children: [
+              _infoRow(
+                Icons.groups_outlined,
+                _tx('profile.active_group_label', 'Grupo activo'),
+                bundle.session.workspaceName ?? bundle.session.workspaceId ?? '-',
+              ),
+              if (memberSince != null && memberSince.isNotEmpty) ...[
+                const Divider(height: 1),
+                _infoRow(Icons.calendar_today_outlined, _tx('profile.member_since', 'Miembro desde'), memberSince),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        _sectionHeader(Icons.warning_amber_outlined, _tx('profile.account_zone_title', 'Zona de cuenta'), color: Colors.red),
         const SizedBox(height: 8),
         Card(
           child: Padding(
@@ -400,48 +482,60 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildPreferencesSection() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            DropdownButtonFormField<String>(
-              initialValue: _theme,
-              decoration: InputDecoration(labelText: _tx('profile.theme_label', 'Tema')),
-              items: _themes.map((theme) => DropdownMenuItem<String>(value: theme, child: Text(theme))).toList(),
-              onChanged: (value) {
-                if (value == null) return;
-                setState(() => _theme = value);
-              },
-            ),
-            const SizedBox(height: 10),
-            DropdownButtonFormField<String>(
-              initialValue: _language,
-              decoration: InputDecoration(labelText: _tx('profile.language_label', 'Idioma')),
-              items: const [
-                DropdownMenuItem(value: 'es', child: Text('Español')),
-                DropdownMenuItem(value: 'en', child: Text('English')),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionHeader(Icons.tune_outlined, _tx('profile.tab_preferences', 'Preferencias')),
+        const SizedBox(height: 8),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                DropdownButtonFormField<String>(
+                  initialValue: _theme,
+                  decoration: InputDecoration(labelText: _tx('profile.theme_label', 'Tema')),
+                  items: _themes.map((theme) => DropdownMenuItem<String>(value: theme, child: Text(theme))).toList(),
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setState(() => _theme = value);
+                  },
+                ),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  initialValue: _language,
+                  decoration: InputDecoration(labelText: _tx('profile.language_label', 'Idioma')),
+                  items: const [
+                    DropdownMenuItem(value: 'es', child: Text('Español')),
+                    DropdownMenuItem(value: 'en', child: Text('English')),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setState(() => _language = value);
+                  },
+                ),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: _savingSettings ? null : _saveSettings,
+                  icon: const Icon(Icons.save_outlined),
+                  label: Text(_savingSettings ? _tx('profile.saving', 'Guardando...') : _tx('profile.save_preferences', 'Guardar preferencias')),
+                ),
               ],
-              onChanged: (value) {
-                if (value == null) return;
-                setState(() => _language = value);
-              },
             ),
-            const SizedBox(height: 12),
-            FilledButton.icon(
-              onPressed: _savingSettings ? null : _saveSettings,
-              icon: const Icon(Icons.save_outlined),
-              label: Text(_savingSettings ? _tx('profile.saving', 'Guardando...') : _tx('profile.save_preferences', 'Guardar preferencias')),
-            ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
   Widget _buildSocialSection() {
-    return Card(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionHeader(Icons.public_outlined, _tx('profile.tab_social', 'Perfil público')),
+        const SizedBox(height: 8),
+        Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -484,11 +578,18 @@ class _ProfilePageState extends State<ProfilePage> {
           ],
         ),
       ),
+        ),
+      ],
     );
   }
 
   Widget _buildSecuritySection() {
-    return Card(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionHeader(Icons.lock_outline, _tx('profile.tab_security', 'Seguridad')),
+        const SizedBox(height: 8),
+        Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -514,6 +615,8 @@ class _ProfilePageState extends State<ProfilePage> {
           ],
         ),
       ),
+        ),
+      ],
     );
   }
 

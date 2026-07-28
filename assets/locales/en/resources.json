@@ -61,7 +61,14 @@
     "delete_confirm_title": "Delete group",
     "delete_confirm_body": "Are you sure you want to delete this group? This action cannot be undone.",
     "invite_sent": "Invitation sent",
-    "member_removed": "Member removed"
+    "member_removed": "Member removed",
+    "view_members": "View members",
+    "invite_user": "Invite user",
+    "invite_dialog_title": "Invite user",
+    "invite_dialog_label": "Invitee's email or username",
+    "invite_dialog_body": "An invitation will be sent to the given user to join this group.",
+    "leave_panel_title": "Leave group",
+    "leave_panel_body": "You'll lose access to resources shared with this group."
   },
   "profile": {
     "tab_account": "My account",
@@ -93,7 +100,11 @@
     "deletion_scheduled": "Deletion scheduled for",
     "no_deletion_scheduled": "No deletion scheduled",
     "request_deletion": "Request account deletion",
-    "scheduling": "Scheduling..."
+    "scheduling": "Scheduling...",
+    "plan_label": "Plan",
+    "plan_free": "Free",
+    "member_since": "Member since",
+    "identity_title": "Identity"
   },
   "agents": {
     "new": "New agent",

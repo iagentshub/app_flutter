@@ -61,7 +61,14 @@
     "delete_confirm_title": "Eliminar grupo",
     "delete_confirm_body": "¿Seguro que quieres eliminar este grupo? Esta acción no se puede deshacer.",
     "invite_sent": "Invitación enviada",
-    "member_removed": "Miembro eliminado"
+    "member_removed": "Miembro eliminado",
+    "view_members": "Ver miembros",
+    "invite_user": "Invitar usuario",
+    "invite_dialog_title": "Invitar usuario",
+    "invite_dialog_label": "Email o usuario del invitado",
+    "invite_dialog_body": "Se enviará una invitación al usuario indicado para unirse a este grupo.",
+    "leave_panel_title": "Abandonar grupo",
+    "leave_panel_body": "Dejarás de tener acceso a los recursos compartidos con este grupo."
   },
   "profile": {
     "tab_account": "Mi cuenta",
@@ -93,7 +100,11 @@
     "deletion_scheduled": "Eliminación programada para",
     "no_deletion_scheduled": "No hay eliminación programada",
     "request_deletion": "Solicitar eliminación de cuenta",
-    "scheduling": "Programando..."
+    "scheduling": "Programando...",
+    "plan_label": "Plan",
+    "plan_free": "Gratuito",
+    "member_since": "Miembro desde",
+    "identity_title": "Identidad"
   },
   "agents": {
     "new": "Nuevo agente",

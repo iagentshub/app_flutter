@@ -66,6 +66,7 @@ class SocialProfile {
     this.github,
     this.cv,
     required this.languages,
+    this.createdAt,
   });
 
   final String username;
@@ -74,6 +75,7 @@ class SocialProfile {
   final String? github;
   final String? cv;
   final List<String> languages;
+  final String? createdAt;
 
   factory SocialProfile.fromJson(Map<String, dynamic> json) {
     final languagesRaw = json['languages'];
@@ -93,6 +95,21 @@ class SocialProfile {
       github: json['github'] as String?,
       cv: json['cv'] as String?,
       languages: languages,
+      createdAt: json['created_at'] as String?,
+    );
+  }
+}
+
+class LicenseInfo {
+  const LicenseInfo({required this.tier, this.status});
+
+  final String tier;
+  final String? status;
+
+  factory LicenseInfo.fromJson(Map<String, dynamic> json) {
+    return LicenseInfo(
+      tier: json['tier'] as String? ?? 'free',
+      status: json['status'] as String?,
     );
   }
 }
@@ -103,10 +120,12 @@ class ProfileBundle {
     required this.settings,
     required this.deletion,
     required this.social,
+    required this.license,
   });
 
   final ProfileSession session;
   final ProfileSettings settings;
   final DeletionStatus deletion;
   final SocialProfile social;
+  final LicenseInfo license;
 }

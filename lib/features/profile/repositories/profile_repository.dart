@@ -29,11 +29,20 @@ class ProfileRepository {
       social = SocialProfile.fromJson(socialResponse.json);
     }
 
+    var license = const LicenseInfo(tier: 'free');
+    try {
+      final licenseResponse = await apiClient.get('/api/billing/subscription', gaToken: token, cache: true);
+      license = LicenseInfo.fromJson(licenseResponse.json);
+    } catch (_) {
+      // Billing puede no estar disponible en todos los despliegues.
+    }
+
     return ProfileBundle(
       session: session,
       settings: settings,
       deletion: deletion,
       social: social,
+      license: license,
     );
   }
 
