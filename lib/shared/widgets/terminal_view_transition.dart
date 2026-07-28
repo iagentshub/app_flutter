@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class TerminalViewTransition extends StatefulWidget {
   const TerminalViewTransition({
     required this.child,
-    this.duration = const Duration(milliseconds: 520),
+    this.duration = const Duration(milliseconds: 220),
     this.scanline = true,
     super.key,
   });
@@ -47,8 +47,8 @@ class _TerminalViewTransitionState extends State<TerminalViewTransition>
       animation: _controller,
       child: widget.child,
       builder: (context, child) {
-        final dimOpacity = (1 - _controller.value) * 0.22;
-        final scanOpacity = widget.scanline ? (1 - _controller.value) * 0.52 : 0.0;
+        final dimOpacity = (1 - _controller.value) * 0.14;
+        final scanOpacity = widget.scanline ? (1 - _controller.value) * 0.35 : 0.0;
         final scanY = -1 + (_controller.value * 2);
 
         return Stack(
