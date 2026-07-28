@@ -1,4 +1,4 @@
-import 'dart:convert';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 
@@ -7,6 +7,7 @@ import '../../../core/network/api_error.dart';
 import '../../../models/workflows/workflow_models.dart';
 import '../repositories/workflows_repository.dart';
 import '../../../shared/state/session_controller.dart';
+import 'workflow_editor_page.dart';
 
 class WorkflowsPage extends StatefulWidget {
   const WorkflowsPage({
@@ -27,7 +28,6 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
   List<WorkflowItem> _workflows = const [];
   bool _loading = true;
   String? _error;
-  String? _runningWorkflowId;
 
   @override
   void initState() {
@@ -76,9 +76,13 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
   }
 
   Future<void> _openCreateDialog() async {
-    final payload = await showDialog<Map<String, dynamic>>(
-      context: context,
-      builder: (context) => const _WorkflowFormDialog(),
+    final payload = await Navigator.of(context).push<Map<String, dynamic>>(
+      MaterialPageRoute(
+        builder: (context) => WorkflowEditorPage(
+          apiClient: widget.apiClient,
+          sessionController: widget.sessionController,
+        ),
+      ),
     );
     if (payload == null) return;
     await _saveWorkflow(payload);
@@ -99,9 +103,14 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
     } catch (_) {}
 
     if (!mounted) return;
-    final payload = await showDialog<Map<String, dynamic>>(
-      context: context,
-      builder: (context) => _WorkflowFormDialog(initial: initial),
+    final payload = await Navigator.of(context).push<Map<String, dynamic>>(
+      MaterialPageRoute(
+        builder: (context) => WorkflowEditorPage(
+          apiClient: widget.apiClient,
+          sessionController: widget.sessionController,
+          initial: initial,
+        ),
+      ),
     );
     if (payload == null) return;
     payload['id'] = item.id;
@@ -165,26 +174,16 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
 
     final token = _token;
     if (token == null || token.isEmpty) return;
+    if (!mounted) return;
 
-    setState(() => _runningWorkflowId = item.id);
-    try {
-      final result = await _repository.runWorkflow(
-        token,
-        workflowId: item.id,
-        input: input.trim(),
-      );
-      if (!mounted) return;
-      await showDialog<void>(
-        context: context,
-        builder: (context) => _RunResultDialog(workflowName: item.name, result: result),
-      );
-    } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
-    } catch (_) {
-      _showMessage('No se pudo ejecutar el workflow', isError: true);
-    } finally {
-      if (mounted) setState(() => _runningWorkflowId = null);
-    }
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => _RunProgressDialog(
+        workflowName: item.name,
+        stream: _repository.streamRun(token, workflowId: item.id, input: input.trim()),
+      ),
+    );
   }
 
   void _showMessage(String text, {bool isError = false}) {
@@ -273,7 +272,6 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
   }
 
   Widget _buildWorkflowCard(WorkflowItem item) {
-    final isRunning = _runningWorkflowId == item.id;
     final meta = <String>['${item.nodes.length} pasos', '${item.edges.length} conexiones'];
     if (item.labels.isNotEmpty) {
       meta.add('labels: ${item.labels.join(', ')}');
@@ -310,9 +308,9 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
               runSpacing: 8,
               children: [
                 OutlinedButton.icon(
-                  onPressed: isRunning ? null : () => _runWorkflow(item),
+                  onPressed: () => _runWorkflow(item),
                   icon: const Icon(Icons.play_arrow_outlined),
-                  label: Text(isRunning ? 'Ejecutando...' : 'Ejecutar'),
+                  label: const Text('Ejecutar'),
                 ),
                 OutlinedButton.icon(
                   onPressed: () => _openEditDialog(item),
@@ -341,162 +339,6 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(text, style: const TextStyle(fontSize: 12)),
-    );
-  }
-}
-
-class _WorkflowFormDialog extends StatefulWidget {
-  const _WorkflowFormDialog({this.initial});
-
-  final Map<String, dynamic>? initial;
-
-  @override
-  State<_WorkflowFormDialog> createState() => _WorkflowFormDialogState();
-}
-
-class _WorkflowFormDialogState extends State<_WorkflowFormDialog> {
-  final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _nameController;
-  late final TextEditingController _descriptionController;
-  late final TextEditingController _labelsController;
-  late final TextEditingController _definitionController;
-  String? _definitionError;
-
-  @override
-  void initState() {
-    super.initState();
-    final initial = widget.initial;
-    _nameController = TextEditingController(text: initial?['name']?.toString() ?? '');
-    _descriptionController = TextEditingController(text: initial?['description']?.toString() ?? '');
-    final labels = (initial?['labels'] is List)
-        ? (initial?['labels'] as List).map((item) => item.toString()).join(', ')
-        : 'private';
-    _labelsController = TextEditingController(text: labels);
-
-    final rawDefinition = initial?['definition'];
-    final pretty = const JsonEncoder.withIndent('  ').convert(
-      rawDefinition is Map<String, dynamic>
-          ? rawDefinition
-          : {
-              'nodes': [
-                {
-                  'id': 'step-1',
-                  'agent_id': '',
-                  'label': 'Paso 1',
-                  'instruction': '',
-                  'kind': 'agent',
-                },
-              ],
-              'edges': [],
-            },
-    );
-    _definitionController = TextEditingController(text: pretty);
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _descriptionController.dispose();
-    _labelsController.dispose();
-    _definitionController.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-
-    final parsed = _parseDefinition(_definitionController.text);
-    if (parsed == null) {
-      setState(() => _definitionError = 'Definition JSON inválido o incompleto');
-      return;
-    }
-
-    final labels = _labelsController.text
-        .split(',')
-        .map((item) => item.trim())
-        .where((item) => item.isNotEmpty)
-        .toList();
-
-    final payload = <String, dynamic>{
-      'name': _nameController.text.trim(),
-      'description': _descriptionController.text.trim(),
-      'labels': labels.isEmpty ? ['private'] : labels,
-      'definition': parsed,
-    };
-    if (widget.initial?['id'] != null) {
-      payload['id'] = widget.initial!['id'];
-    }
-    Navigator.of(context).pop(payload);
-  }
-
-  Map<String, dynamic>? _parseDefinition(String raw) {
-    try {
-      final decoded = jsonDecode(raw);
-      if (decoded is! Map<String, dynamic>) return null;
-      final nodes = decoded['nodes'];
-      final edges = decoded['edges'];
-      if (nodes is! List || edges is! List || nodes.isEmpty) return null;
-      return decoded;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(widget.initial == null ? 'Nuevo workflow' : 'Editar workflow'),
-      content: SizedBox(
-        width: 760,
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            shrinkWrap: true,
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Nombre'),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) return 'Nombre obligatorio';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _descriptionController,
-                minLines: 2,
-                maxLines: 4,
-                decoration: const InputDecoration(labelText: 'Descripción'),
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _labelsController,
-                decoration: const InputDecoration(labelText: 'Labels (coma separada)'),
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _definitionController,
-                minLines: 10,
-                maxLines: 18,
-                decoration: InputDecoration(
-                  labelText: 'Definition (JSON)',
-                  errorText: _definitionError,
-                ),
-                style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
-                onChanged: (_) {
-                  if (_definitionError != null) {
-                    setState(() => _definitionError = null);
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
-        FilledButton(onPressed: _submit, child: const Text('Guardar')),
-      ],
     );
   }
 }
@@ -553,61 +395,149 @@ class _RunWorkflowDialogState extends State<_RunWorkflowDialog> {
   }
 }
 
-class _RunResultDialog extends StatelessWidget {
-  const _RunResultDialog({required this.workflowName, required this.result});
+class _RunProgressDialog extends StatefulWidget {
+  const _RunProgressDialog({required this.workflowName, required this.stream});
 
   final String workflowName;
-  final WorkflowRunResult result;
+  final Stream<Map<String, dynamic>> stream;
+
+  @override
+  State<_RunProgressDialog> createState() => _RunProgressDialogState();
+}
+
+class _RunProgressDialogState extends State<_RunProgressDialog> {
+  final List<Map<String, dynamic>> _events = [];
+  final _scrollController = ScrollController();
+  bool _running = true;
+  String? _finalOutput;
+  String? _errorMessage;
+  StreamSubscription<Map<String, dynamic>>? _subscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _subscription = widget.stream.listen(
+      (event) {
+        setState(() {
+          _events.add(event);
+          final type = event['type']?.toString() ?? '';
+          if (type == 'workflow_done') _finalOutput = event['output']?.toString();
+          if (type == 'error') _errorMessage = event['message']?.toString() ?? 'Error ejecutando workflow';
+        });
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!_scrollController.hasClients) return;
+          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+        });
+      },
+      onError: (_) {
+        if (!mounted) return;
+        setState(() {
+          _errorMessage = 'Error de conexión durante la ejecución';
+          _running = false;
+        });
+      },
+      onDone: () {
+        if (!mounted) return;
+        setState(() => _running = false);
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  String _describe(Map<String, dynamic> event) {
+    final type = event['type']?.toString() ?? '';
+    final agentName = event['agent_name']?.toString();
+    final iteration = event['iteration'];
+    switch (type) {
+      case 'stage_started':
+        return 'Ejecutando ${event['index']}/${event['total']}: ${agentName ?? 'agente'}';
+      case 'stage_done':
+        return 'Terminó ${agentName ?? 'agente'}';
+      case 'evaluation_started':
+        return 'Evaluando con ${agentName ?? 'agente'} (vuelta $iteration)';
+      case 'evaluation_done':
+        final approved = event['approved'] == true;
+        return approved ? 'Evaluación aprobada' : 'Evaluación no aprobada, repitiendo';
+      case 'loop_iteration_started':
+        return 'Nueva vuelta del ciclo ($iteration)';
+      case 'loop_limit_reached':
+        return event['message']?.toString() ?? 'Se alcanzó el límite de vueltas del ciclo';
+      default:
+        return type;
+    }
+  }
+
+  IconData _iconFor(String type) {
+    switch (type) {
+      case 'stage_done':
+        return Icons.check_circle_outline;
+      case 'evaluation_done':
+        return Icons.fact_check_outlined;
+      case 'loop_iteration_started':
+        return Icons.replay;
+      case 'loop_limit_reached':
+        return Icons.warning_amber_outlined;
+      default:
+        return Icons.chevron_right;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final title = result.ok ? 'Resultado' : 'Resultado con error';
     return AlertDialog(
-      title: Text('$title: $workflowName'),
+      title: Text('Ejecutando: ${widget.workflowName}'),
       content: SizedBox(
-        width: 760,
-        child: ListView(
-          shrinkWrap: true,
+        width: 700,
+        height: 460,
+        child: Column(
           children: [
-            if (result.errorMessage != null) ...[
-              Text(
-                result.errorMessage!,
-                style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.w600),
+            Expanded(
+              child: ListView.builder(
+                controller: _scrollController,
+                itemCount: _events.length,
+                itemBuilder: (context, index) {
+                  final event = _events[index];
+                  final type = event['type']?.toString() ?? '';
+                  return ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(_iconFor(type), size: 18),
+                    title: Text(_describe(event)),
+                  );
+                },
               ),
+            ),
+            if (_running) ...[
+              const SizedBox(height: 8),
+              const LinearProgressIndicator(),
+            ],
+            if (_errorMessage != null) ...[
               const SizedBox(height: 10),
+              Text(_errorMessage!, style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.w600)),
             ],
-            if (result.finalOutput != null && result.finalOutput!.trim().isNotEmpty) ...[
-              const Text('Salida final', style: TextStyle(fontWeight: FontWeight.bold)),
+            if (_finalOutput != null && _finalOutput!.trim().isNotEmpty) ...[
+              const SizedBox(height: 10),
+              const Align(alignment: Alignment.centerLeft, child: Text('Salida final', style: TextStyle(fontWeight: FontWeight.bold))),
               const SizedBox(height: 6),
-              SelectableText(result.finalOutput!),
-              const SizedBox(height: 12),
+              SizedBox(
+                height: 100,
+                child: SingleChildScrollView(child: SelectableText(_finalOutput!)),
+              ),
             ],
-            const Text('Eventos', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 6),
-            if (result.events.isEmpty)
-              const Text('No se recibieron eventos')
-            else
-              ...result.events.map((event) {
-                final type = event['type']?.toString() ?? 'event';
-                final agentName = event['agent_name']?.toString();
-                final message = event['message']?.toString();
-                final subtitleParts = <String>[];
-                if (agentName != null && agentName.isNotEmpty) subtitleParts.add(agentName);
-                if (message != null && message.isNotEmpty) subtitleParts.add(message);
-                if (event['iteration'] != null) subtitleParts.add('iteración ${event['iteration']}');
-                return ListTile(
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.chevron_right),
-                  title: Text(type),
-                  subtitle: subtitleParts.isEmpty ? null : Text(subtitleParts.join(' · ')),
-                );
-              }),
           ],
         ),
       ),
       actions: [
-        FilledButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cerrar')),
+        FilledButton(
+          onPressed: _running ? null : () => Navigator.of(context).pop(),
+          child: Text(_running ? 'Ejecutando…' : 'Cerrar'),
+        ),
       ],
     );
   }

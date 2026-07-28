@@ -32,53 +32,29 @@ class WorkflowsRepository {
     await apiClient.delete('/api/workflows/${Uri.encodeComponent(id)}', gaToken: token);
   }
 
-  Future<WorkflowRunResult> runWorkflow(
+  /// Ejecuta el workflow y transmite cada evento SSE a medida que llega
+  /// (stage_started/stage_done/evaluation_*/workflow_done/error).
+  Stream<Map<String, dynamic>> streamRun(
     String token, {
     required String workflowId,
     required String input,
-  }) async {
-    final response = await apiClient.post(
+  }) async* {
+    final lines = apiClient.postStream(
       '/api/workflows/${Uri.encodeComponent(workflowId)}/run',
       gaToken: token,
       body: {'input': input},
     );
-
-    final rawBody = response.body;
-    if (rawBody is Map<String, dynamic>) {
-      return WorkflowRunResult(
-        events: const [],
-        finalOutput: rawBody['output'] as String?,
-        errorMessage: null,
-      );
-    }
-
-    final content = rawBody?.toString() ?? '';
-    final events = <Map<String, dynamic>>[];
-    String? finalOutput;
-    String? errorMessage;
-
-    final lines = content.split('\n');
-    for (final line in lines) {
+    await for (final line in lines) {
       final trimmed = line.trim();
       if (!trimmed.startsWith('data:')) continue;
       final payloadText = trimmed.substring(5).trim();
       if (payloadText.isEmpty) continue;
       try {
         final payload = jsonDecode(payloadText);
-        if (payload is! Map<String, dynamic>) continue;
-        events.add(payload);
-        final type = payload['type'] as String? ?? '';
-        if (type == 'workflow_done') {
-          finalOutput = payload['output']?.toString();
-        }
-        if (type == 'error') {
-          errorMessage = payload['message']?.toString() ?? 'Error ejecutando workflow';
-        }
+        if (payload is Map<String, dynamic>) yield payload;
       } catch (_) {
         // Ignorar líneas no parseables del stream.
       }
     }
-
-    return WorkflowRunResult(events: events, finalOutput: finalOutput, errorMessage: errorMessage);
   }
 }

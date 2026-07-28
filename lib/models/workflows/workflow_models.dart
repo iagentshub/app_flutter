@@ -36,17 +36,3 @@ class WorkflowItem {
     return const ['private'];
   }
 }
-
-class WorkflowRunResult {
-  const WorkflowRunResult({
-    required this.events,
-    required this.finalOutput,
-    required this.errorMessage,
-  });
-
-  final List<Map<String, dynamic>> events;
-  final String? finalOutput;
-  final String? errorMessage;
-
-  bool get ok => errorMessage == null;
-}
