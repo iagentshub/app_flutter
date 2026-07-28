@@ -159,20 +159,21 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             ChoiceChip(
               label: Text(_tx('groups.mine', 'Mis grupos')),
               selected: _tab == 'mine',
               onSelected: (_) => setState(() => _tab = 'mine'),
             ),
-            const SizedBox(width: 8),
             ChoiceChip(
               label: Text('${_tx('groups.invitations', 'Invitaciones')}${_invitations.isEmpty ? '' : ' (${_invitations.length})'}'),
               selected: _tab == 'invitations',
               onSelected: (_) => setState(() => _tab = 'invitations'),
             ),
-            const Spacer(),
             if (_tab == 'mine')
               FilledButton.icon(
                 onPressed: _createGroup,
