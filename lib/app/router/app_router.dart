@@ -166,123 +166,155 @@ GoRouter createRouter({
         routes: [
           GoRoute(
             path: RouteNames.dashboard,
-            builder: (context, state) => DashboardPage(
-              backendController: backendController,
-              sessionController: sessionController,
-              authRepository: authRepository,
-              dashboardRepository: dashboardRepository,
-              apiClient: apiClient,
-              dashboardEditState: dashboardEditState,
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: DashboardPage(
+                backendController: backendController,
+                sessionController: sessionController,
+                authRepository: authRepository,
+                dashboardRepository: dashboardRepository,
+                apiClient: apiClient,
+                dashboardEditState: dashboardEditState,
+              ),
             ),
           ),
           GoRoute(
             path: RouteNames.agents,
-            builder: (context, state) => AgentsPage(
-              apiClient: apiClient,
-              sessionController: sessionController,
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: AgentsPage(
+                apiClient: apiClient,
+                sessionController: sessionController,
+              ),
             ),
           ),
           GoRoute(
             path: RouteNames.orchestrations,
-            builder: (context, state) => WorkflowsPage(
-              apiClient: apiClient,
-              sessionController: sessionController,
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: WorkflowsPage(
+                apiClient: apiClient,
+                sessionController: sessionController,
+              ),
             ),
           ),
           GoRoute(path: RouteNames.workflowsLegacy, redirect: (context, state) => RouteNames.orchestrations),
           GoRoute(
             path: RouteNames.connections,
-            builder: (context, state) => ConnectionsPage(
-              apiClient: apiClient,
-              sessionController: sessionController,
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: ConnectionsPage(
+                apiClient: apiClient,
+                sessionController: sessionController,
+              ),
             ),
           ),
           GoRoute(
             path: RouteNames.memory,
-            builder: (context, state) => MemoryPage(
-              apiClient: apiClient,
-              sessionController: sessionController,
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: MemoryPage(
+                apiClient: apiClient,
+                sessionController: sessionController,
+              ),
             ),
           ),
           GoRoute(
             path: RouteNames.knowledge,
-            builder: (context, state) => KnowledgePage(
-              apiClient: apiClient,
-              sessionController: sessionController,
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: KnowledgePage(
+                apiClient: apiClient,
+                sessionController: sessionController,
+              ),
             ),
           ),
           GoRoute(
             path: RouteNames.explore,
-            builder: (context, state) => ExplorePage(
-              apiClient: apiClient,
-              sessionController: sessionController,
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: ExplorePage(
+                apiClient: apiClient,
+                sessionController: sessionController,
+              ),
             ),
           ),
           GoRoute(
             path: RouteNames.labels,
-            builder: (context, state) => LabelsPage(
-              apiClient: apiClient,
-              sessionController: sessionController,
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: LabelsPage(
+                apiClient: apiClient,
+                sessionController: sessionController,
+              ),
             ),
           ),
           GoRoute(
             path: RouteNames.manager,
-            builder: (context, state) => ManagerPage(
-              apiClient: apiClient,
-              sessionController: sessionController,
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: ManagerPage(
+                apiClient: apiClient,
+                sessionController: sessionController,
+              ),
             ),
           ),
           GoRoute(
             path: RouteNames.profile,
-            builder: (context, state) => ProfilePage(
-              apiClient: apiClient,
-              sessionController: sessionController,
-              localeController: localeController,
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: ProfilePage(
+                apiClient: apiClient,
+                sessionController: sessionController,
+                localeController: localeController,
+              ),
             ),
           ),
           GoRoute(
             path: RouteNames.vscodeAuth,
-            builder: (context, state) => VsCodeAuthPage(
-              authRepository: authRepository,
-              sessionController: sessionController,
-              state: state.uri.queryParameters['state'],
-              callback: state.uri.queryParameters['callback'],
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: VsCodeAuthPage(
+                authRepository: authRepository,
+                sessionController: sessionController,
+                state: state.uri.queryParameters['state'],
+                callback: state.uri.queryParameters['callback'],
+              ),
             ),
           ),
           GoRoute(
             path: RouteNames.admin,
-            builder: (context, state) => AdminPage(
-              apiClient: apiClient,
-              sessionController: sessionController,
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: AdminPage(
+                apiClient: apiClient,
+                sessionController: sessionController,
+              ),
             ),
           ),
           GoRoute(
             path: RouteNames.adminMetadata,
-            builder: (context, state) => MetadataPage(
-              apiClient: apiClient,
-              sessionController: sessionController,
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: MetadataPage(
+                apiClient: apiClient,
+                sessionController: sessionController,
+              ),
             ),
           ),
           GoRoute(
             path: RouteNames.adminCentinel,
-            builder: (context, state) => CentinelPage(
-              apiClient: apiClient,
-              sessionController: sessionController,
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: CentinelPage(
+                apiClient: apiClient,
+                sessionController: sessionController,
+              ),
             ),
           ),
           GoRoute(
             path: RouteNames.adminLogs,
-            builder: (context, state) => LogsPageView(
-              apiClient: apiClient,
-              sessionController: sessionController,
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: LogsPageView(
+                apiClient: apiClient,
+                sessionController: sessionController,
+              ),
             ),
           ),
           GoRoute(
             path: '${RouteNames.publicProfilePrefix}:username',
-            builder: (context, state) => PublicProfilePage(
-              username: state.pathParameters['username'] ?? '',
-              apiClient: apiClient,
-              sessionController: sessionController,
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: PublicProfilePage(
+                username: state.pathParameters['username'] ?? '',
+                apiClient: apiClient,
+                sessionController: sessionController,
+              ),
             ),
           ),
         ],
