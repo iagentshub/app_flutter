@@ -1,0 +1,55 @@
+{
+  "manager": {
+    "page": {
+      "title": "Manager panel",
+      "subtitle": "Manage your team"
+    },
+    "tabs": {
+      "team": "Team",
+      "invitations": "Invitations"
+    },
+    "members": {
+      "table_email": "Email",
+      "table_role": "Role",
+      "table_perms": "Permissions",
+      "table_joined": "Joined",
+      "table_actions": "",
+      "no_members": "The team has no members yet.",
+      "edit_perms": "Edit permissions",
+      "remove": "Remove",
+      "make_manager": "Make manager",
+      "confirm_remove": "Remove {{username}} from the team?"
+    },
+    "permissions": {
+      "title": "Permissions for {{username}}",
+      "tabs": {
+        "agents": "Agents",
+        "connections": "Connections",
+        "knowledge": "Knowledge"
+      },
+      "default_deny": "Default: deny all",
+      "default_allow": "Default: allow all",
+      "can_use": "Can use",
+      "can_direct": "Direct access",
+      "via_agent": "Via agents",
+      "can_view": "View/Use",
+      "no_resources": "No resources available.",
+      "col_resource": "Resource",
+      "filter_placeholder": "Filter resources…"
+    },
+    "invitations": {
+      "invite_label": "Invite by email",
+      "invite_placeholder": "user@example.com",
+      "send": "Send invitation",
+      "table_email": "Email",
+      "table_date": "Sent",
+      "table_actions": "",
+      "cancel": "Cancel",
+      "confirm_cancel": "Cancel this invitation?",
+      "none": "No pending invitations.",
+      "success": "Invitation sent",
+      "already_member": "This user is already a member of the team."
+    },
+    "no_managed_workspace": "You do not manage any work groups."
+  }
+}

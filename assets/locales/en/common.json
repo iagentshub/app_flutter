@@ -1,0 +1,104 @@
+{
+  "cancel": "Cancel",
+  "save": "Save",
+  "nav": {
+    "dashboard": "Dashboard",
+    "agents": "Agents",
+    "workflows": "Orchestration",
+    "skills": "Skills",
+    "knowledge": "Knowledge",
+    "connections": "Connections",
+    "memory": "Memory",
+    "profile": "Profile",
+    "admin": "Admin",
+    "admin_users": "Panel",
+    "admin_logs": "Logs",
+    "admin_mail": "Mailbox",
+    "logout": "Log out",
+    "docs": "Documentation",
+    "about": "About",
+    "support": "Support",
+    "explore": "Explore",
+    "upgrade": "Upgrade plan",
+    "logout_confirm": "Log out?"
+  },
+  "actions": {
+    "save": "Save",
+    "saving": "Saving…",
+    "loading": "Loading…",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "export": "Export",
+    "close": "Close",
+    "clear": "Clear",
+    "clear_filters": "× Clear",
+    "send": "Send",
+    "test": "Test",
+    "view": "View",
+    "new_agent": "New agent",
+    "back": "← Back"
+  },
+  "ui": {
+    "small": "Small",
+    "medium": "Medium",
+    "large": "Large",
+    "checking": "Checking…",
+    "error": "Error",
+    "unexpected_error": "Unexpected error",
+    "select": "Select…"
+  },
+  "errors": {
+    "operation": "The operation could not be completed.",
+    "save_change": "The change could not be saved.",
+    "save_config": "The settings could not be saved.",
+    "save_agent": "The agent could not be saved",
+    "generate_agent": "The agent could not be generated",
+    "export_agent": "The agent could not be exported",
+    "agent_builder": "Builder error",
+    "agent_chat": "Chat error",
+    "agent_response": "Agent error",
+    "share": "The resource could not be shared",
+    "load_memory": "The memory could not be loaded",
+    "load_preview": "The preview could not be loaded",
+    "send": "The message could not be sent"
+  },
+  "search": {
+    "clear_aria": "Clear search"
+  },
+  "redirect": "Redirecting to {{target}}…",
+  "time": {
+    "now": "now",
+    "minutes_ago": "{{count}} min ago",
+    "hours_ago": "{{count}} h ago",
+    "days_ago": "{{count}} d ago"
+  },
+  "resource_type": {
+    "agent": "Agent",
+    "skill": "Skill",
+    "knowledge": "Knowledge",
+    "connection": "Connection"
+  },
+  "languages": {
+    "spanish": "Spanish"
+  },
+  "workspace": {
+    "new_prompt": "New workspace name:",
+    "groups": "Work groups",
+    "show_groups": "Show groups",
+    "hide_groups": "Hide groups"
+  },
+  "resource_type_plural": {
+    "agent": "Agents",
+    "connection": "Connections",
+    "knowledge": "Knowledge",
+    "skill": "Skills"
+  },
+  "knowledge": {
+    "folder": {
+      "move_to": "Move to folder",
+      "no_folder": "No folder",
+      "loading": "Loading folders…"
+    }
+  }
+}

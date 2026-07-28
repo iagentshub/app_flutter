@@ -1,0 +1,49 @@
+{
+  "header": {
+    "cta_register": "Create free account"
+  },
+  "hero": {
+    "badge": "Open source · Self-hosted",
+    "headline": "All your AI in one place",
+    "sub": "Build and share AI agents connected to your own providers — Claude, OpenAI, Gemini, Grok, Ollama and more — each with its own knowledge, memory and tools. Self-host it on your own server and keep full control of your data."
+  },
+  "overview": {
+    "eyebrow": "A complete AI agent platform",
+    "title": "Build, orchestrate and share agents without giving up control of your data",
+    "body": "Bring models, knowledge, memory, skills and teams together in an open source platform you can deploy on your own infrastructure.",
+    "docs_cta": "Explore the documentation",
+    "pricing_cta": "View plans"
+  },
+  "features": {
+    "multi_agent_title": "Multi-agent",
+    "multi_agent_body": "Create as many specialised agents as you need, each with its own knowledge, connections and memory — no artificial limits.",
+    "providers_title": "Provider connections",
+    "providers_body": "Connect Claude, OpenAI, Gemini, Grok, Ollama and more with your own API keys. Switch providers without touching a single line of your agents.",
+    "groups_title": "Work groups",
+    "groups_body": "Share agents, knowledge and connections with your team through work groups, without duplicating anything or losing control.",
+    "selfhosted_title": "Self-hosted",
+    "selfhosted_body": "Your data never leaves your server. Deploy on your own infrastructure with a single command.",
+    "knowledge_title": "Knowledge",
+    "knowledge_body": "Turn documents, URLs and memory into real context for your agents — no retraining, no cloud dependency.",
+    "skills_title": "Skills",
+    "skills_body": "Give your agents reusable tools: build a skill once and share it across every agent that needs it.",
+    "dashboard_title": "Dashboard & analytics",
+    "dashboard_body": "Monitor token and resource consumption, and track the evolution of everything your team builds, in real time.",
+    "centinel_title": "Centinel",
+    "centinel_body": "An admin panel with a built-in test suite: verify your instance's health with one click before every deployment.",
+    "export_title": "Export to local tools",
+    "export_body": "Export your agents to the native format of Claude Code, GitHub Copilot or OpenAI Assistants in one click. Build once, use them wherever you work."
+  },
+  "install": {
+    "title": "Installation",
+    "frontend_vanilla": "Frontend: Vanilla",
+    "frontend_react": "Frontend: React",
+    "mode_docker": "With Docker",
+    "mode_nodocker": "Without Docker",
+    "os_linux": "Linux",
+    "os_mac": "macOS",
+    "os_windows": "Windows",
+    "copy": "Copy",
+    "copied": "Copied!"
+  }
+}

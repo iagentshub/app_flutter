@@ -1,0 +1,153 @@
+{
+  "page": {
+    "title": "Dashboard",
+    "subtitle": "Visión general de tu plataforma",
+    "new_btn": "Nuevo",
+    "new_agent_btn": "Nuevo agente",
+    "new_agent_sub": "Crear o importar un agente",
+    "catalog_btn": "Catálogo",
+    "new_conn_btn": "Nueva conexión",
+    "new_conn_sub": "Añadir proveedor de IA",
+    "loading": "Cargando dashboard…",
+    "load_error": "No se pudo cargar el dashboard",
+    "retry_btn": "Reintentar",
+    "save_error": "No se pudo guardar: {{error}}"
+  },
+  "stats": {
+    "agents": "Agentes",
+    "connections": "Conexiones",
+    "skills": "Skills",
+    "memory": "Memoria",
+    "knowledge": "Conocimiento",
+    "workflows": "Orquestación"
+  },
+  "tokens": {
+    "title": "Uso de tokens",
+    "total": "Total consumido",
+    "no_activity": "Sin actividad registrada",
+    "unit_k": "k tokens"
+  },
+  "composition": {
+    "title": "Composición de agentes",
+    "with_memory": "Con memoria activa",
+    "with_knowledge": "Con conocimiento adjunto",
+    "no_agents": "Sin agentes todavía",
+    "empty": "Sin datos",
+    "config_desc": "Este panel no tiene opciones adicionales."
+  },
+  "recent": {
+    "title": "Agentes recientes",
+    "empty": "Aún no hay agentes.",
+    "chat_btn": "Chat",
+    "page_size_label": "Por página",
+    "agent_fallback": "Agente",
+    "empty_short": "Sin agentes"
+  },
+  "widgets": {
+    "summary": "Resumen",
+    "token_usage": "Uso de tokens",
+    "connection_status": "Estado de conexiones",
+    "recent": "Agentes recientes",
+    "activity": "Actividad",
+    "composition": "Composición",
+    "feed": "Feed",
+    "summary_title": "Resumen",
+    "activity_title": "Actividad",
+    "composition_title": "Composición",
+    "conn_status_title": "Estado de conexiones",
+    "feed_title": "Feed",
+    "recent_title": "Agentes recientes",
+    "token_usage_title": "Uso de tokens"
+  },
+  "editor": {
+    "move_widget": "Mover {{name}}",
+    "configure_widget": "Configurar {{name}}",
+    "remove_widget": "Quitar {{name}}"
+  },
+  "config": {
+    "group_by": "Agrupar por",
+    "connections": "Conexiones",
+    "all": "Todas",
+    "personal": "Personales",
+    "agent": "Agente",
+    "quantity": "Cantidad"
+  },
+  "sidebar": {
+    "customize_title": "Personalizar",
+    "done_btn": "Listo",
+    "hint": "Pulsa un panel para añadirlo. Arrastra para reordenar y usa el engranaje para configurarlo.",
+    "empty_line1": "Todos los paneles están en el dashboard.",
+    "empty_line2": "Usa × para quitar uno.",
+    "move_aria": "Mover {{title}}",
+    "configure_aria": "Configurar {{title}}",
+    "remove_aria": "Quitar {{title}}"
+  },
+  "size": {
+    "small": "Pequeño",
+    "medium": "Mediano",
+    "large": "Grande",
+    "cancel_btn": "Cancelar",
+    "save_btn": "Guardar",
+    "label": "Tamaño"
+  },
+  "summary": {
+    "show_label": "Mostrar"
+  },
+  "activity": {
+    "period_label": "Periodo (solo en Grande)",
+    "days_7": "7 días",
+    "days_14": "14 días",
+    "days_30": "30 días",
+    "empty": "Sin datos de actividad",
+    "hero_label": "tokens / {{days}} días",
+    "empty_days": "Sin actividad en {{days}} días"
+  },
+  "conn_status": {
+    "connections_label": "Conexiones",
+    "scope_all": "Todas",
+    "scope_personal": "Personales",
+    "page_size_label": "Por página (Grande)",
+    "checking": "Comprobando…",
+    "error": "Error",
+    "empty": "Sin conexiones",
+    "ok_label": "conexiones OK",
+    "refresh_btn": "Actualizar",
+    "ok_ratio": "{{ok}} / {{total}} OK",
+    "checking_count": "Comprobando {{total}} conexiones…",
+    "fallback_name": "Conexión"
+  },
+  "feed": {
+    "types_label": "Tipos de recurso",
+    "type_agent": "Agentes",
+    "type_skill": "Skills",
+    "type_knowledge": "Knowledge",
+    "limit_label": "Cantidad",
+    "items_count": "{{count}} items",
+    "density_label": "Vista",
+    "density_normal": "Normal — con descripción",
+    "density_compact": "Compacta — solo nombre y autor",
+    "badge_agent": "Agente",
+    "badge_skill": "Skill",
+    "badge_knowledge": "Knowledge",
+    "star_btn": "Star",
+    "time_min": "hace {{count}}min",
+    "time_hour": "hace {{count}}h",
+    "time_day": "hace {{count}}d",
+    "empty_prefix": "No hay publicaciones. Sigue usuarios en ",
+    "explore_link": "Explorar",
+    "error": "Error al cargar el feed.",
+    "resource_fallback": "Recurso"
+  },
+  "token_usage": {
+    "viz_label": "Visualización",
+    "viz_bars": "Barras",
+    "viz_donut": "Donut",
+    "group_by_label": "Agrupar por",
+    "group_connection": "Conexión",
+    "group_agent": "Agente",
+    "max_label": "Máximo (Grande)",
+    "top_label": "Top {{n}}",
+    "total_label": "tokens",
+    "empty": "Sin actividad de tokens"
+  }
+}

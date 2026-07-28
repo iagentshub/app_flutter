@@ -1,0 +1,39 @@
+{
+  "page": {
+    "title": "Soporte",
+    "eyebrow": "Centro de ayuda",
+    "heading": "¿Cómo podemos ayudarte?",
+    "subtitle": "Consulta la documentación, escríbenos o informa de un problema técnico. Elige la vía que mejor encaje con tu consulta."
+  },
+  "header": {
+    "login": "Iniciar sesión",
+    "dashboard": "Volver al Dashboard"
+  },
+  "channels": {
+    "title": "Canales de soporte",
+    "docs_title": "Documentación",
+    "docs_body": "Guías para configurar proveedores, agentes, conocimiento, conexiones y despliegues.",
+    "docs_action": "Consultar documentación",
+    "email_title": "Contacto directo",
+    "email_body": "Para consultas sobre tu cuenta, planes, facturación o incidencias que contengan información privada.",
+    "email_action": "Escribir a soporte",
+    "github_title": "Problemas técnicos",
+    "github_body": "Si has encontrado un error reproducible en el proyecto, abre una incidencia pública en GitHub.",
+    "github_action": "Abrir una incidencia"
+  },
+  "before": {
+    "title": "Antes de contactar",
+    "body": "Incluye la versión o entorno, los pasos para reproducir el problema y el mensaje de error. No publiques claves API, contraseñas ni datos personales."
+  },
+  "faq": {
+    "title": "Preguntas frecuentes",
+    "account_q": "No puedo acceder a mi cuenta",
+    "account_a": "Utiliza «¿Olvidaste tu contraseña?» en la pantalla de acceso. Si el correo no llega o tu cuenta está bloqueada, escríbenos desde el email asociado.",
+    "provider_q": "Un proveedor o modelo no conecta",
+    "provider_a": "Comprueba la clave API, la URL base y los permisos del proveedor. Después utiliza la acción «Probar» de la conexión y adjunta el error recibido si continúa fallando.",
+    "selfhosted_q": "Necesito ayuda con una instalación propia",
+    "selfhosted_a": "Indica el sistema operativo, la versión de Docker, el archivo de despliegue utilizado y los logs de los contenedores afectados.",
+    "response_q": "¿Cuándo recibiré respuesta?",
+    "response_a": "Las solicitudes se atienden según el plan contratado y la gravedad. Los problemas de seguridad o pérdida de acceso tienen prioridad."
+  }
+}

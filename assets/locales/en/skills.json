@@ -1,0 +1,121 @@
+{
+  "page": {
+    "title": "Skills",
+    "new_btn": "New",
+    "load_btn": "Load",
+    "load_error": "Could not read file: {{msg}}",
+    "new_from_catalog": "From catalog",
+    "new_from_catalog_sub": "Browse public skills",
+    "new_from_file": "Load from file",
+    "new_from_file_sub": "Import a file",
+    "new_from_scratch": "Create from scratch",
+    "new_from_scratch_sub": "Blank skill"
+  },
+  "categories": {
+    "ai": "AI",
+    "ai_agents": "AI & Agents",
+    "messaging": "Messaging",
+    "notes": "Notes",
+    "productivity": "Productivity",
+    "dev": "Dev",
+    "dev_full": "Development",
+    "security": "Security",
+    "media": "Media",
+    "data": "Data",
+    "company": "Company"
+  },
+  "scope": {
+    "all": "All",
+    "public": "Public",
+    "private": "Private",
+    "badge_public": "public",
+    "badge_private": "private",
+    "badge_shared": "shared"
+  },
+  "filter": {
+    "search_placeholder": "Search skill…"
+  },
+  "empty": {
+    "public": "No public skills.",
+    "private": "No private skills yet.",
+    "no_match": "No skills match."
+  },
+  "no_content": "(no content)",
+  "confirm_delete": "Delete this skill?",
+  "deleted": "Skill deleted",
+  "dialog": {
+    "title_new": "New private skill",
+    "title_edit": "Edit private skill",
+    "field_icon": "Icon",
+    "field_name": "Name",
+    "field_description": "Description",
+    "field_category": "Category",
+    "field_content": "Content (Markdown / instructions)",
+    "no_category": "No category",
+    "placeholder_name": "My skill...",
+    "placeholder_desc": "What does this skill do...",
+    "placeholder_content": "Instructions for the agent...",
+    "name_required": "Name is required",
+    "saved": "Skill saved",
+    "save_error": "Error: {{message}}"
+  },
+  "catalog": {
+    "open_btn": "Catalog",
+    "search_placeholder": "Search skills…",
+    "import_btn": "Import",
+    "empty": "No public skills available.",
+    "empty_search": "No skills found matching your search."
+  },
+  "actions": {
+    "edit": "Edit",
+    "delete": "Delete",
+    "share": "Share",
+    "export": "Export"
+  },
+  "export": {
+    "title": "Export skill",
+    "choose_format": "Choose format:",
+    "claude_label": "Claude Code / Anthropic",
+    "claude_sub": "Markdown with YAML frontmatter",
+    "claude_path": "📁 .claude/skills/{name}.md",
+    "github_label": "GitHub Copilot",
+    "github_sub": "Markdown instructions file",
+    "github_path": "📁 .github/instructions/{name}.instructions.md",
+    "openai_label": "OpenAI",
+    "openai_sub": "JSON for Assistants API",
+    "openai_path": "📄 {name}.json",
+    "md_label": "Markdown",
+    "md_sub": "Content only, no metadata",
+    "md_path": "📄 {name}.md",
+    "exported": "Exported: {{name}}"
+  },
+  "knowledge": {
+    "page_title": "Knowledge",
+    "tab_skills": "Skills",
+    "tab_urls": "URLs",
+    "tab_documents": "Documents",
+    "add_url_btn": "Add URL",
+    "url_placeholder": "https://example.com/page",
+    "title_placeholder": "Title (optional)",
+    "upload_btn": "Upload",
+    "upload_doc_btn": "Upload document",
+    "upload_doc": "Upload document",
+    "upload_doc_sub": ".txt, .md or .pdf",
+    "upload_folder": "Upload folder",
+    "upload_folder_sub": "All supported files",
+    "drop_hint": "Drag a file here or click to select it",
+    "formats_hint": "Formats: .txt .md .pdf · Max 10 MB",
+    "char_count": "{{n}} characters",
+    "char_warning": "Long text — may consume a lot of agent context",
+    "empty_urls": "No URLs yet. Add one to attach it to your agents.",
+    "empty_docs": "No documents yet. Upload one to attach it to your agents.",
+    "confirm_delete": "Delete this knowledge item?",
+    "deleted": "Item deleted",
+    "fetching": "Fetching URL…",
+    "uploading": "Uploading document…",
+    "fetch_error": "Could not fetch the URL: {{msg}}",
+    "upload_error": "Could not upload the document: {{msg}}",
+    "section_label": "Attached knowledge",
+    "agent_chars_total": "~{{n}} chars attached"
+  }
+}

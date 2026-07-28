@@ -1,0 +1,153 @@
+{
+  "page": {
+    "title": "Dashboard",
+    "subtitle": "Overview of your platform",
+    "new_btn": "New",
+    "new_agent_btn": "New agent",
+    "new_agent_sub": "Create or import an agent",
+    "catalog_btn": "Catalog",
+    "new_conn_btn": "New connection",
+    "new_conn_sub": "Add an AI provider",
+    "loading": "Loading dashboard…",
+    "load_error": "Couldn't load the dashboard",
+    "retry_btn": "Retry",
+    "save_error": "Couldn't save: {{error}}"
+  },
+  "stats": {
+    "agents": "Agents",
+    "connections": "Connections",
+    "skills": "Skills",
+    "memory": "Memory",
+    "knowledge": "Knowledge",
+    "workflows": "Orchestration"
+  },
+  "tokens": {
+    "title": "Token usage",
+    "total": "Total consumed",
+    "no_activity": "No activity recorded",
+    "unit_k": "k tokens"
+  },
+  "composition": {
+    "title": "Agent composition",
+    "with_memory": "With active memory",
+    "with_knowledge": "With attached knowledge",
+    "no_agents": "No agents yet",
+    "empty": "No data",
+    "config_desc": "This panel has no additional options."
+  },
+  "recent": {
+    "title": "Recent agents",
+    "empty": "No agents yet.",
+    "chat_btn": "Chat",
+    "page_size_label": "Per page",
+    "agent_fallback": "Agent",
+    "empty_short": "No agents"
+  },
+  "widgets": {
+    "summary": "Summary",
+    "token_usage": "Token usage",
+    "connection_status": "Connection status",
+    "recent": "Recent agents",
+    "activity": "Activity",
+    "composition": "Composition",
+    "feed": "Feed",
+    "summary_title": "Summary",
+    "activity_title": "Activity",
+    "composition_title": "Composition",
+    "conn_status_title": "Connection status",
+    "feed_title": "Feed",
+    "recent_title": "Recent agents",
+    "token_usage_title": "Token usage"
+  },
+  "editor": {
+    "move_widget": "Move {{name}}",
+    "configure_widget": "Configure {{name}}",
+    "remove_widget": "Remove {{name}}"
+  },
+  "config": {
+    "group_by": "Group by",
+    "connections": "Connections",
+    "all": "All",
+    "personal": "Personal",
+    "agent": "Agent",
+    "quantity": "Quantity"
+  },
+  "sidebar": {
+    "customize_title": "Customize",
+    "done_btn": "Done",
+    "hint": "Tap a panel to add it. Drag to reorder and use the gear icon to configure it.",
+    "empty_line1": "All panels are on the dashboard.",
+    "empty_line2": "Use × to remove one.",
+    "move_aria": "Move {{title}}",
+    "configure_aria": "Configure {{title}}",
+    "remove_aria": "Remove {{title}}"
+  },
+  "size": {
+    "small": "Small",
+    "medium": "Medium",
+    "large": "Large",
+    "cancel_btn": "Cancel",
+    "save_btn": "Save",
+    "label": "Size"
+  },
+  "summary": {
+    "show_label": "Show"
+  },
+  "activity": {
+    "period_label": "Period (Large only)",
+    "days_7": "7 days",
+    "days_14": "14 days",
+    "days_30": "30 days",
+    "empty": "No activity data",
+    "hero_label": "tokens / {{days}} days",
+    "empty_days": "No activity in {{days}} days"
+  },
+  "conn_status": {
+    "connections_label": "Connections",
+    "scope_all": "All",
+    "scope_personal": "Personal",
+    "page_size_label": "Per page (Large)",
+    "checking": "Checking…",
+    "error": "Error",
+    "empty": "No connections",
+    "ok_label": "connections OK",
+    "refresh_btn": "Refresh",
+    "ok_ratio": "{{ok}} / {{total}} OK",
+    "checking_count": "Checking {{total}} connections…",
+    "fallback_name": "Connection"
+  },
+  "feed": {
+    "types_label": "Resource types",
+    "type_agent": "Agents",
+    "type_skill": "Skills",
+    "type_knowledge": "Knowledge",
+    "limit_label": "Amount",
+    "items_count": "{{count}} items",
+    "density_label": "View",
+    "density_normal": "Normal — with description",
+    "density_compact": "Compact — name and author only",
+    "badge_agent": "Agent",
+    "badge_skill": "Skill",
+    "badge_knowledge": "Knowledge",
+    "star_btn": "Star",
+    "time_min": "{{count}}min ago",
+    "time_hour": "{{count}}h ago",
+    "time_day": "{{count}}d ago",
+    "empty_prefix": "No posts yet. Follow users in ",
+    "explore_link": "Explore",
+    "error": "Error loading the feed.",
+    "resource_fallback": "Resource"
+  },
+  "token_usage": {
+    "viz_label": "Visualization",
+    "viz_bars": "Bars",
+    "viz_donut": "Donut",
+    "group_by_label": "Group by",
+    "group_connection": "Connection",
+    "group_agent": "Agent",
+    "max_label": "Maximum (Large)",
+    "top_label": "Top {{n}}",
+    "total_label": "tokens",
+    "empty": "No token activity"
+  }
+}

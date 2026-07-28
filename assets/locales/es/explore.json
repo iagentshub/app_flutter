@@ -1,0 +1,25 @@
+{
+  "title": "Explorar",
+  "subtitle": "Descubre agentes, skills y conocimiento público de la comunidad",
+  "search_placeholder": "Buscar...",
+  "all_categories": "Todas las categorías",
+  "type_all": "Todo",
+  "type_agents": "Agentes",
+  "type_skills": "Skills",
+  "type_knowledge": "Conocimiento",
+  "type_workflows": "Orquestaciones",
+  "type_users": "Usuarios",
+  "btn_search": "Buscar",
+  "load_more": "Cargar más",
+  "prompt": "Elige un tipo y escribe tu búsqueda para explorar.",
+  "empty": "No hay resultados que coincidan con tu búsqueda.",
+  "users": {
+    "resources": "recursos",
+    "view_profile": "Ver perfil",
+    "invite": "Invitar",
+    "invite_sent": "Invitación enviada a",
+    "invite_already": "Ya es miembro o tiene invitación pendiente",
+    "invite_error": "Error al enviar la invitación",
+    "invite_no_ws": "Selecciona un grupo primero"
+  }
+}

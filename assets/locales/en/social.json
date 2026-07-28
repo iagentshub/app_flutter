@@ -1,0 +1,29 @@
+{
+  "visibility": {
+    "title": "Visibility on iAgents Hub",
+    "make_public": "Make public in the explorer",
+    "category": "Category",
+    "private_skills": "If the agent uses private skills, users who try it:",
+    "deps_warn": "Receive a notice that the skill is missing",
+    "deps_silent": "No notice (fails silently)",
+    "save_btn": "Save visibility",
+    "saved": "Visibility saved",
+    "knowledge_title": "Folder visibility",
+    "knowledge_warning": "This folder may contain sensitive information (URLs, documents, personal data). Making it public means any registered user can view it. Are you sure?",
+    "knowledge_confirm_hint": "Type PUBLISH to confirm:",
+    "knowledge_confirm_error": "You must type PUBLISH to confirm"
+  },
+  "feed": {
+    "title": "Feed",
+    "subtitle": "Latest from people you follow",
+    "empty_following": "You're not following anyone yet.",
+    "discover": "Discover users",
+    "empty_content": "People you follow haven't published anything yet."
+  },
+  "follow": {
+    "btn_follow": "Follow",
+    "btn_unfollow": "Unfollow",
+    "followers": "followers",
+    "following": "following"
+  }
+}

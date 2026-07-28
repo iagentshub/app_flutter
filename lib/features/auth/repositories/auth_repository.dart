@@ -1,0 +1,99 @@
+import '../../../core/network/api_client.dart';
+import '../../../core/network/api_error.dart';
+import '../../../models/auth/auth_result.dart';
+import '../../../models/auth/session_user.dart';
+
+class AuthRepository {
+  AuthRepository(this._apiClient);
+
+  final ApiClient _apiClient;
+
+  Future<(AuthResult, String)> login({
+    required String email,
+    required String password,
+  }) async {
+    final response = await _apiClient.post(
+      '/api/auth/login',
+      body: {'email': email.trim(), 'password': password},
+    );
+
+    final token = _apiClient.extractGaToken(response.headers);
+    if (token == null || token.isEmpty) {
+      throw ApiError(
+        statusCode: 500,
+        message: 'El backend no devolvio cookie de sesion ga_token',
+      );
+    }
+
+    final result = AuthResult.fromJson(response.json);
+    return (result, token);
+  }
+
+  Future<(AuthResult, String)> guestLogin() async {
+    final response = await _apiClient.post('/api/auth/guest');
+    final token = _apiClient.extractGaToken(response.headers);
+    if (token == null || token.isEmpty) {
+      throw ApiError(
+        statusCode: 500,
+        message: 'El backend no devolvio cookie de sesion ga_token',
+      );
+    }
+
+    final result = AuthResult.fromJson(response.json);
+    return (result, token);
+  }
+
+  Future<SessionUser> me(String gaToken) async {
+    final response = await _apiClient.get('/api/auth/me', gaToken: gaToken);
+    return SessionUser.fromJson(response.json);
+  }
+
+  Future<void> logout(String gaToken) async {
+    try {
+      await _apiClient.post('/api/auth/logout', gaToken: gaToken);
+    } catch (_) {
+      // Aunque el backend falle en logout, limpiamos sesión local igualmente.
+    }
+  }
+
+  Future<bool> register({
+    required String email,
+    required String password,
+  }) async {
+    final response = await _apiClient.post(
+      '/api/auth/register',
+      body: {'email': email.trim(), 'password': password},
+    );
+    return response.json['ok'] == true;
+  }
+
+  Future<bool> forgotPassword({required String email}) async {
+    final response = await _apiClient.post(
+      '/api/auth/forgot-password',
+      body: {'email': email.trim()},
+    );
+    return response.json['ok'] == true;
+  }
+
+  Future<bool> resetPassword({
+    required String token,
+    required String password,
+  }) async {
+    final response = await _apiClient.post(
+      '/api/auth/reset-password',
+      body: {'token': token.trim(), 'password': password},
+    );
+    return response.json['ok'] == true;
+  }
+
+  Future<(bool, String?)> verifyEmail(String token) async {
+    final response = await _apiClient.get('/api/auth/verify?token=${Uri.encodeQueryComponent(token)}');
+    final ok = response.json['ok'] == true;
+    return (ok, _apiClient.extractGaToken(response.headers));
+  }
+
+  Future<Map<String, dynamic>> platformPublic() async {
+    final response = await _apiClient.get('/api/settings/platform/public');
+    return response.json;
+  }
+}

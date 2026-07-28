@@ -1,0 +1,96 @@
+{
+  "page": {
+    "title": "Teams",
+    "subtitle": "Your teams and invitations"
+  },
+  "no_teams": "You don't belong to any team yet.",
+  "create_team": "Create team",
+  "guest_cannot_create": "Only registered accounts can create teams",
+  "team_name_placeholder": "Team name",
+  "joined": "Joined",
+  "manager_badge": "Manager",
+  "member_badge": "Member",
+  "leave": "Leave team",
+  "tabs": {
+    "my_teams": "My teams",
+    "invitations": "Invitations"
+  },
+  "table": {
+    "col_name": "Name",
+    "col_creator": "Creator",
+    "col_date": "Created",
+    "col_role": "Role",
+    "filter_placeholder": "Filter teams…"
+  },
+  "actions": {
+    "manage_members": "Manage members",
+    "invite": "Invite",
+    "directory": "Directory",
+    "leave_confirm": "Leave team {{name}}?"
+  },
+  "card": {
+    "members": "Members",
+    "invite_member": "Invite"
+  },
+  "members": {
+    "edit_perms": "Permissions",
+    "no_members": "No members"
+  },
+  "modal_members": {
+    "title": "Members of {{name}}"
+  },
+  "modal_directory": {
+    "title": "Directory of {{name}}",
+    "empty": "No resources shared with this team.",
+    "col_type": "Type",
+    "col_name": "Name",
+    "col_shared_by": "Shared by",
+    "col_date": "Date"
+  },
+  "groups": {
+    "title": "Work groups",
+    "empty": "You don't belong to any group yet.",
+    "all": "All",
+    "badge_mine": "Yours"
+  },
+  "sharing": {
+    "share_with": "Share with group",
+    "modal_title": "Share — {{name}}",
+    "no_teams": "You don't belong to any team.",
+    "no_groups": "You don't have any work groups.",
+    "select_groups": "Select the groups with access",
+    "shared_badge": "Shared",
+    "confirm": "Save",
+    "cancel": "Cancel",
+    "saved": "Access updated",
+    "save": "Save",
+    "col_group": "Group",
+    "col_role": "Role",
+    "grant_access": "Grant access",
+    "revoke_access": "Revoke access",
+    "loading": "Loading…",
+    "type_agent": "Agent",
+    "type_connection": "Connection",
+    "type_knowledge": "Knowledge",
+    "type_skill": "Skill"
+  },
+  "invitations": {
+    "received_title": "Received",
+    "sent_title": "Sent",
+    "col_team": "Team",
+    "col_invited_by": "Invited by",
+    "col_email": "Email",
+    "col_date": "Date",
+    "col_status": "Status",
+    "status_pending": "Pending",
+    "status_accepted": "Accepted",
+    "status_rejected": "Rejected",
+    "status_expired": "Expired",
+    "no_received": "You have no received invitations.",
+    "no_sent": "You have not sent any invitations.",
+    "accept": "Accept",
+    "reject": "Reject",
+    "cancel": "Cancel",
+    "confirm_cancel": "Cancel this invitation?"
+  }
+}

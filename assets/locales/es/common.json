@@ -1,0 +1,104 @@
+{
+  "cancel": "Cancelar",
+  "save": "Guardar",
+  "nav": {
+    "dashboard": "Dashboard",
+    "agents": "Agentes",
+    "workflows": "Orquestación",
+    "skills": "Habilidades",
+    "knowledge": "Conocimiento",
+    "connections": "Conexiones",
+    "memory": "Memoria",
+    "profile": "Perfil",
+    "admin": "Admin",
+    "admin_users": "Panel",
+    "admin_logs": "Logs",
+    "admin_mail": "Correos",
+    "logout": "Cerrar sesion",
+    "docs": "Documentación",
+    "about": "Acerca de",
+    "support": "Soporte",
+    "explore": "Explorar",
+    "upgrade": "Mejorar plan",
+    "logout_confirm": "¿Cerrar sesión?"
+  },
+  "actions": {
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "loading": "Cargando…",
+    "cancel": "Cancelar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "export": "Exportar",
+    "close": "Cerrar",
+    "clear": "Limpiar",
+    "clear_filters": "× Limpiar",
+    "send": "Enviar",
+    "test": "Test",
+    "view": "Ver",
+    "new_agent": "Nuevo agente",
+    "back": "← Volver"
+  },
+  "ui": {
+    "small": "Pequeño",
+    "medium": "Mediano",
+    "large": "Grande",
+    "checking": "Comprobando…",
+    "error": "Error",
+    "unexpected_error": "Error inesperado",
+    "select": "Selecciona…"
+  },
+  "errors": {
+    "operation": "No se pudo completar la operación.",
+    "save_change": "No se pudo guardar el cambio.",
+    "save_config": "No se pudo guardar la configuración.",
+    "save_agent": "No se pudo guardar el agente",
+    "generate_agent": "No se pudo generar el agente",
+    "export_agent": "No se pudo exportar el agente",
+    "agent_builder": "Error del constructor",
+    "agent_chat": "Error de chat",
+    "agent_response": "Error del agente",
+    "share": "No se pudo compartir",
+    "load_memory": "No se pudo cargar la memoria",
+    "load_preview": "No se pudo cargar la vista previa",
+    "send": "No se pudo enviar"
+  },
+  "search": {
+    "clear_aria": "Limpiar búsqueda"
+  },
+  "redirect": "Redirigiendo a {{target}}…",
+  "time": {
+    "now": "ahora",
+    "minutes_ago": "hace {{count}} min",
+    "hours_ago": "hace {{count}} h",
+    "days_ago": "hace {{count}} d"
+  },
+  "resource_type": {
+    "agent": "Agente",
+    "skill": "Skill",
+    "knowledge": "Conocimiento",
+    "connection": "Conexión"
+  },
+  "languages": {
+    "spanish": "Español"
+  },
+  "workspace": {
+    "new_prompt": "Nombre del nuevo workspace:",
+    "groups": "Grupos de trabajo",
+    "show_groups": "Mostrar grupos",
+    "hide_groups": "Ocultar grupos"
+  },
+  "resource_type_plural": {
+    "agent": "Agentes",
+    "connection": "Conexiones",
+    "knowledge": "Conocimiento",
+    "skill": "Skills"
+  },
+  "knowledge": {
+    "folder": {
+      "move_to": "Mover a carpeta",
+      "no_folder": "Sin carpeta",
+      "loading": "Cargando carpetas…"
+    }
+  }
+}

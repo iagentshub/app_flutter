@@ -1,0 +1,45 @@
+{
+  "page": {
+    "title": "Acerca de",
+    "subtitle": "iAgents Hub"
+  },
+  "header": {
+    "login": "Iniciar sesión"
+  },
+  "description": {
+    "title": "¿Qué es iAgents Hub?",
+    "body": "iAgents Hub es una plataforma self-hosted para crear, gestionar y colaborar con agentes de IA. Conecta cualquier proveedor —Anthropic, OpenAI, Google, Ollama y otros— con tu propia API key, organiza tus agentes en carpetas, compártelos con grupos de trabajo con un simple arrastre y exporta al formato nativo de Claude Code, GitHub Copilot u OpenAI Assistants con un clic. Todo desde una interfaz unificada, sin datos en la nube."
+  },
+  "features": {
+    "title": "Funcionalidades"
+  },
+  "stack": {
+    "title": "Stack tecnológico",
+    "python": "Lenguaje principal del backend",
+    "fastapi": "API REST de alto rendimiento",
+    "sqlite": "Base de datos embebida para despliegues ligeros",
+    "postgresql": "Base de datos relacional para producción",
+    "nginx": "Servidor web y proxy inverso",
+    "docker": "Contenerización y despliegue",
+    "vanillajs": "Frontend sin dependencias externas"
+  },
+  "creators": {
+    "title": "Creadores",
+    "role": "Desarrollador"
+  },
+  "github": {
+    "title": "Código fuente",
+    "body": "iAgents Hub es un proyecto de código abierto. Contribuciones bienvenidas.",
+    "label": "Ver en GitHub"
+  },
+  "contact": {
+    "title": "Contacto",
+    "body": "¿Tienes preguntas, sugerencias o quieres colaborar?",
+    "btn": "Contacta con nosotros",
+    "soon": "Próximamente"
+  },
+  "license": {
+    "title": "Licencia",
+    "body": "MIT License — libre de usar, modificar y distribuir."
+  }
+}

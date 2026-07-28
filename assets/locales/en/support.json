@@ -1,0 +1,39 @@
+{
+  "page": {
+    "title": "Support",
+    "eyebrow": "Help centre",
+    "heading": "How can we help?",
+    "subtitle": "Browse the documentation, contact us, or report a technical problem. Choose the channel that best fits your request."
+  },
+  "header": {
+    "login": "Sign in",
+    "dashboard": "Back to Dashboard"
+  },
+  "channels": {
+    "title": "Support channels",
+    "docs_title": "Documentation",
+    "docs_body": "Guides for configuring providers, agents, knowledge, connections, and deployments.",
+    "docs_action": "Browse documentation",
+    "email_title": "Direct contact",
+    "email_body": "For account, plan, billing, or incident enquiries that contain private information.",
+    "email_action": "Email support",
+    "github_title": "Technical issues",
+    "github_body": "If you found a reproducible bug in the project, open a public issue on GitHub.",
+    "github_action": "Open an issue"
+  },
+  "before": {
+    "title": "Before contacting us",
+    "body": "Include the version or environment, steps to reproduce, and the error message. Never publish API keys, passwords, or personal data."
+  },
+  "faq": {
+    "title": "Frequently asked questions",
+    "account_q": "I cannot access my account",
+    "account_a": "Use “Forgot your password?” on the sign-in page. If the email does not arrive or the account is locked, contact us from its associated email address.",
+    "provider_q": "A provider or model will not connect",
+    "provider_a": "Check the API key, base URL, and provider permissions. Then use the connection’s “Test” action and include the resulting error if it still fails.",
+    "selfhosted_q": "I need help with a self-hosted installation",
+    "selfhosted_a": "Include the operating system, Docker version, deployment file used, and logs from the affected containers.",
+    "response_q": "When will I receive a reply?",
+    "response_a": "Requests are handled according to the subscribed plan and severity. Security problems and loss of access receive priority."
+  }
+}

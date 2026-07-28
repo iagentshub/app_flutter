@@ -1,0 +1,69 @@
+{
+  "page": {
+    "title": "Conexiones",
+    "subtitle": "Proveedores de IA configurados",
+    "test_all": "Testear todo",
+    "new_btn": "Nueva conexión"
+  },
+  "types": {
+    "openai": "OpenAI",
+    "claude": "Claude",
+    "gemini": "Gemini",
+    "ollama": "Ollama"
+  },
+  "categories": {
+    "llm": "APIs LLM",
+    "machine": "Máquinas",
+    "database": "Bases de datos"
+  },
+  "filter": {
+    "search_placeholder": "Buscar conexión…"
+  },
+  "modal": {
+    "title_new": "Nueva conexion",
+    "title_edit": "Editar conexion",
+    "field_name": "Nombre",
+    "field_provider": "Proveedor",
+    "field_api_key": "API Key",
+    "api_key_hint": "Déjalo vacío para no cambiar.",
+    "field_host": "Host Ollama",
+    "field_url": "URL",
+    "hint_url": "Cámbiala si usas un proxy corporativo o una URL personalizada.",
+    "field_model": "Modelo por defecto",
+    "placeholder_name": "Nombre de la conexión",
+    "placeholder_host": "http://localhost:11434",
+    "placeholder_model": "gpt-4o / claude-sonnet-4-5 / llama3.2",
+    "field_scope": "Guardar como",
+    "scope_workspace": "Clave compartida",
+    "scope_personal": "Clave personal",
+    "scope_hint_workspace": "Compartible con los miembros de un grupo",
+    "scope_hint_personal": "Solo visible para ti"
+  },
+  "ollama": {
+    "enter_host": "Introduce el host primero",
+    "loading": "Cargando modelos…",
+    "no_models": "Sin modelos instalados (usa ollama pull <nombre>)",
+    "load_error": "No se pudo conectar al servidor"
+  },
+  "confirm_delete": "¿Eliminar esta conexion?",
+  "deleted": "Conexion eliminada",
+  "saved": "Conexion guardada",
+  "empty_filtered": "Sin conexiones que coincidan con el filtro.",
+  "empty_none": "Sin conexiones aun. Crea la primera.",
+  "count_one": "{{n}} conexion",
+  "count_many": "{{n}} conexiones",
+  "test_group": "Testear grupo",
+  "testing": "Testeando…",
+  "test_ok": "✓ OK",
+  "test_error": "✗ Error",
+  "empty": "Sin conexiones. Anade la primera.",
+  "actions": {
+    "test": "Test",
+    "edit": "Editar",
+    "delete": "Eliminar"
+  },
+  "card": {
+    "custom_url": "URL personalizada",
+    "scope_personal": "Personal"
+  }
+}

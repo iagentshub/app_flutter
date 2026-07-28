@@ -1,0 +1,55 @@
+{
+  "manager": {
+    "page": {
+      "title": "Panel de gestor",
+      "subtitle": "Administra tu equipo"
+    },
+    "tabs": {
+      "team": "Equipo",
+      "invitations": "Invitaciones"
+    },
+    "members": {
+      "table_email": "Email",
+      "table_role": "Rol",
+      "table_perms": "Permisos",
+      "table_joined": "Unido",
+      "table_actions": "",
+      "no_members": "El equipo no tiene miembros todavía.",
+      "edit_perms": "Editar permisos",
+      "remove": "Expulsar",
+      "make_manager": "Hacer gestor",
+      "confirm_remove": "¿Expulsar a {{username}} del equipo?"
+    },
+    "permissions": {
+      "title": "Permisos de {{username}}",
+      "tabs": {
+        "agents": "Agentes",
+        "connections": "Conexiones",
+        "knowledge": "Conocimiento"
+      },
+      "default_deny": "Por defecto: denegar todo",
+      "default_allow": "Por defecto: permitir todo",
+      "can_use": "Puede usar",
+      "can_direct": "Acceso directo",
+      "via_agent": "A través de agentes",
+      "can_view": "Ver/Usar",
+      "no_resources": "No hay recursos disponibles.",
+      "col_resource": "Recurso",
+      "filter_placeholder": "Filtrar recursos…"
+    },
+    "invitations": {
+      "invite_label": "Invitar por email",
+      "invite_placeholder": "usuario@ejemplo.com",
+      "send": "Enviar invitación",
+      "table_email": "Email",
+      "table_date": "Enviada",
+      "table_actions": "",
+      "cancel": "Cancelar",
+      "confirm_cancel": "¿Cancelar esta invitación?",
+      "none": "No hay invitaciones pendientes.",
+      "success": "Invitación enviada",
+      "already_member": "Este usuario ya es miembro del equipo."
+    },
+    "no_managed_workspace": "No administras ningún grupo de trabajo."
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "home": {
+    "title": "iAgents Hub — Self-hosted AI agent platform",
+    "description": "Build AI agents with your own Claude, OpenAI, Gemini or Ollama keys. Open source and self-hosted: your data never leaves your server."
+  },
+  "about": {
+    "title": "About · iAgents Hub",
+    "description": "What iAgents Hub is: an open source platform to build, organise and share multi-provider AI agents on your own infrastructure."
+  },
+  "docs": {
+    "title": "Documentation · iAgents Hub",
+    "description": "iAgents Hub guide: installation, agents, provider connections, skills, workspaces, memory and knowledge."
+  },
+  "pricing": {
+    "title": "Pricing and plans · iAgents Hub",
+    "description": "iAgents Hub plans: free when self-hosted, plus managed plans with direct support, backups and an admin panel."
+  },
+  "support": {
+    "title": "Support · iAgents Hub",
+    "description": "iAgents Hub FAQ and contact: accounts, AI providers, self-hosted deployment and response times."
+  },
+  "login": {
+    "title": "Sign in · iAgents Hub",
+    "description": "Sign in to your iAgents Hub account."
+  },
+  "register": {
+    "title": "Create account · iAgents Hub",
+    "description": "Create your iAgents Hub account and start building AI agents with your own providers."
+  },
+  "account": {
+    "title": "Your account · iAgents Hub",
+    "description": "Manage access to your iAgents Hub account."
+  },
+  "checkout": {
+    "title": "Checkout · iAgents Hub",
+    "description": "Complete the purchase of your iAgents Hub plan."
+  },
+  "not_found": {
+    "title": "Page not found · iAgents Hub",
+    "description": "The page you are looking for does not exist or has moved."
+  }
+}

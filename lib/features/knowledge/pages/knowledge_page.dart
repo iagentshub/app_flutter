@@ -1,0 +1,525 @@
+import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+
+import '../../../core/network/api_client.dart';
+import '../../../core/network/api_error.dart';
+import '../../../models/knowledge/knowledge_models.dart';
+import '../repositories/knowledge_repository.dart';
+import '../../../shared/state/session_controller.dart';
+
+class KnowledgePage extends StatefulWidget {
+  const KnowledgePage({
+    required this.apiClient,
+    required this.sessionController,
+    super.key,
+  });
+
+  final ApiClient apiClient;
+  final SessionController sessionController;
+
+  @override
+  State<KnowledgePage> createState() => _KnowledgePageState();
+}
+
+class _KnowledgePageState extends State<KnowledgePage> {
+  late final KnowledgeRepository _repository;
+  List<KnowledgeItem> _items = const [];
+  bool _loading = true;
+  bool _uploading = false;
+  String? _error;
+  String _filter = 'all';
+
+  @override
+  void initState() {
+    super.initState();
+    _repository = KnowledgeRepository(apiClient: widget.apiClient);
+    _load();
+  }
+
+  String? get _token => widget.sessionController.gaToken;
+
+  Future<void> _load() async {
+    final token = _token;
+    if (token == null || token.isEmpty) {
+      setState(() {
+        _error = 'No hay sesión activa';
+        _loading = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      final type = _filter == 'all' ? null : _filter;
+      final items = await _repository.listItems(token, type: type);
+      if (!mounted) return;
+      setState(() {
+        _items = items;
+        _loading = false;
+      });
+    } on ApiError catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _error = error.message;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'No se pudo cargar Knowledge';
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _openAddTextDialog() async {
+    final payload = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (context) => const _AddTextDialog(),
+    );
+    if (payload == null) return;
+
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+
+    try {
+      await _repository.addText(
+        token,
+        title: payload['title'] ?? '',
+        source: payload['source'],
+        content: payload['content'] ?? '',
+      );
+      _showMessage('Texto añadido a Knowledge');
+      await _load();
+    } on ApiError catch (error) {
+      _showMessage(error.message, isError: true);
+    } catch (_) {
+      _showMessage('No se pudo guardar el texto', isError: true);
+    }
+  }
+
+  Future<void> _openAddUrlDialog() async {
+    final payload = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (context) => const _AddUrlDialog(),
+    );
+    if (payload == null) return;
+
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+
+    try {
+      await _repository.addUrl(
+        token,
+        url: payload['url'] ?? '',
+        title: payload['title'],
+      );
+      _showMessage('URL importada a Knowledge');
+      await _load();
+    } on ApiError catch (error) {
+      _showMessage(error.message, isError: true);
+    } catch (_) {
+      _showMessage('No se pudo importar la URL', isError: true);
+    }
+  }
+
+  Future<void> _uploadDocument() async {
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+
+    final result = await FilePicker.platform.pickFiles(
+      withData: true,
+      type: FileType.custom,
+      allowedExtensions: const ['txt', 'md', 'pdf'],
+    );
+    if (result == null || result.files.isEmpty) return;
+
+    final file = result.files.first;
+    final bytes = file.bytes;
+    if (bytes == null || bytes.isEmpty) {
+      _showMessage('No se pudieron leer los bytes del fichero', isError: true);
+      return;
+    }
+
+    setState(() => _uploading = true);
+    try {
+      await _repository.uploadDocument(
+        token,
+        fileName: file.name,
+        fileBytes: bytes,
+      );
+      _showMessage('Documento subido: ${file.name}');
+      await _load();
+    } on ApiError catch (error) {
+      _showMessage(error.message, isError: true);
+    } catch (_) {
+      _showMessage('No se pudo subir el documento', isError: true);
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
+
+  Future<void> _deleteItem(KnowledgeItem item) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar item'),
+        content: Text('¿Seguro que quieres eliminar "${item.title}"?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancelar')),
+          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Eliminar')),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+
+    try {
+      await _repository.deleteItem(token, item.id);
+      _showMessage('Item eliminado');
+      await _load();
+    } on ApiError catch (error) {
+      _showMessage(error.message, isError: true);
+    } catch (_) {
+      _showMessage('No se pudo eliminar el item', isError: true);
+    }
+  }
+
+  void _showMessage(String text, {bool isError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(text),
+        backgroundColor: isError ? Colors.red.shade700 : null,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) return const Center(child: CircularProgressIndicator());
+
+    if (_error != null) {
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Error cargando Knowledge', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Text(_error!),
+                  const SizedBox(height: 12),
+                  FilledButton.icon(
+                    onPressed: _load,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Reintentar'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1100),
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilledButton.icon(
+                    onPressed: _openAddTextDialog,
+                    icon: const Icon(Icons.text_snippet_outlined),
+                    label: const Text('Añadir texto'),
+                  ),
+                  FilledButton.icon(
+                    onPressed: _openAddUrlDialog,
+                    icon: const Icon(Icons.link_outlined),
+                    label: const Text('Importar URL'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _uploading ? null : _uploadDocument,
+                    icon: const Icon(Icons.upload_file_outlined),
+                    label: Text(_uploading ? 'Subiendo...' : 'Subir documento'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _load,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Actualizar'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 220,
+                    child: DropdownButtonFormField<String>(
+                      initialValue: _filter,
+                      decoration: const InputDecoration(labelText: 'Filtrar tipo'),
+                      items: const [
+                        DropdownMenuItem(value: 'all', child: Text('Todos')),
+                        DropdownMenuItem(value: 'text', child: Text('Texto')),
+                        DropdownMenuItem(value: 'url', child: Text('URL')),
+                        DropdownMenuItem(value: 'document', child: Text('Documento')),
+                      ],
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() => _filter = value);
+                        _load();
+                      },
+                    ),
+                  ),
+                  Text('Items: ${_items.length}', style: Theme.of(context).textTheme.bodyMedium),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (_items.isEmpty)
+                const Card(
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text('No hay items de conocimiento para este filtro.'),
+                  ),
+                )
+              else
+                ..._items.map(_buildItemCard),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildItemCard(KnowledgeItem item) {
+    final icon = switch (item.type) {
+      'url' => Icons.public,
+      'document' => Icons.description_outlined,
+      _ => Icons.notes_outlined,
+    };
+
+    final metaParts = <String>[item.type, '${item.charCount} chars'];
+    if (item.source.isNotEmpty) metaParts.add(item.source);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    item.title,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                if (item.shared) _chip('shared'),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(metaParts.join(' · ')),
+            if (item.preview.trim().isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(item.preview.trim(), maxLines: 4, overflow: TextOverflow.ellipsis),
+            ],
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () => _deleteItem(item),
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('Eliminar'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _chip(String text) {
+    return Container(
+      margin: const EdgeInsets.only(left: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.red.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(text, style: const TextStyle(fontSize: 12)),
+    );
+  }
+}
+
+class _AddTextDialog extends StatefulWidget {
+  const _AddTextDialog();
+
+  @override
+  State<_AddTextDialog> createState() => _AddTextDialogState();
+}
+
+class _AddTextDialogState extends State<_AddTextDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _titleController = TextEditingController();
+  final _sourceController = TextEditingController();
+  final _contentController = TextEditingController();
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _sourceController.dispose();
+    _contentController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    Navigator.of(context).pop({
+      'title': _titleController.text.trim(),
+      'source': _sourceController.text.trim(),
+      'content': _contentController.text.trim(),
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Añadir texto'),
+      content: SizedBox(
+        width: 620,
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              TextFormField(
+                controller: _titleController,
+                decoration: const InputDecoration(labelText: 'Título'),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) return 'Título obligatorio';
+                  return null;
+                },
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _sourceController,
+                decoration: const InputDecoration(labelText: 'Fuente (opcional)'),
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _contentController,
+                minLines: 6,
+                maxLines: 12,
+                decoration: const InputDecoration(labelText: 'Contenido'),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) return 'Contenido obligatorio';
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
+        FilledButton(onPressed: _submit, child: const Text('Guardar')),
+      ],
+    );
+  }
+}
+
+class _AddUrlDialog extends StatefulWidget {
+  const _AddUrlDialog();
+
+  @override
+  State<_AddUrlDialog> createState() => _AddUrlDialogState();
+}
+
+class _AddUrlDialogState extends State<_AddUrlDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _urlController = TextEditingController();
+  final _titleController = TextEditingController();
+
+  @override
+  void dispose() {
+    _urlController.dispose();
+    _titleController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    Navigator.of(context).pop({
+      'url': _urlController.text.trim(),
+      'title': _titleController.text.trim(),
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Importar URL'),
+      content: SizedBox(
+        width: 620,
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              TextFormField(
+                controller: _urlController,
+                decoration: const InputDecoration(labelText: 'URL'),
+                validator: (value) {
+                  final raw = value?.trim() ?? '';
+                  if (raw.isEmpty) return 'URL obligatoria';
+                  final uri = Uri.tryParse(raw);
+                  if (uri == null || !uri.hasScheme || !uri.hasAuthority) {
+                    return 'URL no válida';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _titleController,
+                decoration: const InputDecoration(labelText: 'Título (opcional)'),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
+        FilledButton(onPressed: _submit, child: const Text('Importar')),
+      ],
+    );
+  }
+}

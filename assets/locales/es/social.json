@@ -1,0 +1,29 @@
+{
+  "visibility": {
+    "title": "Visibilidad en iAgents Hub",
+    "make_public": "Hacer público en el explorador",
+    "category": "Categoría",
+    "private_skills": "Si el agente usa skills privadas, los usuarios que lo prueben:",
+    "deps_warn": "Reciben un aviso de que falta la skill",
+    "deps_silent": "No reciben aviso (falla en silencio)",
+    "save_btn": "Guardar visibilidad",
+    "saved": "Visibilidad guardada",
+    "knowledge_title": "Visibilidad de la carpeta",
+    "knowledge_warning": "Esta carpeta puede contener información sensible (URLs, documentos, datos personales). Al hacerla pública cualquier usuario registrado podrá verla. ¿Estás seguro?",
+    "knowledge_confirm_hint": "Escribe PUBLICAR para confirmar:",
+    "knowledge_confirm_error": "Debes escribir PUBLICAR para confirmar"
+  },
+  "feed": {
+    "title": "Feed",
+    "subtitle": "Novedades de los usuarios que sigues",
+    "empty_following": "Todavía no sigues a nadie.",
+    "discover": "Descubrir usuarios",
+    "empty_content": "Los usuarios que sigues aún no han publicado nada."
+  },
+  "follow": {
+    "btn_follow": "Seguir",
+    "btn_unfollow": "Dejar de seguir",
+    "followers": "seguidores",
+    "following": "siguiendo"
+  }
+}

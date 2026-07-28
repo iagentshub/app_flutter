@@ -1,0 +1,36 @@
+{
+  "page": {
+    "title": "Memoria",
+    "subtitle": "Archivos de contexto persistente para tus agentes",
+    "new_btn": "Nueva",
+    "load_btn": "Cargar",
+    "load_error": "No se pudo leer el fichero: {{msg}}",
+    "new_from_file": "Cargar de local",
+    "new_from_file_sub": "Importa .md o .json",
+    "new_from_scratch": "Crear desde cero",
+    "new_from_scratch_sub": "Archivo de memoria vacío"
+  },
+  "filter": {
+    "search_placeholder": "Buscar archivo…"
+  },
+  "search": {
+    "clear_aria": "Limpiar"
+  },
+  "modal": {
+    "title_new": "Nueva memoria",
+    "title_edit": "Editar memoria",
+    "field_name": "Nombre del archivo",
+    "field_content": "Contenido",
+    "filename_required": "Nombre de fichero requerido",
+    "saving": "Guardando...",
+    "save_btn": "Guardar",
+    "saved": "Memoria guardada"
+  },
+  "empty": "No hay ficheros de memoria.",
+  "confirm_delete": "Eliminar \"{{file}}\"?",
+  "deleted": "Memoria eliminada",
+  "actions": {
+    "edit": "Editar",
+    "delete": "Eliminar"
+  }
+}

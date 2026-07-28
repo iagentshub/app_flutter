@@ -1,0 +1,96 @@
+{
+  "page": {
+    "title": "Equipos",
+    "subtitle": "Tus equipos e invitaciones"
+  },
+  "no_teams": "No perteneces a ningún equipo todavía.",
+  "create_team": "Crear equipo",
+  "guest_cannot_create": "Solo las cuentas registradas pueden crear equipos",
+  "team_name_placeholder": "Nombre del equipo",
+  "joined": "Unido",
+  "manager_badge": "Gestor",
+  "member_badge": "Miembro",
+  "leave": "Salir del equipo",
+  "tabs": {
+    "my_teams": "Mis equipos",
+    "invitations": "Invitaciones"
+  },
+  "table": {
+    "col_name": "Nombre",
+    "col_creator": "Creador",
+    "col_date": "Creado",
+    "col_role": "Rol",
+    "filter_placeholder": "Filtrar equipos…"
+  },
+  "actions": {
+    "manage_members": "Gestionar miembros",
+    "invite": "Invitar",
+    "directory": "Directorio",
+    "leave_confirm": "¿Salir del equipo {{name}}?"
+  },
+  "card": {
+    "members": "Miembros",
+    "invite_member": "Invitar"
+  },
+  "members": {
+    "edit_perms": "Permisos",
+    "no_members": "Sin miembros"
+  },
+  "modal_members": {
+    "title": "Miembros de {{name}}"
+  },
+  "modal_directory": {
+    "title": "Directorio de {{name}}",
+    "empty": "No hay recursos compartidos con este equipo.",
+    "col_type": "Tipo",
+    "col_name": "Nombre",
+    "col_shared_by": "Compartido por",
+    "col_date": "Fecha"
+  },
+  "groups": {
+    "title": "Grupos de trabajo",
+    "empty": "No perteneces a ningún grupo todavía.",
+    "all": "Todos",
+    "badge_mine": "Tuyo"
+  },
+  "sharing": {
+    "share_with": "Compartir con grupo",
+    "modal_title": "Compartir — {{name}}",
+    "no_teams": "No perteneces a ningún equipo.",
+    "no_groups": "No tienes grupos de trabajo.",
+    "select_groups": "Selecciona los grupos con acceso",
+    "shared_badge": "Compartido",
+    "confirm": "Guardar",
+    "cancel": "Cancelar",
+    "saved": "Acceso actualizado",
+    "save": "Guardar",
+    "col_group": "Grupo",
+    "col_role": "Rol",
+    "grant_access": "Dar acceso",
+    "revoke_access": "Quitar acceso",
+    "loading": "Cargando…",
+    "type_agent": "Agente",
+    "type_connection": "Conexión",
+    "type_knowledge": "Conocimiento",
+    "type_skill": "Habilidad"
+  },
+  "invitations": {
+    "received_title": "Recibidas",
+    "sent_title": "Enviadas",
+    "col_team": "Equipo",
+    "col_invited_by": "Invitado por",
+    "col_email": "Email",
+    "col_date": "Fecha",
+    "col_status": "Estado",
+    "status_pending": "Pendiente",
+    "status_accepted": "Aceptada",
+    "status_rejected": "Rechazada",
+    "status_expired": "Expirada",
+    "no_received": "No tienes invitaciones recibidas.",
+    "no_sent": "No has enviado invitaciones.",
+    "accept": "Aceptar",
+    "reject": "Rechazar",
+    "cancel": "Cancelar",
+    "confirm_cancel": "¿Cancelar esta invitación?"
+  }
+}

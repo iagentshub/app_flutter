@@ -1,0 +1,36 @@
+{
+  "page": {
+    "title": "Memory",
+    "subtitle": "Persistent context files for your agents",
+    "new_btn": "New",
+    "load_btn": "Load",
+    "load_error": "Could not read file: {{msg}}",
+    "new_from_file": "Load from file",
+    "new_from_file_sub": "Import .md or .json",
+    "new_from_scratch": "Create from scratch",
+    "new_from_scratch_sub": "Empty memory file"
+  },
+  "filter": {
+    "search_placeholder": "Search file…"
+  },
+  "search": {
+    "clear_aria": "Clear"
+  },
+  "modal": {
+    "title_new": "New memory",
+    "title_edit": "Edit memory",
+    "field_name": "File name",
+    "field_content": "Content",
+    "filename_required": "File name required",
+    "saving": "Saving...",
+    "save_btn": "Save",
+    "saved": "Memory saved"
+  },
+  "empty": "No memory files.",
+  "confirm_delete": "Delete \"{{file}}\"?",
+  "deleted": "Memory deleted",
+  "actions": {
+    "edit": "Edit",
+    "delete": "Delete"
+  }
+}
