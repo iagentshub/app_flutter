@@ -9,6 +9,8 @@ import '../../explore/repositories/explore_repository.dart';
 import '../repositories/public_profile_repository.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/action_icon_button.dart';
+import '../../../shared/widgets/filter_button.dart';
+import '../../../shared/widgets/responsive_dialog.dart';
 
 class PublicProfilePage extends StatefulWidget {
   const PublicProfilePage({
@@ -48,6 +50,38 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
   String? get _token => widget.sessionController.gaToken;
 
   String get _cleanUsername => widget.username.trim();
+
+  void _openFiltersDialog() {
+    showFilterDialog(
+      context,
+      title: 'Filtros',
+      clearLabel: 'Limpiar filtros',
+      closeLabel: 'Cerrar',
+      onClear: () {
+        setState(() => _type = 'all');
+        _load();
+      },
+      buildFields: (setDialogState) => [
+        DropdownButtonFormField<String>(
+          initialValue: _type,
+          decoration: const InputDecoration(labelText: 'Tipo recurso'),
+          items: const [
+            DropdownMenuItem(value: 'all', child: Text('all')),
+            DropdownMenuItem(value: 'agent', child: Text('agent')),
+            DropdownMenuItem(value: 'skill', child: Text('skill')),
+            DropdownMenuItem(value: 'knowledge', child: Text('knowledge')),
+            DropdownMenuItem(value: 'workflow', child: Text('workflow')),
+          ],
+          onChanged: (value) {
+            if (value == null) return;
+            setState(() => _type = value);
+            _load();
+            setDialogState(() {});
+          },
+        ),
+      ],
+    );
+  }
 
   Future<void> _load() async {
     final token = _token;
@@ -127,7 +161,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
         builder: (context) => AlertDialog(
           title: Text(item.name),
           content: SizedBox(
-            width: 740,
+            width: dialogContentWidth(context, 740),
             child: SingleChildScrollView(
               child: SelectableText(
                 const JsonEncoder.withIndent('  ').convert(preview),
@@ -136,7 +170,10 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
             ),
           ),
           actions: [
-            FilledButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cerrar')),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cerrar'),
+            ),
           ],
         ),
       );
@@ -170,7 +207,10 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Error cargando perfil público', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Error cargando perfil público',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 8),
                   Text(_error!),
                   const SizedBox(height: 12),
@@ -192,102 +232,124 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
       return const Center(child: Text('Sin estado de seguimiento'));
     }
 
+    final header = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  'Perfil público @$_cleanUsername',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                Text('Seguidores: ${followStatus.followersCount}'),
+                Text('Siguiendo: ${followStatus.followingCount}'),
+                FilledButton.icon(
+                  onPressed: _followBusy ? null : _toggleFollow,
+                  icon: Icon(
+                    followStatus.following
+                        ? Icons.person_remove_alt_1
+                        : Icons.person_add_alt_1,
+                  ),
+                  label: Text(
+                    _followBusy
+                        ? 'Actualizando...'
+                        : (followStatus.following
+                              ? 'Dejar de seguir'
+                              : 'Seguir'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            FilterButton(
+              activeCount: _type != 'all' ? 1 : 0,
+              tooltip: 'Filtros',
+              onPressed: _openFiltersDialog,
+            ),
+            Text('Recursos: ${_resources.length}'),
+          ],
+        ),
+      ],
+    );
+
     return RefreshIndicator(
       onRefresh: _load,
       child: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1100),
-          child: ListView(
+          child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Text(
-                        'Perfil público @$_cleanUsername',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      Text('Seguidores: ${followStatus.followersCount}'),
-                      Text('Siguiendo: ${followStatus.followingCount}'),
-                      FilledButton.icon(
-                        onPressed: _followBusy ? null : _toggleFollow,
-                        icon: Icon(followStatus.following ? Icons.person_remove_alt_1 : Icons.person_add_alt_1),
-                        label: Text(_followBusy
-                            ? 'Actualizando...'
-                            : (followStatus.following ? 'Dejar de seguir' : 'Seguir')),
-                      ),
-                    ],
-                  ),
-                ),
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                sliver: SliverToBoxAdapter(child: header),
               ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 220,
-                    child: DropdownButtonFormField<String>(
-                      initialValue: _type,
-                      decoration: const InputDecoration(labelText: 'Tipo recurso'),
-                      items: const [
-                        DropdownMenuItem(value: 'all', child: Text('all')),
-                        DropdownMenuItem(value: 'agent', child: Text('agent')),
-                        DropdownMenuItem(value: 'skill', child: Text('skill')),
-                        DropdownMenuItem(value: 'knowledge', child: Text('knowledge')),
-                        DropdownMenuItem(value: 'workflow', child: Text('workflow')),
-                      ],
-                      onChanged: (value) {
-                        if (value == null) return;
-                        setState(() => _type = value);
-                        _load();
-                      },
-                    ),
-                  ),
-                  Text('Recursos: ${_resources.length}'),
-                ],
-              ),
-              const SizedBox(height: 12),
               if (_resources.isEmpty)
-                const Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text('Este usuario no tiene recursos públicos en este filtro.'),
+                const SliverPadding(
+                  padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  sliver: SliverToBoxAdapter(
+                    child: Card(
+                      child: Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Text(
+                          'Este usuario no tiene recursos públicos en este filtro.',
+                        ),
+                      ),
+                    ),
                   ),
                 )
               else
-                ..._resources.map(
-                  (item) => Card(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    child: ListTile(
-                      title: Text(item.name),
-                      subtitle: Row(
-                        children: [
-                          Text('${item.resourceType} · ${item.category}', style: Theme.of(context).textTheme.bodySmall),
-                          const SizedBox(width: 10),
-                          Icon(Icons.star, size: 13, color: Colors.amber.shade600),
-                          const SizedBox(width: 3),
-                          Text('${item.stars}', style: Theme.of(context).textTheme.bodySmall),
-                        ],
-                      ),
-                      trailing: ActionIconButton(
-                        icon: Icons.visibility_outlined,
-                        tooltip: 'Vista previa',
-                        onPressed: () => _preview(item),
-                      ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => _buildResourceCard(_resources[index]),
+                      childCount: _resources.length,
                     ),
                   ),
                 ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResourceCard(ExploreItem item) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: ListTile(
+        title: Text(item.name),
+        subtitle: Row(
+          children: [
+            Text(
+              '${item.resourceType} · ${item.category}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(width: 10),
+            Icon(Icons.star, size: 13, color: Colors.amber.shade600),
+            const SizedBox(width: 3),
+            Text('${item.stars}', style: Theme.of(context).textTheme.bodySmall),
+          ],
+        ),
+        trailing: ActionIconButton(
+          icon: Icons.visibility_outlined,
+          tooltip: 'Vista previa',
+          onPressed: () => _preview(item),
         ),
       ),
     );

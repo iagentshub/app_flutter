@@ -15,7 +15,9 @@ import '../repositories/agents_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/utils/debouncer.dart';
 import '../../../shared/widgets/action_icon_button.dart';
+import '../../../shared/widgets/filter_button.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
 import '../../../shared/widgets/grouped_label_picker.dart';
 import '../../../shared/widgets/label_chips_row.dart';
@@ -43,31 +45,109 @@ class _AgentsPageState extends State<AgentsPage> {
   late final AgentsRepository _repository;
   late final TranslatedTexts _t;
   final TextEditingController _queryController = TextEditingController();
+  final Debouncer _searchDebouncer = Debouncer();
   List<AgentItem> _agents = const [];
   bool _loading = true;
   String? _error;
   String _query = '';
   String? _activeGroupId;
-  bool _groupsVisible = false;
+  String _scope = 'all';
+  String _agentType = 'all';
+  String _memory = 'all';
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
+  List<String> get _agentTypeOptions =>
+      _agents.map((a) => a.agentType).toSet().toList()..sort();
+
+  int get _activeFilterCount =>
+      (_scope != 'all' ? 1 : 0) +
+      (_agentType != 'all' ? 1 : 0) +
+      (_memory != 'all' ? 1 : 0);
+
   List<AgentItem> get _filteredAgents {
     final query = _query.trim().toLowerCase();
-    if (query.isEmpty) return _agents;
     return _agents.where((item) {
+      if (_scope != 'all' && item.scope != _scope) return false;
+      if (_agentType != 'all' && item.agentType != _agentType) return false;
+      if (_memory == 'with' && !item.useMemory) return false;
+      if (_memory == 'without' && item.useMemory) return false;
+      if (query.isEmpty) return true;
       return item.name.toLowerCase().contains(query) ||
           item.agentType.toLowerCase().contains(query) ||
           item.model.toLowerCase().contains(query);
     }).toList();
   }
 
+  void _openFiltersDialog() {
+    final optionAll = _tx('explore.option_all', 'Todas');
+    final scopeOptions = [
+      ('all', optionAll),
+      ('private', _tx('agents.scope_private', 'Privado')),
+      ('public', _tx('agents.scope_public', 'Público')),
+    ];
+    final typeOptions = [
+      ('all', optionAll),
+      ..._agentTypeOptions.map((t) => (t, t)),
+    ];
+    final memoryOptions = [
+      ('all', optionAll),
+      ('with', _tx('agents.memory_with', 'Con memoria')),
+      ('without', _tx('agents.memory_without', 'Sin memoria')),
+    ];
+
+    showFilterDialog(
+      context,
+      title: _tx('common.filters', 'Filtros'),
+      clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
+      closeLabel: _tx('common.close', 'Cerrar'),
+      onClear: () => setState(() {
+        _scope = 'all';
+        _agentType = 'all';
+        _memory = 'all';
+      }),
+      buildFields: (setDialogState) => [
+        FilterDropdown(
+          label: _tx('agents.scope_label', 'Visibilidad'),
+          value: _scope,
+          options: scopeOptions,
+          onChanged: (v) {
+            setState(() => _scope = v);
+            setDialogState(() {});
+          },
+        ),
+        const SizedBox(height: 12),
+        FilterDropdown(
+          label: _tx('agents.type_label', 'Tipo de agente'),
+          value: _agentType,
+          options: typeOptions,
+          onChanged: (v) {
+            setState(() => _agentType = v);
+            setDialogState(() {});
+          },
+        ),
+        const SizedBox(height: 12),
+        FilterDropdown(
+          label: _tx('agents.memory_label', 'Memoria'),
+          value: _memory,
+          options: memoryOptions,
+          onChanged: (v) {
+            setState(() => _memory = v);
+            setDialogState(() {});
+          },
+        ),
+      ],
+    );
+  }
+
   @override
   void initState() {
     super.initState();
     _repository = AgentsRepository(apiClient: widget.apiClient);
-    _t = TranslatedTexts(localeController: widget.localeController, namespace: 'resources')
-      ..addListener(_onTextsChanged);
+    _t = TranslatedTexts(
+      localeController: widget.localeController,
+      namespace: 'resources',
+    )..addListener(_onTextsChanged);
     _load();
   }
 
@@ -77,6 +157,7 @@ class _AgentsPageState extends State<AgentsPage> {
 
   @override
   void dispose() {
+    _searchDebouncer.dispose();
     _queryController.dispose();
     _t.removeListener(_onTextsChanged);
     _t.dispose();
@@ -101,7 +182,10 @@ class _AgentsPageState extends State<AgentsPage> {
     });
 
     try {
-      final agents = await _repository.listAgents(token, groupId: _activeGroupId);
+      final agents = await _repository.listAgents(
+        token,
+        groupId: _activeGroupId,
+      );
       if (!mounted) return;
       setState(() {
         _agents = agents;
@@ -116,7 +200,10 @@ class _AgentsPageState extends State<AgentsPage> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = _tx('agents.error_generic', 'No se pudieron cargar los agentes');
+        _error = _tx(
+          'agents.error_generic',
+          'No se pudieron cargar los agentes',
+        );
         _loading = false;
       });
     }
@@ -146,7 +233,8 @@ class _AgentsPageState extends State<AgentsPage> {
     if (token == null || token.isEmpty) return;
     final payload = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) => _AgentFormDialog(apiClient: widget.apiClient, token: token, tx: _tx),
+      builder: (context) =>
+          _AgentFormDialog(apiClient: widget.apiClient, token: token, tx: _tx),
     );
     if (payload == null) return;
     await _saveAgent(payload);
@@ -169,7 +257,12 @@ class _AgentsPageState extends State<AgentsPage> {
     if (!mounted) return;
     final payload = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) => _AgentFormDialog(apiClient: widget.apiClient, token: token, initial: initial, tx: _tx),
+      builder: (context) => _AgentFormDialog(
+        apiClient: widget.apiClient,
+        token: token,
+        initial: initial,
+        tx: _tx,
+      ),
     );
     if (payload == null) return;
     payload['id'] = item.id;
@@ -202,8 +295,14 @@ class _AgentsPageState extends State<AgentsPage> {
         title: const Text('Eliminar agente'),
         content: Text('¿Seguro que quieres eliminar "${item.name}"?'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Eliminar')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Eliminar'),
+          ),
         ],
       ),
     );
@@ -257,7 +356,10 @@ class _AgentsPageState extends State<AgentsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(_tx('agents.error_title', 'Error cargando agentes'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    _tx('agents.error_title', 'Error cargando agentes'),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 8),
                   Text(_error!),
                   const SizedBox(height: 12),
@@ -274,99 +376,122 @@ class _AgentsPageState extends State<AgentsPage> {
       );
     }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final wide = constraints.maxWidth >= 700;
-        final groupPanel = GroupFilterPanel(
-          apiClient: widget.apiClient,
-          token: _token ?? '',
-          activeGroupId: _activeGroupId,
-          onSelect: _onGroupSelect,
-          localeController: widget.localeController,
-          vertical: wide,
-        );
-
-        final list = RefreshIndicator(
-          onRefresh: _load,
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
+    final filteredAgents = _filteredAgents;
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  FilledButton.icon(
-                    onPressed: _openCreateDialog,
-                    icon: const Icon(Icons.add),
-                    label: Text(_tx('agents.new', 'Nuevo agente')),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: _load,
-                    icon: const Icon(Icons.refresh),
-                    label: Text(_tx('common.update', 'Actualizar')),
-                  ),
-                  IconButton.outlined(
-                    onPressed: () => setState(() => _groupsVisible = !_groupsVisible),
-                    icon: const Icon(Icons.groups_outlined),
-                    tooltip: _tx('groups.toggle_tooltip', 'Grupos'),
-                    isSelected: _groupsVisible,
-                  ),
-                  if (_activeGroupId != null)
-                    ActionChip(
-                      label: Text(_tx('groups.active_clear', 'Grupo activo ✕')),
-                      onPressed: () => _onGroupSelect(null),
+                  TextField(
+                    controller: _queryController,
+                    decoration: InputDecoration(
+                      labelText: _tx('agents.search_hint', 'Buscar agente'),
+                      prefixIcon: const Icon(Icons.search, size: 20),
                     ),
+                    onChanged: (value) {
+                      _query = value;
+                      _searchDebouncer.run(() {
+                        if (mounted) setState(() {});
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      IconButton.filled(
+                        onPressed: _openCreateDialog,
+                        icon: const Icon(Icons.add),
+                        tooltip: _tx('agents.new', 'Nuevo agente'),
+                      ),
+                      IconButton.outlined(
+                        onPressed: _load,
+                        icon: const Icon(Icons.refresh),
+                        tooltip: _tx('common.update', 'Actualizar'),
+                      ),
+                      FilterButton(
+                        activeCount: _activeFilterCount,
+                        tooltip: _tx('common.filters', 'Filtros'),
+                        onPressed: _openFiltersDialog,
+                      ),
+                      IconButton.outlined(
+                        onPressed: () => showGroupFilterDialog(
+                          context,
+                          apiClient: widget.apiClient,
+                          token: _token ?? '',
+                          activeGroupId: _activeGroupId,
+                          onSelect: _onGroupSelect,
+                          localeController: widget.localeController,
+                        ),
+                        icon: const Icon(Icons.groups_outlined),
+                        tooltip: _tx('groups.toggle_tooltip', 'Grupos'),
+                        isSelected: _activeGroupId != null,
+                      ),
+                      if (_activeGroupId != null)
+                        ActionChip(
+                          label: Text(
+                            _tx('groups.active_clear', 'Grupo activo ✕'),
+                          ),
+                          onPressed: () => _onGroupSelect(null),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    '${_tx('agents.count_label', 'Agentes')}: ${filteredAgents.length}',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
                 ],
               ),
-              if (_groupsVisible && !wide) ...[
-                const SizedBox(height: 12),
-                groupPanel,
-              ],
-              const SizedBox(height: 12),
-              TextField(
-                controller: _queryController,
-                decoration: InputDecoration(
-                  labelText: _tx('agents.search_hint', 'Buscar agente'),
-                  prefixIcon: const Icon(Icons.search, size: 20),
-                ),
-                onChanged: (value) => setState(() => _query = value),
-              ),
-              const SizedBox(height: 12),
-              Text('${_tx('agents.count_label', 'Agentes')}: ${_filteredAgents.length}', style: Theme.of(context).textTheme.bodyMedium),
-              const SizedBox(height: 12),
-              if (_filteredAgents.isEmpty)
-                Card(
+            ),
+          ),
+          if (filteredAgents.isEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              sliver: SliverToBoxAdapter(
+                child: Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Text(
                       _agents.isEmpty
                           ? _tx('agents.empty', 'No hay agentes disponibles.')
-                          : _tx('agents.empty_search', 'Sin resultados para esa búsqueda.'),
+                          : _tx(
+                              'agents.empty_search',
+                              'Sin resultados para esa búsqueda.',
+                            ),
                     ),
                   ),
-                )
-              else
-                ..._filteredAgents.map(_buildAgentCard),
-            ],
-          ),
-        );
-
-        if (!wide) return list;
-        return Row(
-          children: [
-            if (_groupsVisible) groupPanel,
-            Expanded(child: list),
-          ],
-        );
-      },
+                ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => _buildAgentCard(filteredAgents[index]),
+                  childCount: filteredAgents.length,
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
   Widget _buildAgentCard(AgentItem item) {
     final subtitleParts = <String>[item.agentType];
     if (item.model.isNotEmpty) subtitleParts.add(item.model);
-    if (item.connectionId.isNotEmpty) subtitleParts.add('conn: ${item.connectionId}');
+    if (item.connectionId.isNotEmpty)
+      subtitleParts.add('conn: ${item.connectionId}');
 
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
@@ -380,7 +505,10 @@ class _AgentsPageState extends State<AgentsPage> {
                 Expanded(
                   child: Text(
                     item.name,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
@@ -389,7 +517,11 @@ class _AgentsPageState extends State<AgentsPage> {
             Text(subtitleParts.join(' · ')),
             if (item.description.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text(item.description, maxLines: 3, overflow: TextOverflow.ellipsis),
+              Text(
+                item.description,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
             const SizedBox(height: 8),
             LabelChipsRow(
@@ -406,9 +538,16 @@ class _AgentsPageState extends State<AgentsPage> {
             Row(
               children: [
                 Tooltip(
-                  message: item.connectionId.isEmpty ? _tx('agents.chat_no_connection', 'Configura una conexión para este agente') : '',
+                  message: item.connectionId.isEmpty
+                      ? _tx(
+                          'agents.chat_no_connection',
+                          'Configura una conexión para este agente',
+                        )
+                      : '',
                   child: FilledButton.icon(
-                    onPressed: item.connectionId.isEmpty ? null : () => _openChat(item),
+                    onPressed: item.connectionId.isEmpty
+                        ? null
+                        : () => _openChat(item),
                     icon: const Icon(Icons.chat_bubble_outline),
                     label: const Text('Chat'),
                   ),
@@ -489,9 +628,12 @@ class _AgentFormDialogState extends State<_AgentFormDialog> {
 
   /// La visibilidad ya no es un campo aparte: es la label "private"/"public"
   /// del grupo excluyente de Visibilidad (una sola fuente de verdad).
-  String get _scope => _selectedLabels.contains('public') ? 'public' : 'private';
+  String get _scope =>
+      _selectedLabels.contains('public') ? 'public' : 'private';
 
-  String get _title => widget.initial == null ? widget.tx('agents.new_title', 'Nuevo agente') : widget.tx('agents.edit_title', 'Editar agente');
+  String get _title => widget.initial == null
+      ? widget.tx('agents.new_title', 'Nuevo agente')
+      : widget.tx('agents.edit_title', 'Editar agente');
 
   @override
   void initState() {
@@ -501,18 +643,32 @@ class _AgentFormDialogState extends State<_AgentFormDialog> {
     _skillsRepository = SkillsRepository(apiClient: widget.apiClient);
     _knowledgeRepository = KnowledgeRepository(apiClient: widget.apiClient);
     final initial = widget.initial;
-    _nameController = TextEditingController(text: initial?['name']?.toString() ?? '');
-    _descriptionController = TextEditingController(text: initial?['description']?.toString() ?? '');
-    _modelController = TextEditingController(text: initial?['model']?.toString() ?? '');
-    _promptController = TextEditingController(text: initial?['system_prompt']?.toString() ?? '');
+    _nameController = TextEditingController(
+      text: initial?['name']?.toString() ?? '',
+    );
+    _descriptionController = TextEditingController(
+      text: initial?['description']?.toString() ?? '',
+    );
+    _modelController = TextEditingController(
+      text: initial?['model']?.toString() ?? '',
+    );
+    _promptController = TextEditingController(
+      text: initial?['system_prompt']?.toString() ?? '',
+    );
 
     final connId = initial?['connection_id']?.toString() ?? '';
     _connectionId = connId.isEmpty ? null : connId;
-    _temperature = (num.tryParse(initial?['temperature']?.toString() ?? '0.7') ?? 0.7).toDouble().clamp(0.0, 1.0);
+    _temperature =
+        (num.tryParse(initial?['temperature']?.toString() ?? '0.7') ?? 0.7)
+            .toDouble()
+            .clamp(0.0, 1.0);
 
     final labelsRaw = initial?['labels'];
-    _selectedLabels = labelsRaw is List ? labelsRaw.map((e) => e.toString()).toSet() : {'private'};
-    if (!_selectedLabels.contains('private') && !_selectedLabels.contains('public')) {
+    _selectedLabels = labelsRaw is List
+        ? labelsRaw.map((e) => e.toString()).toSet()
+        : {'private'};
+    if (!_selectedLabels.contains('private') &&
+        !_selectedLabels.contains('public')) {
       _selectedLabels = {..._selectedLabels, 'private'};
     }
 
@@ -523,9 +679,13 @@ class _AgentFormDialogState extends State<_AgentFormDialog> {
     _memoryFileController = TextEditingController(text: memoryFile);
 
     final skillsRaw = initial?['skills'];
-    _selectedSkillIds = skillsRaw is List ? skillsRaw.map((e) => e.toString()).toSet() : {};
+    _selectedSkillIds = skillsRaw is List
+        ? skillsRaw.map((e) => e.toString()).toSet()
+        : {};
     final knowledgeRaw = initial?['knowledge'];
-    _selectedKnowledgeIds = knowledgeRaw is List ? knowledgeRaw.map((e) => e.toString()).toSet() : {};
+    _selectedKnowledgeIds = knowledgeRaw is List
+        ? knowledgeRaw.map((e) => e.toString()).toSet()
+        : {};
 
     _loadConnections();
     _loadMemory();
@@ -563,7 +723,10 @@ class _AgentFormDialogState extends State<_AgentFormDialog> {
 
   Future<void> _loadSkills() async {
     try {
-      final list = await _skillsRepository.listSkills(widget.token, scope: 'all');
+      final list = await _skillsRepository.listSkills(
+        widget.token,
+        scope: 'all',
+      );
       if (!mounted) return;
       setState(() {
         _skills = list;
@@ -612,7 +775,9 @@ class _AgentFormDialogState extends State<_AgentFormDialog> {
       'system_prompt': _promptController.text.trim(),
       'temperature': _temperature,
       'labels': _selectedLabels.toList(),
-      'memory_file': _useMemory && _memoryFileController.text.trim().isNotEmpty ? _memoryFileController.text.trim() : null,
+      'memory_file': _useMemory && _memoryFileController.text.trim().isNotEmpty
+          ? _memoryFileController.text.trim()
+          : null,
       'skills': _selectedSkillIds.toList(),
       'knowledge': _selectedKnowledgeIds.toList(),
     };
@@ -640,7 +805,9 @@ class _AgentFormDialogState extends State<_AgentFormDialog> {
                   tabs: [
                     Tab(text: widget.tx('agents.tab_basic', 'Básico')),
                     Tab(text: widget.tx('agents.tab_connection', 'Conexión')),
-                    Tab(text: widget.tx('agents.tab_knowledge', 'Conocimiento')),
+                    Tab(
+                      text: widget.tx('agents.tab_knowledge', 'Conocimiento'),
+                    ),
                     Tab(text: widget.tx('agents.tab_advanced', 'Avanzado')),
                   ],
                 ),
@@ -659,8 +826,14 @@ class _AgentFormDialogState extends State<_AgentFormDialog> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(widget.tx('common.cancel', 'Cancelar'))),
-          FilledButton(onPressed: _submit, child: Text(widget.tx('common.save', 'Guardar'))),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(widget.tx('common.cancel', 'Cancelar')),
+          ),
+          FilledButton(
+            onPressed: _submit,
+            child: Text(widget.tx('common.save', 'Guardar')),
+          ),
         ],
       ),
     );
@@ -674,9 +847,15 @@ class _AgentFormDialogState extends State<_AgentFormDialog> {
         children: [
           TextFormField(
             controller: _nameController,
-            decoration: InputDecoration(labelText: widget.tx('agents.field_name', 'Nombre')),
+            decoration: InputDecoration(
+              labelText: widget.tx('agents.field_name', 'Nombre'),
+            ),
             validator: (value) {
-              if (value == null || value.trim().isEmpty) return widget.tx('agents.name_required', 'El nombre es obligatorio');
+              if (value == null || value.trim().isEmpty)
+                return widget.tx(
+                  'agents.name_required',
+                  'El nombre es obligatorio',
+                );
               return null;
             },
           ),
@@ -685,10 +864,15 @@ class _AgentFormDialogState extends State<_AgentFormDialog> {
             controller: _descriptionController,
             minLines: 2,
             maxLines: 4,
-            decoration: InputDecoration(labelText: widget.tx('agents.field_description', 'Descripción')),
+            decoration: InputDecoration(
+              labelText: widget.tx('agents.field_description', 'Descripción'),
+            ),
           ),
           const SizedBox(height: 12),
-          Text(widget.tx('agents.field_labels', 'Etiquetas'), style: Theme.of(context).textTheme.labelMedium),
+          Text(
+            widget.tx('agents.field_labels', 'Etiquetas'),
+            style: Theme.of(context).textTheme.labelMedium,
+          ),
           const SizedBox(height: 8),
           GroupedLabelPicker(
             selected: _selectedLabels,
@@ -699,7 +883,9 @@ class _AgentFormDialogState extends State<_AgentFormDialog> {
             controller: _promptController,
             minLines: 5,
             maxLines: 10,
-            decoration: InputDecoration(labelText: widget.tx('agents.field_prompt', 'System prompt')),
+            decoration: InputDecoration(
+              labelText: widget.tx('agents.field_prompt', 'System prompt'),
+            ),
           ),
         ],
       ),
@@ -720,13 +906,26 @@ class _AgentFormDialogState extends State<_AgentFormDialog> {
               : DropdownButtonFormField<String>(
                   initialValue: _connectionId,
                   isExpanded: true,
-                  decoration: InputDecoration(labelText: widget.tx('agents.field_connection', 'Conexión LLM')),
+                  decoration: InputDecoration(
+                    labelText: widget.tx(
+                      'agents.field_connection',
+                      'Conexión LLM',
+                    ),
+                  ),
                   items: [
-                    DropdownMenuItem<String>(value: null, child: Text(widget.tx('agents.no_connection', '-- Sin conexión --'))),
+                    DropdownMenuItem<String>(
+                      value: null,
+                      child: Text(
+                        widget.tx('agents.no_connection', '-- Sin conexión --'),
+                      ),
+                    ),
                     ..._connections.map(
                       (conn) => DropdownMenuItem<String>(
                         value: conn.id,
-                        child: Text('${conn.name} (${conn.type})', overflow: TextOverflow.ellipsis),
+                        child: Text(
+                          '${conn.name} (${conn.type})',
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ),
                   ],
@@ -770,81 +969,129 @@ class _AgentFormDialogState extends State<_AgentFormDialog> {
                       Expanded(
                         child: TextFormField(
                           controller: _memoryFileController,
-                          decoration: InputDecoration(labelText: widget.tx('agents.field_memory_file', 'Archivo de memoria')),
+                          decoration: InputDecoration(
+                            labelText: widget.tx(
+                              'agents.field_memory_file',
+                              'Archivo de memoria',
+                            ),
+                          ),
                         ),
                       ),
                       if (_memoryFiles.isNotEmpty)
                         PopupMenuButton<String>(
                           icon: const Icon(Icons.folder_open_outlined),
-                          tooltip: widget.tx('agents.pick_existing', 'Elegir existente'),
-                          onSelected: (value) => setState(() => _memoryFileController.text = value),
+                          tooltip: widget.tx(
+                            'agents.pick_existing',
+                            'Elegir existente',
+                          ),
+                          onSelected: (value) => setState(
+                            () => _memoryFileController.text = value,
+                          ),
                           itemBuilder: (context) => _memoryFiles
-                              .map((file) => PopupMenuItem<String>(value: file.filename, child: Text(file.filename)))
+                              .map(
+                                (file) => PopupMenuItem<String>(
+                                  value: file.filename,
+                                  child: Text(file.filename),
+                                ),
+                              )
                               .toList(),
                         ),
                     ],
                   ),
           ],
           const SizedBox(height: 20),
-          Text(widget.tx('agents.field_skills', 'Skills'), style: Theme.of(context).textTheme.labelMedium),
+          Text(
+            widget.tx('agents.field_skills', 'Skills'),
+            style: Theme.of(context).textTheme.labelMedium,
+          ),
           const SizedBox(height: 6),
           _loadingSkills
               ? const LinearProgressIndicator(minHeight: 2)
               : _skills.isEmpty
-                  ? Text(widget.tx('agents.no_skills', 'No hay skills disponibles.'), style: Theme.of(context).textTheme.bodySmall)
-                  : Container(
-                      constraints: const BoxConstraints(maxHeight: 150),
-                      decoration: BoxDecoration(border: Border.all(color: Theme.of(context).dividerColor), borderRadius: BorderRadius.circular(10)),
-                      child: ListView(
-                        shrinkWrap: true,
-                        children: _skills.map((skill) {
-                          return CheckboxListTile(
-                            dense: true,
-                            value: _selectedSkillIds.contains(skill.id),
-                            title: Text(skill.name),
-                            onChanged: (value) {
-                              setState(() {
-                                if (value == true) {
-                                  _selectedSkillIds = {..._selectedSkillIds, skill.id};
-                                } else {
-                                  _selectedSkillIds = {..._selectedSkillIds}..remove(skill.id);
-                                }
-                              });
-                            },
-                          );
-                        }).toList(),
-                      ),
-                    ),
+              ? Text(
+                  widget.tx('agents.no_skills', 'No hay skills disponibles.'),
+                  style: Theme.of(context).textTheme.bodySmall,
+                )
+              : Container(
+                  constraints: const BoxConstraints(maxHeight: 150),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Theme.of(context).dividerColor),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: _skills.map((skill) {
+                      return CheckboxListTile(
+                        dense: true,
+                        value: _selectedSkillIds.contains(skill.id),
+                        title: Text(skill.name),
+                        onChanged: (value) {
+                          setState(() {
+                            if (value == true) {
+                              _selectedSkillIds = {
+                                ..._selectedSkillIds,
+                                skill.id,
+                              };
+                            } else {
+                              _selectedSkillIds = {..._selectedSkillIds}
+                                ..remove(skill.id);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
           const SizedBox(height: 20),
-          Text(widget.tx('agents.field_knowledge', 'Conocimiento'), style: Theme.of(context).textTheme.labelMedium),
+          Text(
+            widget.tx('agents.field_knowledge', 'Conocimiento'),
+            style: Theme.of(context).textTheme.labelMedium,
+          ),
           const SizedBox(height: 6),
           _loadingKnowledge
               ? const LinearProgressIndicator(minHeight: 2)
               : _knowledgeItems.isEmpty
-                  ? Text(widget.tx('agents.no_knowledge', 'No hay contenido de conocimiento disponible.'), style: Theme.of(context).textTheme.bodySmall)
-                  : Container(
-                      constraints: const BoxConstraints(maxHeight: 150),
-                      decoration: BoxDecoration(border: Border.all(color: Theme.of(context).dividerColor), borderRadius: BorderRadius.circular(10)),
-                      child: ListView(
-                        shrinkWrap: true,
-                        children: _knowledgeItems.map((item) {
-                          return CheckboxListTile(
-                            dense: true,
-                            value: _selectedKnowledgeIds.contains(item.id),
-                            title: Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-                            onChanged: (value) {
-                              setState(() {
-                                if (value == true) {
-                                  _selectedKnowledgeIds = {..._selectedKnowledgeIds, item.id};
-                                } else {
-                                  _selectedKnowledgeIds = {..._selectedKnowledgeIds}..remove(item.id);
-                                }
-                              });
-                            },
-                          );
-                        }).toList(),
-                      ),
-                    ),
+              ? Text(
+                  widget.tx(
+                    'agents.no_knowledge',
+                    'No hay contenido de conocimiento disponible.',
+                  ),
+                  style: Theme.of(context).textTheme.bodySmall,
+                )
+              : Container(
+                  constraints: const BoxConstraints(maxHeight: 150),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Theme.of(context).dividerColor),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: _knowledgeItems.map((item) {
+                      return CheckboxListTile(
+                        dense: true,
+                        value: _selectedKnowledgeIds.contains(item.id),
+                        title: Text(
+                          item.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            if (value == true) {
+                              _selectedKnowledgeIds = {
+                                ..._selectedKnowledgeIds,
+                                item.id,
+                              };
+                            } else {
+                              _selectedKnowledgeIds = {..._selectedKnowledgeIds}
+                                ..remove(item.id);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
         ],
       ),
     );
@@ -858,7 +1105,9 @@ class _AgentFormDialogState extends State<_AgentFormDialog> {
         children: [
           DropdownButtonFormField<String>(
             initialValue: _agentType,
-            decoration: InputDecoration(labelText: widget.tx('agents.field_type', 'Tipo de agente')),
+            decoration: InputDecoration(
+              labelText: widget.tx('agents.field_type', 'Tipo de agente'),
+            ),
             items: const [
               DropdownMenuItem(value: 'generic', child: Text('generic')),
               DropdownMenuItem(value: 'claude', child: Text('claude')),
@@ -873,7 +1122,9 @@ class _AgentFormDialogState extends State<_AgentFormDialog> {
           const SizedBox(height: 12),
           TextFormField(
             controller: _modelController,
-            decoration: InputDecoration(labelText: widget.tx('agents.field_model', 'Modelo (opcional)')),
+            decoration: InputDecoration(
+              labelText: widget.tx('agents.field_model', 'Modelo (opcional)'),
+            ),
           ),
         ],
       ),

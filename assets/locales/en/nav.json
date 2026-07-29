@@ -19,5 +19,7 @@
   "public_profile": "Public Profile",
   "customize_dashboard": "Customize dashboard",
   "customize_hint": "Tap a widget to add it to the dashboard.",
-  "customize_empty": "You've already added every available widget."
+  "customize_empty": "You've already added every available widget.",
+  "backend_connection_issue": "Couldn't connect to {backend}: {error}",
+  "backend_connection_action": "Change backend"
 }

@@ -11,6 +11,7 @@ import '../repositories/dashboard_repository.dart';
 import '../../../shared/state/backend_controller.dart';
 import '../../../shared/state/dashboard_edit_state.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/widgets/responsive_dialog.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({
@@ -120,7 +121,10 @@ class _DashboardPageState extends State<DashboardPage> {
   void _toggleEditing() {
     setState(() => _editing = !_editing);
     if (_editing) {
-      widget.dashboardEditState.startEditing(missing: _missingWidgets, onAdd: _addWidget);
+      widget.dashboardEditState.startEditing(
+        missing: _missingWidgets,
+        onAdd: _addWidget,
+      );
     } else {
       widget.dashboardEditState.stopEditing();
     }
@@ -936,7 +940,10 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text('Configurar: ${dashboardWidgetTitle(widget.widgetId)}'),
-      content: SizedBox(width: 420, child: _buildFields()),
+      content: SizedBox(
+        width: dialogContentWidth(context, 420),
+        child: _buildFields(),
+      ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),

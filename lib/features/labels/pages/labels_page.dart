@@ -7,6 +7,7 @@ import '../../explore/repositories/explore_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/widgets/filter_button.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 
 class LabelsPage extends StatefulWidget {
@@ -41,8 +42,10 @@ class _LabelsPageState extends State<LabelsPage> {
   void initState() {
     super.initState();
     _repository = ExploreRepository(apiClient: widget.apiClient);
-    _t = TranslatedTexts(localeController: widget.localeController, namespace: 'resources')
-      ..addListener(_onTextsChanged);
+    _t = TranslatedTexts(
+      localeController: widget.localeController,
+      namespace: 'resources',
+    )..addListener(_onTextsChanged);
     _loadBase();
   }
 
@@ -163,12 +166,51 @@ class _LabelsPageState extends State<LabelsPage> {
   }
 
   List<DropdownMenuItem<String>> get _typeOptions => [
-    DropdownMenuItem(value: 'all', child: Text(_tx('explore.type_all', 'Todos'))),
-    DropdownMenuItem(value: 'agent', child: Text(_tx('explore.type_agents', 'Agentes'))),
-    DropdownMenuItem(value: 'skill', child: Text(_tx('explore.type_skills', 'Skills'))),
-    DropdownMenuItem(value: 'knowledge', child: Text(_tx('explore.type_knowledge', 'Knowledge'))),
-    DropdownMenuItem(value: 'workflow', child: Text(_tx('explore.type_workflows', 'Workflows'))),
+    DropdownMenuItem(
+      value: 'all',
+      child: Text(_tx('explore.type_all', 'Todos')),
+    ),
+    DropdownMenuItem(
+      value: 'agent',
+      child: Text(_tx('explore.type_agents', 'Agentes')),
+    ),
+    DropdownMenuItem(
+      value: 'skill',
+      child: Text(_tx('explore.type_skills', 'Skills')),
+    ),
+    DropdownMenuItem(
+      value: 'knowledge',
+      child: Text(_tx('explore.type_knowledge', 'Knowledge')),
+    ),
+    DropdownMenuItem(
+      value: 'workflow',
+      child: Text(_tx('explore.type_workflows', 'Workflows')),
+    ),
   ];
+
+  void _openFiltersDialog() {
+    showFilterDialog(
+      context,
+      title: _tx('common.filters', 'Filtros'),
+      clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
+      closeLabel: _tx('common.close', 'Cerrar'),
+      onClear: () => _onTypeChange('all'),
+      buildFields: (setDialogState) => [
+        DropdownButtonFormField<String>(
+          initialValue: _selectedType,
+          decoration: InputDecoration(
+            labelText: _tx('labels.type_label', 'Tipo de recurso'),
+          ),
+          items: _typeOptions,
+          onChanged: (value) {
+            if (value == null) return;
+            _onTypeChange(value);
+            setDialogState(() {});
+          },
+        ),
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -182,7 +224,10 @@ class _LabelsPageState extends State<LabelsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(_tx('labels.error_title', 'Error cargando Labels'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    _tx('labels.error_title', 'Error cargando Labels'),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 8),
                   Text(_error!),
                   const SizedBox(height: 12),
@@ -214,25 +259,18 @@ class _LabelsPageState extends State<LabelsPage> {
               child: Card(
                 child: Padding(
                   padding: const EdgeInsets.all(12),
-                  child: Row(
+                  child: Wrap(
+                    spacing: 12,
+                    runSpacing: 10,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      SizedBox(
-                        width: 200,
-                        child: DropdownButtonFormField<String>(
-                          initialValue: _selectedType,
-                          decoration: InputDecoration(labelText: _tx('labels.type_label', 'Tipo de recurso')),
-                          items: _typeOptions,
-                          onChanged: (value) {
-                            if (value == null) return;
-                            _onTypeChange(value);
-                          },
-                        ),
+                      FilterButton(
+                        activeCount: _selectedType != 'all' ? 1 : 0,
+                        tooltip: _tx('common.filters', 'Filtros'),
+                        onPressed: _openFiltersDialog,
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          '${_tx('labels.active_label', 'Label activo')}: ${_selectedLabel.isEmpty ? _tx('labels.none', '- ninguno -') : _selectedLabel}',
-                        ),
+                      Text(
+                        '${_tx('labels.active_label', 'Label activo')}: ${_selectedLabel.isEmpty ? _tx('labels.none', '- ninguno -') : _selectedLabel}',
                       ),
                       TextButton.icon(
                         onPressed: () async {
@@ -262,10 +300,21 @@ class _LabelsPageState extends State<LabelsPage> {
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.all(16),
                         children: [
-                          Text(_tx('labels.detected', 'Etiquetas detectadas'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          Text(
+                            _tx('labels.detected', 'Etiquetas detectadas'),
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           const SizedBox(height: 8),
                           if (labels.isEmpty)
-                            Text(_tx('labels.empty_detected', 'No hay etiquetas disponibles'))
+                            Text(
+                              _tx(
+                                'labels.empty_detected',
+                                'No hay etiquetas disponibles',
+                              ),
+                            )
                           else
                             Wrap(
                               spacing: 8,
@@ -273,20 +322,30 @@ class _LabelsPageState extends State<LabelsPage> {
                               children: labels
                                   .map(
                                     (entry) => ActionChip(
-                                      label: Text('${entry.key} (${entry.value})'),
+                                      label: Text(
+                                        '${entry.key} (${entry.value})',
+                                      ),
                                       onPressed: () => _applyFilter(entry.key),
                                     ),
                                   )
                                   .toList(),
                             ),
                           const SizedBox(height: 16),
-                          Text('${_tx('labels.resources', 'Recursos')}: ${_filtered.length}', style: Theme.of(context).textTheme.bodyMedium),
+                          Text(
+                            '${_tx('labels.resources', 'Recursos')}: ${_filtered.length}',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
                           const SizedBox(height: 10),
                           if (_filtered.isEmpty)
                             Card(
                               child: Padding(
                                 padding: const EdgeInsets.all(16),
-                                child: Text(_tx('labels.empty_resources', 'No hay recursos para este label/filtro.')),
+                                child: Text(
+                                  _tx(
+                                    'labels.empty_resources',
+                                    'No hay recursos para este label/filtro.',
+                                  ),
+                                ),
                               ),
                             )
                           else
@@ -294,21 +353,46 @@ class _LabelsPageState extends State<LabelsPage> {
                               (item) => Card(
                                 margin: const EdgeInsets.only(bottom: 10),
                                 child: InkWell(
-                                  onTap: () => _showMessage(item.description.isEmpty ? 'Sin descripción' : item.description),
+                                  onTap: () => _showMessage(
+                                    item.description.isEmpty
+                                        ? 'Sin descripción'
+                                        : item.description,
+                                  ),
                                   child: Padding(
                                     padding: const EdgeInsets.all(12),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        Text(item.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                                        Text(
+                                          item.name,
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
                                         const SizedBox(height: 4),
                                         Row(
                                           children: [
-                                            Text('${item.resourceType} · ${item.owner}', style: Theme.of(context).textTheme.bodySmall),
+                                            Text(
+                                              '${item.resourceType} · ${item.owner}',
+                                              style: Theme.of(
+                                                context,
+                                              ).textTheme.bodySmall,
+                                            ),
                                             const SizedBox(width: 10),
-                                            Icon(Icons.star, size: 13, color: Colors.amber.shade600),
+                                            Icon(
+                                              Icons.star,
+                                              size: 13,
+                                              color: Colors.amber.shade600,
+                                            ),
                                             const SizedBox(width: 3),
-                                            Text('${item.stars}', style: Theme.of(context).textTheme.bodySmall),
+                                            Text(
+                                              '${item.stars}',
+                                              style: Theme.of(
+                                                context,
+                                              ).textTheme.bodySmall,
+                                            ),
                                           ],
                                         ),
                                         if (item.labels.isNotEmpty) ...[

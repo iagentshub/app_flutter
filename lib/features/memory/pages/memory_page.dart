@@ -6,6 +6,7 @@ import '../../../models/memory/memory_models.dart';
 import '../repositories/memory_repository.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/action_icon_button.dart';
+import '../../../shared/widgets/responsive_dialog.dart';
 
 class MemoryPage extends StatefulWidget {
   const MemoryPage({
@@ -135,8 +136,14 @@ class _MemoryPageState extends State<MemoryPage> {
         title: const Text('Eliminar archivo'),
         content: Text('¿Seguro que quieres eliminar "${file.filename}"?'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Eliminar')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Eliminar'),
+          ),
         ],
       ),
     );
@@ -179,7 +186,10 @@ class _MemoryPageState extends State<MemoryPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Error cargando Memory', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Error cargando Memory',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 8),
                   Text(_error!),
                   const SizedBox(height: 12),
@@ -196,44 +206,70 @@ class _MemoryPageState extends State<MemoryPage> {
       );
     }
 
+    final toolbar = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            IconButton.filled(
+              onPressed: _createFile,
+              icon: const Icon(Icons.add),
+              tooltip: 'Nuevo archivo',
+            ),
+            IconButton.outlined(
+              onPressed: _load,
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Actualizar',
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Archivos: ${_files.length}',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+      ],
+    );
+
     return RefreshIndicator(
       onRefresh: _load,
       child: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1100),
-          child: ListView(
+          child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  FilledButton.icon(
-                    onPressed: _createFile,
-                    icon: const Icon(Icons.note_add_outlined),
-                    label: const Text('Nuevo archivo'),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: _load,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Actualizar'),
-                  ),
-                ],
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                sliver: SliverToBoxAdapter(child: toolbar),
               ),
-              const SizedBox(height: 12),
-              Text('Archivos: ${_files.length}', style: Theme.of(context).textTheme.bodyMedium),
-              const SizedBox(height: 12),
               if (_files.isEmpty)
-                const Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text('No hay archivos de memoria. Crea el primero.'),
+                const SliverPadding(
+                  padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  sliver: SliverToBoxAdapter(
+                    child: Card(
+                      child: Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Text(
+                          'No hay archivos de memoria. Crea el primero.',
+                        ),
+                      ),
+                    ),
                   ),
                 )
               else
-                ..._files.map(_buildFileCard),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => _buildFileCard(_files[index]),
+                      childCount: _files.length,
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -254,7 +290,9 @@ class _MemoryPageState extends State<MemoryPage> {
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 6),
-            Text('Tamaño: ${file.size} chars${file.updatedAt.isEmpty ? '' : ' · ${file.updatedAt}'}'),
+            Text(
+              'Tamaño: ${file.size} chars${file.updatedAt.isEmpty ? '' : ' · ${file.updatedAt}'}',
+            ),
             const SizedBox(height: 10),
             Row(
               children: [
@@ -302,8 +340,12 @@ class _MemoryEditorDialogState extends State<_MemoryEditorDialog> {
   @override
   void initState() {
     super.initState();
-    _filenameController = TextEditingController(text: widget.initialFilename ?? 'notes.md');
-    _contentController = TextEditingController(text: widget.initialContent ?? '');
+    _filenameController = TextEditingController(
+      text: widget.initialFilename ?? 'notes.md',
+    );
+    _contentController = TextEditingController(
+      text: widget.initialContent ?? '',
+    );
   }
 
   @override
@@ -324,9 +366,13 @@ class _MemoryEditorDialogState extends State<_MemoryEditorDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.initialFilename == null ? 'Nuevo archivo de memoria' : 'Editar archivo'),
+      title: Text(
+        widget.initialFilename == null
+            ? 'Nuevo archivo de memoria'
+            : 'Editar archivo',
+      ),
       content: SizedBox(
-        width: 760,
+        width: dialogContentWidth(context, 760),
         child: Form(
           key: _formKey,
           child: ListView(
@@ -335,7 +381,9 @@ class _MemoryEditorDialogState extends State<_MemoryEditorDialog> {
               TextFormField(
                 controller: _filenameController,
                 readOnly: widget.lockFilename,
-                decoration: const InputDecoration(labelText: 'Nombre de archivo (.md)'),
+                decoration: const InputDecoration(
+                  labelText: 'Nombre de archivo (.md)',
+                ),
                 validator: (value) {
                   final v = value?.trim() ?? '';
                   if (v.isEmpty) return 'Nombre obligatorio';
@@ -354,7 +402,10 @@ class _MemoryEditorDialogState extends State<_MemoryEditorDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
         FilledButton(onPressed: _submit, child: const Text('Guardar')),
       ],
     );

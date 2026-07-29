@@ -7,7 +7,9 @@ import '../repositories/connections_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/utils/debouncer.dart';
 import '../../../shared/widgets/action_icon_button.dart';
+import '../../../shared/widgets/filter_button.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/origin_badge.dart';
@@ -29,10 +31,13 @@ class ConnectionsPage extends StatefulWidget {
   State<ConnectionsPage> createState() => _ConnectionsPageState();
 }
 
-class _ConnectionsPageState extends State<ConnectionsPage> {
+class _ConnectionsPageState extends State<ConnectionsPage>
+    with SingleTickerProviderStateMixin {
   late final ConnectionsRepository _repository;
   late final TranslatedTexts _t;
+  late final TabController _tabController;
   final TextEditingController _queryController = TextEditingController();
+  final Debouncer _searchDebouncer = Debouncer();
   List<ConnectionItem> _connections = const [];
   List<ConnectionProvider> _providers = const [];
   bool _loading = true;
@@ -40,27 +45,90 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
   String? _error;
   String _query = '';
   String? _activeGroupId;
-  bool _groupsVisible = false;
+  String _providerFilter = 'all';
+  int _lastCategoryIndex = 0;
+
+  static const _categoryIds = ['llm', 'machine', 'database'];
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
+  String _categoryOf(String type) {
+    for (final provider in _providers) {
+      if (provider.type == type) return provider.category;
+    }
+    return 'llm';
+  }
+
+  List<ConnectionProvider> _providersForCategory(String category) {
+    return _providers.where((p) => p.category == category).toList();
+  }
+
+  int get _activeFilterCount => _providerFilter != 'all' ? 1 : 0;
+
   List<ConnectionItem> get _filteredConnections {
+    final category = _categoryIds[_tabController.index];
     final query = _query.trim().toLowerCase();
-    if (query.isEmpty) return _connections;
     return _connections.where((item) {
+      if (_categoryOf(item.type) != category) return false;
+      if (_providerFilter != 'all' && item.type != _providerFilter)
+        return false;
+      if (query.isEmpty) return true;
       return item.name.toLowerCase().contains(query) ||
           item.type.toLowerCase().contains(query) ||
           item.model.toLowerCase().contains(query);
     }).toList();
   }
 
+  void _openFiltersDialog() {
+    final category = _categoryIds[_tabController.index];
+    final providerOptions = [
+      ('all', _tx('explore.option_all', 'Todas')),
+      ..._providersForCategory(
+        category,
+      ).map((p) => (p.type, p.label.isEmpty ? p.type : p.label)),
+    ];
+
+    showFilterDialog(
+      context,
+      title: _tx('common.filters', 'Filtros'),
+      clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
+      closeLabel: _tx('common.close', 'Cerrar'),
+      onClear: () => setState(() => _providerFilter = 'all'),
+      buildFields: (setDialogState) => [
+        FilterDropdown(
+          label: _tx('connections.provider_label', 'Proveedor'),
+          value: _providerFilter,
+          options: providerOptions,
+          onChanged: (v) {
+            setState(() => _providerFilter = v);
+            setDialogState(() {});
+          },
+        ),
+      ],
+    );
+  }
+
   @override
   void initState() {
     super.initState();
     _repository = ConnectionsRepository(apiClient: widget.apiClient);
-    _t = TranslatedTexts(localeController: widget.localeController, namespace: 'resources')
-      ..addListener(_onTextsChanged);
+    _tabController = TabController(length: _categoryIds.length, vsync: this)
+      ..addListener(_onTabChanged);
+    _t = TranslatedTexts(
+      localeController: widget.localeController,
+      namespace: 'resources',
+    )..addListener(_onTextsChanged);
     _load();
+  }
+
+  void _onTabChanged() {
+    if (!mounted) return;
+    final index = _tabController.index;
+    if (index != _lastCategoryIndex) {
+      _lastCategoryIndex = index;
+      _providerFilter = 'all';
+    }
+    setState(() {});
   }
 
   void _onTextsChanged() {
@@ -69,7 +137,10 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
 
   @override
   void dispose() {
+    _searchDebouncer.dispose();
     _queryController.dispose();
+    _tabController.removeListener(_onTabChanged);
+    _tabController.dispose();
     _t.removeListener(_onTextsChanged);
     _t.dispose();
     super.dispose();
@@ -113,7 +184,10 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = _tx('connections.error_generic', 'No se pudieron cargar las conexiones');
+        _error = _tx(
+          'connections.error_generic',
+          'No se pudieron cargar las conexiones',
+        );
         _loading = false;
       });
     }
@@ -139,9 +213,13 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
   }
 
   Future<void> _openCreateDialog() async {
+    final category = _categoryIds[_tabController.index];
+    final providers = _providersForCategory(category);
     final payload = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) => _ConnectionFormDialog(providers: _providers),
+      builder: (context) => _ConnectionFormDialog(
+        providers: providers.isEmpty ? _providers : providers,
+      ),
     );
 
     if (payload == null) return;
@@ -150,7 +228,9 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
 
   Future<void> _openEditDialog(ConnectionItem item) async {
     if (item.isVirtual) {
-      _showMessage('Esta conexión es derivada de Ollama y no se edita directamente');
+      _showMessage(
+        'Esta conexión es derivada de Ollama y no se edita directamente',
+      );
       return;
     }
 
@@ -167,10 +247,8 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
     if (!mounted) return;
     final payload = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) => _ConnectionFormDialog(
-        providers: _providers,
-        initial: initial,
-      ),
+      builder: (context) =>
+          _ConnectionFormDialog(providers: _providers, initial: initial),
     );
 
     if (payload == null) return;
@@ -194,7 +272,9 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
 
   Future<void> _deleteConnection(ConnectionItem item) async {
     if (item.isVirtual) {
-      _showMessage('Esta conexión es derivada de Ollama y no se elimina directamente');
+      _showMessage(
+        'Esta conexión es derivada de Ollama y no se elimina directamente',
+      );
       return;
     }
 
@@ -204,8 +284,14 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
         title: const Text('Eliminar conexión'),
         content: Text('¿Seguro que quieres eliminar "${item.name}"?'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Eliminar')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Eliminar'),
+          ),
         ],
       ),
     );
@@ -227,7 +313,9 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
 
   Future<void> _testConnection(ConnectionItem item) async {
     if (item.isVirtual) {
-      _showMessage('Esta conexión es derivada de Ollama y no se testea directamente');
+      _showMessage(
+        'Esta conexión es derivada de Ollama y no se testea directamente',
+      );
       return;
     }
 
@@ -235,8 +323,13 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
     if (token == null || token.isEmpty) return;
     try {
       final result = await _repository.testConnection(token, item.id);
-      final detail = result.detail?.trim().isNotEmpty == true ? '\n${result.detail}' : '';
-      _showMessage('${result.ok ? 'OK' : 'ERROR'}: ${result.message}$detail', isError: !result.ok);
+      final detail = result.detail?.trim().isNotEmpty == true
+          ? '\n${result.detail}'
+          : '';
+      _showMessage(
+        '${result.ok ? 'OK' : 'ERROR'}: ${result.message}$detail',
+        isError: !result.ok,
+      );
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
     } catch (_) {
@@ -248,9 +341,12 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
     final token = _token;
     if (token == null || token.isEmpty) return;
 
+    final ids = _filteredConnections.map((item) => item.id).toList();
+    if (ids.isEmpty) return;
+
     setState(() => _testingAll = true);
     try {
-      final results = await _repository.testAllConnections(token);
+      final results = await _repository.testAllConnections(token, ids: ids);
       if (!mounted) return;
       final ok = results.where((r) => r.ok).length;
       final fail = results.length - ok;
@@ -273,10 +369,16 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
                         .map(
                           (r) => ListTile(
                             dense: true,
-                            leading: Icon(r.ok ? Icons.check_circle_outline : Icons.error_outline),
+                            leading: Icon(
+                              r.ok
+                                  ? Icons.check_circle_outline
+                                  : Icons.error_outline,
+                            ),
                             title: Text(r.id),
                             subtitle: Text(r.message),
-                            trailing: r.latencyMs == null ? null : Text('${r.latencyMs}ms'),
+                            trailing: r.latencyMs == null
+                                ? null
+                                : Text('${r.latencyMs}ms'),
                           ),
                         )
                         .toList(),
@@ -330,7 +432,10 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(_tx('connections.error_title', 'Error cargando conexiones'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    _tx('connections.error_title', 'Error cargando conexiones'),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 8),
                   Text(_error!),
                   const SizedBox(height: 12),
@@ -347,100 +452,182 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
       );
     }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final wide = constraints.maxWidth >= 700;
-        final groupPanel = GroupFilterPanel(
-          apiClient: widget.apiClient,
-          token: _token ?? '',
-          activeGroupId: _activeGroupId,
-          onSelect: _onGroupSelect,
-          localeController: widget.localeController,
-          vertical: wide,
-        );
+    final tabLabels = [
+      _tx('connections.tab_llm', 'APIs LLM'),
+      _tx('connections.tab_machine', 'Máquinas'),
+      _tx('connections.tab_database', 'Bases de datos'),
+    ];
 
-        final list = RefreshIndicator(
-          onRefresh: _load,
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  FilledButton.icon(
-                    onPressed: _providers.isEmpty ? null : _openCreateDialog,
-                    icon: const Icon(Icons.add),
-                    label: Text(_tx('connections.new', 'Nueva conexión')),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: _load,
-                    icon: const Icon(Icons.refresh),
-                    label: Text(_tx('common.update', 'Actualizar')),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: _testingAll ? null : _testAll,
-                    icon: const Icon(Icons.play_circle_outline),
-                    label: Text(_testingAll ? _tx('connections.testing', 'Probando...') : _tx('connections.mass_test', 'Test masivo')),
-                  ),
-                  IconButton.outlined(
-                    onPressed: () => setState(() => _groupsVisible = !_groupsVisible),
-                    icon: const Icon(Icons.groups_outlined),
-                    tooltip: _tx('groups.toggle_tooltip', 'Grupos'),
-                    isSelected: _groupsVisible,
-                  ),
-                  if (_activeGroupId != null)
-                    ActionChip(
-                      label: Text(_tx('groups.active_clear', 'Grupo activo ✕')),
-                      onPressed: () => _onGroupSelect(null),
-                    ),
-                ],
-              ),
-              if (_groupsVisible && !wide) ...[
-                const SizedBox(height: 12),
-                groupPanel,
-              ],
-              const SizedBox(height: 12),
-              TextField(
-                controller: _queryController,
-                decoration: InputDecoration(
-                  labelText: _tx('connections.search_hint', 'Buscar conexión'),
-                  prefixIcon: const Icon(Icons.search, size: 20),
-                ),
-                onChanged: (value) => setState(() => _query = value),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                '${_tx('connections.count_label', 'Conexiones')}: ${_filteredConnections.length} | ${_tx('connections.providers_label', 'Proveedores')}: ${_providers.length}',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 12),
-              if (_filteredConnections.isEmpty)
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      _connections.isEmpty
-                          ? _tx('connections.empty', 'No hay conexiones todavía. Crea la primera.')
-                          : _tx('connections.empty_search', 'Sin resultados para esa búsqueda.'),
-                    ),
-                  ),
-                )
-              else
-                ..._filteredConnections.map(_buildConnectionCard),
-            ],
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: Material(
+            color: Colors.transparent,
+            child: TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              tabs: tabLabels.map((label) => Tab(text: label)).toList(),
+            ),
           ),
-        );
-
-        if (!wide) return list;
-        return Row(
-          children: [
-            if (_groupsVisible) groupPanel,
-            Expanded(child: list),
-          ],
-        );
-      },
+        ),
+        Expanded(
+          child: Builder(
+            builder: (context) {
+              final filteredConnections = _filteredConnections;
+              return RefreshIndicator(
+                onRefresh: _load,
+                child: CustomScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                      sliver: SliverToBoxAdapter(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            TextField(
+                              controller: _queryController,
+                              decoration: InputDecoration(
+                                labelText: _tx(
+                                  'connections.search_hint',
+                                  'Buscar conexión',
+                                ),
+                                prefixIcon: const Icon(Icons.search, size: 20),
+                              ),
+                              onChanged: (value) {
+                                _query = value;
+                                _searchDebouncer.run(() {
+                                  if (mounted) setState(() {});
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                IconButton.filled(
+                                  onPressed: _providers.isEmpty
+                                      ? null
+                                      : _openCreateDialog,
+                                  icon: const Icon(Icons.add),
+                                  tooltip: _tx(
+                                    'connections.new',
+                                    'Nueva conexión',
+                                  ),
+                                ),
+                                IconButton.outlined(
+                                  onPressed: _load,
+                                  icon: const Icon(Icons.refresh),
+                                  tooltip: _tx('common.update', 'Actualizar'),
+                                ),
+                                IconButton.outlined(
+                                  onPressed: _testingAll ? null : _testAll,
+                                  tooltip: _testingAll
+                                      ? _tx(
+                                          'connections.testing',
+                                          'Probando...',
+                                        )
+                                      : _tx(
+                                          'connections.mass_test',
+                                          'Test masivo',
+                                        ),
+                                  icon: _testingAll
+                                      ? const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : const Icon(Icons.play_circle_outline),
+                                ),
+                                FilterButton(
+                                  activeCount: _activeFilterCount,
+                                  tooltip: _tx('common.filters', 'Filtros'),
+                                  onPressed: _openFiltersDialog,
+                                ),
+                                IconButton.outlined(
+                                  onPressed: () => showGroupFilterDialog(
+                                    context,
+                                    apiClient: widget.apiClient,
+                                    token: _token ?? '',
+                                    activeGroupId: _activeGroupId,
+                                    onSelect: _onGroupSelect,
+                                    localeController: widget.localeController,
+                                  ),
+                                  icon: const Icon(Icons.groups_outlined),
+                                  tooltip: _tx(
+                                    'groups.toggle_tooltip',
+                                    'Grupos',
+                                  ),
+                                  isSelected: _activeGroupId != null,
+                                ),
+                                if (_activeGroupId != null)
+                                  ActionChip(
+                                    label: Text(
+                                      _tx(
+                                        'groups.active_clear',
+                                        'Grupo activo ✕',
+                                      ),
+                                    ),
+                                    onPressed: () => _onGroupSelect(null),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              '${_tx('connections.count_label', 'Conexiones')}: ${filteredConnections.length} | ${_tx('connections.providers_label', 'Proveedores')}: ${_providers.length}',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (filteredConnections.isEmpty)
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                        sliver: SliverToBoxAdapter(
+                          child: Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Text(
+                                _connections.isEmpty
+                                    ? _tx(
+                                        'connections.empty',
+                                        'No hay conexiones todavía. Crea la primera.',
+                                      )
+                                    : _tx(
+                                        'connections.empty_search',
+                                        'Sin resultados para esa búsqueda.',
+                                      ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) => _buildConnectionCard(
+                              filteredConnections[index],
+                            ),
+                            childCount: filteredConnections.length,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -462,7 +649,10 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
                 Expanded(
                   child: Text(
                     item.name,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
@@ -488,7 +678,9 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
             Row(
               children: [
                 OutlinedButton.icon(
-                  onPressed: item.isVirtual ? null : () => _testConnection(item),
+                  onPressed: item.isVirtual
+                      ? null
+                      : () => _testConnection(item),
                   icon: const Icon(Icons.health_and_safety_outlined),
                   label: Text(_tx('connections.test', 'Test')),
                 ),
@@ -496,7 +688,9 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
                 ActionIconButton(
                   icon: Icons.group_add_outlined,
                   tooltip: _tx('common.share_group', 'Compartir con grupo'),
-                  onPressed: item.isVirtual ? null : () => _shareConnection(item),
+                  onPressed: item.isVirtual
+                      ? null
+                      : () => _shareConnection(item),
                 ),
                 ActionIconButton(
                   icon: Icons.edit_outlined,
@@ -516,14 +710,10 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
       ),
     );
   }
-
 }
 
 class _ConnectionFormDialog extends StatefulWidget {
-  const _ConnectionFormDialog({
-    required this.providers,
-    this.initial,
-  });
+  const _ConnectionFormDialog({required this.providers, this.initial});
 
   final List<ConnectionProvider> providers;
   final Map<String, dynamic>? initial;
@@ -582,7 +772,9 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
         final raw = initial?[field.key];
         final boolValue = raw is bool
             ? raw
-            : (raw is String ? raw.toLowerCase() == 'true' : field.defaultValue.toLowerCase() == 'true');
+            : (raw is String
+                  ? raw.toLowerCase() == 'true'
+                  : field.defaultValue.toLowerCase() == 'true');
         _boolValues[field.key] = boolValue;
         continue;
       }
@@ -648,7 +840,9 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
     final provider = _provider;
 
     return AlertDialog(
-      title: Text(widget.initial == null ? 'Nueva conexión' : 'Editar conexión'),
+      title: Text(
+        widget.initial == null ? 'Nueva conexión' : 'Editar conexión',
+      ),
       content: SizedBox(
         width: 560,
         child: provider == null
@@ -692,8 +886,14 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
                     DropdownButtonFormField<String>(
                       initialValue: _scope,
                       items: const [
-                        DropdownMenuItem(value: 'workspace', child: Text('Workspace')),
-                        DropdownMenuItem(value: 'personal', child: Text('Personal')),
+                        DropdownMenuItem(
+                          value: 'workspace',
+                          child: Text('Workspace'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'personal',
+                          child: Text('Personal'),
+                        ),
                       ],
                       onChanged: (value) {
                         if (value == null) return;
@@ -705,7 +905,9 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
                     ...provider.fields
                         .where(_visible)
                         .map((field) => _buildField(field))
-                        .expand((widget) => [widget, const SizedBox(height: 10)]),
+                        .expand(
+                          (widget) => [widget, const SizedBox(height: 10)],
+                        ),
                   ],
                 ),
               ),
@@ -715,10 +917,7 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancelar'),
         ),
-        FilledButton(
-          onPressed: _submit,
-          child: const Text('Guardar'),
-        ),
+        FilledButton(onPressed: _submit, child: const Text('Guardar')),
       ],
     );
   }
@@ -735,13 +934,20 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
     }
 
     if (field.type == 'select') {
-      final controller = _textControllers[field.key] ??= TextEditingController(text: field.defaultValue);
+      final controller = _textControllers[field.key] ??= TextEditingController(
+        text: field.defaultValue,
+      );
       final current = controller.text.isEmpty ? null : controller.text;
       return DropdownButtonFormField<String>(
         initialValue: current,
         decoration: InputDecoration(labelText: field.label),
         items: field.options
-            .map((option) => DropdownMenuItem<String>(value: option.value, child: Text(option.label)))
+            .map(
+              (option) => DropdownMenuItem<String>(
+                value: option.value,
+                child: Text(option.label),
+              ),
+            )
             .toList(),
         onChanged: (value) {
           controller.text = value ?? '';
@@ -756,7 +962,9 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
       );
     }
 
-    final controller = _textControllers[field.key] ??= TextEditingController(text: field.defaultValue);
+    final controller = _textControllers[field.key] ??= TextEditingController(
+      text: field.defaultValue,
+    );
     final isPassword = field.type == 'password';
     final isNumber = field.type == 'number';
     final isTextarea = field.type == 'textarea';

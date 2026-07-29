@@ -6,11 +6,11 @@ class SkillItem {
   String get id => raw['id'] as String? ?? '';
   String get name => raw['name'] as String? ?? '(sin nombre)';
   String get description => raw['description'] as String? ?? '';
-  String get icon => raw['icon'] as String? ?? '🔧';
   String get category => raw['category'] as String? ?? '';
   String get content => raw['content'] as String? ?? '';
   String get scope => raw['scope'] as String? ?? 'private';
   bool get shared => raw['_shared'] == true;
+
   /// Solo es de solo-lectura si llegó vía workspace share (no soy el dueño).
   /// Ser público (scope == 'public') no impide editar lo que es mío.
   bool get readOnly => shared;

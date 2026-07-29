@@ -37,10 +37,17 @@ class LogsRepository {
   }
 
   Future<List<LogsSummaryDay>> summary(String token) async {
-    final response = await apiClient.get('$_basePath/summary', gaToken: token);
+    final response = await apiClient.get(
+      '$_basePath/summary',
+      gaToken: token,
+      cache: true,
+    );
     final payload = response.body;
     if (payload is! List) return const [];
-    return payload.whereType<Map<String, dynamic>>().map((item) => LogsSummaryDay(raw: item)).toList();
+    return payload
+        .whereType<Map<String, dynamic>>()
+        .map((item) => LogsSummaryDay(raw: item))
+        .toList();
   }
 
   Future<String> exportCsv(
@@ -62,7 +69,10 @@ class LogsRepository {
       if (source != null && source.isNotEmpty) 'source': source,
       if (query != null && query.isNotEmpty) 'q': query,
     };
-    final path = Uri(path: '$_basePath/export', queryParameters: params).toString();
+    final path = Uri(
+      path: '$_basePath/export',
+      queryParameters: params,
+    ).toString();
     final response = await apiClient.get(path, gaToken: token);
     final body = response.body;
     return body is String ? body : '';

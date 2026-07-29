@@ -58,7 +58,11 @@ class MetadataRepository {
   final ApiClient apiClient;
 
   Future<List<MetadataTable>> listTables(String token) async {
-    final response = await apiClient.get('/api/admin/metadata/tables', gaToken: token);
+    final response = await apiClient.get(
+      '/api/admin/metadata/tables',
+      gaToken: token,
+      cache: true,
+    );
     final payload = response.body;
     if (payload is! List) return const [];
     return payload

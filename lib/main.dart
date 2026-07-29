@@ -9,9 +9,17 @@ import 'shared/widgets/terminal_view_transition.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final backendController = await BackendController.bootstrap();
-  final sessionController = await SessionController.bootstrap();
-  final localeController = await LocaleController.bootstrap();
+  // Los 3 bootstrap son independientes entre sí (cada uno lee su propia
+  // clave de SharedPreferences) — en paralelo en vez de en cadena ahorra
+  // 2 de las 3 esperas de plugin channel en el arranque.
+  final results = await Future.wait([
+    BackendController.bootstrap(),
+    SessionController.bootstrap(),
+    LocaleController.bootstrap(),
+  ]);
+  final backendController = results[0] as BackendController;
+  final sessionController = results[1] as SessionController;
+  final localeController = results[2] as LocaleController;
 
   runApp(
     _BootApp(

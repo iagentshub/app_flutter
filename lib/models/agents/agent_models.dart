@@ -12,6 +12,7 @@ class AgentItem {
   String get systemPrompt => raw['system_prompt'] as String? ?? '';
   String get connectionId => raw['connection_id'] as String? ?? '';
   bool get shared => raw['_shared'] == true;
+  bool get useMemory => raw['use_memory'] == true;
 
   /// Solo es de solo-lectura si llegó vía workspace share (no soy el dueño).
   /// Ser público (scope == 'public') no impide editar lo que es mío.

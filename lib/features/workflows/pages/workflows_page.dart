@@ -10,8 +10,10 @@ import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/action_icon_button.dart';
+import '../../../shared/widgets/filter_button.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/origin_badge.dart';
+import '../../../shared/widgets/responsive_dialog.dart';
 import 'workflow_editor_page.dart';
 
 class WorkflowsPage extends StatefulWidget {
@@ -36,15 +38,52 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
   List<WorkflowItem> _workflows = const [];
   bool _loading = true;
   String? _error;
+  String _scope = 'all';
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+
+  int get _activeFilterCount => _scope != 'all' ? 1 : 0;
+
+  List<WorkflowItem> get _filteredWorkflows {
+    if (_scope == 'all') return _workflows;
+    return _workflows.where((item) => item.scope == _scope).toList();
+  }
+
+  void _openFiltersDialog() {
+    final scopeOptions = [
+      ('all', _tx('explore.option_all', 'Todas')),
+      ('private', _tx('agents.scope_private', 'Privado')),
+      ('public', _tx('agents.scope_public', 'Público')),
+    ];
+
+    showFilterDialog(
+      context,
+      title: _tx('common.filters', 'Filtros'),
+      clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
+      closeLabel: _tx('common.close', 'Cerrar'),
+      onClear: () => setState(() => _scope = 'all'),
+      buildFields: (setDialogState) => [
+        FilterDropdown(
+          label: _tx('agents.scope_label', 'Visibilidad'),
+          value: _scope,
+          options: scopeOptions,
+          onChanged: (v) {
+            setState(() => _scope = v);
+            setDialogState(() {});
+          },
+        ),
+      ],
+    );
+  }
 
   @override
   void initState() {
     super.initState();
     _repository = WorkflowsRepository(apiClient: widget.apiClient);
-    _t = TranslatedTexts(localeController: widget.localeController, namespace: 'resources')
-      ..addListener(_onTextsChanged);
+    _t = TranslatedTexts(
+      localeController: widget.localeController,
+      namespace: 'resources',
+    )..addListener(_onTextsChanged);
     _load();
   }
 
@@ -167,8 +206,14 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
         title: const Text('Eliminar workflow'),
         content: Text('¿Seguro que quieres eliminar "${item.name}"?'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Eliminar')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Eliminar'),
+          ),
         ],
       ),
     );
@@ -204,7 +249,11 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
       barrierDismissible: false,
       builder: (context) => _RunProgressDialog(
         workflowName: item.name,
-        stream: _repository.streamRun(token, workflowId: item.id, input: input.trim()),
+        stream: _repository.streamRun(
+          token,
+          workflowId: item.id,
+          input: input.trim(),
+        ),
       ),
     );
   }
@@ -232,7 +281,10 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Error cargando workflows', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Error cargando workflows',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 8),
                   Text(_error!),
                   const SizedBox(height: 12),
@@ -249,44 +301,75 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
       );
     }
 
+    final filteredWorkflows = _filteredWorkflows;
+    final toolbar = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            IconButton.filled(
+              onPressed: _openCreateDialog,
+              icon: const Icon(Icons.add),
+              tooltip: 'Nuevo workflow',
+            ),
+            IconButton.outlined(
+              onPressed: _load,
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Actualizar',
+            ),
+            FilterButton(
+              activeCount: _activeFilterCount,
+              tooltip: _tx('common.filters', 'Filtros'),
+              onPressed: _openFiltersDialog,
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Workflows: ${filteredWorkflows.length}',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+      ],
+    );
+
     return RefreshIndicator(
       onRefresh: _load,
       child: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1100),
-          child: ListView(
+          child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  FilledButton.icon(
-                    onPressed: _openCreateDialog,
-                    icon: const Icon(Icons.add),
-                    label: const Text('Nuevo workflow'),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: _load,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Actualizar'),
-                  ),
-                ],
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                sliver: SliverToBoxAdapter(child: toolbar),
               ),
-              const SizedBox(height: 12),
-              Text('Workflows: ${_workflows.length}', style: Theme.of(context).textTheme.bodyMedium),
-              const SizedBox(height: 12),
-              if (_workflows.isEmpty)
-                const Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text('No hay workflows todavía.'),
+              if (filteredWorkflows.isEmpty)
+                const SliverPadding(
+                  padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  sliver: SliverToBoxAdapter(
+                    child: Card(
+                      child: Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Text('No hay workflows todavía.'),
+                      ),
+                    ),
                   ),
                 )
               else
-                ..._workflows.map(_buildWorkflowCard),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) =>
+                          _buildWorkflowCard(filteredWorkflows[index]),
+                      childCount: filteredWorkflows.length,
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -295,7 +378,10 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
   }
 
   Widget _buildWorkflowCard(WorkflowItem item) {
-    final meta = <String>['${item.nodes.length} pasos', '${item.edges.length} conexiones'];
+    final meta = <String>[
+      '${item.nodes.length} pasos',
+      '${item.edges.length} conexiones',
+    ];
 
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
@@ -309,7 +395,10 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
                 Expanded(
                   child: Text(
                     item.name,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
@@ -318,7 +407,11 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
             Text(meta.join(' · ')),
             if (item.description.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text(item.description, maxLines: 3, overflow: TextOverflow.ellipsis),
+              Text(
+                item.description,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
             const SizedBox(height: 8),
             LabelChipsRow(
@@ -358,7 +451,6 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
       ),
     );
   }
-
 }
 
 class _RunWorkflowDialog extends StatefulWidget {
@@ -390,7 +482,7 @@ class _RunWorkflowDialogState extends State<_RunWorkflowDialog> {
     return AlertDialog(
       title: Text('Ejecutar: ${widget.workflowName}'),
       content: SizedBox(
-        width: 640,
+        width: dialogContentWidth(context, 640),
         child: Form(
           key: _formKey,
           child: TextFormField(
@@ -399,14 +491,18 @@ class _RunWorkflowDialogState extends State<_RunWorkflowDialog> {
             maxLines: 10,
             decoration: const InputDecoration(labelText: 'Input inicial'),
             validator: (value) {
-              if (value == null || value.trim().isEmpty) return 'Input obligatorio';
+              if (value == null || value.trim().isEmpty)
+                return 'Input obligatorio';
               return null;
             },
           ),
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
         FilledButton(onPressed: _submit, child: const Text('Ejecutar')),
       ],
     );
@@ -439,8 +535,11 @@ class _RunProgressDialogState extends State<_RunProgressDialog> {
         setState(() {
           _events.add(event);
           final type = event['type']?.toString() ?? '';
-          if (type == 'workflow_done') _finalOutput = event['output']?.toString();
-          if (type == 'error') _errorMessage = event['message']?.toString() ?? 'Error ejecutando workflow';
+          if (type == 'workflow_done')
+            _finalOutput = event['output']?.toString();
+          if (type == 'error')
+            _errorMessage =
+                event['message']?.toString() ?? 'Error ejecutando workflow';
         });
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!_scrollController.hasClients) return;
@@ -481,11 +580,14 @@ class _RunProgressDialogState extends State<_RunProgressDialog> {
         return 'Evaluando con ${agentName ?? 'agente'} (vuelta $iteration)';
       case 'evaluation_done':
         final approved = event['approved'] == true;
-        return approved ? 'Evaluación aprobada' : 'Evaluación no aprobada, repitiendo';
+        return approved
+            ? 'Evaluación aprobada'
+            : 'Evaluación no aprobada, repitiendo';
       case 'loop_iteration_started':
         return 'Nueva vuelta del ciclo ($iteration)';
       case 'loop_limit_reached':
-        return event['message']?.toString() ?? 'Se alcanzó el límite de vueltas del ciclo';
+        return event['message']?.toString() ??
+            'Se alcanzó el límite de vueltas del ciclo';
       default:
         return type;
     }
@@ -511,8 +613,8 @@ class _RunProgressDialogState extends State<_RunProgressDialog> {
     return AlertDialog(
       title: Text('Ejecutando: ${widget.workflowName}'),
       content: SizedBox(
-        width: 700,
-        height: 460,
+        width: dialogContentWidth(context, 700),
+        height: dialogContentHeight(context, 460),
         child: Column(
           children: [
             Expanded(
@@ -537,15 +639,29 @@ class _RunProgressDialogState extends State<_RunProgressDialog> {
             ],
             if (_errorMessage != null) ...[
               const SizedBox(height: 10),
-              Text(_errorMessage!, style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.w600)),
+              Text(
+                _errorMessage!,
+                style: TextStyle(
+                  color: Colors.red.shade700,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
             if (_finalOutput != null && _finalOutput!.trim().isNotEmpty) ...[
               const SizedBox(height: 10),
-              const Align(alignment: Alignment.centerLeft, child: Text('Salida final', style: TextStyle(fontWeight: FontWeight.bold))),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Salida final',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
               const SizedBox(height: 6),
               SizedBox(
                 height: 100,
-                child: SingleChildScrollView(child: SelectableText(_finalOutput!)),
+                child: SingleChildScrollView(
+                  child: SelectableText(_finalOutput!),
+                ),
               ),
             ],
           ],

@@ -7,13 +7,22 @@ class DashboardRepository {
 
   final ApiClient _apiClient;
 
-  Future<List<Map<String, dynamic>>> _safeList(String path, String gaToken) async {
+  Future<List<Map<String, dynamic>>> _safeList(
+    String path,
+    String gaToken,
+  ) async {
     try {
-      final response = await _apiClient.get(path, gaToken: gaToken, cache: true);
+      final response = await _apiClient.get(
+        path,
+        gaToken: gaToken,
+        cache: true,
+      );
       final body = response.body;
       if (body is List) return body.whereType<Map<String, dynamic>>().toList();
       if (body is Map<String, dynamic> && body['data'] is List) {
-        return (body['data'] as List).whereType<Map<String, dynamic>>().toList();
+        return (body['data'] as List)
+            .whereType<Map<String, dynamic>>()
+            .toList();
       }
       return const [];
     } catch (_) {
@@ -43,7 +52,10 @@ class DashboardRepository {
     );
   }
 
-  Future<List<ConnectionTestResult>> testAllConnections(String gaToken, {List<String>? ids}) async {
+  Future<List<ConnectionTestResult>> testAllConnections(
+    String gaToken, {
+    List<String>? ids,
+  }) async {
     final response = await _apiClient.post(
       '/api/connections/test-all',
       gaToken: gaToken,
@@ -51,12 +63,19 @@ class DashboardRepository {
     );
     final body = response.body;
     if (body is! List) return const [];
-    return body.whereType<Map<String, dynamic>>().map(ConnectionTestResult.fromJson).toList();
+    return body
+        .whereType<Map<String, dynamic>>()
+        .map(ConnectionTestResult.fromJson)
+        .toList();
   }
 
   Future<List<String>?> getLayout(String gaToken) async {
     try {
-      final response = await _apiClient.get('/api/settings/dashboard-layout', gaToken: gaToken);
+      final response = await _apiClient.get(
+        '/api/settings/dashboard-layout',
+        gaToken: gaToken,
+        cache: true,
+      );
       final layout = response.json['layout'];
       if (layout is! List) return null;
       final valid = layout
@@ -71,31 +90,51 @@ class DashboardRepository {
   }
 
   Future<void> saveLayout(String gaToken, List<String> layout) async {
-    await _apiClient.put('/api/settings/dashboard-layout', gaToken: gaToken, body: {'layout': layout});
+    await _apiClient.put(
+      '/api/settings/dashboard-layout',
+      gaToken: gaToken,
+      body: {'layout': layout},
+    );
   }
 
   Future<Map<String, DashboardWidgetConfig>> getConfig(String gaToken) async {
     try {
-      final response = await _apiClient.get('/api/settings/dashboard-config', gaToken: gaToken);
+      final response = await _apiClient.get(
+        '/api/settings/dashboard-config',
+        gaToken: gaToken,
+        cache: true,
+      );
       final config = response.json['config'];
       if (config is! Map<String, dynamic>) return {};
       return config.map(
-        (key, value) => MapEntry(key, DashboardWidgetConfig.fromJson(value as Map<String, dynamic>? ?? {})),
+        (key, value) => MapEntry(
+          key,
+          DashboardWidgetConfig.fromJson(value as Map<String, dynamic>? ?? {}),
+        ),
       );
     } catch (_) {
       return {};
     }
   }
 
-  Future<void> saveConfig(String gaToken, Map<String, DashboardWidgetConfig> config) async {
+  Future<void> saveConfig(
+    String gaToken,
+    Map<String, DashboardWidgetConfig> config,
+  ) async {
     await _apiClient.put(
       '/api/settings/dashboard-config',
       gaToken: gaToken,
-      body: {'config': config.map((key, value) => MapEntry(key, value.toJson()))},
+      body: {
+        'config': config.map((key, value) => MapEntry(key, value.toJson())),
+      },
     );
   }
 
-  Future<List<Map<String, dynamic>>> fetchFeed(String gaToken, {List<String>? types, int limit = 8}) async {
+  Future<List<Map<String, dynamic>>> fetchFeed(
+    String gaToken, {
+    List<String>? types,
+    int limit = 8,
+  }) async {
     final single = (types != null && types.length == 1) ? types.first : null;
     final multiplier = single != null ? 1 : (types?.length ?? 1).clamp(1, 3);
     final fetchLimit = (limit * multiplier).clamp(1, 100);
@@ -104,7 +143,11 @@ class DashboardRepository {
       queryParameters: {'limit': '$fetchLimit', 'type': ?single},
     ).toString();
     try {
-      final response = await _apiClient.get(path, gaToken: gaToken, cache: true);
+      final response = await _apiClient.get(
+        path,
+        gaToken: gaToken,
+        cache: true,
+      );
       final body = response.body;
       if (body is! List) return const [];
       return body.whereType<Map<String, dynamic>>().toList();

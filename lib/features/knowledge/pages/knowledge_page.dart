@@ -12,11 +12,60 @@ import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/action_icon_button.dart';
-import '../../../shared/widgets/filter_chips_row.dart';
+import '../../../shared/widgets/filter_button.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/origin_badge.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
+
+/// Categorías de skill — mismo set de 9 valores que frontend_react
+/// (`resource-icons.tsx` / `SkillCategoryGlyph`).
+const kSkillCategories = [
+  'ai',
+  'messaging',
+  'notes',
+  'productivity',
+  'dev',
+  'security',
+  'media',
+  'data',
+  'company',
+];
+
+/// Icono simple (Material, sin emoji libre) según la categoría de la skill —
+/// mismo criterio que `SkillCategoryGlyph` en frontend_react, pero con
+/// iconos de Material en vez de SVG a medida.
+IconData skillCategoryIcon(String category) {
+  return switch (category) {
+    'ai' => Icons.smart_toy_outlined,
+    'messaging' => Icons.chat_bubble_outline,
+    'notes' => Icons.description_outlined,
+    'productivity' => Icons.check_circle_outline,
+    'dev' => Icons.code,
+    'security' => Icons.shield_outlined,
+    'media' => Icons.play_circle_outline,
+    'data' => Icons.storage_outlined,
+    'company' => Icons.apartment_outlined,
+    _ => Icons.circle_outlined,
+  };
+}
+
+/// Etiqueta legible por categoría — mismos textos que
+/// `skills.categories.*` en frontend_react (sin emoji).
+String skillCategoryLabel(String category) {
+  return switch (category) {
+    'ai' => 'IA y Agentes',
+    'messaging' => 'Mensajería',
+    'notes' => 'Notas',
+    'productivity' => 'Productividad',
+    'dev' => 'Desarrollo',
+    'security' => 'Seguridad',
+    'media' => 'Media',
+    'data' => 'Datos',
+    'company' => 'Empresa',
+    _ => 'Sin categoría',
+  };
+}
 
 class KnowledgePage extends StatefulWidget {
   const KnowledgePage({
@@ -34,32 +83,148 @@ class KnowledgePage extends StatefulWidget {
   State<KnowledgePage> createState() => _KnowledgePageState();
 }
 
-class _KnowledgePageState extends State<KnowledgePage> {
+class _KnowledgePageState extends State<KnowledgePage>
+    with SingleTickerProviderStateMixin {
   late final KnowledgeRepository _repository;
   late final SkillsRepository _skillsRepository;
   late final TranslatedTexts _t;
+  late final TabController _tabController;
+
+  /// 4 pestañas independientes, igual que knowledge.js en frontend_vanilla
+  /// (no una sección "Conocimiento" genérica con filtro de tipo).
+  static const _sectionIds = ['skills', 'urls', 'documents', 'memory'];
+
   List<KnowledgeItem> _items = const [];
   bool _loading = true;
   bool _uploading = false;
   String? _error;
-  String _filter = 'all';
 
-  String _section = 'knowledge';
   List<SkillItem> _skills = const [];
   bool _skillsLoading = true;
   String? _skillsError;
   String? _activeGroupId;
-  bool _groupsVisible = false;
+  String _knowledgeOrigin = 'all';
+  String _skillScope = 'all';
+  String _skillCategory = 'all';
+
+  List<KnowledgeItem> get _urlItems => _items
+      .where((item) => item.type == 'url')
+      .where(_matchesKnowledgeOrigin)
+      .toList();
+  List<KnowledgeItem> get _documentItems => _items
+      .where((item) => item.type != 'url')
+      .where(_matchesKnowledgeOrigin)
+      .toList();
+
+  bool _matchesKnowledgeOrigin(KnowledgeItem item) {
+    if (_knowledgeOrigin == 'own') return !item.shared;
+    if (_knowledgeOrigin == 'linked') return item.shared;
+    return true;
+  }
+
+  int get _knowledgeFilterCount => _knowledgeOrigin != 'all' ? 1 : 0;
+
+  List<String> get _skillCategoryOptions =>
+      _skills.map((s) => s.category).where((c) => c.isNotEmpty).toSet().toList()
+        ..sort();
+
+  int get _skillFilterCount =>
+      (_skillScope != 'all' ? 1 : 0) + (_skillCategory != 'all' ? 1 : 0);
+
+  List<SkillItem> get _filteredSkills => _skills.where((item) {
+    if (_skillScope != 'all' && item.scope != _skillScope) return false;
+    if (_skillCategory != 'all' && item.category != _skillCategory) {
+      return false;
+    }
+    return true;
+  }).toList();
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+
+  void _openKnowledgeFiltersDialog() {
+    final optionAll = _tx('explore.option_all', 'Todas');
+    final originOptions = [
+      ('all', optionAll),
+      ('own', _tx('knowledge.origin_own', 'Propio')),
+      ('linked', _tx('knowledge.origin_linked', 'Enlazado')),
+    ];
+
+    showFilterDialog(
+      context,
+      title: _tx('common.filters', 'Filtros'),
+      clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
+      closeLabel: _tx('common.close', 'Cerrar'),
+      onClear: () => setState(() => _knowledgeOrigin = 'all'),
+      buildFields: (setDialogState) => [
+        FilterDropdown(
+          label: _tx('knowledge.origin_label', 'Origen'),
+          value: _knowledgeOrigin,
+          options: originOptions,
+          onChanged: (v) {
+            setState(() => _knowledgeOrigin = v);
+            setDialogState(() {});
+          },
+        ),
+      ],
+    );
+  }
+
+  void _openSkillFiltersDialog() {
+    final optionAll = _tx('explore.option_all', 'Todas');
+    final scopeOptions = [
+      ('all', optionAll),
+      ('private', _tx('agents.scope_private', 'Privado')),
+      ('public', _tx('agents.scope_public', 'Público')),
+    ];
+    final categoryOptions = [
+      ('all', optionAll),
+      ..._skillCategoryOptions.map((c) => (c, skillCategoryLabel(c))),
+    ];
+
+    showFilterDialog(
+      context,
+      title: _tx('common.filters', 'Filtros'),
+      clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
+      closeLabel: _tx('common.close', 'Cerrar'),
+      onClear: () => setState(() {
+        _skillScope = 'all';
+        _skillCategory = 'all';
+      }),
+      buildFields: (setDialogState) => [
+        FilterDropdown(
+          label: _tx('agents.scope_label', 'Visibilidad'),
+          value: _skillScope,
+          options: scopeOptions,
+          onChanged: (v) {
+            setState(() => _skillScope = v);
+            setDialogState(() {});
+          },
+        ),
+        const SizedBox(height: 12),
+        FilterDropdown(
+          label: _tx('knowledge.category_label', 'Categoría'),
+          value: _skillCategory,
+          options: categoryOptions,
+          onChanged: (v) {
+            setState(() => _skillCategory = v);
+            setDialogState(() {});
+          },
+        ),
+      ],
+    );
+  }
 
   @override
   void initState() {
     super.initState();
     _repository = KnowledgeRepository(apiClient: widget.apiClient);
     _skillsRepository = SkillsRepository(apiClient: widget.apiClient);
-    _t = TranslatedTexts(localeController: widget.localeController, namespace: 'resources')
-      ..addListener(_onTextsChanged);
+    _tabController = TabController(length: _sectionIds.length, vsync: this)
+      ..addListener(_onTabChanged);
+    _t = TranslatedTexts(
+      localeController: widget.localeController,
+      namespace: 'resources',
+    )..addListener(_onTextsChanged);
     _load();
     _loadSkills();
   }
@@ -68,8 +233,14 @@ class _KnowledgePageState extends State<KnowledgePage> {
     if (mounted) setState(() {});
   }
 
+  void _onTabChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
+    _tabController.removeListener(_onTabChanged);
+    _tabController.dispose();
     _t.removeListener(_onTextsChanged);
     _t.dispose();
     super.dispose();
@@ -91,7 +262,10 @@ class _KnowledgePageState extends State<KnowledgePage> {
       _skillsError = null;
     });
     try {
-      final skills = await _skillsRepository.listSkills(token, groupId: _activeGroupId);
+      final skills = await _skillsRepository.listSkills(
+        token,
+        groupId: _activeGroupId,
+      );
       if (!mounted) return;
       setState(() {
         _skills = skills;
@@ -170,8 +344,14 @@ class _KnowledgePageState extends State<KnowledgePage> {
         title: const Text('Eliminar skill'),
         content: Text('¿Seguro que quieres eliminar "${item.name}"?'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Eliminar')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Eliminar'),
+          ),
         ],
       ),
     );
@@ -206,8 +386,7 @@ class _KnowledgePageState extends State<KnowledgePage> {
     });
 
     try {
-      final type = _filter == 'all' ? null : _filter;
-      final items = await _repository.listItems(token, type: type, groupId: _activeGroupId);
+      final items = await _repository.listItems(token, groupId: _activeGroupId);
       if (!mounted) return;
       setState(() {
         _items = items;
@@ -322,8 +501,14 @@ class _KnowledgePageState extends State<KnowledgePage> {
         title: const Text('Eliminar item'),
         content: Text('¿Seguro que quieres eliminar "${item.title}"?'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Eliminar')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Eliminar'),
+          ),
         ],
       ),
     );
@@ -389,185 +574,244 @@ class _KnowledgePageState extends State<KnowledgePage> {
 
   @override
   Widget build(BuildContext context) {
-    final content = Column(
+    final section = _sectionIds[_tabController.index];
+    final tabLabels = [
+      _tx('knowledge.tab_skills', 'Skills'),
+      _tx('knowledge.tab_urls', 'URLs'),
+      _tx('knowledge.tab_documents', 'Documentos'),
+      _tx('knowledge.tab_memory', 'Memoria'),
+    ];
+
+    return Column(
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          child: Row(
-            children: [
-              Expanded(
-                child: SegmentedButton<String>(
-                  segments: const [
-                    ButtonSegment(value: 'knowledge', label: Text('Conocimiento'), icon: Icon(Icons.menu_book_outlined)),
-                    ButtonSegment(value: 'skills', label: Text('Skills'), icon: Icon(Icons.auto_awesome_outlined)),
-                    ButtonSegment(value: 'memory', label: Text('Memoria'), icon: Icon(Icons.memory_outlined)),
-                  ],
-                  selected: {_section},
-                  onSelectionChanged: (selection) => setState(() => _section = selection.first),
-                ),
-              ),
-              if (_section != 'memory') ...[
-                const SizedBox(width: 8),
-                IconButton.outlined(
-                  onPressed: () => setState(() => _groupsVisible = !_groupsVisible),
-                  icon: const Icon(Icons.groups_outlined),
-                  tooltip: _tx('groups.toggle_tooltip', 'Grupos'),
-                  isSelected: _groupsVisible,
-                ),
-              ],
-            ],
+          child: Material(
+            color: Colors.transparent,
+            child: TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              tabs: tabLabels.map((label) => Tab(text: label)).toList(),
+            ),
           ),
         ),
-        Expanded(child: _buildSection()),
+        Expanded(child: _buildSection(section)),
       ],
     );
+  }
 
-    if (_section == 'memory' || !_groupsVisible) return content;
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final wide = constraints.maxWidth >= 700;
-        final groupPanel = GroupFilterPanel(
+  /// Botón de grupos, junto al resto de acciones de cada sección — igual
+  /// posición/orden que en Agents/Connections (Crear → Actualizar → Filtros
+  /// → Grupos → chip de grupo activo).
+  List<Widget> _groupsButtons() {
+    return [
+      IconButton.outlined(
+        onPressed: () => showGroupFilterDialog(
+          context,
           apiClient: widget.apiClient,
           token: _token ?? '',
           activeGroupId: _activeGroupId,
           onSelect: _onGroupSelect,
           localeController: widget.localeController,
-          vertical: wide,
-        );
-
-        if (!wide) {
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                child: groupPanel,
-              ),
-              Expanded(child: content),
-            ],
-          );
-        }
-        return Row(
-          children: [
-            groupPanel,
-            Expanded(child: content),
-          ],
-        );
-      },
-    );
+        ),
+        icon: const Icon(Icons.groups_outlined),
+        tooltip: _tx('groups.toggle_tooltip', 'Grupos'),
+        isSelected: _activeGroupId != null,
+      ),
+      if (_activeGroupId != null)
+        ActionChip(
+          label: Text(_tx('groups.active_clear', 'Grupo activo ✕')),
+          onPressed: () => _onGroupSelect(null),
+        ),
+    ];
   }
 
-  Widget _buildSection() {
-    return switch (_section) {
-      'skills' => _buildSkillsSection(),
-      'memory' => MemoryPage(apiClient: widget.apiClient, sessionController: widget.sessionController),
-      _ => _buildKnowledgeSection(),
+  Widget _buildSection(String section) {
+    return switch (section) {
+      'urls' => _buildUrlsSection(),
+      'documents' => _buildDocumentsSection(),
+      'memory' => MemoryPage(
+        apiClient: widget.apiClient,
+        sessionController: widget.sessionController,
+      ),
+      _ => _buildSkillsSection(),
     };
   }
 
-  Widget _buildKnowledgeSection() {
-    if (_loading) return const Center(child: CircularProgressIndicator());
-
-    if (_error != null) {
-      return ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Error cargando Knowledge', style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Text(_error!),
-                  const SizedBox(height: 12),
-                  FilledButton.icon(
-                    onPressed: _load,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Reintentar'),
-                  ),
-                ],
-              ),
+  Widget _buildKnowledgeErrorState() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Error cargando Knowledge',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(_error!),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: _load,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Reintentar'),
+                ),
+              ],
             ),
           ),
-        ],
-      );
-    }
+        ),
+      ],
+    );
+  }
 
-    return RefreshIndicator(
+  Widget _buildUrlsSection() {
+    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (_error != null) return _buildKnowledgeErrorState();
+
+    final items = _urlItems;
+    return _buildLazySection<KnowledgeItem>(
       onRefresh: _load,
+      items: items,
+      itemBuilder: _buildItemCard,
+      emptyText: 'No hay URLs importadas todavía.',
+      toolbar: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              IconButton.filled(
+                onPressed: _openAddUrlDialog,
+                icon: const Icon(Icons.add),
+                tooltip: 'Importar URL',
+              ),
+              IconButton.outlined(
+                onPressed: _load,
+                icon: const Icon(Icons.refresh),
+                tooltip: 'Actualizar',
+              ),
+              FilterButton(
+                activeCount: _knowledgeFilterCount,
+                tooltip: _tx('common.filters', 'Filtros'),
+                onPressed: _openKnowledgeFiltersDialog,
+              ),
+              ..._groupsButtons(),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '${items.length}',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDocumentsSection() {
+    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (_error != null) return _buildKnowledgeErrorState();
+
+    final items = _documentItems;
+    return _buildLazySection<KnowledgeItem>(
+      onRefresh: _load,
+      items: items,
+      itemBuilder: _buildItemCard,
+      emptyText: 'No hay documentos todavía.',
+      toolbar: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              IconButton.filled(
+                onPressed: _openAddTextDialog,
+                icon: const Icon(Icons.add),
+                tooltip: 'Añadir texto',
+              ),
+              IconButton.outlined(
+                onPressed: _uploading ? null : _uploadDocument,
+                tooltip: _uploading ? 'Subiendo...' : 'Subir documento',
+                icon: _uploading
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.add),
+              ),
+              IconButton.outlined(
+                onPressed: _load,
+                icon: const Icon(Icons.refresh),
+                tooltip: 'Actualizar',
+              ),
+              FilterButton(
+                activeCount: _knowledgeFilterCount,
+                tooltip: _tx('common.filters', 'Filtros'),
+                onPressed: _openKnowledgeFiltersDialog,
+              ),
+              ..._groupsButtons(),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '${items.length}',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLazySection<T>({
+    required Widget toolbar,
+    required List<T> items,
+    required Widget Function(T) itemBuilder,
+    required String emptyText,
+    required Future<void> Function() onRefresh,
+  }) {
+    return RefreshIndicator(
+      onRefresh: onRefresh,
       child: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1100),
-          child: ListView(
+          child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  FilledButton.icon(
-                    onPressed: _openAddTextDialog,
-                    icon: const Icon(Icons.text_snippet_outlined),
-                    label: const Text('Añadir texto'),
-                  ),
-                  FilledButton.icon(
-                    onPressed: _openAddUrlDialog,
-                    icon: const Icon(Icons.link_outlined),
-                    label: const Text('Importar URL'),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: _uploading ? null : _uploadDocument,
-                    icon: const Icon(Icons.upload_file_outlined),
-                    label: Text(_uploading ? 'Subiendo...' : 'Subir documento'),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: _load,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Actualizar'),
-                  ),
-                ],
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                sliver: SliverToBoxAdapter(child: toolbar),
               ),
-              const SizedBox(height: 12),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: FilterChipsRow(
-                          options: const [
-                            ('all', 'Todos'),
-                            ('text', 'Texto'),
-                            ('url', 'URL'),
-                            ('document', 'Documento'),
-                          ],
-                          value: _filter,
-                          onChanged: (value) {
-                            setState(() => _filter = value);
-                            _load();
-                          },
-                        ),
+              if (items.isEmpty)
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  sliver: SliverToBoxAdapter(
+                    child: Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(emptyText),
                       ),
-                      const SizedBox(width: 12),
-                      Text('${_items.length}', style: Theme.of(context).textTheme.bodyMedium),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              if (_items.isEmpty)
-                const Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text('No hay items de conocimiento para este filtro.'),
+                    ),
                   ),
                 )
               else
-                ..._items.map(_buildItemCard),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => itemBuilder(items[index]),
+                      childCount: items.length,
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -588,7 +832,10 @@ class _KnowledgePageState extends State<KnowledgePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Error cargando Skills', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Error cargando Skills',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 8),
                   Text(_skillsError!),
                   const SizedBox(height: 12),
@@ -605,47 +852,43 @@ class _KnowledgePageState extends State<KnowledgePage> {
       );
     }
 
-    return RefreshIndicator(
+    final filteredSkills = _filteredSkills;
+    return _buildLazySection<SkillItem>(
       onRefresh: _loadSkills,
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1100),
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
+      items: filteredSkills,
+      itemBuilder: _buildSkillCard,
+      emptyText: 'No hay skills todavía.',
+      toolbar: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
             children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  FilledButton.icon(
-                    onPressed: _openCreateSkillDialog,
-                    icon: const Icon(Icons.add),
-                    label: const Text('Nueva skill'),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: _loadSkills,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Actualizar'),
-                  ),
-                ],
+              IconButton.filled(
+                onPressed: _openCreateSkillDialog,
+                icon: const Icon(Icons.add),
+                tooltip: 'Nueva skill',
               ),
-              const SizedBox(height: 12),
-              Text('Skills: ${_skills.length}', style: Theme.of(context).textTheme.bodyMedium),
-              const SizedBox(height: 12),
-              if (_skills.isEmpty)
-                const Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text('No hay skills todavía.'),
-                  ),
-                )
-              else
-                ..._skills.map(_buildSkillCard),
+              IconButton.outlined(
+                onPressed: _loadSkills,
+                icon: const Icon(Icons.refresh),
+                tooltip: 'Actualizar',
+              ),
+              FilterButton(
+                activeCount: _skillFilterCount,
+                tooltip: _tx('common.filters', 'Filtros'),
+                onPressed: _openSkillFiltersDialog,
+              ),
+              ..._groupsButtons(),
             ],
           ),
-        ),
+          const SizedBox(height: 12),
+          Text(
+            'Skills: ${filteredSkills.length}',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
       ),
     );
   }
@@ -664,10 +907,16 @@ class _KnowledgePageState extends State<KnowledgePage> {
           children: [
             Row(
               children: [
-                Text(item.icon, style: const TextStyle(fontSize: 18)),
+                Icon(skillCategoryIcon(item.category), size: 20),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(item.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                  child: Text(
+                    item.name,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -675,7 +924,11 @@ class _KnowledgePageState extends State<KnowledgePage> {
             Text(metaParts.join(' · ')),
             if (item.description.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text(item.description, maxLines: 3, overflow: TextOverflow.ellipsis),
+              Text(
+                item.description,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
             const SizedBox(height: 8),
             LabelChipsRow(
@@ -740,7 +993,10 @@ class _KnowledgePageState extends State<KnowledgePage> {
                 Expanded(
                   child: Text(
                     item.title,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
@@ -749,7 +1005,11 @@ class _KnowledgePageState extends State<KnowledgePage> {
             Text(metaParts.join(' · ')),
             if (item.preview.trim().isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text(item.preview.trim(), maxLines: 4, overflow: TextOverflow.ellipsis),
+              Text(
+                item.preview.trim(),
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
             const SizedBox(height: 8),
             OriginBadge(
@@ -779,7 +1039,6 @@ class _KnowledgePageState extends State<KnowledgePage> {
       ),
     );
   }
-
 }
 
 class _AddTextDialog extends StatefulWidget {
@@ -827,14 +1086,17 @@ class _AddTextDialogState extends State<_AddTextDialog> {
                 controller: _titleController,
                 decoration: const InputDecoration(labelText: 'Título'),
                 validator: (value) {
-                  if (value == null || value.trim().isEmpty) return 'Título obligatorio';
+                  if (value == null || value.trim().isEmpty)
+                    return 'Título obligatorio';
                   return null;
                 },
               ),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _sourceController,
-                decoration: const InputDecoration(labelText: 'Fuente (opcional)'),
+                decoration: const InputDecoration(
+                  labelText: 'Fuente (opcional)',
+                ),
               ),
               const SizedBox(height: 10),
               TextFormField(
@@ -843,7 +1105,8 @@ class _AddTextDialogState extends State<_AddTextDialog> {
                 maxLines: 12,
                 decoration: const InputDecoration(labelText: 'Contenido'),
                 validator: (value) {
-                  if (value == null || value.trim().isEmpty) return 'Contenido obligatorio';
+                  if (value == null || value.trim().isEmpty)
+                    return 'Contenido obligatorio';
                   return null;
                 },
               ),
@@ -852,7 +1115,10 @@ class _AddTextDialogState extends State<_AddTextDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
         FilledButton(onPressed: _submit, child: const Text('Guardar')),
       ],
     );
@@ -913,14 +1179,19 @@ class _AddUrlDialogState extends State<_AddUrlDialog> {
               const SizedBox(height: 10),
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(labelText: 'Título (opcional)'),
+                decoration: const InputDecoration(
+                  labelText: 'Título (opcional)',
+                ),
               ),
             ],
           ),
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
         FilledButton(onPressed: _submit, child: const Text('Importar')),
       ],
     );
@@ -940,23 +1211,29 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _descriptionController;
-  late final TextEditingController _iconController;
-  late final TextEditingController _categoryController;
   late final TextEditingController _tagsController;
   late final TextEditingController _contentController;
   String _scope = 'private';
+  String _category = '';
 
   @override
   void initState() {
     super.initState();
     final initial = widget.initial;
-    _nameController = TextEditingController(text: initial?['name']?.toString() ?? '');
-    _descriptionController = TextEditingController(text: initial?['description']?.toString() ?? '');
-    _iconController = TextEditingController(text: initial?['icon']?.toString() ?? '🔧');
-    _categoryController = TextEditingController(text: initial?['category']?.toString() ?? '');
+    _nameController = TextEditingController(
+      text: initial?['name']?.toString() ?? '',
+    );
+    _descriptionController = TextEditingController(
+      text: initial?['description']?.toString() ?? '',
+    );
+    _category = initial?['category']?.toString() ?? '';
     final tags = initial?['tags'];
-    _tagsController = TextEditingController(text: tags is List ? tags.join(', ') : '');
-    _contentController = TextEditingController(text: initial?['content']?.toString() ?? '');
+    _tagsController = TextEditingController(
+      text: tags is List ? tags.join(', ') : '',
+    );
+    _contentController = TextEditingController(
+      text: initial?['content']?.toString() ?? '',
+    );
     _scope = (initial?['scope'] as String?) ?? 'private';
   }
 
@@ -964,8 +1241,6 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
-    _iconController.dispose();
-    _categoryController.dispose();
     _tagsController.dispose();
     _contentController.dispose();
     super.dispose();
@@ -983,8 +1258,7 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
     final payload = <String, dynamic>{
       'name': _nameController.text.trim(),
       'description': _descriptionController.text.trim(),
-      'icon': _iconController.text.trim().isEmpty ? '🔧' : _iconController.text.trim(),
-      'category': _categoryController.text.trim(),
+      'category': _category,
       'tags': tags,
       'content': _contentController.text.trim(),
       'scope': _scope,
@@ -1004,24 +1278,12 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
           child: ListView(
             shrinkWrap: true,
             children: [
-              Row(
-                children: [
-                  SizedBox(
-                    width: 80,
-                    child: TextFormField(
-                      controller: _iconController,
-                      decoration: const InputDecoration(labelText: 'Icono'),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(labelText: 'Nombre'),
-                      validator: (value) => (value == null || value.trim().isEmpty) ? 'Nombre obligatorio' : null,
-                    ),
-                  ),
-                ],
+              TextFormField(
+                controller: _nameController,
+                decoration: const InputDecoration(labelText: 'Nombre'),
+                validator: (value) => (value == null || value.trim().isEmpty)
+                    ? 'Nombre obligatorio'
+                    : null,
               ),
               const SizedBox(height: 10),
               DropdownButtonFormField<String>(
@@ -1044,28 +1306,55 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
                 decoration: const InputDecoration(labelText: 'Descripción'),
               ),
               const SizedBox(height: 10),
-              TextFormField(
-                controller: _categoryController,
-                decoration: const InputDecoration(labelText: 'Categoría (opcional)'),
+              Text(
+                'Categoría (define el icono)',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  ChoiceChip(
+                    avatar: Icon(skillCategoryIcon(''), size: 16),
+                    label: Text(skillCategoryLabel('')),
+                    selected: _category.isEmpty,
+                    onSelected: (_) => setState(() => _category = ''),
+                  ),
+                  for (final category in kSkillCategories)
+                    ChoiceChip(
+                      avatar: Icon(skillCategoryIcon(category), size: 16),
+                      label: Text(skillCategoryLabel(category)),
+                      selected: _category == category,
+                      onSelected: (_) => setState(() => _category = category),
+                    ),
+                ],
               ),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _tagsController,
-                decoration: const InputDecoration(labelText: 'Tags (coma separada)'),
+                decoration: const InputDecoration(
+                  labelText: 'Tags (coma separada)',
+                ),
               ),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _contentController,
                 minLines: 8,
                 maxLines: 16,
-                decoration: const InputDecoration(labelText: 'Contenido de la skill'),
+                decoration: const InputDecoration(
+                  labelText: 'Contenido de la skill',
+                ),
               ),
             ],
           ),
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
         FilledButton(onPressed: _submit, child: const Text('Guardar')),
       ],
     );

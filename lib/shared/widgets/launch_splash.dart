@@ -141,42 +141,43 @@ class _LaunchSplashState extends State<LaunchSplash> {
     final prefix = _visibleText.substring(0, prefixLen);
     final suffix = _visibleText.length > 7 ? _visibleText.substring(7) : '';
 
-    return RichText(
-      text: TextSpan(
-        children: [
-          TextSpan(
-            text: prefix,
-            style: GoogleFonts.inter(
-              color: const Color(0xFFFFFFFF),
-              fontSize: 44,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.8,
+    // Row + CrossAxisAlignment.baseline (no RichText/WidgetSpan): así el
+    // texto dentro de la píldora "HUB" se asienta en la misma línea base
+    // que "iAgents" en vez de centrarse respecto a la altura de línea.
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Text(
+          prefix,
+          style: GoogleFonts.inter(
+            color: const Color(0xFFFFFFFF),
+            fontSize: 44,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.8,
+          ),
+        ),
+        if (suffix.isNotEmpty) const SizedBox(width: 8),
+        if (suffix.isNotEmpty)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFFD90429),
+              borderRadius: BorderRadius.circular(7),
+              boxShadow: const [BoxShadow(color: Color(0xAA7A0C1C), blurRadius: 16, spreadRadius: 0.3)],
+            ),
+            child: Text(
+              suffix,
+              style: GoogleFonts.inter(color: const Color(0xFFFFFFFF), fontSize: 34, fontWeight: FontWeight.w800),
             ),
           ),
-          if (suffix.isNotEmpty) const WidgetSpan(alignment: PlaceholderAlignment.middle, child: SizedBox(width: 8)),
-          if (suffix.isNotEmpty)
-            WidgetSpan(
-              alignment: PlaceholderAlignment.middle,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFD90429),
-                  borderRadius: BorderRadius.circular(7),
-                  boxShadow: const [BoxShadow(color: Color(0xAA7A0C1C), blurRadius: 16, spreadRadius: 0.3)],
-                ),
-                child: Text(
-                  suffix,
-                  style: GoogleFonts.inter(color: const Color(0xFFFFFFFF), fontSize: 34, fontWeight: FontWeight.w800),
-                ),
-              ),
-            ),
-          if (cursor.isNotEmpty)
-            TextSpan(
-              text: cursor,
-              style: GoogleFonts.inter(color: const Color(0xFFFFFFFF), fontSize: 44, fontWeight: FontWeight.w700),
-            ),
-        ],
-      ),
+        if (cursor.isNotEmpty)
+          Text(
+            cursor,
+            style: GoogleFonts.inter(color: const Color(0xFFFFFFFF), fontSize: 44, fontWeight: FontWeight.w700),
+          ),
+      ],
     );
   }
 }

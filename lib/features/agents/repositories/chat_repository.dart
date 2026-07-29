@@ -8,14 +8,28 @@ class ChatRepository {
 
   final ApiClient apiClient;
 
-  Future<List<ChatConversation>> listConversations(String token, String agentId) async {
-    final response = await apiClient.get('/api/chats/${Uri.encodeComponent(agentId)}', gaToken: token);
+  Future<List<ChatConversation>> listConversations(
+    String token,
+    String agentId,
+  ) async {
+    final response = await apiClient.get(
+      '/api/chats/${Uri.encodeComponent(agentId)}',
+      gaToken: token,
+      cache: true,
+    );
     final payload = response.body;
     if (payload is! List) return const [];
-    return payload.whereType<Map<String, dynamic>>().map(ChatConversation.fromJson).toList();
+    return payload
+        .whereType<Map<String, dynamic>>()
+        .map(ChatConversation.fromJson)
+        .toList();
   }
 
-  Future<ChatConversation> createConversation(String token, String agentId, {String title = ''}) async {
+  Future<ChatConversation> createConversation(
+    String token,
+    String agentId, {
+    String title = '',
+  }) async {
     final response = await apiClient.post(
       '/api/chats/${Uri.encodeComponent(agentId)}',
       gaToken: token,
@@ -24,17 +38,28 @@ class ChatRepository {
     return ChatConversation.fromJson(response.json);
   }
 
-  Future<List<ChatMessage>> getMessages(String token, String agentId, String conversationId) async {
+  Future<List<ChatMessage>> getMessages(
+    String token,
+    String agentId,
+    String conversationId,
+  ) async {
     final response = await apiClient.get(
       '/api/chats/${Uri.encodeComponent(agentId)}/${Uri.encodeComponent(conversationId)}',
       gaToken: token,
     );
     final payload = response.body;
     if (payload is! List) return const [];
-    return payload.whereType<Map<String, dynamic>>().map(ChatMessage.fromJson).toList();
+    return payload
+        .whereType<Map<String, dynamic>>()
+        .map(ChatMessage.fromJson)
+        .toList();
   }
 
-  Future<void> deleteConversation(String token, String agentId, String conversationId) async {
+  Future<void> deleteConversation(
+    String token,
+    String agentId,
+    String conversationId,
+  ) async {
     await apiClient.delete(
       '/api/chats/${Uri.encodeComponent(agentId)}/${Uri.encodeComponent(conversationId)}',
       gaToken: token,
@@ -53,7 +78,8 @@ class ChatRepository {
       gaToken: token,
       body: {
         'messages': messages.map((m) => m.toJson()).toList(),
-        if (conversationId != null && conversationId.isNotEmpty) 'conversation_id': conversationId,
+        if (conversationId != null && conversationId.isNotEmpty)
+          'conversation_id': conversationId,
       },
     );
 

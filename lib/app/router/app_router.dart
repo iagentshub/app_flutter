@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../../core/network/api_client.dart';
 import '../../features/admin/pages/admin_page.dart';
 import '../../features/admin/pages/centinel_page.dart';
-import '../../features/admin/pages/logs_page.dart';
 import '../../features/admin/pages/metadata_page.dart';
 import '../../features/agents/pages/agents_page.dart';
 import '../../features/auth/pages/forgot_password_page.dart';
@@ -60,7 +59,8 @@ GoRouter createRouter({
   return GoRouter(
     initialLocation: RouteNames.home,
     refreshListenable: sessionController,
-    errorBuilder: (context, state) => const TerminalViewTransition(child: _NotFoundPage()),
+    errorBuilder: (context, state) =>
+        const TerminalViewTransition(child: _NotFoundPage()),
     redirect: (context, state) {
       final location = state.matchedLocation;
       final public = isPublicPath(location);
@@ -70,7 +70,8 @@ GoRouter createRouter({
         return '${RouteNames.login}?redirect=$redirect';
       }
 
-      if (sessionController.isLoggedIn && (location == RouteNames.login || location == RouteNames.home)) {
+      if (sessionController.isLoggedIn &&
+          (location == RouteNames.login || location == RouteNames.home)) {
         return safeRedirect(state.uri.queryParameters['redirect']);
       }
 
@@ -97,15 +98,42 @@ GoRouter createRouter({
         path: RouteNames.homeEn,
         redirect: (context, state) => RouteNames.home,
       ),
-      GoRoute(path: RouteNames.about, redirect: (context, state) => RouteNames.home),
-      GoRoute(path: RouteNames.aboutEn, redirect: (context, state) => RouteNames.home),
-      GoRoute(path: RouteNames.docs, redirect: (context, state) => RouteNames.home),
-      GoRoute(path: RouteNames.docsEn, redirect: (context, state) => RouteNames.home),
-      GoRoute(path: RouteNames.support, redirect: (context, state) => RouteNames.home),
-      GoRoute(path: RouteNames.supportEn, redirect: (context, state) => RouteNames.home),
-      GoRoute(path: RouteNames.pricing, redirect: (context, state) => RouteNames.home),
-      GoRoute(path: RouteNames.pricingEn, redirect: (context, state) => RouteNames.home),
-      GoRoute(path: RouteNames.checkout, redirect: (context, state) => RouteNames.home),
+      GoRoute(
+        path: RouteNames.about,
+        redirect: (context, state) => RouteNames.home,
+      ),
+      GoRoute(
+        path: RouteNames.aboutEn,
+        redirect: (context, state) => RouteNames.home,
+      ),
+      GoRoute(
+        path: RouteNames.docs,
+        redirect: (context, state) => RouteNames.home,
+      ),
+      GoRoute(
+        path: RouteNames.docsEn,
+        redirect: (context, state) => RouteNames.home,
+      ),
+      GoRoute(
+        path: RouteNames.support,
+        redirect: (context, state) => RouteNames.home,
+      ),
+      GoRoute(
+        path: RouteNames.supportEn,
+        redirect: (context, state) => RouteNames.home,
+      ),
+      GoRoute(
+        path: RouteNames.pricing,
+        redirect: (context, state) => RouteNames.home,
+      ),
+      GoRoute(
+        path: RouteNames.pricingEn,
+        redirect: (context, state) => RouteNames.home,
+      ),
+      GoRoute(
+        path: RouteNames.checkout,
+        redirect: (context, state) => RouteNames.home,
+      ),
       GoRoute(
         path: RouteNames.login,
         builder: (context, state) => TerminalViewTransition(
@@ -133,7 +161,10 @@ GoRouter createRouter({
       GoRoute(
         path: RouteNames.resetPassword,
         builder: (context, state) => TerminalViewTransition(
-          child: ResetPasswordPage(authRepository: authRepository, token: state.uri.queryParameters['token']),
+          child: ResetPasswordPage(
+            authRepository: authRepository,
+            token: state.uri.queryParameters['token'],
+          ),
         ),
       ),
       GoRoute(
@@ -149,7 +180,10 @@ GoRouter createRouter({
       GoRoute(
         path: RouteNames.backendConfig,
         builder: (context, state) => TerminalViewTransition(
-          child: BackendConfigPage(backendController: backendController),
+          child: BackendConfigPage(
+            backendController: backendController,
+            localeController: localeController,
+          ),
         ),
       ),
 
@@ -197,7 +231,10 @@ GoRouter createRouter({
               ),
             ),
           ),
-          GoRoute(path: RouteNames.workflowsLegacy, redirect: (context, state) => RouteNames.orchestrations),
+          GoRoute(
+            path: RouteNames.workflowsLegacy,
+            redirect: (context, state) => RouteNames.orchestrations,
+          ),
           GoRoute(
             path: RouteNames.connections,
             pageBuilder: (context, state) => NoTransitionPage(
@@ -283,6 +320,7 @@ GoRouter createRouter({
               child: AdminPage(
                 apiClient: apiClient,
                 sessionController: sessionController,
+                localeController: localeController,
               ),
             ),
           ),
@@ -292,6 +330,7 @@ GoRouter createRouter({
               child: MetadataPage(
                 apiClient: apiClient,
                 sessionController: sessionController,
+                localeController: localeController,
               ),
             ),
           ),
@@ -301,17 +340,13 @@ GoRouter createRouter({
               child: CentinelPage(
                 apiClient: apiClient,
                 sessionController: sessionController,
+                localeController: localeController,
               ),
             ),
           ),
           GoRoute(
             path: RouteNames.adminLogs,
-            pageBuilder: (context, state) => NoTransitionPage(
-              child: LogsPageView(
-                apiClient: apiClient,
-                sessionController: sessionController,
-              ),
-            ),
+            redirect: (context, state) => RouteNames.adminMetadata,
           ),
           GoRoute(
             path: '${RouteNames.publicProfilePrefix}:username',

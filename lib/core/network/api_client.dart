@@ -44,6 +44,22 @@ class ApiClient {
     return Uri.parse('$base$normalizedPath');
   }
 
+  /// Envía la petición y reporta al [BackendController] si el backend
+  /// seleccionado es alcanzable o no — una respuesta HTTP (incluso 4xx/5xx)
+  /// cuenta como "alcanzable"; solo un fallo de red real (sin respuesta)
+  /// cuenta como problema de conexión, para no confundirlo con errores de
+  /// API normales y así no fallar en silencio en el resto de la app.
+  Future<http.StreamedResponse> _send(http.BaseRequest request) async {
+    try {
+      final streamed = await _client.send(request);
+      backendController.reportConnectionOk();
+      return streamed;
+    } catch (error) {
+      backendController.reportConnectionError(error.toString());
+      rethrow;
+    }
+  }
+
   /// [cache]: si es true, sirve una respuesta reciente (< [ttl]) desde
   /// memoria en vez de golpear la red. Pensado para listados que se
   /// recargan cada vez que se entra a una vista.
@@ -141,6 +157,21 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? body,
     String? gaToken,
+  }) {
+    return _eventStream('POST', path, body: body, gaToken: gaToken);
+  }
+
+  /// Igual que [postStream] pero por GET, para endpoints SSE que no llevan
+  /// body (p. ej. /admin/centinel/stream/{run_id}).
+  Stream<String> getStream(String path, {String? gaToken}) {
+    return _eventStream('GET', path, gaToken: gaToken);
+  }
+
+  Stream<String> _eventStream(
+    String method,
+    String path, {
+    Map<String, dynamic>? body,
+    String? gaToken,
   }) async* {
     final headers = <String, String>{'Accept': 'text/event-stream'};
     if (gaToken != null && gaToken.isNotEmpty) {
@@ -148,11 +179,11 @@ class ApiClient {
     }
     if (body != null) headers['Content-Type'] = 'application/json';
 
-    final request = http.Request('POST', _uri(path));
+    final request = http.Request(method, _uri(path));
     request.headers.addAll(headers);
     if (body != null) request.body = jsonEncode(body);
 
-    final streamed = await _client.send(request);
+    final streamed = await _send(request);
     if (streamed.statusCode < 200 || streamed.statusCode >= 300) {
       final raw = await streamed.stream.bytesToString();
       final parsed = _parseBody(raw);
@@ -199,7 +230,7 @@ class ApiClient {
       http.MultipartFile.fromBytes(fieldName, fileBytes, filename: fileName),
     );
 
-    final streamed = await _client.send(request);
+    final streamed = await _send(request);
     final response = await http.Response.fromStream(streamed);
     final parsed = _parseBody(response.body);
     final apiResponse = ApiResponse(
@@ -235,7 +266,7 @@ class ApiClient {
     request.headers.addAll(headers);
     if (body != null) request.body = jsonEncode(body);
 
-    final streamed = await _client.send(request);
+    final streamed = await _send(request);
     final response = await http.Response.fromStream(streamed);
     final parsed = _parseBody(response.body);
     final apiResponse = ApiResponse(

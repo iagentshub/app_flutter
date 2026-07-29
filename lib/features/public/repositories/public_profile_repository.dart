@@ -40,6 +40,7 @@ class PublicProfileRepository {
     final response = await apiClient.get(
       '/api/users/${Uri.encodeComponent(username)}/resources?type=${Uri.encodeQueryComponent(type)}',
       gaToken: token,
+      cache: true,
     );
     final payload = response.body;
     if (payload is! List) return const [];
@@ -49,19 +50,29 @@ class PublicProfileRepository {
         .toList();
   }
 
-  Future<PublicFollowStatus> getFollowStatus(String token, String username) async {
+  Future<PublicFollowStatus> getFollowStatus(
+    String token,
+    String username,
+  ) async {
     final response = await apiClient.get(
       '/api/users/${Uri.encodeComponent(username)}/follow-status',
       gaToken: token,
+      cache: true,
     );
     return PublicFollowStatus.fromJson(response.json);
   }
 
   Future<void> follow(String token, String username) async {
-    await apiClient.post('/api/users/${Uri.encodeComponent(username)}/follow', gaToken: token);
+    await apiClient.post(
+      '/api/users/${Uri.encodeComponent(username)}/follow',
+      gaToken: token,
+    );
   }
 
   Future<void> unfollow(String token, String username) async {
-    await apiClient.delete('/api/users/${Uri.encodeComponent(username)}/follow', gaToken: token);
+    await apiClient.delete(
+      '/api/users/${Uri.encodeComponent(username)}/follow',
+      gaToken: token,
+    );
   }
 }

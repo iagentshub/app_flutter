@@ -68,8 +68,12 @@ class _ManagerPageState extends State<ManagerPage> {
       List<Map<String, dynamic>> invitations = const [];
       if (active != null && !active.isPersonal) {
         try {
-          members = await _repository.listMembers(token, active.id);
-          invitations = await _repository.listInvitations(token, active.id);
+          final results = await Future.wait([
+            _repository.listMembers(token, active.id),
+            _repository.listInvitations(token, active.id),
+          ]);
+          members = results[0];
+          invitations = results[1];
         } catch (_) {
           // Si no hay permiso o falla detalle, mantenemos panel principal operativo.
         }
@@ -121,7 +125,10 @@ class _ManagerPageState extends State<ManagerPage> {
       return;
     }
 
-    final name = await _askName(title: 'Renombrar workspace', initial: item.name);
+    final name = await _askName(
+      title: 'Renombrar workspace',
+      initial: item.name,
+    );
     if (name == null) return;
 
     final token = _token;
@@ -150,8 +157,14 @@ class _ManagerPageState extends State<ManagerPage> {
         title: const Text('Eliminar workspace'),
         content: Text('¿Seguro que quieres eliminar "${item.name}"?'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Eliminar')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Eliminar'),
+          ),
         ],
       ),
     );
@@ -197,7 +210,10 @@ class _ManagerPageState extends State<ManagerPage> {
   Future<void> _inviteMember() async {
     final active = _activeWorkspace;
     if (active == null || active.isPersonal) {
-      _showMessage('Activa un workspace de equipo para invitar miembros', isError: true);
+      _showMessage(
+        'Activa un workspace de equipo para invitar miembros',
+        isError: true,
+      );
       return;
     }
     final username = await _askName(title: 'Invitar miembro', initial: '');
@@ -206,7 +222,11 @@ class _ManagerPageState extends State<ManagerPage> {
     final token = _token;
     if (token == null || token.isEmpty) return;
     try {
-      await _repository.inviteMember(token, active.id, username.trim().toLowerCase());
+      await _repository.inviteMember(
+        token,
+        active.id,
+        username.trim().toLowerCase(),
+      );
       _showMessage('Invitación enviada');
       await _load();
     } on ApiError catch (error) {
@@ -219,16 +239,27 @@ class _ManagerPageState extends State<ManagerPage> {
   Future<void> _addMemberDirect() async {
     final active = _activeWorkspace;
     if (active == null || active.isPersonal) {
-      _showMessage('Activa un workspace de equipo para añadir miembros', isError: true);
+      _showMessage(
+        'Activa un workspace de equipo para añadir miembros',
+        isError: true,
+      );
       return;
     }
-    final username = await _askName(title: 'Añadir miembro directo', initial: '');
+    final username = await _askName(
+      title: 'Añadir miembro directo',
+      initial: '',
+    );
     if (username == null) return;
 
     final token = _token;
     if (token == null || token.isEmpty) return;
     try {
-      await _repository.addMember(token, active.id, username: username.trim().toLowerCase(), role: 'member');
+      await _repository.addMember(
+        token,
+        active.id,
+        username: username.trim().toLowerCase(),
+        role: 'member',
+      );
       _showMessage('Miembro añadido');
       await _load();
     } on ApiError catch (error) {
@@ -270,7 +301,10 @@ class _ManagerPageState extends State<ManagerPage> {
     }
   }
 
-  Future<String?> _askName({required String title, required String initial}) async {
+  Future<String?> _askName({
+    required String title,
+    required String initial,
+  }) async {
     final controller = TextEditingController(text: initial);
     final formKey = GlobalKey<FormState>();
 
@@ -292,7 +326,10 @@ class _ManagerPageState extends State<ManagerPage> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancelar'),
+          ),
           FilledButton(
             onPressed: () {
               if (!(formKey.currentState?.validate() ?? false)) return;
@@ -331,7 +368,10 @@ class _ManagerPageState extends State<ManagerPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Error cargando Manager', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Error cargando Manager',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 8),
                   Text(_error!),
                   const SizedBox(height: 12),
@@ -359,23 +399,26 @@ class _ManagerPageState extends State<ManagerPage> {
             padding: const EdgeInsets.all(16),
             children: [
               Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                spacing: 6,
+                runSpacing: 6,
                 children: [
-                  FilledButton.icon(
+                  IconButton.filled(
                     onPressed: _createWorkspace,
-                    icon: const Icon(Icons.add_business_outlined),
-                    label: const Text('Nuevo workspace'),
+                    icon: const Icon(Icons.add),
+                    tooltip: 'Nuevo workspace',
                   ),
-                  OutlinedButton.icon(
+                  IconButton.outlined(
                     onPressed: _load,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Actualizar'),
+                    tooltip: 'Actualizar',
                   ),
                 ],
               ),
               const SizedBox(height: 12),
-              Text('Workspaces: ${_workspaces.length}', style: Theme.of(context).textTheme.bodyMedium),
+              Text(
+                'Workspaces: ${_workspaces.length}',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
               const SizedBox(height: 12),
               if (_workspaces.isEmpty)
                 const Card(
@@ -406,14 +449,16 @@ class _ManagerPageState extends State<ManagerPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Text(
+              item.name,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
               children: [
-                Expanded(
-                  child: Text(
-                    item.name,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                  ),
-                ),
                 _chip(item.type),
                 _chip(item.role),
                 if (item.active) _chip('activo'),
@@ -425,7 +470,9 @@ class _ManagerPageState extends State<ManagerPage> {
             Row(
               children: [
                 OutlinedButton.icon(
-                  onPressed: item.active || switching ? null : () => _switchWorkspace(item),
+                  onPressed: item.active || switching
+                      ? null
+                      : () => _switchWorkspace(item),
                   icon: const Icon(Icons.swap_horiz_outlined),
                   label: Text(switching ? 'Cambiando...' : 'Activar'),
                 ),
@@ -433,13 +480,17 @@ class _ManagerPageState extends State<ManagerPage> {
                 ActionIconButton(
                   icon: Icons.edit_outlined,
                   tooltip: 'Renombrar',
-                  onPressed: item.isPersonal ? null : () => _renameWorkspace(item),
+                  onPressed: item.isPersonal
+                      ? null
+                      : () => _renameWorkspace(item),
                 ),
                 ActionIconButton(
                   icon: Icons.delete_outline,
                   tooltip: 'Eliminar',
                   danger: true,
-                  onPressed: item.isPersonal ? null : () => _deleteWorkspace(item),
+                  onPressed: item.isPersonal
+                      ? null
+                      : () => _deleteWorkspace(item),
                 ),
               ],
             ),
@@ -470,29 +521,32 @@ class _ManagerPageState extends State<ManagerPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Miembros', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              'Miembros',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             Text(
               active == null
                   ? 'No hay workspace activo detectado.'
                   : (active.isPersonal
-                      ? 'Workspace activo: Personal (sin miembros de equipo).'
-                      : 'Workspace activo: ${active.name}'),
+                        ? 'Workspace activo: Personal (sin miembros de equipo).'
+                        : 'Workspace activo: ${active.name}'),
             ),
             const SizedBox(height: 10),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: 6,
+              runSpacing: 6,
               children: [
-                FilledButton.icon(
+                IconButton.filled(
                   onPressed: canManage ? _inviteMember : null,
-                  icon: const Icon(Icons.mail_outline),
-                  label: const Text('Invitar'),
+                  icon: const Icon(Icons.add),
+                  tooltip: 'Invitar',
                 ),
-                OutlinedButton.icon(
+                IconButton.outlined(
                   onPressed: canManage ? _addMemberDirect : null,
-                  icon: const Icon(Icons.person_add_alt_1),
-                  label: const Text('Añadir directo'),
+                  icon: const Icon(Icons.add),
+                  tooltip: 'Añadir directo',
                 ),
               ],
             ),
@@ -530,21 +584,29 @@ class _ManagerPageState extends State<ManagerPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Invitaciones', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              'Invitaciones',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             if (!canManage)
-              const Text('Activa un workspace de equipo para gestionar invitaciones.')
+              const Text(
+                'Activa un workspace de equipo para gestionar invitaciones.',
+              )
             else if (_invitations.isEmpty)
               const Text('No hay invitaciones pendientes.')
             else
               ..._invitations.map((inv) {
                 final id = (inv['id'] ?? '').toString();
-                final username = (inv['username'] ?? inv['to_username'] ?? '').toString();
+                final username = (inv['username'] ?? inv['to_username'] ?? '')
+                    .toString();
                 final createdAt = (inv['created_at'] ?? '').toString();
                 return ListTile(
                   dense: true,
                   title: Text(username.isEmpty ? id : username),
-                  subtitle: Text('id: $id${createdAt.isEmpty ? '' : ' · $createdAt'}'),
+                  subtitle: Text(
+                    'id: $id${createdAt.isEmpty ? '' : ' · $createdAt'}',
+                  ),
                   trailing: ActionIconButton(
                     icon: Icons.close,
                     tooltip: 'Cancelar',

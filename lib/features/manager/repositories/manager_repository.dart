@@ -7,7 +7,11 @@ class ManagerRepository {
   final ApiClient apiClient;
 
   Future<List<WorkspaceItem>> listWorkspaces(String token) async {
-    final response = await apiClient.get('/api/workspaces', gaToken: token, cache: true);
+    final response = await apiClient.get(
+      '/api/workspaces',
+      gaToken: token,
+      cache: true,
+    );
     final payload = response.body;
     if (payload is! List) return const [];
     return payload
@@ -16,7 +20,10 @@ class ManagerRepository {
         .toList();
   }
 
-  Future<Map<String, dynamic>> createWorkspace(String token, String name) async {
+  Future<Map<String, dynamic>> createWorkspace(
+    String token,
+    String name,
+  ) async {
     final response = await apiClient.post(
       '/api/workspaces',
       gaToken: token,
@@ -25,7 +32,11 @@ class ManagerRepository {
     return response.json;
   }
 
-  Future<Map<String, dynamic>> renameWorkspace(String token, String workspaceId, String name) async {
+  Future<Map<String, dynamic>> renameWorkspace(
+    String token,
+    String workspaceId,
+    String name,
+  ) async {
     final response = await apiClient.patch(
       '/api/workspaces/${Uri.encodeComponent(workspaceId)}',
       gaToken: token,
@@ -35,7 +46,10 @@ class ManagerRepository {
   }
 
   Future<void> deleteWorkspace(String token, String workspaceId) async {
-    await apiClient.delete('/api/workspaces/${Uri.encodeComponent(workspaceId)}', gaToken: token);
+    await apiClient.delete(
+      '/api/workspaces/${Uri.encodeComponent(workspaceId)}',
+      gaToken: token,
+    );
   }
 
   Future<String?> switchWorkspace(String token, String workspaceId) async {
@@ -46,10 +60,14 @@ class ManagerRepository {
     return apiClient.extractGaToken(response.headers);
   }
 
-  Future<List<Map<String, dynamic>>> listMembers(String token, String workspaceId) async {
+  Future<List<Map<String, dynamic>>> listMembers(
+    String token,
+    String workspaceId,
+  ) async {
     final response = await apiClient.get(
       '/api/workspaces/${Uri.encodeComponent(workspaceId)}/members',
       gaToken: token,
+      cache: true,
     );
     final payload = response.body;
     if (payload is! List) return const [];
@@ -65,31 +83,40 @@ class ManagerRepository {
     await apiClient.post(
       '/api/workspaces/${Uri.encodeComponent(workspaceId)}/members',
       gaToken: token,
-      body: {
-        'username': username,
-        'role': role,
-      },
+      body: {'username': username, 'role': role},
     );
   }
 
-  Future<void> removeMember(String token, String workspaceId, String username) async {
+  Future<void> removeMember(
+    String token,
+    String workspaceId,
+    String username,
+  ) async {
     await apiClient.delete(
       '/api/workspaces/${Uri.encodeComponent(workspaceId)}/members/${Uri.encodeComponent(username)}',
       gaToken: token,
     );
   }
 
-  Future<List<Map<String, dynamic>>> listInvitations(String token, String workspaceId) async {
+  Future<List<Map<String, dynamic>>> listInvitations(
+    String token,
+    String workspaceId,
+  ) async {
     final response = await apiClient.get(
       '/api/workspaces/${Uri.encodeComponent(workspaceId)}/invitations',
       gaToken: token,
+      cache: true,
     );
     final payload = response.body;
     if (payload is! List) return const [];
     return payload.whereType<Map<String, dynamic>>().toList();
   }
 
-  Future<void> inviteMember(String token, String workspaceId, String username) async {
+  Future<void> inviteMember(
+    String token,
+    String workspaceId,
+    String username,
+  ) async {
     await apiClient.post(
       '/api/workspaces/${Uri.encodeComponent(workspaceId)}/invitations',
       gaToken: token,
@@ -97,7 +124,11 @@ class ManagerRepository {
     );
   }
 
-  Future<void> cancelInvitation(String token, String workspaceId, String invitationId) async {
+  Future<void> cancelInvitation(
+    String token,
+    String workspaceId,
+    String invitationId,
+  ) async {
     await apiClient.delete(
       '/api/workspaces/${Uri.encodeComponent(workspaceId)}/invitations/${Uri.encodeComponent(invitationId)}',
       gaToken: token,
@@ -107,7 +138,11 @@ class ManagerRepository {
   /// Invitaciones que YO he recibido (pendientes de aceptar/rechazar),
   /// distintas de las que un grupo ha enviado a otros usuarios.
   Future<List<Map<String, dynamic>>> listMyInvitations(String token) async {
-    final response = await apiClient.get('/api/workspaces/my-invitations', gaToken: token);
+    final response = await apiClient.get(
+      '/api/workspaces/my-invitations',
+      gaToken: token,
+      cache: true,
+    );
     final payload = response.body;
     if (payload is! List) return const [];
     return payload.whereType<Map<String, dynamic>>().toList();
@@ -127,7 +162,11 @@ class ManagerRepository {
     );
   }
 
-  Future<void> transferOwnership(String token, String workspaceId, String username) async {
+  Future<void> transferOwnership(
+    String token,
+    String workspaceId,
+    String username,
+  ) async {
     await apiClient.post(
       '/api/workspaces/${Uri.encodeComponent(workspaceId)}/transfer-ownership',
       gaToken: token,

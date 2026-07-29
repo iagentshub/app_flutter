@@ -519,6 +519,12 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                     url,
                     headers: {'Cookie': 'ga_token=$token'},
                     fit: BoxFit.cover,
+                    // El avatar subido puede pesar hasta 2MB a resolución
+                    // completa; decodificar solo a 128px (2x el tamaño en
+                    // pantalla) evita mantener un bitmap gigante en memoria
+                    // para mostrarlo en un círculo de 64x64.
+                    cacheWidth: 128,
+                    cacheHeight: 128,
                     errorBuilder: (context, error, stack) => _avatarFallback(initial),
                     loadingBuilder: (context, child, progress) => progress == null ? child : _avatarFallback(initial),
                   )

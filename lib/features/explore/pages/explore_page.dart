@@ -11,6 +11,7 @@ import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/action_icon_button.dart';
+import '../../../shared/widgets/filter_button.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 
 class ExplorePage extends StatefulWidget {
@@ -59,8 +60,10 @@ class _ExplorePageState extends State<ExplorePage> {
   void initState() {
     super.initState();
     _repository = ExploreRepository(apiClient: widget.apiClient);
-    _t = TranslatedTexts(localeController: widget.localeController, namespace: 'resources')
-      ..addListener(_onTextsChanged);
+    _t = TranslatedTexts(
+      localeController: widget.localeController,
+      namespace: 'resources',
+    )..addListener(_onTextsChanged);
     _load();
   }
 
@@ -78,7 +81,8 @@ class _ExplorePageState extends State<ExplorePage> {
 
   String? get _token => widget.sessionController.gaToken;
 
-  String _itemKey(ExploreItem item) => '${item.resourceType}:${item.resourceId}';
+  String _itemKey(ExploreItem item) =>
+      '${item.resourceType}:${item.resourceId}';
 
   Future<void> _load() async {
     final token = _token;
@@ -140,10 +144,8 @@ class _ExplorePageState extends State<ExplorePage> {
       if (!mounted) return;
       await showDialog<void>(
         context: context,
-        builder: (context) => _PreviewDialog(
-          title: item.name,
-          jsonPayload: preview,
-        ),
+        builder: (context) =>
+            _PreviewDialog(title: item.name, jsonPayload: preview),
       );
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
@@ -185,14 +187,23 @@ class _ExplorePageState extends State<ExplorePage> {
     setState(() => _busyKeys.add(key));
     try {
       final stars = remove
-          ? await _repository.unstar(token, resourceType: item.resourceType, resourceId: item.resourceId)
-          : await _repository.star(token, resourceType: item.resourceType, resourceId: item.resourceId);
+          ? await _repository.unstar(
+              token,
+              resourceType: item.resourceType,
+              resourceId: item.resourceId,
+            )
+          : await _repository.star(
+              token,
+              resourceType: item.resourceType,
+              resourceId: item.resourceId,
+            );
 
       if (!mounted) return;
       setState(() {
         final idx = _items.indexWhere(
           (element) =>
-              element.resourceType == item.resourceType && element.resourceId == item.resourceId,
+              element.resourceType == item.resourceType &&
+              element.resourceId == item.resourceId,
         );
         if (idx >= 0) {
           _items[idx].raw['stars_count'] = stars;
@@ -231,6 +242,69 @@ class _ExplorePageState extends State<ExplorePage> {
     ('workflow', _tx('explore.type_workflows', 'Workflows')),
   ];
 
+  int get _activeFilterCount =>
+      (_type != 'all' ? 1 : 0) +
+      (_category.isNotEmpty ? 1 : 0) +
+      (_label.isNotEmpty ? 1 : 0);
+
+  void _openFiltersDialog() {
+    final optionAll = _tx('explore.option_all', 'Todas');
+    final categoryOptions = [
+      ('', optionAll),
+      ..._categoryOptions.map((c) => (c, c)),
+    ];
+    final labelOptions = [('', optionAll), ...kLabelKeys.map((l) => (l, l))];
+
+    showFilterDialog(
+      context,
+      title: _tx('common.filters', 'Filtros'),
+      clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
+      closeLabel: _tx('common.close', 'Cerrar'),
+      onClear: () {
+        setState(() {
+          _type = 'all';
+          _category = '';
+          _label = '';
+        });
+        _load();
+      },
+      buildFields: (setDialogState) => [
+        _dropdown(
+          label: _tx('explore.type_label', 'Tipo'),
+          value: _type,
+          options: _typeOptions,
+          onChanged: (v) {
+            setState(() => _type = v);
+            _load();
+            setDialogState(() {});
+          },
+        ),
+        const SizedBox(height: 12),
+        _dropdown(
+          label: _tx('explore.category_label', 'Categoría'),
+          value: _category,
+          options: categoryOptions,
+          onChanged: (v) {
+            setState(() => _category = v);
+            _load();
+            setDialogState(() {});
+          },
+        ),
+        const SizedBox(height: 12),
+        _dropdown(
+          label: _tx('explore.label_label', 'Label'),
+          value: _label,
+          options: labelOptions,
+          onChanged: (v) {
+            setState(() => _label = v);
+            _load();
+            setDialogState(() {});
+          },
+        ),
+      ],
+    );
+  }
+
   Widget _dropdown({
     required String label,
     required String value,
@@ -242,7 +316,12 @@ class _ExplorePageState extends State<ExplorePage> {
       decoration: InputDecoration(labelText: label),
       isExpanded: true,
       items: options
-          .map((opt) => DropdownMenuItem(value: opt.$1, child: Text(opt.$2, overflow: TextOverflow.ellipsis)))
+          .map(
+            (opt) => DropdownMenuItem(
+              value: opt.$1,
+              child: Text(opt.$2, overflow: TextOverflow.ellipsis),
+            ),
+          )
           .toList(),
       onChanged: (next) {
         if (next == null) return;
@@ -263,7 +342,10 @@ class _ExplorePageState extends State<ExplorePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(_tx('explore.error_title', 'Error cargando Explore'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    _tx('explore.error_title', 'Error cargando Explore'),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 8),
                   Text(_error!),
                   const SizedBox(height: 12),
@@ -280,132 +362,81 @@ class _ExplorePageState extends State<ExplorePage> {
       );
     }
 
-    final optionAll = _tx('explore.option_all', 'Todas');
-    final categoryOptions = [('', optionAll), ..._categoryOptions.map((c) => (c, c))];
-    final labelOptions = [('', optionAll), ...kLabelKeys.map((l) => (l, l))];
+    if (_loading) return const Center(child: CircularProgressIndicator());
 
-    return Column(
-      children: [
-        Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1180),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final searchField = TextField(
-                        controller: _queryController,
-                        decoration: InputDecoration(
-                          labelText: _tx('explore.search_hint', 'Buscar'),
-                          prefixIcon: const Icon(Icons.search, size: 20),
-                        ),
-                        onSubmitted: (_) => _load(),
-                      );
-                      final typeDropdown = _dropdown(
-                        label: _tx('explore.type_label', 'Tipo'),
-                        value: _type,
-                        options: _typeOptions,
-                        onChanged: (v) {
-                          setState(() => _type = v);
-                          _load();
-                        },
-                      );
-                      final categoryDropdown = _dropdown(
-                        label: _tx('explore.category_label', 'Categoría'),
-                        value: _category,
-                        options: categoryOptions,
-                        onChanged: (v) {
-                          setState(() => _category = v);
-                          _load();
-                        },
-                      );
-                      final labelDropdown = _dropdown(
-                        label: _tx('explore.label_label', 'Label'),
-                        value: _label,
-                        options: labelOptions,
-                        onChanged: (v) {
-                          setState(() => _label = v);
-                          _load();
-                        },
-                      );
-
-                      if (constraints.maxWidth < 620) {
-                        return Column(
-                          children: [
-                            searchField,
-                            const SizedBox(height: 10),
-                            typeDropdown,
-                            const SizedBox(height: 10),
-                            Row(
-                              children: [
-                                Expanded(child: categoryDropdown),
-                                const SizedBox(width: 10),
-                                Expanded(child: labelDropdown),
-                              ],
-                            ),
-                          ],
-                        );
-                      }
-
-                      return Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          SizedBox(width: 220, child: searchField),
-                          SizedBox(width: 160, child: typeDropdown),
-                          SizedBox(width: 160, child: categoryDropdown),
-                          SizedBox(width: 160, child: labelDropdown),
-                        ],
-                      );
-                    },
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: _queryController,
+                    decoration: InputDecoration(
+                      labelText: _tx('explore.search_hint', 'Buscar'),
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                    ),
+                    onSubmitted: (_) => _load(),
                   ),
-                ),
+                  const SizedBox(height: 10),
+                  FilterButton(
+                    activeCount: _activeFilterCount,
+                    tooltip: _tx('common.filters', 'Filtros'),
+                    onPressed: _openFiltersDialog,
+                  ),
+                ],
               ),
             ),
           ),
-        ),
-        Expanded(
-          child: _loading
-              ? const Center(child: CircularProgressIndicator())
-              : RefreshIndicator(
-                  onRefresh: _load,
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1180),
-                      child: ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.all(16),
-                        children: [
-                          Text('${_tx('explore.results', 'Resultados')}: ${_items.length}', style: Theme.of(context).textTheme.bodyMedium),
-                          const SizedBox(height: 12),
-                          if (_items.isEmpty)
-                            Card(
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Text(_tx('explore.empty', 'No hay resultados para ese filtro.')),
-                              ),
-                            )
-                          else
-                            Wrap(
-                              spacing: 12,
-                              runSpacing: 12,
-                              children: _items.map((item) {
-                                return SizedBox(width: 360, child: _buildItemCard(item));
-                              }).toList(),
-                            ),
-                        ],
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+            sliver: SliverToBoxAdapter(
+              child: Text(
+                '${_tx('explore.results', 'Resultados')}: ${_items.length}',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+          ),
+          if (_items.isEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              sliver: SliverToBoxAdapter(
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      _tx(
+                        'explore.empty',
+                        'No hay resultados para ese filtro.',
                       ),
                     ),
                   ),
                 ),
-        ),
-      ],
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 380,
+                  mainAxisExtent: 280,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => _buildItemCard(_items[index]),
+                  childCount: _items.length,
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -422,6 +453,7 @@ class _ExplorePageState extends State<ExplorePage> {
 
     return Card(
       margin: EdgeInsets.zero,
+      clipBehavior: Clip.hardEdge,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -432,7 +464,10 @@ class _ExplorePageState extends State<ExplorePage> {
                 Expanded(
                   child: Text(
                     item.name,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
                 _chip(item.resourceType),
@@ -442,7 +477,11 @@ class _ExplorePageState extends State<ExplorePage> {
             const SizedBox(height: 6),
             Row(
               children: [
-                Icon(Icons.person_outline, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                Icon(
+                  Icons.person_outline,
+                  size: 14,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
@@ -454,12 +493,19 @@ class _ExplorePageState extends State<ExplorePage> {
                 const SizedBox(width: 10),
                 Icon(Icons.star, size: 14, color: Colors.amber.shade600),
                 const SizedBox(width: 4),
-                Text('${item.stars}', style: Theme.of(context).textTheme.bodySmall),
+                Text(
+                  '${item.stars}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
               ],
             ),
             if (item.description.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text(item.description, maxLines: 3, overflow: TextOverflow.ellipsis),
+              Text(
+                item.description,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
             if (item.labels.isNotEmpty) ...[
               const SizedBox(height: 8),
@@ -470,10 +516,13 @@ class _ExplorePageState extends State<ExplorePage> {
               Wrap(
                 spacing: 6,
                 runSpacing: 6,
-                children: item.tags.take(6).map((tag) => _miniChip('#$tag')).toList(),
+                children: item.tags
+                    .take(4)
+                    .map((tag) => _miniChip('#$tag'))
+                    .toList(),
               ),
             ],
-            const SizedBox(height: 10),
+            const Spacer(),
             Row(
               children: [
                 ActionIconButton(
@@ -484,13 +533,17 @@ class _ExplorePageState extends State<ExplorePage> {
                 if (isLinkable)
                   ActionIconButton(
                     icon: linked ? Icons.link : Icons.link_outlined,
-                    tooltip: linked ? _tx('explore.linked_tooltip', 'Ya enlazado') : _tx('explore.link', 'Enlazar'),
+                    tooltip: linked
+                        ? _tx('explore.linked_tooltip', 'Ya enlazado')
+                        : _tx('explore.link', 'Enlazar'),
                     onPressed: (busy || linked) ? null : () => _link(item),
                   ),
                 const Spacer(),
                 ActionIconButton(
                   icon: starred ? Icons.star : Icons.star_outline,
-                  tooltip: starred ? _tx('explore.unstar', 'Quitar de favoritos') : _tx('explore.star', 'Añadir a favoritos'),
+                  tooltip: starred
+                      ? _tx('explore.unstar', 'Quitar de favoritos')
+                      : _tx('explore.star', 'Añadir a favoritos'),
                   onPressed: busy ? null : () => _toggleStar(item),
                 ),
               ],
@@ -539,11 +592,17 @@ class _PreviewDialog extends StatelessWidget {
       content: SizedBox(
         width: 760,
         child: SingleChildScrollView(
-          child: SelectableText(pretty, style: const TextStyle(fontFamily: 'monospace', fontSize: 12)),
+          child: SelectableText(
+            pretty,
+            style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+          ),
         ),
       ),
       actions: [
-        FilledButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cerrar')),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cerrar'),
+        ),
       ],
     );
   }
