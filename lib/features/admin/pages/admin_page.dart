@@ -231,7 +231,11 @@ class _AdminPageState extends State<AdminPage>
     }
   }
 
-  Future<bool> _confirm(String title, String body) async {
+  Future<bool> _confirm(
+    String title,
+    String body, {
+    String? confirmLabel,
+  }) async {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -244,7 +248,7 @@ class _AdminPageState extends State<AdminPage>
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(_tx('common.delete', 'Eliminar')),
+            child: Text(confirmLabel ?? _tx('common.delete', 'Eliminar')),
           ),
         ],
       ),
@@ -433,6 +437,7 @@ class _AdminPageState extends State<AdminPage>
         'admin.confirm_promote',
         '¿Ascender a "{username}" a administrador?',
       ).replaceAll('{username}', username),
+      confirmLabel: _tx('admin.action_make_admin', 'Hacer admin'),
     );
     if (!ok) return;
     await _run(
@@ -518,6 +523,7 @@ class _AdminPageState extends State<AdminPage>
           'admin.confirm_deactivate_workspace',
           '¿Desactivar el grupo "{name}"?',
         ).replaceAll('{name}', name),
+        confirmLabel: _tx('admin.action_deactivate', 'Desactivar'),
       );
       if (!ok) return;
     }
@@ -638,6 +644,37 @@ class _AdminPageState extends State<AdminPage>
     await _run(
       () => _repository.deleteAdminWorkflow(token, id),
       _tx('admin.toast_workflow_deleted', 'Orquestación eliminada'),
+    );
+  }
+
+  // ── Acciones: cambiar propietario (agentes/conexiones/knowledge/orquest.) ─
+
+  Future<void> _changeOwner(
+    Map<String, dynamic> item,
+    String resourceType,
+  ) async {
+    final token = _token;
+    if (token == null) return;
+    final id = (item['id'] ?? '').toString();
+    final currentOwner = _ownerOf(item);
+    final usernames =
+        _users
+            .map((u) => (u['username'] ?? '').toString())
+            .where((u) => u.isNotEmpty && u != currentOwner)
+            .toList()
+          ..sort();
+    final newOwner = await showDialog<String>(
+      context: context,
+      builder: (context) => _OwnerPickerDialog(
+        currentOwner: currentOwner,
+        usernames: usernames,
+        tx: _tx,
+      ),
+    );
+    if (newOwner == null || newOwner.isEmpty) return;
+    await _run(
+      () => _repository.setResourceOwner(token, resourceType, id, newOwner),
+      _tx('admin.toast_owner_changed', 'Propietario actualizado'),
     );
   }
 
@@ -1353,6 +1390,14 @@ class _AdminPageState extends State<AdminPage>
                   onPressed: () => _openEditAgentDialog(agent),
                 ),
                 ActionIconButton(
+                  icon: Icons.swap_horiz,
+                  tooltip: _tx(
+                    'admin.action_change_owner',
+                    'Cambiar propietario',
+                  ),
+                  onPressed: () => _changeOwner(agent, 'agent'),
+                ),
+                ActionIconButton(
                   icon: Icons.delete_outline,
                   tooltip: _tx('common.delete', 'Eliminar'),
                   danger: true,
@@ -1431,6 +1476,14 @@ class _AdminPageState extends State<AdminPage>
             Row(
               children: [
                 const Spacer(),
+                ActionIconButton(
+                  icon: Icons.swap_horiz,
+                  tooltip: _tx(
+                    'admin.action_change_owner',
+                    'Cambiar propietario',
+                  ),
+                  onPressed: () => _changeOwner(conn, 'connection'),
+                ),
                 ActionIconButton(
                   icon: Icons.delete_outline,
                   tooltip: _tx('common.delete', 'Eliminar'),
@@ -1529,6 +1582,14 @@ class _AdminPageState extends State<AdminPage>
               children: [
                 const Spacer(),
                 ActionIconButton(
+                  icon: Icons.swap_horiz,
+                  tooltip: _tx(
+                    'admin.action_change_owner',
+                    'Cambiar propietario',
+                  ),
+                  onPressed: () => _changeOwner(item, 'knowledge'),
+                ),
+                ActionIconButton(
                   icon: Icons.delete_outline,
                   tooltip: _tx('common.delete', 'Eliminar'),
                   danger: true,
@@ -1613,6 +1674,14 @@ class _AdminPageState extends State<AdminPage>
               children: [
                 const Spacer(),
                 ActionIconButton(
+                  icon: Icons.swap_horiz,
+                  tooltip: _tx(
+                    'admin.action_change_owner',
+                    'Cambiar propietario',
+                  ),
+                  onPressed: () => _changeOwner(item, 'workflow'),
+                ),
+                ActionIconButton(
                   icon: Icons.delete_outline,
                   tooltip: _tx('common.delete', 'Eliminar'),
                   danger: true,
@@ -1649,6 +1718,71 @@ class _AdminPageState extends State<AdminPage>
 }
 
 // ── Dialogs ─────────────────────────────────────────────────────────────
+
+class _OwnerPickerDialog extends StatefulWidget {
+  const _OwnerPickerDialog({
+    required this.currentOwner,
+    required this.usernames,
+    required this.tx,
+  });
+
+  final String currentOwner;
+  final List<String> usernames;
+  final String Function(String path, String fallback) tx;
+
+  @override
+  State<_OwnerPickerDialog> createState() => _OwnerPickerDialogState();
+}
+
+class _OwnerPickerDialogState extends State<_OwnerPickerDialog> {
+  String _selected = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final tx = widget.tx;
+    return AlertDialog(
+      title: Text(tx('admin.change_owner_title', 'Cambiar propietario')),
+      content: SizedBox(
+        width: 360,
+        child: Autocomplete<String>(
+          optionsBuilder: (value) {
+            if (value.text.isEmpty) return widget.usernames;
+            final q = value.text.toLowerCase();
+            return widget.usernames.where((u) => u.toLowerCase().contains(q));
+          },
+          onSelected: (value) => setState(() => _selected = value),
+          fieldViewBuilder: (context, controller, focusNode, onSubmit) {
+            return TextField(
+              controller: controller,
+              focusNode: focusNode,
+              decoration: InputDecoration(
+                labelText: tx('admin.change_owner_hint', 'Nuevo propietario'),
+                helperText: tx('admin.change_owner_current', 'Actual: {owner}')
+                    .replaceAll(
+                      '{owner}',
+                      widget.currentOwner.isEmpty ? '—' : widget.currentOwner,
+                    ),
+              ),
+              onChanged: (v) => setState(() => _selected = v),
+            );
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(tx('common.cancel', 'Cancelar')),
+        ),
+        FilledButton(
+          onPressed: _selected.trim().isEmpty
+              ? null
+              : () => Navigator.of(context).pop(_selected.trim()),
+          child: Text(tx('admin.action_change_owner', 'Cambiar propietario')),
+        ),
+      ],
+    );
+  }
+}
 
 class _UserEditDialog extends StatefulWidget {
   const _UserEditDialog({required this.user, required this.tx});

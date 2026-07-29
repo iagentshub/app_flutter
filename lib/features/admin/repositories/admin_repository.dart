@@ -36,6 +36,21 @@ class AdminRepository {
     return AdminStats(raw: response.json);
   }
 
+  /// Reasigna el propietario de un recurso (agente, skill, conexión,
+  /// knowledge u orquestación) a otro usuario existente.
+  Future<void> setResourceOwner(
+    String token,
+    String resourceType,
+    String resourceId,
+    String newOwner,
+  ) async {
+    await apiClient.put(
+      '/api/admin/resources/${Uri.encodeComponent(resourceType)}/${Uri.encodeComponent(resourceId)}/owner',
+      gaToken: token,
+      body: {'owner_id': newOwner},
+    );
+  }
+
   // ── Usuarios ──────────────────────────────────────────────────────────
 
   Future<List<Map<String, dynamic>>> listUsers(
