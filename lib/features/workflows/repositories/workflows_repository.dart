@@ -9,7 +9,11 @@ class WorkflowsRepository {
   final ApiClient apiClient;
 
   Future<List<WorkflowItem>> listWorkflows(String token) async {
-    final response = await apiClient.get('/api/workflows', gaToken: token, cache: true);
+    final response = await apiClient.get(
+      '/api/workflows',
+      gaToken: token,
+      cache: true,
+    );
     final payload = response.body;
     if (payload is! List) return const [];
     return payload
@@ -19,17 +23,30 @@ class WorkflowsRepository {
   }
 
   Future<Map<String, dynamic>> getWorkflow(String token, String id) async {
-    final response = await apiClient.get('/api/workflows/${Uri.encodeComponent(id)}', gaToken: token);
+    final response = await apiClient.get(
+      '/api/workflows/${Uri.encodeComponent(id)}',
+      gaToken: token,
+    );
     return response.json;
   }
 
-  Future<Map<String, dynamic>> saveWorkflow(String token, Map<String, dynamic> payload) async {
-    final response = await apiClient.post('/api/workflows', gaToken: token, body: payload);
+  Future<Map<String, dynamic>> saveWorkflow(
+    String token,
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await apiClient.post(
+      '/api/workflows',
+      gaToken: token,
+      body: payload,
+    );
     return response.json;
   }
 
   Future<void> deleteWorkflow(String token, String id) async {
-    await apiClient.delete('/api/workflows/${Uri.encodeComponent(id)}', gaToken: token);
+    await apiClient.delete(
+      '/api/workflows/${Uri.encodeComponent(id)}',
+      gaToken: token,
+    );
   }
 
   /// Ejecuta el workflow y transmite cada evento SSE a medida que llega

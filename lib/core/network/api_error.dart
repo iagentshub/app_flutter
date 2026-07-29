@@ -1,9 +1,5 @@
 class ApiError implements Exception {
-  ApiError({
-    required this.statusCode,
-    required this.message,
-    this.code,
-  });
+  ApiError({required this.statusCode, required this.message, this.code});
 
   final int statusCode;
   final String message;

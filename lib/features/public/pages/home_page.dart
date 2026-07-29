@@ -14,16 +14,20 @@ class HomePage extends StatelessWidget {
     final location = GoRouterState.of(context).matchedLocation;
     final isEnglish = LocaleLoader.isEnglishRoute(location);
     final loginLabel = isEnglish ? 'Sign in' : 'Iniciar sesión';
-    final docsLabel = isEnglish ? 'Explore the documentation' : 'Explorar la documentación';
+    final docsLabel = isEnglish
+        ? 'Explore the documentation'
+        : 'Explorar la documentación';
     final pricingLabel = isEnglish ? 'View plans' : 'Ver planes';
-    final title = isEnglish ? 'All your AI in one place' : 'Toda tu IA en un solo lugar';
+    final title = isEnglish
+        ? 'All your AI in one place'
+        : 'Toda tu IA en un solo lugar';
     final subtitle = isEnglish
         ? 'Build and share AI agents connected to your own providers — Claude, OpenAI, Gemini, Grok, '
-            'Ollama and more — each with its own knowledge, memory and tools. Self-host it on your own '
-            'server and keep full control of your data.'
+              'Ollama and more — each with its own knowledge, memory and tools. Self-host it on your own '
+              'server and keep full control of your data.'
         : 'Crea y comparte agentes de IA conectados a tus propios proveedores —Claude, OpenAI, Gemini, '
-            'Grok, Ollama y más—, cada uno con su propio conocimiento, memoria y herramientas. '
-            'Despliega en tu propio servidor y mantén el control total de tus datos.';
+              'Grok, Ollama y más—, cada uno con su propio conocimiento, memoria y herramientas. '
+              'Despliega en tu propio servidor y mantén el control total de tus datos.';
     const badge = 'Open source · Self-hosted';
     final stats = [
       (number: '6+', label: isEnglish ? 'PROVIDERS' : 'PROVIDERS'),
@@ -104,7 +108,10 @@ class HomePage extends StatelessWidget {
                   child: Column(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFF2A1014),
                           borderRadius: BorderRadius.circular(999),
@@ -149,10 +156,7 @@ class HomePage extends StatelessWidget {
                         runSpacing: 10,
                         children: [
                           for (final stat in stats)
-                            _StatChip(
-                              number: stat.number,
-                              label: stat.label,
-                            ),
+                            _StatChip(number: stat.number, label: stat.label),
                         ],
                       ),
                       const SizedBox(height: 24),
@@ -162,20 +166,32 @@ class HomePage extends StatelessWidget {
                         runSpacing: 10,
                         children: [
                           FilledButton(
-                            onPressed: () => context.go(isEnglish ? RouteNames.docsEn : RouteNames.docs),
+                            onPressed: () => context.go(
+                              isEnglish ? RouteNames.docsEn : RouteNames.docs,
+                            ),
                             style: FilledButton.styleFrom(
                               backgroundColor: const Color(0xFFD90429),
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 14,
+                              ),
                             ),
                             child: Text(docsLabel),
                           ),
                           OutlinedButton(
-                            onPressed: () => context.go(isEnglish ? RouteNames.pricingEn : RouteNames.pricing),
+                            onPressed: () => context.go(
+                              isEnglish
+                                  ? RouteNames.pricingEn
+                                  : RouteNames.pricing,
+                            ),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: const Color(0xFFFFFFFF),
                               side: const BorderSide(color: Color(0xFFFFFFFF)),
-                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 14,
+                              ),
                             ),
                             child: Text(pricingLabel),
                           ),

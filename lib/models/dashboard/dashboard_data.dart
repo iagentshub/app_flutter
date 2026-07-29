@@ -9,13 +9,20 @@ class TokenDailyPoint {
     final tokensRaw = json['tokens'] ?? json['SUM(tokens)'];
     return TokenDailyPoint(
       day: day.toString(),
-      tokens: tokensRaw is num ? tokensRaw.toInt() : int.tryParse('$tokensRaw') ?? 0,
+      tokens: tokensRaw is num
+          ? tokensRaw.toInt()
+          : int.tryParse('$tokensRaw') ?? 0,
     );
   }
 }
 
 class ConnectionTestResult {
-  const ConnectionTestResult({required this.id, required this.ok, this.message, this.latencyMs});
+  const ConnectionTestResult({
+    required this.id,
+    required this.ok,
+    this.message,
+    this.latencyMs,
+  });
 
   final String id;
   final bool ok;
@@ -52,11 +59,14 @@ class DashboardData {
   final List<TokenDailyPoint> tokenDaily;
 
   List<MapEntry<Map<String, dynamic>, int>> get connectionsByTokens {
-    final rows = connections.map((c) {
-      final tokensIn = (c['tokens_in'] as num?)?.toInt() ?? 0;
-      final tokensOut = (c['tokens_out'] as num?)?.toInt() ?? 0;
-      return MapEntry(c, tokensIn + tokensOut);
-    }).where((entry) => entry.value > 0).toList();
+    final rows = connections
+        .map((c) {
+          final tokensIn = (c['tokens_in'] as num?)?.toInt() ?? 0;
+          final tokensOut = (c['tokens_out'] as num?)?.toInt() ?? 0;
+          return MapEntry(c, tokensIn + tokensOut);
+        })
+        .where((entry) => entry.value > 0)
+        .toList();
     rows.sort((a, b) => b.value.compareTo(a.value));
     return rows;
   }

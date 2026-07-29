@@ -21,7 +21,11 @@ class ExploreRepository {
       if (label.trim().isNotEmpty) 'label': label.trim(),
     };
     final uri = Uri(path: '/api/explore', queryParameters: params);
-    final response = await apiClient.get(uri.toString(), gaToken: token, cache: true);
+    final response = await apiClient.get(
+      uri.toString(),
+      gaToken: token,
+      cache: true,
+    );
     final payload = response.body;
     if (payload is! List) return const [];
     return payload
@@ -42,7 +46,11 @@ class ExploreRepository {
     return response.json;
   }
 
-  Future<int> star(String token, {required String resourceType, required String resourceId}) async {
+  Future<int> star(
+    String token, {
+    required String resourceType,
+    required String resourceId,
+  }) async {
     final response = await apiClient.post(
       '/api/${Uri.encodeComponent(resourceType)}/${Uri.encodeComponent(resourceId)}/star',
       gaToken: token,
@@ -55,7 +63,11 @@ class ExploreRepository {
     return 0;
   }
 
-  Future<int> unstar(String token, {required String resourceType, required String resourceId}) async {
+  Future<int> unstar(
+    String token, {
+    required String resourceType,
+    required String resourceId,
+  }) async {
     final response = await apiClient.delete(
       '/api/${Uri.encodeComponent(resourceType)}/${Uri.encodeComponent(resourceId)}/star',
       gaToken: token,
@@ -78,14 +90,12 @@ class ExploreRepository {
         return (await apiClient.post(
           '/api/knowledge/${Uri.encodeComponent(resourceId)}/link',
           gaToken: token,
-        ))
-            .json;
+        )).json;
       case 'workflow':
         return (await apiClient.post(
           '/api/workflows/${Uri.encodeComponent(resourceId)}/link',
           gaToken: token,
-        ))
-            .json;
+        )).json;
       case 'agent':
         return _linkWithScopeFallback(
           token,
@@ -99,7 +109,10 @@ class ExploreRepository {
           '/api/skills/private/${Uri.encodeComponent(resourceId)}/link',
         );
       default:
-        throw ApiError(statusCode: 422, message: 'Tipo no soportado para link: $resourceType');
+        throw ApiError(
+          statusCode: 422,
+          message: 'Tipo no soportado para link: $resourceType',
+        );
     }
   }
 

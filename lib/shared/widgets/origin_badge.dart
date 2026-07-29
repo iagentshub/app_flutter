@@ -4,7 +4,12 @@ import 'package:flutter/material.dart';
 /// llegó vía workspace share ("Enlazado"), igual al originChip de
 /// agent-card.js en frontend_vanilla (mismo estilo que un label-chip).
 class OriginBadge extends StatelessWidget {
-  const OriginBadge({required this.shared, required this.ownerLabel, required this.linkedLabel, super.key});
+  const OriginBadge({
+    required this.shared,
+    required this.ownerLabel,
+    required this.linkedLabel,
+    super.key,
+  });
 
   final bool shared;
   final String ownerLabel;
@@ -16,10 +21,18 @@ class OriginBadge extends StatelessWidget {
     final text = shared ? linkedLabel : ownerLabel;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Text(
         text,
-        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.2),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.2,
+        ),
       ),
     );
   }

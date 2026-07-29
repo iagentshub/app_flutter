@@ -22,7 +22,9 @@ class ActionIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final baseColor = danger ? Colors.red.shade400 : scheme.onSurfaceVariant;
-    final color = onPressed == null ? baseColor.withValues(alpha: 0.35) : baseColor;
+    final color = onPressed == null
+        ? baseColor.withValues(alpha: 0.35)
+        : baseColor;
 
     return Tooltip(
       message: tooltip,

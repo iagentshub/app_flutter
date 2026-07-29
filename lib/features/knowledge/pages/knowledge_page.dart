@@ -16,6 +16,7 @@ import '../../../shared/widgets/filter_button.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/origin_badge.dart';
+import '../../../shared/widgets/resource_history_dialog.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 
 /// Categorías de skill — mismo set de 9 valores que frontend_react
@@ -572,6 +573,20 @@ class _KnowledgePageState extends State<KnowledgePage>
     );
   }
 
+  Future<void> _showSkillHistory(SkillItem item) async {
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+    await showResourceHistoryDialog(
+      context: context,
+      apiClient: widget.apiClient,
+      token: token,
+      resourceType: 'skill',
+      resourceId: item.id,
+      localeController: widget.localeController,
+      onRestored: _loadSkills,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final section = _sectionIds[_tabController.index];
@@ -949,6 +964,14 @@ class _KnowledgePageState extends State<KnowledgePage>
                   icon: Icons.group_add_outlined,
                   tooltip: _tx('common.share_group', 'Compartir con grupo'),
                   onPressed: () => _shareSkill(item),
+                ),
+                ActionIconButton(
+                  icon: Icons.history,
+                  tooltip: _tx(
+                    'history.dialog_title',
+                    'Historial de versiones',
+                  ),
+                  onPressed: () => _showSkillHistory(item),
                 ),
                 ActionIconButton(
                   icon: Icons.edit_outlined,

@@ -38,7 +38,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       await widget.authRepository.forgotPassword(email: _emailController.text);
       if (!mounted) return;
       setState(() {
-        _message = 'Si el correo existe, se enviaron instrucciones de recuperación.';
+        _message =
+            'Si el correo existe, se enviaron instrucciones de recuperación.';
       });
     } on ApiError catch (error) {
       if (!mounted) return;
@@ -66,19 +67,30 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Recuperar contraseña', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
+                        const Text(
+                          'Recuperar contraseña',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _emailController,
                           validator: Validators.email,
-                          decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
+                          decoration: const InputDecoration(
+                            labelText: 'Email',
+                            border: OutlineInputBorder(),
+                          ),
                         ),
                         const SizedBox(height: 16),
                         SizedBox(
                           width: double.infinity,
                           child: FilledButton(
                             onPressed: _loading ? null : _submit,
-                            child: Text(_loading ? 'Enviando...' : 'Enviar enlace'),
+                            child: Text(
+                              _loading ? 'Enviando...' : 'Enviar enlace',
+                            ),
                           ),
                         ),
                         const SizedBox(height: 8),

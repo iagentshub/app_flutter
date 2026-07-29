@@ -23,7 +23,12 @@ const _predefinedEndpoints = [
 /// (no SSE) a propósito, igual que vanilla, para no competir con el stream
 /// SSE de la pestaña Funcionalidad.
 class CentinelStressTab extends StatefulWidget {
-  const CentinelStressTab({required this.repository, required this.token, required this.tx, super.key});
+  const CentinelStressTab({
+    required this.repository,
+    required this.token,
+    required this.tx,
+    super.key,
+  });
 
   final CentinelRepository repository;
   final String token;
@@ -68,7 +73,11 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
   }
 
   Map<String, dynamic> _buildConfig() {
-    final path = _endpoint == 'custom' ? (_customPathController.text.trim().isEmpty ? '/api/auth/me' : _customPathController.text.trim()) : _endpoint;
+    final path = _endpoint == 'custom'
+        ? (_customPathController.text.trim().isEmpty
+              ? '/api/auth/me'
+              : _customPathController.text.trim())
+        : _endpoint;
     var users = _users.round();
     if (_users >= 1000) {
       final custom = int.tryParse(_usersCustomController.text.trim());
@@ -112,7 +121,10 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
       _showMessage(error.message, isError: true);
       if (mounted) setState(() => _starting = false);
     } catch (_) {
-      _showMessage(_tx('centinel.stress_start_error', 'No se pudo iniciar la prueba'), isError: true);
+      _showMessage(
+        _tx('centinel.stress_start_error', 'No se pudo iniciar la prueba'),
+        isError: true,
+      );
       if (mounted) setState(() => _starting = false);
     }
   }
@@ -128,7 +140,10 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
 
   void _startPolling() {
     _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(const Duration(milliseconds: 800), (_) => _poll());
+    _pollTimer = Timer.periodic(
+      const Duration(milliseconds: 800),
+      (_) => _poll(),
+    );
     _poll();
   }
 
@@ -168,18 +183,34 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
   void _showMessage(String text, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(text), backgroundColor: isError ? Colors.red.shade700 : null),
+      SnackBar(
+        content: Text(text),
+        backgroundColor: isError ? Colors.red.shade700 : null,
+      ),
     );
   }
 
   Future<void> _exportCsv() async {
     final header = 'tick,count,errors,avg_s,p95_s,min_s,max_s,rps,active_users';
     final rows = _ticks.map((t) {
-      return [t['tick'], t['count'], t['errors'], t['avg_s'], t['p95_s'], t['min_s'], t['max_s'], t['rps'], t['active_users'] ?? 0].join(',');
+      return [
+        t['tick'],
+        t['count'],
+        t['errors'],
+        t['avg_s'],
+        t['p95_s'],
+        t['min_s'],
+        t['max_s'],
+        t['rps'],
+        t['active_users'] ?? 0,
+      ].join(',');
     });
     final csv = ([header, ...rows]).join('\n');
     final bytes = Uint8List.fromList(utf8.encode(csv));
-    final stamp = DateTime.now().toIso8601String().replaceAll(RegExp(r'[^0-9]'), '').substring(0, 14);
+    final stamp = DateTime.now()
+        .toIso8601String()
+        .replaceAll(RegExp(r'[^0-9]'), '')
+        .substring(0, 14);
     await FilePicker.platform.saveFile(
       dialogTitle: _tx('centinel.summary_export_csv', 'Exportar CSV'),
       fileName: 'stress_$stamp.csv',
@@ -197,7 +228,9 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
         _buildActionsBar(),
         const SizedBox(height: 12),
         _buildConfigCard(),
-        if (_requestedUsers != null && _effectiveUsers != null && _effectiveUsers! < _requestedUsers!) ...[
+        if (_requestedUsers != null &&
+            _effectiveUsers != null &&
+            _effectiveUsers! < _requestedUsers!) ...[
           const SizedBox(height: 10),
           _capNotice(),
         ],
@@ -235,19 +268,30 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
     );
   }
 
-  Widget _pillGroup<T>({required List<(T, String)> options, required T value, required ValueChanged<T> onChanged}) {
+  Widget _pillGroup<T>({
+    required List<(T, String)> options,
+    required T value,
+    required ValueChanged<T> onChanged,
+  }) {
     return Wrap(
       spacing: 6,
       children: options.map((opt) {
         final selected = opt.$1 == value;
-        return ChoiceChip(label: Text(opt.$2), selected: selected, onSelected: (_) => onChanged(opt.$1));
+        return ChoiceChip(
+          label: Text(opt.$2),
+          selected: selected,
+          onSelected: (_) => onChanged(opt.$1),
+        );
       }).toList(),
     );
   }
 
   Widget _buildConfigCard() {
     final endpointOptions = [
-      ('RANDOM', _tx('centinel.stress_endpoint_random', 'Random (endpoints mixtos)')),
+      (
+        'RANDOM',
+        _tx('centinel.stress_endpoint_random', 'Random (endpoints mixtos)'),
+      ),
       ..._predefinedEndpoints.map((e) => (e, e)),
       ('custom', _tx('centinel.stress_endpoint_custom', 'Personalizado…')),
     ];
@@ -258,7 +302,10 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(_tx('centinel.stress_endpoint_label', 'Endpoint'), style: const TextStyle(fontWeight: FontWeight.w700)),
+            Text(
+              _tx('centinel.stress_endpoint_label', 'Endpoint'),
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
             const SizedBox(height: 6),
             Row(
               children: [
@@ -267,8 +314,17 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
                   child: DropdownButtonFormField<String>(
                     initialValue: _endpoint,
                     isExpanded: true,
-                    items: endpointOptions.map((e) => DropdownMenuItem(value: e.$1, child: Text(e.$2, overflow: TextOverflow.ellipsis))).toList(),
-                    onChanged: disabled ? null : (v) => setState(() => _endpoint = v ?? 'RANDOM'),
+                    items: endpointOptions
+                        .map(
+                          (e) => DropdownMenuItem(
+                            value: e.$1,
+                            child: Text(e.$2, overflow: TextOverflow.ellipsis),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: disabled
+                        ? null
+                        : (v) => setState(() => _endpoint = v ?? 'RANDOM'),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -281,7 +337,9 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
                       DropdownMenuItem(value: 'DELETE', child: Text('DELETE')),
                       DropdownMenuItem(value: 'RANDOM', child: Text('Random')),
                     ],
-                    onChanged: (disabled || _endpoint == 'RANDOM') ? null : (v) => setState(() => _method = v ?? 'GET'),
+                    onChanged: (disabled || _endpoint == 'RANDOM')
+                        ? null
+                        : (v) => setState(() => _method = v ?? 'GET'),
                   ),
                 ),
               ],
@@ -295,7 +353,10 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
               ),
             ],
             const SizedBox(height: 16),
-            Text(_tx('centinel.stress_users_label', 'Usuarios concurrentes'), style: const TextStyle(fontWeight: FontWeight.w700)),
+            Text(
+              _tx('centinel.stress_users_label', 'Usuarios concurrentes'),
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
             Row(
               children: [
                 Expanded(
@@ -305,10 +366,18 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
                     max: 1000,
                     divisions: 999,
                     label: _users.round().toString(),
-                    onChanged: disabled ? null : (v) => setState(() => _users = v),
+                    onChanged: disabled
+                        ? null
+                        : (v) => setState(() => _users = v),
                   ),
                 ),
-                SizedBox(width: 48, child: Text(_users.round().toString(), textAlign: TextAlign.right)),
+                SizedBox(
+                  width: 48,
+                  child: Text(
+                    _users.round().toString(),
+                    textAlign: TextAlign.right,
+                  ),
+                ),
               ],
             ),
             if (_users >= 1000)
@@ -318,31 +387,60 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
                   controller: _usersCustomController,
                   enabled: !disabled,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(labelText: _tx('centinel.stress_custom_value_label', 'Valor personalizado (>1000)')),
+                  decoration: InputDecoration(
+                    labelText: _tx(
+                      'centinel.stress_custom_value_label',
+                      'Valor personalizado (>1000)',
+                    ),
+                  ),
                 ),
               ),
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
               controlAffinity: ListTileControlAffinity.leading,
               value: _fluctuate,
-              onChanged: disabled ? null : (v) => setState(() => _fluctuate = v ?? false),
-              title: Text(_tx('centinel.stress_fluctuate_label', 'Fluctuar carga')),
-              subtitle: Text(_tx('centinel.stress_fluctuate_hint', 'Introduce pausas aleatorias entre requests para simular usuarios reales'), style: Theme.of(context).textTheme.bodySmall),
+              onChanged: disabled
+                  ? null
+                  : (v) => setState(() => _fluctuate = v ?? false),
+              title: Text(
+                _tx('centinel.stress_fluctuate_label', 'Fluctuar carga'),
+              ),
+              subtitle: Text(
+                _tx(
+                  'centinel.stress_fluctuate_hint',
+                  'Introduce pausas aleatorias entre requests para simular usuarios reales',
+                ),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
             ),
             const SizedBox(height: 12),
-            Text(_tx('centinel.stress_duration_label', 'Duración'), style: const TextStyle(fontWeight: FontWeight.w700)),
+            Text(
+              _tx('centinel.stress_duration_label', 'Duración'),
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
             const SizedBox(height: 6),
             _pillGroup<int>(
               value: _duration,
-              options: const [(10, '10s'), (30, '30s'), (60, '1min'), (300, '5min')],
-              onChanged: disabled ? (_) {} : (v) => setState(() => _duration = v),
+              options: const [
+                (10, '10s'),
+                (30, '30s'),
+                (60, '1min'),
+                (300, '5min'),
+              ],
+              onChanged: disabled
+                  ? (_) {}
+                  : (v) => setState(() => _duration = v),
             ),
             const SizedBox(height: 12),
             Row(
               children: [
-                Text(_tx('centinel.stress_rampup_label', 'Ramp-up'), style: const TextStyle(fontWeight: FontWeight.w700)),
+                Text(
+                  _tx('centinel.stress_rampup_label', 'Ramp-up'),
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
                 IconButton(
-                  onPressed: () => setState(() => _showRampupInfo = !_showRampupInfo),
+                  onPressed: () =>
+                      setState(() => _showRampupInfo = !_showRampupInfo),
                   icon: const Icon(Icons.info_outline, size: 16),
                   visualDensity: VisualDensity.compact,
                 ),
@@ -365,19 +463,37 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
             const SizedBox(height: 6),
             _pillGroup<int>(
               value: _rampUp,
-              options: [(0, _tx('centinel.stress_rampup_none', 'Ninguno')), (5, '5s'), (10, '10s'), (30, '30s')],
+              options: [
+                (0, _tx('centinel.stress_rampup_none', 'Ninguno')),
+                (5, '5s'),
+                (10, '10s'),
+                (30, '30s'),
+              ],
               onChanged: disabled ? (_) {} : (v) => setState(() => _rampUp = v),
             ),
             const SizedBox(height: 12),
-            Text(_tx('centinel.stress_timeout_label', 'Timeout / req'), style: const TextStyle(fontWeight: FontWeight.w700)),
+            Text(
+              _tx('centinel.stress_timeout_label', 'Timeout / req'),
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
             const SizedBox(height: 6),
             _pillGroup<double>(
               value: _timeout,
-              options: const [(2.0, '2s'), (3.0, '3s'), (10.0, '10s'), (30.0, '30s')],
-              onChanged: disabled ? (_) {} : (v) => setState(() => _timeout = v),
+              options: const [
+                (2.0, '2s'),
+                (3.0, '3s'),
+                (10.0, '10s'),
+                (30.0, '30s'),
+              ],
+              onChanged: disabled
+                  ? (_) {}
+                  : (v) => setState(() => _timeout = v),
             ),
             const SizedBox(height: 12),
-            Text(_tx('centinel.stress_concurrency_label', 'Concurrencia máx'), style: const TextStyle(fontWeight: FontWeight.w700)),
+            Text(
+              _tx('centinel.stress_concurrency_label', 'Concurrencia máx'),
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
             Row(
               children: [
                 Expanded(
@@ -386,11 +502,21 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
                     min: 0,
                     max: 1000,
                     divisions: 1000,
-                    label: _concurrency == 0 ? '∞' : _concurrency.round().toString(),
-                    onChanged: disabled ? null : (v) => setState(() => _concurrency = v),
+                    label: _concurrency == 0
+                        ? '∞'
+                        : _concurrency.round().toString(),
+                    onChanged: disabled
+                        ? null
+                        : (v) => setState(() => _concurrency = v),
                   ),
                 ),
-                SizedBox(width: 48, child: Text(_concurrency == 0 ? '∞' : _concurrency.round().toString(), textAlign: TextAlign.right)),
+                SizedBox(
+                  width: 48,
+                  child: Text(
+                    _concurrency == 0 ? '∞' : _concurrency.round().toString(),
+                    textAlign: TextAlign.right,
+                  ),
+                ),
               ],
             ),
             if (_concurrency >= 1000)
@@ -400,7 +526,12 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
                   controller: _concurrencyCustomController,
                   enabled: !disabled,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(labelText: _tx('centinel.stress_concurrency_custom_label', 'Valor personalizado (0 = sin límite)')),
+                  decoration: InputDecoration(
+                    labelText: _tx(
+                      'centinel.stress_concurrency_custom_label',
+                      'Valor personalizado (0 = sin límite)',
+                    ),
+                  ),
                 ),
               ),
           ],
@@ -416,11 +547,18 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
-            const Icon(Icons.warning_amber_outlined, color: Colors.orange, size: 18),
+            const Icon(
+              Icons.warning_amber_outlined,
+              color: Colors.orange,
+              size: 18,
+            ),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                _tx('centinel.stress_cap_notice', 'Se pidieron {requested} usuarios pero el servidor limitó a {effective} por seguridad de hilos.')
+                _tx(
+                      'centinel.stress_cap_notice',
+                      'Se pidieron {requested} usuarios pero el servidor limitó a {effective} por seguridad de hilos.',
+                    )
                     .replaceAll('{requested}', '$_requestedUsers')
                     .replaceAll('{effective}', '$_effectiveUsers'),
               ),
@@ -432,9 +570,15 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
   }
 
   Widget _buildChartCard() {
-    final avg = _ticks.map((t) => (t['avg_s'] as num? ?? 0).toDouble()).toList();
-    final p95 = _ticks.map((t) => (t['p95_s'] as num? ?? 0).toDouble()).toList();
-    final users = _ticks.map((t) => (t['active_users'] as num? ?? 0).toDouble()).toList();
+    final avg = _ticks
+        .map((t) => (t['avg_s'] as num? ?? 0).toDouble())
+        .toList();
+    final p95 = _ticks
+        .map((t) => (t['p95_s'] as num? ?? 0).toDouble())
+        .toList();
+    final users = _ticks
+        .map((t) => (t['active_users'] as num? ?? 0).toDouble())
+        .toList();
     final rps = _ticks.map((t) => (t['rps'] as num? ?? 0).toDouble()).toList();
 
     // Media acumulada ponderada por nº peticiones ANTES de cada tick, para
@@ -448,7 +592,9 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
       final baseline = cumCount > 0 ? (cumWeightedSum / cumCount) : avg[i];
       cumWeightedSum += avg[i] * count;
       cumCount += count;
-      avgColors.add(avg[i] > baseline ? const Color(0xFFDC2626) : const Color(0xFF059669));
+      avgColors.add(
+        avg[i] > baseline ? const Color(0xFFDC2626) : const Color(0xFF059669),
+      );
       if (breakIndex < 0 && count > 0) {
         final errRate = (t['errors'] as num? ?? 0) / count;
         if (errRate > 0.05) breakIndex = i;
@@ -463,19 +609,45 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
           children: [
             Row(
               children: [
-                Expanded(child: Text(_tx('centinel.chart_response_time_title', 'Tiempo de respuesta en tiempo real'), style: const TextStyle(fontWeight: FontWeight.w700))),
+                Expanded(
+                  child: Text(
+                    _tx(
+                      'centinel.chart_response_time_title',
+                      'Tiempo de respuesta en tiempo real',
+                    ),
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
                 if (_ticks.isNotEmpty)
-                  TextButton.icon(onPressed: _exportCsv, icon: const Icon(Icons.download_outlined, size: 16), label: Text(_tx('centinel.summary_export_csv', 'Exportar CSV'))),
+                  TextButton.icon(
+                    onPressed: _exportCsv,
+                    icon: const Icon(Icons.download_outlined, size: 16),
+                    label: Text(
+                      _tx('centinel.summary_export_csv', 'Exportar CSV'),
+                    ),
+                  ),
               ],
             ),
             const SizedBox(height: 6),
             Wrap(
               spacing: 12,
               children: [
-                _legendItem(const Color(0xFF059669), _tx('centinel.chart_legend_avg', 'Promedio')),
-                _legendItem(const Color(0xFF3987E5), _tx('centinel.chart_legend_p95', 'p95')),
-                _legendItem(const Color(0xFF9085E9), _tx('centinel.chart_legend_rps', 'req/s')),
-                _legendItem(const Color(0xFFD55181), _tx('centinel.chart_legend_users', 'Usuarios')),
+                _legendItem(
+                  const Color(0xFF059669),
+                  _tx('centinel.chart_legend_avg', 'Promedio'),
+                ),
+                _legendItem(
+                  const Color(0xFF3987E5),
+                  _tx('centinel.chart_legend_p95', 'p95'),
+                ),
+                _legendItem(
+                  const Color(0xFF9085E9),
+                  _tx('centinel.chart_legend_rps', 'req/s'),
+                ),
+                _legendItem(
+                  const Color(0xFFD55181),
+                  _tx('centinel.chart_legend_users', 'Usuarios'),
+                ),
               ],
             ),
             const SizedBox(height: 10),
@@ -483,12 +655,31 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
               height: 260,
               child: CentinelChart(
                 markerIndex: breakIndex >= 0 ? breakIndex : null,
-                markerLabel: breakIndex >= 0 ? _tx('centinel.chart_break_marker', 'quiebre') : null,
+                markerLabel: breakIndex >= 0
+                    ? _tx('centinel.chart_break_marker', 'quiebre')
+                    : null,
                 series: [
-                  ChartSeries(values: rps, color: const Color(0xFF9085E9), style: ChartSeriesStyle.bars),
-                  ChartSeries(values: p95, color: const Color(0xFF3987E5), ownScale: false),
-                  ChartSeries(values: users, color: const Color(0xFFD55181), style: ChartSeriesStyle.dashedLine),
-                  ChartSeries(values: avg, color: const Color(0xFF059669), perPointColors: avgColors, ownScale: false),
+                  ChartSeries(
+                    values: rps,
+                    color: const Color(0xFF9085E9),
+                    style: ChartSeriesStyle.bars,
+                  ),
+                  ChartSeries(
+                    values: p95,
+                    color: const Color(0xFF3987E5),
+                    ownScale: false,
+                  ),
+                  ChartSeries(
+                    values: users,
+                    color: const Color(0xFFD55181),
+                    style: ChartSeriesStyle.dashedLine,
+                  ),
+                  ChartSeries(
+                    values: avg,
+                    color: const Color(0xFF059669),
+                    perPointColors: avgColors,
+                    ownScale: false,
+                  ),
                 ],
               ),
             ),
@@ -502,7 +693,11 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
         const SizedBox(width: 4),
         Text(label, style: const TextStyle(fontSize: 11)),
       ],
@@ -513,10 +708,16 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
     final result = _result!;
     final total = result['total'] ?? 0;
     final errors = result['errors'] ?? 0;
-    final errorPct = (total is num && total > 0) ? ((errors as num) / total * 100).toStringAsFixed(1) : '0.0';
+    final errorPct = (total is num && total > 0)
+        ? ((errors as num) / total * 100).toStringAsFixed(1)
+        : '0.0';
     final avgS = result['avg_s'] ?? 0;
     final avgPerUserS = result['avg_per_user_s'] ?? 0;
-    final muchWorse = avgS is num && avgPerUserS is num && avgS > 0 && avgPerUserS > avgS * 1.15;
+    final muchWorse =
+        avgS is num &&
+        avgPerUserS is num &&
+        avgS > 0 &&
+        avgPerUserS > avgS * 1.15;
 
     return Card(
       child: Padding(
@@ -524,16 +725,33 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(_tx('centinel.results_title', 'Resultados'), style: const TextStyle(fontWeight: FontWeight.w700)),
+            Text(
+              _tx('centinel.results_title', 'Resultados'),
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
             const SizedBox(height: 12),
             Wrap(
               spacing: 24,
               runSpacing: 12,
               children: [
-                _statBlock(_tx('centinel.summary_stat_total', 'Peticiones totales'), '$total'),
-                _statBlock(_tx('centinel.summary_stat_errors', 'Errores'), '$errors ($errorPct%)', color: (errors is num && errors > 0) ? Colors.red : null),
-                _statBlock(_tx('centinel.summary_stat_avg', 'Media de resolución'), '${avgS}s'),
-                _statBlock(_tx('centinel.summary_stat_avg_user', 'Media por usuario'), '${avgPerUserS}s', color: muchWorse ? Colors.red : null),
+                _statBlock(
+                  _tx('centinel.summary_stat_total', 'Peticiones totales'),
+                  '$total',
+                ),
+                _statBlock(
+                  _tx('centinel.summary_stat_errors', 'Errores'),
+                  '$errors ($errorPct%)',
+                  color: (errors is num && errors > 0) ? Colors.red : null,
+                ),
+                _statBlock(
+                  _tx('centinel.summary_stat_avg', 'Media de resolución'),
+                  '${avgS}s',
+                ),
+                _statBlock(
+                  _tx('centinel.summary_stat_avg_user', 'Media por usuario'),
+                  '${avgPerUserS}s',
+                  color: muchWorse ? Colors.red : null,
+                ),
               ],
             ),
             if (_errors.isNotEmpty) ...[
@@ -552,7 +770,14 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: color)),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
+          ),
           Text(label, style: Theme.of(context).textTheme.bodySmall),
         ],
       ),
@@ -569,38 +794,72 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
       endpointCounts[key] = (endpointCounts[key] ?? 0) + 1;
 
       final status = e['status'];
-      var msg = status != null ? 'HTTP $status' : (e['msg'] ?? 'Error').toString().split(':').first.trim();
+      var msg = status != null
+          ? 'HTTP $status'
+          : (e['msg'] ?? 'Error').toString().split(':').first.trim();
       msgCounts[msg] = (msgCounts[msg] ?? 0) + 1;
     }
     final total = _errors.length;
-    final topEndpoints = endpointCounts.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
-    final topMsgs = msgCounts.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    final topEndpoints = endpointCounts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final topMsgs = msgCounts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(child: _top3Column(_tx('centinel.summary_top_endpoints', 'Top endpoints con fallos'), topEndpoints.take(3), total)),
+        Expanded(
+          child: _top3Column(
+            _tx('centinel.summary_top_endpoints', 'Top endpoints con fallos'),
+            topEndpoints.take(3),
+            total,
+          ),
+        ),
         const SizedBox(width: 16),
-        Expanded(child: _top3Column(_tx('centinel.summary_top_error_types', 'Top tipos de error'), topMsgs.take(3), total)),
+        Expanded(
+          child: _top3Column(
+            _tx('centinel.summary_top_error_types', 'Top tipos de error'),
+            topMsgs.take(3),
+            total,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _top3Column(String title, Iterable<MapEntry<String, int>> entries, int total) {
+  Widget _top3Column(
+    String title,
+    Iterable<MapEntry<String, int>> entries,
+    int total,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+        Text(
+          title,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+        ),
         const SizedBox(height: 6),
         ...entries.toList().asMap().entries.map((e) {
-          final pct = total > 0 ? (e.value.value / total * 100).toStringAsFixed(1) : '0.0';
+          final pct = total > 0
+              ? (e.value.value / total * 100).toStringAsFixed(1)
+              : '0.0';
           return Padding(
             padding: const EdgeInsets.only(bottom: 4),
             child: Row(
               children: [
-                Text('${e.key + 1}.', style: Theme.of(context).textTheme.bodySmall),
+                Text(
+                  '${e.key + 1}.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
                 const SizedBox(width: 6),
-                Expanded(child: Text(e.value.key, style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis)),
+                Expanded(
+                  child: Text(
+                    e.value.key,
+                    style: const TextStyle(fontSize: 12),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
                 Text('$pct%', style: Theme.of(context).textTheme.bodySmall),
               ],
             ),
@@ -619,7 +878,10 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
           children: [
             Row(
               children: [
-                Text(_tx('centinel.errors_table_title', 'Errores detectados'), style: const TextStyle(fontWeight: FontWeight.w700)),
+                Text(
+                  _tx('centinel.errors_table_title', 'Errores detectados'),
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
                 const SizedBox(width: 8),
                 _summaryChip('${_errors.length}'),
               ],
@@ -633,10 +895,26 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
                   child: DataTable(
                     columns: [
                       const DataColumn(label: Text('t (s)')),
-                      DataColumn(label: Text(_tx('centinel.errors_table_col_method', 'Método'))),
-                      DataColumn(label: Text(_tx('centinel.errors_table_col_endpoint', 'Endpoint'))),
-                      DataColumn(label: Text(_tx('centinel.errors_table_col_code', 'Código'))),
-                      DataColumn(label: Text(_tx('centinel.errors_table_col_error', 'Error'))),
+                      DataColumn(
+                        label: Text(
+                          _tx('centinel.errors_table_col_method', 'Método'),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Text(
+                          _tx('centinel.errors_table_col_endpoint', 'Endpoint'),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Text(
+                          _tx('centinel.errors_table_col_code', 'Código'),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Text(
+                          _tx('centinel.errors_table_col_error', 'Error'),
+                        ),
+                      ),
                       const DataColumn(label: Text('s')),
                     ],
                     rows: _errors.map((e) {
@@ -646,7 +924,15 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
                           DataCell(Text('${e['method'] ?? '-'}')),
                           DataCell(Text('${e['path'] ?? '-'}')),
                           DataCell(Text('${e['status'] ?? '-'}')),
-                          DataCell(SizedBox(width: 220, child: Text('${e['msg'] ?? '-'}', overflow: TextOverflow.ellipsis))),
+                          DataCell(
+                            SizedBox(
+                              width: 220,
+                              child: Text(
+                                '${e['msg'] ?? '-'}',
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
                           DataCell(Text('${e['s'] ?? '-'}')),
                         ],
                       );
@@ -664,8 +950,18 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
   Widget _summaryChip(String text) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(color: Colors.red.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(20)),
-      child: Text(text, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w700, fontSize: 11)),
+      decoration: BoxDecoration(
+        color: Colors.red.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Colors.red,
+          fontWeight: FontWeight.w700,
+          fontSize: 11,
+        ),
+      ),
     );
   }
 }

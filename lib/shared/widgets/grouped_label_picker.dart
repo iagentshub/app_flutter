@@ -43,7 +43,10 @@ class GroupedLabelPicker extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (final group in kLabelGroups) ...[
-          Text(tx(group.titleKey, group.fallbackTitle), style: Theme.of(context).textTheme.labelMedium),
+          Text(
+            tx(group.titleKey, group.fallbackTitle),
+            style: Theme.of(context).textTheme.labelMedium,
+          ),
           const SizedBox(height: 6),
           Wrap(
             spacing: 6,
@@ -56,7 +59,10 @@ class GroupedLabelPicker extends StatelessWidget {
                 selected: isSelected,
                 onSelected: (value) => _toggle(group, key, value),
                 selectedColor: color.withValues(alpha: 0.9),
-                labelStyle: TextStyle(color: isSelected ? Colors.white : null, fontWeight: isSelected ? FontWeight.w700 : null),
+                labelStyle: TextStyle(
+                  color: isSelected ? Colors.white : null,
+                  fontWeight: isSelected ? FontWeight.w700 : null,
+                ),
               );
             }).toList(),
           ),

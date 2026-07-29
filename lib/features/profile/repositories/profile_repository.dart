@@ -7,9 +7,21 @@ class ProfileRepository {
   final ApiClient apiClient;
 
   Future<ProfileBundle> fetchBundle(String token) async {
-    final sessionResponse = await apiClient.get('/api/auth/me', gaToken: token, cache: true);
-    final settingsResponse = await apiClient.get('/api/settings', gaToken: token, cache: true);
-    final deletionResponse = await apiClient.get('/api/auth/me/deletion-status', gaToken: token, cache: true);
+    final sessionResponse = await apiClient.get(
+      '/api/auth/me',
+      gaToken: token,
+      cache: true,
+    );
+    final settingsResponse = await apiClient.get(
+      '/api/settings',
+      gaToken: token,
+      cache: true,
+    );
+    final deletionResponse = await apiClient.get(
+      '/api/auth/me/deletion-status',
+      gaToken: token,
+      cache: true,
+    );
 
     final session = ProfileSession.fromJson(sessionResponse.json);
     final settings = ProfileSettings.fromJson(settingsResponse.json);
@@ -31,7 +43,11 @@ class ProfileRepository {
 
     var license = const LicenseInfo(tier: 'free');
     try {
-      final licenseResponse = await apiClient.get('/api/billing/subscription', gaToken: token, cache: true);
+      final licenseResponse = await apiClient.get(
+        '/api/billing/subscription',
+        gaToken: token,
+        cache: true,
+      );
       license = LicenseInfo.fromJson(licenseResponse.json);
     } catch (_) {
       // Billing puede no estar disponible en todos los despliegues.
@@ -54,10 +70,7 @@ class ProfileRepository {
     final response = await apiClient.put(
       '/api/settings',
       gaToken: token,
-      body: {
-        'theme': theme,
-        'language': language,
-      },
+      body: {'theme': theme, 'language': language},
     );
     return ProfileSettings.fromJson(response.json);
   }
@@ -91,15 +104,16 @@ class ProfileRepository {
     await apiClient.post(
       '/api/auth/change-password',
       gaToken: token,
-      body: {
-        'current_password': currentPassword,
-        'new_password': newPassword,
-      },
+      body: {'current_password': currentPassword, 'new_password': newPassword},
     );
   }
 
   Future<String> requestDeletion(String token) async {
-    final response = await apiClient.post('/api/auth/me/request-deletion', gaToken: token);
-    return response.json['message'] as String? ?? 'Cuenta programada para eliminación';
+    final response = await apiClient.post(
+      '/api/auth/me/request-deletion',
+      gaToken: token,
+    );
+    return response.json['message'] as String? ??
+        'Cuenta programada para eliminación';
   }
 }

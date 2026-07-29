@@ -366,77 +366,96 @@ class _ExplorePageState extends State<ExplorePage> {
 
     return RefreshIndicator(
       onRefresh: _load,
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            sliver: SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextField(
-                    controller: _queryController,
-                    decoration: InputDecoration(
-                      labelText: _tx('explore.search_hint', 'Buscar'),
-                      prefixIcon: const Icon(Icons.search, size: 20),
-                    ),
-                    onSubmitted: (_) => _load(),
-                  ),
-                  const SizedBox(height: 10),
-                  FilterButton(
-                    activeCount: _activeFilterCount,
-                    tooltip: _tx('common.filters', 'Filtros'),
-                    onPressed: _openFiltersDialog,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-            sliver: SliverToBoxAdapter(
-              child: Text(
-                '${_tx('explore.results', 'Resultados')}: ${_items.length}',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ),
-          ),
-          if (_items.isEmpty)
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              sliver: SliverToBoxAdapter(
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      _tx(
-                        'explore.empty',
-                        'No hay resultados para ese filtro.',
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 380,
-                  mainAxisExtent: 280,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                ),
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => _buildItemCard(_items[index]),
-                  childCount: _items.length,
-                ),
-              ),
-            ),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // SliverGridDelegateWithMaxCrossAxisExtent redondea el nº de
+          // columnas hacia arriba: a anchos intermedios eso mete una columna
+          // de más y cada card queda a la mitad de lo que debería medir en
+          // vez de estirarse. Calculamos el nº de columnas nosotros (hacia
+          // abajo) y usamos FixedCrossAxisCount para que sí se repartan todo
+          // el ancho disponible.
+          const cardWidth = 380.0;
+          const spacing = 12.0;
+          final usableWidth = constraints.maxWidth - 32; // padding del sliver
+          final crossAxisCount =
+              ((usableWidth + spacing) / (cardWidth + spacing)).floor().clamp(
+                1,
+                8,
+              );
+          return _buildScrollView(crossAxisCount);
+        },
       ),
+    );
+  }
+
+  Widget _buildScrollView(int crossAxisCount) {
+    return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: _queryController,
+                  decoration: InputDecoration(
+                    labelText: _tx('explore.search_hint', 'Buscar'),
+                    prefixIcon: const Icon(Icons.search, size: 20),
+                  ),
+                  onSubmitted: (_) => _load(),
+                ),
+                const SizedBox(height: 10),
+                FilterButton(
+                  activeCount: _activeFilterCount,
+                  tooltip: _tx('common.filters', 'Filtros'),
+                  onPressed: _openFiltersDialog,
+                ),
+              ],
+            ),
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+          sliver: SliverToBoxAdapter(
+            child: Text(
+              '${_tx('explore.results', 'Resultados')}: ${_items.length}',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+        ),
+        if (_items.isEmpty)
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            sliver: SliverToBoxAdapter(
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    _tx('explore.empty', 'No hay resultados para ese filtro.'),
+                  ),
+                ),
+              ),
+            ),
+          )
+        else
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            sliver: SliverGrid(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                mainAxisExtent: 280,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => _buildItemCard(_items[index]),
+                childCount: _items.length,
+              ),
+            ),
+          ),
+      ],
     );
   }
 

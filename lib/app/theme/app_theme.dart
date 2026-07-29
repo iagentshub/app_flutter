@@ -43,7 +43,10 @@ abstract final class AppTheme {
         filled: true,
         fillColor: surface2,
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 12,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: line),
@@ -126,7 +129,10 @@ abstract final class AppTheme {
         filled: true,
         fillColor: surface2,
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 12,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: line),
@@ -141,9 +147,9 @@ abstract final class AppTheme {
         ),
         labelStyle: const TextStyle(color: Color(0x8AFFFFFF)),
       ),
-      textTheme: ThemeData.dark(useMaterial3: true)
-          .textTheme
-          .apply(bodyColor: _white, displayColor: _white),
+      textTheme: ThemeData.dark(
+        useMaterial3: true,
+      ).textTheme.apply(bodyColor: _white, displayColor: _white),
       appBarTheme: const AppBarTheme(
         backgroundColor: _black,
         foregroundColor: _white,

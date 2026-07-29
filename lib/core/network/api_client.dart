@@ -69,15 +69,19 @@ class ApiClient {
     bool cache = false,
     Duration? ttl,
   }) async {
+    // La clave incluye el token para que la caché nunca sirva la respuesta
+    // de un usuario a otro (p. ej. tras cerrar sesión y entrar con otra
+    // cuenta sin pasar por invalidateCache()).
+    final cacheKey = '${gaToken ?? ''}::$path';
     if (cache) {
-      final cached = _cache[path];
+      final cached = _cache[cacheKey];
       if (cached != null &&
           DateTime.now().difference(cached.at) < (ttl ?? _defaultCacheTtl)) {
         return cached.response;
       }
     }
     final response = await _request('GET', path, gaToken: gaToken);
-    if (cache) _cache[path] = (at: DateTime.now(), response: response);
+    if (cache) _cache[cacheKey] = (at: DateTime.now(), response: response);
     return response;
   }
 
@@ -138,7 +142,7 @@ class ApiClient {
       _cache.clear();
       return;
     }
-    _cache.removeWhere((key, _) => key.startsWith(pathPrefix));
+    _cache.removeWhere((key, _) => key.split('::').last.startsWith(pathPrefix));
   }
 
   void _invalidateForMutation(String path) {

@@ -21,7 +21,10 @@ class LogsPage {
   List<LogEntry> get items {
     final value = raw['items'];
     if (value is! List) return const [];
-    return value.whereType<Map<String, dynamic>>().map((item) => LogEntry(raw: item)).toList();
+    return value
+        .whereType<Map<String, dynamic>>()
+        .map((item) => LogEntry(raw: item))
+        .toList();
   }
 
   int _asInt(Object? value) {

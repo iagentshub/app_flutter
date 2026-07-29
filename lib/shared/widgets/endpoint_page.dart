@@ -53,7 +53,10 @@ class _EndpointPageState extends State<EndpointPage> {
     }
 
     try {
-      final response = await widget.apiClient.get(widget.endpoint, gaToken: token);
+      final response = await widget.apiClient.get(
+        widget.endpoint,
+        gaToken: token,
+      );
       if (!mounted) return;
       setState(() {
         _payload = response.body;
@@ -94,10 +97,7 @@ class _EndpointPageState extends State<EndpointPage> {
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Text(
-                  _error!,
-                  style: const TextStyle(color: Colors.red),
-                ),
+                child: Text(_error!, style: const TextStyle(color: Colors.red)),
               ),
             )
           else
@@ -127,12 +127,14 @@ class _PayloadView extends StatelessWidget {
         children: [
           Text('Registros: ${list.length}'),
           const SizedBox(height: 10),
-          ...list.take(25).map(
-            (item) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Text(const JsonEncoder.withIndent('  ').convert(item)),
-            ),
-          ),
+          ...list
+              .take(25)
+              .map(
+                (item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Text(const JsonEncoder.withIndent('  ').convert(item)),
+                ),
+              ),
         ],
       );
     }

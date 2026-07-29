@@ -14,7 +14,9 @@ abstract final class LocaleLoader {
     final cached = _cache[key];
     if (cached != null) return cached;
 
-    final raw = await rootBundle.loadString('assets/locales/$locale/$namespace.json');
+    final raw = await rootBundle.loadString(
+      'assets/locales/$locale/$namespace.json',
+    );
     final decoded = jsonDecode(raw);
     if (decoded is Map<String, dynamic>) {
       _cache[key] = decoded;

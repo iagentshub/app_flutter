@@ -9,7 +9,10 @@ abstract final class BootPlatformCache {
   static Map<String, dynamic>? _platform;
   static bool? _reachable;
 
-  static void set({required Map<String, dynamic>? platform, required bool reachable}) {
+  static void set({
+    required Map<String, dynamic>? platform,
+    required bool reachable,
+  }) {
     _platform = platform;
     _reachable = reachable;
   }

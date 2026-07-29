@@ -22,6 +22,7 @@ import '../../../shared/widgets/group_filter_panel.dart';
 import '../../../shared/widgets/grouped_label_picker.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/origin_badge.dart';
+import '../../../shared/widgets/resource_history_dialog.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 import 'chat_page.dart';
 
@@ -225,6 +226,20 @@ class _AgentsPageState extends State<AgentsPage> {
       resourceId: item.id,
       localeController: widget.localeController,
       onShared: _load,
+    );
+  }
+
+  Future<void> _showHistory(AgentItem item) async {
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+    await showResourceHistoryDialog(
+      context: context,
+      apiClient: widget.apiClient,
+      token: token,
+      resourceType: 'agent',
+      resourceId: item.id,
+      localeController: widget.localeController,
+      onRestored: _load,
     );
   }
 
@@ -557,6 +572,14 @@ class _AgentsPageState extends State<AgentsPage> {
                   icon: Icons.group_add_outlined,
                   tooltip: _tx('common.share_group', 'Compartir con grupo'),
                   onPressed: () => _shareAgent(item),
+                ),
+                ActionIconButton(
+                  icon: Icons.history,
+                  tooltip: _tx(
+                    'history.dialog_title',
+                    'Historial de versiones',
+                  ),
+                  onPressed: () => _showHistory(item),
                 ),
                 ActionIconButton(
                   icon: Icons.edit_outlined,

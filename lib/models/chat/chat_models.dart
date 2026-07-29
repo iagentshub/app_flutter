@@ -56,7 +56,14 @@ class ChatMessage {
 }
 
 class ChatStreamEvent {
-  const ChatStreamEvent({required this.type, this.token, this.reply, this.tokensIn, this.tokensOut, this.message});
+  const ChatStreamEvent({
+    required this.type,
+    this.token,
+    this.reply,
+    this.tokensIn,
+    this.tokensOut,
+    this.message,
+  });
 
   final String type;
   final String? token;

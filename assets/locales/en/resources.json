@@ -209,6 +209,18 @@
     "group_environment": "Environment",
     "group_status": "Status"
   },
+  "history": {
+    "dialog_title": "Version history",
+    "load_error": "Couldn't load the version history",
+    "empty": "No saved versions yet.",
+    "version_label": "Version {version}",
+    "current": "Current",
+    "reason_restore": "restored",
+    "restore_action": "Restore",
+    "restore_title": "Restore version",
+    "restore_confirm": "Restore version {version}? This will overwrite the current content.",
+    "restore_error": "Couldn't restore the version"
+  },
   "knowledge": {
     "tab_skills": "Skills",
     "tab_urls": "URLs",

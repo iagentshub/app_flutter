@@ -44,7 +44,13 @@ const List<String> kLabelKeys = [
 /// puede quedar vacío (entorno). "Estado" no es excluyente: un recurso
 /// puede llevar varias labels de estado a la vez.
 class LabelGroupDef {
-  const LabelGroupDef({required this.titleKey, required this.fallbackTitle, required this.keys, required this.exclusive, this.required = false});
+  const LabelGroupDef({
+    required this.titleKey,
+    required this.fallbackTitle,
+    required this.keys,
+    required this.exclusive,
+    this.required = false,
+  });
 
   final String titleKey;
   final String fallbackTitle;
@@ -70,7 +76,15 @@ const kLabelGroups = [
   LabelGroupDef(
     titleKey: 'labels.group_status',
     fallbackTitle: 'Estado',
-    keys: ['favorite', 'draft', 'review', 'deprecated', 'quarantine', 'archived', 'delete'],
+    keys: [
+      'favorite',
+      'draft',
+      'review',
+      'deprecated',
+      'quarantine',
+      'archived',
+      'delete',
+    ],
     exclusive: false,
   ),
 ];

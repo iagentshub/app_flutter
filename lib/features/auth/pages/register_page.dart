@@ -39,7 +39,9 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Future<void> _submit() async {
     if (!_registrationEnabled) {
-      setState(() => _message = 'El registro no está habilitado en este backend.');
+      setState(
+        () => _message = 'El registro no está habilitado en este backend.',
+      );
       return;
     }
     if (!(_formKey.currentState?.validate() ?? false)) return;
@@ -55,7 +57,9 @@ class _RegisterPageState extends State<RegisterPage> {
       );
       if (!mounted) return;
       if (ok) {
-        setState(() => _message = 'Registro correcto. Ya puedes iniciar sesión.');
+        setState(
+          () => _message = 'Registro correcto. Ya puedes iniciar sesión.',
+        );
       }
     } on ApiError catch (error) {
       if (!mounted) return;
@@ -102,7 +106,13 @@ class _RegisterPageState extends State<RegisterPage> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Crear cuenta', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
+                        const Text(
+                          'Crear cuenta',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                         const SizedBox(height: 16),
                         if (_configLoaded && !_registrationEnabled) ...[
                           Container(
@@ -111,7 +121,9 @@ class _RegisterPageState extends State<RegisterPage> {
                             decoration: BoxDecoration(
                               color: const Color(0x33D90429),
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: const Color(0x66D90429)),
+                              border: Border.all(
+                                color: const Color(0x66D90429),
+                              ),
                             ),
                             child: const Text(
                               'Registro deshabilitado en este backend. Contacta con el administrador.',
@@ -123,7 +135,10 @@ class _RegisterPageState extends State<RegisterPage> {
                           controller: _emailController,
                           validator: Validators.email,
                           enabled: _registrationEnabled,
-                          decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
+                          decoration: const InputDecoration(
+                            labelText: 'Email',
+                            border: OutlineInputBorder(),
+                          ),
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
@@ -131,19 +146,30 @@ class _RegisterPageState extends State<RegisterPage> {
                           obscureText: true,
                           enabled: _registrationEnabled,
                           validator: (value) {
-                            final requiredError = Validators.requiredField(value, message: 'La contraseña es obligatoria');
+                            final requiredError = Validators.requiredField(
+                              value,
+                              message: 'La contraseña es obligatoria',
+                            );
                             if (requiredError != null) return requiredError;
-                            if ((value ?? '').trim().length < 8) return 'La contraseña debe tener al menos 8 caracteres';
+                            if ((value ?? '').trim().length < 8)
+                              return 'La contraseña debe tener al menos 8 caracteres';
                             return null;
                           },
-                          decoration: const InputDecoration(labelText: 'Contraseña', border: OutlineInputBorder()),
+                          decoration: const InputDecoration(
+                            labelText: 'Contraseña',
+                            border: OutlineInputBorder(),
+                          ),
                         ),
                         const SizedBox(height: 16),
                         SizedBox(
                           width: double.infinity,
                           child: FilledButton(
-                            onPressed: (_loading || !_registrationEnabled) ? null : _submit,
-                            child: Text(_loading ? 'Registrando...' : 'Registrarme'),
+                            onPressed: (_loading || !_registrationEnabled)
+                                ? null
+                                : _submit,
+                            child: Text(
+                              _loading ? 'Registrando...' : 'Registrarme',
+                            ),
                           ),
                         ),
                         const SizedBox(height: 8),

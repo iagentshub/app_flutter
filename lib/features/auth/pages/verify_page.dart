@@ -55,7 +55,8 @@ class _VerifyPageState extends State<VerifyPage> {
       if (gaToken == null || gaToken.isEmpty) {
         setState(() {
           _loading = false;
-          _message = 'Cuenta verificada. Inicia sesión manualmente para continuar.';
+          _message =
+              'Cuenta verificada. Inicia sesión manualmente para continuar.';
         });
         return;
       }

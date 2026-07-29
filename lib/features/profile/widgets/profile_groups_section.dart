@@ -44,8 +44,10 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection> {
   void initState() {
     super.initState();
     _repository = ManagerRepository(apiClient: widget.apiClient);
-    _t = TranslatedTexts(localeController: widget.localeController, namespace: 'resources')
-      ..addListener(_onTextsChanged);
+    _t = TranslatedTexts(
+      localeController: widget.localeController,
+      namespace: 'resources',
+    )..addListener(_onTextsChanged);
     _load();
   }
 
@@ -69,7 +71,9 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection> {
       ]);
       if (!mounted) return;
       setState(() {
-        _groups = (results[0] as List<WorkspaceItem>).where((w) => !w.isPersonal).toList();
+        _groups = (results[0] as List<WorkspaceItem>)
+            .where((w) => !w.isPersonal)
+            .toList();
         _invitations = results[1] as List<Map<String, dynamic>>;
         _loading = false;
       });
@@ -82,7 +86,10 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection> {
   void _showMessage(String text, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(text), backgroundColor: isError ? Colors.red.shade700 : null),
+      SnackBar(
+        content: Text(text),
+        backgroundColor: isError ? Colors.red.shade700 : null,
+      ),
     );
   }
 
@@ -95,10 +102,15 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection> {
         content: TextField(
           controller: controller,
           autofocus: true,
-          decoration: InputDecoration(labelText: _tx('groups.dialog_name_label', 'Nombre del grupo')),
+          decoration: InputDecoration(
+            labelText: _tx('groups.dialog_name_label', 'Nombre del grupo'),
+          ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(_tx('common.cancel', 'Cancelar'))),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(_tx('common.cancel', 'Cancelar')),
+          ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(controller.text.trim()),
             child: Text(_tx('common.create', 'Crear')),
@@ -113,28 +125,43 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection> {
       widget.apiClient.invalidateCache('/api/workspaces');
       await _load();
     } catch (_) {
-      _showMessage(_tx('groups.create_error', 'No se pudo crear el grupo'), isError: true);
+      _showMessage(
+        _tx('groups.create_error', 'No se pudo crear el grupo'),
+        isError: true,
+      );
     }
   }
 
   Future<void> _acceptInvitation(Map<String, dynamic> inv) async {
     try {
-      await _repository.acceptInvitation(widget.token, (inv['id'] ?? '').toString());
+      await _repository.acceptInvitation(
+        widget.token,
+        (inv['id'] ?? '').toString(),
+      );
       widget.apiClient.invalidateCache('/api/workspaces');
       _showMessage(_tx('groups.invitation_accepted', 'Invitación aceptada'));
       await _load();
     } catch (_) {
-      _showMessage(_tx('groups.create_error', 'No se pudo crear el grupo'), isError: true);
+      _showMessage(
+        _tx('groups.create_error', 'No se pudo crear el grupo'),
+        isError: true,
+      );
     }
   }
 
   Future<void> _rejectInvitation(Map<String, dynamic> inv) async {
     try {
-      await _repository.rejectInvitation(widget.token, (inv['id'] ?? '').toString());
+      await _repository.rejectInvitation(
+        widget.token,
+        (inv['id'] ?? '').toString(),
+      );
       _showMessage(_tx('groups.invitation_rejected', 'Invitación rechazada'));
       await _load();
     } catch (_) {
-      _showMessage(_tx('groups.create_error', 'No se pudo crear el grupo'), isError: true);
+      _showMessage(
+        _tx('groups.create_error', 'No se pudo crear el grupo'),
+        isError: true,
+      );
     }
   }
 
@@ -170,7 +197,9 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection> {
               onSelected: (_) => setState(() => _tab = 'mine'),
             ),
             ChoiceChip(
-              label: Text('${_tx('groups.invitations', 'Invitaciones')}${_invitations.isEmpty ? '' : ' (${_invitations.length})'}'),
+              label: Text(
+                '${_tx('groups.invitations', 'Invitaciones')}${_invitations.isEmpty ? '' : ' (${_invitations.length})'}',
+              ),
               selected: _tab == 'invitations',
               onSelected: (_) => setState(() => _tab = 'invitations'),
             ),
@@ -190,7 +219,9 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection> {
 
   List<Widget> _buildMine() {
     if (_groups.isEmpty) {
-      return [Text(_tx('groups.empty_mine', 'No perteneces a ningún grupo todavía.'))];
+      return [
+        Text(_tx('groups.empty_mine', 'No perteneces a ningún grupo todavía.')),
+      ];
     }
     return _groups.map((group) {
       final canManage = group.role == 'owner' || group.role == 'admin';
@@ -209,15 +240,28 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(group.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                    Text(
+                      group.name,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     const SizedBox(height: 2),
-                    Text(roleLabel, style: Theme.of(context).textTheme.bodySmall),
+                    Text(
+                      roleLabel,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                   ],
                 ),
               ),
               OutlinedButton(
                 onPressed: () => _openManageDialog(group),
-                child: Text(canManage ? _tx('groups.manage', 'Gestionar') : _tx('groups.view', 'Ver')),
+                child: Text(
+                  canManage
+                      ? _tx('groups.manage', 'Gestionar')
+                      : _tx('groups.view', 'Ver'),
+                ),
               ),
             ],
           ),
@@ -228,10 +272,15 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection> {
 
   List<Widget> _buildInvitations() {
     if (_invitations.isEmpty) {
-      return [Text(_tx('groups.empty_invitations', 'No tienes invitaciones pendientes.'))];
+      return [
+        Text(
+          _tx('groups.empty_invitations', 'No tienes invitaciones pendientes.'),
+        ),
+      ];
     }
     return _invitations.map((inv) {
-      final name = (inv['workspace_name'] ?? inv['workspace_id'] ?? '').toString();
+      final name = (inv['workspace_name'] ?? inv['workspace_id'] ?? '')
+          .toString();
       final invitedBy = (inv['invited_by'] ?? '').toString();
       return Card(
         margin: const EdgeInsets.only(bottom: 10),
@@ -243,7 +292,13 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     const SizedBox(height: 2),
                     Text(
                       '${_tx('groups.invited_by', 'Invitado por')}: $invitedBy',
@@ -298,7 +353,8 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
   bool _loading = true;
 
   bool get _isOwner => widget.group.role == 'owner';
-  bool get _canManage => widget.group.role == 'owner' || widget.group.role == 'admin';
+  bool get _canManage =>
+      widget.group.role == 'owner' || widget.group.role == 'admin';
 
   @override
   void initState() {
@@ -310,7 +366,10 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      final members = await _repository.listMembers(widget.token, widget.group.id);
+      final members = await _repository.listMembers(
+        widget.token,
+        widget.group.id,
+      );
       if (!mounted) return;
       setState(() {
         _members = members;
@@ -325,7 +384,10 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
   void _showMessage(String text, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(text), backgroundColor: isError ? Colors.red.shade700 : null),
+      SnackBar(
+        content: Text(text),
+        backgroundColor: isError ? Colors.red.shade700 : null,
+      ),
     );
   }
 
@@ -357,7 +419,10 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(widget.tx('groups.create_error', 'No se pudo crear el grupo'), isError: true);
+      _showMessage(
+        widget.tx('groups.create_error', 'No se pudo crear el grupo'),
+        isError: true,
+      );
     }
   }
 
@@ -366,10 +431,21 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(widget.tx('groups.delete_confirm_title', 'Eliminar grupo')),
-        content: Text(widget.tx('groups.delete_confirm_body', '¿Seguro que quieres eliminar este grupo? Esta acción no se puede deshacer.')),
+        content: Text(
+          widget.tx(
+            'groups.delete_confirm_body',
+            '¿Seguro que quieres eliminar este grupo? Esta acción no se puede deshacer.',
+          ),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(widget.tx('common.cancel', 'Cancelar'))),
-          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: Text(widget.tx('common.delete', 'Eliminar'))),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(widget.tx('common.cancel', 'Cancelar')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(widget.tx('common.delete', 'Eliminar')),
+          ),
         ],
       ),
     );
@@ -381,34 +457,59 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
       if (!mounted) return;
       Navigator.of(context).pop();
     } catch (_) {
-      _showMessage(widget.tx('groups.create_error', 'No se pudo crear el grupo'), isError: true);
+      _showMessage(
+        widget.tx('groups.create_error', 'No se pudo crear el grupo'),
+        isError: true,
+      );
     }
   }
 
   Future<void> _leave() async {
-    final otherMembers = _members.where((m) => (m['username'] ?? '') != widget.currentUsername).toList();
+    final otherMembers = _members
+        .where((m) => (m['username'] ?? '') != widget.currentUsername)
+        .toList();
 
     if (!_isOwner) {
       final confirm = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text(widget.tx('groups.leave_confirm_title', 'Abandonar grupo')),
-          content: Text(widget.tx('groups.leave_confirm_body', '¿Seguro que quieres abandonar este grupo?')),
+          title: Text(
+            widget.tx('groups.leave_confirm_title', 'Abandonar grupo'),
+          ),
+          content: Text(
+            widget.tx(
+              'groups.leave_confirm_body',
+              '¿Seguro que quieres abandonar este grupo?',
+            ),
+          ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(widget.tx('common.cancel', 'Cancelar'))),
-            FilledButton(onPressed: () => Navigator.of(context).pop(true), child: Text(widget.tx('groups.leave', 'Abandonar'))),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(widget.tx('common.cancel', 'Cancelar')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(widget.tx('groups.leave', 'Abandonar')),
+            ),
           ],
         ),
       );
       if (confirm != true) return;
       try {
-        await _repository.removeMember(widget.token, widget.group.id, widget.currentUsername);
+        await _repository.removeMember(
+          widget.token,
+          widget.group.id,
+          widget.currentUsername,
+        );
         widget.apiClient.invalidateCache('/api/workspaces');
         _showMessage(widget.tx('groups.left_group', 'Has salido del grupo'));
         if (!mounted) return;
         Navigator.of(context).pop();
       } catch (_) {
-        _showMessage(widget.tx('groups.create_error', 'No se pudo crear el grupo'), isError: true);
+        _showMessage(
+          widget.tx('groups.create_error', 'No se pudo crear el grupo'),
+          isError: true,
+        );
       }
       return;
     }
@@ -417,13 +518,24 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
       final confirm = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text(widget.tx('groups.leave_owner_sole_title', 'Eliminar grupo')),
+          title: Text(
+            widget.tx('groups.leave_owner_sole_title', 'Eliminar grupo'),
+          ),
           content: Text(
-            widget.tx('groups.leave_owner_sole_body', 'Eres el único miembro. Al salir se eliminará el grupo por completo. ¿Continuar?'),
+            widget.tx(
+              'groups.leave_owner_sole_body',
+              'Eres el único miembro. Al salir se eliminará el grupo por completo. ¿Continuar?',
+            ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(widget.tx('common.cancel', 'Cancelar'))),
-            FilledButton(onPressed: () => Navigator.of(context).pop(true), child: Text(widget.tx('common.delete', 'Eliminar'))),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(widget.tx('common.cancel', 'Cancelar')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(widget.tx('common.delete', 'Eliminar')),
+            ),
           ],
         ),
       );
@@ -435,15 +547,23 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
     final newOwner = await showDialog<String>(
       context: context,
       builder: (context) => SimpleDialog(
-        title: Text(widget.tx('groups.leave_owner_title', 'Transferir propiedad y salir')),
+        title: Text(
+          widget.tx('groups.leave_owner_title', 'Transferir propiedad y salir'),
+        ),
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-            child: Text(widget.tx('groups.leave_owner_body', 'Eres el propietario. Elige quién será el nuevo propietario antes de salir.')),
+            child: Text(
+              widget.tx(
+                'groups.leave_owner_body',
+                'Eres el propietario. Elige quién será el nuevo propietario antes de salir.',
+              ),
+            ),
           ),
           for (final m in otherMembers)
             SimpleDialogOption(
-              onPressed: () => Navigator.of(context).pop((m['username'] ?? '').toString()),
+              onPressed: () =>
+                  Navigator.of(context).pop((m['username'] ?? '').toString()),
               child: Text((m['username'] ?? '').toString()),
             ),
         ],
@@ -451,38 +571,68 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
     );
     if (newOwner == null || newOwner.isEmpty) return;
     try {
-      await _repository.transferOwnership(widget.token, widget.group.id, newOwner);
-      await _repository.removeMember(widget.token, widget.group.id, widget.currentUsername);
+      await _repository.transferOwnership(
+        widget.token,
+        widget.group.id,
+        newOwner,
+      );
+      await _repository.removeMember(
+        widget.token,
+        widget.group.id,
+        widget.currentUsername,
+      );
       widget.apiClient.invalidateCache('/api/workspaces');
-      _showMessage(widget.tx('groups.ownership_transferred', 'Propiedad transferida'));
+      _showMessage(
+        widget.tx('groups.ownership_transferred', 'Propiedad transferida'),
+      );
       if (!mounted) return;
       Navigator.of(context).pop();
     } catch (_) {
-      _showMessage(widget.tx('groups.create_error', 'No se pudo crear el grupo'), isError: true);
+      _showMessage(
+        widget.tx('groups.create_error', 'No se pudo crear el grupo'),
+        isError: true,
+      );
     }
   }
 
-  Widget _sectionLabel(BuildContext context, IconData icon, String text, {Color? color}) {
-    final resolvedColor = color ?? Theme.of(context).colorScheme.onSurfaceVariant;
+  Widget _sectionLabel(
+    BuildContext context,
+    IconData icon,
+    String text, {
+    Color? color,
+  }) {
+    final resolvedColor =
+        color ?? Theme.of(context).colorScheme.onSurfaceVariant;
     return Row(
       children: [
         Icon(icon, size: 16, color: resolvedColor),
         const SizedBox(width: 6),
         Text(
           text,
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.3, color: resolvedColor),
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.3,
+            color: resolvedColor,
+          ),
         ),
       ],
     );
   }
 
-  Widget _panel({required Widget child, Color? borderColor, Color? background}) {
+  Widget _panel({
+    required Widget child,
+    Color? borderColor,
+    Color? background,
+  }) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: background,
-        border: Border.all(color: borderColor ?? Theme.of(context).dividerColor),
+        border: Border.all(
+          color: borderColor ?? Theme.of(context).dividerColor,
+        ),
         borderRadius: BorderRadius.circular(12),
       ),
       child: child,
@@ -497,7 +647,10 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
       content: SizedBox(
         width: 480,
         child: _loading
-            ? const SizedBox(height: 160, child: Center(child: CircularProgressIndicator()))
+            ? const SizedBox(
+                height: 160,
+                child: Center(child: CircularProgressIndicator()),
+              )
             : SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -510,7 +663,9 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
                       child: OutlinedButton.icon(
                         onPressed: _openMembersDialog,
                         icon: const Icon(Icons.group_outlined),
-                        label: Text('${widget.tx('groups.view_members', 'Ver miembros')} (${_members.length})'),
+                        label: Text(
+                          '${widget.tx('groups.view_members', 'Ver miembros')} (${_members.length})',
+                        ),
                       ),
                     ),
                     if (_canManage) ...[
@@ -520,13 +675,22 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
                         child: OutlinedButton.icon(
                           onPressed: _openInviteDialog,
                           icon: const Icon(Icons.person_add_alt_outlined),
-                          label: Text(widget.tx('groups.invite_user', 'Invitar usuario')),
+                          label: Text(
+                            widget.tx('groups.invite_user', 'Invitar usuario'),
+                          ),
                         ),
                       ),
                     ],
                     if (_isOwner) ...[
                       const SizedBox(height: 24),
-                      _sectionLabel(context, Icons.warning_amber_outlined, widget.tx('groups.danger_zone', 'Zona de peligro').toUpperCase(), color: Colors.red),
+                      _sectionLabel(
+                        context,
+                        Icons.warning_amber_outlined,
+                        widget
+                            .tx('groups.danger_zone', 'Zona de peligro')
+                            .toUpperCase(),
+                        color: Colors.red,
+                      ),
                       const SizedBox(height: 8),
                       _panel(
                         borderColor: Colors.red.withValues(alpha: 0.35),
@@ -535,16 +699,31 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
                           children: [
                             Expanded(
                               child: Text(
-                                widget.tx('groups.delete_confirm_body', '¿Seguro que quieres eliminar este grupo? Esta acción no se puede deshacer.'),
+                                widget.tx(
+                                  'groups.delete_confirm_body',
+                                  '¿Seguro que quieres eliminar este grupo? Esta acción no se puede deshacer.',
+                                ),
                                 style: const TextStyle(fontSize: 12),
                               ),
                             ),
                             const SizedBox(width: 10),
                             OutlinedButton.icon(
                               onPressed: _deleteGroup,
-                              icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
-                              label: Text(widget.tx('groups.delete_group', 'Eliminar grupo'), style: const TextStyle(color: Colors.red)),
-                              style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.red)),
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.red,
+                                size: 18,
+                              ),
+                              label: Text(
+                                widget.tx(
+                                  'groups.delete_group',
+                                  'Eliminar grupo',
+                                ),
+                                style: const TextStyle(color: Colors.red),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Colors.red),
+                              ),
                             ),
                           ],
                         ),
@@ -554,14 +733,23 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
                     // la barra de acciones, para que no quede al lado de
                     // Cerrar donde es fácil pulsarlo sin querer.
                     const SizedBox(height: 24),
-                    _sectionLabel(context, Icons.logout, widget.tx('groups.leave_panel_title', 'Abandonar grupo').toUpperCase()),
+                    _sectionLabel(
+                      context,
+                      Icons.logout,
+                      widget
+                          .tx('groups.leave_panel_title', 'Abandonar grupo')
+                          .toUpperCase(),
+                    ),
                     const SizedBox(height: 8),
                     _panel(
                       child: Row(
                         children: [
                           Expanded(
                             child: Text(
-                              widget.tx('groups.leave_panel_body', 'Dejarás de tener acceso a los recursos compartidos con este grupo.'),
+                              widget.tx(
+                                'groups.leave_panel_body',
+                                'Dejarás de tener acceso a los recursos compartidos con este grupo.',
+                              ),
                               style: const TextStyle(fontSize: 12),
                             ),
                           ),
@@ -631,7 +819,10 @@ class _MembersDialogState extends State<_MembersDialog> {
     try {
       final results = await Future.wait([
         _repository.listMembers(widget.token, widget.group.id),
-        if (widget.canManage) _repository.listInvitations(widget.token, widget.group.id) else Future.value(const <Map<String, dynamic>>[]),
+        if (widget.canManage)
+          _repository.listInvitations(widget.token, widget.group.id)
+        else
+          Future.value(const <Map<String, dynamic>>[]),
       ]);
       if (!mounted) return;
       setState(() {
@@ -648,7 +839,10 @@ class _MembersDialogState extends State<_MembersDialog> {
   void _showMessage(String text, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(text), backgroundColor: isError ? Colors.red.shade700 : null),
+      SnackBar(
+        content: Text(text),
+        backgroundColor: isError ? Colors.red.shade700 : null,
+      ),
     );
   }
 
@@ -658,7 +852,10 @@ class _MembersDialogState extends State<_MembersDialog> {
       _showMessage(widget.tx('groups.member_removed', 'Miembro eliminado'));
       await _load();
     } catch (_) {
-      _showMessage(widget.tx('groups.create_error', 'No se pudo crear el grupo'), isError: true);
+      _showMessage(
+        widget.tx('groups.create_error', 'No se pudo crear el grupo'),
+        isError: true,
+      );
     }
   }
 
@@ -674,12 +871,17 @@ class _MembersDialogState extends State<_MembersDialog> {
     final scheme = Theme.of(context).colorScheme;
 
     return AlertDialog(
-      title: Text('${widget.tx('groups.members', 'Miembros')} · ${widget.group.name}'),
+      title: Text(
+        '${widget.tx('groups.members', 'Miembros')} · ${widget.group.name}',
+      ),
       contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
       content: SizedBox(
         width: 480,
         child: _loading
-            ? const SizedBox(height: 160, child: Center(child: CircularProgressIndicator()))
+            ? const SizedBox(
+                height: 160,
+                child: Center(child: CircularProgressIndicator()),
+              )
             : SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -692,30 +894,52 @@ class _MembersDialogState extends State<_MembersDialog> {
                           final m = _members[i];
                           final username = (m['username'] ?? '').toString();
                           final role = (m['role'] ?? 'member').toString();
-                          final canRemove = widget.canManage && role != 'owner' && username != widget.currentUsername;
+                          final canRemove =
+                              widget.canManage &&
+                              role != 'owner' &&
+                              username != widget.currentUsername;
                           return Row(
                             children: [
                               CircleAvatar(
                                 radius: 14,
-                                child: Text(username.isNotEmpty ? username[0].toUpperCase() : '?', style: const TextStyle(fontSize: 12)),
+                                child: Text(
+                                  username.isNotEmpty
+                                      ? username[0].toUpperCase()
+                                      : '?',
+                                  style: const TextStyle(fontSize: 12),
+                                ),
                               ),
                               const SizedBox(width: 10),
                               Expanded(
-                                child: Text(username, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                child: Text(
+                                  username,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
                                 decoration: BoxDecoration(
                                   color: scheme.surfaceContainerHighest,
                                   borderRadius: BorderRadius.circular(20),
                                 ),
-                                child: Text(role, style: Theme.of(context).textTheme.bodySmall),
+                                child: Text(
+                                  role,
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
                               ),
                               if (canRemove) ...[
                                 const SizedBox(width: 4),
                                 ActionIconButton(
                                   icon: Icons.person_remove_outlined,
-                                  tooltip: widget.tx('common.delete', 'Eliminar'),
+                                  tooltip: widget.tx(
+                                    'common.delete',
+                                    'Eliminar',
+                                  ),
                                   danger: true,
                                   onPressed: () => _removeMember(username),
                                 ),
@@ -728,8 +952,18 @@ class _MembersDialogState extends State<_MembersDialog> {
                     if (_invitations.isNotEmpty) ...[
                       const SizedBox(height: 20),
                       Text(
-                        widget.tx('groups.pending_invitations', 'Invitaciones pendientes').toUpperCase(),
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.3, color: scheme.onSurfaceVariant),
+                        widget
+                            .tx(
+                              'groups.pending_invitations',
+                              'Invitaciones pendientes',
+                            )
+                            .toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.3,
+                          color: scheme.onSurfaceVariant,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       for (var i = 0; i < _invitations.length; i++) ...[
@@ -743,8 +977,13 @@ class _MembersDialogState extends State<_MembersDialog> {
                                 Expanded(child: Text(username)),
                                 ActionIconButton(
                                   icon: Icons.close,
-                                  tooltip: widget.tx('common.cancel', 'Cancelar'),
-                                  onPressed: () => _cancelInvitation((inv['id'] ?? '').toString()),
+                                  tooltip: widget.tx(
+                                    'common.cancel',
+                                    'Cancelar',
+                                  ),
+                                  onPressed: () => _cancelInvitation(
+                                    (inv['id'] ?? '').toString(),
+                                  ),
                                 ),
                               ],
                             );
@@ -797,20 +1036,32 @@ class _InviteUserDialogState extends State<_InviteUserDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            widget.tx('groups.invite_dialog_body', 'Se enviará una invitación al usuario indicado para unirse a este grupo.'),
+            widget.tx(
+              'groups.invite_dialog_body',
+              'Se enviará una invitación al usuario indicado para unirse a este grupo.',
+            ),
             style: const TextStyle(fontSize: 12),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _controller,
             autofocus: true,
-            decoration: InputDecoration(labelText: widget.tx('groups.invite_dialog_label', 'Email o usuario del invitado')),
-            onSubmitted: (_) => Navigator.of(context).pop(_controller.text.trim()),
+            decoration: InputDecoration(
+              labelText: widget.tx(
+                'groups.invite_dialog_label',
+                'Email o usuario del invitado',
+              ),
+            ),
+            onSubmitted: (_) =>
+                Navigator.of(context).pop(_controller.text.trim()),
           ),
         ],
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(widget.tx('common.cancel', 'Cancelar'))),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(widget.tx('common.cancel', 'Cancelar')),
+        ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(_controller.text.trim()),
           child: Text(widget.tx('groups.invite_user', 'Invitar usuario')),

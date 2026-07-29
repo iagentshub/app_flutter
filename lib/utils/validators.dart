@@ -1,5 +1,8 @@
 class Validators {
-  static String? requiredField(String? value, {String message = 'Campo obligatorio'}) {
+  static String? requiredField(
+    String? value, {
+    String message = 'Campo obligatorio',
+  }) {
     if (value == null || value.trim().isEmpty) return message;
     return null;
   }
@@ -12,7 +15,8 @@ class Validators {
   }
 
   static String? backendUrl(String? value) {
-    if (value == null || value.trim().isEmpty) return 'La URL del backend es obligatoria';
+    if (value == null || value.trim().isEmpty)
+      return 'La URL del backend es obligatoria';
     final uri = Uri.tryParse(value.trim());
     if (uri == null || !(uri.hasScheme && uri.host.isNotEmpty)) {
       return 'URL invalida';

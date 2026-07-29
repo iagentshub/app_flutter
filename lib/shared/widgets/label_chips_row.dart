@@ -7,7 +7,12 @@ import '../labels/label_catalog.dart';
 /// [leading] permite insertar otros chips (p. ej. OriginBadge) en la misma
 /// fila, igual que el originChip que va junto a los label-chips en web.
 class LabelChipsRow extends StatelessWidget {
-  const LabelChipsRow({required this.labels, this.hide = const [], this.leading = const [], super.key});
+  const LabelChipsRow({
+    required this.labels,
+    this.hide = const [],
+    this.leading = const [],
+    super.key,
+  });
 
   final List<String> labels;
   final List<String> hide;
@@ -27,14 +32,20 @@ class LabelChipsRow extends StatelessWidget {
           final color = labelColor(label);
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(20)),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(20),
+            ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
                   width: 5,
                   height: 5,
-                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.7), shape: BoxShape.circle),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.7),
+                    shape: BoxShape.circle,
+                  ),
                 ),
                 const SizedBox(width: 4),
                 Text(

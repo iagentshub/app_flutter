@@ -1,8 +1,5 @@
 class AuthResult {
-  const AuthResult({
-    required this.ok,
-    this.username,
-  });
+  const AuthResult({required this.ok, this.username});
 
   final bool ok;
   final String? username;

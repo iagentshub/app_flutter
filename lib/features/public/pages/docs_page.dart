@@ -25,18 +25,43 @@ class DocsPage extends StatelessWidget {
           final heroTitle = LocaleLoader.text(bundle, 'hero.title');
           final heroSubtitle = LocaleLoader.text(bundle, 'hero.subtitle');
           final quickTitle = LocaleLoader.text(bundle, 'quickStart.title');
-          final quickDescription = LocaleLoader.text(bundle, 'quickStart.description');
+          final quickDescription = LocaleLoader.text(
+            bundle,
+            'quickStart.description',
+          );
           final quickStep1 = LocaleLoader.text(bundle, 'quickStart.steps.0');
           final quickStep2 = LocaleLoader.text(bundle, 'quickStart.steps.1');
           final quickStep3 = LocaleLoader.text(bundle, 'quickStart.steps.2');
           final sectionsTitle = LocaleLoader.text(bundle, 'sections.title');
-          final integrationsTitle = LocaleLoader.text(bundle, 'sections.items.integrations.title');
-          final integrationsDesc = LocaleLoader.text(bundle, 'sections.items.integrations.description');
-          final apiTitle = LocaleLoader.text(bundle, 'sections.items.api.title');
-          final apiDesc = LocaleLoader.text(bundle, 'sections.items.api.description');
-          final troubleshootingTitle = LocaleLoader.text(bundle, 'sections.items.troubleshooting.title');
-          final troubleshootingDesc = LocaleLoader.text(bundle, 'sections.items.troubleshooting.description');
-          final loginLabel = LocaleLoader.text(bundle, 'header.login', fallback: isEnglish ? 'Login' : 'Iniciar sesion');
+          final integrationsTitle = LocaleLoader.text(
+            bundle,
+            'sections.items.integrations.title',
+          );
+          final integrationsDesc = LocaleLoader.text(
+            bundle,
+            'sections.items.integrations.description',
+          );
+          final apiTitle = LocaleLoader.text(
+            bundle,
+            'sections.items.api.title',
+          );
+          final apiDesc = LocaleLoader.text(
+            bundle,
+            'sections.items.api.description',
+          );
+          final troubleshootingTitle = LocaleLoader.text(
+            bundle,
+            'sections.items.troubleshooting.title',
+          );
+          final troubleshootingDesc = LocaleLoader.text(
+            bundle,
+            'sections.items.troubleshooting.description',
+          );
+          final loginLabel = LocaleLoader.text(
+            bundle,
+            'header.login',
+            fallback: isEnglish ? 'Login' : 'Iniciar sesion',
+          );
 
           return CustomScrollView(
             slivers: [
@@ -48,8 +73,11 @@ class DocsPage extends StatelessWidget {
                     loginLabel: loginLabel,
                     onLogin: () => context.go(RouteNames.login),
                     onLanguageSelected: (selected) {
-                      final target = selected == 'en' ? RouteNames.docsEn : RouteNames.docs;
-                      if ((selected == 'en' && !isEnglish) || (selected == 'es' && isEnglish)) {
+                      final target = selected == 'en'
+                          ? RouteNames.docsEn
+                          : RouteNames.docs;
+                      if ((selected == 'en' && !isEnglish) ||
+                          (selected == 'es' && isEnglish)) {
                         context.go(target);
                       }
                     },
@@ -62,9 +90,9 @@ class DocsPage extends StatelessWidget {
                   child: Text(
                     heroTitle,
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                        ),
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
               ),
@@ -73,7 +101,9 @@ class DocsPage extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(24, 10, 24, 0),
                   child: Text(
                     heroSubtitle,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: const Color(0xFFE0E0E0)),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: const Color(0xFFE0E0E0),
+                    ),
                   ),
                 ),
               ),
@@ -100,9 +130,9 @@ class DocsPage extends StatelessWidget {
                   child: Text(
                     sectionsTitle,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                        ),
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ),
@@ -118,10 +148,7 @@ class DocsPage extends StatelessWidget {
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 10),
-                  child: _Card(
-                    title: apiTitle,
-                    subtitle: apiDesc,
-                  ),
+                  child: _Card(title: apiTitle, subtitle: apiDesc),
                 ),
               ),
               SliverToBoxAdapter(
@@ -142,11 +169,7 @@ class DocsPage extends StatelessWidget {
 }
 
 class _Card extends StatelessWidget {
-  const _Card({
-    required this.title,
-    required this.subtitle,
-    this.child,
-  });
+  const _Card({required this.title, required this.subtitle, this.child});
 
   final String title;
   final String subtitle;
@@ -168,19 +191,18 @@ class _Card extends StatelessWidget {
             Text(
               title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                  ),
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               subtitle,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: const Color(0xFFD8D8D8)),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFFD8D8D8)),
             ),
-            if (child != null) ...[
-              const SizedBox(height: 12),
-              child!,
-            ],
+            if (child != null) ...[const SizedBox(height: 12), child!],
           ],
         ),
       ),
@@ -211,14 +233,19 @@ class _StepLine extends StatelessWidget {
             ),
             child: Text(
               step,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               text,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: const Color(0xFFD8D8D8)),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFFD8D8D8)),
             ),
           ),
         ],

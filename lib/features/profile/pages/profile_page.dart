@@ -15,24 +15,25 @@ import '../widgets/profile_groups_section.dart';
 /// Idiomas disponibles para el perfil público. Por ahora la plataforma solo
 /// soporta Español e Inglés (a diferencia del listado más amplio de
 /// frontend_vanilla, aún no habilitado aquí).
-const _languageOptions = [
-  ('es', 'Español', '🇪🇸'),
-  ('en', 'English', '🇬🇧'),
-];
+const _languageOptions = [('es', 'Español', '🇪🇸'), ('en', 'English', '🇬🇧')];
 
 /// El backend exige que `github` sea una URL https:// completa, pero pedirle
 /// eso al usuario es peor UX que un campo "usuario de GitHub" con prefijo
 /// fijo `github.com/` — se convierte en los dos sentidos aquí.
 String _githubUsernameFromUrl(String? url) {
   if (url == null || url.isEmpty) return '';
-  final match = RegExp(r'github\.com/([^/\s]+)', caseSensitive: false).firstMatch(url);
+  final match = RegExp(
+    r'github\.com/([^/\s]+)',
+    caseSensitive: false,
+  ).firstMatch(url);
   return match?.group(1) ?? url;
 }
 
 String? _githubUrlFromUsername(String input) {
   final trimmed = input.trim().replaceAll(RegExp(r'^@'), '');
   if (trimmed.isEmpty) return null;
-  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://'))
+    return trimmed;
   return 'https://github.com/$trimmed';
 }
 
@@ -52,7 +53,8 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStateMixin {
+class _ProfilePageState extends State<ProfilePage>
+    with SingleTickerProviderStateMixin {
   late final ProfileRepository _repository;
   late final TranslatedTexts _t;
   late final TabController _tabController;
@@ -86,9 +88,12 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
   void initState() {
     super.initState();
     _repository = ProfileRepository(apiClient: widget.apiClient);
-    _tabController = TabController(length: _sectionIds.length, vsync: this)..addListener(_onTabChanged);
-    _t = TranslatedTexts(localeController: widget.localeController, namespace: 'resources')
-      ..addListener(_onTextsChanged);
+    _tabController = TabController(length: _sectionIds.length, vsync: this)
+      ..addListener(_onTabChanged);
+    _t = TranslatedTexts(
+      localeController: widget.localeController,
+      namespace: 'resources',
+    )..addListener(_onTextsChanged);
     _load();
   }
 
@@ -235,11 +240,17 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     final file = result.files.first;
     final bytes = file.bytes;
     if (bytes == null || bytes.isEmpty) {
-      _showMessage(_tx('profile.avatar_error', 'No se pudo actualizar la foto'), isError: true);
+      _showMessage(
+        _tx('profile.avatar_error', 'No se pudo actualizar la foto'),
+        isError: true,
+      );
       return;
     }
     if (bytes.length > 2 * 1024 * 1024) {
-      _showMessage(_tx('profile.avatar_too_large', 'La imagen no puede superar 2 MB'), isError: true);
+      _showMessage(
+        _tx('profile.avatar_too_large', 'La imagen no puede superar 2 MB'),
+        isError: true,
+      );
       return;
     }
 
@@ -258,7 +269,10 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(_tx('profile.avatar_error', 'No se pudo actualizar la foto'), isError: true);
+      _showMessage(
+        _tx('profile.avatar_error', 'No se pudo actualizar la foto'),
+        isError: true,
+      );
     } finally {
       if (mounted) setState(() => _uploadingAvatar = false);
     }
@@ -295,8 +309,14 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(_tx('common.cancel', 'Cancelar'))),
-            FilledButton(onPressed: () => Navigator.of(context).pop(draft), child: Text(_tx('common.save', 'Guardar'))),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(_tx('common.cancel', 'Cancelar')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(draft),
+              child: Text(_tx('common.save', 'Guardar')),
+            ),
           ],
         ),
       ),
@@ -315,7 +335,10 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
       return;
     }
     if (next.trim().length < 8) {
-      _showMessage('La nueva contraseña debe tener al menos 8 caracteres', isError: true);
+      _showMessage(
+        'La nueva contraseña debe tener al menos 8 caracteres',
+        isError: true,
+      );
       return;
     }
 
@@ -356,8 +379,14 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
           'La cuenta se programará para eliminación en 30 días. ¿Deseas continuar?',
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Confirmar')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Confirmar'),
+          ),
         ],
       ),
     );
@@ -371,7 +400,10 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo programar la eliminación de cuenta', isError: true);
+      _showMessage(
+        'No se pudo programar la eliminación de cuenta',
+        isError: true,
+      );
     } finally {
       if (mounted) setState(() => _requestingDeletion = false);
     }
@@ -400,7 +432,10 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Error cargando perfil', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Error cargando perfil',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 8),
                   Text(_error!),
                   const SizedBox(height: 12),
@@ -469,14 +504,20 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
   }
 
   Widget _sectionHeader(IconData icon, String text, {Color? color}) {
-    final resolvedColor = color ?? Theme.of(context).colorScheme.onSurfaceVariant;
+    final resolvedColor =
+        color ?? Theme.of(context).colorScheme.onSurfaceVariant;
     return Row(
       children: [
         Icon(icon, size: 16, color: resolvedColor),
         const SizedBox(width: 6),
         Text(
           text.toUpperCase(),
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.4, color: resolvedColor),
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.4,
+            color: resolvedColor,
+          ),
         ),
       ],
     );
@@ -485,8 +526,18 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
   Widget _badge(String text, {required Color color}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(20)),
-      child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
     );
   }
 
@@ -495,9 +546,15 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
+          Icon(
+            icon,
+            size: 18,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
           const SizedBox(width: 12),
-          Expanded(child: Text(label, style: Theme.of(context).textTheme.bodyMedium)),
+          Expanded(
+            child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
+          ),
           Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
         ],
       ),
@@ -525,8 +582,10 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                     // para mostrarlo en un círculo de 64x64.
                     cacheWidth: 128,
                     cacheHeight: 128,
-                    errorBuilder: (context, error, stack) => _avatarFallback(initial),
-                    loadingBuilder: (context, child, progress) => progress == null ? child : _avatarFallback(initial),
+                    errorBuilder: (context, error, stack) =>
+                        _avatarFallback(initial),
+                    loadingBuilder: (context, child, progress) =>
+                        progress == null ? child : _avatarFallback(initial),
                   )
                 : _avatarFallback(initial),
           ),
@@ -543,12 +602,18 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.primary,
                 shape: BoxShape.circle,
-                border: Border.all(color: Theme.of(context).cardColor, width: 2),
+                border: Border.all(
+                  color: Theme.of(context).cardColor,
+                  width: 2,
+                ),
               ),
               child: _uploadingAvatar
                   ? const Padding(
                       padding: EdgeInsets.all(5),
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                   : const Icon(Icons.camera_alt, size: 13, color: Colors.white),
             ),
@@ -561,7 +626,10 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
   Widget _avatarFallback(String initial) {
     return CircleAvatar(
       radius: 32,
-      child: Text(initial, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
+      child: Text(
+        initial,
+        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+      ),
     );
   }
 
@@ -569,7 +637,9 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     final username = bundle.session.username;
     final initial = username.isNotEmpty ? username[0].toUpperCase() : '?';
     final planTier = bundle.license.tier;
-    final planLabel = planTier == 'free' ? _tx('profile.plan_free', 'Gratuito') : planTier;
+    final planLabel = planTier == 'free'
+        ? _tx('profile.plan_free', 'Gratuito')
+        : planTier;
     final memberSince = bundle.social.createdAt;
 
     return Column(
@@ -586,13 +656,22 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(username, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                      Text(
+                        username,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
                         runSpacing: 6,
                         children: [
-                          _badge(bundle.session.role, color: Theme.of(context).colorScheme.primary),
+                          _badge(
+                            bundle.session.role,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
                           _badge(planLabel, color: const Color(0xFF0891B2)),
                         ],
                       ),
@@ -604,7 +683,10 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
           ),
         ),
         const SizedBox(height: 20),
-        _sectionHeader(Icons.badge_outlined, _tx('profile.identity_title', 'Identidad')),
+        _sectionHeader(
+          Icons.badge_outlined,
+          _tx('profile.identity_title', 'Identidad'),
+        ),
         const SizedBox(height: 8),
         Card(
           child: Column(
@@ -612,17 +694,26 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
               _infoRow(
                 Icons.groups_outlined,
                 _tx('profile.active_group_label', 'Grupo activo'),
-                bundle.session.workspaceName ?? bundle.session.workspaceId ?? '-',
+                bundle.session.workspaceName ??
+                    bundle.session.workspaceId ??
+                    '-',
               ),
               if (memberSince != null && memberSince.isNotEmpty) ...[
                 const Divider(height: 1),
-                _infoRow(Icons.calendar_today_outlined, _tx('profile.member_since', 'Miembro desde'), memberSince),
+                _infoRow(
+                  Icons.calendar_today_outlined,
+                  _tx('profile.member_since', 'Miembro desde'),
+                  memberSince,
+                ),
               ],
             ],
           ),
         ),
         const SizedBox(height: 24),
-        _sectionHeader(Icons.tune_outlined, _tx('profile.tab_preferences', 'Preferencias')),
+        _sectionHeader(
+          Icons.tune_outlined,
+          _tx('profile.tab_preferences', 'Preferencias'),
+        ),
         const SizedBox(height: 8),
         Card(
           child: Padding(
@@ -632,8 +723,17 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
               children: [
                 DropdownButtonFormField<String>(
                   initialValue: _theme,
-                  decoration: InputDecoration(labelText: _tx('profile.theme_label', 'Tema')),
-                  items: _themes.map((theme) => DropdownMenuItem<String>(value: theme, child: Text(theme))).toList(),
+                  decoration: InputDecoration(
+                    labelText: _tx('profile.theme_label', 'Tema'),
+                  ),
+                  items: _themes
+                      .map(
+                        (theme) => DropdownMenuItem<String>(
+                          value: theme,
+                          child: Text(theme),
+                        ),
+                      )
+                      .toList(),
                   onChanged: (value) {
                     if (value == null) return;
                     setState(() => _theme = value);
@@ -642,7 +742,9 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                 const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
                   initialValue: _language,
-                  decoration: InputDecoration(labelText: _tx('profile.language_label', 'Idioma')),
+                  decoration: InputDecoration(
+                    labelText: _tx('profile.language_label', 'Idioma'),
+                  ),
                   items: const [
                     DropdownMenuItem(value: 'es', child: Text('Español')),
                     DropdownMenuItem(value: 'en', child: Text('English')),
@@ -656,14 +758,25 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                 FilledButton.icon(
                   onPressed: _savingSettings ? null : _saveSettings,
                   icon: const Icon(Icons.save_outlined),
-                  label: Text(_savingSettings ? _tx('profile.saving', 'Guardando...') : _tx('profile.save_preferences', 'Guardar preferencias')),
+                  label: Text(
+                    _savingSettings
+                        ? _tx('profile.saving', 'Guardando...')
+                        : _tx(
+                            'profile.save_preferences',
+                            'Guardar preferencias',
+                          ),
+                  ),
                 ),
               ],
             ),
           ),
         ),
         const SizedBox(height: 24),
-        _sectionHeader(Icons.warning_amber_outlined, _tx('profile.account_zone_title', 'Zona de cuenta'), color: Colors.red),
+        _sectionHeader(
+          Icons.warning_amber_outlined,
+          _tx('profile.account_zone_title', 'Zona de cuenta'),
+          color: Colors.red,
+        ),
         const SizedBox(height: 8),
         Card(
           child: Padding(
@@ -674,13 +787,25 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                 Text(
                   bundle.deletion.scheduled
                       ? '${_tx('profile.deletion_scheduled', 'Eliminación programada para')}: ${bundle.deletion.deletionDate ?? '-'}'
-                      : _tx('profile.no_deletion_scheduled', 'No hay eliminación programada'),
+                      : _tx(
+                          'profile.no_deletion_scheduled',
+                          'No hay eliminación programada',
+                        ),
                 ),
                 const SizedBox(height: 10),
                 OutlinedButton.icon(
-                  onPressed: _requestingDeletion || bundle.deletion.scheduled ? null : _requestDeletion,
+                  onPressed: _requestingDeletion || bundle.deletion.scheduled
+                      ? null
+                      : _requestDeletion,
                   icon: const Icon(Icons.warning_amber_outlined),
-                  label: Text(_requestingDeletion ? _tx('profile.scheduling', 'Programando...') : _tx('profile.request_deletion', 'Solicitar eliminación de cuenta')),
+                  label: Text(
+                    _requestingDeletion
+                        ? _tx('profile.scheduling', 'Programando...')
+                        : _tx(
+                            'profile.request_deletion',
+                            'Solicitar eliminación de cuenta',
+                          ),
+                  ),
                 ),
               ],
             ),
@@ -696,9 +821,16 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
       children: [
         Row(
           children: [
-            Expanded(child: _sectionHeader(Icons.public_outlined, _tx('profile.tab_social', 'Perfil público'))),
+            Expanded(
+              child: _sectionHeader(
+                Icons.public_outlined,
+                _tx('profile.tab_social', 'Perfil público'),
+              ),
+            ),
             TextButton.icon(
-              onPressed: () => context.push('${RouteNames.publicProfilePrefix}${bundle.session.username}'),
+              onPressed: () => context.push(
+                '${RouteNames.publicProfilePrefix}${bundle.session.username}',
+              ),
               icon: const Icon(Icons.open_in_new, size: 16),
               label: Text(_tx('profile.view_public_profile', 'Ver mi perfil')),
             ),
@@ -722,7 +854,10 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(_tx('profile.languages_label', 'Idiomas'), style: Theme.of(context).textTheme.labelMedium),
+                Text(
+                  _tx('profile.languages_label', 'Idiomas'),
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
                 const SizedBox(height: 8),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -730,15 +865,25 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                     Expanded(
                       child: _selectedLanguages.isEmpty
                           ? Text(
-                              _tx('profile.languages_empty', 'Sin idiomas seleccionados'),
+                              _tx(
+                                'profile.languages_empty',
+                                'Sin idiomas seleccionados',
+                              ),
                               style: Theme.of(context).textTheme.bodySmall,
                             )
                           : Wrap(
                               spacing: 6,
                               runSpacing: 6,
                               children: _languageOptions
-                                  .where((option) => _selectedLanguages.contains(option.$1))
-                                  .map((option) => Chip(label: Text('${option.$3} ${option.$2}')))
+                                  .where(
+                                    (option) =>
+                                        _selectedLanguages.contains(option.$1),
+                                  )
+                                  .map(
+                                    (option) => Chip(
+                                      label: Text('${option.$3} ${option.$2}'),
+                                    ),
+                                  )
                                   .toList(),
                             ),
                     ),
@@ -746,7 +891,9 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                     OutlinedButton.icon(
                       onPressed: _openLanguagesDialog,
                       icon: const Icon(Icons.tune, size: 16),
-                      label: Text(_tx('profile.manage_languages', 'Gestionar idiomas')),
+                      label: Text(
+                        _tx('profile.manage_languages', 'Gestionar idiomas'),
+                      ),
                     ),
                   ],
                 ),
@@ -755,7 +902,10 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                   controller: _emailPublicController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
-                    labelText: _tx('profile.email_public_label', 'Email público'),
+                    labelText: _tx(
+                      'profile.email_public_label',
+                      'Email público',
+                    ),
                     prefixIcon: const Icon(Icons.alternate_email, size: 20),
                   ),
                 ),
@@ -769,10 +919,16 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text(_tx('profile.cv_label', 'Resumen profesional'), style: Theme.of(context).textTheme.labelMedium),
+                Text(
+                  _tx('profile.cv_label', 'Resumen profesional'),
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
                 const SizedBox(height: 4),
                 Text(
-                  _tx('profile.cv_hint', 'Soporta Markdown. Aparecerá en tu perfil público.'),
+                  _tx(
+                    'profile.cv_hint',
+                    'Soporta Markdown. Aparecerá en tu perfil público.',
+                  ),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 8),
@@ -787,7 +943,11 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
                 FilledButton.icon(
                   onPressed: _savingProfile ? null : _savePublicProfile,
                   icon: const Icon(Icons.save_as_outlined),
-                  label: Text(_savingProfile ? _tx('profile.saving', 'Guardando...') : _tx('profile.save_social', 'Guardar perfil público')),
+                  label: Text(
+                    _savingProfile
+                        ? _tx('profile.saving', 'Guardando...')
+                        : _tx('profile.save_social', 'Guardar perfil público'),
+                  ),
                 ),
               ],
             ),
@@ -801,34 +961,51 @@ class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStat
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionHeader(Icons.lock_outline, _tx('profile.tab_security', 'Seguridad')),
+        _sectionHeader(
+          Icons.lock_outline,
+          _tx('profile.tab_security', 'Seguridad'),
+        ),
         const SizedBox(height: 8),
         Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextFormField(
-              controller: _currentPasswordController,
-              obscureText: true,
-              decoration: InputDecoration(labelText: _tx('profile.current_password_label', 'Contraseña actual')),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextFormField(
+                  controller: _currentPasswordController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: _tx(
+                      'profile.current_password_label',
+                      'Contraseña actual',
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: _newPasswordController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: _tx(
+                      'profile.new_password_label',
+                      'Nueva contraseña',
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: _changingPassword ? null : _changePassword,
+                  icon: const Icon(Icons.lock_reset_outlined),
+                  label: Text(
+                    _changingPassword
+                        ? _tx('profile.updating', 'Actualizando...')
+                        : _tx('profile.change_password', 'Cambiar contraseña'),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 10),
-            TextFormField(
-              controller: _newPasswordController,
-              obscureText: true,
-              decoration: InputDecoration(labelText: _tx('profile.new_password_label', 'Nueva contraseña')),
-            ),
-            const SizedBox(height: 12),
-            FilledButton.icon(
-              onPressed: _changingPassword ? null : _changePassword,
-              icon: const Icon(Icons.lock_reset_outlined),
-              label: Text(_changingPassword ? _tx('profile.updating', 'Actualizando...') : _tx('profile.change_password', 'Cambiar contraseña')),
-            ),
-          ],
-        ),
-      ),
+          ),
         ),
       ],
     );

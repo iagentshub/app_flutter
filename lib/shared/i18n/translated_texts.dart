@@ -19,11 +19,15 @@ class TranslatedTexts extends ChangeNotifier {
   void _onLocaleChanged() => _load();
 
   Future<void> _load() async {
-    _bundle = await LocaleLoader.load(isEnglish: localeController.isEnglish, namespace: namespace);
+    _bundle = await LocaleLoader.load(
+      isEnglish: localeController.isEnglish,
+      namespace: namespace,
+    );
     notifyListeners();
   }
 
-  String text(String path, {String fallback = ''}) => LocaleLoader.text(_bundle, path, fallback: fallback);
+  String text(String path, {String fallback = ''}) =>
+      LocaleLoader.text(_bundle, path, fallback: fallback);
 
   @override
   void dispose() {

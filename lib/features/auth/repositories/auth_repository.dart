@@ -87,7 +87,9 @@ class AuthRepository {
   }
 
   Future<(bool, String?)> verifyEmail(String token) async {
-    final response = await _apiClient.get('/api/auth/verify?token=${Uri.encodeQueryComponent(token)}');
+    final response = await _apiClient.get(
+      '/api/auth/verify?token=${Uri.encodeQueryComponent(token)}',
+    );
     final ok = response.json['ok'] == true;
     return (ok, _apiClient.extractGaToken(response.headers));
   }
@@ -97,7 +99,10 @@ class AuthRepository {
     return response.json;
   }
 
-  Future<String> authorizeVsCode(String gaToken, {required String state}) async {
+  Future<String> authorizeVsCode(
+    String gaToken, {
+    required String state,
+  }) async {
     final response = await _apiClient.post(
       '/api/auth/vscode/authorize',
       gaToken: gaToken,

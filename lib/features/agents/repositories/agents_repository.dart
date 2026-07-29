@@ -7,8 +7,14 @@ class AgentsRepository {
   final ApiClient apiClient;
 
   Future<List<AgentItem>> listAgents(String token, {String? groupId}) async {
-    final query = groupId == null || groupId.isEmpty ? '' : '&group_id=${Uri.encodeComponent(groupId)}';
-    final response = await apiClient.get('/api/agents?scope=all$query', gaToken: token, cache: true);
+    final query = groupId == null || groupId.isEmpty
+        ? ''
+        : '&group_id=${Uri.encodeComponent(groupId)}';
+    final response = await apiClient.get(
+      '/api/agents?scope=all$query',
+      gaToken: token,
+      cache: true,
+    );
     final payload = response.body;
     if (payload is! List) return const [];
     return payload
@@ -18,16 +24,29 @@ class AgentsRepository {
   }
 
   Future<Map<String, dynamic>> getAgent(String token, String id) async {
-    final response = await apiClient.get('/api/agents/${Uri.encodeComponent(id)}', gaToken: token);
+    final response = await apiClient.get(
+      '/api/agents/${Uri.encodeComponent(id)}',
+      gaToken: token,
+    );
     return response.json;
   }
 
-  Future<Map<String, dynamic>> saveAgent(String token, Map<String, dynamic> payload) async {
-    final response = await apiClient.post('/api/agents', gaToken: token, body: payload);
+  Future<Map<String, dynamic>> saveAgent(
+    String token,
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await apiClient.post(
+      '/api/agents',
+      gaToken: token,
+      body: payload,
+    );
     return response.json;
   }
 
   Future<void> deleteAgent(String token, String id) async {
-    await apiClient.delete('/api/agents/${Uri.encodeComponent(id)}', gaToken: token);
+    await apiClient.delete(
+      '/api/agents/${Uri.encodeComponent(id)}',
+      gaToken: token,
+    );
   }
 }

@@ -209,6 +209,18 @@
     "group_environment": "Entorno",
     "group_status": "Estado"
   },
+  "history": {
+    "dialog_title": "Historial de versiones",
+    "load_error": "No se pudo cargar el historial de versiones",
+    "empty": "Todavía no hay versiones guardadas.",
+    "version_label": "Versión {version}",
+    "current": "Actual",
+    "reason_restore": "restaurada",
+    "restore_action": "Restaurar",
+    "restore_title": "Restaurar versión",
+    "restore_confirm": "¿Restaurar la versión {version}? Sobrescribirá el contenido actual.",
+    "restore_error": "No se pudo restaurar la versión"
+  },
   "knowledge": {
     "tab_skills": "Skills",
     "tab_urls": "URLs",

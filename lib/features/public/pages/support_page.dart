@@ -26,17 +26,48 @@ class SupportPage extends StatelessWidget {
           final heroSubtitle = LocaleLoader.text(bundle, 'hero.subtitle');
           final contactTitle = LocaleLoader.text(bundle, 'contact.title');
           final contactSubtitle = LocaleLoader.text(bundle, 'contact.subtitle');
-          final emailLabel = LocaleLoader.text(bundle, 'contact.channels.email.label');
-          final emailValue = LocaleLoader.text(bundle, 'contact.channels.email.value');
-          final chatLabel = LocaleLoader.text(bundle, 'contact.channels.chat.label');
-          final chatValue = LocaleLoader.text(bundle, 'contact.channels.chat.value');
-          final helpTitle = LocaleLoader.text(bundle, 'resources.helpCenter.title');
-          final helpDescription = LocaleLoader.text(bundle, 'resources.helpCenter.description');
+          final emailLabel = LocaleLoader.text(
+            bundle,
+            'contact.channels.email.label',
+          );
+          final emailValue = LocaleLoader.text(
+            bundle,
+            'contact.channels.email.value',
+          );
+          final chatLabel = LocaleLoader.text(
+            bundle,
+            'contact.channels.chat.label',
+          );
+          final chatValue = LocaleLoader.text(
+            bundle,
+            'contact.channels.chat.value',
+          );
+          final helpTitle = LocaleLoader.text(
+            bundle,
+            'resources.helpCenter.title',
+          );
+          final helpDescription = LocaleLoader.text(
+            bundle,
+            'resources.helpCenter.description',
+          );
           final docsTitle = LocaleLoader.text(bundle, 'resources.docs.title');
-          final docsDescription = LocaleLoader.text(bundle, 'resources.docs.description');
-          final statusTitle = LocaleLoader.text(bundle, 'resources.status.title');
-          final statusDescription = LocaleLoader.text(bundle, 'resources.status.description');
-          final loginLabel = LocaleLoader.text(bundle, 'header.login', fallback: isEnglish ? 'Login' : 'Iniciar sesion');
+          final docsDescription = LocaleLoader.text(
+            bundle,
+            'resources.docs.description',
+          );
+          final statusTitle = LocaleLoader.text(
+            bundle,
+            'resources.status.title',
+          );
+          final statusDescription = LocaleLoader.text(
+            bundle,
+            'resources.status.description',
+          );
+          final loginLabel = LocaleLoader.text(
+            bundle,
+            'header.login',
+            fallback: isEnglish ? 'Login' : 'Iniciar sesion',
+          );
 
           return CustomScrollView(
             slivers: [
@@ -48,8 +79,11 @@ class SupportPage extends StatelessWidget {
                     loginLabel: loginLabel,
                     onLogin: () => context.go(RouteNames.login),
                     onLanguageSelected: (selected) {
-                      final target = selected == 'en' ? RouteNames.supportEn : RouteNames.support;
-                      if ((selected == 'en' && !isEnglish) || (selected == 'es' && isEnglish)) {
+                      final target = selected == 'en'
+                          ? RouteNames.supportEn
+                          : RouteNames.support;
+                      if ((selected == 'en' && !isEnglish) ||
+                          (selected == 'es' && isEnglish)) {
                         context.go(target);
                       }
                     },
@@ -62,9 +96,9 @@ class SupportPage extends StatelessWidget {
                   child: Text(
                     heroTitle,
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                        ),
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
               ),
@@ -73,7 +107,9 @@ class SupportPage extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(24, 10, 24, 0),
                   child: Text(
                     heroSubtitle,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: const Color(0xFFE0E0E0)),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: const Color(0xFFE0E0E0),
+                    ),
                   ),
                 ),
               ),
@@ -109,8 +145,12 @@ class SupportPage extends StatelessWidget {
                     subtitle: docsDescription,
                     children: [
                       TextButton(
-                        onPressed: () => context.go(isEnglish ? RouteNames.docsEn : RouteNames.docs),
-                        child: Text(isEnglish ? 'Open docs' : 'Abrir documentacion'),
+                        onPressed: () => context.go(
+                          isEnglish ? RouteNames.docsEn : RouteNames.docs,
+                        ),
+                        child: Text(
+                          isEnglish ? 'Open docs' : 'Abrir documentacion',
+                        ),
                       ),
                     ],
                   ),
@@ -166,14 +206,16 @@ class _SectionCard extends StatelessWidget {
             Text(
               title,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                  ),
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               subtitle,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: const Color(0xFFD4D4D4)),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFFD4D4D4)),
             ),
             if (children.isNotEmpty) ...[
               const SizedBox(height: 12),
@@ -202,15 +244,17 @@ class _ChannelRow extends StatelessWidget {
           child: Text(
             label,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFFFFFFFF),
-                  fontWeight: FontWeight.w700,
-                ),
+              color: const Color(0xFFFFFFFF),
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
         Expanded(
           child: Text(
             value,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: const Color(0xFFD4D4D4)),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFFD4D4D4)),
           ),
         ),
       ],

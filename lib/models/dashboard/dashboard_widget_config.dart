@@ -8,9 +8,21 @@ const kDashboardWidgetIds = [
   'feed',
 ];
 
-const kDefaultDashboardLayout = ['summary', 'token-usage', 'conn-status', 'recent'];
+const kDefaultDashboardLayout = [
+  'summary',
+  'token-usage',
+  'conn-status',
+  'recent',
+];
 
-const kSummaryItems = ['agents', 'connections', 'skills', 'memory', 'knowledge', 'workflows'];
+const kSummaryItems = [
+  'agents',
+  'connections',
+  'skills',
+  'memory',
+  'knowledge',
+  'workflows',
+];
 const kFeedTypes = ['agent', 'skill', 'knowledge'];
 
 String dashboardWidgetTitle(String id) {
@@ -115,14 +127,14 @@ class DashboardWidgetConfig {
   }
 
   Map<String, dynamic> toJson() => {
-        if (items != null) 'items': items,
-        if (groupBy != null) 'groupBy': groupBy,
-        if (scope != null) 'scope': scope,
-        if (limit != null) 'limit': limit,
-        if (pageSize != null) 'pageSize': pageSize,
-        if (days != null) 'days': days,
-        if (types != null) 'types': types,
-      };
+    if (items != null) 'items': items,
+    if (groupBy != null) 'groupBy': groupBy,
+    if (scope != null) 'scope': scope,
+    if (limit != null) 'limit': limit,
+    if (pageSize != null) 'pageSize': pageSize,
+    if (days != null) 'days': days,
+    if (types != null) 'types': types,
+  };
 
   DashboardWidgetConfig copyWith({
     List<String>? items,

@@ -25,10 +25,7 @@ class ProfileSession {
 }
 
 class ProfileSettings {
-  const ProfileSettings({
-    required this.theme,
-    required this.language,
-  });
+  const ProfileSettings({required this.theme, required this.language});
 
   final String theme;
   final String language;
@@ -42,10 +39,7 @@ class ProfileSettings {
 }
 
 class DeletionStatus {
-  const DeletionStatus({
-    required this.scheduled,
-    this.deletionDate,
-  });
+  const DeletionStatus({required this.scheduled, this.deletionDate});
 
   final bool scheduled;
   final String? deletionDate;

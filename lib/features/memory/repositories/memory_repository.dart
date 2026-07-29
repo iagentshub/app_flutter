@@ -7,7 +7,11 @@ class MemoryRepository {
   final ApiClient apiClient;
 
   Future<List<MemoryFileItem>> listFiles(String token) async {
-    final response = await apiClient.get('/api/memory', gaToken: token, cache: true);
+    final response = await apiClient.get(
+      '/api/memory',
+      gaToken: token,
+      cache: true,
+    );
     final payload = response.body;
     if (payload is! List) return const [];
     return payload
@@ -17,12 +21,19 @@ class MemoryRepository {
   }
 
   Future<String> getFileContent(String token, String filename) async {
-    final response = await apiClient.get('/api/memory/${Uri.encodeComponent(filename)}', gaToken: token);
+    final response = await apiClient.get(
+      '/api/memory/${Uri.encodeComponent(filename)}',
+      gaToken: token,
+    );
     final data = response.json;
     return data['content'] as String? ?? '';
   }
 
-  Future<Map<String, dynamic>> saveFile(String token, String filename, String content) async {
+  Future<Map<String, dynamic>> saveFile(
+    String token,
+    String filename,
+    String content,
+  ) async {
     final response = await apiClient.post(
       '/api/memory/${Uri.encodeComponent(filename)}',
       gaToken: token,
@@ -32,6 +43,9 @@ class MemoryRepository {
   }
 
   Future<void> deleteFile(String token, String filename) async {
-    await apiClient.delete('/api/memory/${Uri.encodeComponent(filename)}', gaToken: token);
+    await apiClient.delete(
+      '/api/memory/${Uri.encodeComponent(filename)}',
+      gaToken: token,
+    );
   }
 }

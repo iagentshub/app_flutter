@@ -26,15 +26,31 @@ class PricingPage extends StatelessWidget {
           final heroSubtitle = LocaleLoader.text(bundle, 'hero.subtitle');
           final freeName = LocaleLoader.text(bundle, 'plans.free.name');
           final freePrice = LocaleLoader.text(bundle, 'plans.free.price');
-          final freeDescription = LocaleLoader.text(bundle, 'plans.free.description');
+          final freeDescription = LocaleLoader.text(
+            bundle,
+            'plans.free.description',
+          );
           final proName = LocaleLoader.text(bundle, 'plans.pro.name');
           final proPrice = LocaleLoader.text(bundle, 'plans.pro.price');
-          final proDescription = LocaleLoader.text(bundle, 'plans.pro.description');
+          final proDescription = LocaleLoader.text(
+            bundle,
+            'plans.pro.description',
+          );
           final businessName = LocaleLoader.text(bundle, 'plans.business.name');
-          final businessPrice = LocaleLoader.text(bundle, 'plans.business.price');
-          final businessDescription = LocaleLoader.text(bundle, 'plans.business.description');
+          final businessPrice = LocaleLoader.text(
+            bundle,
+            'plans.business.price',
+          );
+          final businessDescription = LocaleLoader.text(
+            bundle,
+            'plans.business.description',
+          );
           final ctaLabel = LocaleLoader.text(bundle, 'cta.primary');
-          final loginLabel = LocaleLoader.text(bundle, 'header.login', fallback: isEnglish ? 'Login' : 'Iniciar sesion');
+          final loginLabel = LocaleLoader.text(
+            bundle,
+            'header.login',
+            fallback: isEnglish ? 'Login' : 'Iniciar sesion',
+          );
 
           return CustomScrollView(
             slivers: [
@@ -46,8 +62,11 @@ class PricingPage extends StatelessWidget {
                     loginLabel: loginLabel,
                     onLogin: () => context.go(RouteNames.login),
                     onLanguageSelected: (selected) {
-                      final target = selected == 'en' ? RouteNames.pricingEn : RouteNames.pricing;
-                      if ((selected == 'en' && !isEnglish) || (selected == 'es' && isEnglish)) {
+                      final target = selected == 'en'
+                          ? RouteNames.pricingEn
+                          : RouteNames.pricing;
+                      if ((selected == 'en' && !isEnglish) ||
+                          (selected == 'es' && isEnglish)) {
                         context.go(target);
                       }
                     },
@@ -60,9 +79,9 @@ class PricingPage extends StatelessWidget {
                   child: Text(
                     heroTitle,
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                        ),
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
               ),
@@ -71,7 +90,9 @@ class PricingPage extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(24, 10, 24, 20),
                   child: Text(
                     heroSubtitle,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: const Color(0xFFE0E0E0)),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: const Color(0xFFE0E0E0),
+                    ),
                   ),
                 ),
               ),
@@ -133,7 +154,10 @@ class _PlanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: isPrimary ? const Color(0xFFD90429) : const Color(0xFF333333), width: 1.2),
+        border: Border.all(
+          color: isPrimary ? const Color(0xFFD90429) : const Color(0xFF333333),
+          width: 1.2,
+        ),
         borderRadius: BorderRadius.circular(14),
         color: const Color(0xFF101010),
       ),
@@ -145,22 +169,24 @@ class _PlanCard extends StatelessWidget {
             Text(
               name,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                  ),
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+              ),
             ),
             const SizedBox(height: 6),
             Text(
               price,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: isPrimary ? const Color(0xFFD90429) : Colors.white,
-                    fontWeight: FontWeight.w900,
-                  ),
+                color: isPrimary ? const Color(0xFFD90429) : Colors.white,
+                fontWeight: FontWeight.w900,
+              ),
             ),
             const SizedBox(height: 10),
             Text(
               description,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: const Color(0xFFD9D9D9)),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFFD9D9D9)),
             ),
             const SizedBox(height: 14),
             ElevatedButton(

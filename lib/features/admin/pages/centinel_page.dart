@@ -27,7 +27,8 @@ class CentinelPage extends StatefulWidget {
   State<CentinelPage> createState() => _CentinelPageState();
 }
 
-class _CentinelPageState extends State<CentinelPage> with SingleTickerProviderStateMixin {
+class _CentinelPageState extends State<CentinelPage>
+    with SingleTickerProviderStateMixin {
   late final CentinelRepository _repository;
   late final TabController _tabController;
   late final TranslatedTexts _t;
@@ -40,9 +41,12 @@ class _CentinelPageState extends State<CentinelPage> with SingleTickerProviderSt
   void initState() {
     super.initState();
     _repository = CentinelRepository(apiClient: widget.apiClient);
-    _tabController = TabController(length: 3, vsync: this)..addListener(_onTabChanged);
-    _t = TranslatedTexts(localeController: widget.localeController, namespace: 'resources')
-      ..addListener(_onTextsChanged);
+    _tabController = TabController(length: 3, vsync: this)
+      ..addListener(_onTabChanged);
+    _t = TranslatedTexts(
+      localeController: widget.localeController,
+      namespace: 'resources',
+    )..addListener(_onTextsChanged);
   }
 
   void _onTabChanged() {
@@ -66,7 +70,9 @@ class _CentinelPageState extends State<CentinelPage> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     final token = _token;
     if (token == null || token.isEmpty) {
-      return Center(child: Text(_tx('common.no_session', 'No hay sesión activa')));
+      return Center(
+        child: Text(_tx('common.no_session', 'No hay sesión activa')),
+      );
     }
 
     final tabLabels = [
@@ -93,7 +99,11 @@ class _CentinelPageState extends State<CentinelPage> with SingleTickerProviderSt
           child: IndexedStack(
             index: _tabController.index,
             children: [
-              CentinelFunctionalTab(repository: _repository, token: token, tx: _tx),
+              CentinelFunctionalTab(
+                repository: _repository,
+                token: token,
+                tx: _tx,
+              ),
               CentinelStressTab(repository: _repository, token: token, tx: _tx),
               CentinelProbeTab(repository: _repository, token: token, tx: _tx),
             ],

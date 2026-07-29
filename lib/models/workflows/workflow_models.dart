@@ -31,7 +31,10 @@ class WorkflowItem {
   List<String> get labels {
     final value = raw['labels'];
     if (value is List) {
-      return value.map((item) => item.toString()).where((item) => item.isNotEmpty).toList();
+      return value
+          .map((item) => item.toString())
+          .where((item) => item.isNotEmpty)
+          .toList();
     }
     return const ['private'];
   }

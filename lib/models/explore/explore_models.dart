@@ -20,7 +20,10 @@ class ExploreItem {
   List<String> get tags {
     final value = raw['tags'];
     if (value is List) {
-      return value.map((item) => item.toString()).where((item) => item.isNotEmpty).toList();
+      return value
+          .map((item) => item.toString())
+          .where((item) => item.isNotEmpty)
+          .toList();
     }
     return const [];
   }
@@ -28,7 +31,10 @@ class ExploreItem {
   List<String> get labels {
     final value = raw['labels'];
     if (value is List) {
-      return value.map((item) => item.toString()).where((item) => item.isNotEmpty).toList();
+      return value
+          .map((item) => item.toString())
+          .where((item) => item.isNotEmpty)
+          .toList();
     }
     return const [];
   }

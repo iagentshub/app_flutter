@@ -60,7 +60,10 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    _authTextsFuture = LocaleLoader.load(isEnglish: _isEnglish, namespace: 'auth');
+    _authTextsFuture = LocaleLoader.load(
+      isEnglish: _isEnglish,
+      namespace: 'auth',
+    );
     widget.localeController.addListener(_onLocaleChanged);
     _loadPlatformSettings();
     _loadRememberedAccount();
@@ -68,7 +71,12 @@ class _LoginPageState extends State<LoginPage> {
 
   void _onLocaleChanged() {
     if (!mounted) return;
-    setState(() => _authTextsFuture = LocaleLoader.load(isEnglish: _isEnglish, namespace: 'auth'));
+    setState(
+      () => _authTextsFuture = LocaleLoader.load(
+        isEnglish: _isEnglish,
+        namespace: 'auth',
+      ),
+    );
   }
 
   Future<void> _loadRememberedAccount() async {
@@ -161,7 +169,8 @@ class _LoginPageState extends State<LoginPage> {
     setState(() {});
   }
 
-  bool get _showAnyOauth => _oauthGoogleEnabled || _oauthAppleEnabled || _oauthMicrosoftEnabled;
+  bool get _showAnyOauth =>
+      _oauthGoogleEnabled || _oauthAppleEnabled || _oauthMicrosoftEnabled;
 
   Future<void> _submit() async {
     final form = _formKey.currentState;
@@ -180,15 +189,24 @@ class _LoginPageState extends State<LoginPage> {
         password: _passwordController.text,
       );
       if (!result.ok) {
-        throw ApiError(statusCode: 401, message: _txt(texts, 'error_invalid', 'Credenciales incorrectas'));
+        throw ApiError(
+          statusCode: 401,
+          message: _txt(texts, 'error_invalid', 'Credenciales incorrectas'),
+        );
       }
 
       final me = await widget.authRepository.me(token);
       widget.authRepository.clearCache();
-      await widget.sessionController.login(token: token, user: me, remember: _rememberAccount);
+      await widget.sessionController.login(
+        token: token,
+        user: me,
+        remember: _rememberAccount,
+      );
       await _persistRememberedAccount();
       unawaited(
-        widget.authRepository.getLanguage(token).then(widget.localeController.syncFromBackend),
+        widget.authRepository
+            .getLanguage(token)
+            .then(widget.localeController.syncFromBackend),
       );
 
       if (!mounted) return;
@@ -199,7 +217,13 @@ class _LoginPageState extends State<LoginPage> {
       setState(() => _errorMessage = error.message);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _errorMessage = _txt(texts, 'error_connection', 'Error de conexión'));
+      setState(
+        () => _errorMessage = _txt(
+          texts,
+          'error_connection',
+          'Error de conexión',
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _loading = false);
@@ -218,11 +242,22 @@ class _LoginPageState extends State<LoginPage> {
     try {
       final (result, token) = await widget.authRepository.guestLogin();
       if (!result.ok) {
-        throw ApiError(statusCode: 401, message: _txt(texts, 'guest_error', 'No fue posible iniciar como invitado'));
+        throw ApiError(
+          statusCode: 401,
+          message: _txt(
+            texts,
+            'guest_error',
+            'No fue posible iniciar como invitado',
+          ),
+        );
       }
 
       final me = await widget.authRepository.me(token);
-      await widget.sessionController.login(token: token, user: me, remember: false);
+      await widget.sessionController.login(
+        token: token,
+        user: me,
+        remember: false,
+      );
       if (!mounted) return;
       final destination = safeRedirect(widget.redirectTo);
       context.go(destination);
@@ -231,7 +266,13 @@ class _LoginPageState extends State<LoginPage> {
       setState(() => _errorMessage = error.message);
     } catch (_) {
       if (!mounted) return;
-      setState(() => _errorMessage = _txt(texts, 'guest_error', 'No se pudo iniciar como invitado'));
+      setState(
+        () => _errorMessage = _txt(
+          texts,
+          'guest_error',
+          'No se pudo iniciar como invitado',
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _loading = false);
@@ -295,8 +336,16 @@ class _LoginPageState extends State<LoginPage> {
         builder: (context, snapshot) {
           final t = snapshot.data ?? const {};
           final headlinePre = _txt(t, 'headline_pre', _isEnglish ? 'in' : 'en');
-          final headline1 = _txt(t, 'headline_1', _isEnglish ? 'All your AI' : 'Toda tu IA');
-          final headlineAccent = _txt(t, 'headline_accent', _isEnglish ? 'one place' : 'un solo lugar');
+          final headline1 = _txt(
+            t,
+            'headline_1',
+            _isEnglish ? 'All your AI' : 'Toda tu IA',
+          );
+          final headlineAccent = _txt(
+            t,
+            'headline_accent',
+            _isEnglish ? 'one place' : 'un solo lugar',
+          );
           final heroSub = _txt(
             t,
             'hero_sub',
@@ -313,12 +362,21 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 24),
               Text(
                 '$headline1 $headlinePre\n$headlineAccent',
-                style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800, height: 1.2, color: Colors.white),
+                style: const TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w800,
+                  height: 1.2,
+                  color: Colors.white,
+                ),
               ),
               const SizedBox(height: 16),
               Text(
                 heroSub,
-                style: TextStyle(fontSize: 15, color: Colors.white.withValues(alpha: 0.7), height: 1.5),
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.white.withValues(alpha: 0.7),
+                  height: 1.5,
+                ),
               ),
             ],
           );
@@ -342,22 +400,68 @@ class _LoginPageState extends State<LoginPage> {
             }
 
             final t = snapshot.data!;
-            final cardTitle = _txt(t, 'card_title', _isEnglish ? 'Welcome' : 'Bienvenido');
-            final cardSub = _txt(t, 'card_sub', _isEnglish ? 'Access your agent workspace' : 'Accede a tu espacio de agentes');
+            final cardTitle = _txt(
+              t,
+              'card_title',
+              _isEnglish ? 'Welcome' : 'Bienvenido',
+            );
+            final cardSub = _txt(
+              t,
+              'card_sub',
+              _isEnglish
+                  ? 'Access your agent workspace'
+                  : 'Accede a tu espacio de agentes',
+            );
             final fieldEmail = _txt(t, 'field_email', 'Email');
-            final fieldPassword = _txt(t, 'field_password', _isEnglish ? 'Password' : 'Contraseña');
-            final loginBtn = _txt(t, 'login_btn', _isEnglish ? 'Sign in' : 'Entrar');
-            final loginBtnLoading = _txt(t, 'login_btn_loading', _isEnglish ? 'Signing in…' : 'Entrando…');
-            final forgotPassword = _txt(t, 'forgot_password', _isEnglish ? 'Forgot your password?' : '¿Olvidaste tu contraseña?');
-            final rememberAccount = _txt(t, 'remember_account', _isEnglish ? 'Remember my account' : 'Recordar mi cuenta');
+            final fieldPassword = _txt(
+              t,
+              'field_password',
+              _isEnglish ? 'Password' : 'Contraseña',
+            );
+            final loginBtn = _txt(
+              t,
+              'login_btn',
+              _isEnglish ? 'Sign in' : 'Entrar',
+            );
+            final loginBtnLoading = _txt(
+              t,
+              'login_btn_loading',
+              _isEnglish ? 'Signing in…' : 'Entrando…',
+            );
+            final forgotPassword = _txt(
+              t,
+              'forgot_password',
+              _isEnglish
+                  ? 'Forgot your password?'
+                  : '¿Olvidaste tu contraseña?',
+            );
+            final rememberAccount = _txt(
+              t,
+              'remember_account',
+              _isEnglish ? 'Remember my account' : 'Recordar mi cuenta',
+            );
             final divider = _txt(t, 'divider', _isEnglish ? 'or' : 'o');
-            final guestLogin = _txt(t, 'guest_login', _isEnglish ? 'Access as guest' : 'Acceder como invitado');
-            final guestLoading = _txt(t, 'guest_entering', _isEnglish ? 'Entering…' : 'Entrando…');
-            final registerAction = _txt(t, 'register_action', _isEnglish ? 'Create account' : 'Crear cuenta');
+            final guestLogin = _txt(
+              t,
+              'guest_login',
+              _isEnglish ? 'Access as guest' : 'Acceder como invitado',
+            );
+            final guestLoading = _txt(
+              t,
+              'guest_entering',
+              _isEnglish ? 'Entering…' : 'Entrando…',
+            );
+            final registerAction = _txt(
+              t,
+              'register_action',
+              _isEnglish ? 'Create account' : 'Crear cuenta',
+            );
             final fieldPasswordRequired = _txt(
               t,
               'field_password_required',
-              _isEnglish ? 'Password is required' : 'La contraseña es obligatoria',
+              _isEnglish
+                  ? 'Password is required'
+                  : 'La contraseña es obligatoria',
             );
             final backendDown = _backendStatus == _BackendStatus.down;
             final backendDownMsg = _txt(
@@ -376,22 +480,36 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   // -- Encabezado ---------------------------------------------------
                   Center(
-                    child: Text(cardTitle, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+                    child: Text(
+                      cardTitle,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Center(
-                    child: Text(cardSub, style: Theme.of(context).textTheme.bodyMedium),
+                    child: Text(
+                      cardSub,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
                   ),
                   const SizedBox(height: 24),
 
                   if (backendDown) ...[
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.redAccent.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.3)),
+                        border: Border.all(
+                          color: Colors.redAccent.withValues(alpha: 0.3),
+                        ),
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -399,7 +517,13 @@ class _LoginPageState extends State<LoginPage> {
                           const _StatusLed(status: _BackendStatus.down),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text(backendDownMsg, style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
+                            child: Text(
+                              backendDownMsg,
+                              style: const TextStyle(
+                                color: Colors.redAccent,
+                                fontSize: 13,
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -422,14 +546,23 @@ class _LoginPageState extends State<LoginPage> {
                   TextFormField(
                     controller: _passwordController,
                     obscureText: !_showPassword,
-                    validator: (value) => Validators.requiredField(value, message: fieldPasswordRequired),
+                    validator: (value) => Validators.requiredField(
+                      value,
+                      message: fieldPasswordRequired,
+                    ),
                     decoration: InputDecoration(
                       labelText: fieldPassword,
                       border: const OutlineInputBorder(),
                       prefixIcon: const Icon(Icons.lock_outline, size: 20),
                       suffixIcon: IconButton(
-                        onPressed: () => setState(() => _showPassword = !_showPassword),
-                        icon: Icon(_showPassword ? Icons.visibility_off : Icons.visibility, size: 20),
+                        onPressed: () =>
+                            setState(() => _showPassword = !_showPassword),
+                        icon: Icon(
+                          _showPassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          size: 20,
+                        ),
                       ),
                     ),
                   ),
@@ -440,7 +573,9 @@ class _LoginPageState extends State<LoginPage> {
                     runSpacing: 4,
                     children: [
                       InkWell(
-                        onTap: () => setState(() => _rememberAccount = !_rememberAccount),
+                        onTap: () => setState(
+                          () => _rememberAccount = !_rememberAccount,
+                        ),
                         borderRadius: BorderRadius.circular(6),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 4),
@@ -452,12 +587,16 @@ class _LoginPageState extends State<LoginPage> {
                                 height: 24,
                                 child: Checkbox(
                                   value: _rememberAccount,
-                                  onChanged: (value) => setState(() => _rememberAccount = value ?? false),
+                                  onChanged: (value) => setState(
+                                    () => _rememberAccount = value ?? false,
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 6),
                               ConstrainedBox(
-                                constraints: const BoxConstraints(maxWidth: 160),
+                                constraints: const BoxConstraints(
+                                  maxWidth: 160,
+                                ),
                                 child: Text(
                                   rememberAccount,
                                   style: Theme.of(context).textTheme.bodySmall,
@@ -470,7 +609,10 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       TextButton(
                         onPressed: () => context.go(RouteNames.forgotPassword),
-                        child: Text(forgotPassword, style: Theme.of(context).textTheme.bodySmall),
+                        child: Text(
+                          forgotPassword,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
                       ),
                     ],
                   ),
@@ -489,13 +631,21 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 10),
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.redAccent.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.3)),
+                        border: Border.all(
+                          color: Colors.redAccent.withValues(alpha: 0.3),
+                        ),
                       ),
-                      child: Text(_errorMessage!, style: const TextStyle(color: Colors.redAccent)),
+                      child: Text(
+                        _errorMessage!,
+                        style: const TextStyle(color: Colors.redAccent),
+                      ),
                     ),
                   ],
 
@@ -510,11 +660,23 @@ class _LoginPageState extends State<LoginPage> {
                         runSpacing: 8,
                         children: [
                           if (_oauthGoogleEnabled)
-                            const _OauthButton(label: 'Google', icon: FaIcon(FontAwesomeIcons.google, size: 17)),
+                            const _OauthButton(
+                              label: 'Google',
+                              icon: FaIcon(FontAwesomeIcons.google, size: 17),
+                            ),
                           if (_oauthAppleEnabled)
-                            const _OauthButton(label: 'Apple', icon: FaIcon(FontAwesomeIcons.apple, size: 18)),
+                            const _OauthButton(
+                              label: 'Apple',
+                              icon: FaIcon(FontAwesomeIcons.apple, size: 18),
+                            ),
                           if (_oauthMicrosoftEnabled)
-                            const _OauthButton(label: 'Microsoft', icon: FaIcon(FontAwesomeIcons.microsoft, size: 17)),
+                            const _OauthButton(
+                              label: 'Microsoft',
+                              icon: FaIcon(
+                                FontAwesomeIcons.microsoft,
+                                size: 17,
+                              ),
+                            ),
                         ],
                       ),
                     if (_guestEnabled) ...[
@@ -522,7 +684,9 @@ class _LoginPageState extends State<LoginPage> {
                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton(
-                          onPressed: (_loading || backendDown) ? null : _submitGuest,
+                          onPressed: (_loading || backendDown)
+                              ? null
+                              : _submitGuest,
                           child: Text(_loading ? guestLoading : guestLogin),
                         ),
                       ),
@@ -558,7 +722,11 @@ class _LoginPageState extends State<LoginPage> {
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
                           ),
-                          Icon(Icons.chevron_right, size: 16, color: Theme.of(context).textTheme.bodySmall?.color),
+                          Icon(
+                            Icons.chevron_right,
+                            size: 16,
+                            color: Theme.of(context).textTheme.bodySmall?.color,
+                          ),
                         ],
                       ),
                     ),
@@ -585,10 +753,7 @@ class _OauthDivider extends StatelessWidget {
         const Expanded(child: Divider()),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Text(
-            text,
-            style: Theme.of(context).textTheme.labelSmall,
-          ),
+          child: Text(text, style: Theme.of(context).textTheme.labelSmall),
         ),
         const Expanded(child: Divider()),
       ],
@@ -611,17 +776,15 @@ class _OauthButton extends StatelessWidget {
         child: OutlinedButton(
           onPressed: null,
           style: OutlinedButton.styleFrom(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
             minimumSize: const Size(44, 44),
             padding: const EdgeInsets.symmetric(horizontal: 10),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
-            children: [
-              icon,
-              const SizedBox(width: 8),
-              Text(label),
-            ],
+            children: [icon, const SizedBox(width: 8), Text(label)],
           ),
         ),
       ),
@@ -655,7 +818,10 @@ class _BrandMark extends StatelessWidget {
                 borderRadius: BorderRadius.circular(6 * scale),
               ),
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8 * scale, vertical: 2 * scale),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 8 * scale,
+                  vertical: 2 * scale,
+                ),
                 child: Text(
                   'HUB',
                   style: TextStyle(
@@ -674,7 +840,8 @@ class _BrandMark extends StatelessWidget {
 }
 
 extension _WidgetSpanExt on Widget {
-  WidgetSpan toWidgetSpan() => WidgetSpan(alignment: PlaceholderAlignment.middle, child: this);
+  WidgetSpan toWidgetSpan() =>
+      WidgetSpan(alignment: PlaceholderAlignment.middle, child: this);
 }
 
 enum _BackendStatus { checking, ok, down }
@@ -688,13 +855,17 @@ class _StatusLed extends StatefulWidget {
   State<_StatusLed> createState() => _StatusLedState();
 }
 
-class _StatusLedState extends State<_StatusLed> with SingleTickerProviderStateMixin {
+class _StatusLedState extends State<_StatusLed>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 900))..repeat(reverse: true);
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
   }
 
   @override
@@ -729,7 +900,11 @@ class _StatusLedState extends State<_StatusLed> with SingleTickerProviderStateMi
         shape: BoxShape.circle,
         color: color.withValues(alpha: opacity),
         boxShadow: [
-          BoxShadow(color: color.withValues(alpha: opacity * 0.6), blurRadius: 5, spreadRadius: 1),
+          BoxShadow(
+            color: color.withValues(alpha: opacity * 0.6),
+            blurRadius: 5,
+            spreadRadius: 1,
+          ),
         ],
       ),
     );

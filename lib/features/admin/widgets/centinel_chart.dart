@@ -89,7 +89,9 @@ class _ChartPainter extends CustomPainter {
     final chartH = size.height - _padTop - _padBottom;
     if (chartW <= 0 || chartH <= 0) return;
 
-    final n = series.map((s) => s.values.length).fold(0, (a, b) => a > b ? a : b);
+    final n = series
+        .map((s) => s.values.length)
+        .fold(0, (a, b) => a > b ? a : b);
     if (n == 0) return;
 
     final primary = series.where((s) => !s.ownScale).toList();
@@ -110,7 +112,12 @@ class _ChartPainter extends CustomPainter {
     const gridLines = 4;
     for (var i = 0; i <= gridLines; i++) {
       final y = _padTop + (chartH / gridLines) * i;
-      _drawDashedLine(canvas, Offset(_padLeft, y), Offset(_padLeft + chartW, y), gridPaint);
+      _drawDashedLine(
+        canvas,
+        Offset(_padLeft, y),
+        Offset(_padLeft + chartW, y),
+        gridPaint,
+      );
       final value = primaryMax * (1 - i / gridLines);
       final tp = TextPainter(
         text: TextSpan(text: '${value.toStringAsFixed(2)}s', style: textStyle),
@@ -126,15 +133,29 @@ class _ChartPainter extends CustomPainter {
         text: TextSpan(text: '${j}s', style: textStyle),
         textDirection: TextDirection.ltr,
       )..layout();
-      tp.paint(canvas, Offset(xAt(j) - tp.width / 2, size.height - _padBottom + 6));
+      tp.paint(
+        canvas,
+        Offset(xAt(j) - tp.width / 2, size.height - _padBottom + 6),
+      );
     }
 
     // Series: primero barras (fondo), luego líneas, luego puntos.
     for (final s in series.where((s) => s.style == ChartSeriesStyle.bars)) {
       _drawBars(canvas, s, chartH, xAt);
     }
-    for (final s in series.where((s) => s.style == ChartSeriesStyle.line || s.style == ChartSeriesStyle.dashedLine)) {
-      _drawLine(canvas, s, chartH, xAt, dashed: s.style == ChartSeriesStyle.dashedLine, ownMax: primaryMax);
+    for (final s in series.where(
+      (s) =>
+          s.style == ChartSeriesStyle.line ||
+          s.style == ChartSeriesStyle.dashedLine,
+    )) {
+      _drawLine(
+        canvas,
+        s,
+        chartH,
+        xAt,
+        dashed: s.style == ChartSeriesStyle.dashedLine,
+        ownMax: primaryMax,
+      );
     }
     for (final s in series.where((s) => s.style == ChartSeriesStyle.dots)) {
       _drawDots(canvas, s, chartH, xAt);
@@ -147,12 +168,21 @@ class _ChartPainter extends CustomPainter {
       final markerPaint = Paint()
         ..color = Colors.red.withValues(alpha: 0.7)
         ..strokeWidth = 1.5;
-      _drawDashedLine(canvas, Offset(x, _padTop), Offset(x, _padTop + chartH), markerPaint);
+      _drawDashedLine(
+        canvas,
+        Offset(x, _padTop),
+        Offset(x, _padTop + chartH),
+        markerPaint,
+      );
       if (markerLabel != null) {
         final tp = TextPainter(
           text: TextSpan(
             text: markerLabel,
-            style: const TextStyle(color: Colors.red, fontSize: 9, fontWeight: FontWeight.w700),
+            style: const TextStyle(
+              color: Colors.red,
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           textDirection: TextDirection.ltr,
         )..layout();
@@ -169,13 +199,21 @@ class _ChartPainter extends CustomPainter {
     return max;
   }
 
-  void _drawBars(Canvas canvas, ChartSeries s, double chartH, double Function(int) xAt) {
+  void _drawBars(
+    Canvas canvas,
+    ChartSeries s,
+    double chartH,
+    double Function(int) xAt,
+  ) {
     final max = _ownMax(s.values);
     final paint = Paint()..color = s.color.withValues(alpha: 0.16);
     for (var i = 0; i < s.values.length; i++) {
       final barH = chartH * (s.values[i] / max);
       final x = xAt(i);
-      canvas.drawRect(Rect.fromLTWH(x - 2, _padTop + chartH - barH, 4, barH), paint);
+      canvas.drawRect(
+        Rect.fromLTWH(x - 2, _padTop + chartH - barH, 4, barH),
+        paint,
+      );
     }
   }
 
@@ -188,7 +226,8 @@ class _ChartPainter extends CustomPainter {
     required double ownMax,
   }) {
     final max = s.ownScale ? _ownMax(s.values) : ownMax;
-    Offset pointAt(int i) => Offset(xAt(i), _padTop + chartH - chartH * (s.values[i] / max));
+    Offset pointAt(int i) =>
+        Offset(xAt(i), _padTop + chartH - chartH * (s.values[i] / max));
 
     if (s.perPointColors != null) {
       final paint = Paint()..strokeWidth = 1.6;
@@ -216,12 +255,24 @@ class _ChartPainter extends CustomPainter {
       canvas.drawPath(path, paint);
     } else {
       for (var i = 1; i < s.values.length; i++) {
-        _drawDashedLine(canvas, pointAt(i - 1), pointAt(i), paint, dashWidth: 3, gapWidth: 2);
+        _drawDashedLine(
+          canvas,
+          pointAt(i - 1),
+          pointAt(i),
+          paint,
+          dashWidth: 3,
+          gapWidth: 2,
+        );
       }
     }
   }
 
-  void _drawDots(Canvas canvas, ChartSeries s, double chartH, double Function(int) xAt) {
+  void _drawDots(
+    Canvas canvas,
+    ChartSeries s,
+    double chartH,
+    double Function(int) xAt,
+  ) {
     final paint = Paint()..color = s.color;
     for (var i = 0; i < s.values.length; i++) {
       if (s.values[i] <= 0) continue;
@@ -264,7 +315,8 @@ class _ChartPainter extends CustomPainter {
     for (var i = 0; i < series.length; i++) {
       final a = oldDelegate.series[i];
       final b = series[i];
-      if (a.color != b.color || a.style != b.style || a.ownScale != b.ownScale) return true;
+      if (a.color != b.color || a.style != b.style || a.ownScale != b.ownScale)
+        return true;
       if (!listEquals(a.values, b.values)) return true;
       if (!listEquals(a.perPointColors, b.perPointColors)) return true;
     }

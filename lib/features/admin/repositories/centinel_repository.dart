@@ -50,18 +50,30 @@ class CentinelRepository {
   /// Eventos del run en curso (o replay si ya terminó): started, collecting,
   /// test, summary, done, aborted, error.
   Stream<Map<String, dynamic>> stream(String token, String runId) {
-    return _decodeSse(apiClient.getStream('$_base/stream/$runId', gaToken: token));
+    return _decodeSse(
+      apiClient.getStream('$_base/stream/$runId', gaToken: token),
+    );
   }
 
   // ── Rendimiento (stress test) ────────────────────────────────────────
 
   Future<Map<String, dynamic>> stressStatus(String token) async {
-    final response = await apiClient.get('$_base/stress/status', gaToken: token);
+    final response = await apiClient.get(
+      '$_base/stress/status',
+      gaToken: token,
+    );
     return response.json;
   }
 
-  Future<Map<String, dynamic>> stressRun(String token, Map<String, dynamic> config) async {
-    final response = await apiClient.post('$_base/stress/run', gaToken: token, body: config);
+  Future<Map<String, dynamic>> stressRun(
+    String token,
+    Map<String, dynamic> config,
+  ) async {
+    final response = await apiClient.post(
+      '$_base/stress/run',
+      gaToken: token,
+      body: config,
+    );
     return response.json;
   }
 
@@ -72,7 +84,9 @@ class CentinelRepository {
   /// Eventos: stress_started, stress_tick (1/s), stress_done, stress_abort,
   /// stress_error.
   Stream<Map<String, dynamic>> stressStream(String token, String runId) {
-    return _decodeSse(apiClient.getStream('$_base/stress/stream/$runId', gaToken: token));
+    return _decodeSse(
+      apiClient.getStream('$_base/stress/stream/$runId', gaToken: token),
+    );
   }
 
   // ── Buscar límite (probe) ────────────────────────────────────────────
@@ -82,8 +96,15 @@ class CentinelRepository {
     return response.json;
   }
 
-  Future<Map<String, dynamic>> probeStart(String token, Map<String, dynamic> config) async {
-    final response = await apiClient.post('$_base/stress/probe', gaToken: token, body: config);
+  Future<Map<String, dynamic>> probeStart(
+    String token,
+    Map<String, dynamic> config,
+  ) async {
+    final response = await apiClient.post(
+      '$_base/stress/probe',
+      gaToken: token,
+      body: config,
+    );
     return response.json;
   }
 

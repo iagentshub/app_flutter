@@ -69,10 +69,16 @@ class _ChatPageState extends State<ChatPage> {
     }
     setState(() => _loadingConversations = true);
     try {
-      final conversations = await _repository.listConversations(token, widget.agent.id);
+      final conversations = await _repository.listConversations(
+        token,
+        widget.agent.id,
+      );
       if (!mounted) return;
       if (conversations.isEmpty) {
-        final created = await _repository.createConversation(token, widget.agent.id);
+        final created = await _repository.createConversation(
+          token,
+          widget.agent.id,
+        );
         if (!mounted) return;
         setState(() {
           _conversations = [created];
@@ -108,7 +114,11 @@ class _ChatPageState extends State<ChatPage> {
     if (token == null || conversationId == null) return;
     setState(() => _loadingMessages = true);
     try {
-      final messages = await _repository.getMessages(token, widget.agent.id, conversationId);
+      final messages = await _repository.getMessages(
+        token,
+        widget.agent.id,
+        conversationId,
+      );
       if (!mounted) return;
       setState(() {
         _messages = messages;
@@ -125,7 +135,10 @@ class _ChatPageState extends State<ChatPage> {
     final token = _token;
     if (token == null) return;
     try {
-      final created = await _repository.createConversation(token, widget.agent.id);
+      final created = await _repository.createConversation(
+        token,
+        widget.agent.id,
+      );
       if (!mounted) return;
       setState(() {
         _conversations = [created, ..._conversations];
@@ -195,46 +208,58 @@ class _ChatPageState extends State<ChatPage> {
     final history = _messages.where((m) => m.role != 'system').toList();
     final completer = Completer<void>();
     _subscription = _repository
-        .streamChat(token, widget.agent.id, messages: history, conversationId: _conversationId)
+        .streamChat(
+          token,
+          widget.agent.id,
+          messages: history,
+          conversationId: _conversationId,
+        )
         .listen(
-      (event) {
-        if (event.type == 'token') {
-          setState(() {
-            _streamingReply += event.token ?? '';
-            if (_streamingReply.isNotEmpty) _thinking = false;
-          });
-          _scrollToEnd();
-        } else if (event.type == 'done') {
-          final reply = event.reply ?? _streamingReply;
-          setState(() {
-            _thinking = false;
-            if (reply.isNotEmpty) {
-              _messages = [
-                ..._messages,
-                ChatMessage(role: 'assistant', content: reply, tokensIn: event.tokensIn, tokensOut: event.tokensOut),
-              ];
+          (event) {
+            if (event.type == 'token') {
+              setState(() {
+                _streamingReply += event.token ?? '';
+                if (_streamingReply.isNotEmpty) _thinking = false;
+              });
+              _scrollToEnd();
+            } else if (event.type == 'done') {
+              final reply = event.reply ?? _streamingReply;
+              setState(() {
+                _thinking = false;
+                if (reply.isNotEmpty) {
+                  _messages = [
+                    ..._messages,
+                    ChatMessage(
+                      role: 'assistant',
+                      content: reply,
+                      tokensIn: event.tokensIn,
+                      tokensOut: event.tokensOut,
+                    ),
+                  ];
+                }
+                _streamingReply = '';
+              });
+              _scrollToEnd();
+            } else if (event.type == 'error') {
+              setState(
+                () => _error = event.message ?? 'Error de respuesta del agente',
+              );
             }
-            _streamingReply = '';
-          });
-          _scrollToEnd();
-        } else if (event.type == 'error') {
-          setState(() => _error = event.message ?? 'Error de respuesta del agente');
-        }
-      },
-      onError: (error) {
-        if (!mounted) return;
-        setState(() => _error = 'Error de conexión con el agente');
-      },
-      onDone: () {
-        if (!mounted) return;
-        setState(() {
-          _streaming = false;
-          _thinking = false;
-        });
-        if (!completer.isCompleted) completer.complete();
-      },
-      cancelOnError: true,
-    );
+          },
+          onError: (error) {
+            if (!mounted) return;
+            setState(() => _error = 'Error de conexión con el agente');
+          },
+          onDone: () {
+            if (!mounted) return;
+            setState(() {
+              _streaming = false;
+              _thinking = false;
+            });
+            if (!completer.isCompleted) completer.complete();
+          },
+          cancelOnError: true,
+        );
     await completer.future;
   }
 
@@ -250,7 +275,10 @@ class _ChatPageState extends State<ChatPage> {
   void _showMessage(String text, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(text), backgroundColor: isError ? Colors.red.shade700 : null),
+      SnackBar(
+        content: Text(text),
+        backgroundColor: isError ? Colors.red.shade700 : null,
+      ),
     );
   }
 
@@ -263,7 +291,8 @@ class _ChatPageState extends State<ChatPage> {
           Builder(
             builder: (context) => LayoutBuilder(
               builder: (context, constraints) {
-                if (MediaQuery.of(context).size.width >= 760) return const SizedBox.shrink();
+                if (MediaQuery.of(context).size.width >= 760)
+                  return const SizedBox.shrink();
                 return IconButton(
                   icon: const Icon(Icons.history),
                   onPressed: () => Scaffold.of(context).openEndDrawer(),
@@ -273,7 +302,9 @@ class _ChatPageState extends State<ChatPage> {
           ),
         ],
       ),
-      endDrawer: MediaQuery.of(context).size.width >= 760 ? null : Drawer(child: _buildHistoryPanel()),
+      endDrawer: MediaQuery.of(context).size.width >= 760
+          ? null
+          : Drawer(child: _buildHistoryPanel()),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final wide = constraints.maxWidth >= 760;
@@ -351,7 +382,11 @@ class _ChatPageState extends State<ChatPage> {
           children: [
             Text(_error!),
             const SizedBox(height: 12),
-            FilledButton.icon(onPressed: _bootstrap, icon: const Icon(Icons.refresh), label: const Text('Reintentar')),
+            FilledButton.icon(
+              onPressed: _bootstrap,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Reintentar'),
+            ),
           ],
         ),
       );
@@ -369,7 +404,10 @@ class _ChatPageState extends State<ChatPage> {
                   itemBuilder: (context, index) {
                     if (index >= _messages.length) {
                       return _buildBubble(
-                        ChatMessage(role: 'assistant', content: _streamingReply),
+                        ChatMessage(
+                          role: 'assistant',
+                          content: _streamingReply,
+                        ),
                         thinking: _thinking && _streamingReply.isEmpty,
                       );
                     }
@@ -403,9 +441,15 @@ class _ChatPageState extends State<ChatPage> {
                 ),
                 const SizedBox(width: 8),
                 if (_streaming)
-                  IconButton.filledTonal(onPressed: _stop, icon: const Icon(Icons.stop))
+                  IconButton.filledTonal(
+                    onPressed: _stop,
+                    icon: const Icon(Icons.stop),
+                  )
                 else
-                  IconButton.filled(onPressed: _send, icon: const Icon(Icons.send)),
+                  IconButton.filled(
+                    onPressed: _send,
+                    icon: const Icon(Icons.send),
+                  ),
               ],
             ),
           ),
@@ -427,7 +471,10 @@ class _ChatPageState extends State<ChatPage> {
         child: Container(
           margin: const EdgeInsets.symmetric(vertical: 6),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(color: bubbleColor, borderRadius: BorderRadius.circular(14)),
+          decoration: BoxDecoration(
+            color: bubbleColor,
+            borderRadius: BorderRadius.circular(14),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -440,7 +487,8 @@ class _ChatPageState extends State<ChatPage> {
                 )
               else
                 Text(message.content),
-              if (!isUser && (message.tokensIn != null || message.tokensOut != null)) ...[
+              if (!isUser &&
+                  (message.tokensIn != null || message.tokensOut != null)) ...[
                 const SizedBox(height: 4),
                 Text(
                   '↑ ${message.tokensIn ?? 0} ↓ ${message.tokensOut ?? 0} tokens',

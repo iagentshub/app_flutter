@@ -6,15 +6,32 @@ class SkillsRepository {
 
   final ApiClient apiClient;
 
-  Future<List<SkillItem>> listSkills(String token, {String scope = 'all', String? groupId}) async {
-    final query = groupId == null || groupId.isEmpty ? '' : '&group_id=${Uri.encodeQueryComponent(groupId)}';
-    final response = await apiClient.get('/api/skills?scope=$scope$query', gaToken: token, cache: true);
+  Future<List<SkillItem>> listSkills(
+    String token, {
+    String scope = 'all',
+    String? groupId,
+  }) async {
+    final query = groupId == null || groupId.isEmpty
+        ? ''
+        : '&group_id=${Uri.encodeQueryComponent(groupId)}';
+    final response = await apiClient.get(
+      '/api/skills?scope=$scope$query',
+      gaToken: token,
+      cache: true,
+    );
     final payload = response.body;
     if (payload is! List) return const [];
-    return payload.whereType<Map<String, dynamic>>().map((item) => SkillItem(raw: item)).toList();
+    return payload
+        .whereType<Map<String, dynamic>>()
+        .map((item) => SkillItem(raw: item))
+        .toList();
   }
 
-  Future<Map<String, dynamic>> getSkill(String token, String scope, String id) async {
+  Future<Map<String, dynamic>> getSkill(
+    String token,
+    String scope,
+    String id,
+  ) async {
     final response = await apiClient.get(
       '/api/skills/${Uri.encodeComponent(scope)}/${Uri.encodeComponent(id)}',
       gaToken: token,
@@ -22,7 +39,11 @@ class SkillsRepository {
     return response.json;
   }
 
-  Future<Map<String, dynamic>> saveSkill(String token, String scope, Map<String, dynamic> payload) async {
+  Future<Map<String, dynamic>> saveSkill(
+    String token,
+    String scope,
+    Map<String, dynamic> payload,
+  ) async {
     final response = await apiClient.post(
       '/api/skills/${Uri.encodeComponent(scope)}',
       gaToken: token,

@@ -26,7 +26,10 @@ class _TerminalViewTransitionState extends State<TerminalViewTransition>
     duration: widget.duration,
   )..forward();
 
-  late final Animation<double> _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+  late final Animation<double> _fade = CurvedAnimation(
+    parent: _controller,
+    curve: Curves.easeOut,
+  );
 
   @override
   void dispose() {

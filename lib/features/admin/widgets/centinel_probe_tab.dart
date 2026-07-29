@@ -10,7 +10,12 @@ import 'centinel_chart.dart';
 /// primer error, para encontrar el techo estable de la plataforma — igual
 /// que la sección "probe" de centinel-stress.js en frontend_vanilla.
 class CentinelProbeTab extends StatefulWidget {
-  const CentinelProbeTab({required this.repository, required this.token, required this.tx, super.key});
+  const CentinelProbeTab({
+    required this.repository,
+    required this.token,
+    required this.tx,
+    super.key,
+  });
 
   final CentinelRepository repository;
   final String token;
@@ -70,13 +75,19 @@ class _CentinelProbeTabState extends State<CentinelProbeTab> {
         _starting = false;
       });
       _pollTimer?.cancel();
-      _pollTimer = Timer.periodic(const Duration(milliseconds: 1200), (_) => _poll());
+      _pollTimer = Timer.periodic(
+        const Duration(milliseconds: 1200),
+        (_) => _poll(),
+      );
       _poll();
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
       if (mounted) setState(() => _starting = false);
     } catch (_) {
-      _showMessage(_tx('centinel.probe_start_error', 'No se pudo iniciar la búsqueda'), isError: true);
+      _showMessage(
+        _tx('centinel.probe_start_error', 'No se pudo iniciar la búsqueda'),
+        isError: true,
+      );
       if (mounted) setState(() => _starting = false);
     }
   }
@@ -122,7 +133,10 @@ class _CentinelProbeTabState extends State<CentinelProbeTab> {
   void _showMessage(String text, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(text), backgroundColor: isError ? Colors.red.shade700 : null),
+      SnackBar(
+        content: Text(text),
+        backgroundColor: isError ? Colors.red.shade700 : null,
+      ),
     );
   }
 
@@ -138,7 +152,9 @@ class _CentinelProbeTabState extends State<CentinelProbeTab> {
               FilledButton.icon(
                 onPressed: _starting ? null : _start,
                 icon: const Icon(Icons.play_arrow),
-                label: Text(_tx('centinel.actions_probe_start', 'Iniciar búsqueda')),
+                label: Text(
+                  _tx('centinel.actions_probe_start', 'Iniciar búsqueda'),
+                ),
               )
             else
               FilledButton.tonalIcon(
@@ -182,7 +198,9 @@ class _CentinelProbeTabState extends State<CentinelProbeTab> {
                     controller: _startController,
                     enabled: !disabled,
                     keyboardType: TextInputType.number,
-                    decoration: InputDecoration(labelText: _tx('centinel.probe_start_label', 'Inicio')),
+                    decoration: InputDecoration(
+                      labelText: _tx('centinel.probe_start_label', 'Inicio'),
+                    ),
                   ),
                 ),
                 SizedBox(
@@ -191,7 +209,9 @@ class _CentinelProbeTabState extends State<CentinelProbeTab> {
                     controller: _stepController,
                     enabled: !disabled,
                     keyboardType: TextInputType.number,
-                    decoration: InputDecoration(labelText: _tx('centinel.probe_step_label', 'Paso')),
+                    decoration: InputDecoration(
+                      labelText: _tx('centinel.probe_step_label', 'Paso'),
+                    ),
                   ),
                 ),
                 SizedBox(
@@ -200,7 +220,12 @@ class _CentinelProbeTabState extends State<CentinelProbeTab> {
                     controller: _concurrencyController,
                     enabled: !disabled,
                     keyboardType: TextInputType.number,
-                    decoration: InputDecoration(labelText: _tx('centinel.probe_concurrency_label', 'Concurrencia máx (0=∞)')),
+                    decoration: InputDecoration(
+                      labelText: _tx(
+                        'centinel.probe_concurrency_label',
+                        'Concurrencia máx (0=∞)',
+                      ),
+                    ),
                   ),
                 ),
                 SizedBox(
@@ -208,32 +233,43 @@ class _CentinelProbeTabState extends State<CentinelProbeTab> {
                   child: TextField(
                     controller: _timeoutController,
                     enabled: !disabled,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: InputDecoration(labelText: _tx('centinel.probe_timeout_label', 'Timeout/req (s)')),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: _tx(
+                        'centinel.probe_timeout_label',
+                        'Timeout/req (s)',
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            Text(_tx('centinel.probe_duration_step_label', 'Duración por paso'), style: const TextStyle(fontWeight: FontWeight.w700)),
+            Text(
+              _tx('centinel.probe_duration_step_label', 'Duración por paso'),
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
             const SizedBox(height: 6),
             Wrap(
               spacing: 6,
-              children: [
-                (10, '10s'),
-                (30, '30s'),
-                (60, '1min'),
-              ].map((opt) {
+              children: [(10, '10s'), (30, '30s'), (60, '1min')].map((opt) {
                 return ChoiceChip(
                   label: Text(opt.$2),
                   selected: _duration == opt.$1,
-                  onSelected: disabled ? null : (_) => setState(() => _duration = opt.$1),
+                  onSelected: disabled
+                      ? null
+                      : (_) => setState(() => _duration = opt.$1),
                 );
               }).toList(),
             ),
             const SizedBox(height: 10),
             Text(
-              _tx('centinel.probe_hint', 'Lanza pruebas secuenciales aumentando el número de usuarios de paso en paso. Se detiene al primer error, mostrando el límite estable de la plataforma.'),
+              _tx(
+                'centinel.probe_hint',
+                'Lanza pruebas secuenciales aumentando el número de usuarios de paso en paso. Se detiene al primer error, mostrando el límite estable de la plataforma.',
+              ),
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
@@ -244,9 +280,15 @@ class _CentinelProbeTabState extends State<CentinelProbeTab> {
 
   Widget _buildChartCard() {
     final rps = _ticks.map((t) => (t['rps'] as num? ?? 0).toDouble()).toList();
-    final avg = _ticks.map((t) => (t['avg_s'] as num? ?? 0).toDouble()).toList();
-    final users = _ticks.map((t) => (t['users'] as num? ?? 0).toDouble()).toList();
-    final errors = _ticks.map((t) => (t['errors'] as num? ?? 0).toDouble()).toList();
+    final avg = _ticks
+        .map((t) => (t['avg_s'] as num? ?? 0).toDouble())
+        .toList();
+    final users = _ticks
+        .map((t) => (t['users'] as num? ?? 0).toDouble())
+        .toList();
+    final errors = _ticks
+        .map((t) => (t['errors'] as num? ?? 0).toDouble())
+        .toList();
 
     return Card(
       child: Padding(
@@ -254,27 +296,53 @@ class _CentinelProbeTabState extends State<CentinelProbeTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(_tx('centinel.probe_chart_title', 'Evolución en tiempo real'), style: const TextStyle(fontWeight: FontWeight.w700)),
+            Text(
+              _tx('centinel.probe_chart_title', 'Evolución en tiempo real'),
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
             const SizedBox(height: 6),
             Wrap(
               spacing: 12,
               children: [
-                _legendItem(const Color(0xFF22C55E), _tx('centinel.chart_legend_rps', 'req/s')),
-                _legendItem(const Color(0xFF6366F1), _tx('centinel.probe_legend_avg', 'Avg s')),
-                _legendItem(const Color(0xFFF97316), _tx('centinel.chart_legend_users', 'Usuarios')),
-                _legendItem(const Color(0xFFEF4444), _tx('centinel.errors_table_col_error', 'Error')),
+                _legendItem(
+                  const Color(0xFF22C55E),
+                  _tx('centinel.chart_legend_rps', 'req/s'),
+                ),
+                _legendItem(
+                  const Color(0xFF6366F1),
+                  _tx('centinel.probe_legend_avg', 'Avg s'),
+                ),
+                _legendItem(
+                  const Color(0xFFF97316),
+                  _tx('centinel.chart_legend_users', 'Usuarios'),
+                ),
+                _legendItem(
+                  const Color(0xFFEF4444),
+                  _tx('centinel.errors_table_col_error', 'Error'),
+                ),
               ],
             ),
             const SizedBox(height: 10),
             SizedBox(
               height: 240,
               child: CentinelChart(
-                emptyLabel: _tx('centinel.probe_chart_empty', 'Inicia la búsqueda para ver la gráfica'),
+                emptyLabel: _tx(
+                  'centinel.probe_chart_empty',
+                  'Inicia la búsqueda para ver la gráfica',
+                ),
                 series: [
                   ChartSeries(values: rps, color: const Color(0xFF22C55E)),
-                  ChartSeries(values: avg, color: const Color(0xFF6366F1), ownScale: false),
+                  ChartSeries(
+                    values: avg,
+                    color: const Color(0xFF6366F1),
+                    ownScale: false,
+                  ),
                   ChartSeries(values: users, color: const Color(0xFFF97316)),
-                  ChartSeries(values: errors, color: const Color(0xFFEF4444), style: ChartSeriesStyle.dots),
+                  ChartSeries(
+                    values: errors,
+                    color: const Color(0xFFEF4444),
+                    style: ChartSeriesStyle.dots,
+                  ),
                 ],
               ),
             ),
@@ -288,7 +356,11 @@ class _CentinelProbeTabState extends State<CentinelProbeTab> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
         const SizedBox(width: 4),
         Text(label, style: const TextStyle(fontSize: 11)),
       ],
@@ -309,7 +381,9 @@ class _CentinelProbeTabState extends State<CentinelProbeTab> {
     final stableUsers = v['stable_users'];
     final breakUsers = v['break_users'];
     final errorRate = v['error_rate'];
-    final errPct = errorRate is num ? (errorRate * 100).toStringAsFixed(1) : '?';
+    final errPct = errorRate is num
+        ? (errorRate * 100).toStringAsFixed(1)
+        : '?';
     final breakTotal = v['break_total'];
 
     if (breakUsers == null) {
@@ -340,7 +414,10 @@ class _CentinelProbeTabState extends State<CentinelProbeTab> {
       color: color.withValues(alpha: 0.12),
       child: Padding(
         padding: const EdgeInsets.all(14),
-        child: Text(text, style: TextStyle(color: color, fontWeight: FontWeight.w600)),
+        child: Text(
+          text,
+          style: TextStyle(color: color, fontWeight: FontWeight.w600),
+        ),
       ),
     );
   }
@@ -356,38 +433,76 @@ class _CentinelProbeTabState extends State<CentinelProbeTab> {
               scrollDirection: Axis.horizontal,
               child: DataTable(
                 columns: [
-                  DataColumn(label: Text(_tx('centinel.probe_col_users', 'Usuarios'))),
-                  DataColumn(label: Text(_tx('centinel.probe_col_rps', 'req/s'))),
-                  DataColumn(label: Text(_tx('centinel.summary_stat_errors', 'Errores'))),
-                  DataColumn(label: Text(_tx('centinel.probe_legend_avg', 'Avg s'))),
-                  DataColumn(label: Text(_tx('centinel.probe_col_status', 'Estado'))),
+                  DataColumn(
+                    label: Text(_tx('centinel.probe_col_users', 'Usuarios')),
+                  ),
+                  DataColumn(
+                    label: Text(_tx('centinel.probe_col_rps', 'req/s')),
+                  ),
+                  DataColumn(
+                    label: Text(_tx('centinel.summary_stat_errors', 'Errores')),
+                  ),
+                  DataColumn(
+                    label: Text(_tx('centinel.probe_legend_avg', 'Avg s')),
+                  ),
+                  DataColumn(
+                    label: Text(_tx('centinel.probe_col_status', 'Estado')),
+                  ),
                 ],
                 rows: _steps.map((s) {
                   final status = (s['status'] ?? '').toString();
                   final total = s['total'] ?? 0;
                   final errors = s['errors'] ?? 0;
-                  final errPct = (total is num && total > 0) ? ((errors as num) / total * 100).toStringAsFixed(1) : null;
+                  final errPct = (total is num && total > 0)
+                      ? ((errors as num) / total * 100).toStringAsFixed(1)
+                      : null;
                   final avgS = s['avg_s'];
                   Color statusColor;
                   String statusText;
                   switch (status) {
                     case 'ok':
                       statusColor = const Color(0xFF059669);
-                      statusText = '✓ ${_tx('centinel.probe_status_ok', 'Estable')}';
+                      statusText =
+                          '✓ ${_tx('centinel.probe_status_ok', 'Estable')}';
                     case 'fail':
                       statusColor = const Color(0xFFDC2626);
-                      statusText = '✗ ${_tx('centinel.probe_status_fail', 'Errores')}';
+                      statusText =
+                          '✗ ${_tx('centinel.probe_status_fail', 'Errores')}';
                     default:
                       statusColor = Colors.grey;
-                      statusText = _tx('centinel.probe_status_running', 'Probando…');
+                      statusText = _tx(
+                        'centinel.probe_status_running',
+                        'Probando…',
+                      );
                   }
                   return DataRow(
                     cells: [
-                      DataCell(Text('${s['users'] ?? '-'}', style: const TextStyle(fontWeight: FontWeight.w700))),
+                      DataCell(
+                        Text(
+                          '${s['users'] ?? '-'}',
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
                       DataCell(Text('${s['rps'] ?? '-'}')),
-                      DataCell(Text(errors is num && errors > 0 ? '$errors (${errPct ?? '-'}%)' : '0')),
-                      DataCell(Text(avgS is num ? avgS.toStringAsFixed(3) : '-')),
-                      DataCell(Text(statusText, style: TextStyle(color: statusColor, fontWeight: FontWeight.w600))),
+                      DataCell(
+                        Text(
+                          errors is num && errors > 0
+                              ? '$errors (${errPct ?? '-'}%)'
+                              : '0',
+                        ),
+                      ),
+                      DataCell(
+                        Text(avgS is num ? avgS.toStringAsFixed(3) : '-'),
+                      ),
+                      DataCell(
+                        Text(
+                          statusText,
+                          style: TextStyle(
+                            color: statusColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     ],
                   );
                 }).toList(),

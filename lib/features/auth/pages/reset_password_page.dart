@@ -52,7 +52,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       );
       if (!mounted) return;
       setState(() {
-        _message = ok ? 'Contraseña actualizada. Ya puedes iniciar sesión.' : 'No se pudo actualizar la contraseña';
+        _message = ok
+            ? 'Contraseña actualizada. Ya puedes iniciar sesión.'
+            : 'No se pudo actualizar la contraseña';
       });
     } on ApiError catch (error) {
       if (!mounted) return;
@@ -83,25 +85,44 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Restablecer contraseña', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
+                              const Text(
+                                'Restablecer contraseña',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                               const SizedBox(height: 16),
                               TextFormField(
                                 controller: _passwordController,
                                 obscureText: true,
                                 validator: (value) {
-                                  final requiredError = Validators.requiredField(value, message: 'La contraseña es obligatoria');
-                                  if (requiredError != null) return requiredError;
-                                  if ((value ?? '').trim().length < 8) return 'La contraseña debe tener al menos 8 caracteres';
+                                  final requiredError =
+                                      Validators.requiredField(
+                                        value,
+                                        message: 'La contraseña es obligatoria',
+                                      );
+                                  if (requiredError != null)
+                                    return requiredError;
+                                  if ((value ?? '').trim().length < 8)
+                                    return 'La contraseña debe tener al menos 8 caracteres';
                                   return null;
                                 },
-                                decoration: const InputDecoration(labelText: 'Nueva contraseña', border: OutlineInputBorder()),
+                                decoration: const InputDecoration(
+                                  labelText: 'Nueva contraseña',
+                                  border: OutlineInputBorder(),
+                                ),
                               ),
                               const SizedBox(height: 16),
                               SizedBox(
                                 width: double.infinity,
                                 child: FilledButton(
                                   onPressed: _loading ? null : _submit,
-                                  child: Text(_loading ? 'Actualizando...' : 'Actualizar contraseña'),
+                                  child: Text(
+                                    _loading
+                                        ? 'Actualizando...'
+                                        : 'Actualizar contraseña',
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -119,12 +140,19 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       : Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text('Enlace inválido', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
+                            const Text(
+                              'Enlace inválido',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                             const SizedBox(height: 10),
                             const Text('No se detectó token de recuperación.'),
                             const SizedBox(height: 8),
                             TextButton(
-                              onPressed: () => context.go(RouteNames.forgotPassword),
+                              onPressed: () =>
+                                  context.go(RouteNames.forgotPassword),
                               child: const Text('Solicitar nuevo enlace'),
                             ),
                           ],

@@ -5,14 +5,21 @@ import '../../../core/network/api_error.dart';
 import '../repositories/auth_repository.dart';
 import '../../../shared/state/session_controller.dart';
 
-const _vsCodeSchemes = {'vscode', 'vscode-insiders', 'vscodium', 'cursor', 'windsurf'};
+const _vsCodeSchemes = {
+  'vscode',
+  'vscode-insiders',
+  'vscodium',
+  'cursor',
+  'windsurf',
+};
 const _vsCodeAuthority = 'iagentshub.iagentshub';
 
 Uri? _safeCallback(String? value) {
   if (value == null || value.isEmpty) return null;
   final uri = Uri.tryParse(value);
   if (uri == null) return null;
-  if (!_vsCodeSchemes.contains(uri.scheme) || uri.authority != _vsCodeAuthority) return null;
+  if (!_vsCodeSchemes.contains(uri.scheme) || uri.authority != _vsCodeAuthority)
+    return null;
   return uri;
 }
 
@@ -52,12 +59,17 @@ class _VsCodeAuthPageState extends State<VsCodeAuthPage> {
       _error = null;
     });
     try {
-      final code = await widget.authRepository.authorizeVsCode(token, state: state);
-      final destination = target.replace(queryParameters: {
-        ...target.queryParameters,
-        'code': code,
-        'state': state,
-      });
+      final code = await widget.authRepository.authorizeVsCode(
+        token,
+        state: state,
+      );
+      final destination = target.replace(
+        queryParameters: {
+          ...target.queryParameters,
+          'code': code,
+          'state': state,
+        },
+      );
       if (!mounted) return;
       setState(() => _done = true);
       await launchUrl(destination, mode: LaunchMode.externalApplication);
@@ -102,7 +114,9 @@ class _VsCodeAuthPageState extends State<VsCodeAuthPage> {
               ),
               const SizedBox(width: 8),
               TextButton(
-                onPressed: _loading ? null : () => Navigator.of(context).maybePop(),
+                onPressed: _loading
+                    ? null
+                    : () => Navigator.of(context).maybePop(),
                 child: const Text('Cancelar'),
               ),
             ],
@@ -124,7 +138,10 @@ class _VsCodeAuthPageState extends State<VsCodeAuthPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('Autorizar VS Code', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                  const Text(
+                    'Autorizar VS Code',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                  ),
                   const SizedBox(height: 12),
                   body,
                 ],

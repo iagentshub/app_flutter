@@ -16,7 +16,8 @@ class _StepDraft {
     this.evaluatorMaxIterations = 5,
     this.loopTargetId,
     this.loopIterations = 2,
-  });
+    List<String>? nextStepIds,
+  }) : nextStepIds = nextStepIds ?? [];
 
   final String id;
   String agentId;
@@ -27,6 +28,12 @@ class _StepDraft {
   int evaluatorMaxIterations;
   String? loopTargetId;
   int loopIterations;
+
+  /// IDs de los pasos a los que sigue este — más de uno = ramas paralelas
+  /// desde aquí; que dos pasos compartan el mismo destino = ese destino
+  /// une (fan-in) esas ramas. Sustituye el antiguo orden implícito por
+  /// posición en la lista.
+  List<String> nextStepIds;
 }
 
 class WorkflowEditorPage extends StatefulWidget {
@@ -61,15 +68,21 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
   void initState() {
     super.initState();
     final initial = widget.initial;
-    _nameController = TextEditingController(text: initial?['name']?.toString() ?? '');
-    _descriptionController = TextEditingController(text: initial?['description']?.toString() ?? '');
+    _nameController = TextEditingController(
+      text: initial?['name']?.toString() ?? '',
+    );
+    _descriptionController = TextEditingController(
+      text: initial?['description']?.toString() ?? '',
+    );
     final labels = (initial?['labels'] is List)
         ? (initial?['labels'] as List).map((item) => item.toString()).join(', ')
         : 'private';
     _labelsController = TextEditingController(text: labels);
 
     final definition = initial?['definition'];
-    _steps = definition is Map<String, dynamic> ? _stepsFromDefinition(definition) : [_newStep()];
+    _steps = definition is Map<String, dynamic>
+        ? _stepsFromDefinition(definition)
+        : [_newStep()];
     _loadAgents();
   }
 
@@ -93,7 +106,9 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
       return;
     }
     try {
-      final agents = await AgentsRepository(apiClient: widget.apiClient).listAgents(token);
+      final agents = await AgentsRepository(
+        apiClient: widget.apiClient,
+      ).listAgents(token);
       if (!mounted) return;
       setState(() {
         _agents = agents;
@@ -110,55 +125,35 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
 
   _StepDraft _newStep() {
     _stepCounter += 1;
-    return _StepDraft(id: 'step-${DateTime.now().millisecondsSinceEpoch}-$_stepCounter');
+    return _StepDraft(
+      id: 'step-${DateTime.now().millisecondsSinceEpoch}-$_stepCounter',
+    );
   }
 
   List<_StepDraft> _stepsFromDefinition(Map<String, dynamic> definition) {
-    final nodes = (definition['nodes'] as List? ?? []).whereType<Map<String, dynamic>>().toList();
-    final edges = (definition['edges'] as List? ?? []).whereType<Map<String, dynamic>>().toList();
+    final nodes = (definition['nodes'] as List? ?? [])
+        .whereType<Map<String, dynamic>>()
+        .toList();
+    final edges = (definition['edges'] as List? ?? [])
+        .whereType<Map<String, dynamic>>()
+        .toList();
     if (nodes.isEmpty) return [_newStep()];
 
-    final byId = {for (final n in nodes) n['id'].toString(): n};
-    final sequenceEdges = edges.where((e) => (e['type'] ?? 'sequence') == 'sequence').toList();
+    final sequenceEdges = edges
+        .where((e) => (e['type'] ?? 'sequence') == 'sequence')
+        .toList();
     final loopEdges = edges.where((e) => e['type'] == 'loop').toList();
 
-    final outgoing = <String, String?>{};
-    final incoming = <String, int>{};
-    for (final n in nodes) {
+    return nodes.map((n) {
       final id = n['id'].toString();
-      outgoing[id] = null;
-      incoming[id] = 0;
-    }
-    for (final e in sequenceEdges) {
-      final source = e['source']?.toString();
-      final target = e['target']?.toString();
-      if (source == null || target == null) continue;
-      outgoing[source] = target;
-      incoming[target] = (incoming[target] ?? 0) + 1;
-    }
-    String? start;
-    for (final n in nodes) {
-      final id = n['id'].toString();
-      if ((incoming[id] ?? 0) == 0) {
-        start = id;
-        break;
-      }
-    }
-    final orderedIds = <String>[];
-    String? current = start ?? nodes.first['id'].toString();
-    while (current != null && !orderedIds.contains(current)) {
-      orderedIds.add(current);
-      current = outgoing[current];
-    }
-    for (final n in nodes) {
-      final id = n['id'].toString();
-      if (!orderedIds.contains(id)) orderedIds.add(id);
-    }
-
-    return orderedIds.map((id) {
-      final n = byId[id]!;
-      final loop = loopEdges.where((e) => e['source']?.toString() == id).toList();
+      final loop = loopEdges
+          .where((e) => e['source']?.toString() == id)
+          .toList();
       final evaluator = n['evaluator'] as Map<String, dynamic>?;
+      final nextIds = sequenceEdges
+          .where((e) => e['source']?.toString() == id)
+          .map((e) => e['target'].toString())
+          .toList();
       return _StepDraft(
         id: id,
         agentId: n['agent_id']?.toString() ?? '',
@@ -166,9 +161,13 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
         instruction: n['instruction']?.toString() ?? '',
         kind: n['kind']?.toString() ?? 'agent',
         evaluatorCondition: evaluator?['condition']?.toString() ?? '',
-        evaluatorMaxIterations: (evaluator?['max_iterations'] as num?)?.toInt() ?? 5,
+        evaluatorMaxIterations:
+            (evaluator?['max_iterations'] as num?)?.toInt() ?? 5,
         loopTargetId: loop.isEmpty ? null : loop.first['target']?.toString(),
-        loopIterations: loop.isEmpty ? 2 : ((loop.first['iterations'] as num?)?.toInt() ?? 2),
+        loopIterations: loop.isEmpty
+            ? 2
+            : ((loop.first['iterations'] as num?)?.toInt() ?? 2),
+        nextStepIds: nextIds,
       );
     }).toList();
   }
@@ -192,8 +191,10 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
     }).toList();
 
     final edges = <Map<String, dynamic>>[];
-    for (var i = 0; i < _steps.length - 1; i++) {
-      edges.add({'source': _steps[i].id, 'target': _steps[i + 1].id, 'type': 'sequence'});
+    for (final step in _steps) {
+      for (final nextId in step.nextStepIds) {
+        edges.add({'source': step.id, 'target': nextId, 'type': 'sequence'});
+      }
     }
     for (final step in _steps) {
       if (step.loopTargetId == null) continue;
@@ -214,7 +215,9 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
     if (_steps.isEmpty) return 'La orquestación necesita al menos un paso';
     for (var i = 0; i < _steps.length; i++) {
       final step = _steps[i];
-      if (step.agentId.isEmpty) return 'Selecciona un agente para el paso ${i + 1}';
+      if (step.agentId.isEmpty) {
+        return 'Selecciona un agente para el paso ${i + 1}';
+      }
       if (step.kind == 'evaluator') {
         if (step.evaluatorCondition.trim().isEmpty) {
           return 'El paso ${i + 1} es un evaluador y necesita una condición';
@@ -224,6 +227,9 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
         }
       }
     }
+    if (_steps.length > 1 && _steps.every((s) => s.nextStepIds.isEmpty)) {
+      return 'Conecta los pasos entre sí ("Continúa hacia") para formar el flujo';
+    }
     return null;
   }
 
@@ -232,7 +238,10 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
     final validationError = _validate();
     if (validationError != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(validationError), backgroundColor: Colors.red.shade700),
+        SnackBar(
+          content: Text(validationError),
+          backgroundColor: Colors.red.shade700,
+        ),
       );
       return;
     }
@@ -254,7 +263,17 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
   }
 
   void _addStep() {
-    setState(() => _steps = [..._steps, _newStep()]);
+    final newStep = _newStep();
+    setState(() {
+      // Si el último paso todavía no continúa hacia ningún sitio, lo
+      // enlazamos automáticamente al nuevo — mantiene el caso lineal
+      // (el más común) tan simple como antes; las ramas se añaden luego
+      // a mano con "Continúa hacia".
+      if (_steps.isNotEmpty && _steps.last.nextStepIds.isEmpty) {
+        _steps.last.nextStepIds.add(newStep.id);
+      }
+      _steps = [..._steps, newStep];
+    });
   }
 
   void _removeStep(int index) {
@@ -264,6 +283,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
       _steps = [..._steps]..removeAt(index);
       for (final step in _steps) {
         if (step.loopTargetId == removedId) step.loopTargetId = null;
+        step.nextStepIds.remove(removedId);
       }
     });
   }
@@ -274,9 +294,6 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
       if (newIndex > oldIndex) newIndex -= 1;
       final item = list.removeAt(oldIndex);
       list.insert(newIndex, item);
-      for (final step in list) {
-        step.loopTargetId = null;
-      }
       _steps = list;
     });
   }
@@ -285,10 +302,10 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.initial == null ? 'Nuevo workflow' : 'Editar workflow'),
-        actions: [
-          TextButton(onPressed: _save, child: const Text('GUARDAR')),
-        ],
+        title: Text(
+          widget.initial == null ? 'Nuevo workflow' : 'Editar workflow',
+        ),
+        actions: [TextButton(onPressed: _save, child: const Text('GUARDAR'))],
       ),
       body: _loadingAgents
           ? const Center(child: CircularProgressIndicator())
@@ -302,37 +319,59 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
                     padding: const EdgeInsets.all(16),
                     children: [
                       if (_error != null) ...[
-                        Text(_error!, style: TextStyle(color: Colors.red.shade700)),
+                        Text(
+                          _error!,
+                          style: TextStyle(color: Colors.red.shade700),
+                        ),
                         const SizedBox(height: 10),
                       ],
                       TextFormField(
                         controller: _nameController,
                         decoration: const InputDecoration(labelText: 'Nombre'),
-                        validator: (value) => (value == null || value.trim().isEmpty) ? 'Nombre obligatorio' : null,
+                        validator: (value) =>
+                            (value == null || value.trim().isEmpty)
+                            ? 'Nombre obligatorio'
+                            : null,
                       ),
                       const SizedBox(height: 10),
                       TextFormField(
                         controller: _descriptionController,
                         minLines: 2,
                         maxLines: 4,
-                        decoration: const InputDecoration(labelText: 'Descripción'),
+                        decoration: const InputDecoration(
+                          labelText: 'Descripción',
+                        ),
                       ),
                       const SizedBox(height: 10),
                       TextFormField(
                         controller: _labelsController,
-                        decoration: const InputDecoration(labelText: 'Labels (coma separada)'),
+                        decoration: const InputDecoration(
+                          labelText: 'Labels (coma separada)',
+                        ),
                       ),
                       const SizedBox(height: 20),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Pasos', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                          const Text(
+                            'Pasos',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                           OutlinedButton.icon(
                             onPressed: _addStep,
                             icon: const Icon(Icons.add),
                             label: const Text('Añadir paso'),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Cada paso puede continuar hacia varios pasos a la vez '
+                        '(ramas paralelas) — marca los destinos en "Continúa hacia".',
+                        style: Theme.of(context).textTheme.bodySmall,
                       ),
                       const SizedBox(height: 10),
                       ReorderableListView.builder(
@@ -341,7 +380,10 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
                         buildDefaultDragHandles: false,
                         itemCount: _steps.length,
                         onReorder: _reorder,
-                        itemBuilder: (context, index) => _buildStepCard(index, key: ValueKey(_steps[index].id)),
+                        itemBuilder: (context, index) => _buildStepCard(
+                          index,
+                          key: ValueKey(_steps[index].id),
+                        ),
                       ),
                     ],
                   ),
@@ -351,9 +393,18 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
     );
   }
 
+  String _stepLabel(int index) {
+    final step = _steps[index];
+    final name = step.label.isNotEmpty ? step.label : step.agentId;
+    return 'Paso ${index + 1}${name.isEmpty ? '' : ': $name'}';
+  }
+
   Widget _buildStepCard(int index, {required Key key}) {
     final step = _steps[index];
-    final earlierSteps = _steps.sublist(0, index);
+    final otherSteps = [
+      for (var i = 0; i < _steps.length; i++)
+        if (i != index) i,
+    ];
 
     return Card(
       key: key,
@@ -372,26 +423,40 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
                     child: Icon(Icons.drag_handle),
                   ),
                 ),
-                Text('Paso ${index + 1}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                Text(
+                  'Paso ${index + 1}',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
                 const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.delete_outline),
-                  onPressed: _steps.length > 1 ? () => _removeStep(index) : null,
+                  onPressed: _steps.length > 1
+                      ? () => _removeStep(index)
+                      : null,
                 ),
               ],
             ),
             DropdownButtonFormField<String>(
-              initialValue: _agents.any((a) => a.id == step.agentId) ? step.agentId : null,
+              initialValue: _agents.any((a) => a.id == step.agentId)
+                  ? step.agentId
+                  : null,
               decoration: const InputDecoration(labelText: 'Agente'),
               items: _agents
-                  .map((agent) => DropdownMenuItem(value: agent.id, child: Text(agent.name)))
+                  .map(
+                    (agent) => DropdownMenuItem(
+                      value: agent.id,
+                      child: Text(agent.name),
+                    ),
+                  )
                   .toList(),
               onChanged: (value) => setState(() => step.agentId = value ?? ''),
             ),
             const SizedBox(height: 10),
             TextFormField(
               initialValue: step.label,
-              decoration: const InputDecoration(labelText: 'Etiqueta (opcional)'),
+              decoration: const InputDecoration(
+                labelText: 'Etiqueta (opcional)',
+              ),
               onChanged: (value) => step.label = value,
             ),
             const SizedBox(height: 10),
@@ -399,7 +464,9 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
               initialValue: step.instruction,
               minLines: 2,
               maxLines: 5,
-              decoration: const InputDecoration(labelText: 'Instrucción para este paso'),
+              decoration: const InputDecoration(
+                labelText: 'Instrucción para este paso',
+              ),
               onChanged: (value) => step.instruction = value,
             ),
             const SizedBox(height: 10),
@@ -418,7 +485,9 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
               const SizedBox(height: 10),
               TextFormField(
                 initialValue: step.evaluatorCondition,
-                decoration: const InputDecoration(labelText: 'Condición de evaluación'),
+                decoration: const InputDecoration(
+                  labelText: 'Condición de evaluación',
+                ),
                 onChanged: (value) => step.evaluatorCondition = value,
               ),
               const SizedBox(height: 10),
@@ -433,28 +502,60 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
                       max: 20,
                       divisions: 18,
                       label: '${step.evaluatorMaxIterations}',
-                      onChanged: (value) => setState(() => step.evaluatorMaxIterations = value.round()),
+                      onChanged: (value) => setState(
+                        () => step.evaluatorMaxIterations = value.round(),
+                      ),
                     ),
                   ),
                   Text('${step.evaluatorMaxIterations}'),
                 ],
               ),
             ],
-            if (earlierSteps.isNotEmpty) ...[
+            if (otherSteps.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              Text(
+                'Continúa hacia',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final otherIndex in otherSteps)
+                    FilterChip(
+                      label: Text(_stepLabel(otherIndex)),
+                      selected: step.nextStepIds.contains(
+                        _steps[otherIndex].id,
+                      ),
+                      onSelected: (selected) => setState(() {
+                        final targetId = _steps[otherIndex].id;
+                        if (selected) {
+                          step.nextStepIds.add(targetId);
+                        } else {
+                          step.nextStepIds.remove(targetId);
+                        }
+                      }),
+                    ),
+                ],
+              ),
               const SizedBox(height: 10),
               DropdownButtonFormField<String>(
                 initialValue: step.loopTargetId,
                 decoration: InputDecoration(
-                  labelText: step.kind == 'evaluator' ? 'Cierra ciclo hacia (obligatorio)' : 'Cierra ciclo hacia (opcional)',
+                  labelText: step.kind == 'evaluator'
+                      ? 'Cierra ciclo hacia (obligatorio)'
+                      : 'Cierra ciclo hacia (opcional)',
                 ),
                 items: [
                   const DropdownMenuItem(value: null, child: Text('Sin ciclo')),
-                  ...earlierSteps.asMap().entries.map(
-                        (entry) => DropdownMenuItem(
-                          value: entry.value.id,
-                          child: Text('Paso ${entry.key + 1}: ${entry.value.label.isEmpty ? entry.value.agentId : entry.value.label}'),
-                        ),
-                      ),
+                  for (final otherIndex in otherSteps)
+                    DropdownMenuItem(
+                      value: _steps[otherIndex].id,
+                      child: Text(_stepLabel(otherIndex)),
+                    ),
                 ],
                 onChanged: (value) => setState(() => step.loopTargetId = value),
               ),
@@ -471,7 +572,8 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
                         max: 20,
                         divisions: 18,
                         label: '${step.loopIterations}',
-                        onChanged: (value) => setState(() => step.loopIterations = value.round()),
+                        onChanged: (value) =>
+                            setState(() => step.loopIterations = value.round()),
                       ),
                     ),
                     Text('${step.loopIterations}'),

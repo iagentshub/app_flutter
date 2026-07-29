@@ -9,7 +9,11 @@ import '../state/backend_controller.dart';
 import '../state/boot_platform_cache.dart';
 
 class LaunchSplash extends StatefulWidget {
-  const LaunchSplash({required this.backendController, required this.onFinished, super.key});
+  const LaunchSplash({
+    required this.backendController,
+    required this.onFinished,
+    super.key,
+  });
 
   final BackendController backendController;
   final VoidCallback onFinished;
@@ -165,17 +169,31 @@ class _LaunchSplashState extends State<LaunchSplash> {
             decoration: BoxDecoration(
               color: const Color(0xFFD90429),
               borderRadius: BorderRadius.circular(7),
-              boxShadow: const [BoxShadow(color: Color(0xAA7A0C1C), blurRadius: 16, spreadRadius: 0.3)],
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0xAA7A0C1C),
+                  blurRadius: 16,
+                  spreadRadius: 0.3,
+                ),
+              ],
             ),
             child: Text(
               suffix,
-              style: GoogleFonts.inter(color: const Color(0xFFFFFFFF), fontSize: 34, fontWeight: FontWeight.w800),
+              style: GoogleFonts.inter(
+                color: const Color(0xFFFFFFFF),
+                fontSize: 34,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
         if (cursor.isNotEmpty)
           Text(
             cursor,
-            style: GoogleFonts.inter(color: const Color(0xFFFFFFFF), fontSize: 44, fontWeight: FontWeight.w700),
+            style: GoogleFonts.inter(
+              color: const Color(0xFFFFFFFF),
+              fontSize: 44,
+              fontWeight: FontWeight.w700,
+            ),
           ),
       ],
     );

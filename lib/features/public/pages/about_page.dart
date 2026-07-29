@@ -25,13 +25,23 @@ class AboutPage extends StatelessWidget {
           final heroTitle = LocaleLoader.text(bundle, 'hero.title');
           final heroSubtitle = LocaleLoader.text(bundle, 'hero.subtitle');
           final missionTitle = LocaleLoader.text(bundle, 'mission.title');
-          final missionDescription = LocaleLoader.text(bundle, 'mission.description');
+          final missionDescription = LocaleLoader.text(
+            bundle,
+            'mission.description',
+          );
           final visionTitle = LocaleLoader.text(bundle, 'vision.title');
-          final visionDescription = LocaleLoader.text(bundle, 'vision.description');
+          final visionDescription = LocaleLoader.text(
+            bundle,
+            'vision.description',
+          );
           final ctaTitle = LocaleLoader.text(bundle, 'cta.title');
           final ctaDescription = LocaleLoader.text(bundle, 'cta.description');
           final ctaButton = LocaleLoader.text(bundle, 'cta.button');
-          final loginLabel = LocaleLoader.text(bundle, 'header.login', fallback: isEnglish ? 'Login' : 'Iniciar sesion');
+          final loginLabel = LocaleLoader.text(
+            bundle,
+            'header.login',
+            fallback: isEnglish ? 'Login' : 'Iniciar sesion',
+          );
 
           return CustomScrollView(
             slivers: [
@@ -43,8 +53,11 @@ class AboutPage extends StatelessWidget {
                     loginLabel: loginLabel,
                     onLogin: () => context.go(RouteNames.login),
                     onLanguageSelected: (selected) {
-                      final target = selected == 'en' ? RouteNames.aboutEn : RouteNames.about;
-                      if ((selected == 'en' && !isEnglish) || (selected == 'es' && isEnglish)) {
+                      final target = selected == 'en'
+                          ? RouteNames.aboutEn
+                          : RouteNames.about;
+                      if ((selected == 'en' && !isEnglish) ||
+                          (selected == 'es' && isEnglish)) {
                         context.go(target);
                       }
                     },
@@ -57,9 +70,9 @@ class AboutPage extends StatelessWidget {
                   child: Text(
                     heroTitle,
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                        ),
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -68,7 +81,9 @@ class AboutPage extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
                   child: Text(
                     heroSubtitle,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: const Color(0xFFE0E0E0)),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: const Color(0xFFE0E0E0),
+                    ),
                   ),
                 ),
               ),
@@ -84,10 +99,7 @@ class AboutPage extends StatelessWidget {
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
-                  child: _InfoCard(
-                    title: visionTitle,
-                    body: visionDescription,
-                  ),
+                  child: _InfoCard(title: visionTitle, body: visionDescription),
                 ),
               ),
               SliverToBoxAdapter(
@@ -106,7 +118,8 @@ class AboutPage extends StatelessWidget {
                         children: [
                           Text(
                             ctaTitle,
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -114,7 +127,8 @@ class AboutPage extends StatelessWidget {
                           const SizedBox(height: 10),
                           Text(
                             ctaDescription,
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: const Color(0xFFD3D3D3)),
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: const Color(0xFFD3D3D3)),
                           ),
                           const SizedBox(height: 14),
                           ElevatedButton(
@@ -161,14 +175,16 @@ class _InfoCard extends StatelessWidget {
             Text(
               title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               body,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: const Color(0xFFD6D6D6)),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFFD6D6D6)),
             ),
           ],
         ),
