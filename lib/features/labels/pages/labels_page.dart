@@ -114,7 +114,7 @@ class _LabelsPageState extends State<LabelsPage> {
       final filtered = await _repository.listResources(
         token,
         type: _selectedType,
-        label: label,
+        labels: label.isEmpty ? const [] : [label],
       );
       if (!mounted) return;
       setState(() {

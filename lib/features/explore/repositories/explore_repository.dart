@@ -12,13 +12,13 @@ class ExploreRepository {
     required String type,
     String query = '',
     String category = '',
-    String label = '',
+    List<String> labels = const [],
   }) async {
-    final params = <String, String>{
+    final params = <String, dynamic>{
       'type': type,
       if (query.trim().isNotEmpty) 'q': query.trim(),
       if (category.trim().isNotEmpty) 'category': category.trim(),
-      if (label.trim().isNotEmpty) 'label': label.trim(),
+      if (labels.isNotEmpty) 'label': labels,
     };
     final uri = Uri(path: '/api/explore', queryParameters: params);
     final response = await apiClient.get(

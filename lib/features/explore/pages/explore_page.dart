@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
@@ -42,7 +43,7 @@ class _ExplorePageState extends State<ExplorePage> {
   String? _error;
   String _type = 'all';
   String _category = '';
-  String _label = '';
+  final Set<String> _labels = <String>{};
   final Set<String> _busyKeys = <String>{};
   final Set<String> _linkedKeys = <String>{};
   final Set<String> _starredKeys = <String>{};
@@ -105,7 +106,7 @@ class _ExplorePageState extends State<ExplorePage> {
         type: _type,
         query: _queryController.text,
         category: _category,
-        label: _label,
+        labels: _labels.toList(),
       );
       if (!mounted) return;
       setState(() {
@@ -242,18 +243,74 @@ class _ExplorePageState extends State<ExplorePage> {
     ('workflow', _tx('explore.type_workflows', 'Workflows')),
   ];
 
+  static const _categoryKeys = {
+    'Coding': 'category_coding',
+    'Writing': 'category_writing',
+    'Research': 'category_research',
+    'Data': 'category_data',
+    'DevOps': 'category_devops',
+    'Support': 'category_support',
+    'Education': 'category_education',
+    'Productivity': 'category_productivity',
+    'Marketing': 'category_marketing',
+    'Finance': 'category_finance',
+    'Other': 'category_other',
+  };
+
+  /// Traduce el tipo de recurso ("agent", "skill"...) al idioma del sistema,
+  /// reutilizando las mismas etiquetas que el filtro de tipo.
+  String _typeChipLabel(String type) {
+    for (final option in _typeOptions) {
+      if (option.$1 == type) return option.$2;
+    }
+    return type;
+  }
+
+  /// Traduce la categoría ("Coding", "Other"...) al idioma del sistema.
+  String _categoryChipLabel(String category) {
+    final key = _categoryKeys[category];
+    if (key == null) return category;
+    return _tx('explore.$key', category);
+  }
+
+  // En Explore todo lo listado es público (el backend solo devuelve
+  // is_public=true), así que filtrar por "public"/"private" no aporta nada.
+  static final _explorableLabelKeys = kLabelKeys
+      .where((l) => l != 'public' && l != 'private')
+      .toList();
+
+  static const _labelKeys = {
+    'production': 'label_production',
+    'staging': 'label_staging',
+    'development': 'label_development',
+    'test': 'label_test',
+    'favorite': 'label_favorite',
+    'draft': 'label_draft',
+    'review': 'label_review',
+    'deprecated': 'label_deprecated',
+    'quarantine': 'label_quarantine',
+    'archived': 'label_archived',
+    'delete': 'label_delete',
+  };
+
+  /// Traduce el nombre de una label ("favorite", "draft"...) al idioma del sistema.
+  String _labelChipLabel(String label) {
+    final key = _labelKeys[label];
+    if (key == null) return label;
+    return _tx('explore.$key', label);
+  }
+
   int get _activeFilterCount =>
       (_type != 'all' ? 1 : 0) +
       (_category.isNotEmpty ? 1 : 0) +
-      (_label.isNotEmpty ? 1 : 0);
+      _labels.length;
 
   void _openFiltersDialog() {
     final optionAll = _tx('explore.option_all', 'Todas');
     final categoryOptions = [
       ('', optionAll),
-      ..._categoryOptions.map((c) => (c, c)),
+      ..._categoryOptions.map((c) => (c, _categoryChipLabel(c))),
     ];
-    final labelOptions = [('', optionAll), ...kLabelKeys.map((l) => (l, l))];
 
     showFilterDialog(
       context,
@@ -264,7 +321,7 @@ class _ExplorePageState extends State<ExplorePage> {
         setState(() {
           _type = 'all';
           _category = '';
-          _label = '';
+          _labels.clear();
         });
         _load();
       },
@@ -291,15 +348,32 @@ class _ExplorePageState extends State<ExplorePage> {
           },
         ),
         const SizedBox(height: 12),
-        _dropdown(
-          label: _tx('explore.label_label', 'Label'),
-          value: _label,
-          options: labelOptions,
-          onChanged: (v) {
-            setState(() => _label = v);
-            _load();
-            setDialogState(() {});
-          },
+        Text(
+          _tx('explore.label_label', 'Label'),
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: _explorableLabelKeys.map((l) {
+            final selected = _labels.contains(l);
+            return FilterChip(
+              label: Text(_labelChipLabel(l)),
+              selected: selected,
+              onSelected: (value) {
+                setState(() {
+                  if (value) {
+                    _labels.add(l);
+                  } else {
+                    _labels.remove(l);
+                  }
+                });
+                _load();
+                setDialogState(() {});
+              },
+            );
+          }).toList(),
         ),
       ],
     );
@@ -442,17 +516,12 @@ class _ExplorePageState extends State<ExplorePage> {
         else
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            sliver: SliverGrid(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: crossAxisCount,
-                mainAxisExtent: 280,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => _buildItemCard(_items[index]),
-                childCount: _items.length,
-              ),
+            sliver: SliverMasonryGrid.count(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childCount: _items.length,
+              itemBuilder: (context, index) => _buildItemCard(_items[index]),
             ),
           ),
       ],
@@ -476,22 +545,14 @@ class _ExplorePageState extends State<ExplorePage> {
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    item.name,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                _chip(item.resourceType),
-                _chip(item.category),
-              ],
+            Text(
+              item.name,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 6),
             Row(
@@ -526,10 +587,14 @@ class _ExplorePageState extends State<ExplorePage> {
                 overflow: TextOverflow.ellipsis,
               ),
             ],
-            if (item.labels.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              LabelChipsRow(labels: item.labels),
-            ],
+            const SizedBox(height: 8),
+            LabelChipsRow(
+              labels: item.labels,
+              leading: [
+                _chip(_typeChipLabel(item.resourceType)),
+                _chip(_categoryChipLabel(item.category)),
+              ],
+            ),
             if (item.tags.isNotEmpty) ...[
               const SizedBox(height: 6),
               Wrap(
@@ -541,7 +606,7 @@ class _ExplorePageState extends State<ExplorePage> {
                     .toList(),
               ),
             ],
-            const Spacer(),
+            const SizedBox(height: 10),
             Row(
               children: [
                 ActionIconButton(
@@ -575,7 +640,6 @@ class _ExplorePageState extends State<ExplorePage> {
 
   Widget _chip(String text) {
     return Container(
-      margin: const EdgeInsets.only(left: 6),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: Colors.red.withValues(alpha: 0.14),
