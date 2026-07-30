@@ -1704,7 +1704,7 @@ class _OwnerPickerDialogState extends State<_OwnerPickerDialog> {
     return AlertDialog(
       title: Text(tx('admin.change_owner_title', 'Cambiar propietario')),
       content: SizedBox(
-        width: 360,
+        width: dialogContentWidth(context, 360),
         child: Autocomplete<String>(
           optionsBuilder: (value) {
             if (value.text.isEmpty) return widget.usernames;

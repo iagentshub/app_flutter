@@ -19,6 +19,7 @@ import '../../../shared/widgets/label_chips_row.dart';
 import 'agent_builder_page.dart';
 import '../../../shared/widgets/origin_badge.dart';
 import '../../../shared/widgets/resource_history_dialog.dart';
+import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 import 'chat_page.dart';
@@ -877,8 +878,8 @@ class _PublicAgentPickerDialogState extends State<_PublicAgentPickerDialog> {
         tx('agents.create_public_picker_title', 'Elige un agente público'),
       ),
       content: SizedBox(
-        width: 480,
-        height: 420,
+        width: dialogContentWidth(context, 480),
+        height: dialogContentHeight(context, 420),
         child: Column(
           children: [
             TextField(

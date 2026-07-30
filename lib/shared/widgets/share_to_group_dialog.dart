@@ -6,6 +6,7 @@ import '../../models/manager/workspace_models.dart';
 import '../i18n/locale_loader.dart';
 import '../repositories/sharing_repository.dart';
 import '../state/locale_controller.dart';
+import 'responsive_dialog.dart';
 import 'status_dot.dart';
 
 /// Diálogo para compartir un recurso con uno o varios grupos a la vez. Cada
@@ -159,7 +160,7 @@ class _ShareToGroupDialogState extends State<_ShareToGroupDialog> {
     return AlertDialog(
       title: Text(_tx('groups.share_dialog_title', 'Compartir con grupo')),
       content: SizedBox(
-        width: 380,
+        width: dialogContentWidth(context, 380),
         child: _loading
             ? const SizedBox(
                 height: 120,

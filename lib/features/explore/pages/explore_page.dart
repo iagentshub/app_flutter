@@ -18,6 +18,7 @@ import '../../../shared/utils/debouncer.dart';
 import '../../../shared/widgets/action_icon_button.dart';
 import '../../../shared/widgets/filter_button.dart';
 import '../../../shared/widgets/label_chips_row.dart';
+import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 
 class ExplorePage extends StatefulWidget {
@@ -1027,7 +1028,7 @@ class _PreviewDialog extends StatelessWidget {
     return AlertDialog(
       title: Text('Preview: $title'),
       content: SizedBox(
-        width: 760,
+        width: dialogContentWidth(context, 760),
         child: SingleChildScrollView(
           child: SelectableText(
             pretty,

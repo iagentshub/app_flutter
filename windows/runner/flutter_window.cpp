@@ -4,6 +4,11 @@
 
 #include "flutter/generated_plugin_registrant.h"
 
+namespace {
+constexpr LONG kMinimumWindowWidth = 720;
+constexpr LONG kMinimumWindowHeight = 600;
+}  // namespace
+
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
 
@@ -51,6 +56,16 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
+  if (message == WM_GETMINMAXINFO) {
+    auto min_max_info = reinterpret_cast<MINMAXINFO*>(lparam);
+    const UINT dpi = GetDpiForWindow(hwnd);
+    min_max_info->ptMinTrackSize.x =
+        MulDiv(kMinimumWindowWidth, dpi, USER_DEFAULT_SCREEN_DPI);
+    min_max_info->ptMinTrackSize.y =
+        MulDiv(kMinimumWindowHeight, dpi, USER_DEFAULT_SCREEN_DPI);
+    return 0;
+  }
+
   // Give Flutter, including plugins, an opportunity to handle window messages.
   if (flutter_controller_) {
     std::optional<LRESULT> result =

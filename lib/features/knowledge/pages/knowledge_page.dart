@@ -17,6 +17,7 @@ import '../../../shared/widgets/group_filter_panel.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/origin_badge.dart';
 import '../../../shared/widgets/resource_history_dialog.dart';
+import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 
@@ -1093,7 +1094,7 @@ class _AddTextDialogState extends State<_AddTextDialog> {
     return AlertDialog(
       title: const Text('Añadir texto'),
       content: SizedBox(
-        width: 620,
+        width: dialogContentWidth(context, 620),
         child: Form(
           key: _formKey,
           child: ListView(
@@ -1174,7 +1175,7 @@ class _AddUrlDialogState extends State<_AddUrlDialog> {
     return AlertDialog(
       title: const Text('Importar URL'),
       content: SizedBox(
-        width: 620,
+        width: dialogContentWidth(context, 620),
         child: Form(
           key: _formKey,
           child: ListView(
@@ -1289,7 +1290,7 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
     return AlertDialog(
       title: Text(widget.initial == null ? 'Nueva skill' : 'Editar skill'),
       content: SizedBox(
-        width: 620,
+        width: dialogContentWidth(context, 620),
         child: Form(
           key: _formKey,
           child: ListView(

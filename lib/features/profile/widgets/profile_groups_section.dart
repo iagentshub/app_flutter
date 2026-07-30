@@ -7,6 +7,7 @@ import '../../manager/repositories/manager_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/widgets/action_icon_button.dart';
+import '../../../shared/widgets/responsive_dialog.dart';
 
 /// Sección "Grupos" de Profile: mis grupos (con gestión inline: miembros,
 /// invitar, abandonar, eliminar) e invitaciones recibidas pendientes.
@@ -645,7 +646,7 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
       title: Text(widget.group.name),
       contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
       content: SizedBox(
-        width: 480,
+        width: dialogContentWidth(context, 480),
         child: _loading
             ? const SizedBox(
                 height: 160,
@@ -876,7 +877,7 @@ class _MembersDialogState extends State<_MembersDialog> {
       ),
       contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
       content: SizedBox(
-        width: 480,
+        width: dialogContentWidth(context, 480),
         child: _loading
             ? const SizedBox(
                 height: 160,

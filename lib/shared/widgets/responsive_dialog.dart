@@ -8,8 +8,9 @@ double dialogContentWidth(
   double preferredWidth, {
   double margin = 48,
 }) {
-  final available = MediaQuery.sizeOf(context).width - margin;
-  return preferredWidth < available ? preferredWidth : available;
+  return (MediaQuery.sizeOf(context).width - margin)
+      .clamp(0.0, preferredWidth)
+      .toDouble();
 }
 
 /// Igual que [dialogContentWidth] pero para el alto — evita que un
@@ -20,6 +21,7 @@ double dialogContentHeight(
   double preferredHeight, {
   double margin = 120,
 }) {
-  final available = MediaQuery.sizeOf(context).height - margin;
-  return preferredHeight < available ? preferredHeight : available;
+  return (MediaQuery.sizeOf(context).height - margin)
+      .clamp(0.0, preferredHeight)
+      .toDouble();
 }

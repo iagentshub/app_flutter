@@ -13,6 +13,7 @@ import '../repositories/chat_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/widgets/responsive_dialog.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({
@@ -622,7 +623,7 @@ class _ConnectionPreferenceDialogState
     return AlertDialog(
       title: Text(tx('agents.preferences_title', 'Preferencia de conexión')),
       content: SizedBox(
-        width: 360,
+        width: dialogContentWidth(context, 360),
         child: DropdownButtonFormField<String?>(
           initialValue: _connectionId,
           isExpanded: true,

@@ -10,6 +10,7 @@ import '../repositories/profile_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/widgets/responsive_dialog.dart';
 import '../widgets/profile_groups_section.dart';
 
 /// Idiomas disponibles para el perfil público. Por ahora la plataforma solo
@@ -286,7 +287,7 @@ class _ProfilePageState extends State<ProfilePage>
         builder: (context, setDialogState) => AlertDialog(
           title: Text(_tx('profile.manage_languages', 'Gestionar idiomas')),
           content: SizedBox(
-            width: 320,
+            width: dialogContentWidth(context, 320),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: _languageOptions.map((option) {

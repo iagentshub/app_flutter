@@ -10,6 +10,7 @@ import '../../../models/knowledge/knowledge_models.dart';
 import '../../../models/memory/memory_models.dart';
 import '../../../models/skills/skill_models.dart';
 import '../../../shared/widgets/grouped_label_picker.dart';
+import '../../../shared/widgets/responsive_dialog.dart';
 
 /// Diálogo de creación/edición de agentes, en 4 pestañas (Básico, Conexión,
 /// Conocimiento, Avanzado). Se reutiliza tanto desde la lista de Agentes
@@ -231,8 +232,8 @@ class _AgentFormDialogState extends State<AgentFormDialog> {
         title: Text(_title),
         contentPadding: const EdgeInsets.fromLTRB(0, 16, 0, 8),
         content: SizedBox(
-          width: 580,
-          height: 480,
+          width: dialogContentWidth(context, 580),
+          height: dialogContentHeight(context, 480),
           child: Form(
             key: _formKey,
             child: Column(

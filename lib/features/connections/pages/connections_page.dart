@@ -13,6 +13,7 @@ import '../../../shared/widgets/filter_button.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/origin_badge.dart';
+import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 
@@ -356,7 +357,7 @@ class _ConnectionsPageState extends State<ConnectionsPage>
         builder: (context) => AlertDialog(
           title: Text('Test masivo (${results.length})'),
           content: SizedBox(
-            width: 520,
+            width: dialogContentWidth(context, 520),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -842,7 +843,7 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
         widget.initial == null ? 'Nueva conexión' : 'Editar conexión',
       ),
       content: SizedBox(
-        width: 560,
+        width: dialogContentWidth(context, 560),
         child: provider == null
             ? const Text('No hay proveedores disponibles')
             : Form(
