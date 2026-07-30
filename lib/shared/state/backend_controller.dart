@@ -105,6 +105,19 @@ class BackendController extends ChangeNotifier {
       selectedBackendId: selected,
       savedBackends: saved,
     );
+    for (var i = controller._savedBackends.length - 1; i >= 0; i--) {
+      final entry = controller._savedBackends[i];
+      final normalized = controller.normalizeBackendInput(entry.url);
+      if (normalized.isEmpty) {
+        controller._savedBackends.removeAt(i);
+      } else if (normalized != entry.url) {
+        controller._savedBackends[i] = SavedBackend(
+          id: entry.id,
+          name: entry.name,
+          url: normalized,
+        );
+      }
+    }
 
     if (!controller.options.any(
       (option) => option.id == controller._selectedBackendId,
@@ -171,11 +184,9 @@ class BackendController extends ChangeNotifier {
     if (value.isEmpty) return '';
 
     if (!value.contains('://')) {
-      final hostPart = value.split('/').first.toLowerCase();
-      final localOrIp = RegExp(
-        r'^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.|\d{1,3}(?:\.\d{1,3}){3})',
-      );
-      final scheme = localOrIp.hasMatch(hostPart) ? 'http' : 'https';
+      final inferred = Uri.tryParse('backend://$value');
+      if (inferred == null || inferred.host.isEmpty) return '';
+      final scheme = _isLocalOrPrivateHost(inferred.host) ? 'http' : 'https';
       value = '$scheme://$value';
     }
 
@@ -183,6 +194,21 @@ class BackendController extends ChangeNotifier {
     if (uri == null) return '';
     if (uri.host.isEmpty) return '';
     if (uri.scheme != 'http' && uri.scheme != 'https') return '';
+    if (uri.userInfo.isNotEmpty ||
+        uri.hasQuery ||
+        uri.hasFragment ||
+        uri.host.contains(RegExp(r'[\s/]'))) {
+      return '';
+    }
+    if (uri.scheme == 'http' && !_isLocalOrPrivateHost(uri.host)) return '';
+
+    int? port;
+    try {
+      port = uri.hasPort ? uri.port : null;
+    } on FormatException {
+      return '';
+    }
+    if (port != null && (port < 1 || port > 65535)) return '';
 
     final path = (uri.path == '/' ? '' : uri.path).replaceFirst(
       RegExp(r'/$'),
@@ -192,7 +218,7 @@ class BackendController extends ChangeNotifier {
     final normalized = Uri(
       scheme: uri.scheme.toLowerCase(),
       host: uri.host.toLowerCase(),
-      port: uri.hasPort ? uri.port : null,
+      port: port,
       path: path,
     ).toString();
 
@@ -222,8 +248,12 @@ class BackendController extends ChangeNotifier {
   /// sin necesidad de sesión. Usado tanto por el test manual del diálogo
   /// como por el chequeo periódico de salud de la lista.
   Future<BackendPingResult> pingBackend(String baseUrl) async {
+    final normalized = normalizeBackendInput(baseUrl);
+    if (normalized.isEmpty) {
+      return const BackendPingResult(ok: false, error: 'URL no permitida');
+    }
     try {
-      final uri = Uri.parse('$baseUrl/api/settings/platform/public');
+      final uri = Uri.parse('$normalized/api/settings/platform/public');
       final response = await http.get(uri).timeout(const Duration(seconds: 8));
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return BackendPingResult(ok: true, statusCode: response.statusCode);
@@ -251,10 +281,14 @@ class BackendController extends ChangeNotifier {
     required String name,
     required String url,
   }) async {
+    final normalized = normalizeBackendInput(url);
+    if (normalized.isEmpty) {
+      throw ArgumentError.value(url, 'url', 'URL de backend no permitida');
+    }
     final entry = SavedBackend(
       id: _newId(),
-      name: name.trim().isEmpty ? _labelFromUrl(url) : name.trim(),
-      url: url,
+      name: name.trim().isEmpty ? _labelFromUrl(normalized) : name.trim(),
+      url: normalized,
     );
     _savedBackends.add(entry);
     notifyListeners();
@@ -273,10 +307,14 @@ class BackendController extends ChangeNotifier {
     if (index == -1) {
       throw StateError('Backend no encontrado: $id');
     }
+    final normalized = normalizeBackendInput(url);
+    if (normalized.isEmpty) {
+      throw ArgumentError.value(url, 'url', 'URL de backend no permitida');
+    }
     final updated = SavedBackend(
       id: id,
-      name: name.trim().isEmpty ? _labelFromUrl(url) : name.trim(),
-      url: url,
+      name: name.trim().isEmpty ? _labelFromUrl(normalized) : name.trim(),
+      url: normalized,
     );
     _savedBackends[index] = updated;
     notifyListeners();
@@ -346,6 +384,34 @@ class BackendController extends ChangeNotifier {
       return 'https://www.iagentshub.com';
     }
     return normalized;
+  }
+
+  static bool _isLocalOrPrivateHost(String rawHost) {
+    final host = rawHost.toLowerCase();
+    if (host == 'localhost' ||
+        host.endsWith('.localhost') ||
+        host.endsWith('.local') ||
+        host == '::1' ||
+        (host.contains(':') &&
+            (host.startsWith('fe80:') ||
+                host.startsWith('fc') ||
+                host.startsWith('fd')))) {
+      return true;
+    }
+
+    final parts = host.split('.');
+    if (parts.length != 4) return false;
+    final octets = parts.map(int.tryParse).toList();
+    if (octets.any((part) => part == null || part < 0 || part > 255)) {
+      return false;
+    }
+    final first = octets[0]!;
+    final second = octets[1]!;
+    return first == 10 ||
+        first == 127 ||
+        (first == 169 && second == 254) ||
+        (first == 172 && second >= 16 && second <= 31) ||
+        (first == 192 && second == 168);
   }
 
   static int _idCounter = 0;

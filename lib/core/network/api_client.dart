@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import 'api_error.dart';
@@ -26,18 +26,40 @@ class ApiResponse {
 }
 
 class ApiClient {
-  ApiClient(this.backendController, {http.Client? client})
-    : _client = client ?? http.Client();
+  ApiClient(
+    this.backendController, {
+    http.Client? client,
+    Duration requestTimeout = const Duration(seconds: 30),
+  }) : _client = client ?? http.Client(),
+       _requestTimeout = requestTimeout;
 
   final BackendController backendController;
   final http.Client _client;
+  final Duration _requestTimeout;
 
   /// Caché en memoria de respuestas GET, igual de espíritu que el staleTime
   /// de react-query en el frontend: evita repetir la misma consulta de
   /// listado cada vez que se revisita una vista, y se invalida sola cuando
   /// una mutación (POST/PUT/PATCH/DELETE) toca el mismo recurso.
-  final Map<String, ({DateTime at, ApiResponse response})> _cache = {};
+  final Map<
+    ({String baseUrl, String? gaToken, String path}),
+    ({DateTime expiresAt, ApiResponse response})
+  >
+  _cache = {};
+  final Map<
+    ({String baseUrl, String? gaToken, String path}),
+    Future<ApiResponse>
+  >
+  _inFlightGets = {};
   static const _defaultCacheTtl = Duration(seconds: 60);
+  static const _maxCacheEntries = 200;
+  int _cacheGeneration = 0;
+
+  @visibleForTesting
+  int get debugCacheEntryCount => _cache.length;
+
+  @visibleForTesting
+  int get debugInFlightGetCount => _inFlightGets.length;
 
   Uri _uri(String path) {
     final base = backendController.effectiveBaseUrl;
@@ -52,7 +74,7 @@ class ApiClient {
   /// API normales y así no fallar en silencio en el resto de la app.
   Future<http.StreamedResponse> _send(http.BaseRequest request) async {
     try {
-      final streamed = await _client.send(request);
+      final streamed = await _client.send(request).timeout(_requestTimeout);
       backendController.reportConnectionOk();
       return streamed;
     } catch (error) {
@@ -73,17 +95,42 @@ class ApiClient {
     // La clave incluye el token para que la caché nunca sirva la respuesta
     // de un usuario a otro (p. ej. tras cerrar sesión y entrar con otra
     // cuenta sin pasar por invalidateCache()).
-    final cacheKey = '${gaToken ?? ''}::$path';
+    final cacheKey = (
+      baseUrl: backendController.effectiveBaseUrl,
+      gaToken: gaToken,
+      path: path,
+    );
+    final now = DateTime.now();
     if (cache) {
       final cached = _cache[cacheKey];
-      if (cached != null &&
-          DateTime.now().difference(cached.at) < (ttl ?? _defaultCacheTtl)) {
+      if (cached != null && now.isBefore(cached.expiresAt)) {
         return cached.response;
       }
+      if (cached != null) _cache.remove(cacheKey);
+
+      final inFlight = _inFlightGets[cacheKey];
+      if (inFlight != null) return inFlight;
     }
-    final response = await _request('GET', path, gaToken: gaToken);
-    if (cache) _cache[cacheKey] = (at: DateTime.now(), response: response);
-    return response;
+
+    final generation = _cacheGeneration;
+    final request = _request('GET', path, gaToken: gaToken);
+    if (cache) _inFlightGets[cacheKey] = request;
+    try {
+      final response = await request;
+      if (cache && generation == _cacheGeneration) {
+        _storeCache(
+          cacheKey,
+          response,
+          now: DateTime.now(),
+          ttl: ttl ?? _defaultCacheTtl,
+        );
+      }
+      return response;
+    } finally {
+      if (cache && identical(_inFlightGets[cacheKey], request)) {
+        _inFlightGets.remove(cacheKey);
+      }
+    }
   }
 
   Future<ApiResponse> post(
@@ -139,11 +186,25 @@ class ApiClient {
   /// Borra toda la caché (p. ej. al cerrar sesión, para no arrastrar datos
   /// de una cuenta a otra) o solo las entradas de un recurso concreto.
   void invalidateCache([String? pathPrefix]) {
+    _cacheGeneration += 1;
     if (pathPrefix == null) {
       _cache.clear();
       return;
     }
-    _cache.removeWhere((key, _) => key.split('::').last.startsWith(pathPrefix));
+    _cache.removeWhere((key, _) => key.path.startsWith(pathPrefix));
+  }
+
+  void _storeCache(
+    ({String baseUrl, String? gaToken, String path}) key,
+    ApiResponse response, {
+    required DateTime now,
+    required Duration ttl,
+  }) {
+    _cache.removeWhere((_, entry) => !now.isBefore(entry.expiresAt));
+    _cache[key] = (expiresAt: now.add(ttl), response: response);
+    while (_cache.length > _maxCacheEntries) {
+      _cache.remove(_cache.keys.first);
+    }
   }
 
   void _invalidateForMutation(String path) {
@@ -168,6 +229,7 @@ class ApiClient {
       headers['Cookie'] = 'ga_token=$gaToken';
     }
     final request = http.Request('GET', _uri(path));
+    request.followRedirects = false;
     request.headers.addAll(headers);
 
     final streamed = await _send(request);
@@ -189,7 +251,10 @@ class ApiClient {
     final match = disposition == null
         ? null
         : RegExp('filename="?([^"; ]+)"?').firstMatch(disposition);
-    return (bytes: response.bodyBytes, filename: match?.group(1));
+    return (
+      bytes: response.bodyBytes,
+      filename: _sanitizeDownloadFilename(match?.group(1)),
+    );
   }
 
   /// Envía un POST y expone la respuesta como flujo de líneas crudas
@@ -221,6 +286,7 @@ class ApiClient {
     if (body != null) headers['Content-Type'] = 'application/json';
 
     final request = http.Request(method, _uri(path));
+    request.followRedirects = false;
     request.headers.addAll(headers);
     if (body != null) request.body = jsonEncode(body);
 
@@ -237,16 +303,9 @@ class ApiClient {
       );
     }
 
-    var buffer = '';
-    await for (final chunk in streamed.stream.transform(utf8.decoder)) {
-      buffer += chunk;
-      final lines = buffer.split('\n');
-      buffer = lines.removeLast();
-      for (final line in lines) {
-        yield line;
-      }
-    }
-    if (buffer.isNotEmpty) yield buffer;
+    yield* streamed.stream
+        .transform(utf8.decoder)
+        .transform(const LineSplitter());
   }
 
   Future<ApiResponse> postMultipart(
@@ -258,6 +317,7 @@ class ApiClient {
     String? gaToken,
   }) async {
     final request = http.MultipartRequest('POST', _uri(path));
+    request.followRedirects = false;
     request.headers['Accept'] = 'application/json';
     if (gaToken != null && gaToken.isNotEmpty) {
       request.headers['Cookie'] = 'ga_token=$gaToken';
@@ -304,6 +364,7 @@ class ApiClient {
     }
 
     final request = http.Request(method, _uri(path));
+    request.followRedirects = false;
     request.headers.addAll(headers);
     if (body != null) request.body = jsonEncode(body);
 
@@ -361,5 +422,23 @@ class ApiClient {
 
     final match = RegExp(r'ga_token=([^;]+)').firstMatch(setCookie);
     return match?.group(1);
+  }
+
+  String? _sanitizeDownloadFilename(String? raw) {
+    if (raw == null || raw.isEmpty) return null;
+    final basename = raw.replaceAll(r'\', '/').split('/').last;
+    final sanitized = basename
+        .replaceAll(RegExp(r'[\x00-\x1F\x7F]'), '')
+        .trim();
+    if (sanitized.isEmpty || sanitized == '.' || sanitized == '..') {
+      return null;
+    }
+    return sanitized.length <= 255 ? sanitized : sanitized.substring(0, 255);
+  }
+
+  void close() {
+    _cache.clear();
+    _inFlightGets.clear();
+    _client.close();
   }
 }

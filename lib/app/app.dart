@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/network/api_client.dart';
+import '../core/network/api_error.dart';
 import '../features/auth/repositories/auth_repository.dart';
 import '../features/dashboard/repositories/dashboard_repository.dart';
 import '../shared/state/backend_controller.dart';
@@ -50,20 +51,39 @@ class _AppState extends State<App> {
       apiClient: _apiClient,
       dashboardEditState: _dashboardEditState,
     );
-    _syncLanguageFromBackend();
+    _revalidatePersistedSession();
   }
 
-  Future<void> _syncLanguageFromBackend() async {
+  Future<void> _revalidatePersistedSession() async {
     final token = widget.sessionController.gaToken;
     if (token == null || token.isEmpty) return;
-    final language = await _authRepository.getLanguage(token);
-    await widget.localeController.syncFromBackend(language);
+    try {
+      final userFuture = _authRepository.me(token);
+      final languageFuture = _authRepository.getLanguage(token);
+      final user = await userFuture;
+      final language = await languageFuture;
+      await widget.sessionController.login(
+        token: token,
+        user: user,
+        remember: true,
+      );
+      await widget.localeController.syncFromBackend(language);
+    } on ApiError catch (error) {
+      if (error.statusCode == 401 || error.statusCode == 403) {
+        await widget.sessionController.logout();
+        _apiClient.invalidateCache();
+      }
+    } catch (_) {
+      // Sin red se conserva la sesión con rol mínimo. Nunca se confía en el
+      // rol persistido hasta recibir una respuesta válida del backend.
+    }
   }
 
   @override
   void dispose() {
     _router.dispose();
     _dashboardEditState.dispose();
+    _apiClient.close();
     super.dispose();
   }
 
