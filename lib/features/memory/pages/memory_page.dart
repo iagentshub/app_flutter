@@ -4,6 +4,8 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/memory/memory_models.dart';
 import '../repositories/memory_repository.dart';
+import '../../../shared/i18n/translated_texts.dart';
+import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/action_icon_button.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
@@ -12,11 +14,13 @@ class MemoryPage extends StatefulWidget {
   const MemoryPage({
     required this.apiClient,
     required this.sessionController,
+    required this.localeController,
     super.key,
   });
 
   final ApiClient apiClient;
   final SessionController sessionController;
+  final LocaleController localeController;
 
   @override
   State<MemoryPage> createState() => _MemoryPageState();
@@ -24,15 +28,33 @@ class MemoryPage extends StatefulWidget {
 
 class _MemoryPageState extends State<MemoryPage> {
   late final MemoryRepository _repository;
+  late final TranslatedTexts _t;
   List<MemoryFileItem> _files = const [];
   bool _loading = true;
   String? _error;
+
+  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
   @override
   void initState() {
     super.initState();
     _repository = MemoryRepository(apiClient: widget.apiClient);
+    _t = TranslatedTexts(
+      localeController: widget.localeController,
+      namespace: 'resources',
+    )..addListener(_onTextsChanged);
     _load();
+  }
+
+  void _onTextsChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _t.removeListener(_onTextsChanged);
+    _t.dispose();
+    super.dispose();
   }
 
   String? get _token => widget.sessionController.gaToken;
@@ -41,7 +63,7 @@ class _MemoryPageState extends State<MemoryPage> {
     final token = _token;
     if (token == null || token.isEmpty) {
       setState(() {
-        _error = 'No hay sesión activa';
+        _error = _tx('common.no_session', 'No hay sesión activa');
         _loading = false;
       });
       return;
@@ -68,7 +90,7 @@ class _MemoryPageState extends State<MemoryPage> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'No se pudo cargar Memory';
+        _error = _tx('memory.error_generic', 'No se pudo cargar Memory');
         _loading = false;
       });
     }
@@ -77,7 +99,7 @@ class _MemoryPageState extends State<MemoryPage> {
   Future<void> _createFile() async {
     final payload = await showDialog<Map<String, String>>(
       context: context,
-      builder: (context) => const _MemoryEditorDialog(),
+      builder: (context) => _MemoryEditorDialog(tx: _tx),
     );
     if (payload == null) return;
     await _saveFile(payload['filename'] ?? '', payload['content'] ?? '');
@@ -93,6 +115,7 @@ class _MemoryPageState extends State<MemoryPage> {
       final payload = await showDialog<Map<String, String>>(
         context: context,
         builder: (context) => _MemoryEditorDialog(
+          tx: _tx,
           initialFilename: file.filename,
           initialContent: content,
           lockFilename: true,
@@ -103,7 +126,10 @@ class _MemoryPageState extends State<MemoryPage> {
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo cargar el archivo', isError: true);
+      _showMessage(
+        _tx('memory.load_file_error', 'No se pudo cargar el archivo'),
+        isError: true,
+      );
     }
   }
 
@@ -111,7 +137,10 @@ class _MemoryPageState extends State<MemoryPage> {
     final token = _token;
     if (token == null || token.isEmpty) return;
     if (filename.trim().isEmpty) {
-      _showMessage('Nombre de archivo obligatorio', isError: true);
+      _showMessage(
+        _tx('memory.filename_required', 'Nombre de archivo obligatorio'),
+        isError: true,
+      );
       return;
     }
 
@@ -120,12 +149,15 @@ class _MemoryPageState extends State<MemoryPage> {
 
     try {
       await _repository.saveFile(token, normalized, content);
-      _showMessage('Archivo guardado');
+      _showMessage(_tx('memory.save_success', 'Archivo guardado'));
       await _load();
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo guardar el archivo', isError: true);
+      _showMessage(
+        _tx('memory.save_error', 'No se pudo guardar el archivo'),
+        isError: true,
+      );
     }
   }
 
@@ -133,16 +165,21 @@ class _MemoryPageState extends State<MemoryPage> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Eliminar archivo'),
-        content: Text('¿Seguro que quieres eliminar "${file.filename}"?'),
+        title: Text(_tx('memory.delete_dialog_title', 'Eliminar archivo')),
+        content: Text(
+          _tx(
+            'memory.delete_dialog_body',
+            '¿Seguro que quieres eliminar "{{filename}}"?',
+          ).replaceAll('{{filename}}', file.filename),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(_tx('common.cancel', 'Cancelar')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Eliminar'),
+            child: Text(_tx('common.delete', 'Eliminar')),
           ),
         ],
       ),
@@ -154,12 +191,15 @@ class _MemoryPageState extends State<MemoryPage> {
 
     try {
       await _repository.deleteFile(token, file.filename);
-      _showMessage('Archivo eliminado');
+      _showMessage(_tx('memory.delete_success', 'Archivo eliminado'));
       await _load();
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo eliminar el archivo', isError: true);
+      _showMessage(
+        _tx('memory.delete_error', 'No se pudo eliminar el archivo'),
+        isError: true,
+      );
     }
   }
 
@@ -186,9 +226,9 @@ class _MemoryPageState extends State<MemoryPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Error cargando Memory',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  Text(
+                    _tx('memory.error_loading_title', 'Error cargando Memory'),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Text(_error!),
@@ -196,7 +236,7 @@ class _MemoryPageState extends State<MemoryPage> {
                   FilledButton.icon(
                     onPressed: _load,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Reintentar'),
+                    label: Text(_tx('common.retry', 'Reintentar')),
                   ),
                 ],
               ),
@@ -216,18 +256,18 @@ class _MemoryPageState extends State<MemoryPage> {
             IconButton.filled(
               onPressed: _createFile,
               icon: const Icon(Icons.add),
-              tooltip: 'Nuevo archivo',
+              tooltip: _tx('memory.new_file_tooltip', 'Nuevo archivo'),
             ),
             IconButton.outlined(
               onPressed: _load,
               icon: const Icon(Icons.refresh),
-              tooltip: 'Actualizar',
+              tooltip: _tx('memory.refresh_tooltip', 'Actualizar'),
             ),
           ],
         ),
         const SizedBox(height: 12),
         Text(
-          'Archivos: ${_files.length}',
+          '${_tx('memory.files_count', 'Archivos')}: ${_files.length}',
           style: Theme.of(context).textTheme.bodyMedium,
         ),
       ],
@@ -247,14 +287,17 @@ class _MemoryPageState extends State<MemoryPage> {
                 sliver: SliverToBoxAdapter(child: toolbar),
               ),
               if (_files.isEmpty)
-                const SliverPadding(
-                  padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverToBoxAdapter(
                     child: Card(
                       child: Padding(
-                        padding: EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(16),
                         child: Text(
-                          'No hay archivos de memoria. Crea el primero.',
+                          _tx(
+                            'memory.empty_files',
+                            'No hay archivos de memoria. Crea el primero.',
+                          ),
                         ),
                       ),
                     ),
@@ -291,7 +334,7 @@ class _MemoryPageState extends State<MemoryPage> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Tamaño: ${file.size} chars${file.updatedAt.isEmpty ? '' : ' · ${file.updatedAt}'}',
+              '${_tx('memory.size_label', 'Tamaño')}: ${file.size} chars${file.updatedAt.isEmpty ? '' : ' · ${file.updatedAt}'}',
             ),
             const SizedBox(height: 10),
             Row(
@@ -299,12 +342,12 @@ class _MemoryPageState extends State<MemoryPage> {
                 const Spacer(),
                 ActionIconButton(
                   icon: Icons.edit_outlined,
-                  tooltip: 'Editar',
+                  tooltip: _tx('common.edit', 'Editar'),
                   onPressed: () => _editFile(file),
                 ),
                 ActionIconButton(
                   icon: Icons.delete_outline,
-                  tooltip: 'Eliminar',
+                  tooltip: _tx('common.delete', 'Eliminar'),
                   danger: true,
                   onPressed: () => _deleteFile(file),
                 ),
@@ -319,11 +362,13 @@ class _MemoryPageState extends State<MemoryPage> {
 
 class _MemoryEditorDialog extends StatefulWidget {
   const _MemoryEditorDialog({
+    required this.tx,
     this.initialFilename,
     this.initialContent,
     this.lockFilename = false,
   });
 
+  final String Function(String path, String fallback) tx;
   final String? initialFilename;
   final String? initialContent;
   final bool lockFilename;
@@ -368,8 +413,8 @@ class _MemoryEditorDialogState extends State<_MemoryEditorDialog> {
     return AlertDialog(
       title: Text(
         widget.initialFilename == null
-            ? 'Nuevo archivo de memoria'
-            : 'Editar archivo',
+            ? widget.tx('memory.new_dialog_title', 'Nuevo archivo de memoria')
+            : widget.tx('memory.edit_dialog_title', 'Editar archivo'),
       ),
       content: SizedBox(
         width: dialogContentWidth(context, 760),
@@ -381,12 +426,20 @@ class _MemoryEditorDialogState extends State<_MemoryEditorDialog> {
               TextFormField(
                 controller: _filenameController,
                 readOnly: widget.lockFilename,
-                decoration: const InputDecoration(
-                  labelText: 'Nombre de archivo (.md)',
+                decoration: InputDecoration(
+                  labelText: widget.tx(
+                    'memory.filename_label',
+                    'Nombre de archivo (.md)',
+                  ),
                 ),
                 validator: (value) {
                   final v = value?.trim() ?? '';
-                  if (v.isEmpty) return 'Nombre obligatorio';
+                  if (v.isEmpty) {
+                    return widget.tx(
+                      'memory.filename_validator',
+                      'Nombre obligatorio',
+                    );
+                  }
                   return null;
                 },
               ),
@@ -395,7 +448,9 @@ class _MemoryEditorDialogState extends State<_MemoryEditorDialog> {
                 controller: _contentController,
                 minLines: 10,
                 maxLines: 18,
-                decoration: const InputDecoration(labelText: 'Contenido'),
+                decoration: InputDecoration(
+                  labelText: widget.tx('memory.content_label', 'Contenido'),
+                ),
               ),
             ],
           ),
@@ -404,9 +459,12 @@ class _MemoryEditorDialogState extends State<_MemoryEditorDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
+          child: Text(widget.tx('common.cancel', 'Cancelar')),
         ),
-        FilledButton(onPressed: _submit, child: const Text('Guardar')),
+        FilledButton(
+          onPressed: _submit,
+          child: Text(widget.tx('common.save', 'Guardar')),
+        ),
       ],
     );
   }

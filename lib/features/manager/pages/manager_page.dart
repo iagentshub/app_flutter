@@ -4,6 +4,8 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/manager/workspace_models.dart';
 import '../repositories/manager_repository.dart';
+import '../../../shared/i18n/translated_texts.dart';
+import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/action_icon_button.dart';
 
@@ -11,11 +13,13 @@ class ManagerPage extends StatefulWidget {
   const ManagerPage({
     required this.apiClient,
     required this.sessionController,
+    required this.localeController,
     super.key,
   });
 
   final ApiClient apiClient;
   final SessionController sessionController;
+  final LocaleController localeController;
 
   @override
   State<ManagerPage> createState() => _ManagerPageState();
@@ -23,6 +27,7 @@ class ManagerPage extends StatefulWidget {
 
 class _ManagerPageState extends State<ManagerPage> {
   late final ManagerRepository _repository;
+  late final TranslatedTexts _t;
   List<WorkspaceItem> _workspaces = const [];
   List<Map<String, dynamic>> _members = const [];
   List<Map<String, dynamic>> _invitations = const [];
@@ -31,11 +36,28 @@ class _ManagerPageState extends State<ManagerPage> {
   String? _error;
   String? _switchingWorkspaceId;
 
+  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+
   @override
   void initState() {
     super.initState();
     _repository = ManagerRepository(apiClient: widget.apiClient);
+    _t = TranslatedTexts(
+      localeController: widget.localeController,
+      namespace: 'resources',
+    )..addListener(_onTextsChanged);
     _load();
+  }
+
+  void _onTextsChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _t.removeListener(_onTextsChanged);
+    _t.dispose();
+    super.dispose();
   }
 
   String? get _token => widget.sessionController.gaToken;
@@ -44,7 +66,7 @@ class _ManagerPageState extends State<ManagerPage> {
     final token = _token;
     if (token == null || token.isEmpty) {
       setState(() {
-        _error = 'No hay sesión activa';
+        _error = _tx('common.no_session', 'No hay sesión activa');
         _loading = false;
       });
       return;
@@ -95,14 +117,17 @@ class _ManagerPageState extends State<ManagerPage> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'No se pudo cargar Manager';
+        _error = _tx('manager.error_generic', 'No se pudo cargar Manager');
         _loading = false;
       });
     }
   }
 
   Future<void> _createWorkspace() async {
-    final name = await _askName(title: 'Crear workspace', initial: '');
+    final name = await _askName(
+      title: _tx('manager.create_workspace_title', 'Crear workspace'),
+      initial: '',
+    );
     if (name == null) return;
 
     final token = _token;
@@ -110,23 +135,31 @@ class _ManagerPageState extends State<ManagerPage> {
 
     try {
       await _repository.createWorkspace(token, name);
-      _showMessage('Workspace creado');
+      _showMessage(_tx('manager.create_success', 'Workspace creado'));
       await _load();
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo crear el workspace', isError: true);
+      _showMessage(
+        _tx('manager.create_error', 'No se pudo crear el workspace'),
+        isError: true,
+      );
     }
   }
 
   Future<void> _renameWorkspace(WorkspaceItem item) async {
     if (item.isPersonal) {
-      _showMessage('El workspace personal no se renombra desde aquí');
+      _showMessage(
+        _tx(
+          'manager.personal_no_rename',
+          'El workspace personal no se renombra desde aquí',
+        ),
+      );
       return;
     }
 
     final name = await _askName(
-      title: 'Renombrar workspace',
+      title: _tx('manager.rename_title', 'Renombrar workspace'),
       initial: item.name,
     );
     if (name == null) return;
@@ -136,34 +169,47 @@ class _ManagerPageState extends State<ManagerPage> {
 
     try {
       await _repository.renameWorkspace(token, item.id, name);
-      _showMessage('Workspace actualizado');
+      _showMessage(_tx('manager.rename_success', 'Workspace actualizado'));
       await _load();
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo renombrar el workspace', isError: true);
+      _showMessage(
+        _tx('manager.rename_error', 'No se pudo renombrar el workspace'),
+        isError: true,
+      );
     }
   }
 
   Future<void> _deleteWorkspace(WorkspaceItem item) async {
     if (item.isPersonal) {
-      _showMessage('El workspace personal no se puede eliminar');
+      _showMessage(
+        _tx(
+          'manager.personal_no_delete',
+          'El workspace personal no se puede eliminar',
+        ),
+      );
       return;
     }
 
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Eliminar workspace'),
-        content: Text('¿Seguro que quieres eliminar "${item.name}"?'),
+        title: Text(_tx('manager.delete_dialog_title', 'Eliminar workspace')),
+        content: Text(
+          _tx(
+            'manager.delete_dialog_body',
+            '¿Seguro que quieres eliminar "{{name}}"?',
+          ).replaceAll('{{name}}', item.name),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(_tx('common.cancel', 'Cancelar')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Eliminar'),
+            child: Text(_tx('common.delete', 'Eliminar')),
           ),
         ],
       ),
@@ -175,12 +221,15 @@ class _ManagerPageState extends State<ManagerPage> {
 
     try {
       await _repository.deleteWorkspace(token, item.id);
-      _showMessage('Workspace eliminado');
+      _showMessage(_tx('manager.delete_success', 'Workspace eliminado'));
       await _load();
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo eliminar el workspace', isError: true);
+      _showMessage(
+        _tx('manager.delete_error', 'No se pudo eliminar el workspace'),
+        isError: true,
+      );
     }
   }
 
@@ -196,12 +245,20 @@ class _ManagerPageState extends State<ManagerPage> {
       if (nextToken != null && user != null) {
         await widget.sessionController.login(token: nextToken, user: user);
       }
-      _showMessage('Workspace activo cambiado a ${item.name}');
+      _showMessage(
+        _tx(
+          'manager.switch_success',
+          'Workspace activo cambiado a {{name}}',
+        ).replaceAll('{{name}}', item.name),
+      );
       await _load();
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo cambiar el workspace activo', isError: true);
+      _showMessage(
+        _tx('manager.switch_error', 'No se pudo cambiar el workspace activo'),
+        isError: true,
+      );
     } finally {
       if (mounted) setState(() => _switchingWorkspaceId = null);
     }
@@ -211,12 +268,18 @@ class _ManagerPageState extends State<ManagerPage> {
     final active = _activeWorkspace;
     if (active == null || active.isPersonal) {
       _showMessage(
-        'Activa un workspace de equipo para invitar miembros',
+        _tx(
+          'manager.invite_need_team',
+          'Activa un workspace de equipo para invitar miembros',
+        ),
         isError: true,
       );
       return;
     }
-    final username = await _askName(title: 'Invitar miembro', initial: '');
+    final username = await _askName(
+      title: _tx('manager.invite_title', 'Invitar miembro'),
+      initial: '',
+    );
     if (username == null) return;
 
     final token = _token;
@@ -227,12 +290,15 @@ class _ManagerPageState extends State<ManagerPage> {
         active.id,
         username.trim().toLowerCase(),
       );
-      _showMessage('Invitación enviada');
+      _showMessage(_tx('manager.invite_success', 'Invitación enviada'));
       await _load();
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo enviar la invitación', isError: true);
+      _showMessage(
+        _tx('manager.invite_error', 'No se pudo enviar la invitación'),
+        isError: true,
+      );
     }
   }
 
@@ -240,13 +306,16 @@ class _ManagerPageState extends State<ManagerPage> {
     final active = _activeWorkspace;
     if (active == null || active.isPersonal) {
       _showMessage(
-        'Activa un workspace de equipo para añadir miembros',
+        _tx(
+          'manager.add_member_need_team',
+          'Activa un workspace de equipo para añadir miembros',
+        ),
         isError: true,
       );
       return;
     }
     final username = await _askName(
-      title: 'Añadir miembro directo',
+      title: _tx('manager.add_member_title', 'Añadir miembro directo'),
       initial: '',
     );
     if (username == null) return;
@@ -260,12 +329,15 @@ class _ManagerPageState extends State<ManagerPage> {
         username: username.trim().toLowerCase(),
         role: 'member',
       );
-      _showMessage('Miembro añadido');
+      _showMessage(_tx('manager.add_member_success', 'Miembro añadido'));
       await _load();
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo añadir el miembro', isError: true);
+      _showMessage(
+        _tx('manager.add_member_error', 'No se pudo añadir el miembro'),
+        isError: true,
+      );
     }
   }
 
@@ -276,12 +348,15 @@ class _ManagerPageState extends State<ManagerPage> {
     if (token == null || token.isEmpty) return;
     try {
       await _repository.removeMember(token, active.id, username);
-      _showMessage('Miembro eliminado');
+      _showMessage(_tx('manager.remove_member_success', 'Miembro eliminado'));
       await _load();
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo eliminar miembro', isError: true);
+      _showMessage(
+        _tx('manager.remove_member_error', 'No se pudo eliminar miembro'),
+        isError: true,
+      );
     }
   }
 
@@ -292,12 +367,20 @@ class _ManagerPageState extends State<ManagerPage> {
     if (token == null || token.isEmpty) return;
     try {
       await _repository.cancelInvitation(token, active.id, invitationId);
-      _showMessage('Invitación cancelada');
+      _showMessage(
+        _tx('manager.cancel_invitation_success', 'Invitación cancelada'),
+      );
       await _load();
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo cancelar invitación', isError: true);
+      _showMessage(
+        _tx(
+          'manager.cancel_invitation_error',
+          'No se pudo cancelar invitación',
+        ),
+        isError: true,
+      );
     }
   }
 
@@ -316,11 +399,17 @@ class _ManagerPageState extends State<ManagerPage> {
           key: formKey,
           child: TextFormField(
             controller: controller,
-            decoration: const InputDecoration(labelText: 'Nombre'),
+            decoration: InputDecoration(
+              labelText: _tx('manager.name_label', 'Nombre'),
+            ),
             validator: (text) {
               final v = text?.trim() ?? '';
-              if (v.isEmpty) return 'Nombre obligatorio';
-              if (v.length > 80) return 'Máximo 80 caracteres';
+              if (v.isEmpty) {
+                return _tx('manager.name_required', 'Nombre obligatorio');
+              }
+              if (v.length > 80) {
+                return _tx('manager.name_max_length', 'Máximo 80 caracteres');
+              }
               return null;
             },
           ),
@@ -328,14 +417,14 @@ class _ManagerPageState extends State<ManagerPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
+            child: Text(_tx('common.cancel', 'Cancelar')),
           ),
           FilledButton(
             onPressed: () {
               if (!(formKey.currentState?.validate() ?? false)) return;
               Navigator.of(context).pop(controller.text.trim());
             },
-            child: const Text('Guardar'),
+            child: Text(_tx('common.save', 'Guardar')),
           ),
         ],
       ),
@@ -368,9 +457,12 @@ class _ManagerPageState extends State<ManagerPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Error cargando Manager',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  Text(
+                    _tx(
+                      'manager.error_loading_title',
+                      'Error cargando Manager',
+                    ),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Text(_error!),
@@ -378,7 +470,7 @@ class _ManagerPageState extends State<ManagerPage> {
                   FilledButton.icon(
                     onPressed: _load,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Reintentar'),
+                    label: Text(_tx('common.retry', 'Reintentar')),
                   ),
                 ],
               ),
@@ -405,26 +497,34 @@ class _ManagerPageState extends State<ManagerPage> {
                   IconButton.filled(
                     onPressed: _createWorkspace,
                     icon: const Icon(Icons.add),
-                    tooltip: 'Nuevo workspace',
+                    tooltip: _tx(
+                      'manager.new_workspace_tooltip',
+                      'Nuevo workspace',
+                    ),
                   ),
                   IconButton.outlined(
                     onPressed: _load,
                     icon: const Icon(Icons.refresh),
-                    tooltip: 'Actualizar',
+                    tooltip: _tx('manager.refresh_tooltip', 'Actualizar'),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
               Text(
-                'Workspaces: ${_workspaces.length}',
+                '${_tx('manager.workspaces_count', 'Workspaces')}: ${_workspaces.length}',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 12),
               if (_workspaces.isEmpty)
-                const Card(
+                Card(
                   child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text('No hay workspaces disponibles.'),
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      _tx(
+                        'manager.empty_workspaces',
+                        'No hay workspaces disponibles.',
+                      ),
+                    ),
                   ),
                 )
               else
@@ -461,7 +561,7 @@ class _ManagerPageState extends State<ManagerPage> {
               children: [
                 _chip(item.type),
                 _chip(item.role),
-                if (item.active) _chip('activo'),
+                if (item.active) _chip(_tx('manager.active_chip', 'activo')),
               ],
             ),
             const SizedBox(height: 8),
@@ -474,19 +574,23 @@ class _ManagerPageState extends State<ManagerPage> {
                       ? null
                       : () => _switchWorkspace(item),
                   icon: const Icon(Icons.swap_horiz_outlined),
-                  label: Text(switching ? 'Cambiando...' : 'Activar'),
+                  label: Text(
+                    switching
+                        ? _tx('manager.switching_label', 'Cambiando...')
+                        : _tx('manager.activate_btn', 'Activar'),
+                  ),
                 ),
                 const Spacer(),
                 ActionIconButton(
                   icon: Icons.edit_outlined,
-                  tooltip: 'Renombrar',
+                  tooltip: _tx('manager.rename_tooltip', 'Renombrar'),
                   onPressed: item.isPersonal
                       ? null
                       : () => _renameWorkspace(item),
                 ),
                 ActionIconButton(
                   icon: Icons.delete_outline,
-                  tooltip: 'Eliminar',
+                  tooltip: _tx('common.delete', 'Eliminar'),
                   danger: true,
                   onPressed: item.isPersonal
                       ? null
@@ -521,17 +625,23 @@ class _ManagerPageState extends State<ManagerPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Miembros',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              _tx('manager.members_title', 'Miembros'),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
               active == null
-                  ? 'No hay workspace activo detectado.'
+                  ? _tx(
+                      'manager.no_active_workspace',
+                      'No hay workspace activo detectado.',
+                    )
                   : (active.isPersonal
-                        ? 'Workspace activo: Personal (sin miembros de equipo).'
-                        : 'Workspace activo: ${active.name}'),
+                        ? _tx(
+                            'manager.active_personal',
+                            'Workspace activo: Personal (sin miembros de equipo).',
+                          )
+                        : '${_tx('manager.active_workspace_prefix', 'Workspace activo')}: ${active.name}'),
             ),
             const SizedBox(height: 10),
             Wrap(
@@ -541,18 +651,18 @@ class _ManagerPageState extends State<ManagerPage> {
                 IconButton.filled(
                   onPressed: canManage ? _inviteMember : null,
                   icon: const Icon(Icons.add),
-                  tooltip: 'Invitar',
+                  tooltip: _tx('manager.invite_tooltip', 'Invitar'),
                 ),
                 IconButton.outlined(
                   onPressed: canManage ? _addMemberDirect : null,
                   icon: const Icon(Icons.add),
-                  tooltip: 'Añadir directo',
+                  tooltip: _tx('manager.add_direct_tooltip', 'Añadir directo'),
                 ),
               ],
             ),
             const SizedBox(height: 8),
             if (_members.isEmpty)
-              const Text('Sin miembros listados')
+              Text(_tx('manager.empty_members', 'Sin miembros listados'))
             else
               ..._members.map((member) {
                 final username = (member['username'] ?? '').toString();
@@ -560,10 +670,10 @@ class _ManagerPageState extends State<ManagerPage> {
                 return ListTile(
                   dense: true,
                   title: Text(username),
-                  subtitle: Text('Rol: $role'),
+                  subtitle: Text('${_tx('manager.role_label', 'Rol')}: $role'),
                   trailing: ActionIconButton(
                     icon: Icons.person_remove_outlined,
-                    tooltip: 'Quitar',
+                    tooltip: _tx('manager.remove_tooltip', 'Quitar'),
                     danger: true,
                     onPressed: canManage ? () => _removeMember(username) : null,
                   ),
@@ -584,17 +694,25 @@ class _ManagerPageState extends State<ManagerPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Invitaciones',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              _tx('manager.invitations_title', 'Invitaciones'),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             if (!canManage)
-              const Text(
-                'Activa un workspace de equipo para gestionar invitaciones.',
+              Text(
+                _tx(
+                  'manager.invitations_need_team',
+                  'Activa un workspace de equipo para gestionar invitaciones.',
+                ),
               )
             else if (_invitations.isEmpty)
-              const Text('No hay invitaciones pendientes.')
+              Text(
+                _tx(
+                  'manager.empty_invitations',
+                  'No hay invitaciones pendientes.',
+                ),
+              )
             else
               ..._invitations.map((inv) {
                 final id = (inv['id'] ?? '').toString();
@@ -609,7 +727,7 @@ class _ManagerPageState extends State<ManagerPage> {
                   ),
                   trailing: ActionIconButton(
                     icon: Icons.close,
-                    tooltip: 'Cancelar',
+                    tooltip: _tx('common.cancel', 'Cancelar'),
                     danger: true,
                     onPressed: () => _cancelInvitation(id),
                   ),

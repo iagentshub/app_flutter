@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../core/network/api_client.dart';
 import '../../../models/agents/agent_models.dart';
 import '../../agents/repositories/agents_repository.dart';
+import '../../../shared/i18n/translated_texts.dart';
+import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 
 class _StepDraft {
@@ -40,12 +42,14 @@ class WorkflowEditorPage extends StatefulWidget {
   const WorkflowEditorPage({
     required this.apiClient,
     required this.sessionController,
+    required this.localeController,
     this.initial,
     super.key,
   });
 
   final ApiClient apiClient;
   final SessionController sessionController;
+  final LocaleController localeController;
   final Map<String, dynamic>? initial;
 
   @override
@@ -57,6 +61,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
   late final TextEditingController _nameController;
   late final TextEditingController _descriptionController;
   late final TextEditingController _labelsController;
+  late final TranslatedTexts _t;
   late List<_StepDraft> _steps;
   int _stepCounter = 0;
 
@@ -64,9 +69,15 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
   bool _loadingAgents = true;
   String? _error;
 
+  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+
   @override
   void initState() {
     super.initState();
+    _t = TranslatedTexts(
+      localeController: widget.localeController,
+      namespace: 'resources',
+    )..addListener(_onTextsChanged);
     final initial = widget.initial;
     _nameController = TextEditingController(
       text: initial?['name']?.toString() ?? '',
@@ -86,8 +97,14 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
     _loadAgents();
   }
 
+  void _onTextsChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
+    _t.removeListener(_onTextsChanged);
+    _t.dispose();
     _nameController.dispose();
     _descriptionController.dispose();
     _labelsController.dispose();
@@ -100,7 +117,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
     final token = _token;
     if (token == null || token.isEmpty) {
       setState(() {
-        _error = 'No hay sesión activa';
+        _error = _tx('common.no_session', 'No hay sesión activa');
         _loadingAgents = false;
       });
       return;
@@ -117,7 +134,10 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'No se pudieron cargar los agentes disponibles';
+        _error = _tx(
+          'workflow_editor.error_load_agents',
+          'No se pudieron cargar los agentes disponibles',
+        );
         _loadingAgents = false;
       });
     }
@@ -212,23 +232,40 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
   }
 
   String? _validate() {
-    if (_steps.isEmpty) return 'La orquestación necesita al menos un paso';
+    if (_steps.isEmpty) {
+      return _tx(
+        'workflow_editor.validate_no_steps',
+        'La orquestación necesita al menos un paso',
+      );
+    }
     for (var i = 0; i < _steps.length; i++) {
       final step = _steps[i];
       if (step.agentId.isEmpty) {
-        return 'Selecciona un agente para el paso ${i + 1}';
+        return _tx(
+          'workflow_editor.validate_select_agent',
+          'Selecciona un agente para el paso {{step}}',
+        ).replaceAll('{{step}}', '${i + 1}');
       }
       if (step.kind == 'evaluator') {
         if (step.evaluatorCondition.trim().isEmpty) {
-          return 'El paso ${i + 1} es un evaluador y necesita una condición';
+          return _tx(
+            'workflow_editor.validate_evaluator_condition',
+            'El paso {{step}} es un evaluador y necesita una condición',
+          ).replaceAll('{{step}}', '${i + 1}');
         }
         if (step.loopTargetId == null) {
-          return 'El paso ${i + 1} es un evaluador y debe volver a un paso anterior';
+          return _tx(
+            'workflow_editor.validate_evaluator_loop',
+            'El paso {{step}} es un evaluador y debe volver a un paso anterior',
+          ).replaceAll('{{step}}', '${i + 1}');
         }
       }
     }
     if (_steps.length > 1 && _steps.every((s) => s.nextStepIds.isEmpty)) {
-      return 'Conecta los pasos entre sí ("Continúa hacia") para formar el flujo';
+      return _tx(
+        'workflow_editor.validate_connect_steps',
+        'Conecta los pasos entre sí ("Continúa hacia") para formar el flujo',
+      );
     }
     return null;
   }
@@ -303,9 +340,16 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.initial == null ? 'Nuevo workflow' : 'Editar workflow',
+          widget.initial == null
+              ? _tx('workflow_editor.title_new', 'Nuevo workflow')
+              : _tx('workflow_editor.title_edit', 'Editar workflow'),
         ),
-        actions: [TextButton(onPressed: _save, child: const Text('GUARDAR'))],
+        actions: [
+          TextButton(
+            onPressed: _save,
+            child: Text(_tx('workflow_editor.save_btn', 'GUARDAR')),
+          ),
+        ],
       ),
       body: _loadingAgents
           ? const Center(child: CircularProgressIndicator())
@@ -327,10 +371,18 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
                       ],
                       TextFormField(
                         controller: _nameController,
-                        decoration: const InputDecoration(labelText: 'Nombre'),
+                        decoration: InputDecoration(
+                          labelText: _tx(
+                            'workflow_editor.name_label',
+                            'Nombre',
+                          ),
+                        ),
                         validator: (value) =>
                             (value == null || value.trim().isEmpty)
-                            ? 'Nombre obligatorio'
+                            ? _tx(
+                                'workflow_editor.name_required',
+                                'Nombre obligatorio',
+                              )
                             : null,
                       ),
                       const SizedBox(height: 10),
@@ -338,24 +390,30 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
                         controller: _descriptionController,
                         minLines: 2,
                         maxLines: 4,
-                        decoration: const InputDecoration(
-                          labelText: 'Descripción',
+                        decoration: InputDecoration(
+                          labelText: _tx(
+                            'workflow_editor.description_label',
+                            'Descripción',
+                          ),
                         ),
                       ),
                       const SizedBox(height: 10),
                       TextFormField(
                         controller: _labelsController,
-                        decoration: const InputDecoration(
-                          labelText: 'Labels (coma separada)',
+                        decoration: InputDecoration(
+                          labelText: _tx(
+                            'workflow_editor.labels_label',
+                            'Labels (coma separada)',
+                          ),
                         ),
                       ),
                       const SizedBox(height: 20),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Pasos',
-                            style: TextStyle(
+                          Text(
+                            _tx('workflow_editor.steps_title', 'Pasos'),
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
                             ),
@@ -363,14 +421,22 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
                           OutlinedButton.icon(
                             onPressed: _addStep,
                             icon: const Icon(Icons.add),
-                            label: const Text('Añadir paso'),
+                            label: Text(
+                              _tx(
+                                'workflow_editor.add_step_btn',
+                                'Añadir paso',
+                              ),
+                            ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Cada paso puede continuar hacia varios pasos a la vez '
-                        '(ramas paralelas) — marca los destinos en "Continúa hacia".',
+                        _tx(
+                          'workflow_editor.steps_hint',
+                          'Cada paso puede continuar hacia varios pasos a la vez '
+                              '(ramas paralelas) — marca los destinos en "Continúa hacia".',
+                        ),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                       const SizedBox(height: 10),
@@ -396,7 +462,8 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
   String _stepLabel(int index) {
     final step = _steps[index];
     final name = step.label.isNotEmpty ? step.label : step.agentId;
-    return 'Paso ${index + 1}${name.isEmpty ? '' : ': $name'}';
+    final stepPrefix = _tx('workflow_editor.step_prefix', 'Paso');
+    return '$stepPrefix ${index + 1}${name.isEmpty ? '' : ': $name'}';
   }
 
   Widget _buildStepCard(int index, {required Key key}) {
@@ -405,6 +472,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
       for (var i = 0; i < _steps.length; i++)
         if (i != index) i,
     ];
+    final stepPrefix = _tx('workflow_editor.step_prefix', 'Paso');
 
     return Card(
       key: key,
@@ -424,7 +492,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
                   ),
                 ),
                 Text(
-                  'Paso ${index + 1}',
+                  '$stepPrefix ${index + 1}',
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 const Spacer(),
@@ -440,7 +508,9 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
               initialValue: _agents.any((a) => a.id == step.agentId)
                   ? step.agentId
                   : null,
-              decoration: const InputDecoration(labelText: 'Agente'),
+              decoration: InputDecoration(
+                labelText: _tx('workflow_editor.agent_label', 'Agente'),
+              ),
               items: _agents
                   .map(
                     (agent) => DropdownMenuItem(
@@ -454,8 +524,11 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
             const SizedBox(height: 10),
             TextFormField(
               initialValue: step.label,
-              decoration: const InputDecoration(
-                labelText: 'Etiqueta (opcional)',
+              decoration: InputDecoration(
+                labelText: _tx(
+                  'workflow_editor.step_label_field',
+                  'Etiqueta (opcional)',
+                ),
               ),
               onChanged: (value) => step.label = value,
             ),
@@ -464,16 +537,27 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
               initialValue: step.instruction,
               minLines: 2,
               maxLines: 5,
-              decoration: const InputDecoration(
-                labelText: 'Instrucción para este paso',
+              decoration: InputDecoration(
+                labelText: _tx(
+                  'workflow_editor.instruction_label',
+                  'Instrucción para este paso',
+                ),
               ),
               onChanged: (value) => step.instruction = value,
             ),
             const SizedBox(height: 10),
             SegmentedButton<String>(
-              segments: const [
-                ButtonSegment(value: 'agent', label: Text('Agente')),
-                ButtonSegment(value: 'evaluator', label: Text('Evaluador')),
+              segments: [
+                ButtonSegment(
+                  value: 'agent',
+                  label: Text(_tx('workflow_editor.kind_agent', 'Agente')),
+                ),
+                ButtonSegment(
+                  value: 'evaluator',
+                  label: Text(
+                    _tx('workflow_editor.kind_evaluator', 'Evaluador'),
+                  ),
+                ),
               ],
               selected: {step.kind},
               onSelectionChanged: (selection) => setState(() {
@@ -485,15 +569,20 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
               const SizedBox(height: 10),
               TextFormField(
                 initialValue: step.evaluatorCondition,
-                decoration: const InputDecoration(
-                  labelText: 'Condición de evaluación',
+                decoration: InputDecoration(
+                  labelText: _tx(
+                    'workflow_editor.evaluator_condition_label',
+                    'Condición de evaluación',
+                  ),
                 ),
                 onChanged: (value) => step.evaluatorCondition = value,
               ),
               const SizedBox(height: 10),
               Row(
                 children: [
-                  const Text('Máx. vueltas'),
+                  Text(
+                    _tx('workflow_editor.max_iterations_label', 'Máx. vueltas'),
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Slider(
@@ -514,7 +603,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
             if (otherSteps.isNotEmpty) ...[
               const SizedBox(height: 14),
               Text(
-                'Continúa hacia',
+                _tx('workflow_editor.continue_to_label', 'Continúa hacia'),
                 style: Theme.of(
                   context,
                 ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
@@ -546,11 +635,20 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
                 initialValue: step.loopTargetId,
                 decoration: InputDecoration(
                   labelText: step.kind == 'evaluator'
-                      ? 'Cierra ciclo hacia (obligatorio)'
-                      : 'Cierra ciclo hacia (opcional)',
+                      ? _tx(
+                          'workflow_editor.loop_target_required',
+                          'Cierra ciclo hacia (obligatorio)',
+                        )
+                      : _tx(
+                          'workflow_editor.loop_target_optional',
+                          'Cierra ciclo hacia (opcional)',
+                        ),
                 ),
                 items: [
-                  const DropdownMenuItem(value: null, child: Text('Sin ciclo')),
+                  DropdownMenuItem(
+                    value: null,
+                    child: Text(_tx('workflow_editor.no_loop', 'Sin ciclo')),
+                  ),
                   for (final otherIndex in otherSteps)
                     DropdownMenuItem(
                       value: _steps[otherIndex].id,
@@ -563,7 +661,12 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    const Text('Vueltas fijas'),
+                    Text(
+                      _tx(
+                        'workflow_editor.fixed_iterations_label',
+                        'Vueltas fijas',
+                      ),
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Slider(

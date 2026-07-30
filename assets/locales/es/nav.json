@@ -21,5 +21,15 @@
   "customize_hint": "Toca un widget para añadirlo al dashboard.",
   "customize_empty": "Ya has añadido todos los widgets disponibles.",
   "backend_connection_issue": "No se pudo conectar con {backend}: {error}",
-  "backend_connection_action": "Cambiar backend"
+  "backend_connection_action": "Cambiar backend",
+  "dashboard_title_summary": "Resumen",
+  "dashboard_title_token_usage": "Uso de tokens",
+  "dashboard_title_conn_status": "Estado de conexiones",
+  "dashboard_title_recent": "Agentes recientes",
+  "dashboard_title_activity": "Actividad",
+  "dashboard_title_composition": "Composición",
+  "dashboard_title_feed": "Actividad social",
+  "dashboard_size_medium": "Mediano",
+  "dashboard_size_small": "Pequeño",
+  "dashboard_size_large": "Grande"
 }

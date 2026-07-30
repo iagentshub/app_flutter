@@ -7,6 +7,8 @@ import '../../../core/network/api_error.dart';
 import '../../../models/explore/explore_models.dart';
 import '../../explore/repositories/explore_repository.dart';
 import '../repositories/public_profile_repository.dart';
+import '../../../shared/i18n/translated_texts.dart';
+import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/action_icon_button.dart';
 import '../../../shared/widgets/filter_button.dart';
@@ -17,12 +19,14 @@ class PublicProfilePage extends StatefulWidget {
     required this.username,
     required this.apiClient,
     required this.sessionController,
+    required this.localeController,
     super.key,
   });
 
   final String username;
   final ApiClient apiClient;
   final SessionController sessionController;
+  final LocaleController localeController;
 
   @override
   State<PublicProfilePage> createState() => _PublicProfilePageState();
@@ -31,6 +35,7 @@ class PublicProfilePage extends StatefulWidget {
 class _PublicProfilePageState extends State<PublicProfilePage> {
   late final PublicProfileRepository _repository;
   late final ExploreRepository _exploreRepository;
+  late final TranslatedTexts _t;
 
   List<ExploreItem> _resources = const [];
   PublicFollowStatus? _followStatus;
@@ -39,12 +44,29 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
   bool _followBusy = false;
   String _type = 'all';
 
+  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+
   @override
   void initState() {
     super.initState();
     _repository = PublicProfileRepository(apiClient: widget.apiClient);
     _exploreRepository = ExploreRepository(apiClient: widget.apiClient);
+    _t = TranslatedTexts(
+      localeController: widget.localeController,
+      namespace: 'resources',
+    )..addListener(_onTextsChanged);
     _load();
+  }
+
+  void _onTextsChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _t.removeListener(_onTextsChanged);
+    _t.dispose();
+    super.dispose();
   }
 
   String? get _token => widget.sessionController.gaToken;
@@ -54,9 +76,9 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
   void _openFiltersDialog() {
     showFilterDialog(
       context,
-      title: 'Filtros',
-      clearLabel: 'Limpiar filtros',
-      closeLabel: 'Cerrar',
+      title: _tx('common.filters', 'Filtros'),
+      clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
+      closeLabel: _tx('common.close', 'Cerrar'),
       onClear: () {
         setState(() => _type = 'all');
         _load();
@@ -64,7 +86,9 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
       buildFields: (setDialogState) => [
         DropdownButtonFormField<String>(
           initialValue: _type,
-          decoration: const InputDecoration(labelText: 'Tipo recurso'),
+          decoration: InputDecoration(
+            labelText: _tx('labels.type_label', 'Tipo de recurso'),
+          ),
           items: const [
             DropdownMenuItem(value: 'all', child: Text('all')),
             DropdownMenuItem(value: 'agent', child: Text('agent')),
@@ -87,7 +111,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
     final token = _token;
     if (token == null || token.isEmpty) {
       setState(() {
-        _error = 'No hay sesión activa';
+        _error = _tx('common.no_session', 'No hay sesión activa');
         _loading = false;
       });
       return;
@@ -119,7 +143,10 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'No se pudo cargar el perfil público';
+        _error = _tx(
+          'public_profile.error_generic',
+          'No se pudo cargar el perfil público',
+        );
         _loading = false;
       });
     }
@@ -140,7 +167,13 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo actualizar follow', isError: true);
+      _showMessage(
+        _tx(
+          'public_profile.follow_update_error',
+          'No se pudo actualizar follow',
+        ),
+        isError: true,
+      );
     } finally {
       if (mounted) setState(() => _followBusy = false);
     }
@@ -172,7 +205,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
           actions: [
             FilledButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cerrar'),
+              child: Text(_tx('common.close', 'Cerrar')),
             ),
           ],
         ),
@@ -180,7 +213,10 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo abrir preview', isError: true);
+      _showMessage(
+        _tx('public_profile.preview_error', 'No se pudo abrir preview'),
+        isError: true,
+      );
     }
   }
 
@@ -207,9 +243,12 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Error cargando perfil público',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  Text(
+                    _tx(
+                      'public_profile.error_loading',
+                      'Error cargando perfil público',
+                    ),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Text(_error!),
@@ -217,7 +256,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                   FilledButton.icon(
                     onPressed: _load,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Reintentar'),
+                    label: Text(_tx('common.retry', 'Reintentar')),
                   ),
                 ],
               ),
@@ -229,7 +268,11 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
 
     final followStatus = _followStatus;
     if (followStatus == null) {
-      return const Center(child: Text('Sin estado de seguimiento'));
+      return Center(
+        child: Text(
+          _tx('public_profile.no_follow_status', 'Sin estado de seguimiento'),
+        ),
+      );
     }
 
     final header = Column(
@@ -244,11 +287,15 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text(
-                  'Perfil público @$_cleanUsername',
+                  '${_tx('public_profile.title_prefix', 'Perfil público')} @$_cleanUsername',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
-                Text('Seguidores: ${followStatus.followersCount}'),
-                Text('Siguiendo: ${followStatus.followingCount}'),
+                Text(
+                  '${_tx('public_profile.followers', 'Seguidores')}: ${followStatus.followersCount}',
+                ),
+                Text(
+                  '${_tx('public_profile.following', 'Siguiendo')}: ${followStatus.followingCount}',
+                ),
                 FilledButton.icon(
                   onPressed: _followBusy ? null : _toggleFollow,
                   icon: Icon(
@@ -258,10 +305,13 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                   ),
                   label: Text(
                     _followBusy
-                        ? 'Actualizando...'
+                        ? _tx('profile.updating', 'Actualizando...')
                         : (followStatus.following
-                              ? 'Dejar de seguir'
-                              : 'Seguir'),
+                              ? _tx(
+                                  'public_profile.unfollow_btn',
+                                  'Dejar de seguir',
+                                )
+                              : _tx('public_profile.follow_btn', 'Seguir')),
                   ),
                 ),
               ],
@@ -276,10 +326,12 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
           children: [
             FilterButton(
               activeCount: _type != 'all' ? 1 : 0,
-              tooltip: 'Filtros',
+              tooltip: _tx('common.filters', 'Filtros'),
               onPressed: _openFiltersDialog,
             ),
-            Text('Recursos: ${_resources.length}'),
+            Text(
+              '${_tx('public_profile.resources_count', 'Recursos')}: ${_resources.length}',
+            ),
           ],
         ),
       ],
@@ -299,14 +351,17 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                 sliver: SliverToBoxAdapter(child: header),
               ),
               if (_resources.isEmpty)
-                const SliverPadding(
-                  padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   sliver: SliverToBoxAdapter(
                     child: Card(
                       child: Padding(
-                        padding: EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(16),
                         child: Text(
-                          'Este usuario no tiene recursos públicos en este filtro.',
+                          _tx(
+                            'public_profile.empty_resources',
+                            'Este usuario no tiene recursos públicos en este filtro.',
+                          ),
                         ),
                       ),
                     ),
@@ -348,7 +403,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
         ),
         trailing: ActionIconButton(
           icon: Icons.visibility_outlined,
-          tooltip: 'Vista previa',
+          tooltip: _tx('explore.preview', 'Vista previa'),
           onPressed: () => _preview(item),
         ),
       ),

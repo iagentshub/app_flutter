@@ -8,8 +8,10 @@ import '../../../models/dashboard/dashboard_widget_config.dart';
 import '../../auth/repositories/auth_repository.dart';
 import '../../explore/repositories/explore_repository.dart';
 import '../repositories/dashboard_repository.dart';
+import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/backend_controller.dart';
 import '../../../shared/state/dashboard_edit_state.dart';
+import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 
@@ -21,6 +23,7 @@ class DashboardPage extends StatefulWidget {
     required this.dashboardRepository,
     required this.apiClient,
     required this.dashboardEditState,
+    required this.localeController,
     super.key,
   });
 
@@ -30,6 +33,7 @@ class DashboardPage extends StatefulWidget {
   final DashboardRepository dashboardRepository;
   final ApiClient apiClient;
   final DashboardEditState dashboardEditState;
+  final LocaleController localeController;
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -37,6 +41,7 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   late final ExploreRepository _exploreRepository;
+  late final TranslatedTexts _t;
 
   DashboardData? _data;
   List<String> _layout = kDefaultDashboardLayout;
@@ -45,16 +50,31 @@ class _DashboardPageState extends State<DashboardPage> {
   bool _editing = false;
   String? _error;
 
+  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+
+  String _widgetTx(String key, String fallback) =>
+      _tx('dashboard.$key', fallback);
+
   @override
   void initState() {
     super.initState();
     _exploreRepository = ExploreRepository(apiClient: widget.apiClient);
+    _t = TranslatedTexts(
+      localeController: widget.localeController,
+      namespace: 'resources',
+    )..addListener(_onTextsChanged);
     _load();
+  }
+
+  void _onTextsChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
     if (_editing) widget.dashboardEditState.stopEditing();
+    _t.removeListener(_onTextsChanged);
+    _t.dispose();
     super.dispose();
   }
 
@@ -64,7 +84,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final token = _token;
     if (token == null || token.isEmpty) {
       setState(() {
-        _error = 'No hay sesión activa';
+        _error = _tx('common.no_session', 'No hay sesión activa');
         _loading = false;
       });
       return;
@@ -89,7 +109,10 @@ class _DashboardPageState extends State<DashboardPage> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'No se pudo cargar el dashboard';
+        _error = _tx(
+          'dashboard.error_generic',
+          'No se pudo cargar el dashboard',
+        );
         _loading = false;
       });
     }
@@ -157,7 +180,8 @@ class _DashboardPageState extends State<DashboardPage> {
     final current = _config[id] ?? const DashboardWidgetConfig();
     final result = await showDialog<DashboardWidgetConfig>(
       context: context,
-      builder: (context) => _WidgetConfigDialog(widgetId: id, initial: current),
+      builder: (context) =>
+          _WidgetConfigDialog(widgetId: id, initial: current, tx: _widgetTx),
     );
     if (result == null) return;
     setState(() => _config = {..._config, id: result});
@@ -172,12 +196,12 @@ class _DashboardPageState extends State<DashboardPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(_error ?? 'Sin datos'),
+            Text(_error ?? _tx('dashboard.no_data', 'Sin datos')),
             const SizedBox(height: 12),
             FilledButton.icon(
               onPressed: _load,
               icon: const Icon(Icons.refresh),
-              label: const Text('Reintentar'),
+              label: Text(_tx('common.retry', 'Reintentar')),
             ),
           ],
         ),
@@ -198,10 +222,16 @@ class _DashboardPageState extends State<DashboardPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   if (_editing)
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Abre el menú (☰) para añadir widgets',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                        _tx(
+                          'dashboard.edit_hint',
+                          'Abre el menú (☰) para añadir widgets',
+                        ),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
                       ),
                     )
                   else
@@ -209,7 +239,11 @@ class _DashboardPageState extends State<DashboardPage> {
                   TextButton.icon(
                     onPressed: _toggleEditing,
                     icon: Icon(_editing ? Icons.check : Icons.tune),
-                    label: Text(_editing ? 'Listo' : 'Personalizar'),
+                    label: Text(
+                      _editing
+                          ? _tx('dashboard.done_btn', 'Listo')
+                          : _tx('dashboard.customize_btn', 'Personalizar'),
+                    ),
                   ),
                 ],
               ),
@@ -220,12 +254,15 @@ class _DashboardPageState extends State<DashboardPage> {
                 child: _layout.isEmpty
                     ? ListView(
                         padding: const EdgeInsets.all(16),
-                        children: const [
+                        children: [
                           Padding(
-                            padding: EdgeInsets.symmetric(vertical: 40),
+                            padding: const EdgeInsets.symmetric(vertical: 40),
                             child: Center(
                               child: Text(
-                                'No hay widgets. Pulsa "Personalizar" y abre el menú para añadir alguno.',
+                                _tx(
+                                  'dashboard.empty_layout',
+                                  'No hay widgets. Pulsa "Personalizar" y abre el menú para añadir alguno.',
+                                ),
                               ),
                             ),
                           ),
@@ -277,7 +314,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                 Expanded(
                   child: Text(
-                    dashboardWidgetTitle(id),
+                    dashboardWidgetTitle(id, _widgetTx),
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -287,13 +324,13 @@ class _DashboardPageState extends State<DashboardPage> {
                 if (_editing && id != 'composition')
                   IconButton(
                     icon: const Icon(Icons.settings_outlined),
-                    tooltip: 'Configurar',
+                    tooltip: _tx('dashboard.configure_tooltip', 'Configurar'),
                     onPressed: () => _editWidget(id),
                   ),
                 if (_editing)
                   IconButton(
                     icon: const Icon(Icons.close),
-                    tooltip: 'Quitar',
+                    tooltip: _tx('dashboard.remove_tooltip', 'Quitar'),
                     onPressed: () => _removeWidget(id),
                   ),
               ],
@@ -309,9 +346,9 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _bodyFor(String id, DashboardData data, DashboardWidgetConfig config) {
     switch (id) {
       case 'summary':
-        return _SummaryBody(data: data, config: config);
+        return _SummaryBody(data: data, config: config, tx: _widgetTx);
       case 'token-usage':
-        return _TokenUsageBody(data: data, config: config);
+        return _TokenUsageBody(data: data, config: config, tx: _widgetTx);
       case 'conn-status':
         return _ConnectionStatusBody(
           key: ValueKey('conn-status-${_token ?? ''}'),
@@ -319,13 +356,14 @@ class _DashboardPageState extends State<DashboardPage> {
           token: _token ?? '',
           repository: widget.dashboardRepository,
           config: config,
+          tx: _widgetTx,
         );
       case 'recent':
-        return _RecentAgentsBody(data: data, config: config);
+        return _RecentAgentsBody(data: data, config: config, tx: _widgetTx);
       case 'activity':
-        return _ActivityBody(data: data, config: config);
+        return _ActivityBody(data: data, config: config, tx: _widgetTx);
       case 'composition':
-        return _CompositionBody(data: data);
+        return _CompositionBody(data: data, tx: _widgetTx);
       case 'feed':
         return _FeedBody(
           key: ValueKey('feed-${config.types}-${config.limit}'),
@@ -333,6 +371,7 @@ class _DashboardPageState extends State<DashboardPage> {
           repository: widget.dashboardRepository,
           exploreRepository: _exploreRepository,
           config: config,
+          tx: _widgetTx,
         );
       default:
         return const SizedBox.shrink();
@@ -341,10 +380,15 @@ class _DashboardPageState extends State<DashboardPage> {
 }
 
 class _SummaryBody extends StatelessWidget {
-  const _SummaryBody({required this.data, required this.config});
+  const _SummaryBody({
+    required this.data,
+    required this.config,
+    required this.tx,
+  });
 
   final DashboardData data;
   final DashboardWidgetConfig config;
+  final DashboardTx tx;
 
   @override
   Widget build(BuildContext context) {
@@ -412,7 +456,7 @@ class _SummaryBody extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        summaryItemLabel(item),
+                        summaryItemLabel(item, tx),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -428,10 +472,15 @@ class _SummaryBody extends StatelessWidget {
 }
 
 class _ActivityBody extends StatelessWidget {
-  const _ActivityBody({required this.data, required this.config});
+  const _ActivityBody({
+    required this.data,
+    required this.config,
+    required this.tx,
+  });
 
   final DashboardData data;
   final DashboardWidgetConfig config;
+  final DashboardTx tx;
 
   @override
   Widget build(BuildContext context) {
@@ -444,12 +493,17 @@ class _ActivityBody extends StatelessWidget {
       (m, item) => item.tokens > m ? item.tokens : m,
     );
 
-    if (daily.isEmpty) return const Text('Sin actividad todavía');
+    if (daily.isEmpty) {
+      return Text(tx('no_activity', 'Sin actividad todavía'));
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Total: $total tokens ($days días)',
+          tx(
+            'total_tokens_days',
+            'Total: {{total}} tokens ({{days}} días)',
+          ).replaceAll('{{total}}', '$total').replaceAll('{{days}}', '$days'),
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         const SizedBox(height: 10),
@@ -499,10 +553,15 @@ class _ActivityBody extends StatelessWidget {
 }
 
 class _TokenUsageBody extends StatelessWidget {
-  const _TokenUsageBody({required this.data, required this.config});
+  const _TokenUsageBody({
+    required this.data,
+    required this.config,
+    required this.tx,
+  });
 
   final DashboardData data;
   final DashboardWidgetConfig config;
+  final DashboardTx tx;
 
   @override
   Widget build(BuildContext context) {
@@ -514,6 +573,9 @@ class _TokenUsageBody extends StatelessWidget {
         .where((c) => c['_personal_key'] == true || c['scope'] == 'personal')
         .map((c) => c['id']?.toString() ?? '')
         .toSet();
+
+    final defaultAgentName = tx('default_agent_name', 'Agente');
+    final defaultConnectionName = tx('default_connection_name', 'Conexión');
 
     List<MapEntry<String, int>> rows;
     if (groupBy == 'agent') {
@@ -529,7 +591,7 @@ class _TokenUsageBody extends StatelessWidget {
               .map((a) {
                 final tokensIn = (a['tokens_in'] as num?)?.toInt() ?? 0;
                 final tokensOut = (a['tokens_out'] as num?)?.toInt() ?? 0;
-                final name = a['name']?.toString() ?? 'Agente';
+                final name = a['name']?.toString() ?? defaultAgentName;
                 return MapEntry(name, tokensIn + tokensOut);
               })
               .where((e) => e.value > 0)
@@ -549,7 +611,7 @@ class _TokenUsageBody extends StatelessWidget {
                 final name =
                     c['name']?.toString() ??
                     c['type']?.toString() ??
-                    'Conexión';
+                    defaultConnectionName;
                 return MapEntry(name, tokensIn + tokensOut);
               })
               .where((e) => e.value > 0)
@@ -559,7 +621,9 @@ class _TokenUsageBody extends StatelessWidget {
     rows = rows.take(limit).toList();
     final max = rows.isEmpty ? 1 : rows.first.value;
 
-    if (rows.isEmpty) return const Text('Todavía no hay consumo de tokens');
+    if (rows.isEmpty) {
+      return Text(tx('no_token_usage', 'Todavía no hay consumo de tokens'));
+    }
     return Column(
       children: rows.map((entry) {
         return Padding(
@@ -602,12 +666,14 @@ class _ConnectionStatusBody extends StatefulWidget {
     required this.token,
     required this.repository,
     required this.config,
+    required this.tx,
   });
 
   final DashboardData data;
   final String token;
   final DashboardRepository repository;
   final DashboardWidgetConfig config;
+  final DashboardTx tx;
 
   @override
   State<_ConnectionStatusBody> createState() => _ConnectionStatusBodyState();
@@ -654,9 +720,15 @@ class _ConnectionStatusBodyState extends State<_ConnectionStatusBody> {
     final pageSize = widget.config.pageSize ?? 4;
     final resultsById = {for (final r in _results) r.id: r};
     final okCount = _results.where((r) => r.ok).length;
+    final defaultConnectionName = widget.tx(
+      'default_connection_name',
+      'Conexión',
+    );
 
     if (connections.isEmpty) {
-      return const Text('No hay conexiones configuradas');
+      return Text(
+        widget.tx('no_connections', 'No hay conexiones configuradas'),
+      );
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -666,8 +738,14 @@ class _ConnectionStatusBodyState extends State<_ConnectionStatusBody> {
           children: [
             Text(
               _tested
-                  ? '$okCount / ${connections.length} operativas'
-                  : 'Comprobando…',
+                  ? widget
+                        .tx(
+                          'operational_count',
+                          '{{ok}} / {{total}} operativas',
+                        )
+                        .replaceAll('{{ok}}', '$okCount')
+                        .replaceAll('{{total}}', '${connections.length}')
+                  : widget.tx('checking', 'Comprobando…'),
             ),
             IconButton(
               icon: _testing
@@ -686,7 +764,7 @@ class _ConnectionStatusBodyState extends State<_ConnectionStatusBody> {
           final name =
               conn['name']?.toString() ??
               conn['type']?.toString() ??
-              'Conexión';
+              defaultConnectionName;
           final result = resultsById[id];
           final color = result == null
               ? Colors.grey
@@ -709,23 +787,31 @@ class _ConnectionStatusBodyState extends State<_ConnectionStatusBody> {
 }
 
 class _RecentAgentsBody extends StatelessWidget {
-  const _RecentAgentsBody({required this.data, required this.config});
+  const _RecentAgentsBody({
+    required this.data,
+    required this.config,
+    required this.tx,
+  });
 
   final DashboardData data;
   final DashboardWidgetConfig config;
+  final DashboardTx tx;
 
   @override
   Widget build(BuildContext context) {
     final pageSize = config.pageSize ?? 4;
     final recent = data.agents.reversed.take(pageSize).toList();
-    if (recent.isEmpty) return const Text('Todavía no hay agentes');
+    final defaultAgentName = tx('default_agent_name', 'Agente');
+    if (recent.isEmpty) {
+      return Text(tx('no_recent_agents', 'Todavía no hay agentes'));
+    }
     return Column(
       children: recent.map((agent) {
         return ListTile(
           contentPadding: EdgeInsets.zero,
           dense: true,
           leading: const Icon(Icons.smart_toy_outlined),
-          title: Text(agent['name']?.toString() ?? 'Agente'),
+          title: Text(agent['name']?.toString() ?? defaultAgentName),
           subtitle: agent['model'] != null
               ? Text(agent['model'].toString())
               : null,
@@ -737,9 +823,10 @@ class _RecentAgentsBody extends StatelessWidget {
 }
 
 class _CompositionBody extends StatelessWidget {
-  const _CompositionBody({required this.data});
+  const _CompositionBody({required this.data, required this.tx});
 
   final DashboardData data;
+  final DashboardTx tx;
 
   static const _colors = [
     Color(0xFF4F46E5),
@@ -765,7 +852,9 @@ class _CompositionBody extends StatelessWidget {
     final rows = counts.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     final top = rows.take(6).toList();
-    if (top.isEmpty) return const Text('Sin datos suficientes todavía');
+    if (top.isEmpty) {
+      return Text(tx('no_composition_data', 'Sin datos suficientes todavía'));
+    }
     final max = top.first.value;
 
     return Column(
@@ -809,12 +898,14 @@ class _FeedBody extends StatefulWidget {
     required this.repository,
     required this.exploreRepository,
     required this.config,
+    required this.tx,
   });
 
   final String token;
   final DashboardRepository repository;
   final ExploreRepository exploreRepository;
   final DashboardWidgetConfig config;
+  final DashboardTx tx;
 
   @override
   State<_FeedBody> createState() => _FeedBodyState();
@@ -882,8 +973,15 @@ class _FeedBodyState extends State<_FeedBody> {
       );
     }
     if (_items.isEmpty) {
-      return const Text('No hay actividad reciente de la comunidad');
+      return Text(
+        widget.tx(
+          'no_recent_activity',
+          'No hay actividad reciente de la comunidad',
+        ),
+      );
     }
+
+    final defaultResourceName = widget.tx('default_resource_name', 'Recurso');
 
     return Column(
       children: _items.map((item) {
@@ -891,7 +989,7 @@ class _FeedBodyState extends State<_FeedBody> {
         final id = item['resource_id']?.toString() ?? '';
         final key = '$type:$id';
         final starred = _starredOverride[key] ?? item['starred'] == true;
-        final name = item['name']?.toString() ?? 'Recurso';
+        final name = item['name']?.toString() ?? defaultResourceName;
         return ListTile(
           contentPadding: EdgeInsets.zero,
           dense: true,
@@ -918,10 +1016,15 @@ class _FeedBodyState extends State<_FeedBody> {
 }
 
 class _WidgetConfigDialog extends StatefulWidget {
-  const _WidgetConfigDialog({required this.widgetId, required this.initial});
+  const _WidgetConfigDialog({
+    required this.widgetId,
+    required this.initial,
+    required this.tx,
+  });
 
   final String widgetId;
   final DashboardWidgetConfig initial;
+  final DashboardTx tx;
 
   @override
   State<_WidgetConfigDialog> createState() => _WidgetConfigDialogState();
@@ -939,7 +1042,14 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Configurar: ${dashboardWidgetTitle(widget.widgetId)}'),
+      title: Text(
+        widget
+            .tx('configure_widget_title', 'Configurar: {{name}}')
+            .replaceAll(
+              '{{name}}',
+              dashboardWidgetTitle(widget.widgetId, widget.tx),
+            ),
+      ),
       content: SizedBox(
         width: dialogContentWidth(context, 420),
         child: _buildFields(),
@@ -947,23 +1057,24 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
+          child: Text(widget.tx('common.cancel', 'Cancelar')),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(_draft),
-          child: const Text('Guardar'),
+          child: Text(widget.tx('common.save', 'Guardar')),
         ),
       ],
     );
   }
 
   Widget _buildFields() {
+    final tx = widget.tx;
     switch (widget.widgetId) {
       case 'summary':
         return _checklist(
           kSummaryItems,
           _draft.items ?? kSummaryItems,
-          summaryItemLabel,
+          (item) => summaryItemLabel(item, tx),
           (next) => setState(() => _draft = _draft.copyWith(items: next)),
         );
       case 'token-usage':
@@ -972,21 +1083,27 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _pillRow(
-              'Agrupar por',
-              {'connection': 'Conexión', 'agent': 'Agente'},
+              tx('group_by_label', 'Agrupar por'),
+              {
+                'connection': tx('group_by_connection', 'Conexión'),
+                'agent': tx('group_by_agent', 'Agente'),
+              },
               _draft.groupBy ?? 'connection',
               (v) => setState(() => _draft = _draft.copyWith(groupBy: v)),
             ),
             const SizedBox(height: 12),
             _pillRow(
-              'Conexiones',
-              {'all': 'Todas', 'personal': 'Personales'},
+              tx('connections_label', 'Conexiones'),
+              {
+                'all': tx('scope_all', 'Todas'),
+                'personal': tx('scope_personal', 'Personales'),
+              },
               _draft.scope ?? 'all',
               (v) => setState(() => _draft = _draft.copyWith(scope: v)),
             ),
             const SizedBox(height: 12),
             _numberRow(
-              'Cantidad',
+              tx('quantity_label', 'Cantidad'),
               [3, 5, 10],
               _draft.limit ?? 5,
               (v) => setState(() => _draft = _draft.copyWith(limit: v)),
@@ -999,14 +1116,17 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _pillRow(
-              'Conexiones',
-              {'all': 'Todas', 'personal': 'Personales'},
+              tx('connections_label', 'Conexiones'),
+              {
+                'all': tx('scope_all', 'Todas'),
+                'personal': tx('scope_personal', 'Personales'),
+              },
               _draft.scope ?? 'all',
               (v) => setState(() => _draft = _draft.copyWith(scope: v)),
             ),
             const SizedBox(height: 12),
             _numberRow(
-              'Cantidad',
+              tx('quantity_label', 'Cantidad'),
               [2, 4, 6, 8],
               _draft.pageSize ?? 4,
               (v) => setState(() => _draft = _draft.copyWith(pageSize: v)),
@@ -1015,14 +1135,14 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
         );
       case 'recent':
         return _numberRow(
-          'Cantidad',
+          tx('quantity_label', 'Cantidad'),
           [2, 4, 6, 8],
           _draft.pageSize ?? 4,
           (v) => setState(() => _draft = _draft.copyWith(pageSize: v)),
         );
       case 'activity':
         return _numberRow(
-          'Periodo (días)',
+          tx('period_days_label', 'Periodo (días)'),
           [7, 14, 30],
           _draft.days ?? 14,
           (v) => setState(() => _draft = _draft.copyWith(days: v)),
@@ -1035,12 +1155,12 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
             _checklist(
               kFeedTypes,
               _draft.types ?? kFeedTypes,
-              feedTypeLabel,
+              (type) => feedTypeLabel(type, tx),
               (next) => setState(() => _draft = _draft.copyWith(types: next)),
             ),
             const SizedBox(height: 12),
             _numberRow(
-              'Cantidad',
+              tx('quantity_label', 'Cantidad'),
               [4, 8, 15, 25],
               _draft.limit ?? 8,
               (v) => setState(() => _draft = _draft.copyWith(limit: v)),
@@ -1048,7 +1168,12 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
           ],
         );
       default:
-        return const Text('Este widget no tiene opciones configurables.');
+        return Text(
+          tx(
+            'no_widget_options',
+            'Este widget no tiene opciones configurables.',
+          ),
+        );
     }
   }
 

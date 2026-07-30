@@ -402,6 +402,9 @@ class _WidgetPickerDrawerContent extends StatelessWidget {
   final DashboardEditState state;
   final Map<String, dynamic> t;
 
+  String _dashboardTx(String key, String fallback) =>
+      LocaleLoader.text(t, 'dashboard_$key', fallback: fallback);
+
   @override
   Widget build(BuildContext context) {
     final missing = state.missing;
@@ -455,9 +458,15 @@ class _WidgetPickerDrawerContent extends StatelessWidget {
                           padding: const EdgeInsets.all(14),
                           child: Row(
                             children: [
-                              Expanded(child: Text(dashboardWidgetTitle(id))),
+                              Expanded(
+                                child: Text(
+                                  dashboardWidgetTitle(id, _dashboardTx),
+                                ),
+                              ),
                               Chip(
-                                label: Text(dashboardWidgetSizeLabel(id)),
+                                label: Text(
+                                  dashboardWidgetSizeLabel(id, _dashboardTx),
+                                ),
                                 visualDensity: VisualDensity.compact,
                                 materialTapTargetSize:
                                     MaterialTapTargetSize.shrinkWrap,

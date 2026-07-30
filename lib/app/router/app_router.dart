@@ -149,13 +149,19 @@ GoRouter createRouter({
       GoRoute(
         path: RouteNames.register,
         builder: (context, state) => TerminalViewTransition(
-          child: RegisterPage(authRepository: authRepository),
+          child: RegisterPage(
+            authRepository: authRepository,
+            localeController: localeController,
+          ),
         ),
       ),
       GoRoute(
         path: RouteNames.forgotPassword,
         builder: (context, state) => TerminalViewTransition(
-          child: ForgotPasswordPage(authRepository: authRepository),
+          child: ForgotPasswordPage(
+            authRepository: authRepository,
+            localeController: localeController,
+          ),
         ),
       ),
       GoRoute(
@@ -163,6 +169,7 @@ GoRouter createRouter({
         builder: (context, state) => TerminalViewTransition(
           child: ResetPasswordPage(
             authRepository: authRepository,
+            localeController: localeController,
             token: state.uri.queryParameters['token'],
           ),
         ),
@@ -173,6 +180,7 @@ GoRouter createRouter({
           child: VerifyPage(
             authRepository: authRepository,
             sessionController: sessionController,
+            localeController: localeController,
             token: state.uri.queryParameters['token'],
           ),
         ),
@@ -208,6 +216,7 @@ GoRouter createRouter({
                 dashboardRepository: dashboardRepository,
                 apiClient: apiClient,
                 dashboardEditState: dashboardEditState,
+                localeController: localeController,
               ),
             ),
           ),
@@ -251,6 +260,7 @@ GoRouter createRouter({
               child: MemoryPage(
                 apiClient: apiClient,
                 sessionController: sessionController,
+                localeController: localeController,
               ),
             ),
           ),
@@ -290,6 +300,7 @@ GoRouter createRouter({
               child: ManagerPage(
                 apiClient: apiClient,
                 sessionController: sessionController,
+                localeController: localeController,
               ),
             ),
           ),
@@ -309,6 +320,7 @@ GoRouter createRouter({
               child: VsCodeAuthPage(
                 authRepository: authRepository,
                 sessionController: sessionController,
+                localeController: localeController,
                 state: state.uri.queryParameters['state'],
                 callback: state.uri.queryParameters['callback'],
               ),
@@ -355,6 +367,7 @@ GoRouter createRouter({
                 username: state.pathParameters['username'] ?? '',
                 apiClient: apiClient,
                 sessionController: sessionController,
+                localeController: localeController,
               ),
             ),
           ),

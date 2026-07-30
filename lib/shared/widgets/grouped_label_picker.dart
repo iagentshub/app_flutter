@@ -55,7 +55,7 @@ class GroupedLabelPicker extends StatelessWidget {
               final isSelected = selected.contains(key);
               final color = labelColor(key);
               return ChoiceChip(
-                label: Text(key),
+                label: Text(tx('labels.$key', key)),
                 selected: isSelected,
                 onSelected: (value) => _toggle(group, key, value),
                 selectedColor: color.withValues(alpha: 0.9),

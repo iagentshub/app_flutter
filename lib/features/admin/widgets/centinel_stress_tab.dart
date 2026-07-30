@@ -654,6 +654,10 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
             SizedBox(
               height: 260,
               child: CentinelChart(
+                emptyLabel: _tx(
+                  'centinel.stress_chart_empty',
+                  'Inicia la prueba para ver la gráfica',
+                ),
                 markerIndex: breakIndex >= 0 ? breakIndex : null,
                 markerLabel: breakIndex >= 0
                     ? _tx('centinel.chart_break_marker', 'quiebre')

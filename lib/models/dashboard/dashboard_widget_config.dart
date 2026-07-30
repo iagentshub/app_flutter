@@ -25,66 +25,68 @@ const kSummaryItems = [
 ];
 const kFeedTypes = ['agent', 'skill', 'knowledge'];
 
-String dashboardWidgetTitle(String id) {
+typedef DashboardTx = String Function(String key, String fallback);
+
+String dashboardWidgetTitle(String id, DashboardTx tx) {
   switch (id) {
     case 'summary':
-      return 'Resumen';
+      return tx('title_summary', 'Resumen');
     case 'token-usage':
-      return 'Uso de tokens';
+      return tx('title_token_usage', 'Uso de tokens');
     case 'conn-status':
-      return 'Estado de conexiones';
+      return tx('title_conn_status', 'Estado de conexiones');
     case 'recent':
-      return 'Agentes recientes';
+      return tx('title_recent', 'Agentes recientes');
     case 'activity':
-      return 'Actividad';
+      return tx('title_activity', 'Actividad');
     case 'composition':
-      return 'Composición';
+      return tx('title_composition', 'Composición');
     case 'feed':
-      return 'Actividad social';
+      return tx('title_feed', 'Actividad social');
     default:
       return id;
   }
 }
 
-String summaryItemLabel(String item) {
+String summaryItemLabel(String item, DashboardTx tx) {
   switch (item) {
     case 'agents':
-      return 'Agentes';
+      return tx('summary_agents', 'Agentes');
     case 'connections':
-      return 'Conexiones';
+      return tx('summary_connections', 'Conexiones');
     case 'skills':
-      return 'Skills';
+      return tx('summary_skills', 'Skills');
     case 'memory':
-      return 'Memoria';
+      return tx('summary_memory', 'Memoria');
     case 'knowledge':
-      return 'Knowledge';
+      return tx('summary_knowledge', 'Knowledge');
     case 'workflows':
-      return 'Workflows';
+      return tx('summary_workflows', 'Workflows');
     default:
       return item;
   }
 }
 
-String dashboardWidgetSizeLabel(String id) {
+String dashboardWidgetSizeLabel(String id, DashboardTx tx) {
   switch (id) {
     case 'token-usage':
     case 'feed':
-      return 'Mediano';
+      return tx('size_medium', 'Mediano');
     case 'composition':
-      return 'Pequeño';
+      return tx('size_small', 'Pequeño');
     default:
-      return 'Grande';
+      return tx('size_large', 'Grande');
   }
 }
 
-String feedTypeLabel(String type) {
+String feedTypeLabel(String type, DashboardTx tx) {
   switch (type) {
     case 'agent':
-      return 'Agentes';
+      return tx('feed_agent', 'Agentes');
     case 'skill':
-      return 'Skills';
+      return tx('feed_skill', 'Skills');
     case 'knowledge':
-      return 'Knowledge';
+      return tx('feed_knowledge', 'Knowledge');
     default:
       return type;
   }

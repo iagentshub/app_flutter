@@ -649,6 +649,7 @@ class _KnowledgePageState extends State<KnowledgePage>
       'memory' => MemoryPage(
         apiClient: widget.apiClient,
         sessionController: widget.sessionController,
+        localeController: widget.localeController,
       ),
       _ => _buildSkillsSection(),
     };
