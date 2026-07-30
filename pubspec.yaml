@@ -66,15 +66,28 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/icons/app_icon.png
+    - assets/icons/ia/
+    - assets/icons/coordinator/
     - assets/locales/en/
     - assets/locales/es/
 
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: assets/icons/app_icon.png
+  image_path: assets/icons/ia/ia_inter_white_on_red.png
   remove_alpha_ios: true
+  web:
+    generate: true
+    image_path: assets/icons/ia/ia_inter_white_on_red.png
+    background_color: "#D90429"
+    theme_color: "#D90429"
+  windows:
+    generate: true
+    image_path: assets/icons/ia/ia_inter_white_on_red.png
+    icon_size: 256
+  macos:
+    generate: true
+    image_path: assets/icons/ia/ia_inter_white_on_red.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

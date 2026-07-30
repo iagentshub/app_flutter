@@ -83,6 +83,8 @@
     "preferences_title": "Preferencias",
     "theme_label": "Tema",
     "language_label": "Idioma",
+    "app_icon_label": "Icono de la aplicación",
+    "app_icon_description": "Elige el icono que se muestra dentro de iAgents.",
     "save_preferences": "Guardar preferencias",
     "saving": "Guardando...",
     "social_title": "Perfil público",

@@ -8,8 +8,10 @@ import '../../../core/network/api_error.dart';
 import '../../../models/profile/profile_models.dart';
 import '../repositories/profile_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
+import '../../../shared/state/brand_icon_controller.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/widgets/brand_icon.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../widgets/profile_groups_section.dart';
 
@@ -753,6 +755,23 @@ class _ProfilePageState extends State<ProfilePage>
                     setState(() => _language = value);
                   },
                 ),
+                const SizedBox(height: 20),
+                Text(
+                  _tx('profile.app_icon_label', 'Icono de la aplicación'),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _tx(
+                    'profile.app_icon_description',
+                    'Elige el icono que se muestra dentro de iAgents.',
+                  ),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 10),
+                const _BrandIconSelector(),
                 const SizedBox(height: 12),
                 FilledButton.icon(
                   onPressed: _savingSettings ? null : _saveSettings,
@@ -1018,6 +1037,97 @@ class _ProfilePageState extends State<ProfilePage>
       token: token,
       currentUsername: bundle.session.username,
       localeController: widget.localeController,
+    );
+  }
+}
+
+class _BrandIconSelector extends StatelessWidget {
+  const _BrandIconSelector();
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = BrandIconScope.watch(context);
+    return SizedBox(
+      height: 78,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: BrandIconVariant.values.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
+        itemBuilder: (context, index) {
+          final variant = BrandIconVariant.values[index];
+          return _BrandIconChoice(
+            variant: variant,
+            selected: controller.selected == variant,
+            onSelected: controller.select,
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _BrandIconChoice extends StatelessWidget {
+  const _BrandIconChoice({
+    required this.variant,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final BrandIconVariant variant;
+  final bool selected;
+  final ValueChanged<BrandIconVariant> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return SizedBox(
+      width: 68,
+      height: 68,
+      child: Material(
+        color: selected
+            ? colorScheme.primaryContainer.withValues(alpha: 0.35)
+            : colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: selected ? colorScheme.primary : colorScheme.outlineVariant,
+            width: selected ? 2 : 1,
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => onSelected(variant),
+          child: Padding(
+            padding: const EdgeInsets.all(6),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.asset(variant.assetPath, fit: BoxFit.cover),
+                  ),
+                ),
+                if (selected)
+                  Positioned(
+                    top: 2,
+                    right: 2,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: colorScheme.surface,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.check_circle,
+                        color: colorScheme.primary,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
