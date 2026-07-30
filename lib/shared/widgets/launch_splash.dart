@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/network/api_client.dart';
 import '../../features/auth/repositories/auth_repository.dart';
+import '../branding/brand_mark_geometry.dart';
 import '../state/backend_controller.dart';
 import '../state/boot_platform_cache.dart';
 
@@ -22,35 +22,28 @@ class LaunchSplash extends StatefulWidget {
   State<LaunchSplash> createState() => _LaunchSplashState();
 }
 
-enum _Phase { typingAi, erasingAi, typingBrand, done }
+class _LaunchSplashState extends State<LaunchSplash>
+    with SingleTickerProviderStateMixin {
+  static const _initialPause = Duration(milliseconds: 140);
+  static const _animationDuration = Duration(milliseconds: 1050);
+  static const _finalPause = Duration(milliseconds: 260);
 
-class _LaunchSplashState extends State<LaunchSplash> {
-  static const _initialPause = Duration(milliseconds: 100);
-  static const _typeStep = Duration(milliseconds: 65);
-  static const _aiHoldPause = Duration(milliseconds: 220);
-  static const _eraseStep = Duration(milliseconds: 45);
-  static const _brandTypeStep = Duration(milliseconds: 40);
-  static const _finalPause = Duration(milliseconds: 300);
-
-  static const _ai = 'AI';
-  static const _brand = 'iAgentsHUB';
-
-  Timer? _cursorTimer;
-  bool _showCursor = false;
-  String _visibleText = '';
-  _Phase _phase = _Phase.typingAi;
+  late final AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
-    _startCursorBlink();
+    _controller = AnimationController(
+      vsync: this,
+      duration: _animationDuration,
+    );
     unawaited(_checkBackend());
     unawaited(_runSequence());
   }
 
   @override
   void dispose() {
-    _cursorTimer?.cancel();
+    _controller.dispose();
     super.dispose();
   }
 
@@ -67,50 +60,14 @@ class _LaunchSplashState extends State<LaunchSplash> {
 
   Future<void> _runSequence() async {
     await Future<void>.delayed(_initialPause);
-    if (mounted) setState(() => _showCursor = true);
-
-    await _typeText(_ai, _typeStep);
-    await Future<void>.delayed(_aiHoldPause);
-
-    if (mounted) setState(() => _phase = _Phase.erasingAi);
-    await _eraseText(_eraseStep);
-
-    if (mounted) setState(() => _phase = _Phase.typingBrand);
-    await _typeText(_brand, _brandTypeStep);
-
-    if (mounted) setState(() => _phase = _Phase.done);
-    await Future<void>.delayed(_finalPause);
     if (!mounted) return;
-    widget.onFinished();
-  }
-
-  Future<void> _typeText(String fullText, Duration step) async {
-    for (var i = _visibleText.length + 1; i <= fullText.length; i++) {
-      if (!mounted) return;
-      setState(() => _visibleText = fullText.substring(0, i));
-      await Future<void>.delayed(step);
-    }
-  }
-
-  Future<void> _eraseText(Duration step) async {
-    for (var i = _visibleText.length - 1; i >= 0; i--) {
-      if (!mounted) return;
-      setState(() => _visibleText = _visibleText.substring(0, i));
-      await Future<void>.delayed(step);
-    }
-  }
-
-  void _startCursorBlink() {
-    _cursorTimer = Timer.periodic(const Duration(milliseconds: 420), (_) {
-      if (!mounted) return;
-      setState(() => _showCursor = !_showCursor);
-    });
+    await _controller.forward();
+    await Future<void>.delayed(_finalPause);
+    if (mounted) widget.onFinished();
   }
 
   @override
   Widget build(BuildContext context) {
-    final cursor = _showCursor && _phase != _Phase.done ? '|' : '';
-
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -120,82 +77,188 @@ class _LaunchSplashState extends State<LaunchSplash> {
             colors: [Color(0xFF050505), Color(0xFF101010), Color(0xFF161616)],
           ),
         ),
-        child: Center(child: _buildBrandLine(cursor)),
+        child: Center(child: CoordinatorToIaMark(animation: _controller)),
       ),
     );
   }
+}
 
-  Widget _buildBrandLine(String cursor) {
-    final isBrandPhase = _phase == _Phase.typingBrand || _phase == _Phase.done;
+/// Transición contenida en una única superficie: el coordinador se repliega
+/// mientras la marca iA ocupa su lugar. Al compartir encuadre y color de fondo
+/// se percibe como una transformación, no como dos logos consecutivos.
+class CoordinatorToIaMark extends StatelessWidget {
+  const CoordinatorToIaMark({
+    required this.animation,
+    this.size = 124,
+    super.key,
+  });
 
-    if (!isBrandPhase) {
-      return Text(
-        '$_visibleText$cursor',
-        style: GoogleFonts.inter(
-          color: const Color(0xFFFF5A73),
-          fontSize: 44,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0.6,
-          shadows: const [Shadow(color: Color(0xAA7A0C1C), blurRadius: 20)],
-        ),
-      );
-    }
+  final Animation<double> animation;
+  final double size;
 
-    final prefixLen = _visibleText.length <= 7 ? _visibleText.length : 7;
-    final prefix = _visibleText.substring(0, prefixLen);
-    final suffix = _visibleText.length > 7 ? _visibleText.substring(7) : '';
-
-    // Row + CrossAxisAlignment.baseline (no RichText/WidgetSpan): así el
-    // texto dentro de la píldora "HUB" se asienta en la misma línea base
-    // que "iAgents" en vez de centrarse respecto a la altura de línea.
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
-      children: [
-        Text(
-          prefix,
-          style: GoogleFonts.inter(
-            color: const Color(0xFFFFFFFF),
-            fontSize: 44,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.8,
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      image: true,
+      label: 'iAgents',
+      child: SizedBox.square(
+        dimension: size,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(size * 0.22),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x667A0C1C),
+                blurRadius: 24,
+                spreadRadius: 1,
+              ),
+            ],
           ),
-        ),
-        if (suffix.isNotEmpty) const SizedBox(width: 8),
-        if (suffix.isNotEmpty)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(size * 0.22),
+            child: ColoredBox(
               color: const Color(0xFFD90429),
-              borderRadius: BorderRadius.circular(7),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0xAA7A0C1C),
-                  blurRadius: 16,
-                  spreadRadius: 0.3,
+              child: AnimatedBuilder(
+                animation: animation,
+                builder: (context, _) => CustomPaint(
+                  key: const Key('splash-icon-morph'),
+                  painter: CoordinatorToIaPainter(
+                    progress: Curves.easeInOutCubic.transform(animation.value),
+                  ),
                 ),
-              ],
-            ),
-            child: Text(
-              suffix,
-              style: GoogleFonts.inter(
-                color: const Color(0xFFFFFFFF),
-                fontSize: 34,
-                fontWeight: FontWeight.w800,
               ),
             ),
           ),
-        if (cursor.isNotEmpty)
-          Text(
-            cursor,
-            style: GoogleFonts.inter(
-              color: const Color(0xFFFFFFFF),
-              fontSize: 44,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-      ],
+        ),
+      ),
     );
+  }
+}
+
+/// Morph vectorial con correspondencia entre trazos:
+/// punto → punto de la i, tronco → cuerpo de la i y brazos → patas de la A.
+class CoordinatorToIaPainter extends CustomPainter {
+  const CoordinatorToIaPainter({required this.progress});
+
+  final double progress;
+
+  Offset _point(Size size, BrandPoint start, BrandPoint end) {
+    return Offset.lerp(
+      Offset(start.x * size.width, start.y * size.height),
+      Offset(end.x * size.width, end.y * size.height),
+      progress,
+    )!;
+  }
+
+  Rect _rect(Size size, BrandRect start, BrandRect end) {
+    final normalized = Rect.lerp(
+      Rect.fromLTRB(start.left, start.top, start.right, start.bottom),
+      Rect.fromLTRB(end.left, end.top, end.right, end.bottom),
+      progress,
+    )!;
+    return Rect.fromLTRB(
+      normalized.left * size.width,
+      normalized.top * size.height,
+      normalized.right * size.width,
+      normalized.bottom * size.height,
+    );
+  }
+
+  void _drawPolygon(
+    Canvas canvas,
+    Size size,
+    Paint paint,
+    List<BrandPoint> start,
+    List<BrandPoint> end,
+  ) {
+    assert(start.length == end.length);
+    final path = Path();
+    for (var index = 0; index < start.length; index++) {
+      final point = _point(size, start[index], end[index]);
+      if (index == 0) {
+        path.moveTo(point.dx, point.dy);
+      } else {
+        path.lineTo(point.dx, point.dy);
+      }
+    }
+    canvas.drawPath(path..close(), paint);
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final shortestSide = size.shortestSide;
+    final mark = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+
+    _drawPolygon(
+      canvas,
+      size,
+      mark,
+      BrandMarkGeometry.coordinatorLeft,
+      BrandMarkGeometry.iaLeft,
+    );
+
+    _drawPolygon(
+      canvas,
+      size,
+      mark,
+      BrandMarkGeometry.coordinatorRight,
+      BrandMarkGeometry.iaRight,
+    );
+
+    final connectorRect = _rect(
+      size,
+      BrandMarkGeometry.coordinatorConnector,
+      BrandMarkGeometry.iaConnector,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        connectorRect,
+        Radius.circular(
+          shortestSide *
+              BrandMarkGeometry.coordinatorCornerRadius *
+              (1 - progress),
+        ),
+      ),
+      mark,
+    );
+
+    final stemRect = _rect(
+      size,
+      BrandMarkGeometry.coordinatorStem,
+      BrandMarkGeometry.iaStem,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        stemRect,
+        Radius.circular(
+          shortestSide *
+              BrandMarkGeometry.coordinatorCornerRadius *
+              (1 - progress),
+        ),
+      ),
+      mark,
+    );
+
+    final dotCenter = _point(
+      size,
+      BrandMarkGeometry.coordinatorDot,
+      BrandMarkGeometry.iaDot,
+    );
+    canvas.drawCircle(
+      dotCenter,
+      shortestSide *
+          (BrandMarkGeometry.coordinatorDotRadius -
+              ((BrandMarkGeometry.coordinatorDotRadius -
+                      BrandMarkGeometry.iaDotRadius) *
+                  progress)),
+      mark,
+    );
+  }
+
+  @override
+  bool shouldRepaint(CoordinatorToIaPainter oldDelegate) {
+    return oldDelegate.progress != progress;
   }
 }
