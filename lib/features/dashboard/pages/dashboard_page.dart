@@ -415,8 +415,8 @@ class _DashboardPageState extends State<DashboardPage> {
         return _RecentResourcesBody(data: data, config: config, tx: _widgetTx);
       case 'agent-health':
         return _AgentHealthBody(data: data, config: config, tx: _widgetTx);
-      case 'workspace':
-        return _WorkspaceBody(data: data, tx: _widgetTx);
+      case 'group':
+        return _GroupBody(data: data, tx: _widgetTx);
       default:
         return const SizedBox.shrink();
     }
@@ -1473,8 +1473,8 @@ class _AgentHealthBody extends StatelessWidget {
   }
 }
 
-class _WorkspaceBody extends StatelessWidget {
-  const _WorkspaceBody({required this.data, required this.tx});
+class _GroupBody extends StatelessWidget {
+  const _GroupBody({required this.data, required this.tx});
 
   final DashboardData data;
   final DashboardTx tx;
@@ -1482,18 +1482,18 @@ class _WorkspaceBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Map<String, dynamic>? active;
-    for (final workspace in data.workspaces) {
-      if (workspace['active'] == true) {
-        active = workspace;
+    for (final group in data.groups) {
+      if (group['active'] == true) {
+        active = group;
         break;
       }
     }
-    final teamCount = data.workspaces
-        .where((workspace) => workspace['type'] == 'team')
+    final teamCount = data.groups
+        .where((group) => group['type'] == 'team')
         .length;
 
     if (active == null) {
-      return Text(tx('workspace_empty', 'No hay workspace activo'));
+      return Text(tx('group_empty', 'No hay ningún grupo activo'));
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1501,23 +1501,23 @@ class _WorkspaceBody extends StatelessWidget {
         ListTile(
           contentPadding: EdgeInsets.zero,
           leading: const CircleAvatar(child: Icon(Icons.groups_outlined)),
-          title: Text(active['name']?.toString() ?? 'Workspace'),
+          title: Text(active['name']?.toString() ?? 'Grupo'),
           subtitle: Text(
-            active['role']?.toString() ?? tx('workspace_member', 'Miembro'),
+            active['role']?.toString() ?? tx('group_member', 'Miembro'),
           ),
         ),
         Row(
           children: [
             Expanded(
-              child: _WorkspaceStat(
+              child: _GroupStat(
                 value: '$teamCount',
-                label: tx('workspace_teams', 'Equipos'),
+                label: tx('group_teams', 'Grupos compartidos'),
               ),
             ),
             Expanded(
-              child: _WorkspaceStat(
+              child: _GroupStat(
                 value: '${data.invitations.length}',
-                label: tx('workspace_invitations', 'Invitaciones'),
+                label: tx('group_invitations', 'Invitaciones'),
               ),
             ),
           ],
@@ -1528,7 +1528,7 @@ class _WorkspaceBody extends StatelessWidget {
           child: TextButton.icon(
             onPressed: () => context.go(RouteNames.manager),
             icon: const Icon(Icons.settings_outlined),
-            label: Text(tx('workspace_manage', 'Gestionar')),
+            label: Text(tx('group_manage', 'Gestionar')),
           ),
         ),
       ],
@@ -1536,8 +1536,8 @@ class _WorkspaceBody extends StatelessWidget {
   }
 }
 
-class _WorkspaceStat extends StatelessWidget {
-  const _WorkspaceStat({required this.value, required this.label});
+class _GroupStat extends StatelessWidget {
+  const _GroupStat({required this.value, required this.label});
 
   final String value;
   final String label;

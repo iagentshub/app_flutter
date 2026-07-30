@@ -2,23 +2,23 @@ class ProfileSession {
   const ProfileSession({
     required this.username,
     required this.role,
-    this.workspaceId,
-    this.workspaceName,
+    this.groupId,
+    this.groupName,
     this.authMethod,
   });
 
   final String username;
   final String role;
-  final String? workspaceId;
-  final String? workspaceName;
+  final String? groupId;
+  final String? groupName;
   final String? authMethod;
 
   factory ProfileSession.fromJson(Map<String, dynamic> json) {
     return ProfileSession(
       username: json['username'] as String? ?? '',
       role: json['role'] as String? ?? 'user',
-      workspaceId: json['workspace_id'] as String?,
-      workspaceName: json['workspace_name'] as String?,
+      groupId: json['group_id'] as String?,
+      groupName: json['group_name'] as String?,
       authMethod: json['auth_method'] as String?,
     );
   }

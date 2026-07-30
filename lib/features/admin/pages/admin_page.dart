@@ -63,7 +63,7 @@ class _AdminPageState extends State<AdminPage>
   static const _tabIds = [
     'general',
     'users',
-    'workspaces',
+    'groups',
     'agents',
     'connections',
     'knowledge',
@@ -72,7 +72,7 @@ class _AdminPageState extends State<AdminPage>
   ];
 
   final TextEditingController _userSearchController = TextEditingController();
-  final TextEditingController _wsSearchController = TextEditingController();
+  final TextEditingController _groupSearchController = TextEditingController();
   final TextEditingController _agentSearchController = TextEditingController();
   final TextEditingController _knowledgeSearchController =
       TextEditingController();
@@ -91,7 +91,7 @@ class _AdminPageState extends State<AdminPage>
 
   AdminStats? _stats;
   List<Map<String, dynamic>> _users = const [];
-  List<Map<String, dynamic>> _workspaces = const [];
+  List<Map<String, dynamic>> _groups = const [];
   List<Map<String, dynamic>> _agents = const [];
   List<Map<String, dynamic>> _connections = const [];
   List<Map<String, dynamic>> _knowledge = const [];
@@ -139,7 +139,7 @@ class _AdminPageState extends State<AdminPage>
   void dispose() {
     _searchDebouncer.dispose();
     _userSearchController.dispose();
-    _wsSearchController.dispose();
+    _groupSearchController.dispose();
     _agentSearchController.dispose();
     _knowledgeSearchController.dispose();
     _workflowSearchController.dispose();
@@ -169,7 +169,7 @@ class _AdminPageState extends State<AdminPage>
       final results = await Future.wait([
         _repository.getStats(token),
         _repository.listUsers(token),
-        _repository.listWorkspaces(token),
+        _repository.listGroups(token),
         _repository.listAgents(token),
         _repository.listAdminConnections(token),
         _repository.listAdminKnowledge(token),
@@ -181,7 +181,7 @@ class _AdminPageState extends State<AdminPage>
       setState(() {
         _stats = results[0] as AdminStats;
         _users = results[1] as List<Map<String, dynamic>>;
-        _workspaces = results[2] as List<Map<String, dynamic>>;
+        _groups = results[2] as List<Map<String, dynamic>>;
         _agents = results[3] as List<Map<String, dynamic>>;
         _connections = results[4] as List<Map<String, dynamic>>;
         _knowledge = results[5] as List<Map<String, dynamic>>;
@@ -354,12 +354,12 @@ class _AdminPageState extends State<AdminPage>
     );
   }
 
-  List<Map<String, dynamic>> get _filteredWorkspaces {
-    final q = _wsSearchController.text.trim().toLowerCase();
-    if (q.isEmpty) return _workspaces;
-    return _workspaces.where((ws) {
-      final name = (ws['name'] ?? '').toString().toLowerCase();
-      final creator = (ws['created_by'] ?? '').toString().toLowerCase();
+  List<Map<String, dynamic>> get _filteredGroups {
+    final q = _groupSearchController.text.trim().toLowerCase();
+    if (q.isEmpty) return _groups;
+    return _groups.where((group) {
+      final name = (group['name'] ?? '').toString().toLowerCase();
+      final creator = (group['created_by'] ?? '').toString().toLowerCase();
       return name.contains(q) || creator.contains(q);
     }).toList();
   }
@@ -508,20 +508,20 @@ class _AdminPageState extends State<AdminPage>
     );
   }
 
-  // ── Acciones: grupos (workspaces) ────────────────────────────────────
+  // ── Acciones: grupos (groups) ────────────────────────────────────
 
-  Future<void> _toggleWorkspaceStatus(Map<String, dynamic> ws) async {
+  Future<void> _toggleGroupStatus(Map<String, dynamic> group) async {
     final token = _token;
     if (token == null) return;
-    final id = (ws['id'] ?? '').toString();
-    final name = (ws['name'] ?? id).toString();
-    final isDisabled = (ws['status'] ?? 'active').toString() == 'disabled';
+    final id = (group['id'] ?? '').toString();
+    final name = (group['name'] ?? id).toString();
+    final isDisabled = (group['status'] ?? 'active').toString() == 'disabled';
     final newStatus = isDisabled ? 'active' : 'disabled';
     if (!isDisabled) {
       final ok = await _confirm(
         _tx('admin.action_deactivate', 'Desactivar'),
         _tx(
-          'admin.confirm_deactivate_workspace',
+          'admin.confirm_deactivate_group',
           '¿Desactivar el grupo "{name}"?',
         ).replaceAll('{name}', name),
         confirmLabel: _tx('admin.action_deactivate', 'Desactivar'),
@@ -529,29 +529,29 @@ class _AdminPageState extends State<AdminPage>
       if (!ok) return;
     }
     await _run(
-      () => _repository.setWorkspaceStatus(token, id, newStatus),
+      () => _repository.setGroupStatus(token, id, newStatus),
       isDisabled
-          ? _tx('admin.toast_ws_reactivated', 'Grupo reactivado')
-          : _tx('admin.toast_ws_deactivated', 'Grupo desactivado'),
+          ? _tx('admin.toast_group_reactivated', 'Grupo reactivado')
+          : _tx('admin.toast_group_deactivated', 'Grupo desactivado'),
     );
   }
 
-  Future<void> _deleteWorkspace(Map<String, dynamic> ws) async {
+  Future<void> _deleteGroup(Map<String, dynamic> group) async {
     final token = _token;
     if (token == null) return;
-    final id = (ws['id'] ?? '').toString();
-    final name = (ws['name'] ?? id).toString();
+    final id = (group['id'] ?? '').toString();
+    final name = (group['name'] ?? id).toString();
     final ok = await _confirm(
       _tx('common.delete', 'Eliminar'),
       _tx(
-        'admin.confirm_delete_workspace',
+        'admin.confirm_delete_group',
         '¿Seguro que quieres eliminar el grupo "{name}"?',
       ).replaceAll('{name}', name),
     );
     if (!ok) return;
     await _run(
-      () => _repository.deleteWorkspace(token, id),
-      _tx('admin.toast_ws_deleted', 'Grupo eliminado'),
+      () => _repository.deleteGroup(token, id),
+      _tx('admin.toast_group_deleted', 'Grupo eliminado'),
     );
   }
 
@@ -844,7 +844,7 @@ class _AdminPageState extends State<AdminPage>
     final tabLabels = [
       _tx('admin.tab_general', 'General'),
       _tx('admin.tab_users', 'Usuarios'),
-      _tx('admin.tab_workspaces', 'Grupos'),
+      _tx('admin.tab_groups', 'Grupos'),
       _tx('admin.tab_agents', 'Agentes'),
       _tx('admin.tab_connections', 'Conexiones'),
       _tx('admin.tab_knowledge', 'Conocimiento'),
@@ -875,7 +875,7 @@ class _AdminPageState extends State<AdminPage>
   Widget _buildSection(String section) {
     return switch (section) {
       'users' => _buildUsersTab(),
-      'workspaces' => _buildWorkspacesTab(),
+      'groups' => _buildGroupsTab(),
       'agents' => _buildAgentsTab(),
       'connections' => _buildConnectionsTab(),
       'knowledge' => _buildKnowledgeTab(),
@@ -1147,17 +1147,17 @@ class _AdminPageState extends State<AdminPage>
 
   // ── Tab: Grupos ──────────────────────────────────────────────────────
 
-  Widget _buildWorkspacesTab() {
+  Widget _buildGroupsTab() {
     return _buildFilterableList(
-      items: _filteredWorkspaces,
-      itemBuilder: _buildWorkspaceCard,
-      emptyText: _tx('admin.ws_empty', 'Sin grupos'),
+      items: _filteredGroups,
+      itemBuilder: _buildGroupCard,
+      emptyText: _tx('admin.group_empty', 'Sin grupos'),
       toolbar: _toolbar(
         search: TextField(
-          controller: _wsSearchController,
+          controller: _groupSearchController,
           decoration: InputDecoration(
             labelText: _tx(
-              'admin.ws_search_hint',
+              'admin.group_search_hint',
               'Buscar por nombre o creador',
             ),
             prefixIcon: const Icon(Icons.search, size: 20),
@@ -1175,16 +1175,16 @@ class _AdminPageState extends State<AdminPage>
     );
   }
 
-  Widget _buildWorkspaceCard(Map<String, dynamic> ws) {
-    final name = (ws['name'] ?? ws['id'] ?? '').toString();
-    final disabled = (ws['status'] ?? 'active').toString() == 'disabled';
-    final creator = (ws['created_by'] ?? '—').toString();
-    final members = _asInt(ws['member_count']);
-    final connections = _asInt(ws['connections_count']);
-    final agents = _asInt(ws['agents_count']);
-    final knowledge = _asInt(ws['knowledge_count']);
-    final tokens = _asInt(ws['tokens_in']) + _asInt(ws['tokens_out']);
-    final date = _fmtDate(ws['created_at']);
+  Widget _buildGroupCard(Map<String, dynamic> group) {
+    final name = (group['name'] ?? group['id'] ?? '').toString();
+    final disabled = (group['status'] ?? 'active').toString() == 'disabled';
+    final creator = (group['created_by'] ?? '—').toString();
+    final members = _asInt(group['member_count']);
+    final connections = _asInt(group['connections_count']);
+    final agents = _asInt(group['agents_count']);
+    final knowledge = _asInt(group['knowledge_count']);
+    final tokens = _asInt(group['tokens_in']) + _asInt(group['tokens_out']);
+    final date = _fmtDate(group['created_at']);
 
     return Card(
       margin: EdgeInsets.zero,
@@ -1253,13 +1253,13 @@ class _AdminPageState extends State<AdminPage>
                   tooltip: disabled
                       ? _tx('admin.action_reactivate', 'Reactivar')
                       : _tx('admin.action_deactivate', 'Desactivar'),
-                  onPressed: () => _toggleWorkspaceStatus(ws),
+                  onPressed: () => _toggleGroupStatus(group),
                 ),
                 ActionIconButton(
                   icon: Icons.delete_outline,
                   tooltip: _tx('common.delete', 'Eliminar'),
                   danger: true,
-                  onPressed: () => _deleteWorkspace(ws),
+                  onPressed: () => _deleteGroup(group),
                 ),
               ],
             ),

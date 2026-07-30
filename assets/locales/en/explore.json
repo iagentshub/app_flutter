@@ -20,6 +20,6 @@
     "invite_sent": "Invitation sent to",
     "invite_already": "Already a member or invite pending",
     "invite_error": "Error sending invitation",
-    "invite_no_ws": "No active workspace to invite to"
+    "invite_no_group": "No active group to invite to"
   }
 }

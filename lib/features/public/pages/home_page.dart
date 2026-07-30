@@ -39,8 +39,8 @@ class HomePage extends StatelessWidget {
       (
         title: isEnglish ? 'Multi-agent' : 'Multiagente',
         body: isEnglish
-            ? 'Coordinate multiple specialized agents inside the same workspace.'
-            : 'Coordina varios agentes especializados dentro del mismo workspace.',
+            ? 'Coordinate multiple specialized agents inside the same group.'
+            : 'Coordina varios agentes especializados dentro del mismo grupo.',
       ),
       (
         title: isEnglish ? 'Real connections' : 'Conexiones reales',
@@ -67,7 +67,7 @@ class HomePage extends StatelessWidget {
             : 'Despliega en tu propia infraestructura y conserva soberanía de datos.',
       ),
       (
-        title: isEnglish ? 'Workspace sharing' : 'Compartición por workspace',
+        title: isEnglish ? 'Group sharing' : 'Compartición por grupos',
         body: isEnglish
             ? 'Share resources across teams while keeping permission control.'
             : 'Comparte recursos por equipos sin perder control de permisos.',

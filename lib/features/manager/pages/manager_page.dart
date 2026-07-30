@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
-import '../../../models/manager/workspace_models.dart';
+import '../../../models/manager/group_models.dart';
 import '../repositories/manager_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
@@ -29,13 +29,13 @@ class ManagerPage extends StatefulWidget {
 class _ManagerPageState extends State<ManagerPage> {
   late final ManagerRepository _repository;
   late final TranslatedTexts _t;
-  List<WorkspaceItem> _workspaces = const [];
+  List<GroupItem> _groups = const [];
   List<Map<String, dynamic>> _members = const [];
   List<Map<String, dynamic>> _invitations = const [];
-  WorkspaceItem? _activeWorkspace;
+  GroupItem? _activeGroup;
   bool _loading = true;
   String? _error;
-  String? _switchingWorkspaceId;
+  String? _switchingGroupId;
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
@@ -79,9 +79,9 @@ class _ManagerPageState extends State<ManagerPage> {
     });
 
     try {
-      final workspaces = await _repository.listWorkspaces(token);
-      WorkspaceItem? active;
-      for (final item in workspaces) {
+      final groups = await _repository.listGroups(token);
+      GroupItem? active;
+      for (final item in groups) {
         if (item.active) {
           active = item;
           break;
@@ -89,7 +89,7 @@ class _ManagerPageState extends State<ManagerPage> {
       }
       List<Map<String, dynamic>> members = const [];
       List<Map<String, dynamic>> invitations = const [];
-      if (active != null && !active.isPersonal) {
+      if (active != null) {
         try {
           final results = await Future.wait([
             _repository.listMembers(token, active.id),
@@ -103,8 +103,8 @@ class _ManagerPageState extends State<ManagerPage> {
       }
       if (!mounted) return;
       setState(() {
-        _workspaces = workspaces;
-        _activeWorkspace = active;
+        _groups = groups;
+        _activeGroup = active;
         _members = members;
         _invitations = invitations;
         _loading = false;
@@ -124,9 +124,9 @@ class _ManagerPageState extends State<ManagerPage> {
     }
   }
 
-  Future<void> _createWorkspace() async {
+  Future<void> _createGroup() async {
     final name = await _askName(
-      title: _tx('manager.create_workspace_title', 'Crear workspace'),
+      title: _tx('manager.create_group_title', 'Crear grupo'),
       initial: '',
     );
     if (name == null) return;
@@ -135,32 +135,32 @@ class _ManagerPageState extends State<ManagerPage> {
     if (token == null || token.isEmpty) return;
 
     try {
-      await _repository.createWorkspace(token, name);
-      _showMessage(_tx('manager.create_success', 'Workspace creado'));
+      await _repository.createGroup(token, name);
+      _showMessage(_tx('manager.create_success', 'Grupo creado'));
       await _load();
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
     } catch (_) {
       _showMessage(
-        _tx('manager.create_error', 'No se pudo crear el workspace'),
+        _tx('manager.create_error', 'No se pudo crear el grupo'),
         isError: true,
       );
     }
   }
 
-  Future<void> _renameWorkspace(WorkspaceItem item) async {
+  Future<void> _renameGroup(GroupItem item) async {
     if (item.isPersonal) {
       _showMessage(
         _tx(
           'manager.personal_no_rename',
-          'El workspace personal no se renombra desde aquí',
+          'El grupo Personal no se puede renombrar',
         ),
       );
       return;
     }
 
     final name = await _askName(
-      title: _tx('manager.rename_title', 'Renombrar workspace'),
+      title: _tx('manager.rename_title', 'Renombrar grupo'),
       initial: item.name,
     );
     if (name == null) return;
@@ -169,25 +169,25 @@ class _ManagerPageState extends State<ManagerPage> {
     if (token == null || token.isEmpty) return;
 
     try {
-      await _repository.renameWorkspace(token, item.id, name);
-      _showMessage(_tx('manager.rename_success', 'Workspace actualizado'));
+      await _repository.renameGroup(token, item.id, name);
+      _showMessage(_tx('manager.rename_success', 'Grupo actualizado'));
       await _load();
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
     } catch (_) {
       _showMessage(
-        _tx('manager.rename_error', 'No se pudo renombrar el workspace'),
+        _tx('manager.rename_error', 'No se pudo renombrar el grupo'),
         isError: true,
       );
     }
   }
 
-  Future<void> _deleteWorkspace(WorkspaceItem item) async {
+  Future<void> _deleteGroup(GroupItem item) async {
     if (item.isPersonal) {
       _showMessage(
         _tx(
           'manager.personal_no_delete',
-          'El workspace personal no se puede eliminar',
+          'El grupo Personal no se puede eliminar',
         ),
       );
       return;
@@ -196,7 +196,7 @@ class _ManagerPageState extends State<ManagerPage> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(_tx('manager.delete_dialog_title', 'Eliminar workspace')),
+        title: Text(_tx('manager.delete_dialog_title', 'Eliminar grupo')),
         content: Text(
           _tx(
             'manager.delete_dialog_body',
@@ -221,27 +221,27 @@ class _ManagerPageState extends State<ManagerPage> {
     if (token == null || token.isEmpty) return;
 
     try {
-      await _repository.deleteWorkspace(token, item.id);
-      _showMessage(_tx('manager.delete_success', 'Workspace eliminado'));
+      await _repository.deleteGroup(token, item.id);
+      _showMessage(_tx('manager.delete_success', 'Grupo eliminado'));
       await _load();
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
     } catch (_) {
       _showMessage(
-        _tx('manager.delete_error', 'No se pudo eliminar el workspace'),
+        _tx('manager.delete_error', 'No se pudo eliminar el grupo'),
         isError: true,
       );
     }
   }
 
-  Future<void> _switchWorkspace(WorkspaceItem item) async {
+  Future<void> _switchGroup(GroupItem item) async {
     final token = _token;
     if (token == null || token.isEmpty) return;
     if (item.active) return;
 
-    setState(() => _switchingWorkspaceId = item.id);
+    setState(() => _switchingGroupId = item.id);
     try {
-      final nextToken = await _repository.switchWorkspace(token, item.id);
+      final nextToken = await _repository.switchGroup(token, item.id);
       final user = widget.sessionController.user;
       if (nextToken != null && user != null) {
         await widget.sessionController.login(token: nextToken, user: user);
@@ -249,7 +249,7 @@ class _ManagerPageState extends State<ManagerPage> {
       _showMessage(
         _tx(
           'manager.switch_success',
-          'Workspace activo cambiado a {{name}}',
+          'Grupo activo cambiado a {{name}}',
         ).replaceAll('{{name}}', item.name),
       );
       await _load();
@@ -257,21 +257,21 @@ class _ManagerPageState extends State<ManagerPage> {
       _showMessage(error.message, isError: true);
     } catch (_) {
       _showMessage(
-        _tx('manager.switch_error', 'No se pudo cambiar el workspace activo'),
+        _tx('manager.switch_error', 'No se pudo cambiar el grupo activo'),
         isError: true,
       );
     } finally {
-      if (mounted) setState(() => _switchingWorkspaceId = null);
+      if (mounted) setState(() => _switchingGroupId = null);
     }
   }
 
   Future<void> _inviteMember() async {
-    final active = _activeWorkspace;
+    final active = _activeGroup;
     if (active == null || active.isPersonal) {
       _showMessage(
         _tx(
           'manager.invite_need_team',
-          'Activa un workspace de equipo para invitar miembros',
+          'Activa un grupo compartido para invitar miembros',
         ),
         isError: true,
       );
@@ -304,12 +304,12 @@ class _ManagerPageState extends State<ManagerPage> {
   }
 
   Future<void> _addMemberDirect() async {
-    final active = _activeWorkspace;
+    final active = _activeGroup;
     if (active == null || active.isPersonal) {
       _showMessage(
         _tx(
           'manager.add_member_need_team',
-          'Activa un workspace de equipo para añadir miembros',
+          'Activa un grupo compartido para añadir miembros',
         ),
         isError: true,
       );
@@ -343,7 +343,7 @@ class _ManagerPageState extends State<ManagerPage> {
   }
 
   Future<void> _removeMember(String username) async {
-    final active = _activeWorkspace;
+    final active = _activeGroup;
     if (active == null || active.isPersonal) return;
     final token = _token;
     if (token == null || token.isEmpty) return;
@@ -362,7 +362,7 @@ class _ManagerPageState extends State<ManagerPage> {
   }
 
   Future<void> _cancelInvitation(String invitationId) async {
-    final active = _activeWorkspace;
+    final active = _activeGroup;
     if (active == null || active.isPersonal) return;
     final token = _token;
     if (token == null || token.isEmpty) return;
@@ -497,11 +497,11 @@ class _ManagerPageState extends State<ManagerPage> {
                     runSpacing: 6,
                     children: [
                       IconButton.filled(
-                        onPressed: _createWorkspace,
+                        onPressed: _createGroup,
                         icon: const Icon(Icons.add),
                         tooltip: _tx(
-                          'manager.new_workspace_tooltip',
-                          'Nuevo workspace',
+                          'manager.new_group_tooltip',
+                          'Nuevo grupo',
                         ),
                       ),
                       IconButton.outlined(
@@ -513,14 +513,14 @@ class _ManagerPageState extends State<ManagerPage> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    '${_tx('manager.workspaces_count', 'Workspaces')}: ${_workspaces.length}',
+                    '${_tx('manager.groups_count', 'Grupos')}: ${_groups.length}',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],
               ),
             ),
           ),
-          if (_workspaces.isEmpty)
+          if (_groups.isEmpty)
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               sliver: SliverToBoxAdapter(
@@ -528,10 +528,7 @@ class _ManagerPageState extends State<ManagerPage> {
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Text(
-                      _tx(
-                        'manager.empty_workspaces',
-                        'No hay workspaces disponibles.',
-                      ),
+                      _tx('manager.empty_groups', 'No hay grupos disponibles.'),
                     ),
                   ),
                 ),
@@ -541,9 +538,9 @@ class _ManagerPageState extends State<ManagerPage> {
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               sliver: ResponsiveSliverMasonryGrid(
-                itemCount: _workspaces.length,
+                itemCount: _groups.length,
                 itemBuilder: (context, index) =>
-                    _buildWorkspaceCard(_workspaces[index]),
+                    _buildGroupCard(_groups[index]),
               ),
             ),
           SliverPadding(
@@ -559,8 +556,8 @@ class _ManagerPageState extends State<ManagerPage> {
     );
   }
 
-  Widget _buildWorkspaceCard(WorkspaceItem item) {
-    final switching = _switchingWorkspaceId == item.id;
+  Widget _buildGroupCard(GroupItem item) {
+    final switching = _switchingGroupId == item.id;
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
@@ -591,7 +588,7 @@ class _ManagerPageState extends State<ManagerPage> {
                 OutlinedButton.icon(
                   onPressed: item.active || switching
                       ? null
-                      : () => _switchWorkspace(item),
+                      : () => _switchGroup(item),
                   icon: const Icon(Icons.swap_horiz_outlined),
                   label: Text(
                     switching
@@ -603,17 +600,13 @@ class _ManagerPageState extends State<ManagerPage> {
                 ActionIconButton(
                   icon: Icons.edit_outlined,
                   tooltip: _tx('manager.rename_tooltip', 'Renombrar'),
-                  onPressed: item.isPersonal
-                      ? null
-                      : () => _renameWorkspace(item),
+                  onPressed: item.isPersonal ? null : () => _renameGroup(item),
                 ),
                 ActionIconButton(
                   icon: Icons.delete_outline,
                   tooltip: _tx('common.delete', 'Eliminar'),
                   danger: true,
-                  onPressed: item.isPersonal
-                      ? null
-                      : () => _deleteWorkspace(item),
+                  onPressed: item.isPersonal ? null : () => _deleteGroup(item),
                 ),
               ],
             ),
@@ -636,7 +629,7 @@ class _ManagerPageState extends State<ManagerPage> {
   }
 
   Widget _buildMembersCard() {
-    final active = _activeWorkspace;
+    final active = _activeGroup;
     final canManage = active != null && !active.isPersonal;
     return Card(
       child: Padding(
@@ -652,15 +645,15 @@ class _ManagerPageState extends State<ManagerPage> {
             Text(
               active == null
                   ? _tx(
-                      'manager.no_active_workspace',
-                      'No hay workspace activo detectado.',
+                      'manager.no_active_group',
+                      'No hay ningún grupo activo.',
                     )
                   : (active.isPersonal
                         ? _tx(
                             'manager.active_personal',
-                            'Workspace activo: Personal (sin miembros de equipo).',
+                            'Grupo activo: Personal. Solo tú puedes pertenecer a este grupo.',
                           )
-                        : '${_tx('manager.active_workspace_prefix', 'Workspace activo')}: ${active.name}'),
+                        : '${_tx('manager.active_group_prefix', 'Grupo activo')}: ${active.name}'),
             ),
             const SizedBox(height: 10),
             Wrap(
@@ -705,7 +698,7 @@ class _ManagerPageState extends State<ManagerPage> {
   }
 
   Widget _buildInvitationsCard() {
-    final active = _activeWorkspace;
+    final active = _activeGroup;
     final canManage = active != null && !active.isPersonal;
     return Card(
       child: Padding(
@@ -722,7 +715,7 @@ class _ManagerPageState extends State<ManagerPage> {
               Text(
                 _tx(
                   'manager.invitations_need_team',
-                  'Activa un workspace de equipo para gestionar invitaciones.',
+                  'Activa un grupo compartido para gestionar invitaciones.',
                 ),
               )
             else if (_invitations.isEmpty)

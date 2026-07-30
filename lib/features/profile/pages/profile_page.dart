@@ -695,9 +695,7 @@ class _ProfilePageState extends State<ProfilePage>
               _infoRow(
                 Icons.groups_outlined,
                 _tx('profile.active_group_label', 'Grupo activo'),
-                bundle.session.workspaceName ??
-                    bundle.session.workspaceId ??
-                    '-',
+                bundle.session.groupName ?? bundle.session.groupId ?? '-',
               ),
               if (memberSince != null && memberSince.isNotEmpty) ...[
                 const Divider(height: 1),

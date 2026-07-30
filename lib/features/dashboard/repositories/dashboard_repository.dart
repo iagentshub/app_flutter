@@ -74,16 +74,11 @@ class DashboardRepository {
         '/api/connections/tokens-daily?days=90',
         gaToken,
       ),
-      _loadSource(
-        sources,
-        DashboardDataSource.workspaces,
-        '/api/workspaces',
-        gaToken,
-      ),
+      _loadSource(sources, DashboardDataSource.groups, '/api/groups', gaToken),
       _loadSource(
         sources,
         DashboardDataSource.invitations,
-        '/api/workspaces/my-invitations',
+        '/api/groups/my-invitations',
         gaToken,
       ),
       _loadSource(
@@ -102,7 +97,7 @@ class DashboardRepository {
       skills: results[4],
       memory: results[5],
       tokenDaily: results[6].map(TokenDailyPoint.fromJson).toList(),
-      workspaces: results[7],
+      groups: results[7],
       invitations: results[8],
       conversations: results[9],
     );
@@ -192,7 +187,7 @@ class DashboardRepository {
       final layout = response.json['layout'];
       if (layout is! List) return null;
       final valid = layout
-          .map((e) => e.toString())
+          .map(normalizeDashboardWidgetType)
           .where((id) => kDashboardWidgetIds.contains(id))
           .toSet()
           .toList();
@@ -233,7 +228,7 @@ class DashboardRepository {
       if (config is! Map<String, dynamic>) return {};
       return config.map(
         (key, value) => MapEntry(
-          key,
+          normalizeDashboardWidgetType(key),
           DashboardWidgetConfig.fromJson(value as Map<String, dynamic>? ?? {}),
         ),
       );

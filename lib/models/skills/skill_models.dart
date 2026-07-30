@@ -11,7 +11,7 @@ class SkillItem {
   String get scope => raw['scope'] as String? ?? 'private';
   bool get shared => raw['_shared'] == true;
 
-  /// Solo es de solo-lectura si llegó vía workspace share (no soy el dueño).
+  /// Solo es de solo-lectura si llegó vía group share (no soy el dueño).
   /// Ser público (scope == 'public') no impide editar lo que es mío.
   bool get readOnly => shared;
 

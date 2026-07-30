@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
-import '../../../models/manager/workspace_models.dart';
+import '../../../models/manager/group_models.dart';
 import '../../manager/repositories/manager_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
@@ -11,7 +11,7 @@ import '../../../shared/widgets/responsive_dialog.dart';
 
 /// Sección "Grupos" de Profile: mis grupos (con gestión inline: miembros,
 /// invitar, abandonar, eliminar) e invitaciones recibidas pendientes.
-/// Equivalente a profile-workspaces.js en frontend_vanilla.
+/// Equivalente a profile-groups.js en frontend_vanilla.
 class ProfileGroupsSection extends StatefulWidget {
   const ProfileGroupsSection({
     required this.apiClient,
@@ -35,7 +35,7 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection> {
   late final TranslatedTexts _t;
 
   String _tab = 'mine';
-  List<WorkspaceItem> _groups = const [];
+  List<GroupItem> _groups = const [];
   List<Map<String, dynamic>> _invitations = const [];
   bool _loading = true;
 
@@ -67,12 +67,12 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection> {
     setState(() => _loading = true);
     try {
       final results = await Future.wait([
-        _repository.listWorkspaces(widget.token),
+        _repository.listGroups(widget.token),
         _repository.listMyInvitations(widget.token),
       ]);
       if (!mounted) return;
       setState(() {
-        _groups = (results[0] as List<WorkspaceItem>)
+        _groups = (results[0] as List<GroupItem>)
             .where((w) => !w.isPersonal)
             .toList();
         _invitations = results[1] as List<Map<String, dynamic>>;
@@ -122,8 +122,8 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection> {
     controller.dispose();
     if (name == null || name.isEmpty) return;
     try {
-      await _repository.createWorkspace(widget.token, name);
-      widget.apiClient.invalidateCache('/api/workspaces');
+      await _repository.createGroup(widget.token, name);
+      widget.apiClient.invalidateCache('/api/groups');
       await _load();
     } catch (_) {
       _showMessage(
@@ -139,7 +139,7 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection> {
         widget.token,
         (inv['id'] ?? '').toString(),
       );
-      widget.apiClient.invalidateCache('/api/workspaces');
+      widget.apiClient.invalidateCache('/api/groups');
       _showMessage(_tx('groups.invitation_accepted', 'Invitación aceptada'));
       await _load();
     } catch (_) {
@@ -166,7 +166,7 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection> {
     }
   }
 
-  Future<void> _openManageDialog(WorkspaceItem group) async {
+  Future<void> _openManageDialog(GroupItem group) async {
     await showDialog<void>(
       context: context,
       builder: (context) => _ManageGroupDialog(
@@ -280,8 +280,7 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection> {
       ];
     }
     return _invitations.map((inv) {
-      final name = (inv['workspace_name'] ?? inv['workspace_id'] ?? '')
-          .toString();
+      final name = (inv['group_name'] ?? inv['group_id'] ?? '').toString();
       final invitedBy = (inv['invited_by'] ?? '').toString();
       return Card(
         margin: const EdgeInsets.only(bottom: 10),
@@ -340,7 +339,7 @@ class _ManageGroupDialog extends StatefulWidget {
 
   final ApiClient apiClient;
   final String token;
-  final WorkspaceItem group;
+  final GroupItem group;
   final String currentUsername;
   final String Function(String path, String fallback) tx;
 
@@ -452,8 +451,8 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
     );
     if (confirm != true) return;
     try {
-      await _repository.deleteWorkspace(widget.token, widget.group.id);
-      widget.apiClient.invalidateCache('/api/workspaces');
+      await _repository.deleteGroup(widget.token, widget.group.id);
+      widget.apiClient.invalidateCache('/api/groups');
       _showMessage(widget.tx('groups.group_deleted', 'Grupo eliminado'));
       if (!mounted) return;
       Navigator.of(context).pop();
@@ -502,7 +501,7 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
           widget.group.id,
           widget.currentUsername,
         );
-        widget.apiClient.invalidateCache('/api/workspaces');
+        widget.apiClient.invalidateCache('/api/groups');
         _showMessage(widget.tx('groups.left_group', 'Has salido del grupo'));
         if (!mounted) return;
         Navigator.of(context).pop();
@@ -582,7 +581,7 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
         widget.group.id,
         widget.currentUsername,
       );
-      widget.apiClient.invalidateCache('/api/workspaces');
+      widget.apiClient.invalidateCache('/api/groups');
       _showMessage(
         widget.tx('groups.ownership_transferred', 'Propiedad transferida'),
       );
@@ -793,7 +792,7 @@ class _MembersDialog extends StatefulWidget {
 
   final ApiClient apiClient;
   final String token;
-  final WorkspaceItem group;
+  final GroupItem group;
   final String currentUsername;
   final bool canManage;
   final String Function(String path, String fallback) tx;

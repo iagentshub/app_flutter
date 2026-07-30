@@ -20,6 +20,6 @@
     "invite_sent": "Invitación enviada a",
     "invite_already": "Ya es miembro o tiene invitación pendiente",
     "invite_error": "Error al enviar la invitación",
-    "invite_no_ws": "Selecciona un grupo primero"
+    "invite_no_group": "Selecciona un grupo primero"
   }
 }

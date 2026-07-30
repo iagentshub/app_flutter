@@ -129,11 +129,11 @@ class AdminRepository {
     );
   }
 
-  // ── Grupos (workspaces) ──────────────────────────────────────────────
+  // ── Grupos (groups) ──────────────────────────────────────────────
 
-  Future<List<Map<String, dynamic>>> listWorkspaces(String token) async {
+  Future<List<Map<String, dynamic>>> listGroups(String token) async {
     final response = await apiClient.get(
-      '/api/admin/workspaces',
+      '/api/admin/groups',
       gaToken: token,
       cache: true,
     );
@@ -142,21 +142,21 @@ class AdminRepository {
     return payload.whereType<Map<String, dynamic>>().toList();
   }
 
-  Future<void> setWorkspaceStatus(
+  Future<void> setGroupStatus(
     String token,
-    String workspaceId,
+    String groupId,
     String status,
   ) async {
     await apiClient.post(
-      '/api/admin/workspaces/${Uri.encodeComponent(workspaceId)}/status',
+      '/api/admin/groups/${Uri.encodeComponent(groupId)}/status',
       gaToken: token,
       body: {'status': status},
     );
   }
 
-  Future<void> deleteWorkspace(String token, String workspaceId) async {
+  Future<void> deleteGroup(String token, String groupId) async {
     await apiClient.delete(
-      '/api/admin/workspaces/${Uri.encodeComponent(workspaceId)}',
+      '/api/admin/groups/${Uri.encodeComponent(groupId)}',
       gaToken: token,
     );
   }

@@ -22,9 +22,17 @@ enum DashboardDataSource {
   skills,
   memory,
   tokenDaily,
-  workspaces,
+  groups,
   invitations,
   conversations,
+}
+
+String normalizeDashboardWidgetType(Object? value) {
+  final type = value?.toString() ?? '';
+  final legacyGroupType =
+      'work'
+      'space';
+  return type == legacyGroupType ? 'group' : type;
 }
 
 class DashboardWidgetInstance {
@@ -43,7 +51,7 @@ class DashboardWidgetInstance {
   factory DashboardWidgetInstance.fromJson(Map<String, dynamic> json) {
     return DashboardWidgetInstance(
       id: json['id']?.toString() ?? '',
-      type: json['type']?.toString() ?? '',
+      type: normalizeDashboardWidgetType(json['type']),
       size: DashboardWidgetSize.fromJson(json['size']),
       config: DashboardWidgetConfig.fromJson(
         json['config'] as Map<String, dynamic>? ?? const {},

@@ -123,14 +123,11 @@ const dashboardWidgetDefinitions = [
     dataSources: {DashboardDataSource.agents, DashboardDataSource.connections},
   ),
   DashboardWidgetDefinition(
-    type: 'workspace',
+    type: 'group',
     icon: Icons.groups_outlined,
     defaultSize: DashboardWidgetSize.medium,
     supportedSizes: {DashboardWidgetSize.compact, DashboardWidgetSize.medium},
-    dataSources: {
-      DashboardDataSource.workspaces,
-      DashboardDataSource.invitations,
-    },
+    dataSources: {DashboardDataSource.groups, DashboardDataSource.invitations},
   ),
   DashboardWidgetDefinition(
     type: 'composition',
@@ -170,7 +167,7 @@ List<DashboardWidgetInstance> migrateLegacyDashboardLayout(
   Map<String, DashboardWidgetConfig> config,
 ) {
   return [
-    for (final type in layout)
+    for (final type in layout.map(normalizeDashboardWidgetType))
       if (dashboardWidgetDefinition(type) case final definition?)
         DashboardWidgetInstance(
           id: type,

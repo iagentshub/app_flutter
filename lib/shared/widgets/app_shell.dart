@@ -357,7 +357,7 @@ class _NavItem {
 
 // Mismos 6 items primarios que frontend_react/frontend_vanilla (main-nav).
 // Memory y Skills viven dentro de Knowledge (son pestañas, no nav propio);
-// Manager no aparece en el nav web (se llega desde Profile > Workspaces).
+// Manager no aparece en el nav web (se llega desde Profile > Groups).
 const _mainItems = [
   _NavItem(RouteNames.dashboard, 'dashboard', Icons.dashboard_outlined),
   _NavItem(RouteNames.explore, 'explore', Icons.travel_explore_outlined),

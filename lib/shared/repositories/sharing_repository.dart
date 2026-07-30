@@ -1,8 +1,8 @@
 import '../../core/network/api_client.dart';
 
-/// Comparte/descomparte un recurso con uno o varios grupos (workspaces) —
+/// Comparte/descomparte un recurso con uno o varios grupos (groups) —
 /// un recurso puede estar compartido con varios grupos a la vez
-/// (`resource_workspace_shares` es una relación N a N en el backend).
+/// (`resource_group_shares` es una relación N a N en el backend).
 class SharingRepository {
   SharingRepository({required this.apiClient});
 

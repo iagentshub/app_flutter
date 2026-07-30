@@ -33,6 +33,21 @@ void main() {
     expect(migrated.first.size, DashboardWidgetSize.medium);
   });
 
+  test('migra el nombre anterior del widget de grupo', () {
+    final legacyType =
+        'work'
+        'space';
+    final restored = DashboardWidgetInstance.fromJson({
+      'id': 'legacy-group',
+      'type': legacyType,
+      'size': 'medium',
+    });
+    final migrated = migrateLegacyDashboardLayout([legacyType], const {});
+
+    expect(restored.type, 'group');
+    expect(migrated.single.type, 'group');
+  });
+
   test('permite instancias repetidas y calcula solo sus dependencias', () {
     final first = createDashboardWidgetInstance('token-kpi');
     final second = createDashboardWidgetInstance('token-kpi');

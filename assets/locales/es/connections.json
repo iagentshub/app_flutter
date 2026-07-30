@@ -34,9 +34,9 @@
     "placeholder_host": "http://localhost:11434",
     "placeholder_model": "gpt-4o / claude-sonnet-4-5 / llama3.2",
     "field_scope": "Guardar como",
-    "scope_workspace": "Clave compartida",
+    "scope_group": "Clave compartida",
     "scope_personal": "Clave personal",
-    "scope_hint_workspace": "Compartible con los miembros de un grupo",
+    "scope_hint_group": "Compartible con los miembros de un grupo",
     "scope_hint_personal": "Solo visible para ti"
   },
   "ollama": {

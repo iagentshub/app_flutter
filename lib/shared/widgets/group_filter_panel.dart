@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../core/network/api_client.dart';
 import '../../features/manager/repositories/manager_repository.dart';
-import '../../models/manager/workspace_models.dart';
+import '../../models/manager/group_models.dart';
 import '../i18n/translated_texts.dart';
 import '../state/locale_controller.dart';
 import 'responsive_dialog.dart';
 
-/// Abre el selector de grupos (workspaces) como diálogo en vez de panel
+/// Abre el selector de grupos (groups) como diálogo en vez de panel
 /// incrustado en la página — mismo listado de [GroupFilterPanel], pero sin
 /// ocupar espacio permanente en la vista mientras no se usa.
 Future<void> showGroupFilterDialog(
@@ -52,7 +52,7 @@ class _GroupFilterDialog extends StatefulWidget {
 class _GroupFilterDialogState extends State<_GroupFilterDialog> {
   late final ManagerRepository _repository;
   late final TranslatedTexts _t;
-  List<WorkspaceItem> _groups = const [];
+  List<GroupItem> _groups = const [];
   bool _loading = true;
   String? _activeGroupId;
 
@@ -84,7 +84,7 @@ class _GroupFilterDialogState extends State<_GroupFilterDialog> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      final groups = await _repository.listWorkspaces(widget.token);
+      final groups = await _repository.listGroups(widget.token);
       if (!mounted) return;
       setState(() {
         _groups = groups;
@@ -125,8 +125,8 @@ class _GroupFilterDialogState extends State<_GroupFilterDialog> {
     if (name == null || name.isEmpty) return;
 
     try {
-      await _repository.createWorkspace(widget.token, name);
-      widget.apiClient.invalidateCache('/api/workspaces');
+      await _repository.createGroup(widget.token, name);
+      widget.apiClient.invalidateCache('/api/groups');
       await _load();
     } catch (_) {
       if (!mounted) return;

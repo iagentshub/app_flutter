@@ -409,7 +409,7 @@ class _LoginPageState extends State<LoginPage> {
               t,
               'card_sub',
               _isEnglish
-                  ? 'Access your agent workspace'
+                  ? 'Access your agent platform'
                   : 'Accede a tu espacio de agentes',
             );
             final fieldEmail = _txt(t, 'field_email', 'Email');

@@ -11,7 +11,7 @@
   "tabs": {
     "general": "General",
     "users": "Usuarios",
-    "workspaces": "Grupos",
+    "groups": "Grupos",
     "agents": "Agentes",
     "connections": "Conexiones",
     "knowledge": "Conocimiento",

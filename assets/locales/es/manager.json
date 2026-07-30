@@ -50,6 +50,6 @@
       "success": "Invitación enviada",
       "already_member": "Este usuario ya es miembro del equipo."
     },
-    "no_managed_workspace": "No administras ningún grupo de trabajo."
+    "no_managed_group": "No administras ningún grupo de trabajo."
   }
 }

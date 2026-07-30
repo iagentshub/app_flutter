@@ -32,7 +32,7 @@
     "test":        "Resource reserved for testing and validation.",
     "linked":       "Live link to a source resource. You can sync it with the original when it changes using the Sync button.",
     "origin_owner": "You are the original owner of this agent. You can edit, export, and delete it.",
-    "origin_linked":"This agent is a link to a resource from another user or workspace. It is read-only.",
+    "origin_linked":"This agent is a link to a resource from another user or group. It is read-only.",
     "favorite":    "Marks the resource as a favorite for quick access.",
     "draft":       "Work in progress, not ready to use. Blocks access until it is complete.",
     "review":      "The resource needs review before being used or published.",

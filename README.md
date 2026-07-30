@@ -52,10 +52,10 @@ flutter test
 	- Memory: CRUD de archivos markdown con editor integrado.
 	- Explore: filtros, preview, star/unstar y link de recursos públicos.
 	- Labels: agregación y filtrado por etiquetas reales del catálogo.
-	- Manager: gestión de workspaces (crear, renombrar, eliminar, activar).
+	- Manager: gestión de groups (crear, renombrar, eliminar, activar).
 	- Profile: settings, perfil público, cambio contraseña, solicitud de eliminación.
 - Área admin funcional:
-	- Admin: estadísticas, gestión rápida de usuarios y workspaces.
+	- Admin: estadísticas, gestión rápida de usuarios y groups.
 	- Metadata: exploración de tablas y datos paginados.
 	- Centinel: estado, ejecución/aborto de runs e historial.
 - Perfil público funcional con follow/unfollow y recursos del usuario.

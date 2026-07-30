@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/network/api_client.dart';
 import '../../features/manager/repositories/manager_repository.dart';
-import '../../models/manager/workspace_models.dart';
+import '../../models/manager/group_models.dart';
 import '../i18n/locale_loader.dart';
 import '../repositories/sharing_repository.dart';
 import '../state/locale_controller.dart';
@@ -61,7 +61,7 @@ class _ShareToGroupDialogState extends State<_ShareToGroupDialog> {
   late final ManagerRepository _managerRepository;
   late final SharingRepository _sharingRepository;
   Map<String, dynamic> _texts = const {};
-  List<WorkspaceItem> _groups = const [];
+  List<GroupItem> _groups = const [];
   Set<String> _sharedGroupIds = {};
   final Set<String> _pending = {};
   bool _loading = true;
@@ -89,7 +89,7 @@ class _ShareToGroupDialogState extends State<_ShareToGroupDialog> {
           isEnglish: widget.localeController.isEnglish,
           namespace: 'resources',
         ),
-        _managerRepository.listWorkspaces(widget.token),
+        _managerRepository.listGroups(widget.token),
         _sharingRepository.listGroups(
           widget.token,
           resourceType: widget.resourceType,
@@ -99,7 +99,7 @@ class _ShareToGroupDialogState extends State<_ShareToGroupDialog> {
       if (!mounted) return;
       setState(() {
         _texts = results[0] as Map<String, dynamic>;
-        _groups = results[1] as List<WorkspaceItem>;
+        _groups = results[1] as List<GroupItem>;
         _sharedGroupIds = (results[2] as List<String>).toSet();
         _loading = false;
       });
@@ -112,7 +112,7 @@ class _ShareToGroupDialogState extends State<_ShareToGroupDialog> {
     }
   }
 
-  Future<void> _toggle(WorkspaceItem group) async {
+  Future<void> _toggle(GroupItem group) async {
     if (_pending.contains(group.id)) return;
     final wasShared = _sharedGroupIds.contains(group.id);
     setState(() => _pending.add(group.id));

@@ -82,8 +82,8 @@
   "languages": {
     "spanish": "Español"
   },
-  "workspace": {
-    "new_prompt": "Nombre del nuevo workspace:",
+  "group": {
+    "new_prompt": "Nombre del nuevo grupo:",
     "groups": "Grupos de trabajo",
     "show_groups": "Mostrar grupos",
     "hide_groups": "Ocultar grupos"

@@ -118,7 +118,7 @@
     "guests_body": "Users without an account (guest mode) cannot create or join groups. Register an account to access collaboration features."
   },
   "folders": {
-    "intro": "Folders are a personal organisation tool. They do not affect visibility, permissions, or sharing — they only help you keep your own workspace tidy.",
+    "intro": "Folders are a personal organisation tool. They do not affect visibility, permissions, or sharing — they only help you keep your resources tidy.",
     "create_title": "Creating folders and moving items",
     "create_body": "In the left panel of any section (Agents, Knowledge), click the «+» button next to «Folders» to create a new one. Drag a card directly onto a folder to move it there — the change takes effect immediately.",
     "filter_title": "Filtering by folder",

@@ -1,5 +1,5 @@
-class WorkspaceItem {
-  const WorkspaceItem({required this.raw});
+class GroupItem {
+  const GroupItem({required this.raw});
 
   final Map<String, dynamic> raw;
 

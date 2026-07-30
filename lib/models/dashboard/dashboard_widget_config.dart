@@ -11,7 +11,7 @@ const kDashboardWidgetIds = [
   'token-kpi',
   'recent-resources',
   'agent-health',
-  'workspace',
+  'group',
 ];
 
 const kDefaultDashboardLayout = [
@@ -63,8 +63,8 @@ String dashboardWidgetTitle(String id, DashboardTx tx) {
       return tx('title_recent_resources', 'Recursos recientes');
     case 'agent-health':
       return tx('title_agent_health', 'Estado de agentes');
-    case 'workspace':
-      return tx('title_workspace', 'Workspace');
+    case 'group':
+      return tx('title_group', 'Grupo activo');
     default:
       return id;
   }
@@ -104,7 +104,7 @@ String dashboardWidgetSizeLabel(String id, DashboardTx tx) {
     case 'recent-resources':
     case 'recent-conversations':
     case 'agent-health':
-    case 'workspace':
+    case 'group':
       return tx('size_medium', 'Mediano');
     default:
       return tx('size_medium', 'Mediano');

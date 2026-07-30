@@ -7,7 +7,7 @@ import '../../../app/router/route_names.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/explore/explore_models.dart';
-import '../../../models/manager/workspace_models.dart';
+import '../../../models/manager/group_models.dart';
 import '../../manager/repositories/manager_repository.dart';
 import '../repositories/explore_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
@@ -349,18 +349,18 @@ class _ExplorePageState extends State<ExplorePage>
 
     setState(() => _invitingUsernames.add(username));
     try {
-      final workspaces = await _managerRepository.listWorkspaces(token);
-      WorkspaceItem? active;
-      for (final ws in workspaces) {
-        if (ws.active) {
-          active = ws;
+      final groups = await _managerRepository.listGroups(token);
+      GroupItem? active;
+      for (final group in groups) {
+        if (group.active) {
+          active = group;
           break;
         }
       }
       if (active == null || active.isPersonal) {
         _showMessage(
           _tx(
-            'explore.users_invite_no_workspace',
+            'explore.users_invite_no_group',
             'Activa un grupo de equipo para invitar usuarios',
           ),
           isError: true,
