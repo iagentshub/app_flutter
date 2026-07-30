@@ -34,6 +34,27 @@ class ExploreRepository {
         .toList();
   }
 
+  Future<List<ExploreUserItem>> searchUsers(
+    String token, {
+    String query = '',
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    final params = <String, String>{
+      if (query.trim().isNotEmpty) 'q': query.trim(),
+      'limit': '$limit',
+      'offset': '$offset',
+    };
+    final uri = Uri(path: '/api/users', queryParameters: params);
+    final response = await apiClient.get(uri.toString(), gaToken: token);
+    final payload = response.body;
+    if (payload is! List) return const [];
+    return payload
+        .whereType<Map<String, dynamic>>()
+        .map((item) => ExploreUserItem(raw: item))
+        .toList();
+  }
+
   Future<Map<String, dynamic>> getPreview(
     String token, {
     required String resourceType,

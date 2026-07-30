@@ -39,3 +39,24 @@ class ExploreItem {
     return const [];
   }
 }
+
+class ExploreUserItem {
+  const ExploreUserItem({required this.raw});
+
+  final Map<String, dynamic> raw;
+
+  String get username => raw['username'] as String? ?? '';
+
+  /// Ruta relativa del avatar (p. ej. `/api/users/{username}/avatar`), o
+  /// `null` si el usuario no tiene avatar subido.
+  String? get avatarPath => raw['avatar_url'] as String?;
+
+  int get followersCount => _asInt(raw['followers_count']);
+  int get publicResourcesCount => _asInt(raw['public_resources_count']);
+
+  static int _asInt(Object? value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return 0;
+  }
+}

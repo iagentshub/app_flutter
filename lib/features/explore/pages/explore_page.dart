@@ -2,15 +2,20 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../app/router/route_names.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/explore/explore_models.dart';
+import '../../../models/manager/workspace_models.dart';
+import '../../manager/repositories/manager_repository.dart';
 import '../repositories/explore_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/utils/debouncer.dart';
 import '../../../shared/widgets/action_icon_button.dart';
 import '../../../shared/widgets/filter_button.dart';
 import '../../../shared/widgets/label_chips_row.dart';
@@ -31,10 +36,15 @@ class ExplorePage extends StatefulWidget {
   State<ExplorePage> createState() => _ExplorePageState();
 }
 
-class _ExplorePageState extends State<ExplorePage> {
+class _ExplorePageState extends State<ExplorePage>
+    with SingleTickerProviderStateMixin {
   late final ExploreRepository _repository;
+  late final ManagerRepository _managerRepository;
   late final TranslatedTexts _t;
+  late final TabController _tabController;
   final TextEditingController _queryController = TextEditingController();
+  final TextEditingController _userQueryController = TextEditingController();
+  final Debouncer _userSearchDebouncer = Debouncer();
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
@@ -47,6 +57,15 @@ class _ExplorePageState extends State<ExplorePage> {
   final Set<String> _busyKeys = <String>{};
   final Set<String> _linkedKeys = <String>{};
   final Set<String> _starredKeys = <String>{};
+
+  static const _usersPageSize = 20;
+  List<ExploreUserItem> _users = const [];
+  bool _usersLoading = true;
+  bool _usersLoadingMore = false;
+  String? _usersError;
+  bool _usersHasMore = false;
+  int _usersOffset = 0;
+  final Set<String> _invitingUsernames = <String>{};
 
   List<String> get _categoryOptions {
     final set = <String>{};
@@ -61,11 +80,14 @@ class _ExplorePageState extends State<ExplorePage> {
   void initState() {
     super.initState();
     _repository = ExploreRepository(apiClient: widget.apiClient);
+    _managerRepository = ManagerRepository(apiClient: widget.apiClient);
+    _tabController = TabController(length: 2, vsync: this);
     _t = TranslatedTexts(
       localeController: widget.localeController,
       namespace: 'resources',
     )..addListener(_onTextsChanged);
     _load();
+    _loadUsers();
   }
 
   void _onTextsChanged() {
@@ -75,6 +97,9 @@ class _ExplorePageState extends State<ExplorePage> {
   @override
   void dispose() {
     _queryController.dispose();
+    _userQueryController.dispose();
+    _userSearchDebouncer.dispose();
+    _tabController.dispose();
     _t.removeListener(_onTextsChanged);
     _t.dispose();
     super.dispose();
@@ -233,6 +258,128 @@ class _ExplorePageState extends State<ExplorePage> {
         backgroundColor: isError ? Colors.red.shade700 : null,
       ),
     );
+  }
+
+  // ── Pestaña Usuarios ────────────────────────────────────────────────
+
+  void _onUserSearchChanged() {
+    _userSearchDebouncer.run(() => _loadUsers());
+  }
+
+  Future<void> _loadUsers() async {
+    final token = _token;
+    if (token == null || token.isEmpty) {
+      setState(() {
+        _usersError = _tx('common.no_session', 'No hay sesión activa');
+        _usersLoading = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _usersLoading = true;
+      _usersError = null;
+    });
+
+    try {
+      final users = await _repository.searchUsers(
+        token,
+        query: _userQueryController.text,
+        limit: _usersPageSize,
+        offset: 0,
+      );
+      if (!mounted) return;
+      setState(() {
+        _users = users;
+        _usersOffset = users.length;
+        _usersHasMore = users.length >= _usersPageSize;
+        _usersLoading = false;
+      });
+    } on ApiError catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _usersError = error.message;
+        _usersLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _usersError = _tx('explore.users_error_title', 'No se pudo cargar');
+        _usersLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadMoreUsers() async {
+    final token = _token;
+    if (token == null || token.isEmpty || _usersLoadingMore || !_usersHasMore) {
+      return;
+    }
+    setState(() => _usersLoadingMore = true);
+    try {
+      final next = await _repository.searchUsers(
+        token,
+        query: _userQueryController.text,
+        limit: _usersPageSize,
+        offset: _usersOffset,
+      );
+      if (!mounted) return;
+      setState(() {
+        _users = [..._users, ...next];
+        _usersOffset += next.length;
+        _usersHasMore = next.length >= _usersPageSize;
+        _usersLoadingMore = false;
+      });
+    } on ApiError catch (error) {
+      _showMessage(error.message, isError: true);
+      if (mounted) setState(() => _usersLoadingMore = false);
+    } catch (_) {
+      if (mounted) setState(() => _usersLoadingMore = false);
+    }
+  }
+
+  void _openProfile(String username) {
+    context.push('${RouteNames.publicProfilePrefix}$username');
+  }
+
+  Future<void> _inviteUser(String username) async {
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+
+    setState(() => _invitingUsernames.add(username));
+    try {
+      final workspaces = await _managerRepository.listWorkspaces(token);
+      WorkspaceItem? active;
+      for (final ws in workspaces) {
+        if (ws.active) {
+          active = ws;
+          break;
+        }
+      }
+      if (active == null || active.isPersonal) {
+        _showMessage(
+          _tx(
+            'explore.users_invite_no_workspace',
+            'Activa un grupo de equipo para invitar usuarios',
+          ),
+          isError: true,
+        );
+        return;
+      }
+      await _managerRepository.inviteMember(token, active.id, username);
+      _showMessage(
+        '${_tx('explore.users_invite_sent', 'Invitación enviada a')} $username',
+      );
+    } on ApiError catch (error) {
+      _showMessage(error.message, isError: true);
+    } catch (_) {
+      _showMessage(
+        _tx('explore.users_invite_error', 'No se pudo enviar la invitación'),
+        isError: true,
+      );
+    } finally {
+      if (mounted) setState(() => _invitingUsernames.remove(username));
+    }
   }
 
   List<(String, String)> get _typeOptions => [
@@ -406,6 +553,29 @@ class _ExplorePageState extends State<ExplorePage> {
 
   @override
   Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Material(
+          color: Theme.of(context).colorScheme.surface,
+          child: TabBar(
+            controller: _tabController,
+            tabs: [
+              Tab(text: _tx('explore.tab_resources', 'Recursos')),
+              Tab(text: _tx('explore.tab_users', 'Usuarios')),
+            ],
+          ),
+        ),
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: [_buildResourcesTab(), _buildUsersTab()],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildResourcesTab() {
     if (_error != null) {
       return ListView(
         padding: const EdgeInsets.all(16),
@@ -525,6 +695,228 @@ class _ExplorePageState extends State<ExplorePage> {
             ),
           ),
       ],
+    );
+  }
+
+  Widget _buildUsersTab() {
+    if (_usersError != null) {
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _tx('explore.users_error_title', 'No se pudo cargar'),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(_usersError!),
+                  const SizedBox(height: 12),
+                  FilledButton.icon(
+                    onPressed: _loadUsers,
+                    icon: const Icon(Icons.refresh),
+                    label: Text(_tx('common.retry', 'Reintentar')),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (_usersLoading) return const Center(child: CircularProgressIndicator());
+
+    return RefreshIndicator(
+      onRefresh: _loadUsers,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          const cardWidth = 260.0;
+          const spacing = 12.0;
+          final usableWidth = constraints.maxWidth - 32;
+          final crossAxisCount =
+              ((usableWidth + spacing) / (cardWidth + spacing)).floor().clamp(
+                1,
+                10,
+              );
+          return _buildUsersScrollView(crossAxisCount);
+        },
+      ),
+    );
+  }
+
+  Widget _buildUsersScrollView(int crossAxisCount) {
+    return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+          sliver: SliverToBoxAdapter(
+            child: TextField(
+              controller: _userQueryController,
+              decoration: InputDecoration(
+                labelText: _tx('explore.users_search_hint', 'Buscar usuarios'),
+                prefixIcon: const Icon(Icons.search, size: 20),
+              ),
+              onChanged: (_) => _onUserSearchChanged(),
+            ),
+          ),
+        ),
+        if (_users.isEmpty)
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            sliver: SliverToBoxAdapter(
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    _tx('explore.users_empty', 'No se encontraron usuarios.'),
+                  ),
+                ),
+              ),
+            ),
+          )
+        else ...[
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            sliver: SliverMasonryGrid.count(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childCount: _users.length,
+              itemBuilder: (context, index) => _buildUserCard(_users[index]),
+            ),
+          ),
+          if (_usersHasMore)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              sliver: SliverToBoxAdapter(
+                child: Center(
+                  child: _usersLoadingMore
+                      ? const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : OutlinedButton(
+                          onPressed: _loadMoreUsers,
+                          child: Text(
+                            _tx('explore.users_load_more', 'Cargar más'),
+                          ),
+                        ),
+                ),
+              ),
+            ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildUserCard(ExploreUserItem user) {
+    final username = user.username;
+    final initial = username.isNotEmpty ? username[0].toUpperCase() : '?';
+    final token = _token;
+    final avatarPath = user.avatarPath;
+    final avatarUrl = avatarPath != null
+        ? '${widget.apiClient.backendController.effectiveBaseUrl}$avatarPath'
+        : null;
+    final inviting = _invitingUsernames.contains(username);
+
+    return Card(
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.hardEdge,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                ClipOval(
+                  child: SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: (avatarUrl != null && token != null)
+                        ? Image.network(
+                            avatarUrl,
+                            headers: {'Cookie': 'ga_token=$token'},
+                            fit: BoxFit.cover,
+                            cacheWidth: 80,
+                            cacheHeight: 80,
+                            errorBuilder: (context, error, stack) =>
+                                _userAvatarFallback(initial),
+                            loadingBuilder: (context, child, progress) =>
+                                progress == null
+                                ? child
+                                : _userAvatarFallback(initial),
+                          )
+                        : _userAvatarFallback(initial),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    '@$username',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 12,
+              runSpacing: 4,
+              children: [
+                Text(
+                  '${user.followersCount} '
+                  '${_tx('explore.users_followers', 'seguidores')}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                Text(
+                  '${user.publicResourcesCount} '
+                  '${_tx('explore.users_resources', 'recursos')}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                ActionIconButton(
+                  icon: Icons.person_outline,
+                  tooltip: _tx('explore.users_view_profile', 'Ver perfil'),
+                  onPressed: () => _openProfile(username),
+                ),
+                const Spacer(),
+                ActionIconButton(
+                  icon: Icons.group_add_outlined,
+                  tooltip: _tx('explore.users_invite', 'Invitar'),
+                  onPressed: inviting ? null : () => _inviteUser(username),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _userAvatarFallback(String initial) {
+    return CircleAvatar(
+      radius: 20,
+      child: Text(
+        initial,
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+      ),
     );
   }
 

@@ -213,7 +213,20 @@
     "label_deprecated": "Deprecated",
     "label_quarantine": "Quarantine",
     "label_archived": "Archived",
-    "label_delete": "Marked for deletion"
+    "label_delete": "Marked for deletion",
+    "tab_resources": "Resources",
+    "tab_users": "Users",
+    "users_search_hint": "Search users",
+    "users_empty": "No users found.",
+    "users_error_title": "Couldn't load",
+    "users_followers": "followers",
+    "users_resources": "resources",
+    "users_view_profile": "View profile",
+    "users_invite": "Invite",
+    "users_invite_sent": "Invitation sent to",
+    "users_invite_error": "Couldn't send the invitation",
+    "users_invite_no_workspace": "Activate a team workspace to invite users",
+    "users_load_more": "Load more"
   },
   "labels": {
     "type_label": "Resource type",

@@ -213,7 +213,20 @@
     "label_deprecated": "Obsoleto",
     "label_quarantine": "Cuarentena",
     "label_archived": "Archivado",
-    "label_delete": "Para eliminar"
+    "label_delete": "Para eliminar",
+    "tab_resources": "Recursos",
+    "tab_users": "Usuarios",
+    "users_search_hint": "Buscar usuarios",
+    "users_empty": "No se encontraron usuarios.",
+    "users_error_title": "No se pudo cargar",
+    "users_followers": "seguidores",
+    "users_resources": "recursos",
+    "users_view_profile": "Ver perfil",
+    "users_invite": "Invitar",
+    "users_invite_sent": "Invitación enviada a",
+    "users_invite_error": "No se pudo enviar la invitación",
+    "users_invite_no_workspace": "Activa un grupo de equipo para invitar usuarios",
+    "users_load_more": "Cargar más"
   },
   "labels": {
     "type_label": "Tipo de recurso",
