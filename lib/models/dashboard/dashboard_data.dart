@@ -48,6 +48,9 @@ class DashboardData {
     required this.skills,
     required this.memory,
     required this.tokenDaily,
+    this.workspaces = const [],
+    this.invitations = const [],
+    this.conversations = const [],
   });
 
   final List<Map<String, dynamic>> agents;
@@ -57,6 +60,9 @@ class DashboardData {
   final List<Map<String, dynamic>> skills;
   final List<Map<String, dynamic>> memory;
   final List<TokenDailyPoint> tokenDaily;
+  final List<Map<String, dynamic>> workspaces;
+  final List<Map<String, dynamic>> invitations;
+  final List<Map<String, dynamic>> conversations;
 
   List<MapEntry<Map<String, dynamic>, int>> get connectionsByTokens {
     final rows = connections

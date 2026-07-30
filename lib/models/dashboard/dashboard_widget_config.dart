@@ -3,13 +3,21 @@ const kDashboardWidgetIds = [
   'token-usage',
   'conn-status',
   'recent',
+  'recent-conversations',
   'activity',
   'composition',
   'feed',
+  'quick-actions',
+  'token-kpi',
+  'recent-resources',
+  'agent-health',
+  'workspace',
 ];
 
 const kDefaultDashboardLayout = [
   'summary',
+  'quick-actions',
+  'token-kpi',
   'token-usage',
   'conn-status',
   'recent',
@@ -24,6 +32,8 @@ const kSummaryItems = [
   'workflows',
 ];
 const kFeedTypes = ['agent', 'skill', 'knowledge'];
+const kQuickActionItems = ['agent', 'connection', 'workflow', 'knowledge'];
+const kRecentResourceTypes = ['agent', 'skill', 'knowledge', 'workflow'];
 
 typedef DashboardTx = String Function(String key, String fallback);
 
@@ -37,12 +47,24 @@ String dashboardWidgetTitle(String id, DashboardTx tx) {
       return tx('title_conn_status', 'Estado de conexiones');
     case 'recent':
       return tx('title_recent', 'Agentes recientes');
+    case 'recent-conversations':
+      return tx('title_recent_conversations', 'Conversaciones recientes');
     case 'activity':
       return tx('title_activity', 'Actividad');
     case 'composition':
       return tx('title_composition', 'Composición');
     case 'feed':
       return tx('title_feed', 'Actividad social');
+    case 'quick-actions':
+      return tx('title_quick_actions', 'Acciones rápidas');
+    case 'token-kpi':
+      return tx('title_token_kpi', 'Consumo de tokens');
+    case 'recent-resources':
+      return tx('title_recent_resources', 'Recursos recientes');
+    case 'agent-health':
+      return tx('title_agent_health', 'Estado de agentes');
+    case 'workspace':
+      return tx('title_workspace', 'Workspace');
     default:
       return id;
   }
@@ -69,13 +91,23 @@ String summaryItemLabel(String item, DashboardTx tx) {
 
 String dashboardWidgetSizeLabel(String id, DashboardTx tx) {
   switch (id) {
+    case 'token-kpi':
+    case 'composition':
+      return tx('size_compact', 'Compacto');
+    case 'activity':
+      return tx('size_wide', 'Ancho');
+    case 'summary':
+      return tx('size_full', 'Completo');
     case 'token-usage':
     case 'feed':
+    case 'quick-actions':
+    case 'recent-resources':
+    case 'recent-conversations':
+    case 'agent-health':
+    case 'workspace':
       return tx('size_medium', 'Mediano');
-    case 'composition':
-      return tx('size_small', 'Pequeño');
     default:
-      return tx('size_large', 'Grande');
+      return tx('size_medium', 'Mediano');
   }
 }
 
@@ -101,6 +133,7 @@ class DashboardWidgetConfig {
     this.pageSize,
     this.days,
     this.types,
+    this.period,
   });
 
   final List<String>? items;
@@ -110,6 +143,7 @@ class DashboardWidgetConfig {
   final int? pageSize;
   final int? days;
   final List<String>? types;
+  final String? period;
 
   factory DashboardWidgetConfig.fromJson(Map<String, dynamic> json) {
     List<String>? stringList(Object? value) {
@@ -125,6 +159,7 @@ class DashboardWidgetConfig {
       pageSize: (json['pageSize'] as num?)?.toInt(),
       days: (json['days'] as num?)?.toInt(),
       types: stringList(json['types']),
+      period: json['period'] as String?,
     );
   }
 
@@ -136,6 +171,7 @@ class DashboardWidgetConfig {
     if (pageSize != null) 'pageSize': pageSize,
     if (days != null) 'days': days,
     if (types != null) 'types': types,
+    if (period != null) 'period': period,
   };
 
   DashboardWidgetConfig copyWith({
@@ -146,6 +182,7 @@ class DashboardWidgetConfig {
     int? pageSize,
     int? days,
     List<String>? types,
+    String? period,
   }) {
     return DashboardWidgetConfig(
       items: items ?? this.items,
@@ -155,6 +192,7 @@ class DashboardWidgetConfig {
       pageSize: pageSize ?? this.pageSize,
       days: days ?? this.days,
       types: types ?? this.types,
+      period: period ?? this.period,
     );
   }
 }

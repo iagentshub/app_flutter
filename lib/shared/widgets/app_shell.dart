@@ -5,6 +5,7 @@ import '../../app/router/route_names.dart';
 import '../../core/network/api_client.dart';
 import '../../features/auth/repositories/auth_repository.dart';
 import '../../models/dashboard/dashboard_widget_config.dart';
+import '../../models/dashboard/dashboard_widget_registry.dart';
 import '../i18n/locale_loader.dart';
 import '../state/dashboard_edit_state.dart';
 import '../state/locale_controller.dart';
@@ -458,6 +459,12 @@ class _WidgetPickerDrawerContent extends StatelessWidget {
                           padding: const EdgeInsets.all(14),
                           child: Row(
                             children: [
+                              Icon(
+                                dashboardWidgetDefinition(id)?.icon ??
+                                    Icons.widgets_outlined,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
                                   dashboardWidgetTitle(id, _dashboardTx),

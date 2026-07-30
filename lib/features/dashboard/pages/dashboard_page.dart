@@ -5,6 +5,8 @@ import '../../../app/router/route_names.dart';
 import '../../../core/network/api_client.dart';
 import '../../../models/dashboard/dashboard_data.dart';
 import '../../../models/dashboard/dashboard_widget_config.dart';
+import '../../../models/dashboard/dashboard_widget_instance.dart';
+import '../../../models/dashboard/dashboard_widget_registry.dart';
 import '../../auth/repositories/auth_repository.dart';
 import '../../explore/repositories/explore_repository.dart';
 import '../repositories/dashboard_repository.dart';
@@ -14,7 +16,7 @@ import '../../../shared/state/dashboard_edit_state.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
-import '../../../shared/widgets/responsive_masonry_grid.dart';
+import '../widgets/responsive_dashboard_grid.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({
@@ -45,8 +47,7 @@ class _DashboardPageState extends State<DashboardPage> {
   late final TranslatedTexts _t;
 
   DashboardData? _data;
-  List<String> _layout = kDefaultDashboardLayout;
-  Map<String, DashboardWidgetConfig> _config = const {};
+  List<DashboardWidgetInstance> _layout = defaultDashboardInstances();
   bool _loading = true;
   bool _editing = false;
   String? _error;
@@ -95,18 +96,20 @@ class _DashboardPageState extends State<DashboardPage> {
       _error = null;
     });
     try {
-      final results = await Future.wait([
-        widget.dashboardRepository.fetchData(gaToken: token),
-        widget.dashboardRepository.getLayout(token),
-        widget.dashboardRepository.getConfig(token),
-      ]);
+      final preferences = await widget.dashboardRepository.getPreferences(
+        token,
+      );
+      final data = await widget.dashboardRepository.fetchData(
+        gaToken: token,
+        sources: dashboardDataSourcesFor(preferences.instances),
+      );
       if (!mounted) return;
       setState(() {
-        _data = results[0] as DashboardData;
-        _layout = (results[1] as List<String>?) ?? kDefaultDashboardLayout;
-        _config = results[2] as Map<String, DashboardWidgetConfig>;
+        _data = data;
+        _layout = preferences.instances;
         _loading = false;
       });
+      if (!preferences.isVersioned) _persistLayout();
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -123,30 +126,26 @@ class _DashboardPageState extends State<DashboardPage> {
     final token = _token;
     if (token == null) return;
     try {
-      await widget.dashboardRepository.saveLayout(token, _layout);
+      await widget.dashboardRepository.savePreferences(token, _layout);
     } catch (_) {
       // best-effort: el layout sigue aplicado localmente aunque falle el guardado
     }
   }
 
-  Future<void> _persistConfig() async {
-    final token = _token;
-    if (token == null) return;
-    try {
-      await widget.dashboardRepository.saveConfig(token, _config);
-    } catch (_) {
-      // best-effort
-    }
+  List<String> get _availableWidgetTypes {
+    return [
+      for (final definition in dashboardWidgetDefinitions)
+        if (!definition.singleton ||
+            !_layout.any((item) => item.type == definition.type))
+          definition.type,
+    ];
   }
-
-  List<String> get _missingWidgets =>
-      kDashboardWidgetIds.where((id) => !_layout.contains(id)).toList();
 
   void _toggleEditing() {
     setState(() => _editing = !_editing);
     if (_editing) {
       widget.dashboardEditState.startEditing(
-        missing: _missingWidgets,
+        missing: _availableWidgetTypes,
         onAdd: _addWidget,
       );
     } else {
@@ -154,16 +153,27 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  void _addWidget(String id) {
-    setState(() => _layout = [..._layout, id]);
-    widget.dashboardEditState.updateMissing(_missingWidgets);
+  void _addWidget(String type) {
+    setState(() => _layout = [..._layout, createDashboardWidgetInstance(type)]);
+    widget.dashboardEditState.updateMissing(_availableWidgetTypes);
+    _persistLayout();
+    _reloadDataForCurrentLayout();
+  }
+
+  void _removeWidget(String instanceId) {
+    setState(() => _layout = _layout.where((w) => w.id != instanceId).toList());
+    widget.dashboardEditState.updateMissing(_availableWidgetTypes);
     _persistLayout();
   }
 
-  void _removeWidget(String id) {
-    setState(() => _layout = _layout.where((w) => w != id).toList());
-    widget.dashboardEditState.updateMissing(_missingWidgets);
-    _persistLayout();
+  Future<void> _reloadDataForCurrentLayout() async {
+    final token = _token;
+    if (token == null) return;
+    final data = await widget.dashboardRepository.fetchData(
+      gaToken: token,
+      sources: dashboardDataSourcesFor(_layout),
+    );
+    if (mounted) setState(() => _data = data);
   }
 
   void _reorder(int oldIndex, int newIndex) {
@@ -177,16 +187,27 @@ class _DashboardPageState extends State<DashboardPage> {
     _persistLayout();
   }
 
-  Future<void> _editWidget(String id) async {
-    final current = _config[id] ?? const DashboardWidgetConfig();
-    final result = await showDialog<DashboardWidgetConfig>(
+  Future<void> _editWidget(DashboardWidgetInstance instance) async {
+    final result = await showDialog<_DashboardWidgetEditResult>(
       context: context,
-      builder: (context) =>
-          _WidgetConfigDialog(widgetId: id, initial: current, tx: _widgetTx),
+      builder: (context) => _WidgetConfigDialog(
+        widgetType: instance.type,
+        initialConfig: instance.config,
+        initialSize: instance.size,
+        tx: _widgetTx,
+      ),
     );
     if (result == null) return;
-    setState(() => _config = {..._config, id: result});
-    _persistConfig();
+    setState(() {
+      _layout = [
+        for (final item in _layout)
+          if (item.id == instance.id)
+            item.copyWith(size: result.size, config: result.config)
+          else
+            item,
+      ];
+    });
+    _persistLayout();
   }
 
   @override
@@ -276,12 +297,12 @@ class _DashboardPageState extends State<DashboardPage> {
                     slivers: [
                       SliverPadding(
                         padding: const EdgeInsets.all(16),
-                        sliver: ResponsiveSliverMasonryGrid(
-                          minCardWidth: 400,
-                          maxColumns: 4,
-                          itemCount: _layout.length,
-                          itemBuilder: (context, index) =>
-                              _buildCard(_layout[index], data, inGrid: true),
+                        sliver: SliverToBoxAdapter(
+                          child: ResponsiveDashboardGrid(
+                            items: _layout,
+                            itemBuilder: (context, instance, index) =>
+                                _buildCard(instance, data, inGrid: true),
+                          ),
                         ),
                       ),
                     ],
@@ -293,14 +314,14 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildCard(
-    String id,
+    DashboardWidgetInstance instance,
     DashboardData data, {
     int index = 0,
     bool inGrid = false,
   }) {
-    final config = _config[id] ?? const DashboardWidgetConfig();
+    final definition = dashboardWidgetDefinition(instance.type);
     return Card(
-      key: ValueKey(id),
+      key: ValueKey(instance.id),
       margin: inGrid ? EdgeInsets.zero : const EdgeInsets.only(bottom: 12),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -319,29 +340,31 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                 Expanded(
                   child: Text(
-                    dashboardWidgetTitle(id, _widgetTx),
+                    dashboardWidgetTitle(instance.type, _widgetTx),
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
-                if (_editing && id != 'composition')
+                if (_editing &&
+                    (definition?.configurable == true ||
+                        (definition?.supportedSizes.length ?? 0) > 1))
                   IconButton(
                     icon: const Icon(Icons.settings_outlined),
                     tooltip: _tx('dashboard.configure_tooltip', 'Configurar'),
-                    onPressed: () => _editWidget(id),
+                    onPressed: () => _editWidget(instance),
                   ),
                 if (_editing)
                   IconButton(
                     icon: const Icon(Icons.close),
                     tooltip: _tx('dashboard.remove_tooltip', 'Quitar'),
-                    onPressed: () => _removeWidget(id),
+                    onPressed: () => _removeWidget(instance.id),
                   ),
               ],
             ),
             const SizedBox(height: 12),
-            _bodyFor(id, data, config),
+            _bodyFor(instance.type, data, instance.config),
           ],
         ),
       ),
@@ -365,6 +388,12 @@ class _DashboardPageState extends State<DashboardPage> {
         );
       case 'recent':
         return _RecentAgentsBody(data: data, config: config, tx: _widgetTx);
+      case 'recent-conversations':
+        return _RecentConversationsBody(
+          data: data,
+          config: config,
+          tx: _widgetTx,
+        );
       case 'activity':
         return _ActivityBody(data: data, config: config, tx: _widgetTx);
       case 'composition':
@@ -378,6 +407,16 @@ class _DashboardPageState extends State<DashboardPage> {
           config: config,
           tx: _widgetTx,
         );
+      case 'quick-actions':
+        return _QuickActionsBody(config: config, tx: _widgetTx);
+      case 'token-kpi':
+        return _TokenKpiBody(data: data, config: config, tx: _widgetTx);
+      case 'recent-resources':
+        return _RecentResourcesBody(data: data, config: config, tx: _widgetTx);
+      case 'agent-health':
+        return _AgentHealthBody(data: data, config: config, tx: _widgetTx);
+      case 'workspace':
+        return _WorkspaceBody(data: data, tx: _widgetTx);
       default:
         return const SizedBox.shrink();
     }
@@ -706,7 +745,14 @@ class _ConnectionStatusBodyState extends State<_ConnectionStatusBody> {
   Future<void> _runTest() async {
     setState(() => _testing = true);
     try {
-      final results = await widget.repository.testAllConnections(widget.token);
+      final ids = _connections
+          .map((connection) => connection['id']?.toString() ?? '')
+          .where((id) => id.isNotEmpty)
+          .toList();
+      final results = await widget.repository.testAllConnections(
+        widget.token,
+        ids: ids,
+      );
       if (!mounted) return;
       setState(() {
         _results = results;
@@ -823,6 +869,58 @@ class _RecentAgentsBody extends StatelessWidget {
           onTap: () => context.go(RouteNames.agents),
         );
       }).toList(),
+    );
+  }
+}
+
+class _RecentConversationsBody extends StatelessWidget {
+  const _RecentConversationsBody({
+    required this.data,
+    required this.config,
+    required this.tx,
+  });
+
+  final DashboardData data;
+  final DashboardWidgetConfig config;
+  final DashboardTx tx;
+
+  @override
+  Widget build(BuildContext context) {
+    final limit = config.limit ?? 5;
+    final agentNames = {
+      for (final agent in data.agents)
+        if (agent['id'] != null)
+          agent['id'].toString():
+              agent['name']?.toString() ?? tx('default_agent_name', 'Agente'),
+    };
+    final conversations = data.conversations.take(limit).toList();
+
+    if (conversations.isEmpty) {
+      return Text(
+        tx('no_recent_conversations', 'Todavía no hay conversaciones'),
+      );
+    }
+    return Column(
+      children: [
+        for (final conversation in conversations)
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+            leading: const Icon(Icons.forum_outlined),
+            title: Text(
+              (conversation['title']?.toString().trim().isNotEmpty ?? false)
+                  ? conversation['title'].toString()
+                  : tx('untitled_conversation', 'Conversación sin título'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: Text(
+              agentNames[conversation['agent_id']?.toString()] ??
+                  tx('default_agent_name', 'Agente'),
+            ),
+            onTap: () => context.go(RouteNames.agents),
+          ),
+      ],
     );
   }
 }
@@ -1020,15 +1118,475 @@ class _FeedBodyState extends State<_FeedBody> {
   }
 }
 
-class _WidgetConfigDialog extends StatefulWidget {
-  const _WidgetConfigDialog({
-    required this.widgetId,
-    required this.initial,
+class _QuickActionsBody extends StatelessWidget {
+  const _QuickActionsBody({required this.config, required this.tx});
+
+  final DashboardWidgetConfig config;
+  final DashboardTx tx;
+
+  @override
+  Widget build(BuildContext context) {
+    final definitions = <String, ({IconData icon, String label, String route})>{
+      'agent': (
+        icon: Icons.smart_toy_outlined,
+        label: tx('action_agent', 'Nuevo agente'),
+        route: RouteNames.agents,
+      ),
+      'connection': (
+        icon: Icons.cable_outlined,
+        label: tx('action_connection', 'Nueva conexión'),
+        route: RouteNames.connections,
+      ),
+      'workflow': (
+        icon: Icons.account_tree_outlined,
+        label: tx('action_workflow', 'Nuevo workflow'),
+        route: RouteNames.orchestrations,
+      ),
+      'knowledge': (
+        icon: Icons.note_add_outlined,
+        label: tx('action_knowledge', 'Añadir conocimiento'),
+        route: RouteNames.knowledge,
+      ),
+    };
+    final items = config.items ?? kQuickActionItems;
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final item in items)
+          if (definitions[item] case final action?)
+            ActionChip(
+              avatar: Icon(action.icon, size: 18),
+              label: Text(action.label),
+              onPressed: () => context.go(action.route),
+            ),
+      ],
+    );
+  }
+}
+
+class _TokenKpiBody extends StatelessWidget {
+  const _TokenKpiBody({
+    required this.data,
+    required this.config,
     required this.tx,
   });
 
-  final String widgetId;
-  final DashboardWidgetConfig initial;
+  final DashboardData data;
+  final DashboardWidgetConfig config;
+  final DashboardTx tx;
+
+  @override
+  Widget build(BuildContext context) {
+    final period = config.period ?? '7d';
+    final days = switch (period) {
+      'today' => 1,
+      '30d' => 30,
+      _ => 7,
+    };
+    final today = DateTime.now();
+    final start = DateTime(
+      today.year,
+      today.month,
+      today.day,
+    ).subtract(Duration(days: days - 1));
+    final previousStart = start.subtract(Duration(days: days));
+    var current = 0;
+    var previous = 0;
+    final series = <double>[];
+
+    for (final point in data.tokenDaily) {
+      final date = DateTime.tryParse(point.day);
+      if (date == null) continue;
+      if (!date.isBefore(start)) {
+        current += point.tokens;
+        series.add(point.tokens.toDouble());
+      } else if (!date.isBefore(previousStart)) {
+        previous += point.tokens;
+      }
+    }
+
+    final delta = previous == 0
+        ? null
+        : ((current - previous) / previous * 100);
+    final positive = (delta ?? 0) >= 0;
+    final periodLabel = switch (period) {
+      'today' => tx('period_today', 'Hoy'),
+      '30d' => tx('period_30d', 'Últimos 30 días'),
+      _ => tx('period_7d', 'Últimos 7 días'),
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: Text(
+                _formatCompactInt(current),
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            if (delta != null)
+              Chip(
+                avatar: Icon(
+                  positive ? Icons.trending_up : Icons.trending_down,
+                  size: 16,
+                ),
+                label: Text('${delta.abs().toStringAsFixed(1)}%'),
+                visualDensity: VisualDensity.compact,
+                side: BorderSide.none,
+              ),
+          ],
+        ),
+        Text(periodLabel, style: Theme.of(context).textTheme.bodySmall),
+        if (series.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 42,
+            width: double.infinity,
+            child: CustomPaint(
+              painter: _SparklinePainter(
+                values: series,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _SparklinePainter extends CustomPainter {
+  const _SparklinePainter({required this.values, required this.color});
+
+  final List<double> values;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (values.isEmpty) return;
+    final minValue = values.reduce((a, b) => a < b ? a : b);
+    final maxValue = values.reduce((a, b) => a > b ? a : b);
+    final range = maxValue - minValue;
+    final path = Path();
+
+    for (var index = 0; index < values.length; index++) {
+      final x = values.length == 1
+          ? size.width / 2
+          : size.width * index / (values.length - 1);
+      final normalized = range == 0 ? .5 : (values[index] - minValue) / range;
+      final y = size.height - normalized * (size.height - 4) - 2;
+      if (index == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = color
+        ..strokeWidth = 2.5
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_SparklinePainter oldDelegate) {
+    return oldDelegate.values != values || oldDelegate.color != color;
+  }
+}
+
+class _RecentResourcesBody extends StatelessWidget {
+  const _RecentResourcesBody({
+    required this.data,
+    required this.config,
+    required this.tx,
+  });
+
+  final DashboardData data;
+  final DashboardWidgetConfig config;
+  final DashboardTx tx;
+
+  @override
+  Widget build(BuildContext context) {
+    final selected = (config.types ?? kRecentResourceTypes).toSet();
+    final limit = config.limit ?? 6;
+    final resources = <({String type, Map<String, dynamic> raw})>[
+      if (selected.contains('agent'))
+        for (final raw in data.agents) (type: 'agent', raw: raw),
+      if (selected.contains('skill'))
+        for (final raw in data.skills) (type: 'skill', raw: raw),
+      if (selected.contains('knowledge'))
+        for (final raw in data.knowledge) (type: 'knowledge', raw: raw),
+      if (selected.contains('workflow'))
+        for (final raw in data.workflows) (type: 'workflow', raw: raw),
+    ]..sort((a, b) => _resourceDate(b.raw).compareTo(_resourceDate(a.raw)));
+
+    if (resources.isEmpty) {
+      return Text(tx('no_recent_resources', 'No hay recursos recientes'));
+    }
+
+    final metadata = <String, ({IconData icon, String label, String route})>{
+      'agent': (
+        icon: Icons.smart_toy_outlined,
+        label: tx('feed_agent', 'Agente'),
+        route: RouteNames.agents,
+      ),
+      'skill': (
+        icon: Icons.auto_awesome_outlined,
+        label: tx('feed_skill', 'Skill'),
+        route: RouteNames.knowledge,
+      ),
+      'knowledge': (
+        icon: Icons.menu_book_outlined,
+        label: tx('feed_knowledge', 'Knowledge'),
+        route: RouteNames.knowledge,
+      ),
+      'workflow': (
+        icon: Icons.account_tree_outlined,
+        label: tx('summary_workflows', 'Workflow'),
+        route: RouteNames.orchestrations,
+      ),
+    };
+
+    return Column(
+      children: [
+        for (final resource in resources.take(limit))
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+            leading: Icon(metadata[resource.type]?.icon),
+            title: Text(
+              resource.raw['name']?.toString() ??
+                  resource.raw['title']?.toString() ??
+                  tx('default_resource_name', 'Recurso'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: Text(metadata[resource.type]?.label ?? resource.type),
+            onTap: () => context.go(
+              metadata[resource.type]?.route ?? RouteNames.dashboard,
+            ),
+          ),
+      ],
+    );
+  }
+
+  DateTime _resourceDate(Map<String, dynamic> raw) {
+    return DateTime.tryParse(
+          raw['updated_at']?.toString() ?? raw['created_at']?.toString() ?? '',
+        ) ??
+        DateTime.fromMillisecondsSinceEpoch(0);
+  }
+}
+
+class _AgentHealthBody extends StatelessWidget {
+  const _AgentHealthBody({
+    required this.data,
+    required this.config,
+    required this.tx,
+  });
+
+  final DashboardData data;
+  final DashboardWidgetConfig config;
+  final DashboardTx tx;
+
+  @override
+  Widget build(BuildContext context) {
+    final connectionIds = data.connections
+        .map((item) => item['id']?.toString() ?? '')
+        .where((id) => id.isNotEmpty)
+        .toSet();
+    final issues = <({Map<String, dynamic> agent, List<String> reasons})>[];
+
+    for (final agent in data.agents) {
+      final reasons = <String>[];
+      final connectionId = agent['connection_id']?.toString() ?? '';
+      if (connectionId.isEmpty || !connectionIds.contains(connectionId)) {
+        reasons.add(tx('health_no_connection', 'sin conexión'));
+      }
+      final prompt =
+          agent['system_prompt']?.toString() ??
+          agent['instructions']?.toString() ??
+          '';
+      if (prompt.trim().isEmpty) {
+        reasons.add(tx('health_no_instructions', 'sin instrucciones'));
+      }
+      if (reasons.isNotEmpty) issues.add((agent: agent, reasons: reasons));
+    }
+
+    final total = data.agents.length;
+    final ready = total - issues.length;
+    final ratio = total == 0 ? 0.0 : ready / total;
+    final limit = config.limit ?? 4;
+
+    if (total == 0) {
+      return Text(tx('no_recent_agents', 'Todavía no hay agentes'));
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                tx('health_ready_count', '{{ready}} de {{total}} listos')
+                    .replaceAll('{{ready}}', '$ready')
+                    .replaceAll('{{total}}', '$total'),
+              ),
+            ),
+            Text('${(ratio * 100).round()}%'),
+          ],
+        ),
+        const SizedBox(height: 8),
+        LinearProgressIndicator(value: ratio),
+        if (issues.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          for (final issue in issues.take(limit))
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              leading: Icon(
+                Icons.warning_amber_rounded,
+                color: Theme.of(context).colorScheme.tertiary,
+              ),
+              title: Text(
+                issue.agent['name']?.toString() ??
+                    tx('default_agent_name', 'Agente'),
+              ),
+              subtitle: Text(issue.reasons.join(' · ')),
+              onTap: () => context.go(RouteNames.agents),
+            ),
+        ],
+      ],
+    );
+  }
+}
+
+class _WorkspaceBody extends StatelessWidget {
+  const _WorkspaceBody({required this.data, required this.tx});
+
+  final DashboardData data;
+  final DashboardTx tx;
+
+  @override
+  Widget build(BuildContext context) {
+    Map<String, dynamic>? active;
+    for (final workspace in data.workspaces) {
+      if (workspace['active'] == true) {
+        active = workspace;
+        break;
+      }
+    }
+    final teamCount = data.workspaces
+        .where((workspace) => workspace['type'] == 'team')
+        .length;
+
+    if (active == null) {
+      return Text(tx('workspace_empty', 'No hay workspace activo'));
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: const CircleAvatar(child: Icon(Icons.groups_outlined)),
+          title: Text(active['name']?.toString() ?? 'Workspace'),
+          subtitle: Text(
+            active['role']?.toString() ?? tx('workspace_member', 'Miembro'),
+          ),
+        ),
+        Row(
+          children: [
+            Expanded(
+              child: _WorkspaceStat(
+                value: '$teamCount',
+                label: tx('workspace_teams', 'Equipos'),
+              ),
+            ),
+            Expanded(
+              child: _WorkspaceStat(
+                value: '${data.invitations.length}',
+                label: tx('workspace_invitations', 'Invitaciones'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: () => context.go(RouteNames.manager),
+            icon: const Icon(Icons.settings_outlined),
+            label: Text(tx('workspace_manage', 'Gestionar')),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _WorkspaceStat extends StatelessWidget {
+  const _WorkspaceStat({required this.value, required this.label});
+
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          value,
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        Text(label, style: Theme.of(context).textTheme.bodySmall),
+      ],
+    );
+  }
+}
+
+String _formatCompactInt(int value) {
+  if (value >= 1000000) {
+    return '${(value / 1000000).toStringAsFixed(value >= 10000000 ? 0 : 1)}M';
+  }
+  if (value >= 1000) {
+    return '${(value / 1000).toStringAsFixed(value >= 10000 ? 0 : 1)}K';
+  }
+  return '$value';
+}
+
+class _DashboardWidgetEditResult {
+  const _DashboardWidgetEditResult({required this.config, required this.size});
+
+  final DashboardWidgetConfig config;
+  final DashboardWidgetSize size;
+}
+
+class _WidgetConfigDialog extends StatefulWidget {
+  const _WidgetConfigDialog({
+    required this.widgetType,
+    required this.initialConfig,
+    required this.initialSize,
+    required this.tx,
+  });
+
+  final String widgetType;
+  final DashboardWidgetConfig initialConfig;
+  final DashboardWidgetSize initialSize;
   final DashboardTx tx;
 
   @override
@@ -1037,11 +1595,13 @@ class _WidgetConfigDialog extends StatefulWidget {
 
 class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
   late DashboardWidgetConfig _draft;
+  late DashboardWidgetSize _size;
 
   @override
   void initState() {
     super.initState();
-    _draft = widget.initial;
+    _draft = widget.initialConfig;
+    _size = widget.initialSize;
   }
 
   @override
@@ -1052,12 +1612,22 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
             .tx('configure_widget_title', 'Configurar: {{name}}')
             .replaceAll(
               '{{name}}',
-              dashboardWidgetTitle(widget.widgetId, widget.tx),
+              dashboardWidgetTitle(widget.widgetType, widget.tx),
             ),
       ),
       content: SizedBox(
         width: dialogContentWidth(context, 420),
-        child: _buildFields(),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _sizeSelector(),
+              const SizedBox(height: 16),
+              _buildFields(),
+            ],
+          ),
+        ),
       ),
       actions: [
         TextButton(
@@ -1065,7 +1635,9 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
           child: Text(widget.tx('common.cancel', 'Cancelar')),
         ),
         FilledButton(
-          onPressed: () => Navigator.of(context).pop(_draft),
+          onPressed: () => Navigator.of(
+            context,
+          ).pop(_DashboardWidgetEditResult(config: _draft, size: _size)),
           child: Text(widget.tx('common.save', 'Guardar')),
         ),
       ],
@@ -1074,7 +1646,7 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
 
   Widget _buildFields() {
     final tx = widget.tx;
-    switch (widget.widgetId) {
+    switch (widget.widgetType) {
       case 'summary':
         return _checklist(
           kSummaryItems,
@@ -1145,6 +1717,13 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
           _draft.pageSize ?? 4,
           (v) => setState(() => _draft = _draft.copyWith(pageSize: v)),
         );
+      case 'recent-conversations':
+        return _numberRow(
+          tx('quantity_label', 'Cantidad'),
+          [3, 5, 8],
+          _draft.limit ?? 5,
+          (value) => setState(() => _draft = _draft.copyWith(limit: value)),
+        );
       case 'activity':
         return _numberRow(
           tx('period_days_label', 'Periodo (días)'),
@@ -1172,6 +1751,61 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
             ),
           ],
         );
+      case 'quick-actions':
+        return _checklist(
+          kQuickActionItems,
+          _draft.items ?? kQuickActionItems,
+          (item) => switch (item) {
+            'agent' => tx('action_agent', 'Nuevo agente'),
+            'connection' => tx('action_connection', 'Nueva conexión'),
+            'workflow' => tx('action_workflow', 'Nuevo workflow'),
+            _ => tx('action_knowledge', 'Añadir conocimiento'),
+          },
+          (next) => setState(() => _draft = _draft.copyWith(items: next)),
+        );
+      case 'token-kpi':
+        return _pillRow(
+          tx('period_label', 'Periodo'),
+          {
+            'today': tx('period_today', 'Hoy'),
+            '7d': tx('period_7d', '7 días'),
+            '30d': tx('period_30d', '30 días'),
+          },
+          _draft.period ?? '7d',
+          (value) => setState(() => _draft = _draft.copyWith(period: value)),
+        );
+      case 'recent-resources':
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _checklist(
+              kRecentResourceTypes,
+              _draft.types ?? kRecentResourceTypes,
+              (type) => switch (type) {
+                'agent' => tx('feed_agent', 'Agentes'),
+                'skill' => tx('feed_skill', 'Skills'),
+                'workflow' => tx('summary_workflows', 'Workflows'),
+                _ => tx('feed_knowledge', 'Knowledge'),
+              },
+              (next) => setState(() => _draft = _draft.copyWith(types: next)),
+            ),
+            const SizedBox(height: 12),
+            _numberRow(
+              tx('quantity_label', 'Cantidad'),
+              [4, 6, 10],
+              _draft.limit ?? 6,
+              (value) => setState(() => _draft = _draft.copyWith(limit: value)),
+            ),
+          ],
+        );
+      case 'agent-health':
+        return _numberRow(
+          tx('quantity_label', 'Cantidad'),
+          [2, 4, 6],
+          _draft.limit ?? 4,
+          (value) => setState(() => _draft = _draft.copyWith(limit: value)),
+        );
       default:
         return Text(
           tx(
@@ -1180,6 +1814,47 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
           ),
         );
     }
+  }
+
+  Widget _sizeSelector() {
+    final definition = dashboardWidgetDefinition(widget.widgetType);
+    final sizes = definition?.supportedSizes ?? {DashboardWidgetSize.medium};
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.tx('size_label', 'Tamaño'),
+          style: Theme.of(context).textTheme.labelMedium,
+        ),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final size in sizes)
+              ChoiceChip(
+                label: Text(switch (size) {
+                  DashboardWidgetSize.compact => widget.tx(
+                    'size_compact',
+                    'Compacto',
+                  ),
+                  DashboardWidgetSize.medium => widget.tx(
+                    'size_medium',
+                    'Mediano',
+                  ),
+                  DashboardWidgetSize.wide => widget.tx('size_wide', 'Ancho'),
+                  DashboardWidgetSize.full => widget.tx(
+                    'size_full',
+                    'Completo',
+                  ),
+                }),
+                selected: _size == size,
+                onSelected: (_) => setState(() => _size = size),
+              ),
+          ],
+        ),
+      ],
+    );
   }
 
   Widget _checklist(

@@ -1,6 +1,18 @@
 import '../../../core/network/api_client.dart';
 import '../../../models/dashboard/dashboard_data.dart';
 import '../../../models/dashboard/dashboard_widget_config.dart';
+import '../../../models/dashboard/dashboard_widget_instance.dart';
+import '../../../models/dashboard/dashboard_widget_registry.dart';
+
+class DashboardPreferences {
+  const DashboardPreferences({
+    required this.instances,
+    required this.isVersioned,
+  });
+
+  final List<DashboardWidgetInstance> instances;
+  final bool isVersioned;
+}
 
 class DashboardRepository {
   DashboardRepository(this._apiClient);
@@ -30,15 +42,56 @@ class DashboardRepository {
     }
   }
 
-  Future<DashboardData> fetchData({required String gaToken}) async {
+  Future<DashboardData> fetchData({
+    required String gaToken,
+    required Set<DashboardDataSource> sources,
+  }) async {
     final results = await Future.wait([
-      _safeList('/api/agents', gaToken),
-      _safeList('/api/connections', gaToken),
-      _safeList('/api/knowledge', gaToken),
-      _safeList('/api/workflows', gaToken),
-      _safeList('/api/skills', gaToken),
-      _safeList('/api/memory', gaToken),
-      _safeList('/api/connections/tokens-daily?days=30', gaToken),
+      _loadSource(sources, DashboardDataSource.agents, '/api/agents', gaToken),
+      _loadSource(
+        sources,
+        DashboardDataSource.connections,
+        '/api/connections',
+        gaToken,
+      ),
+      _loadSource(
+        sources,
+        DashboardDataSource.knowledge,
+        '/api/knowledge',
+        gaToken,
+      ),
+      _loadSource(
+        sources,
+        DashboardDataSource.workflows,
+        '/api/workflows',
+        gaToken,
+      ),
+      _loadSource(sources, DashboardDataSource.skills, '/api/skills', gaToken),
+      _loadSource(sources, DashboardDataSource.memory, '/api/memory', gaToken),
+      _loadSource(
+        sources,
+        DashboardDataSource.tokenDaily,
+        '/api/connections/tokens-daily?days=90',
+        gaToken,
+      ),
+      _loadSource(
+        sources,
+        DashboardDataSource.workspaces,
+        '/api/workspaces',
+        gaToken,
+      ),
+      _loadSource(
+        sources,
+        DashboardDataSource.invitations,
+        '/api/workspaces/my-invitations',
+        gaToken,
+      ),
+      _loadSource(
+        sources,
+        DashboardDataSource.conversations,
+        '/api/chats/recent?limit=8',
+        gaToken,
+      ),
     ]);
 
     return DashboardData(
@@ -49,7 +102,20 @@ class DashboardRepository {
       skills: results[4],
       memory: results[5],
       tokenDaily: results[6].map(TokenDailyPoint.fromJson).toList(),
+      workspaces: results[7],
+      invitations: results[8],
+      conversations: results[9],
     );
+  }
+
+  Future<List<Map<String, dynamic>>> _loadSource(
+    Set<DashboardDataSource> sources,
+    DashboardDataSource source,
+    String path,
+    String gaToken,
+  ) {
+    if (!sources.contains(source)) return Future.value(const []);
+    return _safeList(path, gaToken);
   }
 
   Future<List<ConnectionTestResult>> testAllConnections(
@@ -69,7 +135,54 @@ class DashboardRepository {
         .toList();
   }
 
-  Future<List<String>?> getLayout(String gaToken) async {
+  Future<DashboardPreferences> getPreferences(String gaToken) async {
+    final results = await Future.wait([
+      _getVersionedLayout(gaToken),
+      _getLegacyLayout(gaToken),
+      getConfig(gaToken),
+    ]);
+    final versioned = results[0] as List<DashboardWidgetInstance>?;
+    if (versioned != null) {
+      return DashboardPreferences(instances: versioned, isVersioned: true);
+    }
+    final legacy = results[1] as List<String>?;
+    final config = results[2] as Map<String, DashboardWidgetConfig>;
+    return DashboardPreferences(
+      instances: legacy == null
+          ? defaultDashboardInstances()
+          : migrateLegacyDashboardLayout(legacy, config),
+      isVersioned: false,
+    );
+  }
+
+  Future<List<DashboardWidgetInstance>?> _getVersionedLayout(
+    String gaToken,
+  ) async {
+    try {
+      final response = await _apiClient.get(
+        '/api/settings/dashboard-layout-v2',
+        gaToken: gaToken,
+        cache: true,
+      );
+      final items = response.json['items'];
+      if (items is! List) return null;
+      final seen = <String>{};
+      return items
+          .whereType<Map<String, dynamic>>()
+          .map(DashboardWidgetInstance.fromJson)
+          .where(
+            (item) =>
+                item.id.isNotEmpty &&
+                seen.add(item.id) &&
+                kDashboardWidgetIds.contains(item.type),
+          )
+          .toList();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<List<String>?> _getLegacyLayout(String gaToken) async {
     try {
       final response = await _apiClient.get(
         '/api/settings/dashboard-layout',
@@ -83,18 +196,30 @@ class DashboardRepository {
           .where((id) => kDashboardWidgetIds.contains(id))
           .toSet()
           .toList();
-      return valid.isEmpty ? null : valid;
+      return valid;
     } catch (_) {
       return null;
     }
   }
 
-  Future<void> saveLayout(String gaToken, List<String> layout) async {
+  Future<void> savePreferences(
+    String gaToken,
+    List<DashboardWidgetInstance> instances,
+  ) async {
     await _apiClient.put(
-      '/api/settings/dashboard-layout',
+      '/api/settings/dashboard-layout-v2',
       gaToken: gaToken,
-      body: {'layout': layout},
+      body: {
+        'version': 2,
+        'items': instances.map((item) => item.toJson()).toList(),
+      },
     );
+
+    final legacyConfig = <String, DashboardWidgetConfig>{};
+    for (final instance in instances) {
+      legacyConfig.putIfAbsent(instance.type, () => instance.config);
+    }
+    await saveConfig(gaToken, legacyConfig);
   }
 
   Future<Map<String, DashboardWidgetConfig>> getConfig(String gaToken) async {
