@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../../../core/network/api_client.dart';
 import '../../../models/agents/agent_models.dart';
 
@@ -47,6 +49,42 @@ class AgentsRepository {
     await apiClient.delete(
       '/api/agents/${Uri.encodeComponent(id)}',
       gaToken: token,
+    );
+  }
+
+  /// Exporta el agente en el formato dado (openai/claude/github/mcp) como un
+  /// paquete .zip con el propio agente, sus skills, knowledge y memoria.
+  Future<({Uint8List bytes, String? filename})> exportAgent(
+    String token,
+    String id,
+    String format,
+  ) async {
+    return apiClient.getBytes(
+      '/api/agents/${Uri.encodeComponent(id)}/export/${Uri.encodeComponent(format)}',
+      gaToken: token,
+    );
+  }
+
+  /// Conexión que este usuario prefiere para este agente (p. ej. un agente
+  /// compartido cuya conexión por defecto no le pertenece), o `null` si usa
+  /// la conexión predeterminada del agente.
+  Future<String?> getPreferredConnection(String token, String agentId) async {
+    final response = await apiClient.get(
+      '/api/agents/${Uri.encodeComponent(agentId)}/preferences',
+      gaToken: token,
+    );
+    return response.json['connection_id'] as String?;
+  }
+
+  Future<void> setPreferredConnection(
+    String token,
+    String agentId,
+    String? connectionId,
+  ) async {
+    await apiClient.put(
+      '/api/agents/${Uri.encodeComponent(agentId)}/preferences',
+      gaToken: token,
+      body: {'connection_id': connectionId},
     );
   }
 }

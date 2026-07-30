@@ -4,9 +4,14 @@ import 'package:flutter/material.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
+import '../../../features/connections/repositories/connections_repository.dart';
 import '../../../models/agents/agent_models.dart';
 import '../../../models/chat/chat_models.dart';
+import '../../../models/connections/connection_models.dart';
+import '../repositories/agents_repository.dart';
 import '../repositories/chat_repository.dart';
+import '../../../shared/i18n/translated_texts.dart';
+import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 
 class ChatPage extends StatefulWidget {
@@ -14,12 +19,14 @@ class ChatPage extends StatefulWidget {
     required this.agent,
     required this.apiClient,
     required this.sessionController,
+    required this.localeController,
     super.key,
   });
 
   final AgentItem agent;
   final ApiClient apiClient;
   final SessionController sessionController;
+  final LocaleController localeController;
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -27,8 +34,13 @@ class ChatPage extends StatefulWidget {
 
 class _ChatPageState extends State<ChatPage> {
   late final ChatRepository _repository;
+  late final AgentsRepository _agentsRepository;
+  late final ConnectionsRepository _connectionsRepository;
+  late final TranslatedTexts _t;
   final _textController = TextEditingController();
   final _scrollController = ScrollController();
+
+  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
   List<ChatConversation> _conversations = const [];
   String? _conversationId;
@@ -45,7 +57,17 @@ class _ChatPageState extends State<ChatPage> {
   void initState() {
     super.initState();
     _repository = ChatRepository(apiClient: widget.apiClient);
+    _agentsRepository = AgentsRepository(apiClient: widget.apiClient);
+    _connectionsRepository = ConnectionsRepository(apiClient: widget.apiClient);
+    _t = TranslatedTexts(
+      localeController: widget.localeController,
+      namespace: 'resources',
+    )..addListener(_onTextsChanged);
     _bootstrap();
+  }
+
+  void _onTextsChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
@@ -53,6 +75,8 @@ class _ChatPageState extends State<ChatPage> {
     _subscription?.cancel();
     _textController.dispose();
     _scrollController.dispose();
+    _t.removeListener(_onTextsChanged);
+    _t.dispose();
     super.dispose();
   }
 
@@ -282,12 +306,63 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
+  Future<void> _openPreferences() async {
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+    try {
+      final results = await Future.wait([
+        _agentsRepository.getPreferredConnection(token, widget.agent.id),
+        _connectionsRepository.listConnections(token),
+      ]);
+      if (!mounted) return;
+      final currentPreference = results[0] as String?;
+      final connections = results[1] as List<ConnectionItem>;
+      await showDialog<void>(
+        context: context,
+        builder: (context) => _ConnectionPreferenceDialog(
+          connections: connections,
+          initialConnectionId: currentPreference,
+          tx: _tx,
+          onSave: (connectionId) async {
+            await _agentsRepository.setPreferredConnection(
+              token,
+              widget.agent.id,
+              connectionId,
+            );
+            if (!mounted) return;
+            _showMessage(
+              _tx('agents.preferences_saved', 'Preferencia guardada'),
+            );
+          },
+        ),
+      );
+    } on ApiError catch (error) {
+      _showMessage(error.message, isError: true);
+    } catch (_) {
+      _showMessage(
+        _tx(
+          'agents.preferences_load_error',
+          'No se pudieron cargar las preferencias',
+        ),
+        isError: true,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.agent.name),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.tune),
+            tooltip: _tx(
+              'agents.preferences_tooltip',
+              'Preferencia de conexión',
+            ),
+            onPressed: _openPreferences,
+          ),
           Builder(
             builder: (context) => LayoutBuilder(
               builder: (context, constraints) {
@@ -499,6 +574,94 @@ class _ChatPageState extends State<ChatPage> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Permite a este usuario elegir su propia conexión/modelo para un agente,
+/// sin afectar a la conexión predeterminada que ven el resto de usuarios
+/// (relevante sobre todo en agentes compartidos o enlazados).
+class _ConnectionPreferenceDialog extends StatefulWidget {
+  const _ConnectionPreferenceDialog({
+    required this.connections,
+    required this.initialConnectionId,
+    required this.tx,
+    required this.onSave,
+  });
+
+  final List<ConnectionItem> connections;
+  final String? initialConnectionId;
+  final String Function(String path, String fallback) tx;
+  final Future<void> Function(String? connectionId) onSave;
+
+  @override
+  State<_ConnectionPreferenceDialog> createState() =>
+      _ConnectionPreferenceDialogState();
+}
+
+class _ConnectionPreferenceDialogState
+    extends State<_ConnectionPreferenceDialog> {
+  String? _connectionId;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _connectionId = widget.initialConnectionId;
+  }
+
+  Future<void> _save() async {
+    setState(() => _saving = true);
+    await widget.onSave(_connectionId);
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tx = widget.tx;
+    return AlertDialog(
+      title: Text(tx('agents.preferences_title', 'Preferencia de conexión')),
+      content: SizedBox(
+        width: 360,
+        child: DropdownButtonFormField<String?>(
+          initialValue: _connectionId,
+          isExpanded: true,
+          decoration: InputDecoration(
+            labelText: tx('agents.field_connection', 'Conexión LLM'),
+          ),
+          items: [
+            DropdownMenuItem<String?>(
+              value: null,
+              child: Text(
+                tx(
+                  'agents.preferences_use_default',
+                  'Usar la conexión del agente',
+                ),
+              ),
+            ),
+            ...widget.connections.map(
+              (conn) => DropdownMenuItem<String?>(
+                value: conn.id,
+                child: Text(
+                  '${conn.name} (${conn.type})',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          ],
+          onChanged: (value) => setState(() => _connectionId = value),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _saving ? null : () => Navigator.of(context).pop(),
+          child: Text(tx('common.cancel', 'Cancelar')),
+        ),
+        FilledButton(
+          onPressed: _saving ? null : _save,
+          child: Text(tx('common.save', 'Guardar')),
+        ),
+      ],
     );
   }
 }

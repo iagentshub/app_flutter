@@ -1,0 +1,30 @@
+/// Evento SSE del constructor de agentes por IA (`POST /api/agent-builder/chat`).
+class AgentBuilderEvent {
+  const AgentBuilderEvent({
+    required this.type,
+    this.message,
+    this.assistantMessage,
+    this.status,
+    this.draft,
+  });
+
+  final String type;
+  final String? message;
+  final String? assistantMessage;
+  final String? status;
+  final Map<String, dynamic>? draft;
+
+  bool get isReady => status == 'ready';
+
+  factory AgentBuilderEvent.fromJson(Map<String, dynamic> json) {
+    return AgentBuilderEvent(
+      type: json['type']?.toString() ?? '',
+      message: json['message']?.toString(),
+      assistantMessage: json['assistant_message']?.toString(),
+      status: json['status']?.toString(),
+      draft: json['draft'] is Map<String, dynamic>
+          ? json['draft'] as Map<String, dynamic>
+          : null,
+    );
+  }
+}

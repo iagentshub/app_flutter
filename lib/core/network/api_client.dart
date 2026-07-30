@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -153,6 +154,42 @@ class ApiClient {
         .toList();
     final root = segments.length >= 2 ? '/${segments[0]}/${segments[1]}' : path;
     invalidateCache(root);
+  }
+
+  /// Descarga un recurso binario (p. ej. un export en .zip) sin pasar el
+  /// cuerpo por el decodificador UTF-8/JSON de [_request], que corrompería
+  /// bytes no textuales.
+  Future<({Uint8List bytes, String? filename})> getBytes(
+    String path, {
+    String? gaToken,
+  }) async {
+    final headers = <String, String>{'Accept': '*/*'};
+    if (gaToken != null && gaToken.isNotEmpty) {
+      headers['Cookie'] = 'ga_token=$gaToken';
+    }
+    final request = http.Request('GET', _uri(path));
+    request.headers.addAll(headers);
+
+    final streamed = await _send(request);
+    final response = await http.Response.fromStream(streamed);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final parsed = _parseBody(
+        utf8.decode(response.bodyBytes, allowMalformed: true),
+      );
+      throw _toApiError(
+        ApiResponse(
+          statusCode: response.statusCode,
+          headers: response.headers,
+          body: parsed,
+        ),
+      );
+    }
+
+    final disposition = response.headers['content-disposition'];
+    final match = disposition == null
+        ? null
+        : RegExp('filename="?([^"; ]+)"?').firstMatch(disposition);
+    return (bytes: response.bodyBytes, filename: match?.group(1));
   }
 
   /// Envía un POST y expone la respuesta como flujo de líneas crudas
