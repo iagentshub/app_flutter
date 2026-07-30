@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router/route_names.dart';
 import '../../../shared/i18n/locale_loader.dart';
 import '../../../shared/widgets/public_top_bar.dart';
+import '../../../shared/widgets/responsive_masonry_grid.dart';
 
 class SupportPage extends StatelessWidget {
   const SupportPage({super.key});
@@ -68,6 +69,44 @@ class SupportPage extends StatelessWidget {
             'header.login',
             fallback: isEnglish ? 'Login' : 'Iniciar sesion',
           );
+          final sections = [
+            _SectionCard(
+              title: contactTitle,
+              subtitle: contactSubtitle,
+              children: [
+                _ChannelRow(label: emailLabel, value: emailValue),
+                const SizedBox(height: 8),
+                _ChannelRow(label: chatLabel, value: chatValue),
+              ],
+            ),
+            _SectionCard(
+              title: helpTitle,
+              subtitle: helpDescription,
+              children: const [],
+            ),
+            _SectionCard(
+              title: docsTitle,
+              subtitle: docsDescription,
+              children: [
+                TextButton(
+                  onPressed: () => context.go(
+                    isEnglish ? RouteNames.docsEn : RouteNames.docs,
+                  ),
+                  child: Text(isEnglish ? 'Open docs' : 'Abrir documentacion'),
+                ),
+              ],
+            ),
+            _SectionCard(
+              title: statusTitle,
+              subtitle: statusDescription,
+              children: [
+                TextButton(
+                  onPressed: null,
+                  child: Text(isEnglish ? 'View status' : 'Ver estado'),
+                ),
+              ],
+            ),
+          ];
 
           return CustomScrollView(
             slivers: [
@@ -113,62 +152,12 @@ class SupportPage extends StatelessWidget {
                   ),
                 ),
               ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                  child: _SectionCard(
-                    title: contactTitle,
-                    subtitle: contactSubtitle,
-                    children: [
-                      _ChannelRow(label: emailLabel, value: emailValue),
-                      const SizedBox(height: 8),
-                      _ChannelRow(label: chatLabel, value: chatValue),
-                    ],
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-                  child: _SectionCard(
-                    title: helpTitle,
-                    subtitle: helpDescription,
-                    children: const [],
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-                  child: _SectionCard(
-                    title: docsTitle,
-                    subtitle: docsDescription,
-                    children: [
-                      TextButton(
-                        onPressed: () => context.go(
-                          isEnglish ? RouteNames.docsEn : RouteNames.docs,
-                        ),
-                        child: Text(
-                          isEnglish ? 'Open docs' : 'Abrir documentacion',
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
-                  child: _SectionCard(
-                    title: statusTitle,
-                    subtitle: statusDescription,
-                    children: [
-                      TextButton(
-                        onPressed: null,
-                        child: Text(isEnglish ? 'View status' : 'Ver estado'),
-                      ),
-                    ],
-                  ),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
+                sliver: ResponsiveSliverMasonryGrid(
+                  density: ResponsiveCardDensity.marketing,
+                  itemCount: sections.length,
+                  itemBuilder: (context, index) => sections[index],
                 ),
               ),
             ],

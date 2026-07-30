@@ -13,6 +13,7 @@ import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/action_icon_button.dart';
 import '../../../shared/widgets/filter_button.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
+import '../../../shared/widgets/responsive_masonry_grid.dart';
 
 class PublicProfilePage extends StatefulWidget {
   const PublicProfilePage({
@@ -339,54 +340,47 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
 
     return RefreshIndicator(
       onRefresh: _load,
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1100),
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                sliver: SliverToBoxAdapter(child: header),
-              ),
-              if (_resources.isEmpty)
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  sliver: SliverToBoxAdapter(
-                    child: Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Text(
-                          _tx(
-                            'public_profile.empty_resources',
-                            'Este usuario no tiene recursos públicos en este filtro.',
-                          ),
-                        ),
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            sliver: SliverToBoxAdapter(child: header),
+          ),
+          if (_resources.isEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              sliver: SliverToBoxAdapter(
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      _tx(
+                        'public_profile.empty_resources',
+                        'Este usuario no tiene recursos públicos en este filtro.',
                       ),
                     ),
                   ),
-                )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) => _buildResourceCard(_resources[index]),
-                      childCount: _resources.length,
-                    ),
-                  ),
                 ),
-            ],
-          ),
-        ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              sliver: ResponsiveSliverMasonryGrid(
+                itemCount: _resources.length,
+                itemBuilder: (context, index) =>
+                    _buildResourceCard(_resources[index]),
+              ),
+            ),
+        ],
       ),
     );
   }
 
   Widget _buildResourceCard(ExploreItem item) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: EdgeInsets.zero,
       child: ListTile(
         title: Text(item.name),
         subtitle: Row(

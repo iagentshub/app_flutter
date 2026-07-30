@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router/route_names.dart';
@@ -19,6 +18,7 @@ import '../../../shared/utils/debouncer.dart';
 import '../../../shared/widgets/action_icon_button.dart';
 import '../../../shared/widgets/filter_button.dart';
 import '../../../shared/widgets/label_chips_row.dart';
+import '../../../shared/widgets/responsive_masonry_grid.dart';
 
 class ExplorePage extends StatefulWidget {
   const ExplorePage({
@@ -608,31 +608,10 @@ class _ExplorePageState extends State<ExplorePage>
 
     if (_loading) return const Center(child: CircularProgressIndicator());
 
-    return RefreshIndicator(
-      onRefresh: _load,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          // SliverGridDelegateWithMaxCrossAxisExtent redondea el nº de
-          // columnas hacia arriba: a anchos intermedios eso mete una columna
-          // de más y cada card queda a la mitad de lo que debería medir en
-          // vez de estirarse. Calculamos el nº de columnas nosotros (hacia
-          // abajo) y usamos FixedCrossAxisCount para que sí se repartan todo
-          // el ancho disponible.
-          const cardWidth = 380.0;
-          const spacing = 12.0;
-          final usableWidth = constraints.maxWidth - 32; // padding del sliver
-          final crossAxisCount =
-              ((usableWidth + spacing) / (cardWidth + spacing)).floor().clamp(
-                1,
-                8,
-              );
-          return _buildScrollView(crossAxisCount);
-        },
-      ),
-    );
+    return RefreshIndicator(onRefresh: _load, child: _buildScrollView());
   }
 
-  Widget _buildScrollView(int crossAxisCount) {
+  Widget _buildScrollView() {
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
@@ -686,11 +665,8 @@ class _ExplorePageState extends State<ExplorePage>
         else
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            sliver: SliverMasonryGrid.count(
-              crossAxisCount: crossAxisCount,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childCount: _items.length,
+            sliver: ResponsiveSliverMasonryGrid(
+              itemCount: _items.length,
               itemBuilder: (context, index) => _buildItemCard(_items[index]),
             ),
           ),
@@ -733,23 +709,11 @@ class _ExplorePageState extends State<ExplorePage>
 
     return RefreshIndicator(
       onRefresh: _loadUsers,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          const cardWidth = 260.0;
-          const spacing = 12.0;
-          final usableWidth = constraints.maxWidth - 32;
-          final crossAxisCount =
-              ((usableWidth + spacing) / (cardWidth + spacing)).floor().clamp(
-                1,
-                10,
-              );
-          return _buildUsersScrollView(crossAxisCount);
-        },
-      ),
+      child: _buildUsersScrollView(),
     );
   }
 
-  Widget _buildUsersScrollView(int crossAxisCount) {
+  Widget _buildUsersScrollView() {
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
@@ -783,11 +747,9 @@ class _ExplorePageState extends State<ExplorePage>
         else ...[
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            sliver: SliverMasonryGrid.count(
-              crossAxisCount: crossAxisCount,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childCount: _users.length,
+            sliver: ResponsiveSliverMasonryGrid(
+              density: ResponsiveCardDensity.compact,
+              itemCount: _users.length,
               itemBuilder: (context, index) => _buildUserCard(_users[index]),
             ),
           ),

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router/route_names.dart';
 import '../../../shared/i18n/locale_loader.dart';
 import '../../../shared/widgets/public_top_bar.dart';
+import '../../../shared/widgets/responsive_masonry_grid.dart';
 
 class DocsPage extends StatelessWidget {
   const DocsPage({super.key});
@@ -62,6 +63,11 @@ class DocsPage extends StatelessWidget {
             'header.login',
             fallback: isEnglish ? 'Login' : 'Iniciar sesion',
           );
+          final sectionCards = [
+            _Card(title: integrationsTitle, subtitle: integrationsDesc),
+            _Card(title: apiTitle, subtitle: apiDesc),
+            _Card(title: troubleshootingTitle, subtitle: troubleshootingDesc),
+          ];
 
           return CustomScrollView(
             slivers: [
@@ -136,28 +142,12 @@ class DocsPage extends StatelessWidget {
                   ),
                 ),
               ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 10),
-                  child: _Card(
-                    title: integrationsTitle,
-                    subtitle: integrationsDesc,
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 10),
-                  child: _Card(title: apiTitle, subtitle: apiDesc),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
-                  child: _Card(
-                    title: troubleshootingTitle,
-                    subtitle: troubleshootingDesc,
-                  ),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
+                sliver: ResponsiveSliverMasonryGrid(
+                  density: ResponsiveCardDensity.marketing,
+                  itemCount: sectionCards.length,
+                  itemBuilder: (context, index) => sectionCards[index],
                 ),
               ),
             ],

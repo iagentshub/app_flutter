@@ -19,6 +19,7 @@ import '../../../shared/widgets/label_chips_row.dart';
 import 'agent_builder_page.dart';
 import '../../../shared/widgets/origin_badge.dart';
 import '../../../shared/widgets/resource_history_dialog.dart';
+import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 import 'chat_page.dart';
 
@@ -704,11 +705,10 @@ class _AgentsPageState extends State<AgentsPage> {
           else
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => _buildAgentCard(filteredAgents[index]),
-                  childCount: filteredAgents.length,
-                ),
+              sliver: ResponsiveSliverMasonryGrid(
+                itemCount: filteredAgents.length,
+                itemBuilder: (context, index) =>
+                    _buildAgentCard(filteredAgents[index]),
               ),
             ),
         ],
@@ -723,7 +723,7 @@ class _AgentsPageState extends State<AgentsPage> {
       subtitleParts.add('conn: ${item.connectionId}');
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(

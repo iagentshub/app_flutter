@@ -13,6 +13,7 @@ import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/filter_button.dart';
 import '../../../shared/widgets/label_chips_row.dart';
+import '../../../shared/widgets/responsive_masonry_grid.dart';
 
 /// Vista unificada de un recurso propio (agente/skill/workflow) para el
 /// buscador por labels — Knowledge queda fuera porque el backend todavía no
@@ -290,36 +291,30 @@ class _LabelsPageState extends State<LabelsPage> {
 
     return Column(
       children: [
-        Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1180),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: Card(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Wrap(
-                    spacing: 12,
-                    runSpacing: 10,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      FilterButton(
-                        activeCount: _selectedType != 'all' ? 1 : 0,
-                        tooltip: _tx('common.filters', 'Filtros'),
-                        onPressed: _openFiltersDialog,
-                      ),
-                      Text(
-                        '${_tx('labels.active_label', 'Label activo')}: ${_selectedLabel.isEmpty ? _tx('labels.none', '- ninguno -') : _tx('labels.$_selectedLabel', _selectedLabel)}',
-                      ),
-                      TextButton.icon(
-                        onPressed: () => setState(() => _selectedLabel = ''),
-                        icon: const Icon(Icons.clear_all, size: 18),
-                        label: Text(_tx('labels.clear', 'Limpiar')),
-                      ),
-                    ],
+              padding: const EdgeInsets.all(12),
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 10,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  FilterButton(
+                    activeCount: _selectedType != 'all' ? 1 : 0,
+                    tooltip: _tx('common.filters', 'Filtros'),
+                    onPressed: _openFiltersDialog,
                   ),
-                ),
+                  Text(
+                    '${_tx('labels.active_label', 'Label activo')}: ${_selectedLabel.isEmpty ? _tx('labels.none', '- ninguno -') : _tx('labels.$_selectedLabel', _selectedLabel)}',
+                  ),
+                  TextButton.icon(
+                    onPressed: () => setState(() => _selectedLabel = ''),
+                    icon: const Icon(Icons.clear_all, size: 18),
+                    label: Text(_tx('labels.clear', 'Limpiar')),
+                  ),
+                ],
               ),
             ),
           ),
@@ -329,55 +324,64 @@ class _LabelsPageState extends State<LabelsPage> {
               ? const Center(child: CircularProgressIndicator())
               : RefreshIndicator(
                   onRefresh: _loadBase,
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1180),
-                      child: ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.all(16),
-                        children: [
-                          _buildCatalog(),
-                          const SizedBox(height: 16),
-                          Text(
-                            _tx('labels.detected', 'Etiquetas detectadas'),
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          if (labels.isEmpty)
-                            Text(
-                              _tx(
-                                'labels.empty_detected',
-                                'No hay etiquetas disponibles',
+                  child: CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    slivers: [
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+                        sliver: SliverToBoxAdapter(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildCatalog(),
+                              const SizedBox(height: 16),
+                              Text(
+                                _tx('labels.detected', 'Etiquetas detectadas'),
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            )
-                          else
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: labels.map((entry) {
-                                final selected = _selectedLabel == entry.key;
-                                return ChoiceChip(
-                                  label: Text(
-                                    '${_tx('labels.${entry.key}', entry.key)} (${entry.value})',
+                              const SizedBox(height: 8),
+                              if (labels.isEmpty)
+                                Text(
+                                  _tx(
+                                    'labels.empty_detected',
+                                    'No hay etiquetas disponibles',
                                   ),
-                                  selected: selected,
-                                  onSelected: (_) =>
-                                      _applyFilter(selected ? '' : entry.key),
-                                );
-                              }).toList(),
-                            ),
-                          const SizedBox(height: 16),
-                          Text(
-                            '${_tx('labels.resources', 'Recursos')}: ${filtered.length}',
-                            style: Theme.of(context).textTheme.bodyMedium,
+                                )
+                              else
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: labels.map((entry) {
+                                    final selected =
+                                        _selectedLabel == entry.key;
+                                    return ChoiceChip(
+                                      label: Text(
+                                        '${_tx('labels.${entry.key}', entry.key)} (${entry.value})',
+                                      ),
+                                      selected: selected,
+                                      onSelected: (_) => _applyFilter(
+                                        selected ? '' : entry.key,
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              const SizedBox(height: 16),
+                              Text(
+                                '${_tx('labels.resources', 'Recursos')}: ${filtered.length}',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 10),
-                          if (filtered.isEmpty)
-                            Card(
+                        ),
+                      ),
+                      if (filtered.isEmpty)
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                          sliver: SliverToBoxAdapter(
+                            child: Card(
                               child: Padding(
                                 padding: const EdgeInsets.all(16),
                                 child: Text(
@@ -387,12 +391,19 @@ class _LabelsPageState extends State<LabelsPage> {
                                   ),
                                 ),
                               ),
-                            )
-                          else
-                            ...filtered.map(_buildItemCard),
-                        ],
-                      ),
-                    ),
+                            ),
+                          ),
+                        )
+                      else
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                          sliver: ResponsiveSliverMasonryGrid(
+                            itemCount: filtered.length,
+                            itemBuilder: (context, index) =>
+                                _buildItemCard(filtered[index]),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
         ),
@@ -402,7 +413,7 @@ class _LabelsPageState extends State<LabelsPage> {
 
   Widget _buildItemCard(_LabeledItem item) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: EdgeInsets.zero,
       child: InkWell(
         onTap: () => _showMessage(
           item.description.isEmpty

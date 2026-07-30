@@ -17,6 +17,7 @@ import '../../../shared/widgets/group_filter_panel.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/origin_badge.dart';
 import '../../../shared/widgets/resource_history_dialog.dart';
+import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 
 /// Categorías de skill — mismo set de 9 valores que frontend_react
@@ -795,42 +796,34 @@ class _KnowledgePageState extends State<KnowledgePage>
   }) {
     return RefreshIndicator(
       onRefresh: onRefresh,
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1100),
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                sliver: SliverToBoxAdapter(child: toolbar),
-              ),
-              if (items.isEmpty)
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  sliver: SliverToBoxAdapter(
-                    child: Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Text(emptyText),
-                      ),
-                    ),
-                  ),
-                )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) => itemBuilder(items[index]),
-                      childCount: items.length,
-                    ),
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            sliver: SliverToBoxAdapter(child: toolbar),
+          ),
+          if (items.isEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              sliver: SliverToBoxAdapter(
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(emptyText),
                   ),
                 ),
-            ],
-          ),
-        ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              sliver: ResponsiveSliverMasonryGrid(
+                itemCount: items.length,
+                itemBuilder: (context, index) => itemBuilder(items[index]),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -915,7 +908,7 @@ class _KnowledgePageState extends State<KnowledgePage>
     if (item.tags.isNotEmpty) metaParts.add(item.tags.join(', '));
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -1004,7 +997,7 @@ class _KnowledgePageState extends State<KnowledgePage>
     if (item.source.isNotEmpty) metaParts.add(item.source);
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(

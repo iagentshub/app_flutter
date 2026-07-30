@@ -9,6 +9,7 @@ import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/action_icon_button.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
+import '../../../shared/widgets/responsive_masonry_grid.dart';
 
 class MemoryPage extends StatefulWidget {
   const MemoryPage({
@@ -275,54 +276,46 @@ class _MemoryPageState extends State<MemoryPage> {
 
     return RefreshIndicator(
       onRefresh: _load,
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1100),
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                sliver: SliverToBoxAdapter(child: toolbar),
-              ),
-              if (_files.isEmpty)
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  sliver: SliverToBoxAdapter(
-                    child: Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Text(
-                          _tx(
-                            'memory.empty_files',
-                            'No hay archivos de memoria. Crea el primero.',
-                          ),
-                        ),
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            sliver: SliverToBoxAdapter(child: toolbar),
+          ),
+          if (_files.isEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              sliver: SliverToBoxAdapter(
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      _tx(
+                        'memory.empty_files',
+                        'No hay archivos de memoria. Crea el primero.',
                       ),
                     ),
                   ),
-                )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) => _buildFileCard(_files[index]),
-                      childCount: _files.length,
-                    ),
-                  ),
                 ),
-            ],
-          ),
-        ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              sliver: ResponsiveSliverMasonryGrid(
+                itemCount: _files.length,
+                itemBuilder: (context, index) => _buildFileCard(_files[index]),
+              ),
+            ),
+        ],
       ),
     );
   }
 
   Widget _buildFileCard(MemoryFileItem file) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(

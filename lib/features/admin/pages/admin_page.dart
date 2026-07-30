@@ -11,6 +11,7 @@ import '../../../shared/utils/debouncer.dart';
 import '../../../shared/widgets/action_icon_button.dart';
 import '../../../shared/widgets/filter_button.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
+import '../../../shared/widgets/responsive_masonry_grid.dart';
 
 int _asInt(Object? value) {
   if (value is int) return value;
@@ -889,91 +890,60 @@ class _AdminPageState extends State<AdminPage>
   Widget _buildGeneralTab() {
     final stats = _stats;
     if (stats == null) return const Center(child: Text('—'));
+    final statItems = [
+      (_tx('admin.stat_users', 'Usuarios'), stats.usersTotal),
+      (_tx('admin.stat_active', 'Activos'), stats.usersActive),
+      (_tx('admin.stat_verified', 'Verificados'), stats.usersVerified),
+      (_tx('admin.stat_connections', 'Conexiones'), stats.connectionsTotal),
+      (_tx('admin.stat_knowledge', 'Knowledge'), stats.knowledgeTotal),
+      (_tx('admin.stat_workflows', 'Orquestaciones'), stats.workflowsTotal),
+      (
+        _tx('admin.stat_conversations', 'Conversaciones'),
+        stats.conversationsTotal,
+      ),
+      (_tx('admin.stat_agents_public', 'Agentes públicos'), stats.agentsPublic),
+      (
+        _tx('admin.stat_agents_private', 'Agentes privados'),
+        stats.agentsPrivate,
+      ),
+    ];
     return RefreshIndicator(
       onRefresh: _load,
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1280),
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverPadding(
             padding: const EdgeInsets.all(16),
-            children: [
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  _statCard(
-                    _tx('admin.stat_users', 'Usuarios'),
-                    stats.usersTotal,
-                  ),
-                  _statCard(
-                    _tx('admin.stat_active', 'Activos'),
-                    stats.usersActive,
-                  ),
-                  _statCard(
-                    _tx('admin.stat_verified', 'Verificados'),
-                    stats.usersVerified,
-                  ),
-                  _statCard(
-                    _tx('admin.stat_connections', 'Conexiones'),
-                    stats.connectionsTotal,
-                  ),
-                  _statCard(
-                    _tx('admin.stat_knowledge', 'Knowledge'),
-                    stats.knowledgeTotal,
-                  ),
-                  _statCard(
-                    _tx('admin.stat_workflows', 'Orquestaciones'),
-                    stats.workflowsTotal,
-                  ),
-                  _statCard(
-                    _tx('admin.stat_conversations', 'Conversaciones'),
-                    stats.conversationsTotal,
-                  ),
-                  _statCard(
-                    _tx('admin.stat_agents_public', 'Agentes públicos'),
-                    stats.agentsPublic,
-                  ),
-                  _statCard(
-                    _tx('admin.stat_agents_private', 'Agentes privados'),
-                    stats.agentsPrivate,
-                  ),
-                ],
-              ),
-            ],
+            sliver: ResponsiveSliverMasonryGrid(
+              density: ResponsiveCardDensity.compact,
+              itemCount: statItems.length,
+              itemBuilder: (context, index) =>
+                  _statCard(statItems[index].$1, statItems[index].$2),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 
   Widget _statCard(String title, int value) {
-    return SizedBox(
-      width: 170,
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '$value',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
-          ),
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '$value',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+            ),
+          ],
         ),
       ),
     );
@@ -981,7 +951,7 @@ class _AdminPageState extends State<AdminPage>
 
   // ── Tab: Usuarios ────────────────────────────────────────────────────
 
-  /// Lista con scroll perezoso (SliverList) compartida por las 5 pestañas
+  /// Cuadrícula con construcción perezosa compartida por las pestañas
   /// tabulares de Admin: antes cada una era un `ListView` con
   /// `...items.map(cardBuilder)`, que construye TODAS las tarjetas de golpe
   /// en cada rebuild (cada tecla en el buscador) en vez de solo las
@@ -1008,39 +978,30 @@ class _AdminPageState extends State<AdminPage>
     required List<Map<String, dynamic>> items,
     required Widget Function(Map<String, dynamic>) itemBuilder,
     required String emptyText,
-    double maxWidth = 1100,
   }) {
     return RefreshIndicator(
       onRefresh: _load,
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: maxWidth),
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                sliver: SliverToBoxAdapter(child: toolbar),
-              ),
-              if (items.isEmpty)
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  sliver: SliverToBoxAdapter(child: _emptyCard(emptyText)),
-                )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) => itemBuilder(items[index]),
-                      childCount: items.length,
-                    ),
-                  ),
-                ),
-            ],
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            sliver: SliverToBoxAdapter(child: toolbar),
           ),
-        ),
+          if (items.isEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              sliver: SliverToBoxAdapter(child: _emptyCard(emptyText)),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              sliver: ResponsiveSliverMasonryGrid(
+                itemCount: items.length,
+                itemBuilder: (context, index) => itemBuilder(items[index]),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -1096,7 +1057,7 @@ class _AdminPageState extends State<AdminPage>
     final date = _fmtDate(user['created_at']);
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -1226,7 +1187,7 @@ class _AdminPageState extends State<AdminPage>
     final date = _fmtDate(ws['created_at']);
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -1354,7 +1315,7 @@ class _AdminPageState extends State<AdminPage>
     final date = _fmtDate(agent['created_at']);
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -1447,7 +1408,7 @@ class _AdminPageState extends State<AdminPage>
     final date = _fmtDate(conn['created_at']);
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -1543,7 +1504,7 @@ class _AdminPageState extends State<AdminPage>
     final date = _fmtDate(item['created_at']);
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -1649,7 +1610,7 @@ class _AdminPageState extends State<AdminPage>
     final date = _fmtDate(item['updated_at']);
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(

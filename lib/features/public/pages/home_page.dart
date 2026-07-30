@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router/route_names.dart';
 import '../../../shared/i18n/locale_loader.dart';
 import '../../../shared/widgets/public_top_bar.dart';
+import '../../../shared/widgets/responsive_masonry_grid.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -203,19 +204,12 @@ class HomePage extends StatelessWidget {
               ),
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(24, 28, 24, 34),
-                sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 320,
-                    mainAxisExtent: 150,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                  ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => _FeatureCard(
-                      title: features[index].title,
-                      body: features[index].body,
-                    ),
-                    childCount: features.length,
+                sliver: ResponsiveSliverMasonryGrid(
+                  density: ResponsiveCardDensity.marketing,
+                  itemCount: features.length,
+                  itemBuilder: (context, index) => _FeatureCard(
+                    title: features[index].title,
+                    body: features[index].body,
                   ),
                 ),
               ),

@@ -8,6 +8,7 @@ import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/action_icon_button.dart';
+import '../../../shared/widgets/responsive_masonry_grid.dart';
 
 class ManagerPage extends StatefulWidget {
   const ManagerPage({
@@ -482,41 +483,48 @@ class _ManagerPageState extends State<ManagerPage> {
 
     return RefreshIndicator(
       onRefresh: _load,
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1100),
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            children: [
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  IconButton.filled(
-                    onPressed: _createWorkspace,
-                    icon: const Icon(Icons.add),
-                    tooltip: _tx(
-                      'manager.new_workspace_tooltip',
-                      'Nuevo workspace',
-                    ),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      IconButton.filled(
+                        onPressed: _createWorkspace,
+                        icon: const Icon(Icons.add),
+                        tooltip: _tx(
+                          'manager.new_workspace_tooltip',
+                          'Nuevo workspace',
+                        ),
+                      ),
+                      IconButton.outlined(
+                        onPressed: _load,
+                        icon: const Icon(Icons.refresh),
+                        tooltip: _tx('manager.refresh_tooltip', 'Actualizar'),
+                      ),
+                    ],
                   ),
-                  IconButton.outlined(
-                    onPressed: _load,
-                    icon: const Icon(Icons.refresh),
-                    tooltip: _tx('manager.refresh_tooltip', 'Actualizar'),
+                  const SizedBox(height: 12),
+                  Text(
+                    '${_tx('manager.workspaces_count', 'Workspaces')}: ${_workspaces.length}',
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              Text(
-                '${_tx('manager.workspaces_count', 'Workspaces')}: ${_workspaces.length}',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 12),
-              if (_workspaces.isEmpty)
-                Card(
+            ),
+          ),
+          if (_workspaces.isEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              sliver: SliverToBoxAdapter(
+                child: Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Text(
@@ -526,16 +534,27 @@ class _ManagerPageState extends State<ManagerPage> {
                       ),
                     ),
                   ),
-                )
-              else
-                ..._workspaces.map(_buildWorkspaceCard),
-              const SizedBox(height: 14),
-              _buildMembersCard(),
-              const SizedBox(height: 14),
-              _buildInvitationsCard(),
-            ],
+                ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              sliver: ResponsiveSliverMasonryGrid(
+                itemCount: _workspaces.length,
+                itemBuilder: (context, index) =>
+                    _buildWorkspaceCard(_workspaces[index]),
+              ),
+            ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 2, 16, 14),
+            sliver: SliverToBoxAdapter(child: _buildMembersCard()),
           ),
-        ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            sliver: SliverToBoxAdapter(child: _buildInvitationsCard()),
+          ),
+        ],
       ),
     );
   }
@@ -543,7 +562,7 @@ class _ManagerPageState extends State<ManagerPage> {
   Widget _buildWorkspaceCard(WorkspaceItem item) {
     final switching = _switchingWorkspaceId == item.id;
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(

@@ -232,94 +232,88 @@ class _MetadataPageState extends State<MetadataPage>
     final items = _filteredTables;
     return RefreshIndicator(
       onRefresh: _loadTables,
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 900),
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        children: [
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Wrap(
-                spacing: 12,
-                runSpacing: 8,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 280,
-                    child: TextField(
-                      controller: _tableSearchController,
-                      decoration: InputDecoration(
-                        labelText: _tx(
-                          'admin.metadata_search_table',
-                          'Buscar tabla',
-                        ),
-                        prefixIcon: const Icon(Icons.search, size: 20),
-                      ),
-                      onChanged: (_) => setState(() {}),
+              SizedBox(
+                width: 280,
+                child: TextField(
+                  controller: _tableSearchController,
+                  decoration: InputDecoration(
+                    labelText: _tx(
+                      'admin.metadata_search_table',
+                      'Buscar tabla',
                     ),
+                    prefixIcon: const Icon(Icons.search, size: 20),
                   ),
-                  Text(
-                    '${items.length}/${_tables.length}',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Card(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    sortColumnIndex: _sortColumnIndex,
-                    sortAscending: _sortAscending,
-                    columns: [
-                      DataColumn(
-                        label: Text(_tx('admin.metadata_col_table', 'Tabla')),
-                        onSort: _onSort,
-                      ),
-                      DataColumn(
-                        label: Text(_tx('admin.metadata_col_rows', 'Filas')),
-                        numeric: true,
-                        onSort: _onSort,
-                      ),
-                      DataColumn(
-                        label: Text(_tx('admin.metadata_col_cols', 'Columnas')),
-                        numeric: true,
-                        onSort: _onSort,
-                      ),
-                      DataColumn(
-                        label: Text(_tx('admin.metadata_col_size', 'Peso')),
-                        numeric: true,
-                        onSort: _onSort,
-                      ),
-                    ],
-                    rows: items
-                        .map(
-                          (table) => DataRow(
-                            onSelectChanged: (_) => _openTableDialog(table),
-                            cells: [
-                              DataCell(
-                                Text(
-                                  table.name,
-                                  style: const TextStyle(
-                                    fontFamily: 'monospace',
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                              DataCell(Text('${table.rows}')),
-                              DataCell(Text('${table.colCount}')),
-                              DataCell(Text(_fmtBytes(table.sizeBytes))),
-                            ],
-                          ),
-                        )
-                        .toList(),
-                  ),
+                  onChanged: (_) => setState(() {}),
                 ),
+              ),
+              Text(
+                '${items.length}/${_tables.length}',
+                style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 12),
+          Card(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                sortColumnIndex: _sortColumnIndex,
+                sortAscending: _sortAscending,
+                columns: [
+                  DataColumn(
+                    label: Text(_tx('admin.metadata_col_table', 'Tabla')),
+                    onSort: _onSort,
+                  ),
+                  DataColumn(
+                    label: Text(_tx('admin.metadata_col_rows', 'Filas')),
+                    numeric: true,
+                    onSort: _onSort,
+                  ),
+                  DataColumn(
+                    label: Text(_tx('admin.metadata_col_cols', 'Columnas')),
+                    numeric: true,
+                    onSort: _onSort,
+                  ),
+                  DataColumn(
+                    label: Text(_tx('admin.metadata_col_size', 'Peso')),
+                    numeric: true,
+                    onSort: _onSort,
+                  ),
+                ],
+                rows: items
+                    .map(
+                      (table) => DataRow(
+                        onSelectChanged: (_) => _openTableDialog(table),
+                        cells: [
+                          DataCell(
+                            Text(
+                              table.name,
+                              style: const TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                          DataCell(Text('${table.rows}')),
+                          DataCell(Text('${table.colCount}')),
+                          DataCell(Text(_fmtBytes(table.sizeBytes))),
+                        ],
+                      ),
+                    )
+                    .toList(),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -13,6 +13,7 @@ import '../../../shared/widgets/filter_button.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/origin_badge.dart';
+import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 
 class ConnectionsPage extends StatefulWidget {
@@ -612,13 +613,10 @@ class _ConnectionsPageState extends State<ConnectionsPage>
                     else
                       SliverPadding(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) => _buildConnectionCard(
-                              filteredConnections[index],
-                            ),
-                            childCount: filteredConnections.length,
-                          ),
+                        sliver: ResponsiveSliverMasonryGrid(
+                          itemCount: filteredConnections.length,
+                          itemBuilder: (context, index) =>
+                              _buildConnectionCard(filteredConnections[index]),
                         ),
                       ),
                   ],
@@ -638,7 +636,7 @@ class _ConnectionsPageState extends State<ConnectionsPage>
     if (item.url.isNotEmpty) metaParts.add(item.url);
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(

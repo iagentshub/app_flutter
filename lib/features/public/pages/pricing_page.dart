@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router/route_names.dart';
 import '../../../shared/i18n/locale_loader.dart';
 import '../../../shared/widgets/public_top_bar.dart';
+import '../../../shared/widgets/responsive_masonry_grid.dart';
 
 class PricingPage extends StatelessWidget {
   const PricingPage({super.key});
@@ -51,6 +52,29 @@ class PricingPage extends StatelessWidget {
             'header.login',
             fallback: isEnglish ? 'Login' : 'Iniciar sesion',
           );
+          final plans = [
+            _PlanCard(
+              name: freeName,
+              price: freePrice,
+              description: freeDescription,
+              buttonLabel: ctaLabel,
+              isPrimary: false,
+            ),
+            _PlanCard(
+              name: proName,
+              price: proPrice,
+              description: proDescription,
+              buttonLabel: ctaLabel,
+              isPrimary: true,
+            ),
+            _PlanCard(
+              name: businessName,
+              price: businessPrice,
+              description: businessDescription,
+              buttonLabel: ctaLabel,
+              isPrimary: false,
+            ),
+          ];
 
           return CustomScrollView(
             slivers: [
@@ -97,34 +121,11 @@ class PricingPage extends StatelessWidget {
                 ),
               ),
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                sliver: SliverList.list(
-                  children: [
-                    _PlanCard(
-                      name: freeName,
-                      price: freePrice,
-                      description: freeDescription,
-                      buttonLabel: ctaLabel,
-                      isPrimary: false,
-                    ),
-                    const SizedBox(height: 12),
-                    _PlanCard(
-                      name: proName,
-                      price: proPrice,
-                      description: proDescription,
-                      buttonLabel: ctaLabel,
-                      isPrimary: true,
-                    ),
-                    const SizedBox(height: 12),
-                    _PlanCard(
-                      name: businessName,
-                      price: businessPrice,
-                      description: businessDescription,
-                      buttonLabel: ctaLabel,
-                      isPrimary: false,
-                    ),
-                    const SizedBox(height: 40),
-                  ],
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
+                sliver: ResponsiveSliverMasonryGrid(
+                  density: ResponsiveCardDensity.marketing,
+                  itemCount: plans.length,
+                  itemBuilder: (context, index) => plans[index],
                 ),
               ),
             ],

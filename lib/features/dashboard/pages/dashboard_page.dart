@@ -14,6 +14,7 @@ import '../../../shared/state/dashboard_edit_state.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
+import '../../../shared/widgets/responsive_masonry_grid.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({
@@ -210,93 +211,97 @@ class _DashboardPageState extends State<DashboardPage> {
 
     final data = _data!;
 
-    return Align(
-      alignment: Alignment.topCenter,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 900),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  if (_editing)
-                    Expanded(
-                      child: Text(
-                        _tx(
-                          'dashboard.edit_hint',
-                          'Abre el menú (☰) para añadir widgets',
-                        ),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    )
-                  else
-                    const Spacer(),
-                  TextButton.icon(
-                    onPressed: _toggleEditing,
-                    icon: Icon(_editing ? Icons.check : Icons.tune),
-                    label: Text(
-                      _editing
-                          ? _tx('dashboard.done_btn', 'Listo')
-                          : _tx('dashboard.customize_btn', 'Personalizar'),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (_editing)
+                Expanded(
+                  child: Text(
+                    _tx(
+                      'dashboard.edit_hint',
+                      'Abre el menú (☰) para añadir widgets',
                     ),
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
-                ],
+                )
+              else
+                const Spacer(),
+              TextButton.icon(
+                onPressed: _toggleEditing,
+                icon: Icon(_editing ? Icons.check : Icons.tune),
+                label: Text(
+                  _editing
+                      ? _tx('dashboard.done_btn', 'Listo')
+                      : _tx('dashboard.customize_btn', 'Personalizar'),
+                ),
               ),
-            ),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _load,
-                child: _layout.isEmpty
-                    ? ListView(
-                        padding: const EdgeInsets.all(16),
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 40),
-                            child: Center(
-                              child: Text(
-                                _tx(
-                                  'dashboard.empty_layout',
-                                  'No hay widgets. Pulsa "Personalizar" y abre el menú para añadir alguno.',
-                                ),
-                              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: _load,
+            child: _layout.isEmpty
+                ? ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 40),
+                        child: Center(
+                          child: Text(
+                            _tx(
+                              'dashboard.empty_layout',
+                              'No hay widgets. Pulsa "Personalizar" y abre el menú para añadir alguno.',
                             ),
                           ),
-                        ],
-                      )
-                    : _editing
-                    ? ReorderableListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        buildDefaultDragHandles: false,
-                        itemCount: _layout.length,
-                        onReorder: _reorder,
-                        itemBuilder: (context, index) =>
-                            _buildCard(_layout[index], data, index: index),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        itemCount: _layout.length,
-                        itemBuilder: (context, index) =>
-                            _buildCard(_layout[index], data),
+                        ),
                       ),
-              ),
-            ),
-          ],
+                    ],
+                  )
+                : _editing
+                ? ReorderableListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    buildDefaultDragHandles: false,
+                    itemCount: _layout.length,
+                    onReorder: _reorder,
+                    itemBuilder: (context, index) =>
+                        _buildCard(_layout[index], data, index: index),
+                  )
+                : CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    slivers: [
+                      SliverPadding(
+                        padding: const EdgeInsets.all(16),
+                        sliver: ResponsiveSliverMasonryGrid(
+                          minCardWidth: 400,
+                          maxColumns: 4,
+                          itemCount: _layout.length,
+                          itemBuilder: (context, index) =>
+                              _buildCard(_layout[index], data, inGrid: true),
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
         ),
-      ),
+      ],
     );
   }
 
-  Widget _buildCard(String id, DashboardData data, {int index = 0}) {
+  Widget _buildCard(
+    String id,
+    DashboardData data, {
+    int index = 0,
+    bool inGrid = false,
+  }) {
     final config = _config[id] ?? const DashboardWidgetConfig();
     return Card(
       key: ValueKey(id),
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: inGrid ? EdgeInsets.zero : const EdgeInsets.only(bottom: 12),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

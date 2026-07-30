@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router/route_names.dart';
 import '../../../shared/i18n/locale_loader.dart';
 import '../../../shared/widgets/public_top_bar.dart';
+import '../../../shared/widgets/responsive_masonry_grid.dart';
 
 class AboutPage extends StatelessWidget {
   const AboutPage({super.key});
@@ -42,6 +43,10 @@ class AboutPage extends StatelessWidget {
             'header.login',
             fallback: isEnglish ? 'Login' : 'Iniciar sesion',
           );
+          final infoCards = [
+            _InfoCard(title: missionTitle, body: missionDescription),
+            _InfoCard(title: visionTitle, body: visionDescription),
+          ];
 
           return CustomScrollView(
             slivers: [
@@ -87,19 +92,12 @@ class AboutPage extends StatelessWidget {
                   ),
                 ),
               ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
-                  child: _InfoCard(
-                    title: missionTitle,
-                    body: missionDescription,
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
-                  child: _InfoCard(title: visionTitle, body: visionDescription),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
+                sliver: ResponsiveSliverMasonryGrid(
+                  density: ResponsiveCardDensity.marketing,
+                  itemCount: infoCards.length,
+                  itemBuilder: (context, index) => infoCards[index],
                 ),
               ),
               SliverToBoxAdapter(

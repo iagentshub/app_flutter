@@ -336,40 +336,34 @@ class _LogsPageViewState extends State<LogsPageView> {
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.topCenter,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1300),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SegmentedButton<bool>(
-                segments: [
-                  ButtonSegment(
-                    value: false,
-                    label: Text(_tx('logs.tab_summary', 'Resumen')),
-                    icon: const Icon(Icons.dashboard_outlined),
-                  ),
-                  ButtonSegment(
-                    value: true,
-                    label: Text(_tx('logs.tab_viewer', 'Visor')),
-                    icon: const Icon(Icons.list_alt_outlined),
-                  ),
-                ],
-                selected: {_viewerTab},
-                onSelectionChanged: (selection) {
-                  final wantsViewer = selection.first;
-                  setState(() => _viewerTab = wantsViewer);
-                  if (wantsViewer && _logsPage == null) _loadViewer();
-                },
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SegmentedButton<bool>(
+            segments: [
+              ButtonSegment(
+                value: false,
+                label: Text(_tx('logs.tab_summary', 'Resumen')),
+                icon: const Icon(Icons.dashboard_outlined),
               ),
-              const SizedBox(height: 14),
-              Expanded(child: _viewerTab ? _buildViewer() : _buildSummary()),
+              ButtonSegment(
+                value: true,
+                label: Text(_tx('logs.tab_viewer', 'Visor')),
+                icon: const Icon(Icons.list_alt_outlined),
+              ),
             ],
+            selected: {_viewerTab},
+            onSelectionChanged: (selection) {
+              final wantsViewer = selection.first;
+              setState(() => _viewerTab = wantsViewer);
+              if (wantsViewer && _logsPage == null) _loadViewer();
+            },
           ),
-        ),
+          const SizedBox(height: 14),
+          Expanded(child: _viewerTab ? _buildViewer() : _buildSummary()),
+        ],
       ),
     );
   }
