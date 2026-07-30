@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/agents/agent_models.dart';
+import '../../../models/explore/explore_models.dart';
+import '../../explore/repositories/explore_repository.dart';
 import '../repositories/agents_repository.dart';
 import '../widgets/agent_form_dialog.dart';
 import '../../../shared/i18n/translated_texts.dart';
@@ -249,6 +251,188 @@ class _AgentsPageState extends State<AgentsPage> {
     await _saveAgent(payload);
   }
 
+  Future<void> _openCreateChoiceDialog() async {
+    final choice = await showDialog<String>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text(
+          _tx('agents.create_choice_title', '¿Cómo quieres crear el agente?'),
+        ),
+        children: [
+          _createChoiceOption(
+            context,
+            icon: Icons.edit_note_outlined,
+            title: _tx('agents.create_choice_scratch', 'Desde cero'),
+            subtitle: _tx(
+              'agents.create_choice_scratch_desc',
+              'Un formulario en blanco, tú decides cada campo.',
+            ),
+            value: 'scratch',
+          ),
+          _createChoiceOption(
+            context,
+            icon: Icons.public,
+            title: _tx(
+              'agents.create_choice_public',
+              'A partir de un agente público',
+            ),
+            subtitle: _tx(
+              'agents.create_choice_public_desc',
+              'Parte de uno ya existente como plantilla y edítalo.',
+            ),
+            value: 'public',
+          ),
+          _createChoiceOption(
+            context,
+            icon: Icons.auto_awesome_outlined,
+            title: _tx('agents.create_choice_ai', 'Con ayuda de IA'),
+            subtitle: _tx(
+              'agents.create_choice_ai_desc',
+              'Descríbelo en una conversación y te propone un borrador.',
+            ),
+            value: 'ai',
+          ),
+        ],
+      ),
+    );
+    if (choice == null || !mounted) return;
+    switch (choice) {
+      case 'scratch':
+        await _openCreateDialog();
+      case 'public':
+        await _openCreateFromPublicDialog();
+      case 'ai':
+        await _openAgentBuilder();
+    }
+  }
+
+  Widget _createChoiceOption(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required String value,
+  }) {
+    return SimpleDialogOption(
+      onPressed: () => Navigator.of(context).pop(value),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openCreateFromPublicDialog() async {
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+
+    // Los agentes públicos de CUALQUIER usuario se descubren vía Explore
+    // (/api/agents?scope=X para un usuario normal solo devuelve los tuyos).
+    final exploreRepository = ExploreRepository(apiClient: widget.apiClient);
+    List<ExploreItem> publicAgents;
+    try {
+      publicAgents = await exploreRepository.listResources(
+        token,
+        type: 'agent',
+      );
+    } on ApiError catch (error) {
+      _showMessage(error.message, isError: true);
+      return;
+    } catch (_) {
+      _showMessage(
+        _tx(
+          'agents.create_public_load_error',
+          'No se pudieron cargar los agentes públicos',
+        ),
+        isError: true,
+      );
+      return;
+    }
+    if (!mounted) return;
+    if (publicAgents.isEmpty) {
+      _showMessage(
+        _tx(
+          'agents.create_public_empty',
+          'No hay agentes públicos disponibles todavía',
+        ),
+      );
+      return;
+    }
+
+    final selected = await showDialog<ExploreItem>(
+      context: context,
+      builder: (context) =>
+          _PublicAgentPickerDialog(agents: publicAgents, tx: _tx),
+    );
+    if (selected == null || !mounted) return;
+
+    Map<String, dynamic> preview;
+    try {
+      preview = await exploreRepository.getPreview(
+        token,
+        resourceType: 'agent',
+        resourceId: selected.resourceId,
+      );
+    } on ApiError catch (error) {
+      _showMessage(error.message, isError: true);
+      return;
+    } catch (_) {
+      _showMessage(
+        _tx(
+          'agents.create_public_load_error',
+          'No se pudieron cargar los agentes públicos',
+        ),
+        isError: true,
+      );
+      return;
+    }
+    if (!mounted) return;
+
+    final template = <String, dynamic>{
+      'name':
+          '${selected.name} '
+          '(${_tx('agents.create_public_copy_suffix', 'copia')})',
+      'description': selected.description,
+      'system_prompt': preview['system_prompt'] ?? '',
+      'agent_type': preview['agent_type'] ?? 'generic',
+      'temperature': preview['temperature'],
+      'labels': ['private'],
+    };
+
+    final currentToken = _token;
+    if (currentToken == null) return;
+    final payload = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => AgentFormDialog(
+        apiClient: widget.apiClient,
+        token: currentToken,
+        initial: template,
+        tx: _tx,
+      ),
+    );
+    if (payload == null) return;
+    await _saveAgent(payload);
+  }
+
   Future<void> _openEditDialog(AgentItem item) async {
     if (item.readOnly) {
       _showMessage('Este agente no es editable (público o compartido)');
@@ -453,17 +637,9 @@ class _AgentsPageState extends State<AgentsPage> {
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       IconButton.filled(
-                        onPressed: _openCreateDialog,
+                        onPressed: _openCreateChoiceDialog,
                         icon: const Icon(Icons.add),
                         tooltip: _tx('agents.new', 'Nuevo agente'),
-                      ),
-                      IconButton.outlined(
-                        onPressed: _openAgentBuilder,
-                        icon: const Icon(Icons.auto_awesome_outlined),
-                        tooltip: _tx(
-                          'agents.builder_new',
-                          'Crear agente con IA',
-                        ),
                       ),
                       IconButton.outlined(
                         onPressed: _load,
@@ -660,6 +836,100 @@ class _AgentsPageState extends State<AgentsPage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Selector de agente público a usar como plantilla, con búsqueda por nombre.
+class _PublicAgentPickerDialog extends StatefulWidget {
+  const _PublicAgentPickerDialog({required this.agents, required this.tx});
+
+  final List<ExploreItem> agents;
+  final String Function(String path, String fallback) tx;
+
+  @override
+  State<_PublicAgentPickerDialog> createState() =>
+      _PublicAgentPickerDialogState();
+}
+
+class _PublicAgentPickerDialogState extends State<_PublicAgentPickerDialog> {
+  final _queryController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _queryController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tx = widget.tx;
+    final query = _query.trim().toLowerCase();
+    final filtered = query.isEmpty
+        ? widget.agents
+        : widget.agents
+              .where((a) => a.name.toLowerCase().contains(query))
+              .toList();
+
+    return AlertDialog(
+      title: Text(
+        tx('agents.create_public_picker_title', 'Elige un agente público'),
+      ),
+      content: SizedBox(
+        width: 480,
+        height: 420,
+        child: Column(
+          children: [
+            TextField(
+              controller: _queryController,
+              decoration: InputDecoration(
+                labelText: tx('agents.search_hint', 'Buscar agente'),
+                prefixIcon: const Icon(Icons.search, size: 20),
+              ),
+              onChanged: (value) => setState(() => _query = value),
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: filtered.isEmpty
+                  ? Center(
+                      child: Text(
+                        tx(
+                          'agents.create_public_no_match',
+                          'Sin coincidencias',
+                        ),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    )
+                  : ListView.separated(
+                      itemCount: filtered.length,
+                      separatorBuilder: (context, _) =>
+                          const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final agent = filtered[index];
+                        return ListTile(
+                          title: Text(agent.name),
+                          subtitle: agent.description.isEmpty
+                              ? null
+                              : Text(
+                                  agent.description,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                          onTap: () => Navigator.of(context).pop(agent),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(tx('common.cancel', 'Cancelar')),
+        ),
+      ],
     );
   }
 }
