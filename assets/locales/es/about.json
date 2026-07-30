@@ -1,14 +1,14 @@
 {
   "page": {
     "title": "Acerca de",
-    "subtitle": "iAgents Hub"
+    "subtitle": "iAgents"
   },
   "header": {
     "login": "Iniciar sesión"
   },
   "description": {
-    "title": "¿Qué es iAgents Hub?",
-    "body": "iAgents Hub es una plataforma self-hosted para crear, gestionar y colaborar con agentes de IA. Conecta cualquier proveedor —Anthropic, OpenAI, Google, Ollama y otros— con tu propia API key, organiza tus agentes en carpetas, compártelos con grupos de trabajo con un simple arrastre y exporta al formato nativo de Claude Code, GitHub Copilot u OpenAI Assistants con un clic. Todo desde una interfaz unificada, sin datos en la nube."
+    "title": "¿Qué es iAgents?",
+    "body": "iAgents es una plataforma self-hosted para crear, gestionar y colaborar con agentes de IA. Conecta cualquier proveedor —Anthropic, OpenAI, Google, Ollama y otros— con tu propia API key, organiza tus agentes en carpetas, compártelos con grupos de trabajo con un simple arrastre y exporta al formato nativo de Claude Code, GitHub Copilot u OpenAI Assistants con un clic. Todo desde una interfaz unificada, sin datos en la nube."
   },
   "features": {
     "title": "Funcionalidades"
@@ -29,7 +29,7 @@
   },
   "github": {
     "title": "Código fuente",
-    "body": "iAgents Hub es un proyecto de código abierto. Contribuciones bienvenidas.",
+    "body": "iAgents es un proyecto de código abierto. Contribuciones bienvenidas.",
     "label": "Ver en GitHub"
   },
   "contact": {

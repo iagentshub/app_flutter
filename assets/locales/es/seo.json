@@ -1,42 +1,42 @@
 {
   "home": {
-    "title": "iAgents Hub — Plataforma self-hosted de agentes de IA",
+    "title": "iAgents — Plataforma self-hosted de agentes de IA",
     "description": "Crea agentes de IA con tus claves de Claude, OpenAI, Gemini u Ollama. Plataforma open source y self-hosted: tus datos nunca salen de tu servidor."
   },
   "about": {
-    "title": "Acerca de · iAgents Hub",
-    "description": "Qué es iAgents Hub: plataforma open source para crear, organizar y compartir agentes de IA multiproveedor en tu propia infraestructura."
+    "title": "Acerca de · iAgents",
+    "description": "Qué es iAgents: plataforma open source para crear, organizar y compartir agentes de IA multiproveedor en tu propia infraestructura."
   },
   "docs": {
-    "title": "Documentación · iAgents Hub",
-    "description": "Guía de iAgents Hub: instalación, agentes, conexiones con proveedores, skills, grupos de trabajo, memoria y conocimiento."
+    "title": "Documentación · iAgents",
+    "description": "Guía de iAgents: instalación, agentes, conexiones con proveedores, skills, grupos de trabajo, memoria y conocimiento."
   },
   "pricing": {
-    "title": "Precios y planes · iAgents Hub",
-    "description": "Planes de iAgents Hub: gratis en self-hosted y planes gestionados con soporte directo, copias de seguridad y panel de administración."
+    "title": "Precios y planes · iAgents",
+    "description": "Planes de iAgents: gratis en self-hosted y planes gestionados con soporte directo, copias de seguridad y panel de administración."
   },
   "support": {
-    "title": "Soporte · iAgents Hub",
-    "description": "Preguntas frecuentes y contacto de iAgents Hub: cuenta, proveedores de IA, despliegue self-hosted y tiempos de respuesta."
+    "title": "Soporte · iAgents",
+    "description": "Preguntas frecuentes y contacto de iAgents: cuenta, proveedores de IA, despliegue self-hosted y tiempos de respuesta."
   },
   "login": {
-    "title": "Iniciar sesión · iAgents Hub",
-    "description": "Accede a tu cuenta de iAgents Hub."
+    "title": "Iniciar sesión · iAgents",
+    "description": "Accede a tu cuenta de iAgents."
   },
   "register": {
-    "title": "Crear cuenta · iAgents Hub",
-    "description": "Crea tu cuenta de iAgents Hub y empieza a construir agentes de IA con tus propios proveedores."
+    "title": "Crear cuenta · iAgents",
+    "description": "Crea tu cuenta de iAgents y empieza a construir agentes de IA con tus propios proveedores."
   },
   "account": {
-    "title": "Tu cuenta · iAgents Hub",
-    "description": "Gestiona el acceso a tu cuenta de iAgents Hub."
+    "title": "Tu cuenta · iAgents",
+    "description": "Gestiona el acceso a tu cuenta de iAgents."
   },
   "checkout": {
-    "title": "Pago · iAgents Hub",
-    "description": "Finaliza la contratación de tu plan de iAgents Hub."
+    "title": "Pago · iAgents",
+    "description": "Finaliza la contratación de tu plan de iAgents."
   },
   "not_found": {
-    "title": "Página no encontrada · iAgents Hub",
+    "title": "Página no encontrada · iAgents",
     "description": "La página que buscas no existe o ha cambiado de dirección."
   }
 }

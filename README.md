@@ -1,6 +1,6 @@
 # app_flutter
 
-Cliente Flutter de iAgents Hub, basado en la estructura funcional del proyecto
+Cliente Flutter de iAgents, basado en la estructura funcional del proyecto
 frontend_react.
 
 ## Ejecutar

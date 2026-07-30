@@ -391,7 +391,7 @@ String _titleForLocation(String location, Map<String, dynamic> t) {
   if (location.startsWith(RouteNames.publicProfilePrefix)) {
     return LocaleLoader.text(t, 'public_profile', fallback: 'Public Profile');
   }
-  return LocaleLoader.text(t, 'app_title', fallback: 'iAgents Hub');
+  return LocaleLoader.text(t, 'app_title', fallback: 'iAgents');
 }
 
 /// Sustituye la navegación normal del drawer mientras el dashboard está en

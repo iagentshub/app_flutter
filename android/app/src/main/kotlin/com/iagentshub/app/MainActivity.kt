@@ -1,4 +1,4 @@
-package com.iagentshub.app_flutter
+package com.iagentshub.app
 
 import io.flutter.embedding.android.FlutterActivity
 

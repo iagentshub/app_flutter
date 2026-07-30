@@ -1,6 +1,6 @@
 {
   "visibility": {
-    "title": "Visibility on iAgents Hub",
+    "title": "Visibility on iAgents",
     "make_public": "Make public in the explorer",
     "category": "Category",
     "private_skills": "If the agent uses private skills, users who try it:",

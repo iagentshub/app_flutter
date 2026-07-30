@@ -1,11 +1,11 @@
 {
-    "name": "app_flutter",
-    "short_name": "app_flutter",
+    "name": "iAgents",
+    "short_name": "iAgents",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Create, manage and collaborate with AI agents.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

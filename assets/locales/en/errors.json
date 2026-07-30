@@ -88,7 +88,7 @@
   "document_text_extraction_failed": "Couldn't extract text from the document",
   "folder_fields_required": "Section and name are required",
 
-  "hub_sync_invalid_type": "Only available for iAgents Hub connections",
+  "hub_sync_invalid_type": "Only available for iAgents connections",
   "unsafe_url": "This URL is unsafe or not allowed",
   "hub_auth_error": "Authentication error: {{reason}}",
   "import_models_unsupported": "Model import isn't supported for '{{type}}'",

@@ -1,7 +1,7 @@
 {
   "page": {
     "title": "Documentación",
-    "subtitle": "Guías y referencia de iAgents Hub"
+    "subtitle": "Guías y referencia de iAgents"
   },
   "nav": {
     "keywords": "Palabras clave",
@@ -57,10 +57,10 @@
     "fine_tuning_title": "Fine-tuning",
     "fine_tuning_body": "Proceso de reentrenar un LLM con datos propios para especializarlo en un dominio concreto. Es distinto de configurar un agente: el fine-tuning modifica el modelo en sí, lo que implica coste, tiempo y recursos técnicos significativos.",
     "multimodal_title": "Multimodal",
-    "multimodal_body": "Modelos capaces de procesar no solo texto, sino también imágenes, audio o vídeo. Varios LLMs disponibles en iAgents Hub ya son multimodales (GPT-4o, Claude 3), lo que permite, por ejemplo, analizar capturas de pantalla o describir documentos escaneados."
+    "multimodal_body": "Modelos capaces de procesar no solo texto, sino también imágenes, audio o vídeo. Varios LLMs disponibles en iAgents ya son multimodales (GPT-4o, Claude 3), lo que permite, por ejemplo, analizar capturas de pantalla o describir documentos escaneados."
   },
   "getting_started": {
-    "intro": "iAgents Hub es una plataforma self-hosted de agentes IA, accesible desde cualquier dispositivo — la interfaz es responsive y se adapta a móvil y escritorio. Sigue estos tres pasos para empezar:",
+    "intro": "iAgents es una plataforma self-hosted de agentes IA, accesible desde cualquier dispositivo — la interfaz es responsive y se adapta a móvil y escritorio. Sigue estos tres pasos para empezar:",
     "accounts_title": "Tipos de cuenta",
     "accounts_registered_title": "Cuenta registrada",
     "accounts_registered_body": "Acceso completo y permanente: agentes, historial de conversaciones, memoria, skills y configuración se conservan entre sesiones.",
@@ -74,11 +74,11 @@
     "step3_body": "En la lista de agentes, pulsa sobre un agente y selecciona «Nuevo chat». El historial de tus conversaciones se guarda automáticamente."
   },
   "agents": {
-    "intro": "Cada plataforma de IA (Claude, ChatGPT, Copilot…) tiene su propio formato de agente. iAgents Hub abstrae esa diferencia: configuras el agente una sola vez —instrucciones, skills, memoria, base de conocimiento— y puedes probarlo en la web con cualquier LLM antes de exportarlo a la plataforma que corresponda.",
+    "intro": "Cada plataforma de IA (Claude, ChatGPT, Copilot…) tiene su propio formato de agente. iAgents abstrae esa diferencia: configuras el agente una sola vez —instrucciones, skills, memoria, base de conocimiento— y puedes probarlo en la web con cualquier LLM antes de exportarlo a la plataforma que corresponda.",
     "test_title": "Prueba con cualquier LLM",
     "test_body": "Conecta cualquier proveedor y cambia el modelo del agente con un clic. Así puedes comparar respuestas entre Claude, GPT-4o u otros sin reconfigurar nada.",
     "export_title": "Configura una vez, despliega en cualquier plataforma",
-    "export_body": "El system prompt, las skills y el contexto se definen una sola vez en iAgents Hub. Exporta el agente al formato nativo de cada plataforma —Claude Code, OpenAI Assistants o GitHub Copilot—, o importa agentes existentes con una vista previa del contenido antes de confirmar.",
+    "export_body": "El system prompt, las skills y el contexto se definen una sola vez en iAgents. Exporta el agente al formato nativo de cada plataforma —Claude Code, OpenAI Assistants o GitHub Copilot—, o importa agentes existentes con una vista previa del contenido antes de confirmar.",
     "config_title": "Qué define un agente",
     "config_body": "Nombre, instrucciones del sistema (system prompt), modelo y conexión activa, skills habilitadas, memoria persistente, base de conocimiento y rutinas programadas.",
     "memory_title": "Memoria",
@@ -127,7 +127,7 @@
     "rename_body": "Pasa el cursor sobre una carpeta para ver los botones de edición. Puedes renombrarla con el icono de lápiz o eliminarla con el icono de papelera. Al eliminar una carpeta, los elementos que contiene no se borran: vuelven a la vista «Todos»."
   },
   "memory_knowledge": {
-    "intro": "iAgents Hub tiene dos formas de dar contexto persistente a un agente: memoria conversacional y base de conocimiento.",
+    "intro": "iAgents tiene dos formas de dar contexto persistente a un agente: memoria conversacional y base de conocimiento.",
     "memory_title": "Memoria",
     "memory_body": "La memoria almacena fragmentos de texto que el agente recuerda entre conversaciones. Útil para preferencias del usuario, datos de contexto o notas. Se activa por agente.",
     "knowledge_title": "Base de conocimiento",
