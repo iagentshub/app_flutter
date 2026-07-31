@@ -1,86 +1,309 @@
 part of '../app_shell.dart';
 
-/// Contenido de navegación compartido entre el Drawer (móvil) y el sidebar
-/// fijo (tablet/desktop): igual estructura, solo cambia si cierra el drawer
-/// al navegar.
-class _NavContent extends StatelessWidget {
-  const _NavContent({
+/// Navegación principal compartida por el sidebar de escritorio y el drawer.
+class AppSidebarNavigation extends StatelessWidget {
+  const AppSidebarNavigation({
     required this.isAdmin,
     required this.location,
     required this.username,
+    required this.displayName,
+    required this.email,
     required this.role,
     required this.tx,
-    required this.closeDrawerOnTap,
+    required this.showCloseButton,
+    required this.onNavigate,
     required this.onLogout,
+    super.key,
   });
 
   final bool isAdmin;
   final String location;
   final String username;
+  final String? displayName;
+  final String? email;
   final String role;
   final String Function(String key, String fallback) tx;
-  final bool closeDrawerOnTap;
+  final bool showCloseButton;
+  final ValueChanged<String> onNavigate;
   final VoidCallback onLogout;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final visibleName = displayName?.trim().isNotEmpty == true
+        ? displayName!.trim()
+        : username;
+    final accountDetail = email?.trim().isNotEmpty == true
+        ? email!.trim()
+        : role == 'admin'
+        ? tx('role_admin', 'Administrador')
+        : tx('role_user', 'Usuario');
+    final initial = visibleName.trim().isEmpty
+        ? 'U'
+        : visibleName.trimLeft().substring(0, 1).toUpperCase();
+
     return Column(
       children: [
+        _SidebarBrand(showCloseButton: showCloseButton),
         Expanded(
           child: ListView(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
             children: [
-              ListTile(
-                title: Text(username),
-                subtitle: Text(role),
-                leading: const Icon(Icons.account_circle_outlined),
+              _NavigationSection(
+                label: tx('workspace', 'Espacio de trabajo'),
+                items: _mainItems,
+                location: location,
+                tx: tx,
+                onNavigate: onNavigate,
               ),
-              const Divider(),
-              ..._mainItems.map(
-                (item) => _NavItemTile(
-                  icon: item.icon,
-                  label: tx(item.labelKey, item.labelKey),
-                  route: item.route,
-                  selected: location == item.route,
-                  closeDrawerOnTap: closeDrawerOnTap,
-                ),
+              const SizedBox(height: 18),
+              _NavigationSection(
+                label: tx('organization', 'Organización'),
+                items: _secondaryItems,
+                location: location,
+                tx: tx,
+                onNavigate: onNavigate,
               ),
-              const Divider(),
-              ..._secondaryItems.map(
-                (item) => _NavItemTile(
-                  icon: item.icon,
-                  label: tx(item.labelKey, item.labelKey),
-                  route: item.route,
-                  selected: location == item.route,
-                  closeDrawerOnTap: closeDrawerOnTap,
+              if (isAdmin) ...[
+                const SizedBox(height: 18),
+                _NavigationSection(
+                  label: tx('administration', 'Administración'),
+                  items: _adminItems,
+                  location: location,
+                  tx: tx,
+                  onNavigate: onNavigate,
                 ),
-              ),
-              if (isAdmin) const Divider(),
-              if (isAdmin)
-                ..._adminItems.map(
-                  (item) => _NavItemTile(
-                    icon: item.icon,
-                    label: tx(item.labelKey, item.labelKey),
-                    route: item.route,
-                    selected: location == item.route,
-                    closeDrawerOnTap: closeDrawerOnTap,
-                  ),
-                ),
+              ],
             ],
           ),
         ),
-        const Divider(height: 1),
-        ListTile(
-          leading: const Icon(Icons.logout),
-          title: Text(tx('logout', 'Cerrar sesión')),
-          onTap: onLogout,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: scheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: scheme.outlineVariant),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(10, 10, 6, 10),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 19,
+                    backgroundColor: scheme.primary,
+                    foregroundColor: scheme.onPrimary,
+                    child: Text(
+                      initial,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          visibleName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          accountDetail,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Tooltip(
+                    message: tx('logout', 'Cerrar sesión'),
+                    child: IconButton(
+                      onPressed: onLogout,
+                      icon: const Icon(Icons.logout_rounded, size: 20),
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ],
     );
   }
 }
 
-/// Aviso persistente cuando el backend seleccionado deja de responder, para
-/// que un fallo de conexión no pase inadvertido en el resto de la app.
+class _SidebarBrand extends StatelessWidget {
+  const _SidebarBrand({required this.showCloseButton});
+
+  final bool showCloseButton;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 12, 12),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: scheme.primary,
+              borderRadius: BorderRadius.circular(11),
+              boxShadow: [
+                BoxShadow(
+                  color: scheme.primary.withValues(alpha: 0.22),
+                  blurRadius: 14,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Text(
+              'iA',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: scheme.onPrimary,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -1,
+              ),
+            ),
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'iAgentsHub',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                Text(
+                  'AI workspace',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (showCloseButton)
+            IconButton(
+              tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+              onPressed: () => Navigator.of(context).maybePop(),
+              icon: const Icon(Icons.close_rounded),
+              color: scheme.onSurfaceVariant,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NavigationSection extends StatelessWidget {
+  const _NavigationSection({
+    required this.label,
+    required this.items,
+    required this.location,
+    required this.tx,
+    required this.onNavigate,
+  });
+
+  final String label;
+  final List<_NavItem> items;
+  final String location;
+  final String Function(String key, String fallback) tx;
+  final ValueChanged<String> onNavigate;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 7),
+          child: Text(
+            label.toUpperCase(),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.1,
+            ),
+          ),
+        ),
+        ...items.map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(bottom: 3),
+            child: _NavItemTile(
+              icon: item.icon,
+              label: tx(item.labelKey, item.labelKey),
+              selected: location == item.route,
+              onTap: () => onNavigate(item.route),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ShellTopBar extends StatelessWidget {
+  const _ShellTopBar({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Container(
+      height: 68,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 4,
+            height: 24,
+            decoration: BoxDecoration(
+              color: scheme.primary,
+              borderRadius: BorderRadius.circular(99),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            title,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontSize: 19,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Aviso persistente cuando el backend seleccionado deja de responder.
 class _ConnectionIssueBanner extends StatelessWidget {
   const _ConnectionIssueBanner({required this.apiClient, required this.tx});
 
@@ -107,7 +330,7 @@ class _ConnectionIssueBanner extends StatelessWidget {
                 child: Text(
                   tx(
                         'backend_connection_issue',
-                        "No se pudo conectar con {backend}: {error}",
+                        'No se pudo conectar con {backend}: {error}',
                       )
                       .replaceAll(
                         '{backend}',
@@ -141,27 +364,82 @@ class _NavItemTile extends StatelessWidget {
   const _NavItemTile({
     required this.icon,
     required this.label,
-    required this.route,
     required this.selected,
-    this.closeDrawerOnTap = false,
+    required this.onTap,
   });
 
   final IconData icon;
   final String label;
-  final String route;
   final bool selected;
-  final bool closeDrawerOnTap;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(label),
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final foreground = selected ? scheme.primary : scheme.onSurfaceVariant;
+    return Semantics(
       selected: selected,
-      onTap: () {
-        if (closeDrawerOnTap) Navigator.of(context).pop();
-        context.go(route);
-      },
+      button: true,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            curve: Curves.easeOut,
+            constraints: const BoxConstraints(minHeight: 46),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: selected
+                  ? scheme.primary.withValues(alpha: 0.10)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? scheme.primary.withValues(alpha: 0.12)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: Icon(icon, size: 20, color: foreground),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: selected ? scheme.primary : scheme.onSurface,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    ),
+                  ),
+                ),
+                AnimatedOpacity(
+                  duration: const Duration(milliseconds: 160),
+                  opacity: selected ? 1 : 0,
+                  child: Container(
+                    width: 3,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      color: scheme.primary,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -174,9 +452,6 @@ class _NavItem {
   final IconData icon;
 }
 
-// Mismos 6 items primarios que frontend_react/frontend_vanilla (main-nav).
-// Memory y Skills viven dentro de Knowledge (son pestañas, no nav propio);
-// Manager no aparece en el nav web (se llega desde Profile > Groups).
 const _mainItems = [
   _NavItem(RouteNames.dashboard, 'dashboard', Icons.dashboard_outlined),
   _NavItem(RouteNames.explore, 'explore', Icons.travel_explore_outlined),
@@ -186,8 +461,6 @@ const _mainItems = [
   _NavItem(RouteNames.connections, 'connections', Icons.cable_outlined),
 ];
 
-// Accesos que en web viven en la fila de iconos del footer / avatar del nav,
-// no en la lista principal.
 const _secondaryItems = [
   _NavItem(RouteNames.labels, 'labels', Icons.label_outline),
   _NavItem(RouteNames.profile, 'profile', Icons.person_outline),
@@ -214,6 +487,3 @@ String _titleForLocation(String location, Map<String, dynamic> t) {
   }
   return LocaleLoader.text(t, 'app_title', fallback: 'iAgents');
 }
-
-/// Sustituye la navegación normal del drawer mientras el dashboard está en
-/// modo "Personalizar": aquí se listan los widgets todavía no añadidos.

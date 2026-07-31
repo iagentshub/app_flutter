@@ -15,12 +15,11 @@ import 'terminal_view_transition.dart';
 part 'shell/app_shell_navigation.dart';
 part 'shell/widget_picker_drawer.dart';
 
-/// Por debajo de este ancho el nav vive en un Drawer con hamburguesa
-/// (móvil); por encima, un sidebar fijo siempre visible (tablet/desktop/web
-/// ancho) — igual que el sidebar persistente de 232px de frontend_vanilla,
-/// que solo colapsa a hamburguesa por debajo de 768px CSS.
-const _wideNavBreakpoint = 900.0;
-const _sidebarWidth = 240.0;
+/// En viewports estrechos la navegación vive en un drawer; desde 960 px se
+/// convierte en un sidebar persistente para aprovechar el espacio web.
+const _wideNavBreakpoint = 960.0;
+const _sidebarWidth = 276.0;
+const _drawerWidth = 304.0;
 
 class AppShell extends StatefulWidget {
   const AppShell({
@@ -124,14 +123,20 @@ class _AppShellState extends State<AppShell> {
                     state: widget.dashboardEditState,
                     t: _texts,
                   )
-                : _NavContent(
+                : AppSidebarNavigation(
                     isAdmin: isAdmin,
                     location: location,
                     username:
                         widget.sessionController.user?.username ?? 'Usuario',
+                    displayName: widget.sessionController.user?.displayName,
+                    email: widget.sessionController.user?.email,
                     role: widget.sessionController.user?.role ?? 'user',
                     tx: _tx,
-                    closeDrawerOnTap: !wide,
+                    showCloseButton: !wide,
+                    onNavigate: (route) {
+                      if (!wide) Navigator.of(context).pop();
+                      context.go(route);
+                    },
                     onLogout: () => _logout(context),
                   );
 
@@ -152,29 +157,63 @@ class _AppShellState extends State<AppShell> {
 
             if (wide) {
               return Scaffold(
-                appBar: AppBar(
-                  title: Text(_titleForLocation(location, _texts)),
-                  automaticallyImplyLeading: false,
-                ),
                 body: Row(
                   children: [
                     SizedBox(
                       width: _sidebarWidth,
-                      child: Material(
-                        elevation: 1,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          border: Border(
+                            right: BorderSide(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.outlineVariant,
+                            ),
+                          ),
+                        ),
                         child: SafeArea(right: false, child: navContent),
                       ),
                     ),
-                    const VerticalDivider(width: 1),
-                    Expanded(child: body),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          _ShellTopBar(
+                            title: _titleForLocation(location, _texts),
+                          ),
+                          Expanded(child: body),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               );
             }
 
             return Scaffold(
-              appBar: AppBar(title: Text(_titleForLocation(location, _texts))),
-              drawer: Drawer(child: SafeArea(child: navContent)),
+              appBar: AppBar(
+                toolbarHeight: 68,
+                titleSpacing: 4,
+                title: Text(
+                  _titleForLocation(location, _texts),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              drawer: Drawer(
+                width: _drawerWidth,
+                elevation: 12,
+                surfaceTintColor: Colors.transparent,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.horizontal(
+                    right: Radius.circular(24),
+                  ),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: SafeArea(child: navContent),
+              ),
               body: body,
             );
           },
