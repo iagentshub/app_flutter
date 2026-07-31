@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:app_flutter/core/network/api_client.dart';
 import 'package:app_flutter/core/network/api_error.dart';
+import 'package:app_flutter/core/network/api_uri.dart';
 import 'package:app_flutter/shared/state/backend_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -17,6 +18,27 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     backendController = await BackendController.bootstrap();
+  });
+
+  test('usa /api en el mismo origen para Flutter Web oficial', () {
+    final uri = resolveApiUri(
+      baseUrl: 'https://www.iagentshub.com',
+      path: '/api/auth/me',
+      useSameOrigin: true,
+      browserBase: Uri.parse('http://127.0.0.1:7357/app/login'),
+    );
+
+    expect(uri.toString(), 'http://127.0.0.1:7357/api/auth/me');
+  });
+
+  test('mantiene la URL absoluta para móvil y backends personalizados', () {
+    final uri = resolveApiUri(
+      baseUrl: 'https://www.iagentshub.com',
+      path: 'api/auth/me',
+      useSameOrigin: false,
+    );
+
+    expect(uri.toString(), 'https://www.iagentshub.com/api/auth/me');
   });
 
   test('agrupa GET cacheables simultáneos y reutiliza la respuesta', () async {

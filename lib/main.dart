@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 
 import 'app/app.dart';
+import 'app/router/url_strategy.dart';
+import 'core/config/runtime_config.dart';
 import 'shared/state/backend_controller.dart';
 import 'shared/state/brand_icon_controller.dart';
 import 'shared/state/locale_controller.dart';
@@ -10,7 +13,12 @@ import 'shared/widgets/launch_splash.dart';
 import 'shared/widgets/terminal_view_transition.dart';
 
 Future<void> main() async {
+  configureUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
+  if (stripePublishableKey.isNotEmpty) {
+    Stripe.publishableKey = stripePublishableKey;
+    await Stripe.instance.applySettings();
+  }
   // Los 4 bootstrap son independientes entre sí (cada uno lee su propia
   // clave de SharedPreferences) — en paralelo en vez de en cadena ahorra
   // esperas de plugin channel en el arranque.

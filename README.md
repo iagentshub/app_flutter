@@ -1,108 +1,74 @@
-# app_flutter
+<div align="center">
+  <a href="docs/en/index.md">🇬🇧 English</a> &nbsp;·&nbsp;
+  <a href="docs/es/index.md">🇪🇸 Español</a>
+</div>
 
-Cliente Flutter de iAgents, basado en la estructura funcional del proyecto
-frontend_react.
+<br>
 
-## Ejecutar
+<h1 align="center">iAgents — Flutter App</h1>
 
-1. Instalar Flutter SDK (estable).
-2. Desde esta carpeta:
+<p align="center">The native client for creating and managing AI agents, on mobile and desktop.</p>
+
+---
+
+## Quick start
 
 ```bash
 flutter pub get
 flutter run
 ```
 
-Validación rápida:
+Requires the stable Flutter SDK (Dart 3.10+). Run `flutter doctor` to check what your target platform still needs.
+
+**Verification**
 
 ```bash
 flutter analyze
 flutter test
 ```
 
-## Arquitectura
+---
 
-- lib/app: arranque, tema y router.
-- lib/core: red, configuración y almacenamiento.
-- lib/features: vistas por dominio (auth, dashboard, agents, etc.).
-- lib/models: modelos de dominio.
-- lib/shared: estado global y widgets compartidos.
-- lib/utils: validaciones y helpers.
+## Platforms
 
-## Estado actual
+Android · iOS · web · Windows · macOS · Linux, from a single codebase.
 
-- Selector de backend en login (por defecto iagentshub).
-- Autenticación real contra backend FastAPI:
-	- login
-	- guest login
-	- me
-	- logout
-	- register
-	- forgot/reset password
-	- verify
-- Sesión persistente con SharedPreferences (cookie ga_token y usuario).
-- Rutas públicas, privadas y admin con guards de sesión/rol.
-- Shell de navegación para secciones privadas.
-- Dashboard con resumen real consumiendo endpoints backend.
-- Módulos funcionales completos en app privada:
-	- Agents: listado, crear, editar, eliminar.
-	- Connections: CRUD + test individual + test masivo.
-	- Knowledge: alta texto, import URL, subida documento, listado y borrado.
-	- Workflows: CRUD + ejecución (run) con visualización de eventos.
-	- Memory: CRUD de archivos markdown con editor integrado.
-	- Explore: filtros, preview, star/unstar y link de recursos públicos.
-	- Labels: agregación y filtrado por etiquetas reales del catálogo.
-	- Manager: gestión de groups (crear, renombrar, eliminar, activar).
-	- Profile: settings, perfil público, cambio contraseña, solicitud de eliminación.
-- Área admin funcional:
-	- Admin: estadísticas, gestión rápida de usuarios y groups.
-	- Metadata: exploración de tablas y datos paginados.
-	- Centinel: estado, ejecución/aborto de runs e historial.
-- Perfil público funcional con follow/unfollow y recursos del usuario.
+```bash
+flutter build apk        # or appbundle, ipa, web, windows, macos, linux
+```
 
-## Rutas principales
+---
 
-Públicas:
+## Backend
 
-- /
-- /en/
-- /about
-- /en/about
-- /docs
-- /en/docs
-- /support
-- /en/support
-- /pricing/
-- /en/pricing/
-- /checkout/
-- /login/
-- /register/
-- /forgot-password/
-- /reset-password/?token=...
-- /verify/?token=...
+The app ships pointing at `www.iagentshub.com`. Any other iAgentsHub instance can be added from the server screen — no rebuild needed. If the remote backend does not resolve on your network, point it at a local one (for example `http://localhost:8765`).
 
-Privadas:
+> For the full stack (backend + frontend + skills), deploy from [iAgentsHub](https://github.com/iagentshub/iAgents).
 
-- /dashboard/
-- /agents/
-- /orchestrations/
-- /connections/
-- /memory/
-- /knowledge/
-- /explore/
-- /labels/
-- /manager/
-- /profile/
-- /vscode-auth/
-- /u/:username
+---
 
-Admin:
+## Web development with the official backend
 
-- /admin/
-- /admin/metadata/
-- /admin/centinel/
+Run Flutter's web server and the same-origin development proxy in separate terminals:
 
-## Nota de conectividad
+```bash
+flutter run -d web-server --web-hostname 127.0.0.1 --web-port 7359
+dart run tool/dev_web_proxy.dart
+```
 
-Si el backend remoto no resuelve en tu red, usa el selector de backend para
-apuntar a una instancia local (ejemplo: http://localhost:8765).
+Open `http://127.0.0.1:7357/login`. The proxy only listens on localhost and forwards `/api` to `https://www.iagentshub.com`, so browser sessions work without changing production CORS.
+
+To use the local backend instead, start it from a third terminal:
+
+```bash
+dart run tool/run_local_backend.dart
+```
+
+Then choose `Localhost` in the server selector on the login page.
+
+---
+
+| | |
+|---|---|
+| 🇪🇸 Español | [docs/es/index.md](docs/es/index.md) |
+| 🇬🇧 English | [docs/en/index.md](docs/en/index.md) |

@@ -22,6 +22,7 @@ import '../../features/labels/pages/labels_page.dart';
 import '../../features/manager/pages/manager_page.dart';
 import '../../features/memory/pages/memory_page.dart';
 import '../../features/profile/pages/profile_page.dart';
+import '../../features/public/pages/checkout_page.dart';
 import '../../features/public/pages/public_profile_page.dart';
 import '../../features/workflows/pages/workflows_page.dart';
 import '../../shared/state/backend_controller.dart';
@@ -57,7 +58,7 @@ GoRouter createRouter({
   }
 
   return GoRouter(
-    initialLocation: RouteNames.home,
+    initialLocation: RouteNames.login,
     refreshListenable: sessionController,
     errorBuilder: (context, state) =>
         const TerminalViewTransition(child: NotFoundPage()),
@@ -84,15 +85,7 @@ GoRouter createRouter({
     routes: [
       GoRoute(
         path: RouteNames.home,
-        builder: (context, state) => TerminalViewTransition(
-          child: LoginPage(
-            backendController: backendController,
-            sessionController: sessionController,
-            localeController: localeController,
-            authRepository: authRepository,
-            redirectTo: state.uri.queryParameters['redirect'],
-          ),
-        ),
+        redirect: (context, state) => RouteNames.login,
       ),
       for (final path in const [
         RouteNames.homeEn,
@@ -104,7 +97,6 @@ GoRouter createRouter({
         RouteNames.supportEn,
         RouteNames.pricing,
         RouteNames.pricingEn,
-        RouteNames.checkout,
       ])
         GoRoute(path: path, redirect: (context, state) => RouteNames.home),
       GoRoute(
@@ -284,6 +276,15 @@ GoRouter createRouter({
                 apiClient: apiClient,
                 sessionController: sessionController,
                 localeController: localeController,
+              ),
+            ),
+          ),
+          GoRoute(
+            path: RouteNames.checkout,
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: CheckoutPage(
+                apiClient: apiClient,
+                queryParameters: state.uri.queryParameters,
               ),
             ),
           ),

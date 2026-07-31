@@ -4,10 +4,13 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+import '../config/backend_defaults.dart';
 import 'api_error.dart';
 import 'api_response.dart';
 import 'api_response_cache.dart';
 import 'bounded_line_transformer.dart';
+import 'api_uri.dart';
+import 'http_client_factory.dart';
 import '../../shared/state/backend_controller.dart';
 
 export 'api_response.dart';
@@ -20,7 +23,7 @@ class ApiClient {
     int maxResponseBytes = 20 * 1024 * 1024,
     int maxDownloadBytes = 200 * 1024 * 1024,
     int maxStreamLineChars = 1024 * 1024,
-  }) : _client = client ?? http.Client(),
+  }) : _client = client ?? createHttpClient(),
        _requestTimeout = requestTimeout,
        _maxResponseBytes = maxResponseBytes,
        _maxDownloadBytes = maxDownloadBytes,
@@ -46,11 +49,17 @@ class ApiClient {
 
   @visibleForTesting
   int get debugInFlightGetCount => _cache.inFlightCount;
+  static const browserCookieSessionToken = '__browser_cookie_session__';
 
   Uri _uri(String path) {
-    final base = backendController.effectiveBaseUrl;
-    final normalizedPath = path.startsWith('/') ? path : '/$path';
-    return Uri.parse('$base$normalizedPath');
+    return resolveApiUri(
+      baseUrl: backendController.effectiveBaseUrl,
+      path: path,
+      useSameOrigin:
+          kIsWeb &&
+          backendController.selectedBackendId ==
+              BackendDefaults.selectedBackendId,
+    );
   }
 
   /// Envía la petición y reporta al [BackendController] si el backend
@@ -236,7 +245,7 @@ class ApiClient {
     String? gaToken,
   }) async* {
     final headers = <String, String>{'Accept': 'text/event-stream'};
-    if (gaToken != null && gaToken.isNotEmpty) {
+    if (!kIsWeb && gaToken != null && gaToken.isNotEmpty) {
       headers['Cookie'] = 'ga_token=$gaToken';
     }
     if (body != null) headers['Content-Type'] = 'application/json';
@@ -275,7 +284,7 @@ class ApiClient {
     final request = http.MultipartRequest('POST', _uri(path));
     request.followRedirects = false;
     request.headers['Accept'] = 'application/json';
-    if (gaToken != null && gaToken.isNotEmpty) {
+    if (!kIsWeb && gaToken != null && gaToken.isNotEmpty) {
       request.headers['Cookie'] = 'ga_token=$gaToken';
     }
 
@@ -311,7 +320,7 @@ class ApiClient {
     String? gaToken,
   }) async {
     final headers = <String, String>{'Accept': 'application/json'};
-    if (gaToken != null && gaToken.isNotEmpty) {
+    if (!kIsWeb && gaToken != null && gaToken.isNotEmpty) {
       headers['Cookie'] = 'ga_token=$gaToken';
     }
 
@@ -412,6 +421,12 @@ class ApiClient {
   }
 
   String? extractGaToken(Map<String, String> headers) {
+    // Los navegadores guardan la cookie HttpOnly automáticamente, pero por
+    // seguridad nunca exponen Set-Cookie a JavaScript. El marcador mantiene
+    // el contrato de sesión interno; BrowserClient enviará la cookie real en
+    // todas las peticiones same-origin bajo /app/.
+    if (kIsWeb) return browserCookieSessionToken;
+
     final setCookie = headers['set-cookie'];
     if (setCookie == null || setCookie.isEmpty) return null;
 
