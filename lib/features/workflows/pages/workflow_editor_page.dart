@@ -9,6 +9,8 @@ import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../models/workflow_step_draft.dart';
+import '../widgets/workflow_editor_toolbar.dart';
+import '../widgets/workflow_visual_canvas.dart';
 
 part '../cards/workflow_step_editor_card.dart';
 
@@ -37,6 +39,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
   late final TextEditingController _labelsController;
   late final TranslatedTexts _t;
   late List<WorkflowStepDraft> _steps;
+  String? _selectedStepId;
   int _stepCounter = 0;
 
   List<AgentItem> _agents = const [];
@@ -69,6 +72,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
     _steps = definition is Map<String, dynamic>
         ? _stepsFromDefinition(definition)
         : [_newStep()];
+    _selectedStepId = _steps.first.id;
     _loadAgents();
   }
 
@@ -164,6 +168,8 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
         loopIterations: loop.isEmpty
             ? 2
             : ((loop.first['iterations'] as num?)?.toInt() ?? 2),
+        positionX: ((n['position'] as Map?)?['x'] as num?)?.toDouble(),
+        positionY: ((n['position'] as Map?)?['y'] as num?)?.toDouble(),
         nextStepIds: nextIds,
       );
     }).toList();
@@ -177,6 +183,8 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
         'label': step.label,
         'instruction': step.instruction,
         'kind': step.kind,
+        if (step.positionX != null && step.positionY != null)
+          'position': {'x': step.positionX, 'y': step.positionY},
       };
       if (step.kind == 'evaluator') {
         node['evaluator'] = {
@@ -287,6 +295,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
         _steps.last.nextStepIds.add(newStep.id);
       }
       _steps = [..._steps, newStep];
+      _selectedStepId = newStep.id;
     });
   }
 
@@ -299,22 +308,225 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
         if (step.loopTargetId == removedId) step.loopTargetId = null;
         step.nextStepIds.remove(removedId);
       }
+      if (_selectedStepId == removedId) {
+        _selectedStepId = _steps.first.id;
+      }
     });
   }
 
-  void _reorder(int oldIndex, int newIndex) {
+  void _removeStepById(String stepId) {
+    final index = _steps.indexWhere((step) => step.id == stepId);
+    if (index >= 0) _removeStep(index);
+  }
+
+  void _moveStep(String stepId, Offset position) {
+    final step = _steps.where((item) => item.id == stepId).firstOrNull;
+    if (step == null) return;
+    step.positionX = position.dx;
+    step.positionY = position.dy;
+  }
+
+  void _createConnection(String sourceId, String targetId, String type) {
     _refresh(() {
-      final list = [..._steps];
-      if (newIndex > oldIndex) newIndex -= 1;
-      final item = list.removeAt(oldIndex);
-      list.insert(newIndex, item);
-      _steps = list;
+      final source = _steps.where((item) => item.id == sourceId).firstOrNull;
+      if (source == null) return;
+      if (type == 'loop') {
+        source.loopTargetId = targetId;
+      } else if (!source.nextStepIds.contains(targetId)) {
+        source.nextStepIds.add(targetId);
+      }
     });
+  }
+
+  void _deleteConnection(String sourceId, String targetId, String type) {
+    _refresh(() {
+      final source = _steps.where((item) => item.id == sourceId).firstOrNull;
+      if (source == null) return;
+      if (type == 'loop') {
+        if (source.loopTargetId == targetId) source.loopTargetId = null;
+      } else {
+        source.nextStepIds.remove(targetId);
+      }
+    });
+  }
+
+  bool _canCreateConnection(String sourceId, String targetId) {
+    if (sourceId == targetId) return false;
+    final source = _steps.where((item) => item.id == sourceId).firstOrNull;
+    if (source == null || source.nextStepIds.contains(targetId)) return false;
+
+    final pending = <String>[targetId];
+    final visited = <String>{};
+    while (pending.isNotEmpty) {
+      final current = pending.removeLast();
+      if (!visited.add(current)) continue;
+      if (current == sourceId) return false;
+      final step = _steps.where((item) => item.id == current).firstOrNull;
+      if (step != null) pending.addAll(step.nextStepIds);
+    }
+    return true;
+  }
+
+  Widget _buildMetadataCard() {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: ExpansionTile(
+        initiallyExpanded: widget.initial == null,
+        leading: const Icon(Icons.description_outlined),
+        title: Text(
+          _tx('workflow_editor.details_title', 'Datos del workflow'),
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        children: [
+          TextFormField(
+            controller: _nameController,
+            decoration: InputDecoration(
+              labelText: _tx('workflow_editor.name_label', 'Nombre'),
+            ),
+            validator: (value) => (value == null || value.trim().isEmpty)
+                ? _tx('workflow_editor.name_required', 'Nombre obligatorio')
+                : null,
+          ),
+          const SizedBox(height: 10),
+          TextFormField(
+            controller: _descriptionController,
+            minLines: 2,
+            maxLines: 4,
+            decoration: InputDecoration(
+              labelText: _tx(
+                'workflow_editor.description_label',
+                'Descripción',
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextFormField(
+            controller: _labelsController,
+            decoration: InputDecoration(
+              labelText: _tx(
+                'workflow_editor.labels_label',
+                'Labels (coma separada)',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInspector() {
+    final index = _steps.indexWhere((step) => step.id == _selectedStepId);
+    if (index < 0) {
+      return Center(
+        child: Text(
+          _tx(
+            'workflow_editor.select_node_hint',
+            'Selecciona un nodo para editarlo',
+          ),
+        ),
+      );
+    }
+    return ListView(
+      padding: EdgeInsets.zero,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                _tx(
+                  'workflow_editor.inspector_title',
+                  'Configuración del paso',
+                ),
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            Text(
+              '${index + 1}/${_steps.length}',
+              style: Theme.of(context).textTheme.labelMedium,
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        _buildStepCard(index, key: ValueKey('inspector-${_steps[index].id}')),
+      ],
+    );
+  }
+
+  Widget _buildWorkspace() {
+    final canvas = WorkflowVisualCanvas(
+      steps: _steps,
+      agents: _agents,
+      selectedStepId: _selectedStepId,
+      onStepSelected: (id) => _refresh(() => _selectedStepId = id),
+      onStepMoved: _moveStep,
+      onStepDeleted: _removeStepById,
+      onConnectionCreated: _createConnection,
+      onConnectionDeleted: _deleteConnection,
+      canCreateConnection: _canCreateConnection,
+      fitTooltip: _tx('workflow_editor.fit_view', 'Encajar diagrama'),
+      zoomInTooltip: _tx('workflow_editor.zoom_in', 'Acercar'),
+      zoomOutTooltip: _tx('workflow_editor.zoom_out', 'Alejar'),
+      connectionHint: _tx(
+        'workflow_editor.visual_hint',
+        'Arrastra desde la salida de un nodo hasta la entrada de otro',
+      ),
+      inputLabel: _tx('workflow_editor.input_port', 'Entrada'),
+      outputLabel: _tx('workflow_editor.output_port', 'Salida'),
+      missingAgentLabel: _tx('workflow_editor.no_agent', 'Sin agente'),
+      agentKindLabel: _tx('workflow_editor.kind_agent', 'Agente'),
+      evaluatorKindLabel: _tx('workflow_editor.kind_evaluator', 'Evaluador'),
+      loopLabel: _tx('workflow_editor.loop_label', 'Bucle'),
+      invalidConnectionMessage: _tx(
+        'workflow_editor.invalid_connection',
+        'La conexión crearía un ciclo o ya existe',
+      ),
+    );
+    final colors = Theme.of(context).colorScheme;
+    final inspector = Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: _buildInspector(),
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 980;
+        if (wide) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: canvas),
+              const SizedBox(width: 14),
+              SizedBox(width: 370, child: inspector),
+            ],
+          );
+        }
+        return Column(
+          children: [
+            Expanded(flex: 3, child: canvas),
+            const SizedBox(height: 12),
+            Expanded(flex: 2, child: inspector),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
+      backgroundColor: colors.surfaceContainerLowest,
       appBar: AppBar(
         title: Text(
           widget.initial == null
@@ -322,9 +534,10 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
               : _tx('workflow_editor.title_edit', 'Editar workflow'),
         ),
         actions: [
-          TertiaryButton(
+          PrimaryButton.icon(
             onPressed: _save,
-            child: Text(_tx('workflow_editor.save_btn', 'GUARDAR')),
+            icon: const Icon(Icons.check_rounded, size: 18),
+            label: Text(_tx('workflow_editor.save_btn', 'Guardar')),
           ),
         ],
       ),
@@ -332,104 +545,49 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
           ? const Center(child: CircularProgressIndicator())
           : Form(
               key: _formKey,
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 760),
-                  child: ListView(
-                    padding: const EdgeInsets.all(16),
-                    children: [
-                      if (_error != null) ...[
-                        Text(
-                          _error!,
-                          style: TextStyle(color: Colors.red.shade700),
-                        ),
-                        const SizedBox(height: 10),
-                      ],
-                      TextFormField(
-                        controller: _nameController,
-                        decoration: InputDecoration(
-                          labelText: _tx(
-                            'workflow_editor.name_label',
-                            'Nombre',
-                          ),
-                        ),
-                        validator: (value) =>
-                            (value == null || value.trim().isEmpty)
-                            ? _tx(
-                                'workflow_editor.name_required',
-                                'Nombre obligatorio',
-                              )
-                            : null,
-                      ),
-                      const SizedBox(height: 10),
-                      TextFormField(
-                        controller: _descriptionController,
-                        minLines: 2,
-                        maxLines: 4,
-                        decoration: InputDecoration(
-                          labelText: _tx(
-                            'workflow_editor.description_label',
-                            'Descripción',
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      TextFormField(
-                        controller: _labelsController,
-                        decoration: InputDecoration(
-                          labelText: _tx(
-                            'workflow_editor.labels_label',
-                            'Labels (coma separada)',
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            _tx('workflow_editor.steps_title', 'Pasos'),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          SecondaryButton.icon(
-                            onPressed: _addStep,
-                            icon: const Icon(Icons.add),
-                            label: Text(
-                              _tx(
-                                'workflow_editor.add_step_btn',
-                                'Añadir paso',
-                              ),
-                            ),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  children: [
+                    if (_error != null) ...[
+                      MaterialBanner(
+                        content: Text(_error!),
+                        actions: [
+                          TertiaryButton(
+                            onPressed: () => _refresh(() => _error = null),
+                            child: Text(_tx('common.close', 'Cerrar')),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _tx(
-                          'workflow_editor.steps_hint',
-                          'Cada paso puede continuar hacia varios pasos a la vez '
-                              '(ramas paralelas) — marca los destinos en "Continúa hacia".',
-                        ),
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
                       const SizedBox(height: 10),
-                      ReorderableListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        buildDefaultDragHandles: false,
-                        itemCount: _steps.length,
-                        onReorder: _reorder,
-                        itemBuilder: (context, index) => _buildStepCard(
-                          index,
-                          key: ValueKey(_steps[index].id),
-                        ),
-                      ),
                     ],
-                  ),
+                    _buildMetadataCard(),
+                    const SizedBox(height: 12),
+                    WorkflowEditorToolbar(
+                      title: _tx(
+                        'workflow_editor.canvas_title',
+                        'Lienzo de orquestación',
+                      ),
+                      subtitle: _tx(
+                        'workflow_editor.canvas_subtitle',
+                        'Diseña el flujo conectando agentes visualmente',
+                      ),
+                      stepCount: _steps.length,
+                      connectionCount: _steps.connectionCount,
+                      stepsLabel: _tx('workflows.steps_suffix', 'pasos'),
+                      connectionsLabel: _tx(
+                        'workflows.connections_suffix',
+                        'conexiones',
+                      ),
+                      addLabel: _tx(
+                        'workflow_editor.add_step_btn',
+                        'Añadir paso',
+                      ),
+                      onAdd: _addStep,
+                    ),
+                    const SizedBox(height: 10),
+                    Expanded(child: _buildWorkspace()),
+                  ],
                 ),
               ),
             ),

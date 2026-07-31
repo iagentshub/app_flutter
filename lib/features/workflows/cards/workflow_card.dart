@@ -149,34 +149,81 @@ class WorkflowCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final metadata = [
-      '${item.nodes.length} $stepsLabel',
-      '${item.edges.length} $connectionsLabel',
-    ];
+    final colors = Theme.of(context).colorScheme;
     final (graphNodes, graphEdges) = _buildGraph();
 
     return Card(
       margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              item.name,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: colors.primaryContainer,
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: Icon(
+                    Icons.account_tree_outlined,
+                    color: colors.primary,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Text(
+                    item.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                ActionIconButton(
+                  icon: Icons.edit_outlined,
+                  tooltip: editTooltip,
+                  onPressed: onEdit,
+                ),
+              ],
             ),
-            const SizedBox(height: 6),
-            Text(metadata.join(' · ')),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _WorkflowMetric(
+                  icon: Icons.smart_toy_outlined,
+                  value: item.nodes.length,
+                  label: stepsLabel,
+                ),
+                _WorkflowMetric(
+                  icon: Icons.arrow_forward_rounded,
+                  value: item.edges.length,
+                  label: connectionsLabel,
+                ),
+              ],
+            ),
             if (item.description.isNotEmpty) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: 14),
               Text(
                 item.description,
-                maxLines: 3,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  height: 1.35,
+                ),
               ),
             ],
-            const SizedBox(height: 8),
+            const SizedBox(height: 14),
             LabelChipsRow(
               labels: item.labels,
               leading: [
@@ -187,15 +234,19 @@ class WorkflowCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
+            Divider(height: 1, color: colors.outlineVariant),
+            const SizedBox(height: 12),
             Row(
               children: [
-                SecondaryButton.icon(
-                  onPressed: onRun,
-                  icon: const Icon(Icons.play_arrow_outlined),
-                  label: Text(runLabel),
+                Expanded(
+                  child: SecondaryButton.icon(
+                    onPressed: onRun,
+                    icon: const Icon(Icons.play_arrow_rounded),
+                    label: Text(runLabel),
+                  ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 ResourceGraphButton(
                   tooltip: graphTooltip,
                   dialogTitle: item.name,
@@ -206,11 +257,7 @@ class WorkflowCard extends StatelessWidget {
                   searchHint: graphSearchHint,
                   emptyLabel: graphEmptyLabel,
                 ),
-                ActionIconButton(
-                  icon: Icons.edit_outlined,
-                  tooltip: editTooltip,
-                  onPressed: onEdit,
-                ),
+                const SizedBox(width: 8),
                 ActionIconButton(
                   icon: Icons.delete_outline,
                   tooltip: deleteTooltip,
@@ -221,6 +268,44 @@ class WorkflowCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _WorkflowMetric extends StatelessWidget {
+  const _WorkflowMetric({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
+
+  final IconData icon;
+  final int value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHighest.withValues(alpha: .65),
+        borderRadius: BorderRadius.circular(9),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: colors.onSurfaceVariant),
+          const SizedBox(width: 5),
+          Text(
+            '$value $label',
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: colors.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
