@@ -30,10 +30,32 @@ IconData iconForType(String type) {
   }
 }
 
-/// Grafo animado de contenido de un recurso: nodo raíz en el centro y el
-/// resto distribuido en círculo a su alrededor. Sin dependencias externas
-/// (solo `CustomPaint` + `AnimationController`) para no añadir un paquete
-/// de grafos solo para esta vista.
+/// Formas de ordenar automáticamente el grafo: dos variantes jerárquicas
+/// (raíz arriba/izquierda y capas hacia abajo/derecha) y la original en
+/// círculos concéntricos.
+enum GraphSortMode { hierarchyVertical, hierarchyHorizontal, radial }
+
+/// Controla el modo de ordenación desde fuera de [AnimatedResourceGraph]
+/// (p. ej. un botón desplegable en la cabecera del diálogo, junto al
+/// buscador), sin que el grafo necesite conocer ese control.
+class GraphSortController extends ChangeNotifier {
+  GraphSortController([this._mode = GraphSortMode.hierarchyVertical]);
+
+  GraphSortMode _mode;
+  GraphSortMode get mode => _mode;
+
+  void setMode(GraphSortMode mode) {
+    if (_mode == mode) return;
+    _mode = mode;
+    notifyListeners();
+  }
+}
+
+/// Grafo animado de contenido de un recurso: por defecto en capas
+/// jerárquicas (raíz arriba, niveles hacia abajo) o, si se prefiere, en
+/// círculos concéntricos. Sin dependencias externas (solo `CustomPaint` +
+/// `AnimationController`) para no añadir un paquete de grafos solo para
+/// esta vista.
 class AnimatedResourceGraph extends StatefulWidget {
   const AnimatedResourceGraph({
     required this.nodes,
@@ -41,6 +63,10 @@ class AnimatedResourceGraph extends StatefulWidget {
     required this.rootId,
     this.emptyLabel = '',
     this.highlightQuery = '',
+    this.sortController,
+    this.quickViewConnectionsLabel = 'Conexiones',
+    this.quickViewNoConnectionsLabel = 'Sin conexiones',
+    this.quickViewCloseTooltip = 'Cerrar',
     super.key,
   });
 
@@ -53,14 +79,26 @@ class AnimatedResourceGraph extends StatefulWidget {
   /// resaltarse, sin cambiar la vista (siempre es un grafo).
   final String highlightQuery;
 
+  /// Permite elegir el modo de ordenación desde fuera (p. ej. un botón
+  /// desplegable en la cabecera del diálogo). Si no se provee, el grafo
+  /// crea y gestiona uno propio internamente.
+  final GraphSortController? sortController;
+
+  final String quickViewConnectionsLabel;
+  final String quickViewNoConnectionsLabel;
+  final String quickViewCloseTooltip;
+
   @override
   State<AnimatedResourceGraph> createState() => _AnimatedResourceGraphState();
 }
 
 class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     with TickerProviderStateMixin {
-  // Distancia entre anillos de niveles consecutivos.
+  // Distancia entre anillos de niveles consecutivos (modo radial).
   static const _ringSpacing = 170.0;
+  // Distancia entre niveles/hermanos consecutivos (modos jerárquicos).
+  static const _levelSpacing = 150.0;
+  static const _siblingSpacing = 130.0;
   static const _minScale = 0.4;
   static const _maxScale = 2.5;
 
@@ -102,8 +140,32 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
   Offset _gestureStartFocalGlobal = Offset.zero;
   Offset _gestureStartLocalFocal = Offset.zero;
 
+  late final GraphSortController _sortController =
+      widget.sortController ?? GraphSortController();
+  bool get _ownsSortController => widget.sortController == null;
+  GraphSortMode get _sortMode => _sortController.mode;
+
+  @override
+  void initState() {
+    super.initState();
+    _sortController.addListener(_handleSortModeChanged);
+  }
+
+  /// Cambiar de modo reordena desde cero: se descartan las posiciones
+  /// (incluidas las arrastradas a mano) y se recentra el lienzo, ya que
+  /// cada modo tiene una forma y un tamaño de lienzo muy distintos.
+  void _handleSortModeChanged() {
+    setState(() {
+      _positions.clear();
+      _panInitialized = false;
+      _scale = 1.0;
+    });
+  }
+
   @override
   void dispose() {
+    _sortController.removeListener(_handleSortModeChanged);
+    if (_ownsSortController) _sortController.dispose();
     _entrance.dispose();
     _pulse.dispose();
     _blink.dispose();
@@ -143,16 +205,43 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
   }
 
   Size _canvasSizeFor(Size viewport, Map<String, int> levels) {
+    if (_sortMode == GraphSortMode.radial) {
+      final maxLevel = levels.values.fold(0, math.max);
+      final maxRadius = maxLevel * _ringSpacing + 70;
+      return Size(
+        math.max(viewport.width, maxRadius * 2),
+        math.max(viewport.height, maxRadius * 2),
+      );
+    }
+    final perLevelCount = <int, int>{};
+    for (final level in levels.values) {
+      perLevelCount[level] = (perLevelCount[level] ?? 0) + 1;
+    }
     final maxLevel = levels.values.fold(0, math.max);
-    final maxRadius = maxLevel * _ringSpacing + 70;
+    final maxPerLevel = perLevelCount.values.fold(1, math.max);
+    final mainAxis = (maxLevel + 1) * _levelSpacing + 100;
+    final crossAxis = maxPerLevel * _siblingSpacing + 100;
+    final horizontal = _sortMode == GraphSortMode.hierarchyHorizontal;
     return Size(
-      math.max(viewport.width, maxRadius * 2),
-      math.max(viewport.height, maxRadius * 2),
+      math.max(viewport.width, horizontal ? mainAxis : crossAxis),
+      math.max(viewport.height, horizontal ? crossAxis : mainAxis),
     );
   }
 
   void _ensurePositions(Size canvasSize, Map<String, int> levels) {
     if (_positions.length == widget.nodes.length) return;
+    if (_sortMode == GraphSortMode.radial) {
+      _ensureRadialPositions(canvasSize, levels);
+    } else {
+      _ensureLayeredPositions(
+        canvasSize,
+        levels,
+        horizontal: _sortMode == GraphSortMode.hierarchyHorizontal,
+      );
+    }
+  }
+
+  void _ensureRadialPositions(Size canvasSize, Map<String, int> levels) {
     final center = Offset(canvasSize.width / 2, canvasSize.height / 2);
     final byLevel = <int, List<GraphNode>>{};
     for (final node in widget.nodes) {
@@ -174,6 +263,73 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
                   );
       }
     }
+  }
+
+  /// Layout jerárquico: la raíz queda en el extremo superior (o izquierdo,
+  /// en el modo horizontal) y cada nivel siguiente se dibuja como una capa
+  /// más abajo (o a la derecha). Dentro de cada capa, los nodos se ordenan
+  /// por la posición media de sus padres en la capa anterior (heurística
+  /// de baricentro) para minimizar cruces de aristas entre capas.
+  void _ensureLayeredPositions(
+    Size canvasSize,
+    Map<String, int> levels, {
+    required bool horizontal,
+  }) {
+    final byLevel = <int, List<GraphNode>>{};
+    for (final node in widget.nodes) {
+      byLevel.putIfAbsent(levels[node.id] ?? 1, () => []).add(node);
+    }
+    final parentsOf = <String, List<String>>{};
+    for (final edge in widget.edges) {
+      parentsOf.putIfAbsent(edge.targetId, () => []).add(edge.sourceId);
+    }
+    final crossPosition = <String, double>{};
+    final crossCenter = horizontal
+        ? canvasSize.height / 2
+        : canvasSize.width / 2;
+    for (final level in byLevel.keys.toList()..sort()) {
+      var nodesInLevel = byLevel[level]!;
+      if (level > 0) {
+        final indexed = nodesInLevel.asMap().entries.toList();
+        indexed.sort((a, b) {
+          final barycenterA = _barycenterOf(a.value, parentsOf, crossPosition);
+          final barycenterB = _barycenterOf(b.value, parentsOf, crossPosition);
+          final cmp = barycenterA.compareTo(barycenterB);
+          return cmp != 0 ? cmp : a.key.compareTo(b.key);
+        });
+        nodesInLevel = [for (final entry in indexed) entry.value];
+      }
+      final totalSpan = (nodesInLevel.length - 1) * _siblingSpacing;
+      final mainAxisPos = 80.0 + level * _levelSpacing;
+      for (var i = 0; i < nodesInLevel.length; i++) {
+        final node = nodesInLevel[i];
+        final crossPos = nodesInLevel.length == 1
+            ? crossCenter
+            : crossCenter - totalSpan / 2 + i * _siblingSpacing;
+        crossPosition[node.id] = crossPos;
+        if (_positions.containsKey(node.id)) continue;
+        _positions[node.id] = horizontal
+            ? Offset(mainAxisPos, crossPos)
+            : Offset(crossPos, mainAxisPos);
+      }
+    }
+  }
+
+  /// Posición media (en el eje transversal) de los padres ya ubicados de
+  /// [node]; si no tiene padres ubicados aún, mantiene su orden original.
+  double _barycenterOf(
+    GraphNode node,
+    Map<String, List<String>> parentsOf,
+    Map<String, double> crossPosition,
+  ) {
+    final parentPositions = [
+      for (final parentId in parentsOf[node.id] ?? const <String>[])
+        ?crossPosition[parentId],
+    ];
+    if (parentPositions.isEmpty) {
+      return widget.nodes.indexWhere((n) => n.id == node.id).toDouble();
+    }
+    return parentPositions.reduce((a, b) => a + b) / parentPositions.length;
   }
 
   Offset _clampPan(Offset offset, Size viewport, Size canvas, double scale) {
@@ -362,6 +518,7 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
         cursor: SystemMouseCursors.grab,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
+          onTap: () => _showQuickView(context, node),
           onPanUpdate: (details) {
             setState(() {
               final updated = pos + details.delta / _scale;
@@ -424,6 +581,91 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Vista rápida de un nodo: icono/color/etiqueta y con qué otros nodos
+  /// conecta (entrantes y salientes), sin salir del grafo.
+  void _showQuickView(BuildContext context, GraphNode node) {
+    final connectedIds = <String>{
+      for (final edge in widget.edges)
+        if (edge.sourceId == node.id) edge.targetId,
+      for (final edge in widget.edges)
+        if (edge.targetId == node.id) edge.sourceId,
+    };
+    final connectedNodes = [
+      for (final other in widget.nodes)
+        if (connectedIds.contains(other.id)) other,
+    ];
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: labelColor(node.type),
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: Icon(
+                iconForType(node.type),
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(child: Text(node.label, overflow: TextOverflow.ellipsis)),
+            IconButton(
+              icon: const Icon(Icons.close),
+              tooltip: widget.quickViewCloseTooltip,
+              onPressed: () => Navigator.of(dialogContext).pop(),
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: 320,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.quickViewConnectionsLabel,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              if (connectedNodes.isEmpty)
+                Text(
+                  widget.quickViewNoConnectionsLabel,
+                  style: Theme.of(dialogContext).textTheme.bodySmall,
+                )
+              else
+                for (final connected in connectedNodes)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      children: [
+                        Icon(
+                          iconForType(connected.type),
+                          size: 16,
+                          color: labelColor(connected.type),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            connected.label,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+            ],
           ),
         ),
       ),

@@ -16,6 +16,10 @@ Future<void> showResourceGraphDialog({
   required String closeLabel,
   required String searchHint,
   String emptyLabel = '',
+  String sortTooltip = 'Ordenar',
+  String sortHierarchyVerticalLabel = 'Jerárquico (arriba-abajo)',
+  String sortHierarchyHorizontalLabel = 'Jerárquico (izquierda-derecha)',
+  String sortRadialLabel = 'Radial (círculos)',
 }) {
   return showDialog<void>(
     context: context,
@@ -27,6 +31,10 @@ Future<void> showResourceGraphDialog({
       closeLabel: closeLabel,
       searchHint: searchHint,
       emptyLabel: emptyLabel,
+      sortTooltip: sortTooltip,
+      sortHierarchyVerticalLabel: sortHierarchyVerticalLabel,
+      sortHierarchyHorizontalLabel: sortHierarchyHorizontalLabel,
+      sortRadialLabel: sortRadialLabel,
     ),
   );
 }
@@ -40,6 +48,10 @@ class _ResourceGraphDialogContent extends StatefulWidget {
     required this.closeLabel,
     required this.searchHint,
     required this.emptyLabel,
+    required this.sortTooltip,
+    required this.sortHierarchyVerticalLabel,
+    required this.sortHierarchyHorizontalLabel,
+    required this.sortRadialLabel,
   });
 
   final String title;
@@ -49,6 +61,10 @@ class _ResourceGraphDialogContent extends StatefulWidget {
   final String closeLabel;
   final String searchHint;
   final String emptyLabel;
+  final String sortTooltip;
+  final String sortHierarchyVerticalLabel;
+  final String sortHierarchyHorizontalLabel;
+  final String sortRadialLabel;
 
   @override
   State<_ResourceGraphDialogContent> createState() =>
@@ -58,6 +74,49 @@ class _ResourceGraphDialogContent extends StatefulWidget {
 class _ResourceGraphDialogContentState
     extends State<_ResourceGraphDialogContent> {
   String _query = '';
+  final _sortController = GraphSortController();
+
+  @override
+  void dispose() {
+    _sortController.dispose();
+    super.dispose();
+  }
+
+  List<PopupMenuEntry<GraphSortMode>> _sortMenuItems() {
+    return [
+      _sortMenuItem(
+        GraphSortMode.hierarchyVertical,
+        widget.sortHierarchyVerticalLabel,
+        Icons.vertical_align_bottom,
+      ),
+      _sortMenuItem(
+        GraphSortMode.hierarchyHorizontal,
+        widget.sortHierarchyHorizontalLabel,
+        Icons.align_horizontal_left,
+      ),
+      _sortMenuItem(GraphSortMode.radial, widget.sortRadialLabel, Icons.hub_outlined),
+    ];
+  }
+
+  PopupMenuItem<GraphSortMode> _sortMenuItem(
+    GraphSortMode mode,
+    String label,
+    IconData icon,
+  ) {
+    final selected = _sortController.mode == mode;
+    return PopupMenuItem<GraphSortMode>(
+      value: mode,
+      child: Row(
+        children: [
+          Icon(icon, size: 18),
+          const SizedBox(width: 10),
+          Expanded(child: Text(label)),
+          if (selected)
+            const Icon(Icons.check_circle, size: 18, color: Colors.green),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,14 +148,32 @@ class _ResourceGraphDialogContentState
               ],
             ),
             const SizedBox(height: 8),
-            TextField(
-              decoration: InputDecoration(
-                isDense: true,
-                prefixIcon: const Icon(Icons.search, size: 20),
-                hintText: widget.searchHint,
-                border: const OutlineInputBorder(),
-              ),
-              onChanged: (value) => setState(() => _query = value.trim()),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    style: const TextStyle(fontSize: 13),
+                    decoration: InputDecoration(
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
+                      prefixIcon: const Icon(Icons.search, size: 18),
+                      hintText: widget.searchHint,
+                      border: const OutlineInputBorder(),
+                    ),
+                    onChanged: (value) => setState(() => _query = value.trim()),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                PopupMenuButton<GraphSortMode>(
+                  tooltip: widget.sortTooltip,
+                  icon: const Icon(Icons.sort),
+                  onSelected: _sortController.setMode,
+                  itemBuilder: (context) => _sortMenuItems(),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             Expanded(
@@ -106,6 +183,7 @@ class _ResourceGraphDialogContentState
                 rootId: widget.rootId,
                 emptyLabel: widget.emptyLabel,
                 highlightQuery: _query,
+                sortController: _sortController,
               ),
             ),
           ],
