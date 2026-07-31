@@ -26,12 +26,9 @@ extension _WorkflowStepEditorCard on _WorkflowEditorPageState {
           children: [
             Row(
               children: [
-                ReorderableDragStartListener(
-                  index: index,
-                  child: const Padding(
-                    padding: EdgeInsets.only(right: 8),
-                    child: Icon(Icons.drag_handle),
-                  ),
+                const Padding(
+                  padding: EdgeInsets.only(right: 8),
+                  child: Icon(Icons.tune, size: 20),
                 ),
                 Text(
                   '$stepPrefix ${index + 1}',

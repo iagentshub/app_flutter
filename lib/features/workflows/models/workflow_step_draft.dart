@@ -9,6 +9,8 @@ class WorkflowStepDraft {
     this.evaluatorMaxIterations = 5,
     this.loopTargetId,
     this.loopIterations = 2,
+    this.positionX,
+    this.positionY,
     List<String>? nextStepIds,
   }) : nextStepIds = nextStepIds ?? [];
 
@@ -21,6 +23,8 @@ class WorkflowStepDraft {
   int evaluatorMaxIterations;
   String? loopTargetId;
   int loopIterations;
+  double? positionX;
+  double? positionY;
 
   /// IDs de los pasos siguientes; varios destinos representan ramas
   /// paralelas y un destino compartido representa fan-in.
