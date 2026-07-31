@@ -419,6 +419,35 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
                       'graph.search_hint',
                       'Buscar en el grafo...',
                     ),
+                    graphSortTooltip: _tx('graph.sort_tooltip', 'Ordenar'),
+                    graphSortHierarchyVerticalLabel: _tx(
+                      'graph.sort_hierarchy_vertical',
+                      'Jerárquico (arriba-abajo)',
+                    ),
+                    graphSortHierarchyHorizontalLabel: _tx(
+                      'graph.sort_hierarchy_horizontal',
+                      'Jerárquico (izquierda-derecha)',
+                    ),
+                    graphSortRadialLabel: _tx(
+                      'graph.sort_radial',
+                      'Radial (círculos)',
+                    ),
+                    graphQuickViewDescriptionLabel: _tx(
+                      'graph.quick_view_description',
+                      'Descripción',
+                    ),
+                    graphQuickViewNoDescriptionLabel: _tx(
+                      'graph.quick_view_no_description',
+                      'Sin descripción',
+                    ),
+                    graphQuickViewConnectionsLabel: _tx(
+                      'graph.quick_view_connections',
+                      'Conexiones',
+                    ),
+                    graphQuickViewNoConnectionsLabel: _tx(
+                      'graph.quick_view_no_connections',
+                      'Sin conexiones',
+                    ),
                     onRun: () => _runWorkflow(item),
                     onEdit: () => _openEditDialog(item),
                     onDelete: () => _deleteWorkflow(item),

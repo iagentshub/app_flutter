@@ -4,11 +4,17 @@
 /// `labelColor` (mismas claves que el catálogo de etiquetas: agent, skill,
 /// knowledge, connection, memory, workflow...).
 class GraphNode {
-  const GraphNode({required this.id, required this.label, required this.type});
+  const GraphNode({
+    required this.id,
+    required this.label,
+    required this.type,
+    this.description = '',
+  });
 
   final String id;
   final String label;
   final String type;
+  final String description;
 }
 
 class GraphEdge {

@@ -40,7 +40,14 @@ class AgentCard extends StatelessWidget {
   /// Nodos del grafo de contenido: el agente en el centro y sus skills,
   /// knowledge, conexión y memoria alrededor.
   List<GraphNode> _graphNodes() {
-    final nodes = [GraphNode(id: 'root', label: item.name, type: 'agent')];
+    final nodes = [
+      GraphNode(
+        id: 'root',
+        label: item.name,
+        type: 'agent',
+        description: item.description,
+      ),
+    ];
     if (item.connectionId.isNotEmpty) {
       nodes.add(
         GraphNode(id: 'connection', label: item.connectionId, type: 'connection'),
@@ -165,6 +172,32 @@ class AgentCard extends StatelessWidget {
                   rootId: 'root',
                   closeLabel: tx('common.close', 'Cerrar'),
                   searchHint: tx('graph.search_hint', 'Buscar en el grafo...'),
+                  sortTooltip: tx('graph.sort_tooltip', 'Ordenar'),
+                  sortHierarchyVerticalLabel: tx(
+                    'graph.sort_hierarchy_vertical',
+                    'Jerárquico (arriba-abajo)',
+                  ),
+                  sortHierarchyHorizontalLabel: tx(
+                    'graph.sort_hierarchy_horizontal',
+                    'Jerárquico (izquierda-derecha)',
+                  ),
+                  sortRadialLabel: tx('graph.sort_radial', 'Radial (círculos)'),
+                  quickViewDescriptionLabel: tx(
+                    'graph.quick_view_description',
+                    'Descripción',
+                  ),
+                  quickViewNoDescriptionLabel: tx(
+                    'graph.quick_view_no_description',
+                    'Sin descripción',
+                  ),
+                  quickViewConnectionsLabel: tx(
+                    'graph.quick_view_connections',
+                    'Conexiones',
+                  ),
+                  quickViewNoConnectionsLabel: tx(
+                    'graph.quick_view_no_connections',
+                    'Sin conexiones',
+                  ),
                   emptyLabel: tx(
                     'agents.graph_empty',
                     'Este agente todavía no tiene skills, knowledge, conexión ni memoria.',

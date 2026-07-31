@@ -1,6 +1,14 @@
 {
   "graph": {
-    "search_hint": "Buscar en el grafo..."
+    "search_hint": "Buscar en el grafo...",
+    "sort_tooltip": "Ordenar",
+    "sort_hierarchy_vertical": "Jerárquico (arriba-abajo)",
+    "sort_hierarchy_horizontal": "Jerárquico (izquierda-derecha)",
+    "sort_radial": "Radial (círculos)",
+    "quick_view_description": "Descripción",
+    "quick_view_no_description": "Sin descripción",
+    "quick_view_connections": "Conexiones",
+    "quick_view_no_connections": "Sin conexiones"
   },
   "common": {
     "edit": "Editar",

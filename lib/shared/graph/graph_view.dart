@@ -61,12 +61,14 @@ class AnimatedResourceGraph extends StatefulWidget {
     required this.nodes,
     required this.edges,
     required this.rootId,
+    required this.quickViewDescriptionLabel,
+    required this.quickViewNoDescriptionLabel,
+    required this.quickViewConnectionsLabel,
+    required this.quickViewNoConnectionsLabel,
+    required this.quickViewCloseTooltip,
     this.emptyLabel = '',
     this.highlightQuery = '',
     this.sortController,
-    this.quickViewConnectionsLabel = 'Conexiones',
-    this.quickViewNoConnectionsLabel = 'Sin conexiones',
-    this.quickViewCloseTooltip = 'Cerrar',
     super.key,
   });
 
@@ -84,6 +86,8 @@ class AnimatedResourceGraph extends StatefulWidget {
   /// crea y gestiona uno propio internamente.
   final GraphSortController? sortController;
 
+  final String quickViewDescriptionLabel;
+  final String quickViewNoDescriptionLabel;
   final String quickViewConnectionsLabel;
   final String quickViewNoConnectionsLabel;
   final String quickViewCloseTooltip;
@@ -634,6 +638,18 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Text(
+                widget.quickViewDescriptionLabel,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                node.description.isEmpty
+                    ? widget.quickViewNoDescriptionLabel
+                    : node.description,
+                style: Theme.of(dialogContext).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 16),
               Text(
                 widget.quickViewConnectionsLabel,
                 style: const TextStyle(fontWeight: FontWeight.w600),

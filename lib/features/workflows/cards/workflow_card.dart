@@ -25,6 +25,14 @@ class WorkflowCard extends StatelessWidget {
     required this.graphCloseLabel,
     required this.graphEmptyLabel,
     required this.graphSearchHint,
+    required this.graphSortTooltip,
+    required this.graphSortHierarchyVerticalLabel,
+    required this.graphSortHierarchyHorizontalLabel,
+    required this.graphSortRadialLabel,
+    required this.graphQuickViewDescriptionLabel,
+    required this.graphQuickViewNoDescriptionLabel,
+    required this.graphQuickViewConnectionsLabel,
+    required this.graphQuickViewNoConnectionsLabel,
     required this.onRun,
     required this.onEdit,
     required this.onDelete,
@@ -48,6 +56,14 @@ class WorkflowCard extends StatelessWidget {
   final String graphCloseLabel;
   final String graphEmptyLabel;
   final String graphSearchHint;
+  final String graphSortTooltip;
+  final String graphSortHierarchyVerticalLabel;
+  final String graphSortHierarchyHorizontalLabel;
+  final String graphSortRadialLabel;
+  final String graphQuickViewDescriptionLabel;
+  final String graphQuickViewNoDescriptionLabel;
+  final String graphQuickViewConnectionsLabel;
+  final String graphQuickViewNoConnectionsLabel;
   final VoidCallback onRun;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -61,7 +77,12 @@ class WorkflowCard extends StatelessWidget {
   /// enlazado desde cada paso que lo use.
   (List<GraphNode>, List<GraphEdge>) _buildGraph() {
     final nodesById = <String, GraphNode>{
-      'root': GraphNode(id: 'root', label: item.name, type: 'workflow'),
+      'root': GraphNode(
+        id: 'root',
+        label: item.name,
+        type: 'workflow',
+        description: item.description,
+      ),
     };
     final edgeKeys = <String>{};
     final edges = <GraphEdge>[];
@@ -90,6 +111,12 @@ class WorkflowCard extends StatelessWidget {
 
       final agent = agentsById[raw['agent_id']?.toString() ?? ''];
       if (agent == null) continue;
+      nodesById[id] = GraphNode(
+        id: id,
+        label: label,
+        type: isEvaluator ? 'evaluator' : 'agent',
+        description: agent.description,
+      );
       if (agent.connectionId.isNotEmpty) {
         final childId = 'connection:${agent.connectionId}';
         nodesById[childId] = GraphNode(
@@ -255,6 +282,14 @@ class WorkflowCard extends StatelessWidget {
                   rootId: 'root',
                   closeLabel: graphCloseLabel,
                   searchHint: graphSearchHint,
+                  sortTooltip: graphSortTooltip,
+                  sortHierarchyVerticalLabel: graphSortHierarchyVerticalLabel,
+                  sortHierarchyHorizontalLabel: graphSortHierarchyHorizontalLabel,
+                  sortRadialLabel: graphSortRadialLabel,
+                  quickViewDescriptionLabel: graphQuickViewDescriptionLabel,
+                  quickViewNoDescriptionLabel: graphQuickViewNoDescriptionLabel,
+                  quickViewConnectionsLabel: graphQuickViewConnectionsLabel,
+                  quickViewNoConnectionsLabel: graphQuickViewNoConnectionsLabel,
                   emptyLabel: graphEmptyLabel,
                 ),
                 const SizedBox(width: 8),

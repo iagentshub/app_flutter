@@ -15,11 +15,15 @@ Future<void> showResourceGraphDialog({
   required String rootId,
   required String closeLabel,
   required String searchHint,
+  required String sortTooltip,
+  required String sortHierarchyVerticalLabel,
+  required String sortHierarchyHorizontalLabel,
+  required String sortRadialLabel,
+  required String quickViewDescriptionLabel,
+  required String quickViewNoDescriptionLabel,
+  required String quickViewConnectionsLabel,
+  required String quickViewNoConnectionsLabel,
   String emptyLabel = '',
-  String sortTooltip = 'Ordenar',
-  String sortHierarchyVerticalLabel = 'Jerárquico (arriba-abajo)',
-  String sortHierarchyHorizontalLabel = 'Jerárquico (izquierda-derecha)',
-  String sortRadialLabel = 'Radial (círculos)',
 }) {
   return showDialog<void>(
     context: context,
@@ -35,6 +39,10 @@ Future<void> showResourceGraphDialog({
       sortHierarchyVerticalLabel: sortHierarchyVerticalLabel,
       sortHierarchyHorizontalLabel: sortHierarchyHorizontalLabel,
       sortRadialLabel: sortRadialLabel,
+      quickViewDescriptionLabel: quickViewDescriptionLabel,
+      quickViewNoDescriptionLabel: quickViewNoDescriptionLabel,
+      quickViewConnectionsLabel: quickViewConnectionsLabel,
+      quickViewNoConnectionsLabel: quickViewNoConnectionsLabel,
     ),
   );
 }
@@ -52,6 +60,10 @@ class _ResourceGraphDialogContent extends StatefulWidget {
     required this.sortHierarchyVerticalLabel,
     required this.sortHierarchyHorizontalLabel,
     required this.sortRadialLabel,
+    required this.quickViewDescriptionLabel,
+    required this.quickViewNoDescriptionLabel,
+    required this.quickViewConnectionsLabel,
+    required this.quickViewNoConnectionsLabel,
   });
 
   final String title;
@@ -65,6 +77,10 @@ class _ResourceGraphDialogContent extends StatefulWidget {
   final String sortHierarchyVerticalLabel;
   final String sortHierarchyHorizontalLabel;
   final String sortRadialLabel;
+  final String quickViewDescriptionLabel;
+  final String quickViewNoDescriptionLabel;
+  final String quickViewConnectionsLabel;
+  final String quickViewNoConnectionsLabel;
 
   @override
   State<_ResourceGraphDialogContent> createState() =>
@@ -184,6 +200,11 @@ class _ResourceGraphDialogContentState
                 emptyLabel: widget.emptyLabel,
                 highlightQuery: _query,
                 sortController: _sortController,
+                quickViewDescriptionLabel: widget.quickViewDescriptionLabel,
+                quickViewNoDescriptionLabel: widget.quickViewNoDescriptionLabel,
+                quickViewConnectionsLabel: widget.quickViewConnectionsLabel,
+                quickViewNoConnectionsLabel: widget.quickViewNoConnectionsLabel,
+                quickViewCloseTooltip: widget.closeLabel,
               ),
             ),
           ],
