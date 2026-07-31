@@ -18,6 +18,7 @@ import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/resource_toolbar.dart';
 import '../cards/workflow_card.dart';
+import '../widgets/workflow_overview_header.dart';
 import 'workflow_editor_page.dart';
 
 part '../dialogs/run_progress_dialog.dart';
@@ -308,13 +309,12 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
     }
 
     final filteredWorkflows = _filteredWorkflows;
+    final totalNodes = _workflows.fold<int>(
+      0,
+      (total, workflow) => total + workflow.nodes.length,
+    );
     final toolbar = ResourceToolbar(
       actions: [
-        AppIconButton.filled(
-          onPressed: _openCreateDialog,
-          icon: const Icon(Icons.add),
-          tooltip: _tx('workflows.new_workflow_tooltip', 'Nuevo workflow'),
-        ),
         AppIconButton.outlined(
           onPressed: _load,
           icon: const Icon(Icons.refresh),
@@ -338,20 +338,42 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+            sliver: SliverToBoxAdapter(
+              child: WorkflowOverviewHeader(
+                title: _tx('workflows.page_title', 'Orquestación visual'),
+                subtitle: _tx(
+                  'workflows.page_subtitle',
+                  'Conecta agentes y automatiza procesos de principio a fin.',
+                ),
+                workflowCount: _workflows.length,
+                nodeCount: totalNodes,
+                workflowsLabel: _tx('workflows.count_label', 'Workflows'),
+                nodesLabel: _tx('workflows.nodes_label', 'Nodos'),
+                createLabel: _tx('workflows.create_action', 'Crear workflow'),
+                onCreate: _openCreateDialog,
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             sliver: SliverToBoxAdapter(child: toolbar),
           ),
           if (filteredWorkflows.isEmpty)
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               sliver: SliverToBoxAdapter(
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      _tx('workflows.empty_list', 'No hay workflows todavía.'),
-                    ),
+                child: WorkflowEmptyState(
+                  title: _tx(
+                    'workflows.empty_title',
+                    'Crea tu primera orquestación',
                   ),
+                  description: _tx(
+                    'workflows.empty_description',
+                    'Combina agentes en un flujo visual, define decisiones y ejecútalo desde un único lugar.',
+                  ),
+                  actionLabel: _tx('workflows.create_action', 'Crear workflow'),
+                  onCreate: _openCreateDialog,
                 ),
               ),
             )

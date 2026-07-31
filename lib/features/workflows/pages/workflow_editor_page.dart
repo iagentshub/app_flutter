@@ -9,6 +9,7 @@ import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../models/workflow_step_draft.dart';
+import '../widgets/workflow_editor_toolbar.dart';
 import '../widgets/workflow_visual_canvas.dart';
 
 part '../cards/workflow_step_editor_card.dart';
@@ -367,8 +368,13 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
   }
 
   Widget _buildMetadataCard() {
-    return Card(
-      margin: EdgeInsets.zero,
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.outlineVariant),
+      ),
       child: ExpansionTile(
         initiallyExpanded: widget.initial == null,
         leading: const Icon(Icons.description_outlined),
@@ -481,6 +487,16 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
         'La conexión crearía un ciclo o ya existe',
       ),
     );
+    final colors = Theme.of(context).colorScheme;
+    final inspector = Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: _buildInspector(),
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -491,7 +507,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
             children: [
               Expanded(child: canvas),
               const SizedBox(width: 14),
-              SizedBox(width: 390, child: _buildInspector()),
+              SizedBox(width: 370, child: inspector),
             ],
           );
         }
@@ -499,7 +515,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
           children: [
             Expanded(flex: 3, child: canvas),
             const SizedBox(height: 12),
-            Expanded(flex: 2, child: _buildInspector()),
+            Expanded(flex: 2, child: inspector),
           ],
         );
       },
@@ -518,9 +534,10 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
               : _tx('workflow_editor.title_edit', 'Editar workflow'),
         ),
         actions: [
-          TertiaryButton(
+          PrimaryButton.icon(
             onPressed: _save,
-            child: Text(_tx('workflow_editor.save_btn', 'GUARDAR')),
+            icon: const Icon(Icons.check_rounded, size: 18),
+            label: Text(_tx('workflow_editor.save_btn', 'Guardar')),
           ),
         ],
       ),
@@ -546,37 +563,27 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
                     ],
                     _buildMetadataCard(),
                     const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _tx(
-                                  'workflow_editor.canvas_title',
-                                  'Lienzo de orquestación',
-                                ),
-                                style: Theme.of(context).textTheme.titleMedium,
-                              ),
-                              Text(
-                                _tx(
-                                  'workflow_editor.canvas_subtitle',
-                                  'Diseña el flujo conectando agentes visualmente',
-                                ),
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                            ],
-                          ),
-                        ),
-                        SecondaryButton.icon(
-                          onPressed: _addStep,
-                          icon: const Icon(Icons.add),
-                          label: Text(
-                            _tx('workflow_editor.add_step_btn', 'Añadir paso'),
-                          ),
-                        ),
-                      ],
+                    WorkflowEditorToolbar(
+                      title: _tx(
+                        'workflow_editor.canvas_title',
+                        'Lienzo de orquestación',
+                      ),
+                      subtitle: _tx(
+                        'workflow_editor.canvas_subtitle',
+                        'Diseña el flujo conectando agentes visualmente',
+                      ),
+                      stepCount: _steps.length,
+                      connectionCount: _steps.connectionCount,
+                      stepsLabel: _tx('workflows.steps_suffix', 'pasos'),
+                      connectionsLabel: _tx(
+                        'workflows.connections_suffix',
+                        'conexiones',
+                      ),
+                      addLabel: _tx(
+                        'workflow_editor.add_step_btn',
+                        'Añadir paso',
+                      ),
+                      onAdd: _addStep,
                     ),
                     const SizedBox(height: 10),
                     Expanded(child: _buildWorkspace()),

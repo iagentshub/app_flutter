@@ -62,7 +62,7 @@ class WorkflowVisualCanvas extends StatefulWidget {
 }
 
 class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
-  static const _nodeSize = Size(240, 132);
+  static const _nodeSize = Size(232, 116);
   static const _inputPort = 'input';
   static const _outputPort = 'output';
 
@@ -73,6 +73,7 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
   void initState() {
     super.initState();
     _controller = NodeFlowController<WorkflowStepDraft, String>(
+      config: NodeFlowConfig(showAttribution: false),
       nodes: widget.steps.map(_nodeForStep).toList(),
       connections: _connectionsFromSteps(widget.steps),
     );
@@ -115,7 +116,7 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
           name: widget.inputLabel,
           type: PortType.input,
           position: PortPosition.left,
-          offset: Offset(-2, 66),
+          offset: Offset(0, _nodeSize.height / 2),
           multiConnections: true,
           tooltip: widget.inputLabel,
         ),
@@ -124,7 +125,7 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
           name: widget.outputLabel,
           type: PortType.output,
           position: PortPosition.right,
-          offset: Offset(242, 66),
+          offset: Offset(0, _nodeSize.height / 2),
           multiConnections: true,
           tooltip: widget.outputLabel,
         ),
@@ -146,7 +147,6 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
             targetNodeId: targetId,
             targetPortId: _inputPort,
             data: 'sequence',
-            animated: true,
           ),
         );
       }
@@ -160,7 +160,6 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
             targetNodeId: loopTargetId,
             targetPortId: _inputPort,
             data: 'loop',
-            animated: true,
             color: Colors.orangeAccent,
             label: ConnectionLabel(text: widget.loopLabel),
           ),
@@ -172,6 +171,12 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
 
   String _connectionId(String type, String source, String target) =>
       '$type::$source::$target';
+
+  String _connectionKey(Connection<String> connection) => _connectionId(
+    connection.data ?? 'sequence',
+    connection.sourceNodeId,
+    connection.targetNodeId,
+  );
 
   void _syncGraph() {
     _syncing = true;
@@ -188,15 +193,19 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
 
       final desiredConnections = {
         for (final connection in _connectionsFromSteps(widget.steps))
-          connection.id: connection,
+          _connectionKey(connection): connection,
       };
-      for (final connectionId in _controller.connectionIds.toList()) {
-        if (!desiredConnections.containsKey(connectionId)) {
-          _controller.removeConnection(connectionId);
+      final existingConnections = {
+        for (final connection in _controller.connections)
+          _connectionKey(connection): connection,
+      };
+      for (final entry in existingConnections.entries) {
+        if (!desiredConnections.containsKey(entry.key)) {
+          _controller.removeConnection(entry.value.id);
         }
       }
       for (final entry in desiredConnections.entries) {
-        if (_controller.getConnection(entry.key) == null) {
+        if (!existingConnections.containsKey(entry.key)) {
           _controller.addConnection(entry.value);
         }
       }
@@ -230,9 +239,50 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
     return widget.missingAgentLabel;
   }
 
+  NodeFlowTheme _canvasTheme(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final base = isDark ? NodeFlowTheme.dark : NodeFlowTheme.light;
+    final connection = base.connectionTheme.copyWith(
+      color: colors.outline,
+      selectedColor: colors.primary,
+      highlightColor: colors.primary,
+      highlightBorderColor: colors.primary,
+      strokeWidth: 1.7,
+      selectedStrokeWidth: 2.4,
+      endPoint: ConnectionEndPoint.triangle,
+      endpointColor: colors.outline,
+      endpointBorderColor: colors.outline,
+      cornerRadius: 10,
+      portExtension: 24,
+      backEdgeGap: 28,
+    );
+    return base.copyWith(
+      backgroundColor: colors.surfaceContainerLowest,
+      connectionTheme: connection,
+      temporaryConnectionTheme: connection.copyWith(
+        color: colors.primary,
+        dashPattern: const [5, 4],
+      ),
+      portTheme: base.portTheme.copyWith(
+        size: const Size.square(12),
+        color: colors.surfaceContainerHighest,
+        connectedColor: colors.primary,
+        highlightColor: colors.primary,
+        highlightBorderColor: colors.onPrimary,
+        borderColor: colors.outline,
+        borderWidth: 1.5,
+      ),
+      gridTheme: base.gridTheme.copyWith(
+        color: colors.outlineVariant.withValues(alpha: .55),
+        size: 24,
+        thickness: .75,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = Theme.of(context).colorScheme;
     return ClipRRect(
       borderRadius: BorderRadius.circular(18),
@@ -246,7 +296,7 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
           children: [
             NodeFlowEditor<WorkflowStepDraft, String>(
               controller: _controller,
-              theme: isDark ? NodeFlowTheme.dark : NodeFlowTheme.light,
+              theme: _canvasTheme(context),
               nodeBuilder: _buildNode,
               events: NodeFlowEvents<WorkflowStepDraft, String>(
                 onInit: () => WidgetsBinding.instance.addPostFrameCallback(
@@ -258,7 +308,8 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
                     if (node != null) widget.onStepSelected(node.id);
                   },
                   onDragStop: (node) {
-                    final position = node.position.value;
+                    final position = node.visualPosition.value;
+                    _controller.setNodePosition(node.id, position);
                     widget.onStepMoved(node.id, position);
                   },
                   onBeforeDelete: (node) async => widget.steps.length > 1,
@@ -286,7 +337,7 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
             ),
             Positioned(
               top: 12,
-              left: 12,
+              right: 12,
               child: _CanvasControls(
                 fitTooltip: widget.fitTooltip,
                 zoomInTooltip: widget.zoomInTooltip,
@@ -341,7 +392,7 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
 
     return Container(
       key: ValueKey('workflow-node-${step.id}'),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 11),
       decoration: BoxDecoration(
         color: colors.surfaceContainer,
         borderRadius: BorderRadius.circular(14),
@@ -350,11 +401,12 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
           width: selected ? 2 : 1,
         ),
         boxShadow: [
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: .12),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
+          if (selected)
+            BoxShadow(
+              color: accent.withValues(alpha: .16),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
+            ),
         ],
       ),
       child: Column(
@@ -386,7 +438,7 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Text(
             _agentName(step.agentId),
             maxLines: 1,

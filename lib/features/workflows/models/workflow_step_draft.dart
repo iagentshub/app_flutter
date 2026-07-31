@@ -30,3 +30,11 @@ class WorkflowStepDraft {
   /// paralelas y un destino compartido representa fan-in.
   List<String> nextStepIds;
 }
+
+extension WorkflowStepDraftCollection on Iterable<WorkflowStepDraft> {
+  int get connectionCount => fold(
+    0,
+    (total, step) =>
+        total + step.nextStepIds.length + (step.loopTargetId == null ? 0 : 1),
+  );
+}
