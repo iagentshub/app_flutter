@@ -107,8 +107,15 @@ class _FeedBodyState extends State<_FeedBody> {
             child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?'),
           ),
           title: Text(name),
-          subtitle: Text(
-            '$type${item['owner'] != null ? ' · @${item['owner']}' : ''}',
+          subtitle: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ResourceTypeBadge(type: type, label: feedTypeLabel(type, widget.tx)),
+              if (item['owner'] != null) ...[
+                const SizedBox(width: 6),
+                Text('@${item['owner']}'),
+              ],
+            ],
           ),
           trailing: AppIconButton(
             icon: Icon(

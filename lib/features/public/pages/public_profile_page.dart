@@ -359,6 +359,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                   final item = _resources[index];
                   return PublicResourceCard(
                     item: item,
+                    typeLabel: _tx('labels.${item.resourceType}', item.resourceType),
                     previewTooltip: _tx('explore.preview', 'Vista previa'),
                     onPreview: () => _preview(item),
                   );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/origin_badge.dart';
+import '../../../shared/widgets/resource_type_badge.dart';
 import '../models/labeled_item.dart';
 
 class LabeledItemCard extends StatelessWidget {
@@ -39,7 +40,7 @@ class LabeledItemCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
-              Text(typeLabel, style: Theme.of(context).textTheme.bodySmall),
+              ResourceTypeBadge(type: item.type, label: typeLabel),
               const SizedBox(height: 8),
               LabelChipsRow(
                 labels: item.labels,

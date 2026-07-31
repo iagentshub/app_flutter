@@ -64,7 +64,10 @@ extension _ExploreResourceCard on _ExplorePageState {
             LabelChipsRow(
               labels: item.labels,
               leading: [
-                _chip(_typeChipLabel(item.resourceType)),
+                ResourceTypeBadge(
+                  type: item.resourceType,
+                  label: _typeChipLabel(item.resourceType),
+                ),
                 _chip(_categoryChipLabel(item.category)),
               ],
             ),
@@ -115,7 +118,7 @@ extension _ExploreResourceCard on _ExplorePageState {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.14),
+        color: Colors.black.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(text, style: const TextStyle(fontSize: 12)),

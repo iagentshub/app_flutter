@@ -14,11 +14,13 @@ import '../../explore/repositories/explore_repository.dart';
 import '../cards/dashboard_widget_card.dart';
 import '../repositories/dashboard_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
+import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/backend_controller.dart';
 import '../../../shared/state/dashboard_edit_state.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
+import '../../../shared/widgets/resource_type_badge.dart';
 import '../widgets/responsive_dashboard_grid.dart';
 
 part '../cards/dashboard_activity_cards.dart';

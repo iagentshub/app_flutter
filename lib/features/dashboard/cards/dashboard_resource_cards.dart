@@ -59,7 +59,10 @@ class _RecentResourcesBody extends StatelessWidget {
           ListTile(
             contentPadding: EdgeInsets.zero,
             dense: true,
-            leading: Icon(metadata[resource.type]?.icon),
+            leading: Icon(
+              metadata[resource.type]?.icon,
+              color: labelColor(resource.type),
+            ),
             title: Text(
               resource.raw['name']?.toString() ??
                   resource.raw['title']?.toString() ??
