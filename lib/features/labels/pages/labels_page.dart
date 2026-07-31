@@ -247,9 +247,23 @@ class _LabelsPageState extends State<LabelsPage>
   }
 
   Widget _buildCatalogTab() {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [LabelCatalogCard(text: _tx, initiallyExpanded: true)],
+    final groups = [kResourceTypeGroup, kOwnershipGroup, ...kLabelGroups];
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+          sliver: SliverToBoxAdapter(child: LabelCatalogIntro(text: _tx)),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          sliver: ResponsiveSliverMasonryGrid(
+            density: ResponsiveCardDensity.marketing,
+            itemCount: groups.length,
+            itemBuilder: (context, index) =>
+                LabelGroupCard(group: groups[index], text: _tx),
+          ),
+        ),
+      ],
     );
   }
 
@@ -409,10 +423,8 @@ class _LabelsPageState extends State<LabelsPage>
                               return LabeledItemCard(
                                 item: item,
                                 typeLabel: _itemTypeLabel(item.type),
-                                sharedLabel: _tx(
-                                  'labels.shared_badge',
-                                  'Compartido',
-                                ),
+                                ownerLabel: _tx('common.owner', 'Propietario'),
+                                linkedLabel: _tx('common.linked', 'Enlazado'),
                                 onTap: () => _showMessage(
                                   item.description.isEmpty
                                       ? _tx(
