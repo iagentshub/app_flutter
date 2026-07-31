@@ -13,6 +13,7 @@ const Map<String, Color> _labelColors = {
   'connection': Color(0xFFDB2777),
   'memory': Color(0xFFB45309),
   'workflow': Color(0xFF16A34A),
+  'evaluator': Color(0xFFE11D48),
   'private': Color(0xFF64748B),
   'public': Color(0xFF059669),
   'production': Color(0xFF0891B2),

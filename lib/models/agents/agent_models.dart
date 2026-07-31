@@ -13,6 +13,19 @@ class AgentItem {
   String get connectionId => raw['connection_id'] as String? ?? '';
   bool get shared => raw['_shared'] == true;
   bool get useMemory => raw['use_memory'] == true;
+  String get memoryFile => raw['memory_file'] as String? ?? '';
+
+  List<String> get skills {
+    final value = raw['skills'];
+    if (value is List) return value.map((item) => item.toString()).toList();
+    return const [];
+  }
+
+  List<String> get knowledge {
+    final value = raw['knowledge'];
+    if (value is List) return value.map((item) => item.toString()).toList();
+    return const [];
+  }
 
   /// Solo es de solo-lectura si llegó vía group share (no soy el dueño).
   /// Ser público (scope == 'public') no impide editar lo que es mío.

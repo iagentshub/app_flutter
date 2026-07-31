@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 
 import '../../../models/agents/agent_models.dart';
+import '../../../shared/graph/graph_models.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/origin_badge.dart';
+import '../../../shared/widgets/resource_graph_button.dart';
 
 typedef AgentCardText = String Function(String path, String fallback);
 
@@ -35,6 +37,40 @@ class AgentCard extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
+  /// Nodos del grafo de contenido: el agente en el centro y sus skills,
+  /// knowledge, conexión y memoria alrededor.
+  List<GraphNode> _graphNodes() {
+    final nodes = [GraphNode(id: 'root', label: item.name, type: 'agent')];
+    if (item.connectionId.isNotEmpty) {
+      nodes.add(
+        GraphNode(id: 'connection', label: item.connectionId, type: 'connection'),
+      );
+    }
+    for (final skill in item.skills) {
+      nodes.add(GraphNode(id: 'skill-$skill', label: skill, type: 'skill'));
+    }
+    for (final knowledge in item.knowledge) {
+      nodes.add(
+        GraphNode(id: 'knowledge-$knowledge', label: knowledge, type: 'knowledge'),
+      );
+    }
+    if (item.useMemory) {
+      nodes.add(
+        GraphNode(
+          id: 'memory',
+          label: item.memoryFile.isEmpty ? 'memory' : item.memoryFile,
+          type: 'memory',
+        ),
+      );
+    }
+    return nodes;
+  }
+
+  List<GraphEdge> _graphEdges(List<GraphNode> nodes) => [
+    for (final node in nodes.skip(1))
+      GraphEdge(sourceId: 'root', targetId: node.id),
+  ];
+
   @override
   Widget build(BuildContext context) {
     final subtitleParts = <String>[item.agentType];
@@ -42,6 +78,7 @@ class AgentCard extends StatelessWidget {
     if (item.connectionId.isNotEmpty) {
       subtitleParts.add('conn: ${item.connectionId}');
     }
+    final graphNodes = _graphNodes();
 
     return Card(
       margin: EdgeInsets.zero,
@@ -119,6 +156,19 @@ class AgentCard extends StatelessWidget {
                   icon: Icons.group_add_outlined,
                   tooltip: tx('common.share_group', 'Compartir con grupo'),
                   onPressed: onShare,
+                ),
+                ResourceGraphButton(
+                  tooltip: tx('agents.graph_tooltip', 'Ver grafo de contenido'),
+                  dialogTitle: item.name,
+                  nodes: graphNodes,
+                  edges: _graphEdges(graphNodes),
+                  rootId: 'root',
+                  closeLabel: tx('common.close', 'Cerrar'),
+                  searchHint: tx('graph.search_hint', 'Buscar en el grafo...'),
+                  emptyLabel: tx(
+                    'agents.graph_empty',
+                    'Este agente todavía no tiene skills, knowledge, conexión ni memoria.',
+                  ),
                 ),
                 ActionIconButton(
                   icon: Icons.history,

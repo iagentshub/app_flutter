@@ -1,4 +1,7 @@
 {
+  "graph": {
+    "search_hint": "Search the graph..."
+  },
   "common": {
     "edit": "Edit",
     "delete": "Delete",
@@ -149,6 +152,8 @@
     "edit_title": "Edit agent",
     "name_required": "Name is required",
     "chat_no_connection": "Set up a connection for this agent",
+    "graph_tooltip": "View content graph",
+    "graph_empty": "This agent doesn't have any skills, knowledge, connection or memory yet.",
     "tab_knowledge": "Knowledge",
     "field_use_memory": "Use memory",
     "field_memory_file": "Memory file",
@@ -486,6 +491,8 @@
     "empty_list": "No workflows yet.",
     "steps_suffix": "steps",
     "connections_suffix": "connections",
+    "graph_tooltip": "View content graph",
+    "graph_empty": "This orchestration doesn't have any steps yet.",
     "run_btn": "Run",
     "run_dialog_title": "Run: {{name}}",
     "run_input_label": "Initial input",

@@ -1,4 +1,7 @@
 {
+  "graph": {
+    "search_hint": "Buscar en el grafo..."
+  },
   "common": {
     "edit": "Editar",
     "delete": "Eliminar",
@@ -149,6 +152,8 @@
     "edit_title": "Editar agente",
     "name_required": "El nombre es obligatorio",
     "chat_no_connection": "Configura una conexión para este agente",
+    "graph_tooltip": "Ver grafo de contenido",
+    "graph_empty": "Este agente todavía no tiene skills, knowledge, conexión ni memoria.",
     "tab_knowledge": "Conocimiento",
     "field_use_memory": "Usar memoria",
     "field_memory_file": "Archivo de memoria",
@@ -486,6 +491,8 @@
     "empty_list": "No hay workflows todavía.",
     "steps_suffix": "pasos",
     "connections_suffix": "conexiones",
+    "graph_tooltip": "Ver grafo de contenido",
+    "graph_empty": "Esta orquestación todavía no tiene pasos.",
     "run_btn": "Ejecutar",
     "run_dialog_title": "Ejecutar: {{name}}",
     "run_input_label": "Input inicial",

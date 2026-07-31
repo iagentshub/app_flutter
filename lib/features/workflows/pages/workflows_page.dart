@@ -7,6 +7,8 @@ import '../../../shared/widgets/async_state_panel.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
+import '../../../features/agents/repositories/agents_repository.dart';
+import '../../../models/agents/agent_models.dart';
 import '../../../models/workflows/workflow_models.dart';
 import '../repositories/workflows_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
@@ -41,8 +43,10 @@ class WorkflowsPage extends StatefulWidget {
 
 class _WorkflowsPageState extends State<WorkflowsPage> {
   late final WorkflowsRepository _repository;
+  late final AgentsRepository _agentsRepository;
   late final TranslatedTexts _t;
   List<WorkflowItem> _workflows = const [];
+  Map<String, AgentItem> _agentsById = const {};
   bool _loading = true;
   String? _error;
   String _scope = 'all';
@@ -87,6 +91,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
   void initState() {
     super.initState();
     _repository = WorkflowsRepository(apiClient: widget.apiClient);
+    _agentsRepository = AgentsRepository(apiClient: widget.apiClient);
     _t = TranslatedTexts(
       localeController: widget.localeController,
       namespace: 'resources',
@@ -124,9 +129,13 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
 
     try {
       final workflows = await _repository.listWorkflows(token);
+      final agents = await _agentsRepository
+          .listAgents(token)
+          .catchError((_) => <AgentItem>[]);
       if (!mounted) return;
       setState(() {
         _workflows = workflows;
+        _agentsById = {for (final agent in agents) agent.id: agent};
         _loading = false;
       });
     } on ApiError catch (error) {
@@ -364,6 +373,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
                   final item = filteredWorkflows[index];
                   return WorkflowCard(
                     item: item,
+                    agentsById: _agentsById,
                     stepsLabel: _tx('workflows.steps_suffix', 'pasos'),
                     connectionsLabel: _tx(
                       'workflows.connections_suffix',
@@ -374,6 +384,19 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
                     runLabel: _tx('workflows.run_btn', 'Ejecutar'),
                     editTooltip: _tx('common.edit', 'Editar'),
                     deleteTooltip: _tx('common.delete', 'Eliminar'),
+                    graphTooltip: _tx(
+                      'workflows.graph_tooltip',
+                      'Ver grafo de contenido',
+                    ),
+                    graphCloseLabel: _tx('common.close', 'Cerrar'),
+                    graphEmptyLabel: _tx(
+                      'workflows.graph_empty',
+                      'Esta orquestación todavía no tiene pasos.',
+                    ),
+                    graphSearchHint: _tx(
+                      'graph.search_hint',
+                      'Buscar en el grafo...',
+                    ),
                     onRun: () => _runWorkflow(item),
                     onEdit: () => _openEditDialog(item),
                     onDelete: () => _deleteWorkflow(item),
