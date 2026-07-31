@@ -15,6 +15,7 @@ import '../../../models/connections/connection_models.dart';
 import '../repositories/agent_builder_repository.dart';
 import '../repositories/agents_repository.dart';
 import '../dialogs/agent_form_dialog.dart';
+import '../widgets/agent_builder_chat_panel.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
@@ -126,8 +127,20 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
   void _scrollToEnd() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scrollController.hasClients) return;
-      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOut,
+      );
     });
+  }
+
+  void _sendSuggestion(String suggestion) {
+    _textController.text = suggestion;
+    _textController.selection = TextSelection.collapsed(
+      offset: suggestion.length,
+    );
+    _send();
   }
 
   Future<void> _send() async {
@@ -274,9 +287,10 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildModernPage(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
+      backgroundColor: colors.surfaceContainerLowest,
       appBar: AppBar(
         title: Text(_tx('agents.builder_title', 'Constructor de agentes IA')),
         actions: [
@@ -288,149 +302,201 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
             ),
         ],
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: _loadingConnections
-                ? const LinearProgressIndicator(minHeight: 2)
-                : DropdownButtonFormField<String>(
-                    initialValue: _connectionId,
-                    isExpanded: true,
-                    decoration: InputDecoration(
-                      labelText: _tx('agents.field_connection', 'Conexión LLM'),
-                    ),
-                    items: _connections
-                        .map(
-                          (conn) => DropdownMenuItem<String>(
-                            value: conn.id,
-                            child: Text(
-                              '${conn.name} (${conn.type})',
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: _streaming
-                        ? null
-                        : (value) => setState(() => _connectionId = value),
-                  ),
-          ),
-          Expanded(child: _buildChatColumn()),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChatColumn() {
-    if (_messages.isEmpty && !_streaming) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            _tx(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= 900;
+          final setup = _buildSetupPanel(compact: !wide);
+          final chat = AgentBuilderChatPanel(
+            messages: _messages,
+            streaming: _streaming,
+            thinking: _thinking,
+            enabled: !_loadingConnections && _connectionId != null,
+            textController: _textController,
+            scrollController: _scrollController,
+            onSend: _send,
+            onStop: _stop,
+            onSuggestion: _sendSuggestion,
+            title: _tx('agents.builder_assistant_title', 'Asistente de diseño'),
+            subtitle: _tx(
+              'agents.builder_assistant_subtitle',
+              'Te hará preguntas y preparará un borrador editable',
+            ),
+            intro: _tx(
               'agents.builder_intro',
               'Describe qué agente quieres crear y para qué lo vas a usar. '
                   'El asistente te hará las preguntas necesarias y propondrá '
                   'un borrador que podrás revisar antes de guardarlo.',
             ),
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-        ),
-      );
-    }
-
-    return Column(
-      children: [
-        Expanded(
-          child: ListView.builder(
-            controller: _scrollController,
-            padding: const EdgeInsets.all(16),
-            itemCount: _messages.length + (_streaming ? 1 : 0),
-            itemBuilder: (context, index) {
-              if (index >= _messages.length) {
-                return _buildBubble(
-                  const ChatMessage(role: 'assistant', content: ''),
-                  thinking: _thinking,
-                );
-              }
-              return _buildBubble(_messages[index]);
-            },
-          ),
-        ),
-        if (_error != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(_error!, style: TextStyle(color: Colors.red.shade700)),
-          ),
-        SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _textController,
-                    minLines: 1,
-                    maxLines: 5,
-                    textInputAction: TextInputAction.send,
-                    decoration: InputDecoration(
-                      hintText: _tx(
-                        'agents.builder_input_hint',
-                        'Describe el agente que quieres crear…',
-                      ),
-                      border: const OutlineInputBorder(),
-                    ),
-                    onSubmitted: (_) => _send(),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                if (_streaming)
-                  AppIconButton.filledTonal(
-                    onPressed: _stop,
-                    icon: const Icon(Icons.stop),
-                  )
-                else
-                  AppIconButton.filled(
-                    onPressed: _send,
-                    icon: const Icon(Icons.send),
-                  ),
-              ],
+            inputHint: _tx(
+              'agents.builder_input_hint',
+              'Describe el agente que quieres crear...',
             ),
-          ),
-        ),
-      ],
+            sendTooltip: _tx('agents.builder_send', 'Enviar mensaje'),
+            stopTooltip: _tx('agents.builder_stop', 'Detener respuesta'),
+            suggestions: [
+              _tx(
+                'agents.builder_suggestion_support',
+                'Un agente para atender clientes',
+              ),
+              _tx(
+                'agents.builder_suggestion_sales',
+                'Un asistente para cualificar leads',
+              ),
+              _tx(
+                'agents.builder_suggestion_content',
+                'Un experto en crear contenido',
+              ),
+            ],
+            error: _error,
+          );
+
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1280),
+              child: Padding(
+                padding: EdgeInsets.all(wide ? 24 : 12),
+                child: wide
+                    ? Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          SizedBox(width: 300, child: setup),
+                          const SizedBox(width: 16),
+                          Expanded(child: chat),
+                        ],
+                      )
+                    : Column(
+                        children: [
+                          setup,
+                          const SizedBox(height: 10),
+                          Expanded(child: chat),
+                        ],
+                      ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
-  Widget _buildBubble(ChatMessage message, {bool thinking = false}) {
-    final isUser = message.isUser;
-    final bubbleColor = isUser
-        ? Theme.of(context).colorScheme.primaryContainer
-        : Theme.of(context).colorScheme.surfaceContainerHighest;
-
-    return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 640),
-        child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 6),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: bubbleColor,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: thinking
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Text(message.content),
+  Widget _buildSetupPanel({required bool compact}) {
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      margin: EdgeInsets.zero,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: colors.outlineVariant),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(compact ? 14 : 18),
+        child: Column(
+          mainAxisSize: compact ? MainAxisSize.min : MainAxisSize.max,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!compact) ...[
+              Text(
+                _tx('agents.builder_setup_title', 'Configura tu agente'),
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _tx(
+                  'agents.builder_setup_subtitle',
+                  'Elige el modelo que te ayudará a diseñarlo.',
+                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
+              ),
+              const SizedBox(height: 20),
+            ],
+            if (_loadingConnections)
+              const LinearProgressIndicator(minHeight: 2)
+            else
+              DropdownButtonFormField<String>(
+                initialValue: _connectionId,
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: _tx('agents.field_connection', 'Conexión LLM'),
+                  prefixIcon: const Icon(Icons.hub_outlined),
+                ),
+                items: _connections
+                    .map(
+                      (conn) => DropdownMenuItem<String>(
+                        value: conn.id,
+                        child: Text(
+                          '${conn.name} (${conn.type})',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: _streaming
+                    ? null
+                    : (value) => setState(() => _connectionId = value),
+              ),
+            if (!_loadingConnections && _connections.isEmpty) ...[
+              const SizedBox(height: 10),
+              Text(
+                _tx(
+                  'agents.builder_connection_required',
+                  'Necesitas una conexión LLM para usar el asistente.',
+                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: colors.error),
+              ),
+            ],
+            if (!compact) ...[
+              const SizedBox(height: 24),
+              _buildStep(
+                Icons.chat_bubble_outline,
+                '1',
+                _tx(
+                  'agents.builder_step_describe',
+                  'Describe lo que necesitas',
+                ),
+              ),
+              _buildStep(
+                Icons.tune,
+                '2',
+                _tx('agents.builder_step_refine', 'Responde y afina detalles'),
+              ),
+              _buildStep(
+                Icons.fact_check_outlined,
+                '3',
+                _tx('agents.builder_step_review', 'Revisa el borrador'),
+              ),
+            ],
+          ],
         ),
       ),
     );
   }
+
+  Widget _buildStep(IconData icon, String number, String label) {
+    final colors = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: colors.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 18, color: colors.primary),
+          ),
+          const SizedBox(width: 10),
+          Expanded(child: Text('$number. $label')),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => _buildModernPage(context);
 }
