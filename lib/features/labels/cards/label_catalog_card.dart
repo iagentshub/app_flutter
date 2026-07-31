@@ -7,9 +7,14 @@ typedef LabelText = String Function(String path, String fallback);
 const _blockingLabels = {'draft', 'quarantine', 'archived', 'delete'};
 
 class LabelCatalogCard extends StatelessWidget {
-  const LabelCatalogCard({required this.text, super.key});
+  const LabelCatalogCard({
+    required this.text,
+    this.initiallyExpanded = false,
+    super.key,
+  });
 
   final LabelText text;
+  final bool initiallyExpanded;
 
   @override
   Widget build(BuildContext context) {
@@ -17,6 +22,7 @@ class LabelCatalogCard extends StatelessWidget {
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
+          initiallyExpanded: initiallyExpanded,
           title: Text(
             text('labels.catalog_title', 'Catálogo de etiquetas'),
             style: const TextStyle(fontWeight: FontWeight.w700),
@@ -32,7 +38,7 @@ class LabelCatalogCard extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 14),
-            for (final group in kLabelGroups) ...[
+            for (final group in [kOwnershipGroup, ...kLabelGroups]) ...[
               Text(
                 text(group.titleKey, group.fallbackTitle),
                 style: const TextStyle(

@@ -12,6 +12,7 @@ import '../../knowledge/repositories/skills_repository.dart';
 import '../../workflows/repositories/workflows_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
+import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
@@ -36,16 +37,19 @@ class LabelsPage extends StatefulWidget {
   State<LabelsPage> createState() => _LabelsPageState();
 }
 
-class _LabelsPageState extends State<LabelsPage> {
+class _LabelsPageState extends State<LabelsPage>
+    with SingleTickerProviderStateMixin {
   late final AgentsRepository _agentsRepository;
   late final SkillsRepository _skillsRepository;
   late final WorkflowsRepository _workflowsRepository;
   late final TranslatedTexts _t;
+  late final TabController _tabController;
   List<LabeledItem> _all = const [];
   bool _loading = true;
   String? _error;
   String _selectedType = 'all';
   String _selectedLabel = '';
+  String _selectedOwnership = '';
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
@@ -55,6 +59,7 @@ class _LabelsPageState extends State<LabelsPage> {
     _agentsRepository = AgentsRepository(apiClient: widget.apiClient);
     _skillsRepository = SkillsRepository(apiClient: widget.apiClient);
     _workflowsRepository = WorkflowsRepository(apiClient: widget.apiClient);
+    _tabController = TabController(length: 2, vsync: this);
     _t = TranslatedTexts(
       localeController: widget.localeController,
       namespace: 'resources',
@@ -68,6 +73,7 @@ class _LabelsPageState extends State<LabelsPage> {
 
   @override
   void dispose() {
+    _tabController.dispose();
     _t.removeListener(_onTextsChanged);
     _t.dispose();
     super.dispose();
@@ -155,6 +161,8 @@ class _LabelsPageState extends State<LabelsPage> {
   List<LabeledItem> get _filtered {
     return _all.where((item) {
       if (_selectedType != 'all' && item.type != _selectedType) return false;
+      if (_selectedOwnership == 'owner' && item.shared) return false;
+      if (_selectedOwnership == 'linked' && !item.shared) return false;
       if (_selectedLabel.isNotEmpty && !item.labels.contains(_selectedLabel)) {
         return false;
       }
@@ -171,6 +179,20 @@ class _LabelsPageState extends State<LabelsPage> {
       }
     }
     return counts;
+  }
+
+  Map<String, int> _ownershipCounts() {
+    final counts = {'owner': 0, 'linked': 0};
+    for (final item in _all) {
+      if (_selectedType != 'all' && item.type != _selectedType) continue;
+      final key = item.shared ? 'linked' : 'owner';
+      counts[key] = (counts[key] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  void _applyOwnership(String value) {
+    setState(() => _selectedOwnership = _selectedOwnership == value ? '' : value);
   }
 
   void _showMessage(String text) {
@@ -224,24 +246,18 @@ class _LabelsPageState extends State<LabelsPage> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    if (_error != null) {
-      return ListView(
-        children: [
-          AsyncStatePanel.error(
-            title: _tx('labels.error_title', 'Error cargando Labels'),
-            message: _error!,
-            retryLabel: _tx('common.retry', 'Reintentar'),
-            onRetry: _loadBase,
-          ),
-        ],
-      );
-    }
+  Widget _buildCatalogTab() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [LabelCatalogCard(text: _tx, initiallyExpanded: true)],
+    );
+  }
 
+  Widget _buildSearchTab(BuildContext context) {
     final labelCounts = _labelCounts();
     final labels = labelCounts.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
+    final ownershipCounts = _ownershipCounts();
     final filtered = _filtered;
 
     return Column(
@@ -265,7 +281,10 @@ class _LabelsPageState extends State<LabelsPage> {
                     '${_tx('labels.active_label', 'Label activo')}: ${_selectedLabel.isEmpty ? _tx('labels.none', '- ninguno -') : _tx('labels.$_selectedLabel', _selectedLabel)}',
                   ),
                   TertiaryButton.icon(
-                    onPressed: () => setState(() => _selectedLabel = ''),
+                    onPressed: () => setState(() {
+                      _selectedLabel = '';
+                      _selectedOwnership = '';
+                    }),
                     icon: const Icon(Icons.clear_all, size: 18),
                     label: Text(_tx('labels.clear', 'Limpiar')),
                   ),
@@ -288,7 +307,38 @@ class _LabelsPageState extends State<LabelsPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              LabelCatalogCard(text: _tx),
+                              Text(
+                                _tx('labels.group_ownership', 'Propiedad'),
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: kOwnershipGroup.keys.map((key) {
+                                  final selected = _selectedOwnership == key;
+                                  final count = ownershipCounts[key] ?? 0;
+                                  return ChoiceChip(
+                                    label: Text(
+                                      '${_tx('labels.$key', key)} ($count)',
+                                    ),
+                                    selected: selected,
+                                    selectedColor: labelColor(
+                                      key,
+                                    ).withValues(alpha: 0.9),
+                                    labelStyle: TextStyle(
+                                      color: selected ? Colors.white : null,
+                                      fontWeight: selected
+                                          ? FontWeight.w700
+                                          : null,
+                                    ),
+                                    onSelected: (_) => _applyOwnership(key),
+                                  );
+                                }).toList(),
+                              ),
                               const SizedBox(height: 16),
                               Text(
                                 _tx('labels.detected', 'Etiquetas detectadas'),
@@ -378,6 +428,40 @@ class _LabelsPageState extends State<LabelsPage> {
                     ],
                   ),
                 ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_error != null) {
+      return ListView(
+        children: [
+          AsyncStatePanel.error(
+            title: _tx('labels.error_title', 'Error cargando Labels'),
+            message: _error!,
+            retryLabel: _tx('common.retry', 'Reintentar'),
+            onRetry: _loadBase,
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      children: [
+        TabBar(
+          controller: _tabController,
+          tabs: [
+            Tab(text: _tx('labels.tab_catalog', 'Catálogo')),
+            Tab(text: _tx('labels.tab_search', 'Buscar por etiqueta')),
+          ],
+        ),
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: [_buildCatalogTab(), _buildSearchTab(context)],
+          ),
         ),
       ],
     );

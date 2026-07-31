@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 
 /// Tabla de colores de labels, igual a GROUPS en frontend_vanilla
 /// (assets/js/labels.js): 3 grupos exclusivos (visibilidad, entorno, estado).
+/// Incluye también "owner"/"linked", usados por el badge de origen
+/// (OriginBadge) y por el grupo informativo de propiedad del catálogo.
 const Map<String, Color> _labelColors = {
+  'owner': Color(0xFF059669),
+  'linked': Color(0xFF0891B2),
   'private': Color(0xFF64748B),
   'public': Color(0xFF059669),
   'production': Color(0xFF0891B2),
@@ -58,6 +62,18 @@ class LabelGroupDef {
   final bool exclusive;
   final bool required;
 }
+
+/// Grupo de propiedad ("Propietario" vs "Enlazado"): no es un label real
+/// asignable al recurso (no vive en `labels`, se calcula del flag `_shared`),
+/// por eso vive fuera de `kLabelGroups` y no aparece en GroupedLabelPicker.
+/// Debe mostrarse siempre primero en el catálogo explicativo.
+const kOwnershipGroup = LabelGroupDef(
+  titleKey: 'labels.group_ownership',
+  fallbackTitle: 'Propiedad',
+  keys: ['owner', 'linked'],
+  exclusive: true,
+  required: true,
+);
 
 const kLabelGroups = [
   LabelGroupDef(

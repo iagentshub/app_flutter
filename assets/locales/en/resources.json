@@ -275,9 +275,12 @@
     "error_title": "Error loading Labels",
     "error_generic": "Couldn't load labels",
     "filter_error": "Couldn't apply filter",
+    "group_ownership": "Ownership",
     "group_visibility": "Visibility",
     "group_environment": "Environment",
     "group_status": "Status",
+    "owner": "Owner",
+    "linked": "Linked",
     "private": "Private",
     "public": "Public",
     "production": "Production",
@@ -298,6 +301,8 @@
     "behavior_blocks": "Blocks the resource",
     "behavior_warns": "Visual warning",
     "behavior_default": "Default",
+    "desc_owner": "You are the direct owner of this resource.",
+    "desc_linked": "The resource reached you via a group or share; the original owner is someone else.",
     "desc_private": "Only you can see and use this resource. It does not appear in any public listing.",
     "desc_public": "The resource is visible to everyone in Explore and on your public profile.",
     "desc_production": "Indicates this resource is in active use in a production environment.",
@@ -315,7 +320,9 @@
     "item_type_skill": "Skill",
     "item_type_workflow": "Workflow",
     "no_description": "No description",
-    "shared_badge": "Shared"
+    "shared_badge": "Shared",
+    "tab_catalog": "Catalog",
+    "tab_search": "Search by label"
   },
   "public_profile": {
     "title_prefix": "Public profile",

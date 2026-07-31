@@ -275,9 +275,12 @@
     "error_title": "Error cargando Labels",
     "error_generic": "No se pudieron cargar labels",
     "filter_error": "No se pudo aplicar filtro",
+    "group_ownership": "Propiedad",
     "group_visibility": "Visibilidad",
     "group_environment": "Entorno",
     "group_status": "Estado",
+    "owner": "Propietario",
+    "linked": "Enlazado",
     "private": "Privado",
     "public": "Público",
     "production": "Producción",
@@ -298,6 +301,8 @@
     "behavior_blocks": "Bloquea el recurso",
     "behavior_warns": "Aviso visual",
     "behavior_default": "Por defecto",
+    "desc_owner": "Eres el propietario directo de este recurso.",
+    "desc_linked": "El recurso llegó a ti mediante un grupo o enlace; el propietario original es otra persona.",
     "desc_private": "Solo tú puedes ver y usar este recurso. No aparece en ningún listado público.",
     "desc_public": "El recurso es visible para todos en Explorar y en tu perfil público.",
     "desc_production": "Indica que este recurso está en uso activo en un entorno productivo.",
@@ -315,7 +320,9 @@
     "item_type_skill": "Skill",
     "item_type_workflow": "Workflow",
     "no_description": "Sin descripción",
-    "shared_badge": "Compartido"
+    "shared_badge": "Compartido",
+    "tab_catalog": "Catálogo",
+    "tab_search": "Buscar por etiqueta"
   },
   "public_profile": {
     "title_prefix": "Perfil público",
