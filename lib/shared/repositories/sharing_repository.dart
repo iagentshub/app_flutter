@@ -1,12 +1,10 @@
-import '../../core/network/api_client.dart';
+import '../../core/network/api_repository.dart';
 
 /// Comparte/descomparte un recurso con uno o varios grupos (groups) —
 /// un recurso puede estar compartido con varios grupos a la vez
 /// (`resource_group_shares` es una relación N a N en el backend).
-class SharingRepository {
-  SharingRepository({required this.apiClient});
-
-  final ApiClient apiClient;
+class SharingRepository extends ApiRepository {
+  SharingRepository({required super.apiClient});
 
   /// IDs de los grupos que ya tienen acceso al recurso.
   Future<List<String>> listGroups(

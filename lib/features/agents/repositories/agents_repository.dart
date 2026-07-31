@@ -1,12 +1,10 @@
 import 'dart:typed_data';
 
-import '../../../core/network/api_client.dart';
+import '../../../core/network/api_repository.dart';
 import '../../../models/agents/agent_models.dart';
 
-class AgentsRepository {
-  AgentsRepository({required this.apiClient});
-
-  final ApiClient apiClient;
+class AgentsRepository extends ApiRepository {
+  AgentsRepository({required super.apiClient});
 
   Future<List<AgentItem>> listAgents(String token, {String? groupId}) async {
     final query = groupId == null || groupId.isEmpty

@@ -15,8 +15,9 @@ class Validators {
   }
 
   static String? backendUrl(String? value) {
-    if (value == null || value.trim().isEmpty)
+    if (value == null || value.trim().isEmpty) {
       return 'La URL del backend es obligatoria';
+    }
     final uri = Uri.tryParse(value.trim());
     if (uri == null || !(uri.hasScheme && uri.host.isNotEmpty)) {
       return 'URL invalida';

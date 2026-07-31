@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../shared/widgets/buttons/app_buttons.dart';
+
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/manager/group_models.dart';
@@ -7,8 +9,14 @@ import '../repositories/manager_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
-import '../../../shared/widgets/action_icon_button.dart';
+import '../../../shared/widgets/buttons/action_icon_button.dart';
+import '../../../shared/widgets/async_state_panel.dart';
+import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
+
+part '../cards/group_card.dart';
+part '../cards/group_invitations_card.dart';
+part '../cards/group_members_card.dart';
 
 class ManagerPage extends StatefulWidget {
   const ManagerPage({
@@ -193,29 +201,17 @@ class _ManagerPageState extends State<ManagerPage> {
       return;
     }
 
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(_tx('manager.delete_dialog_title', 'Eliminar grupo')),
-        content: Text(
-          _tx(
-            'manager.delete_dialog_body',
-            '¿Seguro que quieres eliminar "{{name}}"?',
-          ).replaceAll('{{name}}', item.name),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(_tx('common.cancel', 'Cancelar')),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(_tx('common.delete', 'Eliminar')),
-          ),
-        ],
-      ),
+    final confirm = await showConfirmActionDialog(
+      context,
+      title: _tx('manager.delete_dialog_title', 'Eliminar grupo'),
+      message: _tx(
+        'manager.delete_dialog_body',
+        '¿Seguro que quieres eliminar "{{name}}"?',
+      ).replaceAll('{{name}}', item.name),
+      cancelLabel: _tx('common.cancel', 'Cancelar'),
+      confirmLabel: _tx('common.delete', 'Eliminar'),
     );
-    if (confirm != true) return;
+    if (!confirm) return;
 
     final token = _token;
     if (token == null || token.isEmpty) return;
@@ -416,11 +412,11 @@ class _ManagerPageState extends State<ManagerPage> {
           ),
         ),
         actions: [
-          TextButton(
+          TertiaryButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(_tx('common.cancel', 'Cancelar')),
           ),
-          FilledButton(
+          PrimaryButton(
             onPressed: () {
               if (!(formKey.currentState?.validate() ?? false)) return;
               Navigator.of(context).pop(controller.text.trim());
@@ -447,35 +443,15 @@ class _ManagerPageState extends State<ManagerPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (_loading) return const AsyncStatePanel.loading();
     if (_error != null) {
       return ListView(
-        padding: const EdgeInsets.all(16),
         children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _tx(
-                      'manager.error_loading_title',
-                      'Error cargando Manager',
-                    ),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(_error!),
-                  const SizedBox(height: 12),
-                  FilledButton.icon(
-                    onPressed: _load,
-                    icon: const Icon(Icons.refresh),
-                    label: Text(_tx('common.retry', 'Reintentar')),
-                  ),
-                ],
-              ),
-            ),
+          AsyncStatePanel.error(
+            title: _tx('manager.error_loading_title', 'Error cargando Manager'),
+            message: _error!,
+            retryLabel: _tx('common.retry', 'Reintentar'),
+            onRetry: _load,
           ),
         ],
       );
@@ -496,7 +472,7 @@ class _ManagerPageState extends State<ManagerPage> {
                     spacing: 6,
                     runSpacing: 6,
                     children: [
-                      IconButton.filled(
+                      AppIconButton.filled(
                         onPressed: _createGroup,
                         icon: const Icon(Icons.add),
                         tooltip: _tx(
@@ -504,7 +480,7 @@ class _ManagerPageState extends State<ManagerPage> {
                           'Nuevo grupo',
                         ),
                       ),
-                      IconButton.outlined(
+                      AppIconButton.outlined(
                         onPressed: _load,
                         icon: const Icon(Icons.refresh),
                         tooltip: _tx('manager.refresh_tooltip', 'Actualizar'),
@@ -552,201 +528,6 @@ class _ManagerPageState extends State<ManagerPage> {
             sliver: SliverToBoxAdapter(child: _buildInvitationsCard()),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildGroupCard(GroupItem item) {
-    final switching = _switchingGroupId == item.id;
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              item.name,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 6),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                _chip(item.type),
-                _chip(item.role),
-                if (item.active) _chip(_tx('manager.active_chip', 'activo')),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text('ID: ${item.id}'),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                OutlinedButton.icon(
-                  onPressed: item.active || switching
-                      ? null
-                      : () => _switchGroup(item),
-                  icon: const Icon(Icons.swap_horiz_outlined),
-                  label: Text(
-                    switching
-                        ? _tx('manager.switching_label', 'Cambiando...')
-                        : _tx('manager.activate_btn', 'Activar'),
-                  ),
-                ),
-                const Spacer(),
-                ActionIconButton(
-                  icon: Icons.edit_outlined,
-                  tooltip: _tx('manager.rename_tooltip', 'Renombrar'),
-                  onPressed: item.isPersonal ? null : () => _renameGroup(item),
-                ),
-                ActionIconButton(
-                  icon: Icons.delete_outline,
-                  tooltip: _tx('common.delete', 'Eliminar'),
-                  danger: true,
-                  onPressed: item.isPersonal ? null : () => _deleteGroup(item),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _chip(String text) {
-    return Container(
-      margin: const EdgeInsets.only(left: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(text, style: const TextStyle(fontSize: 12)),
-    );
-  }
-
-  Widget _buildMembersCard() {
-    final active = _activeGroup;
-    final canManage = active != null && !active.isPersonal;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _tx('manager.members_title', 'Miembros'),
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              active == null
-                  ? _tx(
-                      'manager.no_active_group',
-                      'No hay ningún grupo activo.',
-                    )
-                  : (active.isPersonal
-                        ? _tx(
-                            'manager.active_personal',
-                            'Grupo activo: Personal. Solo tú puedes pertenecer a este grupo.',
-                          )
-                        : '${_tx('manager.active_group_prefix', 'Grupo activo')}: ${active.name}'),
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                IconButton.filled(
-                  onPressed: canManage ? _inviteMember : null,
-                  icon: const Icon(Icons.add),
-                  tooltip: _tx('manager.invite_tooltip', 'Invitar'),
-                ),
-                IconButton.outlined(
-                  onPressed: canManage ? _addMemberDirect : null,
-                  icon: const Icon(Icons.add),
-                  tooltip: _tx('manager.add_direct_tooltip', 'Añadir directo'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            if (_members.isEmpty)
-              Text(_tx('manager.empty_members', 'Sin miembros listados'))
-            else
-              ..._members.map((member) {
-                final username = (member['username'] ?? '').toString();
-                final role = (member['role'] ?? 'member').toString();
-                return ListTile(
-                  dense: true,
-                  title: Text(username),
-                  subtitle: Text('${_tx('manager.role_label', 'Rol')}: $role'),
-                  trailing: ActionIconButton(
-                    icon: Icons.person_remove_outlined,
-                    tooltip: _tx('manager.remove_tooltip', 'Quitar'),
-                    danger: true,
-                    onPressed: canManage ? () => _removeMember(username) : null,
-                  ),
-                );
-              }),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInvitationsCard() {
-    final active = _activeGroup;
-    final canManage = active != null && !active.isPersonal;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _tx('manager.invitations_title', 'Invitaciones'),
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            if (!canManage)
-              Text(
-                _tx(
-                  'manager.invitations_need_team',
-                  'Activa un grupo compartido para gestionar invitaciones.',
-                ),
-              )
-            else if (_invitations.isEmpty)
-              Text(
-                _tx(
-                  'manager.empty_invitations',
-                  'No hay invitaciones pendientes.',
-                ),
-              )
-            else
-              ..._invitations.map((inv) {
-                final id = (inv['id'] ?? '').toString();
-                final username = (inv['username'] ?? inv['to_username'] ?? '')
-                    .toString();
-                final createdAt = (inv['created_at'] ?? '').toString();
-                return ListTile(
-                  dense: true,
-                  title: Text(username.isEmpty ? id : username),
-                  subtitle: Text(
-                    'id: $id${createdAt.isEmpty ? '' : ' · $createdAt'}',
-                  ),
-                  trailing: ActionIconButton(
-                    icon: Icons.close,
-                    tooltip: _tx('common.cancel', 'Cancelar'),
-                    danger: true,
-                    onPressed: () => _cancelInvitation(id),
-                  ),
-                );
-              }),
-          ],
-        ),
       ),
     );
   }

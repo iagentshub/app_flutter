@@ -1,10 +1,8 @@
-import '../../../core/network/api_client.dart';
+import '../../../core/network/api_repository.dart';
 import '../../../models/manager/group_models.dart';
 
-class ManagerRepository {
-  ManagerRepository({required this.apiClient});
-
-  final ApiClient apiClient;
+class ManagerRepository extends ApiRepository {
+  ManagerRepository({required super.apiClient});
 
   Future<List<GroupItem>> listGroups(String token) async {
     final response = await apiClient.get(

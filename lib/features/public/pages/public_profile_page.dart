@@ -2,6 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
+import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/async_state_panel.dart';
+
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/explore/explore_models.dart';
@@ -10,10 +13,10 @@ import '../repositories/public_profile_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
-import '../../../shared/widgets/action_icon_button.dart';
-import '../../../shared/widgets/filter_button.dart';
+import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
+import '../cards/public_resource_card.dart';
 
 class PublicProfilePage extends StatefulWidget {
   const PublicProfilePage({
@@ -204,7 +207,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
             ),
           ),
           actions: [
-            FilledButton(
+            PrimaryButton(
               onPressed: () => Navigator.of(context).pop(),
               child: Text(_tx('common.close', 'Cerrar')),
             ),
@@ -233,35 +236,18 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (_loading) return const AsyncStatePanel.loading();
     if (_error != null) {
       return ListView(
-        padding: const EdgeInsets.all(16),
         children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _tx(
-                      'public_profile.error_loading',
-                      'Error cargando perfil público',
-                    ),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(_error!),
-                  const SizedBox(height: 12),
-                  FilledButton.icon(
-                    onPressed: _load,
-                    icon: const Icon(Icons.refresh),
-                    label: Text(_tx('common.retry', 'Reintentar')),
-                  ),
-                ],
-              ),
+          AsyncStatePanel.error(
+            title: _tx(
+              'public_profile.error_loading',
+              'Error cargando perfil público',
             ),
+            message: _error!,
+            retryLabel: _tx('common.retry', 'Reintentar'),
+            onRetry: _load,
           ),
         ],
       );
@@ -297,7 +283,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                 Text(
                   '${_tx('public_profile.following', 'Siguiendo')}: ${followStatus.followingCount}',
                 ),
-                FilledButton.icon(
+                PrimaryButton.icon(
                   onPressed: _followBusy ? null : _toggleFollow,
                   icon: Icon(
                     followStatus.following
@@ -369,37 +355,17 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               sliver: ResponsiveSliverMasonryGrid(
                 itemCount: _resources.length,
-                itemBuilder: (context, index) =>
-                    _buildResourceCard(_resources[index]),
+                itemBuilder: (context, index) {
+                  final item = _resources[index];
+                  return PublicResourceCard(
+                    item: item,
+                    previewTooltip: _tx('explore.preview', 'Vista previa'),
+                    onPreview: () => _preview(item),
+                  );
+                },
               ),
             ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildResourceCard(ExploreItem item) {
-    return Card(
-      margin: EdgeInsets.zero,
-      child: ListTile(
-        title: Text(item.name),
-        subtitle: Row(
-          children: [
-            Text(
-              '${item.resourceType} · ${item.category}',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(width: 10),
-            Icon(Icons.star, size: 13, color: Colors.amber.shade600),
-            const SizedBox(width: 3),
-            Text('${item.stars}', style: Theme.of(context).textTheme.bodySmall),
-          ],
-        ),
-        trailing: ActionIconButton(
-          icon: Icons.visibility_outlined,
-          tooltip: _tx('explore.preview', 'Vista previa'),
-          onPressed: () => _preview(item),
-        ),
       ),
     );
   }

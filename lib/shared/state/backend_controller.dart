@@ -5,36 +5,11 @@ import 'package:http/http.dart' as http;
 
 import '../../core/config/backend_defaults.dart';
 import '../../core/config/backend_option.dart';
+import '../../core/config/backend_url.dart';
 import '../../core/storage/local_store.dart';
+import '../../models/backend/backend_models.dart';
 
-/// Resultado de comprobar si un backend responde, usado tanto por el diálogo
-/// de añadir/editar (comprobación manual) como por el chequeo periódico de
-/// salud de la lista.
-class BackendPingResult {
-  const BackendPingResult({required this.ok, this.statusCode, this.error});
-
-  final bool ok;
-  final int? statusCode;
-  final String? error;
-}
-
-/// Backend añadido a mano por el usuario (nombre + URL), a diferencia de los
-/// oficiales en [BackendDefaults] que vienen predefinidos y no se eliminan.
-class SavedBackend {
-  const SavedBackend({required this.id, required this.name, required this.url});
-
-  final String id;
-  final String name;
-  final String url;
-
-  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'url': url};
-
-  factory SavedBackend.fromJson(Map<String, dynamic> json) => SavedBackend(
-    id: json['id']?.toString() ?? '',
-    name: json['name']?.toString() ?? '',
-    url: json['url']?.toString() ?? '',
-  );
-}
+export '../../models/backend/backend_models.dart';
 
 class BackendController extends ChangeNotifier {
   BackendController._({
@@ -180,68 +155,18 @@ class BackendController extends ChangeNotifier {
   /// Localhost/IPs privadas usan http por defecto; el resto, https.
   /// Devuelve cadena vacía si el input no es un host válido.
   String normalizeBackendInput(String input) {
-    var value = input.trim();
-    if (value.isEmpty) return '';
-
-    if (!value.contains('://')) {
-      final inferred = Uri.tryParse('backend://$value');
-      if (inferred == null || inferred.host.isEmpty) return '';
-      final scheme = _isLocalOrPrivateHost(inferred.host) ? 'http' : 'https';
-      value = '$scheme://$value';
-    }
-
-    final uri = Uri.tryParse(value);
-    if (uri == null) return '';
-    if (uri.host.isEmpty) return '';
-    if (uri.scheme != 'http' && uri.scheme != 'https') return '';
-    if (uri.userInfo.isNotEmpty ||
-        uri.hasQuery ||
-        uri.hasFragment ||
-        uri.host.contains(RegExp(r'[\s/]'))) {
-      return '';
-    }
-    if (uri.scheme == 'http' && !_isLocalOrPrivateHost(uri.host)) return '';
-
-    int? port;
-    try {
-      port = uri.hasPort ? uri.port : null;
-    } on FormatException {
-      return '';
-    }
-    if (port != null && (port < 1 || port > 65535)) return '';
-
-    final path = (uri.path == '/' ? '' : uri.path).replaceFirst(
-      RegExp(r'/$'),
-      '',
-    );
-
-    final normalized = Uri(
-      scheme: uri.scheme.toLowerCase(),
-      host: uri.host.toLowerCase(),
-      port: port,
-      path: path,
-    ).toString();
-
-    return normalized.endsWith('/')
-        ? normalized.substring(0, normalized.length - 1)
-        : normalized;
+    return BackendUrl.normalize(input);
   }
 
   /// Combina host + puerto opcional en una única cadena para normalizar.
   String composeHostAndPort(String host, String port) {
-    final trimmedHost = host.trim();
-    final trimmedPort = port.trim();
-    if (trimmedHost.isEmpty) return '';
-    if (trimmedPort.isEmpty) return trimmedHost;
-    return '$trimmedHost:$trimmedPort';
+    return BackendUrl.composeHostAndPort(host, port);
   }
 
   /// Descompone una URL guardada en host + puerto para precargar el
   /// formulario de edición. `port` viene vacío si la URL no especifica uno.
   ({String host, String port}) splitHostAndPort(String url) {
-    final uri = Uri.tryParse(url);
-    if (uri == null || uri.host.isEmpty) return (host: url, port: '');
-    return (host: uri.host, port: uri.hasPort ? '${uri.port}' : '');
+    return BackendUrl.splitHostAndPort(url);
   }
 
   /// Comprueba si un backend responde en `/api/settings/platform/public`,
@@ -384,34 +309,6 @@ class BackendController extends ChangeNotifier {
       return 'https://www.iagentshub.com';
     }
     return normalized;
-  }
-
-  static bool _isLocalOrPrivateHost(String rawHost) {
-    final host = rawHost.toLowerCase();
-    if (host == 'localhost' ||
-        host.endsWith('.localhost') ||
-        host.endsWith('.local') ||
-        host == '::1' ||
-        (host.contains(':') &&
-            (host.startsWith('fe80:') ||
-                host.startsWith('fc') ||
-                host.startsWith('fd')))) {
-      return true;
-    }
-
-    final parts = host.split('.');
-    if (parts.length != 4) return false;
-    final octets = parts.map(int.tryParse).toList();
-    if (octets.any((part) => part == null || part < 0 || part > 255)) {
-      return false;
-    }
-    final first = octets[0]!;
-    final second = octets[1]!;
-    return first == 10 ||
-        first == 127 ||
-        (first == 169 && second == 254) ||
-        (first == 172 && second >= 16 && second <= 31) ||
-        (first == 192 && second == 168);
   }
 
   static int _idCounter = 0;

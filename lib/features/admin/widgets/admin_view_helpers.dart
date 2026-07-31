@@ -1,0 +1,129 @@
+part of '../pages/admin_page.dart';
+
+extension _AdminViewHelpers on _AdminPageState {
+  Widget _badge(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
+      ),
+    );
+  }
+
+  Widget _dropdown({
+    required String label,
+    required String value,
+    required List<(String, String)> options,
+    required ValueChanged<String> onChanged,
+    double width = 170,
+  }) {
+    return SizedBox(
+      width: width,
+      child: DropdownButtonFormField<String>(
+        initialValue: value,
+        decoration: InputDecoration(labelText: label),
+        isExpanded: true,
+        items: options
+            .map(
+              (opt) => DropdownMenuItem(
+                value: opt.$1,
+                child: Text(opt.$2, overflow: TextOverflow.ellipsis),
+              ),
+            )
+            .toList(),
+        onChanged: (next) {
+          if (next == null) return;
+          onChanged(next);
+        },
+      ),
+    );
+  }
+
+  /// Diálogo de filtros compartido por las pestañas Agentes/Conexiones/
+  /// Orquestaciones, que solo filtran por propietario.
+  void _openOwnerFilterDialog({
+    required List<String> owners,
+    required String currentOwner,
+    required ValueChanged<String> onChanged,
+  }) {
+    showFilterDialog(
+      context,
+      title: _tx('common.filters', 'Filtros'),
+      clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
+      closeLabel: _tx('common.close', 'Cerrar'),
+      onClear: () => onChanged(''),
+      buildFields: (setDialogState) => [
+        _dropdown(
+          label: _tx('admin.table_owner', 'Propietario'),
+          value: currentOwner,
+          width: 360,
+          options: [
+            ('', _tx('admin.all_owners', 'Todos los propietarios')),
+            ...owners.map((o) => (o, o)),
+          ],
+          onChanged: (v) {
+            onChanged(v);
+            setDialogState(() {});
+          },
+        ),
+      ],
+    );
+  }
+
+  void _openKnowledgeFiltersDialog() {
+    showFilterDialog(
+      context,
+      title: _tx('common.filters', 'Filtros'),
+      clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
+      closeLabel: _tx('common.close', 'Cerrar'),
+      onClear: () => _refresh(() {
+        _knowledgeType = '';
+        _knowledgeOwner = '';
+      }),
+      buildFields: (setDialogState) => [
+        _dropdown(
+          label: _tx('admin.filter_type', 'Tipo'),
+          value: _knowledgeType,
+          width: 360,
+          options: [
+            ('', _tx('admin.all_types', 'Todos los tipos')),
+            ('url', 'URL'),
+            ('document', _tx('admin.type_document', 'Documento')),
+          ],
+          onChanged: (v) {
+            _refresh(() => _knowledgeType = v);
+            setDialogState(() {});
+          },
+        ),
+        const SizedBox(height: 12),
+        _dropdown(
+          label: _tx('admin.table_owner', 'Propietario'),
+          value: _knowledgeOwner,
+          width: 360,
+          options: [
+            ('', _tx('admin.all_owners', 'Todos los propietarios')),
+            ..._ownersOf(_knowledge).map((o) => (o, o)),
+          ],
+          onChanged: (v) {
+            _refresh(() => _knowledgeOwner = v);
+            setDialogState(() {});
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _emptyCard(String text) => Card(
+    child: Padding(padding: const EdgeInsets.all(16), child: Text(text)),
+  );
+}

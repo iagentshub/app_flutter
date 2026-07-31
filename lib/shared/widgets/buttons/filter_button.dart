@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'responsive_dialog.dart';
+import '../responsive_dialog.dart';
 
 /// Botón de filtros: solo icono + insignia con el nº de filtros activos
 /// (el tooltip lleva el texto). Mismo icono/forma en toda la app para que

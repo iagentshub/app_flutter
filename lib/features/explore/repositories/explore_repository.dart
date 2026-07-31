@@ -1,11 +1,9 @@
-import '../../../core/network/api_client.dart';
+import '../../../core/network/api_repository.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/explore/explore_models.dart';
 
-class ExploreRepository {
-  ExploreRepository({required this.apiClient});
-
-  final ApiClient apiClient;
+class ExploreRepository extends ApiRepository {
+  ExploreRepository({required super.apiClient});
 
   Future<List<ExploreItem>> listResources(
     String token, {

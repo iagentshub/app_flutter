@@ -1,0 +1,265 @@
+part of '../pages/logs_page.dart';
+
+extension _LogsViews on _LogsPageViewState {
+  Widget _buildSummary() {
+    if (_summaryLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_summaryError != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(_summaryError!),
+            const SizedBox(height: 12),
+            PrimaryButton.icon(
+              onPressed: _loadSummary,
+              icon: const Icon(Icons.refresh),
+              label: Text(_tx('common.retry', 'Reintentar')),
+            ),
+          ],
+        ),
+      );
+    }
+    if (_summary.isEmpty) {
+      return Center(
+        child: Text(_tx('logs.empty', 'Sin datos de logs todavía')),
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: _loadSummary,
+      child: GridView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 280,
+          mainAxisExtent: 150,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+        ),
+        itemCount: _summary.length,
+        itemBuilder: (context, index) {
+          final day = _summary[index];
+          return Card(
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: () => _openDay(day.date),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      day.date,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _tx(
+                        'logs.lines_count',
+                        'Líneas: {n}',
+                      ).replaceAll('{n}', '${day.lines}'),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _tx('logs.be_summary', 'BE: {warn} warn · {err} err')
+                          .replaceAll('{warn}', '${day.beWarnings}')
+                          .replaceAll('{err}', '${day.beErrors}'),
+                    ),
+                    Text(
+                      _tx('logs.fe_summary', 'FE: {warn} warn · {err} err')
+                          .replaceAll('{warn}', '${day.feWarnings}')
+                          .replaceAll('{err}', '${day.feErrors}'),
+                    ),
+                    const Spacer(),
+                    Row(
+                      children: [
+                        if (day.errors > 0)
+                          Icon(
+                            Icons.error_outline,
+                            size: 16,
+                            color: Colors.red.shade700,
+                          ),
+                        if (day.warnings > 0) ...[
+                          const SizedBox(width: 6),
+                          Icon(
+                            Icons.warning_amber_outlined,
+                            size: 16,
+                            color: Colors.orange.shade800,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildViewer() {
+    final data = _logsPage;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: _queryController,
+          decoration: InputDecoration(
+            labelText: _tx('logs.search_message_label', 'Buscar en mensaje'),
+            prefixIcon: const Icon(Icons.search, size: 20),
+          ),
+          onSubmitted: (_) => _loadViewer(),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            AppIconButton.outlined(
+              onPressed: _exporting ? null : _exportCsv,
+              tooltip: _tx('logs.export_csv', 'Exportar CSV'),
+              icon: _exporting
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.download_outlined),
+            ),
+            FilterButton(
+              activeCount: _logsActiveFilterCount,
+              tooltip: _tx('common.filters', 'Filtros'),
+              onPressed: _openLogsFiltersDialog,
+            ),
+            if (_dateFilter != null)
+              ActionChip(
+                label: Text(
+                  _tx(
+                    'logs.day_filter_chip',
+                    'Día: {date} ✕',
+                  ).replaceAll('{date}', _dateFilter!),
+                ),
+                onPressed: _clearDateFilter,
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (_viewerError != null) ...[
+          Text(_viewerError!, style: TextStyle(color: Colors.red.shade700)),
+          const SizedBox(height: 10),
+        ],
+        if (_viewerLoading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 40),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (data == null)
+          Text(
+            _tx(
+              'logs.viewer_hint',
+              'Ajusta los filtros y pulsa "Filtrar" para ver logs',
+            ),
+          )
+        else ...[
+          Expanded(
+            child: SingleChildScrollView(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  columns: [
+                    DataColumn(label: Text(_tx('logs.col_date', 'Fecha'))),
+                    DataColumn(label: Text(_tx('logs.col_time', 'Hora'))),
+                    DataColumn(label: Text(_tx('logs.col_level', 'Nivel'))),
+                    DataColumn(label: Text(_tx('logs.col_ip', 'IP'))),
+                    DataColumn(label: Text(_tx('logs.col_user', 'Usuario'))),
+                    DataColumn(
+                      label: Text(_tx('logs.col_service', 'Servicio')),
+                    ),
+                    DataColumn(label: Text(_tx('logs.col_message', 'Mensaje'))),
+                  ],
+                  rows: data.items.map((entry) {
+                    return DataRow(
+                      cells: [
+                        DataCell(Text(entry.date)),
+                        DataCell(Text(entry.time)),
+                        DataCell(
+                          Text(
+                            entry.level,
+                            style: TextStyle(
+                              color: _levelColor(entry.level),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        DataCell(
+                          InkWell(
+                            onTap: () => _filterByIp(entry.ip),
+                            child: Text(entry.ip),
+                          ),
+                        ),
+                        DataCell(
+                          InkWell(
+                            onTap: () => _filterByUsername(entry.username),
+                            child: Text(entry.username),
+                          ),
+                        ),
+                        DataCell(Text(entry.source)),
+                        DataCell(
+                          SizedBox(
+                            width: 420,
+                            child: Text(
+                              entry.summary,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                _tx('logs.page_total', 'Página {page}/{pages} · Total: {total}')
+                    .replaceAll('{page}', '${data.page}')
+                    .replaceAll(
+                      '{pages}',
+                      '${data.pages == 0 ? 1 : data.pages}',
+                    )
+                    .replaceAll('{total}', '${data.total}'),
+              ),
+              Wrap(
+                spacing: 8,
+                children: [
+                  SecondaryButton(
+                    onPressed: data.page > 1
+                        ? () => _loadViewer(page: data.page - 1)
+                        : null,
+                    child: Text(_tx('logs.prev', 'Anterior')),
+                  ),
+                  SecondaryButton(
+                    onPressed: data.page < data.pages
+                        ? () => _loadViewer(page: data.page + 1)
+                        : null,
+                    child: Text(_tx('logs.next', 'Siguiente')),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}

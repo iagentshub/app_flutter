@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:app_flutter/core/network/api_client.dart';
+import 'package:app_flutter/core/network/api_error.dart';
 import 'package:app_flutter/shared/state/backend_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -158,6 +159,29 @@ void main() {
     expect(backendController.hasConnectionIssue, isTrue);
   });
 
+  test('rechaza respuestas que superan el límite de memoria', () async {
+    final mock = MockClient(
+      (request) async => http.Response('0123456789', 200),
+    );
+    final client = ApiClient(
+      backendController,
+      client: mock,
+      maxResponseBytes: 8,
+    );
+    addTearDown(client.close);
+
+    await expectLater(
+      client.get('/api/large'),
+      throwsA(
+        isA<ApiError>().having(
+          (error) => error.code,
+          'code',
+          'response_too_large',
+        ),
+      ),
+    );
+  });
+
   test('SSE separa correctamente CRLF y la última línea', () async {
     final mock = MockClient(
       (request) async => http.Response(
@@ -174,6 +198,29 @@ void main() {
         .toList();
 
     expect(lines, ['data: uno', 'data: dos', 'final']);
+  });
+
+  test('SSE rechaza eventos sin terminador que crecen sin límite', () async {
+    final mock = MockClient(
+      (request) async => http.Response('data: 0123456789', 200),
+    );
+    final client = ApiClient(
+      backendController,
+      client: mock,
+      maxStreamLineChars: 8,
+    );
+    addTearDown(client.close);
+
+    await expectLater(
+      client.getStream('/api/stream').toList(),
+      throwsA(
+        isA<ApiError>().having(
+          (error) => error.code,
+          'code',
+          'stream_event_too_large',
+        ),
+      ),
+    );
   });
 
   test('sanea nombres de descarga recibidos del servidor', () async {

@@ -1,12 +1,10 @@
 import 'dart:convert';
 
-import '../../../core/network/api_client.dart';
+import '../../../core/network/api_repository.dart';
 import '../../../models/workflows/workflow_models.dart';
 
-class WorkflowsRepository {
-  WorkflowsRepository({required this.apiClient});
-
-  final ApiClient apiClient;
+class WorkflowsRepository extends ApiRepository {
+  WorkflowsRepository({required super.apiClient});
 
   Future<List<WorkflowItem>> listWorkflows(String token) async {
     final response = await apiClient.get(

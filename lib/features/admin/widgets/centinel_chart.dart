@@ -315,8 +315,11 @@ class _ChartPainter extends CustomPainter {
     for (var i = 0; i < series.length; i++) {
       final a = oldDelegate.series[i];
       final b = series[i];
-      if (a.color != b.color || a.style != b.style || a.ownScale != b.ownScale)
+      if (a.color != b.color ||
+          a.style != b.style ||
+          a.ownScale != b.ownScale) {
         return true;
+      }
       if (!listEquals(a.values, b.values)) return true;
       if (!listEquals(a.perPointColors, b.perPointColors)) return true;
     }

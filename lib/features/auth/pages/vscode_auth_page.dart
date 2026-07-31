@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../shared/widgets/buttons/app_buttons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/network/api_error.dart';
@@ -20,8 +22,10 @@ Uri? _safeCallback(String? value) {
   if (value == null || value.isEmpty) return null;
   final uri = Uri.tryParse(value);
   if (uri == null) return null;
-  if (!_vsCodeSchemes.contains(uri.scheme) || uri.authority != _vsCodeAuthority)
+  if (!_vsCodeSchemes.contains(uri.scheme) ||
+      uri.authority != _vsCodeAuthority) {
     return null;
+  }
   return uri;
 }
 
@@ -170,7 +174,7 @@ class _VsCodeAuthPageState extends State<VsCodeAuthPage> {
               const SizedBox(height: 16),
               Row(
                 children: [
-                  FilledButton(
+                  PrimaryButton(
                     onPressed: _loading ? null : () => _authorize(t),
                     child: Text(
                       _loading
@@ -183,7 +187,7 @@ class _VsCodeAuthPageState extends State<VsCodeAuthPage> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  TextButton(
+                  TertiaryButton(
                     onPressed: _loading
                         ? null
                         : () => Navigator.of(context).maybePop(),

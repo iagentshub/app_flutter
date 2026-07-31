@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../shared/widgets/buttons/app_buttons.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router/route_names.dart';
@@ -14,11 +16,11 @@ class CheckoutPage extends StatelessWidget {
       description:
           'Flujo de suscripción y confirmación de plan. Aquí conectaremos billing en la siguiente iteración.',
       actions: [
-        FilledButton(
+        PrimaryButton(
           onPressed: () => context.go(RouteNames.pricing),
           child: const Text('Volver a precios'),
         ),
-        OutlinedButton(
+        SecondaryButton(
           onPressed: () => context.go(RouteNames.login),
           child: const Text('Ir al login'),
         ),

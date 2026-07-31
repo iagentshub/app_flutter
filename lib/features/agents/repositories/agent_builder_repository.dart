@@ -1,13 +1,11 @@
 import 'dart:convert';
 
-import '../../../core/network/api_client.dart';
+import '../../../core/network/api_repository.dart';
 import '../../../models/agents/agent_builder_models.dart';
 import '../../../models/chat/chat_models.dart';
 
-class AgentBuilderRepository {
-  AgentBuilderRepository({required this.apiClient});
-
-  final ApiClient apiClient;
+class AgentBuilderRepository extends ApiRepository {
+  AgentBuilderRepository({required super.apiClient});
 
   /// Envía la conversación al constructor de agentes por IA y transmite los
   /// eventos SSE de la respuesta (`progress`, `error`, `builder_done`).

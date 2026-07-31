@@ -1,4 +1,4 @@
-import '../../../core/network/api_client.dart';
+import '../../../core/network/api_repository.dart';
 
 class AdminStats {
   const AdminStats({required this.raw});
@@ -22,10 +22,8 @@ class AdminStats {
   int get agentsPrivate => _asInt(raw['agents_private']);
 }
 
-class AdminRepository {
-  AdminRepository({required this.apiClient});
-
-  final ApiClient apiClient;
+class AdminRepository extends ApiRepository {
+  AdminRepository({required super.apiClient});
 
   Future<AdminStats> getStats(String token) async {
     final response = await apiClient.get(
@@ -87,8 +85,8 @@ class AdminRepository {
       '/api/admin/users/${Uri.encodeComponent(username)}',
       gaToken: token,
       body: {
-        if (role != null) 'role': role,
-        if (isActive != null) 'is_active': isActive,
+        'role': ?role,
+        'is_active': ?isActive,
         if (password != null && password.isNotEmpty) 'password': password,
       },
     );

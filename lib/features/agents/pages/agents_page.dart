@@ -1,28 +1,34 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
+import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/async_state_panel.dart';
+
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/agents/agent_models.dart';
 import '../../../models/explore/explore_models.dart';
 import '../../explore/repositories/explore_repository.dart';
+import '../cards/agent_card.dart';
 import '../repositories/agents_repository.dart';
-import '../widgets/agent_form_dialog.dart';
+import '../dialogs/agent_form_dialog.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/debouncer.dart';
-import '../../../shared/widgets/action_icon_button.dart';
-import '../../../shared/widgets/filter_button.dart';
+import '../../../shared/widgets/buttons/filter_button.dart';
+import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
-import '../../../shared/widgets/label_chips_row.dart';
 import 'agent_builder_page.dart';
-import '../../../shared/widgets/origin_badge.dart';
 import '../../../shared/widgets/resource_history_dialog.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
+import '../../../shared/widgets/resource_toolbar.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 import 'chat_page.dart';
+
+part '../dialogs/public_agent_picker_dialog.dart';
+part '../widgets/agents_page_view.dart';
 
 class AgentsPage extends StatefulWidget {
   const AgentsPage({
@@ -484,24 +490,14 @@ class _AgentsPageState extends State<AgentsPage> {
       return;
     }
 
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Eliminar agente'),
-        content: Text('¿Seguro que quieres eliminar "${item.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
+    final confirm = await showConfirmActionDialog(
+      context,
+      title: 'Eliminar agente',
+      message: '¿Seguro que quieres eliminar "${item.name}"?',
+      cancelLabel: 'Cancelar',
+      confirmLabel: 'Eliminar',
     );
-    if (confirm != true) return;
+    if (!confirm) return;
 
     final token = _token;
     if (token == null || token.isEmpty) return;
@@ -574,363 +570,8 @@ class _AgentsPageState extends State<AgentsPage> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    if (_loading) return const Center(child: CircularProgressIndicator());
-    if (_error != null) {
-      return ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _tx('agents.error_title', 'Error cargando agentes'),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(_error!),
-                  const SizedBox(height: 12),
-                  FilledButton.icon(
-                    onPressed: _load,
-                    icon: const Icon(Icons.refresh),
-                    label: Text(_tx('common.retry', 'Reintentar')),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      );
-    }
-
-    final filteredAgents = _filteredAgents;
-    return RefreshIndicator(
-      onRefresh: _load,
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            sliver: SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextField(
-                    controller: _queryController,
-                    decoration: InputDecoration(
-                      labelText: _tx('agents.search_hint', 'Buscar agente'),
-                      prefixIcon: const Icon(Icons.search, size: 20),
-                    ),
-                    onChanged: (value) {
-                      _query = value;
-                      _searchDebouncer.run(() {
-                        if (mounted) setState(() {});
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      IconButton.filled(
-                        onPressed: _openCreateChoiceDialog,
-                        icon: const Icon(Icons.add),
-                        tooltip: _tx('agents.new', 'Nuevo agente'),
-                      ),
-                      IconButton.outlined(
-                        onPressed: _load,
-                        icon: const Icon(Icons.refresh),
-                        tooltip: _tx('common.update', 'Actualizar'),
-                      ),
-                      FilterButton(
-                        activeCount: _activeFilterCount,
-                        tooltip: _tx('common.filters', 'Filtros'),
-                        onPressed: _openFiltersDialog,
-                      ),
-                      IconButton.outlined(
-                        onPressed: () => showGroupFilterDialog(
-                          context,
-                          apiClient: widget.apiClient,
-                          token: _token ?? '',
-                          activeGroupId: _activeGroupId,
-                          onSelect: _onGroupSelect,
-                          localeController: widget.localeController,
-                        ),
-                        icon: const Icon(Icons.groups_outlined),
-                        tooltip: _tx('groups.toggle_tooltip', 'Grupos'),
-                        isSelected: _activeGroupId != null,
-                      ),
-                      if (_activeGroupId != null)
-                        ActionChip(
-                          label: Text(
-                            _tx('groups.active_clear', 'Grupo activo ✕'),
-                          ),
-                          onPressed: () => _onGroupSelect(null),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    '${_tx('agents.count_label', 'Agentes')}: ${filteredAgents.length}',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (filteredAgents.isEmpty)
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              sliver: SliverToBoxAdapter(
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      _agents.isEmpty
-                          ? _tx('agents.empty', 'No hay agentes disponibles.')
-                          : _tx(
-                              'agents.empty_search',
-                              'Sin resultados para esa búsqueda.',
-                            ),
-                    ),
-                  ),
-                ),
-              ),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              sliver: ResponsiveSliverMasonryGrid(
-                itemCount: filteredAgents.length,
-                itemBuilder: (context, index) =>
-                    _buildAgentCard(filteredAgents[index]),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAgentCard(AgentItem item) {
-    final subtitleParts = <String>[item.agentType];
-    if (item.model.isNotEmpty) subtitleParts.add(item.model);
-    if (item.connectionId.isNotEmpty)
-      subtitleParts.add('conn: ${item.connectionId}');
-
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    item.name,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(subtitleParts.join(' · ')),
-            if (item.description.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                item.description,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-            const SizedBox(height: 8),
-            LabelChipsRow(
-              labels: item.labels,
-              leading: [
-                OriginBadge(
-                  shared: item.shared,
-                  ownerLabel: _tx('common.owner', 'Propietario'),
-                  linkedLabel: _tx('common.linked', 'Enlazado'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Tooltip(
-                  message: item.connectionId.isEmpty
-                      ? _tx(
-                          'agents.chat_no_connection',
-                          'Configura una conexión para este agente',
-                        )
-                      : '',
-                  child: FilledButton.icon(
-                    onPressed: item.connectionId.isEmpty
-                        ? null
-                        : () => _openChat(item),
-                    icon: const Icon(Icons.chat_bubble_outline),
-                    label: const Text('Chat'),
-                  ),
-                ),
-                const Spacer(),
-                PopupMenuButton<String>(
-                  tooltip: _tx('agents.export_tooltip', 'Exportar'),
-                  icon: const Icon(Icons.ios_share_outlined, size: 18),
-                  onSelected: (format) => _exportAgent(item, format),
-                  itemBuilder: (context) => [
-                    PopupMenuItem(
-                      value: 'openai',
-                      child: Text(_tx('agents.export_openai', 'OpenAI')),
-                    ),
-                    PopupMenuItem(
-                      value: 'claude',
-                      child: Text(_tx('agents.export_claude', 'Claude')),
-                    ),
-                    PopupMenuItem(
-                      value: 'github',
-                      child: Text(
-                        _tx('agents.export_github', 'GitHub Copilot'),
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: 'mcp',
-                      child: Text(_tx('agents.export_mcp', 'Servidor MCP')),
-                    ),
-                  ],
-                ),
-                ActionIconButton(
-                  icon: Icons.group_add_outlined,
-                  tooltip: _tx('common.share_group', 'Compartir con grupo'),
-                  onPressed: () => _shareAgent(item),
-                ),
-                ActionIconButton(
-                  icon: Icons.history,
-                  tooltip: _tx(
-                    'history.dialog_title',
-                    'Historial de versiones',
-                  ),
-                  onPressed: () => _showHistory(item),
-                ),
-                ActionIconButton(
-                  icon: Icons.edit_outlined,
-                  tooltip: _tx('common.edit', 'Editar'),
-                  onPressed: () => _openEditDialog(item),
-                ),
-                ActionIconButton(
-                  icon: Icons.delete_outline,
-                  tooltip: _tx('common.delete', 'Eliminar'),
-                  danger: true,
-                  onPressed: () => _deleteAgent(item),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Selector de agente público a usar como plantilla, con búsqueda por nombre.
-class _PublicAgentPickerDialog extends StatefulWidget {
-  const _PublicAgentPickerDialog({required this.agents, required this.tx});
-
-  final List<ExploreItem> agents;
-  final String Function(String path, String fallback) tx;
+  void _refresh(VoidCallback update) => setState(update);
 
   @override
-  State<_PublicAgentPickerDialog> createState() =>
-      _PublicAgentPickerDialogState();
-}
-
-class _PublicAgentPickerDialogState extends State<_PublicAgentPickerDialog> {
-  final _queryController = TextEditingController();
-  String _query = '';
-
-  @override
-  void dispose() {
-    _queryController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final tx = widget.tx;
-    final query = _query.trim().toLowerCase();
-    final filtered = query.isEmpty
-        ? widget.agents
-        : widget.agents
-              .where((a) => a.name.toLowerCase().contains(query))
-              .toList();
-
-    return AlertDialog(
-      title: Text(
-        tx('agents.create_public_picker_title', 'Elige un agente público'),
-      ),
-      content: SizedBox(
-        width: dialogContentWidth(context, 480),
-        height: dialogContentHeight(context, 420),
-        child: Column(
-          children: [
-            TextField(
-              controller: _queryController,
-              decoration: InputDecoration(
-                labelText: tx('agents.search_hint', 'Buscar agente'),
-                prefixIcon: const Icon(Icons.search, size: 20),
-              ),
-              onChanged: (value) => setState(() => _query = value),
-            ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: filtered.isEmpty
-                  ? Center(
-                      child: Text(
-                        tx(
-                          'agents.create_public_no_match',
-                          'Sin coincidencias',
-                        ),
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    )
-                  : ListView.separated(
-                      itemCount: filtered.length,
-                      separatorBuilder: (context, _) =>
-                          const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final agent = filtered[index];
-                        return ListTile(
-                          title: Text(agent.name),
-                          subtitle: agent.description.isEmpty
-                              ? null
-                              : Text(
-                                  agent.description,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                          onTap: () => Navigator.of(context).pop(agent),
-                        );
-                      },
-                    ),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(tx('common.cancel', 'Cancelar')),
-        ),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => _buildPage(context);
 }

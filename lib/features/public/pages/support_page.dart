@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+
+import '../../../shared/widgets/buttons/app_buttons.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router/route_names.dart';
 import '../../../shared/i18n/locale_loader.dart';
 import '../../../shared/widgets/public_top_bar.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
+
+part '../cards/support_cards.dart';
 
 class SupportPage extends StatelessWidget {
   const SupportPage({super.key});
@@ -88,7 +92,7 @@ class SupportPage extends StatelessWidget {
               title: docsTitle,
               subtitle: docsDescription,
               children: [
-                TextButton(
+                TertiaryButton(
                   onPressed: () => context.go(
                     isEnglish ? RouteNames.docsEn : RouteNames.docs,
                   ),
@@ -100,7 +104,7 @@ class SupportPage extends StatelessWidget {
               title: statusTitle,
               subtitle: statusDescription,
               children: [
-                TextButton(
+                TertiaryButton(
                   onPressed: null,
                   child: Text(isEnglish ? 'View status' : 'Ver estado'),
                 ),
@@ -164,89 +168,6 @@ class SupportPage extends StatelessWidget {
           );
         },
       ),
-    );
-  }
-}
-
-class _SectionCard extends StatelessWidget {
-  const _SectionCard({
-    required this.title,
-    required this.subtitle,
-    required this.children,
-  });
-
-  final String title;
-  final String subtitle;
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFF333333)),
-        borderRadius: BorderRadius.circular(14),
-        color: const Color(0xFF101010),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              subtitle,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFFD4D4D4)),
-            ),
-            if (children.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              ...children,
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ChannelRow extends StatelessWidget {
-  const _ChannelRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 120,
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFFFFFFFF),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFFD4D4D4)),
-          ),
-        ),
-      ],
     );
   }
 }

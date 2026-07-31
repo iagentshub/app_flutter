@@ -1,0 +1,31 @@
+part of '../pages/explore_page.dart';
+
+class _PreviewDialog extends StatelessWidget {
+  const _PreviewDialog({required this.title, required this.jsonPayload});
+
+  final String title;
+  final Map<String, dynamic> jsonPayload;
+
+  @override
+  Widget build(BuildContext context) {
+    final pretty = const JsonEncoder.withIndent('  ').convert(jsonPayload);
+    return AlertDialog(
+      title: Text('Preview: $title'),
+      content: SizedBox(
+        width: dialogContentWidth(context, 760),
+        child: SingleChildScrollView(
+          child: SelectableText(
+            pretty,
+            style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+          ),
+        ),
+      ),
+      actions: [
+        PrimaryButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cerrar'),
+        ),
+      ],
+    );
+  }
+}

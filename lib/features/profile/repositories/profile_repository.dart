@@ -1,31 +1,24 @@
-import '../../../core/network/api_client.dart';
+import '../../../core/network/api_repository.dart';
 import '../../../models/profile/profile_models.dart';
 
-class ProfileRepository {
-  ProfileRepository({required this.apiClient});
-
-  final ApiClient apiClient;
+class ProfileRepository extends ApiRepository {
+  ProfileRepository({required super.apiClient});
 
   Future<ProfileBundle> fetchBundle(String token) async {
-    final sessionResponse = await apiClient.get(
-      '/api/auth/me',
-      gaToken: token,
-      cache: true,
-    );
-    final settingsResponse = await apiClient.get(
-      '/api/settings',
-      gaToken: token,
-      cache: true,
-    );
-    final deletionResponse = await apiClient.get(
-      '/api/auth/me/deletion-status',
-      gaToken: token,
-      cache: true,
-    );
+    final licenseFuture = _fetchLicense(token);
+    final coreResponses = await Future.wait([
+      apiClient.get('/api/auth/me', gaToken: token, cache: true),
+      apiClient.get('/api/settings', gaToken: token, cache: true),
+      apiClient.get(
+        '/api/auth/me/deletion-status',
+        gaToken: token,
+        cache: true,
+      ),
+    ]);
 
-    final session = ProfileSession.fromJson(sessionResponse.json);
-    final settings = ProfileSettings.fromJson(settingsResponse.json);
-    final deletion = DeletionStatus.fromJson(deletionResponse.json);
+    final session = ProfileSession.fromJson(coreResponses[0].json);
+    final settings = ProfileSettings.fromJson(coreResponses[1].json);
+    final deletion = DeletionStatus.fromJson(coreResponses[2].json);
 
     SocialProfile social = SocialProfile(
       username: session.username,
@@ -41,25 +34,27 @@ class ProfileRepository {
       social = SocialProfile.fromJson(socialResponse.json);
     }
 
-    var license = const LicenseInfo(tier: 'free');
-    try {
-      final licenseResponse = await apiClient.get(
-        '/api/billing/subscription',
-        gaToken: token,
-        cache: true,
-      );
-      license = LicenseInfo.fromJson(licenseResponse.json);
-    } catch (_) {
-      // Billing puede no estar disponible en todos los despliegues.
-    }
-
     return ProfileBundle(
       session: session,
       settings: settings,
       deletion: deletion,
       social: social,
-      license: license,
+      license: await licenseFuture,
     );
+  }
+
+  Future<LicenseInfo> _fetchLicense(String token) async {
+    try {
+      final response = await apiClient.get(
+        '/api/billing/subscription',
+        gaToken: token,
+        cache: true,
+      );
+      return LicenseInfo.fromJson(response.json);
+    } catch (_) {
+      // Billing puede no estar disponible en todos los despliegues.
+      return const LicenseInfo(tier: 'free');
+    }
   }
 
   Future<ProfileSettings> updateSettings(

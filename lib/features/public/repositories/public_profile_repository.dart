@@ -1,4 +1,4 @@
-import '../../../core/network/api_client.dart';
+import '../../../core/network/api_repository.dart';
 import '../../../models/explore/explore_models.dart';
 
 class PublicFollowStatus {
@@ -27,10 +27,8 @@ class PublicFollowStatus {
   }
 }
 
-class PublicProfileRepository {
-  PublicProfileRepository({required this.apiClient});
-
-  final ApiClient apiClient;
+class PublicProfileRepository extends ApiRepository {
+  PublicProfileRepository({required super.apiClient});
 
   Future<List<ExploreItem>> listResources(
     String token, {

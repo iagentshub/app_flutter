@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../shared/widgets/buttons/app_buttons.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router/route_names.dart';
@@ -133,7 +135,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                             const SizedBox(height: 16),
                             SizedBox(
                               width: double.infinity,
-                              child: FilledButton(
+                              child: PrimaryButton(
                                 onPressed: _loading ? null : () => _submit(t),
                                 child: Text(
                                   _loading
@@ -151,7 +153,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            TextButton(
+                            TertiaryButton(
                               onPressed: () => context.go(RouteNames.login),
                               child: Text(
                                 _txt(

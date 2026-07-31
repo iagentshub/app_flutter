@@ -1,4 +1,4 @@
-import '../../../core/network/api_client.dart';
+import '../../../core/network/api_repository.dart';
 
 class MetadataTable {
   const MetadataTable({required this.raw});
@@ -52,10 +52,8 @@ class MetadataPageData {
   int get pages => _asInt(raw['pages']);
 }
 
-class MetadataRepository {
-  MetadataRepository({required this.apiClient});
-
-  final ApiClient apiClient;
+class MetadataRepository extends ApiRepository {
+  MetadataRepository({required super.apiClient});
 
   Future<List<MetadataTable>> listTables(String token) async {
     final response = await apiClient.get(

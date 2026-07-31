@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/async_state_panel.dart';
+import '../../../shared/widgets/confirm_action_dialog.dart';
+
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/memory/memory_models.dart';
@@ -7,9 +11,12 @@ import '../repositories/memory_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
-import '../../../shared/widgets/action_icon_button.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
+import '../../../shared/widgets/resource_toolbar.dart';
+import '../cards/memory_file_card.dart';
+
+part '../dialogs/memory_editor_dialog.dart';
 
 class MemoryPage extends StatefulWidget {
   const MemoryPage({
@@ -163,29 +170,17 @@ class _MemoryPageState extends State<MemoryPage> {
   }
 
   Future<void> _deleteFile(MemoryFileItem file) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(_tx('memory.delete_dialog_title', 'Eliminar archivo')),
-        content: Text(
-          _tx(
-            'memory.delete_dialog_body',
-            '¿Seguro que quieres eliminar "{{filename}}"?',
-          ).replaceAll('{{filename}}', file.filename),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(_tx('common.cancel', 'Cancelar')),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(_tx('common.delete', 'Eliminar')),
-          ),
-        ],
-      ),
+    final confirm = await showConfirmActionDialog(
+      context,
+      title: _tx('memory.delete_dialog_title', 'Eliminar archivo'),
+      message: _tx(
+        'memory.delete_dialog_body',
+        '¿Seguro que quieres eliminar "{{filename}}"?',
+      ).replaceAll('{{filename}}', file.filename),
+      cancelLabel: _tx('common.cancel', 'Cancelar'),
+      confirmLabel: _tx('common.delete', 'Eliminar'),
     );
-    if (confirm != true) return;
+    if (!confirm) return;
 
     final token = _token;
     if (token == null || token.isEmpty) return;
@@ -216,62 +211,37 @@ class _MemoryPageState extends State<MemoryPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (_loading) return const AsyncStatePanel.loading();
     if (_error != null) {
       return ListView(
-        padding: const EdgeInsets.all(16),
         children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _tx('memory.error_loading_title', 'Error cargando Memory'),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(_error!),
-                  const SizedBox(height: 12),
-                  FilledButton.icon(
-                    onPressed: _load,
-                    icon: const Icon(Icons.refresh),
-                    label: Text(_tx('common.retry', 'Reintentar')),
-                  ),
-                ],
-              ),
-            ),
+          AsyncStatePanel.error(
+            title: _tx('memory.error_loading_title', 'Error cargando Memory'),
+            message: _error!,
+            retryLabel: _tx('common.retry', 'Reintentar'),
+            onRetry: _load,
           ),
         ],
       );
     }
 
-    final toolbar = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: [
-            IconButton.filled(
-              onPressed: _createFile,
-              icon: const Icon(Icons.add),
-              tooltip: _tx('memory.new_file_tooltip', 'Nuevo archivo'),
-            ),
-            IconButton.outlined(
-              onPressed: _load,
-              icon: const Icon(Icons.refresh),
-              tooltip: _tx('memory.refresh_tooltip', 'Actualizar'),
-            ),
-          ],
+    final toolbar = ResourceToolbar(
+      actions: [
+        AppIconButton.filled(
+          onPressed: _createFile,
+          icon: const Icon(Icons.add),
+          tooltip: _tx('memory.new_file_tooltip', 'Nuevo archivo'),
         ),
-        const SizedBox(height: 12),
-        Text(
-          '${_tx('memory.files_count', 'Archivos')}: ${_files.length}',
-          style: Theme.of(context).textTheme.bodyMedium,
+        AppIconButton.outlined(
+          onPressed: _load,
+          icon: const Icon(Icons.refresh),
+          tooltip: _tx('memory.refresh_tooltip', 'Actualizar'),
         ),
       ],
+      summary: Text(
+        '${_tx('memory.files_count', 'Archivos')}: ${_files.length}',
+        style: Theme.of(context).textTheme.bodyMedium,
+      ),
     );
 
     return RefreshIndicator(
@@ -305,160 +275,21 @@ class _MemoryPageState extends State<MemoryPage> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               sliver: ResponsiveSliverMasonryGrid(
                 itemCount: _files.length,
-                itemBuilder: (context, index) => _buildFileCard(_files[index]),
+                itemBuilder: (context, index) {
+                  final file = _files[index];
+                  return MemoryFileCard(
+                    file: file,
+                    sizeLabel: _tx('memory.size_label', 'Tamaño'),
+                    editTooltip: _tx('common.edit', 'Editar'),
+                    deleteTooltip: _tx('common.delete', 'Eliminar'),
+                    onEdit: () => _editFile(file),
+                    onDelete: () => _deleteFile(file),
+                  );
+                },
               ),
             ),
         ],
       ),
-    );
-  }
-
-  Widget _buildFileCard(MemoryFileItem file) {
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              file.filename,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              '${_tx('memory.size_label', 'Tamaño')}: ${file.size} chars${file.updatedAt.isEmpty ? '' : ' · ${file.updatedAt}'}',
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                const Spacer(),
-                ActionIconButton(
-                  icon: Icons.edit_outlined,
-                  tooltip: _tx('common.edit', 'Editar'),
-                  onPressed: () => _editFile(file),
-                ),
-                ActionIconButton(
-                  icon: Icons.delete_outline,
-                  tooltip: _tx('common.delete', 'Eliminar'),
-                  danger: true,
-                  onPressed: () => _deleteFile(file),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MemoryEditorDialog extends StatefulWidget {
-  const _MemoryEditorDialog({
-    required this.tx,
-    this.initialFilename,
-    this.initialContent,
-    this.lockFilename = false,
-  });
-
-  final String Function(String path, String fallback) tx;
-  final String? initialFilename;
-  final String? initialContent;
-  final bool lockFilename;
-
-  @override
-  State<_MemoryEditorDialog> createState() => _MemoryEditorDialogState();
-}
-
-class _MemoryEditorDialogState extends State<_MemoryEditorDialog> {
-  final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _filenameController;
-  late final TextEditingController _contentController;
-
-  @override
-  void initState() {
-    super.initState();
-    _filenameController = TextEditingController(
-      text: widget.initialFilename ?? 'notes.md',
-    );
-    _contentController = TextEditingController(
-      text: widget.initialContent ?? '',
-    );
-  }
-
-  @override
-  void dispose() {
-    _filenameController.dispose();
-    _contentController.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-    Navigator.of(context).pop({
-      'filename': _filenameController.text.trim(),
-      'content': _contentController.text,
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        widget.initialFilename == null
-            ? widget.tx('memory.new_dialog_title', 'Nuevo archivo de memoria')
-            : widget.tx('memory.edit_dialog_title', 'Editar archivo'),
-      ),
-      content: SizedBox(
-        width: dialogContentWidth(context, 760),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            shrinkWrap: true,
-            children: [
-              TextFormField(
-                controller: _filenameController,
-                readOnly: widget.lockFilename,
-                decoration: InputDecoration(
-                  labelText: widget.tx(
-                    'memory.filename_label',
-                    'Nombre de archivo (.md)',
-                  ),
-                ),
-                validator: (value) {
-                  final v = value?.trim() ?? '';
-                  if (v.isEmpty) {
-                    return widget.tx(
-                      'memory.filename_validator',
-                      'Nombre obligatorio',
-                    );
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _contentController,
-                minLines: 10,
-                maxLines: 18,
-                decoration: InputDecoration(
-                  labelText: widget.tx('memory.content_label', 'Contenido'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(widget.tx('common.cancel', 'Cancelar')),
-        ),
-        FilledButton(
-          onPressed: _submit,
-          child: Text(widget.tx('common.save', 'Guardar')),
-        ),
-      ],
     );
   }
 }

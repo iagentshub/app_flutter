@@ -1,10 +1,8 @@
-import '../../../core/network/api_client.dart';
+import '../../../core/network/api_repository.dart';
 import '../../../models/skills/skill_models.dart';
 
-class SkillsRepository {
-  SkillsRepository({required this.apiClient});
-
-  final ApiClient apiClient;
+class SkillsRepository extends ApiRepository {
+  SkillsRepository({required super.apiClient});
 
   Future<List<SkillItem>> listSkills(
     String token, {

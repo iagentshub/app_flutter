@@ -1,10 +1,8 @@
-import '../../../core/network/api_client.dart';
+import '../../../core/network/api_repository.dart';
 import '../../../models/knowledge/knowledge_models.dart';
 
-class KnowledgeRepository {
-  KnowledgeRepository({required this.apiClient});
-
-  final ApiClient apiClient;
+class KnowledgeRepository extends ApiRepository {
+  KnowledgeRepository({required super.apiClient});
 
   Future<List<KnowledgeItem>> listItems(
     String token, {
@@ -12,10 +10,12 @@ class KnowledgeRepository {
     String? groupId,
   }) async {
     final params = <String>[];
-    if (type != null && type.isNotEmpty)
+    if (type != null && type.isNotEmpty) {
       params.add('type=${Uri.encodeQueryComponent(type)}');
-    if (groupId != null && groupId.isNotEmpty)
+    }
+    if (groupId != null && groupId.isNotEmpty) {
       params.add('group_id=${Uri.encodeQueryComponent(groupId)}');
+    }
     final query = params.isEmpty ? '' : '?${params.join('&')}';
     final response = await apiClient.get(
       '/api/knowledge$query',

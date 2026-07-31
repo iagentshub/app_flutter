@@ -1,65 +1,51 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import 'api_error.dart';
+import 'api_response.dart';
+import 'api_response_cache.dart';
+import 'bounded_line_transformer.dart';
 import '../../shared/state/backend_controller.dart';
 
-class ApiResponse {
-  const ApiResponse({
-    required this.statusCode,
-    required this.headers,
-    required this.body,
-  });
-
-  final int statusCode;
-  final Map<String, String> headers;
-  final Object? body;
-
-  bool get isOk => statusCode >= 200 && statusCode < 300;
-
-  Map<String, dynamic> get json {
-    if (body is Map<String, dynamic>) return body as Map<String, dynamic>;
-    return <String, dynamic>{'data': body};
-  }
-}
+export 'api_response.dart';
 
 class ApiClient {
   ApiClient(
     this.backendController, {
     http.Client? client,
     Duration requestTimeout = const Duration(seconds: 30),
+    int maxResponseBytes = 20 * 1024 * 1024,
+    int maxDownloadBytes = 200 * 1024 * 1024,
+    int maxStreamLineChars = 1024 * 1024,
   }) : _client = client ?? http.Client(),
-       _requestTimeout = requestTimeout;
+       _requestTimeout = requestTimeout,
+       _maxResponseBytes = maxResponseBytes,
+       _maxDownloadBytes = maxDownloadBytes,
+       _maxStreamLineChars = maxStreamLineChars {
+    if (maxResponseBytes <= 0 ||
+        maxDownloadBytes <= 0 ||
+        maxStreamLineChars <= 0) {
+      throw ArgumentError('Los límites de respuesta deben ser positivos');
+    }
+  }
 
   final BackendController backendController;
   final http.Client _client;
   final Duration _requestTimeout;
+  final int _maxResponseBytes;
+  final int _maxDownloadBytes;
+  final int _maxStreamLineChars;
 
-  /// Caché en memoria de respuestas GET, igual de espíritu que el staleTime
-  /// de react-query en el frontend: evita repetir la misma consulta de
-  /// listado cada vez que se revisita una vista, y se invalida sola cuando
-  /// una mutación (POST/PUT/PATCH/DELETE) toca el mismo recurso.
-  final Map<
-    ({String baseUrl, String? gaToken, String path}),
-    ({DateTime expiresAt, ApiResponse response})
-  >
-  _cache = {};
-  final Map<
-    ({String baseUrl, String? gaToken, String path}),
-    Future<ApiResponse>
-  >
-  _inFlightGets = {};
-  static const _defaultCacheTtl = Duration(seconds: 60);
-  static const _maxCacheEntries = 200;
-  int _cacheGeneration = 0;
+  final ApiResponseCache _cache = ApiResponseCache();
 
   @visibleForTesting
-  int get debugCacheEntryCount => _cache.length;
+  int get debugCacheEntryCount => _cache.entryCount;
 
   @visibleForTesting
-  int get debugInFlightGetCount => _inFlightGets.length;
+  int get debugInFlightGetCount => _cache.inFlightCount;
 
   Uri _uri(String path) {
     final base = backendController.effectiveBaseUrl;
@@ -102,34 +88,29 @@ class ApiClient {
     );
     final now = DateTime.now();
     if (cache) {
-      final cached = _cache[cacheKey];
-      if (cached != null && now.isBefore(cached.expiresAt)) {
-        return cached.response;
-      }
-      if (cached != null) _cache.remove(cacheKey);
-
-      final inFlight = _inFlightGets[cacheKey];
+      final cached = _cache.read(cacheKey, now);
+      if (cached != null) return cached;
+      final inFlight = _cache.inFlight(cacheKey);
       if (inFlight != null) return inFlight;
     }
 
-    final generation = _cacheGeneration;
+    final generation = _cache.generation;
     final request = _request('GET', path, gaToken: gaToken);
-    if (cache) _inFlightGets[cacheKey] = request;
+    if (cache) _cache.track(cacheKey, request);
     try {
       final response = await request;
-      if (cache && generation == _cacheGeneration) {
-        _storeCache(
+      if (cache) {
+        _cache.store(
           cacheKey,
           response,
+          requestGeneration: generation,
           now: DateTime.now(),
-          ttl: ttl ?? _defaultCacheTtl,
+          ttl: ttl ?? ApiResponseCache.defaultTtl,
         );
       }
       return response;
     } finally {
-      if (cache && identical(_inFlightGets[cacheKey], request)) {
-        _inFlightGets.remove(cacheKey);
-      }
+      if (cache) _cache.untrack(cacheKey, request);
     }
   }
 
@@ -139,7 +120,7 @@ class ApiClient {
     String? gaToken,
   }) async {
     final response = await _request('POST', path, body: body, gaToken: gaToken);
-    _invalidateForMutation(path);
+    _cache.invalidateForMutation(path);
     return response;
   }
 
@@ -149,7 +130,7 @@ class ApiClient {
     String? gaToken,
   }) async {
     final response = await _request('PUT', path, body: body, gaToken: gaToken);
-    _invalidateForMutation(path);
+    _cache.invalidateForMutation(path);
     return response;
   }
 
@@ -164,7 +145,7 @@ class ApiClient {
       body: body,
       gaToken: gaToken,
     );
-    _invalidateForMutation(path);
+    _cache.invalidateForMutation(path);
     return response;
   }
 
@@ -179,42 +160,14 @@ class ApiClient {
       body: body,
       gaToken: gaToken,
     );
-    _invalidateForMutation(path);
+    _cache.invalidateForMutation(path);
     return response;
   }
 
   /// Borra toda la caché (p. ej. al cerrar sesión, para no arrastrar datos
   /// de una cuenta a otra) o solo las entradas de un recurso concreto.
   void invalidateCache([String? pathPrefix]) {
-    _cacheGeneration += 1;
-    if (pathPrefix == null) {
-      _cache.clear();
-      return;
-    }
-    _cache.removeWhere((key, _) => key.path.startsWith(pathPrefix));
-  }
-
-  void _storeCache(
-    ({String baseUrl, String? gaToken, String path}) key,
-    ApiResponse response, {
-    required DateTime now,
-    required Duration ttl,
-  }) {
-    _cache.removeWhere((_, entry) => !now.isBefore(entry.expiresAt));
-    _cache[key] = (expiresAt: now.add(ttl), response: response);
-    while (_cache.length > _maxCacheEntries) {
-      _cache.remove(_cache.keys.first);
-    }
-  }
-
-  void _invalidateForMutation(String path) {
-    final withoutQuery = path.split('?').first;
-    final segments = withoutQuery
-        .split('/')
-        .where((s) => s.isNotEmpty)
-        .toList();
-    final root = segments.length >= 2 ? '/${segments[0]}/${segments[1]}' : path;
-    invalidateCache(root);
+    _cache.invalidate(pathPrefix);
   }
 
   /// Descarga un recurso binario (p. ej. un export en .zip) sin pasar el
@@ -233,7 +186,10 @@ class ApiClient {
     request.headers.addAll(headers);
 
     final streamed = await _send(request);
-    final response = await http.Response.fromStream(streamed);
+    final response = await _readBoundedResponse(
+      streamed,
+      maxBytes: _maxDownloadBytes,
+    );
     if (response.statusCode < 200 || response.statusCode >= 300) {
       final parsed = _parseBody(
         utf8.decode(response.bodyBytes, allowMalformed: true),
@@ -292,8 +248,8 @@ class ApiClient {
 
     final streamed = await _send(request);
     if (streamed.statusCode < 200 || streamed.statusCode >= 300) {
-      final raw = await streamed.stream.bytesToString();
-      final parsed = _parseBody(raw);
+      final response = await _readBoundedResponse(streamed);
+      final parsed = _parseBody(response.body);
       throw _toApiError(
         ApiResponse(
           statusCode: streamed.statusCode,
@@ -305,7 +261,7 @@ class ApiClient {
 
     yield* streamed.stream
         .transform(utf8.decoder)
-        .transform(const LineSplitter());
+        .transform(BoundedLineTransformer(maxLineChars: _maxStreamLineChars));
   }
 
   Future<ApiResponse> postMultipart(
@@ -332,7 +288,7 @@ class ApiClient {
     );
 
     final streamed = await _send(request);
-    final response = await http.Response.fromStream(streamed);
+    final response = await _readBoundedResponse(streamed);
     final parsed = _parseBody(response.body);
     final apiResponse = ApiResponse(
       statusCode: response.statusCode,
@@ -344,7 +300,7 @@ class ApiClient {
       throw _toApiError(apiResponse);
     }
 
-    _invalidateForMutation(path);
+    _cache.invalidateForMutation(path);
     return apiResponse;
   }
 
@@ -369,7 +325,7 @@ class ApiClient {
     if (body != null) request.body = jsonEncode(body);
 
     final streamed = await _send(request);
-    final response = await http.Response.fromStream(streamed);
+    final response = await _readBoundedResponse(streamed);
     final parsed = _parseBody(response.body);
     final apiResponse = ApiResponse(
       statusCode: response.statusCode,
@@ -382,6 +338,45 @@ class ApiClient {
     }
 
     return apiResponse;
+  }
+
+  Future<http.Response> _readBoundedResponse(
+    http.StreamedResponse streamed, {
+    int? maxBytes,
+  }) async {
+    final limit = maxBytes ?? _maxResponseBytes;
+    final declaredLength = streamed.contentLength;
+    if (declaredLength != null && declaredLength > limit) {
+      throw ApiError(
+        statusCode: 502,
+        code: 'response_too_large',
+        message: 'La respuesta del servidor supera el límite permitido',
+      );
+    }
+
+    final bytes = BytesBuilder(copy: false);
+    var received = 0;
+    await for (final chunk in streamed.stream) {
+      received += chunk.length;
+      if (received > limit) {
+        throw ApiError(
+          statusCode: 502,
+          code: 'response_too_large',
+          message: 'La respuesta del servidor supera el límite permitido',
+        );
+      }
+      bytes.add(chunk);
+    }
+
+    return http.Response.bytes(
+      bytes.takeBytes(),
+      streamed.statusCode,
+      headers: streamed.headers,
+      request: streamed.request,
+      isRedirect: streamed.isRedirect,
+      persistentConnection: streamed.persistentConnection,
+      reasonPhrase: streamed.reasonPhrase,
+    );
   }
 
   Object? _parseBody(String body) {
@@ -438,7 +433,6 @@ class ApiClient {
 
   void close() {
     _cache.clear();
-    _inFlightGets.clear();
     _client.close();
   }
 }

@@ -1,14 +1,12 @@
-import '../../core/network/api_client.dart';
+import '../../core/network/api_repository.dart';
 import '../../models/common/resource_version.dart';
 
 /// Historial de versiones de un recurso editable (solo agentes y skills,
 /// que es lo que soporta el backend en /api/resources/{tipo}/{id}/versions).
 /// Los snapshots se crean solos en el backend en cada guardado — aquí solo
 /// se listan, consultan y restauran.
-class ResourceVersionRepository {
-  ResourceVersionRepository({required this.apiClient});
-
-  final ApiClient apiClient;
+class ResourceVersionRepository extends ApiRepository {
+  ResourceVersionRepository({required super.apiClient});
 
   Future<List<ResourceVersionItem>> listVersions(
     String token, {

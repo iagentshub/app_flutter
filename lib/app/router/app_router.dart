@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/network/api_client.dart';
@@ -32,6 +31,7 @@ import '../../shared/state/session_controller.dart';
 import '../../shared/widgets/app_shell.dart';
 import '../../shared/widgets/terminal_view_transition.dart';
 import '../../utils/safe_redirect.dart';
+import 'not_found_page.dart';
 import 'route_names.dart';
 
 GoRouter createRouter({
@@ -60,7 +60,7 @@ GoRouter createRouter({
     initialLocation: RouteNames.home,
     refreshListenable: sessionController,
     errorBuilder: (context, state) =>
-        const TerminalViewTransition(child: _NotFoundPage()),
+        const TerminalViewTransition(child: NotFoundPage()),
     redirect: (context, state) {
       final location = state.matchedLocation;
       final public = isPublicPath(location);
@@ -94,46 +94,19 @@ GoRouter createRouter({
           ),
         ),
       ),
-      GoRoute(
-        path: RouteNames.homeEn,
-        redirect: (context, state) => RouteNames.home,
-      ),
-      GoRoute(
-        path: RouteNames.about,
-        redirect: (context, state) => RouteNames.home,
-      ),
-      GoRoute(
-        path: RouteNames.aboutEn,
-        redirect: (context, state) => RouteNames.home,
-      ),
-      GoRoute(
-        path: RouteNames.docs,
-        redirect: (context, state) => RouteNames.home,
-      ),
-      GoRoute(
-        path: RouteNames.docsEn,
-        redirect: (context, state) => RouteNames.home,
-      ),
-      GoRoute(
-        path: RouteNames.support,
-        redirect: (context, state) => RouteNames.home,
-      ),
-      GoRoute(
-        path: RouteNames.supportEn,
-        redirect: (context, state) => RouteNames.home,
-      ),
-      GoRoute(
-        path: RouteNames.pricing,
-        redirect: (context, state) => RouteNames.home,
-      ),
-      GoRoute(
-        path: RouteNames.pricingEn,
-        redirect: (context, state) => RouteNames.home,
-      ),
-      GoRoute(
-        path: RouteNames.checkout,
-        redirect: (context, state) => RouteNames.home,
-      ),
+      for (final path in const [
+        RouteNames.homeEn,
+        RouteNames.about,
+        RouteNames.aboutEn,
+        RouteNames.docs,
+        RouteNames.docsEn,
+        RouteNames.support,
+        RouteNames.supportEn,
+        RouteNames.pricing,
+        RouteNames.pricingEn,
+        RouteNames.checkout,
+      ])
+        GoRoute(path: path, redirect: (context, state) => RouteNames.home),
       GoRoute(
         path: RouteNames.login,
         builder: (context, state) => TerminalViewTransition(
@@ -375,30 +348,4 @@ GoRouter createRouter({
       ),
     ],
   );
-}
-
-class _NotFoundPage extends StatelessWidget {
-  const _NotFoundPage();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Página no encontrada'),
-              const SizedBox(height: 8),
-              FilledButton(
-                onPressed: () => context.go(RouteNames.login),
-                child: const Text('Ir al inicio'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }

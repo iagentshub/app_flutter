@@ -1,12 +1,10 @@
 import 'dart:convert';
 
-import '../../../core/network/api_client.dart';
+import '../../../core/network/api_repository.dart';
 import '../../../models/chat/chat_models.dart';
 
-class ChatRepository {
-  ChatRepository({required this.apiClient});
-
-  final ApiClient apiClient;
+class ChatRepository extends ApiRepository {
+  ChatRepository({required super.apiClient});
 
   Future<List<ChatConversation>> listConversations(
     String token,

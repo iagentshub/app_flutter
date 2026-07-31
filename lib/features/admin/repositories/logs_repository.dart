@@ -1,10 +1,8 @@
-import '../../../core/network/api_client.dart';
+import '../../../core/network/api_repository.dart';
 import '../../../models/logs/log_models.dart';
 
-class LogsRepository {
-  LogsRepository({required this.apiClient});
-
-  final ApiClient apiClient;
+class LogsRepository extends ApiRepository {
+  LogsRepository({required super.apiClient});
 
   static const _basePath = '/api/admin/logs';
 

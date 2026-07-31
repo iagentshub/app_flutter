@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/async_state_panel.dart';
+
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/workflows/workflow_models.dart';
@@ -9,13 +12,16 @@ import '../repositories/workflows_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
-import '../../../shared/widgets/action_icon_button.dart';
-import '../../../shared/widgets/filter_button.dart';
-import '../../../shared/widgets/label_chips_row.dart';
-import '../../../shared/widgets/origin_badge.dart';
+import '../../../shared/widgets/buttons/filter_button.dart';
+import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
+import '../../../shared/widgets/resource_toolbar.dart';
+import '../cards/workflow_card.dart';
 import 'workflow_editor_page.dart';
+
+part '../dialogs/run_progress_dialog.dart';
+part '../dialogs/run_workflow_dialog.dart';
 
 class WorkflowsPage extends StatefulWidget {
   const WorkflowsPage({
@@ -216,29 +222,17 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
       return;
     }
 
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(_tx('workflows.delete_dialog_title', 'Eliminar workflow')),
-        content: Text(
-          _tx(
-            'workflows.delete_dialog_body',
-            '¿Seguro que quieres eliminar "{{name}}"?',
-          ).replaceAll('{{name}}', item.name),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(_tx('common.cancel', 'Cancelar')),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(_tx('common.delete', 'Eliminar')),
-          ),
-        ],
-      ),
+    final confirm = await showConfirmActionDialog(
+      context,
+      title: _tx('workflows.delete_dialog_title', 'Eliminar workflow'),
+      message: _tx(
+        'workflows.delete_dialog_body',
+        '¿Seguro que quieres eliminar "{{name}}"?',
+      ).replaceAll('{{name}}', item.name),
+      cancelLabel: _tx('common.cancel', 'Cancelar'),
+      confirmLabel: _tx('common.delete', 'Eliminar'),
     );
-    if (confirm != true) return;
+    if (!confirm) return;
 
     final token = _token;
     if (token == null || token.isEmpty) return;
@@ -296,71 +290,46 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (_loading) return const AsyncStatePanel.loading();
     if (_error != null) {
       return ListView(
-        padding: const EdgeInsets.all(16),
         children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _tx(
-                      'workflows.error_loading_title',
-                      'Error cargando workflows',
-                    ),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(_error!),
-                  const SizedBox(height: 12),
-                  FilledButton.icon(
-                    onPressed: _load,
-                    icon: const Icon(Icons.refresh),
-                    label: Text(_tx('common.retry', 'Reintentar')),
-                  ),
-                ],
-              ),
+          AsyncStatePanel.error(
+            title: _tx(
+              'workflows.error_loading_title',
+              'Error cargando workflows',
             ),
+            message: _error!,
+            retryLabel: _tx('common.retry', 'Reintentar'),
+            onRetry: _load,
           ),
         ],
       );
     }
 
     final filteredWorkflows = _filteredWorkflows;
-    final toolbar = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: [
-            IconButton.filled(
-              onPressed: _openCreateDialog,
-              icon: const Icon(Icons.add),
-              tooltip: _tx('workflows.new_workflow_tooltip', 'Nuevo workflow'),
-            ),
-            IconButton.outlined(
-              onPressed: _load,
-              icon: const Icon(Icons.refresh),
-              tooltip: _tx('workflows.refresh_tooltip', 'Actualizar'),
-            ),
-            FilterButton(
-              activeCount: _activeFilterCount,
-              tooltip: _tx('common.filters', 'Filtros'),
-              onPressed: _openFiltersDialog,
-            ),
-          ],
+    final toolbar = ResourceToolbar(
+      actions: [
+        AppIconButton.filled(
+          onPressed: _openCreateDialog,
+          icon: const Icon(Icons.add),
+          tooltip: _tx('workflows.new_workflow_tooltip', 'Nuevo workflow'),
         ),
-        const SizedBox(height: 12),
-        Text(
-          '${_tx('workflows.count_label', 'Workflows')}: ${filteredWorkflows.length}',
-          style: Theme.of(context).textTheme.bodyMedium,
+        AppIconButton.outlined(
+          onPressed: _load,
+          icon: const Icon(Icons.refresh),
+          tooltip: _tx('workflows.refresh_tooltip', 'Actualizar'),
+        ),
+        FilterButton(
+          activeCount: _activeFilterCount,
+          tooltip: _tx('common.filters', 'Filtros'),
+          onPressed: _openFiltersDialog,
         ),
       ],
+      summary: Text(
+        '${_tx('workflows.count_label', 'Workflows')}: ${filteredWorkflows.length}',
+        style: Theme.of(context).textTheme.bodyMedium,
+      ),
     );
 
     return RefreshIndicator(
@@ -391,378 +360,29 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               sliver: ResponsiveSliverMasonryGrid(
                 itemCount: filteredWorkflows.length,
-                itemBuilder: (context, index) =>
-                    _buildWorkflowCard(filteredWorkflows[index]),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWorkflowCard(WorkflowItem item) {
-    final meta = <String>[
-      '${item.nodes.length} ${_tx('workflows.steps_suffix', 'pasos')}',
-      '${item.edges.length} ${_tx('workflows.connections_suffix', 'conexiones')}',
-    ];
-
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    item.name,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(meta.join(' · ')),
-            if (item.description.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                item.description,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-            const SizedBox(height: 8),
-            LabelChipsRow(
-              labels: item.labels,
-              leading: [
-                OriginBadge(
-                  shared: item.shared,
-                  ownerLabel: _tx('common.owner', 'Propietario'),
-                  linkedLabel: _tx('common.linked', 'Enlazado'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                OutlinedButton.icon(
-                  onPressed: () => _runWorkflow(item),
-                  icon: const Icon(Icons.play_arrow_outlined),
-                  label: Text(_tx('workflows.run_btn', 'Ejecutar')),
-                ),
-                const Spacer(),
-                ActionIconButton(
-                  icon: Icons.edit_outlined,
-                  tooltip: _tx('common.edit', 'Editar'),
-                  onPressed: () => _openEditDialog(item),
-                ),
-                ActionIconButton(
-                  icon: Icons.delete_outline,
-                  tooltip: _tx('common.delete', 'Eliminar'),
-                  danger: true,
-                  onPressed: () => _deleteWorkflow(item),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _RunWorkflowDialog extends StatefulWidget {
-  const _RunWorkflowDialog({required this.workflowName, required this.tx});
-
-  final String workflowName;
-  final String Function(String path, String fallback) tx;
-
-  @override
-  State<_RunWorkflowDialog> createState() => _RunWorkflowDialogState();
-}
-
-class _RunWorkflowDialogState extends State<_RunWorkflowDialog> {
-  final _formKey = GlobalKey<FormState>();
-  final _inputController = TextEditingController();
-
-  @override
-  void dispose() {
-    _inputController.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-    Navigator.of(context).pop(_inputController.text.trim());
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        widget
-            .tx('workflows.run_dialog_title', 'Ejecutar: {{name}}')
-            .replaceAll('{{name}}', widget.workflowName),
-      ),
-      content: SizedBox(
-        width: dialogContentWidth(context, 640),
-        child: Form(
-          key: _formKey,
-          child: TextFormField(
-            controller: _inputController,
-            minLines: 5,
-            maxLines: 10,
-            decoration: InputDecoration(
-              labelText: widget.tx(
-                'workflows.run_input_label',
-                'Input inicial',
-              ),
-            ),
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return widget.tx(
-                  'workflows.run_input_required',
-                  'Input obligatorio',
-                );
-              }
-              return null;
-            },
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(widget.tx('common.cancel', 'Cancelar')),
-        ),
-        FilledButton(
-          onPressed: _submit,
-          child: Text(widget.tx('workflows.run_btn', 'Ejecutar')),
-        ),
-      ],
-    );
-  }
-}
-
-class _RunProgressDialog extends StatefulWidget {
-  const _RunProgressDialog({
-    required this.workflowName,
-    required this.stream,
-    required this.tx,
-  });
-
-  final String workflowName;
-  final Stream<Map<String, dynamic>> stream;
-  final String Function(String path, String fallback) tx;
-
-  @override
-  State<_RunProgressDialog> createState() => _RunProgressDialogState();
-}
-
-class _RunProgressDialogState extends State<_RunProgressDialog> {
-  final List<Map<String, dynamic>> _events = [];
-  final _scrollController = ScrollController();
-  bool _running = true;
-  String? _finalOutput;
-  String? _errorMessage;
-  StreamSubscription<Map<String, dynamic>>? _subscription;
-
-  @override
-  void initState() {
-    super.initState();
-    _subscription = widget.stream.listen(
-      (event) {
-        setState(() {
-          _events.add(event);
-          final type = event['type']?.toString() ?? '';
-          if (type == 'workflow_done')
-            _finalOutput = event['output']?.toString();
-          if (type == 'error')
-            _errorMessage =
-                event['message']?.toString() ??
-                widget.tx(
-                  'workflows.error_running_generic',
-                  'Error ejecutando workflow',
-                );
-        });
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!_scrollController.hasClients) return;
-          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-        });
-      },
-      onError: (_) {
-        if (!mounted) return;
-        setState(() {
-          _errorMessage = widget.tx(
-            'workflows.error_connection',
-            'Error de conexión durante la ejecución',
-          );
-          _running = false;
-        });
-      },
-      onDone: () {
-        if (!mounted) return;
-        setState(() => _running = false);
-      },
-    );
-  }
-
-  @override
-  void dispose() {
-    _subscription?.cancel();
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  String _describe(Map<String, dynamic> event) {
-    final type = event['type']?.toString() ?? '';
-    final defaultAgent = widget.tx('workflows.default_agent_label', 'agente');
-    final agentName = event['agent_name']?.toString() ?? defaultAgent;
-    final iteration = event['iteration'];
-    switch (type) {
-      case 'stage_started':
-        return widget
-            .tx(
-              'workflows.event_stage_started',
-              'Ejecutando {{index}}/{{total}}: {{agent}}',
-            )
-            .replaceAll('{{index}}', '${event['index']}')
-            .replaceAll('{{total}}', '${event['total']}')
-            .replaceAll('{{agent}}', agentName);
-      case 'stage_done':
-        return widget
-            .tx('workflows.event_stage_done', 'Terminó {{agent}}')
-            .replaceAll('{{agent}}', agentName);
-      case 'evaluation_started':
-        return widget
-            .tx(
-              'workflows.event_evaluation_started',
-              'Evaluando con {{agent}} (vuelta {{iteration}})',
-            )
-            .replaceAll('{{agent}}', agentName)
-            .replaceAll('{{iteration}}', '$iteration');
-      case 'evaluation_done':
-        final approved = event['approved'] == true;
-        return approved
-            ? widget.tx(
-                'workflows.event_evaluation_approved',
-                'Evaluación aprobada',
-              )
-            : widget.tx(
-                'workflows.event_evaluation_rejected',
-                'Evaluación no aprobada, repitiendo',
-              );
-      case 'loop_iteration_started':
-        return widget
-            .tx(
-              'workflows.event_loop_iteration',
-              'Nueva vuelta del ciclo ({{iteration}})',
-            )
-            .replaceAll('{{iteration}}', '$iteration');
-      case 'loop_limit_reached':
-        return event['message']?.toString() ??
-            widget.tx(
-              'workflows.event_loop_limit',
-              'Se alcanzó el límite de vueltas del ciclo',
-            );
-      default:
-        return type;
-    }
-  }
-
-  IconData _iconFor(String type) {
-    switch (type) {
-      case 'stage_done':
-        return Icons.check_circle_outline;
-      case 'evaluation_done':
-        return Icons.fact_check_outlined;
-      case 'loop_iteration_started':
-        return Icons.replay;
-      case 'loop_limit_reached':
-        return Icons.warning_amber_outlined;
-      default:
-        return Icons.chevron_right;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        widget
-            .tx('workflows.run_progress_title', 'Ejecutando: {{name}}')
-            .replaceAll('{{name}}', widget.workflowName),
-      ),
-      content: SizedBox(
-        width: dialogContentWidth(context, 700),
-        height: dialogContentHeight(context, 460),
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                controller: _scrollController,
-                itemCount: _events.length,
                 itemBuilder: (context, index) {
-                  final event = _events[index];
-                  final type = event['type']?.toString() ?? '';
-                  return ListTile(
-                    dense: true,
-                    contentPadding: EdgeInsets.zero,
-                    leading: Icon(_iconFor(type), size: 18),
-                    title: Text(_describe(event)),
+                  final item = filteredWorkflows[index];
+                  return WorkflowCard(
+                    item: item,
+                    stepsLabel: _tx('workflows.steps_suffix', 'pasos'),
+                    connectionsLabel: _tx(
+                      'workflows.connections_suffix',
+                      'conexiones',
+                    ),
+                    ownerLabel: _tx('common.owner', 'Propietario'),
+                    linkedLabel: _tx('common.linked', 'Enlazado'),
+                    runLabel: _tx('workflows.run_btn', 'Ejecutar'),
+                    editTooltip: _tx('common.edit', 'Editar'),
+                    deleteTooltip: _tx('common.delete', 'Eliminar'),
+                    onRun: () => _runWorkflow(item),
+                    onEdit: () => _openEditDialog(item),
+                    onDelete: () => _deleteWorkflow(item),
                   );
                 },
               ),
             ),
-            if (_running) ...[
-              const SizedBox(height: 8),
-              const LinearProgressIndicator(),
-            ],
-            if (_errorMessage != null) ...[
-              const SizedBox(height: 10),
-              Text(
-                _errorMessage!,
-                style: TextStyle(
-                  color: Colors.red.shade700,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-            if (_finalOutput != null && _finalOutput!.trim().isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  widget.tx('workflows.final_output_title', 'Salida final'),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-              const SizedBox(height: 6),
-              SizedBox(
-                height: 100,
-                child: SingleChildScrollView(
-                  child: SelectableText(_finalOutput!),
-                ),
-              ),
-            ],
-          ],
-        ),
+        ],
       ),
-      actions: [
-        FilledButton(
-          onPressed: _running ? null : () => Navigator.of(context).pop(),
-          child: Text(
-            _running
-                ? widget.tx('workflows.running_label', 'Ejecutando…')
-                : widget.tx('common.close', 'Cerrar'),
-          ),
-        ),
-      ],
     );
   }
 }

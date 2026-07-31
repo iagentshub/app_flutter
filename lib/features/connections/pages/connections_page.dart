@@ -1,21 +1,27 @@
 import 'package:flutter/material.dart';
 
+import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/async_state_panel.dart';
+
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/connections/connection_models.dart';
+import '../cards/connection_card.dart';
 import '../repositories/connections_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/debouncer.dart';
-import '../../../shared/widgets/action_icon_button.dart';
-import '../../../shared/widgets/filter_button.dart';
+import '../../../shared/widgets/buttons/filter_button.dart';
+import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
-import '../../../shared/widgets/label_chips_row.dart';
-import '../../../shared/widgets/origin_badge.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
+import '../../../shared/widgets/resource_toolbar.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
+
+part '../dialogs/connection_form_dialog.dart';
+part '../widgets/connections_page_view.dart';
 
 class ConnectionsPage extends StatefulWidget {
   const ConnectionsPage({
@@ -72,8 +78,9 @@ class _ConnectionsPageState extends State<ConnectionsPage>
     final query = _query.trim().toLowerCase();
     return _connections.where((item) {
       if (_categoryOf(item.type) != category) return false;
-      if (_providerFilter != 'all' && item.type != _providerFilter)
+      if (_providerFilter != 'all' && item.type != _providerFilter) {
         return false;
+      }
       if (query.isEmpty) return true;
       return item.name.toLowerCase().contains(query) ||
           item.type.toLowerCase().contains(query) ||
@@ -280,24 +287,14 @@ class _ConnectionsPageState extends State<ConnectionsPage>
       return;
     }
 
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Eliminar conexión'),
-        content: Text('¿Seguro que quieres eliminar "${item.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
+    final confirm = await showConfirmActionDialog(
+      context,
+      title: 'Eliminar conexión',
+      message: '¿Seguro que quieres eliminar "${item.name}"?',
+      cancelLabel: 'Cancelar',
+      confirmLabel: 'Eliminar',
     );
-    if (confirm != true) return;
+    if (!confirm) return;
 
     final token = _token;
     if (token == null || token.isEmpty) return;
@@ -390,7 +387,7 @@ class _ConnectionsPageState extends State<ConnectionsPage>
             ),
           ),
           actions: [
-            FilledButton(
+            PrimaryButton(
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('Cerrar'),
             ),
@@ -418,569 +415,8 @@ class _ConnectionsPageState extends State<ConnectionsPage>
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_error != null) {
-      return ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _tx('connections.error_title', 'Error cargando conexiones'),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(_error!),
-                  const SizedBox(height: 12),
-                  FilledButton.icon(
-                    onPressed: _load,
-                    icon: const Icon(Icons.refresh),
-                    label: Text(_tx('common.retry', 'Reintentar')),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      );
-    }
-
-    final tabLabels = [
-      _tx('connections.tab_llm', 'APIs LLM'),
-      _tx('connections.tab_machine', 'Máquinas'),
-      _tx('connections.tab_database', 'Bases de datos'),
-    ];
-
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          child: Material(
-            color: Colors.transparent,
-            child: TabBar(
-              controller: _tabController,
-              isScrollable: true,
-              tabAlignment: TabAlignment.start,
-              tabs: tabLabels.map((label) => Tab(text: label)).toList(),
-            ),
-          ),
-        ),
-        Expanded(
-          child: Builder(
-            builder: (context) {
-              final filteredConnections = _filteredConnections;
-              return RefreshIndicator(
-                onRefresh: _load,
-                child: CustomScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  slivers: [
-                    SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                      sliver: SliverToBoxAdapter(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            TextField(
-                              controller: _queryController,
-                              decoration: InputDecoration(
-                                labelText: _tx(
-                                  'connections.search_hint',
-                                  'Buscar conexión',
-                                ),
-                                prefixIcon: const Icon(Icons.search, size: 20),
-                              ),
-                              onChanged: (value) {
-                                _query = value;
-                                _searchDebouncer.run(() {
-                                  if (mounted) setState(() {});
-                                });
-                              },
-                            ),
-                            const SizedBox(height: 10),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              children: [
-                                IconButton.filled(
-                                  onPressed: _providers.isEmpty
-                                      ? null
-                                      : _openCreateDialog,
-                                  icon: const Icon(Icons.add),
-                                  tooltip: _tx(
-                                    'connections.new',
-                                    'Nueva conexión',
-                                  ),
-                                ),
-                                IconButton.outlined(
-                                  onPressed: _load,
-                                  icon: const Icon(Icons.refresh),
-                                  tooltip: _tx('common.update', 'Actualizar'),
-                                ),
-                                IconButton.outlined(
-                                  onPressed: _testingAll ? null : _testAll,
-                                  tooltip: _testingAll
-                                      ? _tx(
-                                          'connections.testing',
-                                          'Probando...',
-                                        )
-                                      : _tx(
-                                          'connections.mass_test',
-                                          'Test masivo',
-                                        ),
-                                  icon: _testingAll
-                                      ? const SizedBox(
-                                          width: 16,
-                                          height: 16,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
-                                        )
-                                      : const Icon(Icons.play_circle_outline),
-                                ),
-                                FilterButton(
-                                  activeCount: _activeFilterCount,
-                                  tooltip: _tx('common.filters', 'Filtros'),
-                                  onPressed: _openFiltersDialog,
-                                ),
-                                IconButton.outlined(
-                                  onPressed: () => showGroupFilterDialog(
-                                    context,
-                                    apiClient: widget.apiClient,
-                                    token: _token ?? '',
-                                    activeGroupId: _activeGroupId,
-                                    onSelect: _onGroupSelect,
-                                    localeController: widget.localeController,
-                                  ),
-                                  icon: const Icon(Icons.groups_outlined),
-                                  tooltip: _tx(
-                                    'groups.toggle_tooltip',
-                                    'Grupos',
-                                  ),
-                                  isSelected: _activeGroupId != null,
-                                ),
-                                if (_activeGroupId != null)
-                                  ActionChip(
-                                    label: Text(
-                                      _tx(
-                                        'groups.active_clear',
-                                        'Grupo activo ✕',
-                                      ),
-                                    ),
-                                    onPressed: () => _onGroupSelect(null),
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              '${_tx('connections.count_label', 'Conexiones')}: ${filteredConnections.length} | ${_tx('connections.providers_label', 'Proveedores')}: ${_providers.length}',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    if (filteredConnections.isEmpty)
-                      SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        sliver: SliverToBoxAdapter(
-                          child: Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Text(
-                                _connections.isEmpty
-                                    ? _tx(
-                                        'connections.empty',
-                                        'No hay conexiones todavía. Crea la primera.',
-                                      )
-                                    : _tx(
-                                        'connections.empty_search',
-                                        'Sin resultados para esa búsqueda.',
-                                      ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      )
-                    else
-                      SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        sliver: ResponsiveSliverMasonryGrid(
-                          itemCount: filteredConnections.length,
-                          itemBuilder: (context, index) =>
-                              _buildConnectionCard(filteredConnections[index]),
-                        ),
-                      ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildConnectionCard(ConnectionItem item) {
-    final metaParts = <String>[item.type];
-    if (item.model.isNotEmpty) metaParts.add(item.model);
-    if (item.host.isNotEmpty) metaParts.add(item.host);
-    if (item.url.isNotEmpty) metaParts.add(item.url);
-
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    item.name,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(metaParts.join(' · ')),
-            const SizedBox(height: 8),
-            LabelChipsRow(
-              labels: [
-                ...item.labels,
-                if (item.personalKey) 'Personal',
-                if (item.isVirtual) 'Virtual',
-              ],
-              leading: [
-                OriginBadge(
-                  shared: item.shared,
-                  ownerLabel: _tx('common.owner', 'Propietario'),
-                  linkedLabel: _tx('common.linked', 'Enlazado'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                OutlinedButton.icon(
-                  onPressed: item.isVirtual
-                      ? null
-                      : () => _testConnection(item),
-                  icon: const Icon(Icons.health_and_safety_outlined),
-                  label: Text(_tx('connections.test', 'Test')),
-                ),
-                const Spacer(),
-                ActionIconButton(
-                  icon: Icons.group_add_outlined,
-                  tooltip: _tx('common.share_group', 'Compartir con grupo'),
-                  onPressed: item.isVirtual
-                      ? null
-                      : () => _shareConnection(item),
-                ),
-                ActionIconButton(
-                  icon: Icons.edit_outlined,
-                  tooltip: _tx('common.edit', 'Editar'),
-                  onPressed: () => _openEditDialog(item),
-                ),
-                ActionIconButton(
-                  icon: Icons.delete_outline,
-                  tooltip: _tx('common.delete', 'Eliminar'),
-                  danger: true,
-                  onPressed: () => _deleteConnection(item),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ConnectionFormDialog extends StatefulWidget {
-  const _ConnectionFormDialog({required this.providers, this.initial});
-
-  final List<ConnectionProvider> providers;
-  final Map<String, dynamic>? initial;
+  void _refresh(VoidCallback update) => setState(update);
 
   @override
-  State<_ConnectionFormDialog> createState() => _ConnectionFormDialogState();
-}
-
-class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  String _scope = 'group';
-  String _selectedType = '';
-  final Map<String, TextEditingController> _textControllers = {};
-  final Map<String, bool> _boolValues = {};
-
-  @override
-  void initState() {
-    super.initState();
-    final initial = widget.initial;
-    _nameController.text = (initial?['name'] as String?) ?? '';
-    _scope = initial?['_personal_key'] == true ? 'personal' : 'group';
-
-    if (widget.providers.isNotEmpty) {
-      final initialType = initial?['type'] as String?;
-      _selectedType = widget.providers.any((p) => p.type == initialType)
-          ? (initialType ?? widget.providers.first.type)
-          : widget.providers.first.type;
-      _syncControllersFromProvider();
-    }
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    for (final c in _textControllers.values) {
-      c.dispose();
-    }
-    super.dispose();
-  }
-
-  ConnectionProvider? get _provider {
-    for (final p in widget.providers) {
-      if (p.type == _selectedType) return p;
-    }
-    return null;
-  }
-
-  void _syncControllersFromProvider() {
-    final provider = _provider;
-    if (provider == null) return;
-    final initial = widget.initial;
-
-    for (final field in provider.fields) {
-      if (field.type == 'checkbox') {
-        final raw = initial?[field.key];
-        final boolValue = raw is bool
-            ? raw
-            : (raw is String
-                  ? raw.toLowerCase() == 'true'
-                  : field.defaultValue.toLowerCase() == 'true');
-        _boolValues[field.key] = boolValue;
-        continue;
-      }
-
-      final existingController = _textControllers[field.key];
-      if (existingController != null) continue;
-
-      final value = initial?[field.key]?.toString() ?? field.defaultValue;
-      _textControllers[field.key] = TextEditingController(text: value);
-    }
-  }
-
-  bool _visible(ProviderField field) {
-    if (field.dependsOn == null || field.dependsOn!.isEmpty) return true;
-    final dependsOn = field.dependsOn!;
-    final expected = field.dependsValue ?? '';
-    final boolVal = _boolValues[dependsOn];
-    if (boolVal != null) {
-      return boolVal.toString() == expected;
-    }
-    final textVal = _textControllers[dependsOn]?.text ?? '';
-    return textVal == expected;
-  }
-
-  void _submit() {
-    final form = _formKey.currentState;
-    if (form == null || !form.validate()) return;
-    final provider = _provider;
-    if (provider == null) return;
-
-    final payload = <String, dynamic>{
-      'name': _nameController.text.trim(),
-      'type': _selectedType,
-      'scope': _scope,
-    };
-
-    for (final field in provider.fields) {
-      if (!_visible(field)) continue;
-
-      if (field.type == 'checkbox') {
-        payload[field.key] = _boolValues[field.key] ?? false;
-        continue;
-      }
-
-      final raw = _textControllers[field.key]?.text ?? '';
-      if (field.type == 'number') {
-        final parsed = num.tryParse(raw.trim());
-        if (parsed != null) {
-          payload[field.key] = parsed;
-        } else {
-          payload[field.key] = raw.trim();
-        }
-      } else {
-        payload[field.key] = raw.trim();
-      }
-    }
-
-    Navigator.of(context).pop(payload);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final provider = _provider;
-
-    return AlertDialog(
-      title: Text(
-        widget.initial == null ? 'Nueva conexión' : 'Editar conexión',
-      ),
-      content: SizedBox(
-        width: dialogContentWidth(context, 560),
-        child: provider == null
-            ? const Text('No hay proveedores disponibles')
-            : Form(
-                key: _formKey,
-                child: ListView(
-                  shrinkWrap: true,
-                  children: [
-                    TextFormField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(labelText: 'Nombre'),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'El nombre es obligatorio';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 10),
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedType,
-                      items: widget.providers
-                          .map(
-                            (p) => DropdownMenuItem<String>(
-                              value: p.type,
-                              child: Text('${p.label} (${p.type})'),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        if (value == null) return;
-                        setState(() {
-                          _selectedType = value;
-                          _syncControllersFromProvider();
-                        });
-                      },
-                      decoration: const InputDecoration(labelText: 'Proveedor'),
-                    ),
-                    const SizedBox(height: 10),
-                    DropdownButtonFormField<String>(
-                      initialValue: _scope,
-                      items: const [
-                        DropdownMenuItem(value: 'group', child: Text('Grupo')),
-                        DropdownMenuItem(
-                          value: 'personal',
-                          child: Text('Personal'),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        if (value == null) return;
-                        setState(() => _scope = value);
-                      },
-                      decoration: const InputDecoration(labelText: 'Ámbito'),
-                    ),
-                    const SizedBox(height: 10),
-                    ...provider.fields
-                        .where(_visible)
-                        .map((field) => _buildField(field))
-                        .expand(
-                          (widget) => [widget, const SizedBox(height: 10)],
-                        ),
-                  ],
-                ),
-              ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
-        ),
-        FilledButton(onPressed: _submit, child: const Text('Guardar')),
-      ],
-    );
-  }
-
-  Widget _buildField(ProviderField field) {
-    if (field.type == 'checkbox') {
-      final value = _boolValues[field.key] ?? false;
-      return SwitchListTile(
-        title: Text(field.label),
-        value: value,
-        onChanged: (next) => setState(() => _boolValues[field.key] = next),
-        contentPadding: EdgeInsets.zero,
-      );
-    }
-
-    if (field.type == 'select') {
-      final controller = _textControllers[field.key] ??= TextEditingController(
-        text: field.defaultValue,
-      );
-      final current = controller.text.isEmpty ? null : controller.text;
-      return DropdownButtonFormField<String>(
-        initialValue: current,
-        decoration: InputDecoration(labelText: field.label),
-        items: field.options
-            .map(
-              (option) => DropdownMenuItem<String>(
-                value: option.value,
-                child: Text(option.label),
-              ),
-            )
-            .toList(),
-        onChanged: (value) {
-          controller.text = value ?? '';
-          setState(() {});
-        },
-        validator: (value) {
-          if (field.required && (value == null || value.trim().isEmpty)) {
-            return 'Campo obligatorio';
-          }
-          return null;
-        },
-      );
-    }
-
-    final controller = _textControllers[field.key] ??= TextEditingController(
-      text: field.defaultValue,
-    );
-    final isPassword = field.type == 'password';
-    final isNumber = field.type == 'number';
-    final isTextarea = field.type == 'textarea';
-
-    return TextFormField(
-      controller: controller,
-      obscureText: isPassword,
-      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-      minLines: isTextarea ? 3 : 1,
-      maxLines: isTextarea ? 5 : 1,
-      decoration: InputDecoration(
-        labelText: field.label,
-        hintText: field.placeholder.isEmpty ? null : field.placeholder,
-      ),
-      validator: (value) {
-        if (field.required && (value == null || value.trim().isEmpty)) {
-          return 'Campo obligatorio';
-        }
-        return null;
-      },
-    );
-  }
+  Widget build(BuildContext context) => _buildPage(context);
 }

@@ -1,5 +1,9 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+
+import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/async_state_panel.dart';
+import '../../../shared/widgets/confirm_action_dialog.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router/route_names.dart';
@@ -14,6 +18,12 @@ import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/brand_icon.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../widgets/profile_groups_section.dart';
+
+part '../widgets/brand_icon_selector.dart';
+part '../widgets/profile_account_section.dart';
+part '../widgets/profile_security_section.dart';
+part '../widgets/profile_social_section.dart';
+part '../widgets/profile_view_helpers.dart';
 
 /// Idiomas disponibles para el perfil público. Por ahora la plataforma solo
 /// soporta Español e Inglés (a diferencia del listado más amplio de
@@ -35,8 +45,9 @@ String _githubUsernameFromUrl(String? url) {
 String? _githubUrlFromUsername(String input) {
   final trimmed = input.trim().replaceAll(RegExp(r'^@'), '');
   if (trimmed.isEmpty) return null;
-  if (trimmed.startsWith('http://') || trimmed.startsWith('https://'))
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
     return trimmed;
+  }
   return 'https://github.com/$trimmed';
 }
 
@@ -312,11 +323,11 @@ class _ProfilePageState extends State<ProfilePage>
             ),
           ),
           actions: [
-            TextButton(
+            TertiaryButton(
               onPressed: () => Navigator.of(context).pop(),
               child: Text(_tx('common.cancel', 'Cancelar')),
             ),
-            FilledButton(
+            PrimaryButton(
               onPressed: () => Navigator.of(context).pop(draft),
               child: Text(_tx('common.save', 'Guardar')),
             ),
@@ -374,26 +385,15 @@ class _ProfilePageState extends State<ProfilePage>
       return;
     }
 
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Solicitar eliminación de cuenta'),
-        content: const Text(
+    final confirm = await showConfirmActionDialog(
+      context,
+      title: 'Solicitar eliminación de cuenta',
+      message:
           'La cuenta se programará para eliminación en 30 días. ¿Deseas continuar?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Confirmar'),
-          ),
-        ],
-      ),
+      cancelLabel: 'Cancelar',
+      confirmLabel: 'Confirmar',
     );
-    if (confirm != true) return;
+    if (!confirm) return;
 
     setState(() => _requestingDeletion = true);
     try {
@@ -422,34 +422,19 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
+  void _refresh(VoidCallback update) => setState(update);
+
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (_loading) return const AsyncStatePanel.loading();
     if (_error != null) {
       return ListView(
-        padding: const EdgeInsets.all(16),
         children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Error cargando perfil',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(_error!),
-                  const SizedBox(height: 12),
-                  FilledButton.icon(
-                    onPressed: _load,
-                    icon: const Icon(Icons.refresh),
-                    label: Text(_tx('common.retry', 'Reintentar')),
-                  ),
-                ],
-              ),
-            ),
+          AsyncStatePanel.error(
+            title: 'Error cargando perfil',
+            message: _error!,
+            retryLabel: _tx('common.retry', 'Reintentar'),
+            onRetry: _load,
           ),
         ],
       );
@@ -505,646 +490,4 @@ class _ProfilePageState extends State<ProfilePage>
       ],
     );
   }
-
-  Widget _sectionHeader(IconData icon, String text, {Color? color}) {
-    final resolvedColor =
-        color ?? Theme.of(context).colorScheme.onSurfaceVariant;
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: resolvedColor),
-        const SizedBox(width: 6),
-        Text(
-          text.toUpperCase(),
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.4,
-            color: resolvedColor,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _badge(String text, {required Color color}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-
-  Widget _infoRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            size: 18,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
-          ),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAvatar(String initial) {
-    final token = _token;
-    final url = _avatarUrl;
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        ClipOval(
-          child: SizedBox(
-            width: 64,
-            height: 64,
-            child: (url != null && token != null)
-                ? Image.network(
-                    url,
-                    headers: {'Cookie': 'ga_token=$token'},
-                    fit: BoxFit.cover,
-                    // El avatar subido puede pesar hasta 2MB a resolución
-                    // completa; decodificar solo a 128px (2x el tamaño en
-                    // pantalla) evita mantener un bitmap gigante en memoria
-                    // para mostrarlo en un círculo de 64x64.
-                    cacheWidth: 128,
-                    cacheHeight: 128,
-                    errorBuilder: (context, error, stack) =>
-                        _avatarFallback(initial),
-                    loadingBuilder: (context, child, progress) =>
-                        progress == null ? child : _avatarFallback(initial),
-                  )
-                : _avatarFallback(initial),
-          ),
-        ),
-        Positioned(
-          right: -2,
-          bottom: -2,
-          child: InkWell(
-            onTap: _uploadingAvatar ? null : _pickAndUploadAvatar,
-            borderRadius: BorderRadius.circular(14),
-            child: Container(
-              width: 26,
-              height: 26,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Theme.of(context).cardColor,
-                  width: 2,
-                ),
-              ),
-              child: _uploadingAvatar
-                  ? const Padding(
-                      padding: EdgeInsets.all(5),
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Icon(Icons.camera_alt, size: 13, color: Colors.white),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _avatarFallback(String initial) {
-    return CircleAvatar(
-      radius: 32,
-      child: Text(
-        initial,
-        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
-      ),
-    );
-  }
-
-  Widget _buildAccountSection(ProfileBundle bundle) {
-    final username = bundle.session.username;
-    final initial = username.isNotEmpty ? username[0].toUpperCase() : '?';
-    final planTier = bundle.license.tier;
-    final planLabel = planTier == 'free'
-        ? _tx('profile.plan_free', 'Gratuito')
-        : planTier;
-    final memberSince = bundle.social.createdAt;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                _buildAvatar(initial),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        username,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 6,
-                        children: [
-                          _badge(
-                            bundle.session.role,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                          _badge(planLabel, color: const Color(0xFF0891B2)),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
-        _sectionHeader(
-          Icons.badge_outlined,
-          _tx('profile.identity_title', 'Identidad'),
-        ),
-        const SizedBox(height: 8),
-        Card(
-          child: Column(
-            children: [
-              _infoRow(
-                Icons.groups_outlined,
-                _tx('profile.active_group_label', 'Grupo activo'),
-                bundle.session.groupName ?? bundle.session.groupId ?? '-',
-              ),
-              if (memberSince != null && memberSince.isNotEmpty) ...[
-                const Divider(height: 1),
-                _infoRow(
-                  Icons.calendar_today_outlined,
-                  _tx('profile.member_since', 'Miembro desde'),
-                  memberSince,
-                ),
-              ],
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
-        _sectionHeader(
-          Icons.tune_outlined,
-          _tx('profile.tab_preferences', 'Preferencias'),
-        ),
-        const SizedBox(height: 8),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                DropdownButtonFormField<String>(
-                  initialValue: _theme,
-                  decoration: InputDecoration(
-                    labelText: _tx('profile.theme_label', 'Tema'),
-                  ),
-                  items: _themes
-                      .map(
-                        (theme) => DropdownMenuItem<String>(
-                          value: theme,
-                          child: Text(theme),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value == null) return;
-                    setState(() => _theme = value);
-                  },
-                ),
-                const SizedBox(height: 10),
-                DropdownButtonFormField<String>(
-                  initialValue: _language,
-                  decoration: InputDecoration(
-                    labelText: _tx('profile.language_label', 'Idioma'),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: 'es', child: Text('Español')),
-                    DropdownMenuItem(value: 'en', child: Text('English')),
-                  ],
-                  onChanged: (value) {
-                    if (value == null) return;
-                    setState(() => _language = value);
-                  },
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  _tx('profile.app_icon_label', 'Icono de la aplicación'),
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _tx(
-                    'profile.app_icon_description',
-                    'Elige el icono que se muestra dentro de iAgents.',
-                  ),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(height: 10),
-                const _BrandIconSelector(),
-                const SizedBox(height: 12),
-                FilledButton.icon(
-                  onPressed: _savingSettings ? null : _saveSettings,
-                  icon: const Icon(Icons.save_outlined),
-                  label: Text(
-                    _savingSettings
-                        ? _tx('profile.saving', 'Guardando...')
-                        : _tx(
-                            'profile.save_preferences',
-                            'Guardar preferencias',
-                          ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
-        _sectionHeader(
-          Icons.warning_amber_outlined,
-          _tx('profile.account_zone_title', 'Zona de cuenta'),
-          color: Colors.red,
-        ),
-        const SizedBox(height: 8),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  bundle.deletion.scheduled
-                      ? '${_tx('profile.deletion_scheduled', 'Eliminación programada para')}: ${bundle.deletion.deletionDate ?? '-'}'
-                      : _tx(
-                          'profile.no_deletion_scheduled',
-                          'No hay eliminación programada',
-                        ),
-                ),
-                const SizedBox(height: 10),
-                OutlinedButton.icon(
-                  onPressed: _requestingDeletion || bundle.deletion.scheduled
-                      ? null
-                      : _requestDeletion,
-                  icon: const Icon(Icons.warning_amber_outlined),
-                  label: Text(
-                    _requestingDeletion
-                        ? _tx('profile.scheduling', 'Programando...')
-                        : _tx(
-                            'profile.request_deletion',
-                            'Solicitar eliminación de cuenta',
-                          ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSocialSection(ProfileBundle bundle) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _sectionHeader(
-                Icons.public_outlined,
-                _tx('profile.tab_social', 'Perfil público'),
-              ),
-            ),
-            TextButton.icon(
-              onPressed: () => context.push(
-                '${RouteNames.publicProfilePrefix}${bundle.session.username}',
-              ),
-              icon: const Icon(Icons.open_in_new, size: 16),
-              label: Text(_tx('profile.view_public_profile', 'Ver mi perfil')),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextFormField(
-                  controller: _bioController,
-                  minLines: 2,
-                  maxLines: 4,
-                  maxLength: 500,
-                  decoration: InputDecoration(
-                    labelText: _tx('profile.bio_label', 'Bio'),
-                    alignLabelWithHint: true,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _tx('profile.languages_label', 'Idiomas'),
-                  style: Theme.of(context).textTheme.labelMedium,
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: _selectedLanguages.isEmpty
-                          ? Text(
-                              _tx(
-                                'profile.languages_empty',
-                                'Sin idiomas seleccionados',
-                              ),
-                              style: Theme.of(context).textTheme.bodySmall,
-                            )
-                          : Wrap(
-                              spacing: 6,
-                              runSpacing: 6,
-                              children: _languageOptions
-                                  .where(
-                                    (option) =>
-                                        _selectedLanguages.contains(option.$1),
-                                  )
-                                  .map(
-                                    (option) => Chip(
-                                      label: Text('${option.$3} ${option.$2}'),
-                                    ),
-                                  )
-                                  .toList(),
-                            ),
-                    ),
-                    const SizedBox(width: 8),
-                    OutlinedButton.icon(
-                      onPressed: _openLanguagesDialog,
-                      icon: const Icon(Icons.tune, size: 16),
-                      label: Text(
-                        _tx('profile.manage_languages', 'Gestionar idiomas'),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _emailPublicController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: _tx(
-                      'profile.email_public_label',
-                      'Email público',
-                    ),
-                    prefixIcon: const Icon(Icons.alternate_email, size: 20),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: _githubController,
-                  decoration: InputDecoration(
-                    labelText: _tx('profile.github_label', 'Usuario de GitHub'),
-                    prefixIcon: const Icon(Icons.code, size: 20),
-                    prefixText: 'github.com/',
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  _tx('profile.cv_label', 'Resumen profesional'),
-                  style: Theme.of(context).textTheme.labelMedium,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _tx(
-                    'profile.cv_hint',
-                    'Soporta Markdown. Aparecerá en tu perfil público.',
-                  ),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _cvController,
-                  minLines: 6,
-                  maxLines: 12,
-                  style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
-                  decoration: const InputDecoration(isDense: true),
-                ),
-                const SizedBox(height: 12),
-                FilledButton.icon(
-                  onPressed: _savingProfile ? null : _savePublicProfile,
-                  icon: const Icon(Icons.save_as_outlined),
-                  label: Text(
-                    _savingProfile
-                        ? _tx('profile.saving', 'Guardando...')
-                        : _tx('profile.save_social', 'Guardar perfil público'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSecuritySection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionHeader(
-          Icons.lock_outline,
-          _tx('profile.tab_security', 'Seguridad'),
-        ),
-        const SizedBox(height: 8),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextFormField(
-                  controller: _currentPasswordController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: _tx(
-                      'profile.current_password_label',
-                      'Contraseña actual',
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: _newPasswordController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: _tx(
-                      'profile.new_password_label',
-                      'Nueva contraseña',
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                FilledButton.icon(
-                  onPressed: _changingPassword ? null : _changePassword,
-                  icon: const Icon(Icons.lock_reset_outlined),
-                  label: Text(
-                    _changingPassword
-                        ? _tx('profile.updating', 'Actualizando...')
-                        : _tx('profile.change_password', 'Cambiar contraseña'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildGroupsSection(ProfileBundle bundle) {
-    final token = _token;
-    if (token == null || token.isEmpty) return const SizedBox.shrink();
-    return ProfileGroupsSection(
-      apiClient: widget.apiClient,
-      token: token,
-      currentUsername: bundle.session.username,
-      localeController: widget.localeController,
-    );
-  }
 }
-
-class _BrandIconSelector extends StatelessWidget {
-  const _BrandIconSelector();
-
-  @override
-  Widget build(BuildContext context) {
-    final controller = BrandIconScope.watch(context);
-    return SizedBox(
-      height: 78,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: BrandIconVariant.values.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 10),
-        itemBuilder: (context, index) {
-          final variant = BrandIconVariant.values[index];
-          return _BrandIconChoice(
-            variant: variant,
-            selected: controller.selected == variant,
-            onSelected: controller.select,
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _BrandIconChoice extends StatelessWidget {
-  const _BrandIconChoice({
-    required this.variant,
-    required this.selected,
-    required this.onSelected,
-  });
-
-  final BrandIconVariant variant;
-  final bool selected;
-  final ValueChanged<BrandIconVariant> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return SizedBox(
-      width: 68,
-      height: 68,
-      child: Material(
-        color: selected
-            ? colorScheme.primaryContainer.withValues(alpha: 0.35)
-            : colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: BorderSide(
-            color: selected ? colorScheme.primary : colorScheme.outlineVariant,
-            width: selected ? 2 : 1,
-          ),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () => onSelected(variant),
-          child: Padding(
-            padding: const EdgeInsets.all(6),
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.asset(variant.assetPath, fit: BoxFit.cover),
-                  ),
-                ),
-                if (selected)
-                  Positioned(
-                    top: 2,
-                    right: 2,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: colorScheme.surface,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.check_circle,
-                        color: colorScheme.primary,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-const _themes = [
-  'dark-red',
-  'dark-blue',
-  'dark-orange',
-  'dark-purple',
-  'light-red',
-  'light-blue',
-  'light-orange',
-  'light-purple',
-  'noir',
-  'marble',
-  'ember',
-  'ocean',
-  'forest',
-  'dusk',
-];

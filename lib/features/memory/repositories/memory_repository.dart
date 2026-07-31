@@ -1,10 +1,8 @@
-import '../../../core/network/api_client.dart';
+import '../../../core/network/api_repository.dart';
 import '../../../models/memory/memory_models.dart';
 
-class MemoryRepository {
-  MemoryRepository({required this.apiClient});
-
-  final ApiClient apiClient;
+class MemoryRepository extends ApiRepository {
+  MemoryRepository({required super.apiClient});
 
   Future<List<MemoryFileItem>> listFiles(String token) async {
     final response = await apiClient.get(

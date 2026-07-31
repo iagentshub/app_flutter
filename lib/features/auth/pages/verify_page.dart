@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../shared/widgets/buttons/app_buttons.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router/route_names.dart';
@@ -134,7 +136,7 @@ class _VerifyPageState extends State<VerifyPage> {
                         Text(message),
                         const SizedBox(height: 10),
                         if (!_loading)
-                          TextButton(
+                          TertiaryButton(
                             onPressed: () => context.go(RouteNames.login),
                             child: Text(
                               _txt(t, 'verify.go_login', 'Volver al login'),

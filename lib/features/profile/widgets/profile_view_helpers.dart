@@ -1,0 +1,133 @@
+part of '../pages/profile_page.dart';
+
+extension _ProfileViewHelpers on _ProfilePageState {
+  Widget _sectionHeader(IconData icon, String text, {Color? color}) {
+    final resolvedColor =
+        color ?? Theme.of(context).colorScheme.onSurfaceVariant;
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: resolvedColor),
+        const SizedBox(width: 6),
+        Text(
+          text.toUpperCase(),
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.4,
+            color: resolvedColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _badge(String text, {required Color color}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  Widget _infoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 18,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
+          ),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAvatar(String initial) {
+    final token = _token;
+    final url = _avatarUrl;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        ClipOval(
+          child: SizedBox(
+            width: 64,
+            height: 64,
+            child: (url != null && token != null)
+                ? Image.network(
+                    url,
+                    headers: {'Cookie': 'ga_token=$token'},
+                    fit: BoxFit.cover,
+                    // El avatar subido puede pesar hasta 2MB a resolución
+                    // completa; decodificar solo a 128px (2x el tamaño en
+                    // pantalla) evita mantener un bitmap gigante en memoria
+                    // para mostrarlo en un círculo de 64x64.
+                    cacheWidth: 128,
+                    cacheHeight: 128,
+                    errorBuilder: (context, error, stack) =>
+                        _avatarFallback(initial),
+                    loadingBuilder: (context, child, progress) =>
+                        progress == null ? child : _avatarFallback(initial),
+                  )
+                : _avatarFallback(initial),
+          ),
+        ),
+        Positioned(
+          right: -2,
+          bottom: -2,
+          child: InkWell(
+            onTap: _uploadingAvatar ? null : _pickAndUploadAvatar,
+            borderRadius: BorderRadius.circular(14),
+            child: Container(
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Theme.of(context).cardColor,
+                  width: 2,
+                ),
+              ),
+              child: _uploadingAvatar
+                  ? const Padding(
+                      padding: EdgeInsets.all(5),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.camera_alt, size: 13, color: Colors.white),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _avatarFallback(String initial) {
+    return CircleAvatar(
+      radius: 32,
+      child: Text(
+        initial,
+        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+      ),
+    );
+  }
+}

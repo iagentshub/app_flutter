@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+
+import '../../../shared/widgets/buttons/app_buttons.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router/route_names.dart';
 import '../../../shared/i18n/locale_loader.dart';
 import '../../../shared/widgets/public_top_bar.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
+
+part '../cards/about_cards.dart';
 
 class AboutPage extends StatelessWidget {
   const AboutPage({super.key});
@@ -129,7 +133,7 @@ class AboutPage extends StatelessWidget {
                                 ?.copyWith(color: const Color(0xFFD3D3D3)),
                           ),
                           const SizedBox(height: 14),
-                          ElevatedButton(
+                          PrimaryButton.elevated(
                             onPressed: () => context.go(RouteNames.register),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFD90429),
@@ -146,46 +150,6 @@ class AboutPage extends StatelessWidget {
             ],
           );
         },
-      ),
-    );
-  }
-}
-
-class _InfoCard extends StatelessWidget {
-  const _InfoCard({required this.title, required this.body});
-
-  final String title;
-  final String body;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFF333333)),
-        borderRadius: BorderRadius.circular(14),
-        color: const Color(0xFF0E0E0E),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              body,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFFD6D6D6)),
-            ),
-          ],
-        ),
       ),
     );
   }

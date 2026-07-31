@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../../shared/widgets/buttons/app_buttons.dart';
+
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../features/connections/repositories/connections_repository.dart';
@@ -12,7 +14,7 @@ import '../../../models/chat/chat_models.dart';
 import '../../../models/connections/connection_models.dart';
 import '../repositories/agent_builder_repository.dart';
 import '../repositories/agents_repository.dart';
-import '../widgets/agent_form_dialog.dart';
+import '../dialogs/agent_form_dialog.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
@@ -279,7 +281,7 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
         title: Text(_tx('agents.builder_title', 'Constructor de agentes IA')),
         actions: [
           if (_agentSaved)
-            TextButton.icon(
+            TertiaryButton.icon(
               onPressed: () => Navigator.of(context).pop(true),
               icon: const Icon(Icons.check),
               label: Text(_tx('agents.builder_done_action', 'Terminar')),
@@ -386,12 +388,12 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
                 ),
                 const SizedBox(width: 8),
                 if (_streaming)
-                  IconButton.filledTonal(
+                  AppIconButton.filledTonal(
                     onPressed: _stop,
                     icon: const Icon(Icons.stop),
                   )
                 else
-                  IconButton.filled(
+                  AppIconButton.filled(
                     onPressed: _send,
                     icon: const Icon(Icons.send),
                   ),

@@ -2,8 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../../shared/widgets/buttons/app_buttons.dart';
+
 import '../../../core/network/api_error.dart';
 import '../repositories/centinel_repository.dart';
+
+part '../centinel/functional_results.dart';
 
 class _TestEvent {
   const _TestEvent({
@@ -64,6 +68,7 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
   bool _starting = false;
 
   String _tx(String path, String fallback) => widget.tx(path, fallback);
+  void _refresh(VoidCallback update) => setState(update);
 
   @override
   void initState() {
@@ -89,26 +94,26 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
   }
 
   Future<void> _loadTree() async {
-    setState(() {
+    _refresh(() {
       _treeLoading = true;
       _treeError = null;
     });
     try {
       final tree = await widget.repository.tree(widget.token);
       if (!mounted) return;
-      setState(() {
+      _refresh(() {
         _tree = tree;
         _treeLoading = false;
       });
     } on ApiError catch (error) {
       if (!mounted) return;
-      setState(() {
+      _refresh(() {
         _treeError = error.message;
         _treeLoading = false;
       });
     } catch (_) {
       if (!mounted) return;
-      setState(() {
+      _refresh(() {
         _treeError = _tx(
           'centinel.errors_discover',
           'No se pudo descubrir la suite de tests',
@@ -122,7 +127,7 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
     try {
       final history = await widget.repository.history(widget.token);
       if (!mounted) return;
-      setState(() => _history = history);
+      _refresh(() => _history = history);
     } catch (_) {
       // Historial es informativo; un fallo aquí no bloquea el resto.
     }
@@ -134,7 +139,7 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
       if (!mounted) return;
       final runStatus = (status['status'] ?? 'idle').toString();
       final failed = status['failed_ids'];
-      setState(() {
+      _refresh(() {
         _status = runStatus;
         _runId = status['run_id'] as String?;
         _failedIds = failed is List
@@ -157,10 +162,11 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
 
   Future<void> _startRun({bool rerunFailed = false}) async {
     if (_status == 'running') return;
-    if (!rerunFailed && _selectedFiles != null && _selectedFiles!.isEmpty)
+    if (!rerunFailed && _selectedFiles != null && _selectedFiles!.isEmpty) {
       return;
+    }
 
-    setState(() {
+    _refresh(() {
       _starting = true;
       _events.clear();
       _logLines.clear();
@@ -175,7 +181,7 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
         rerunFailed: rerunFailed,
       );
       if (!mounted) return;
-      setState(() {
+      _refresh(() {
         _status = 'running';
         _runId = result['run_id'] as String?;
         _starting = false;
@@ -183,13 +189,13 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
       if (_runId != null) _connectStream(_runId!);
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
-      if (mounted) setState(() => _starting = false);
+      if (mounted) _refresh(() => _starting = false);
     } catch (_) {
       _showMessage(
         _tx('centinel.errors_run_start', 'No se pudo iniciar el run'),
         isError: true,
       );
-      if (mounted) setState(() => _starting = false);
+      if (mounted) _refresh(() => _starting = false);
     }
   }
 
@@ -214,12 +220,14 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
         .listen(
           _handleEvent,
           onDone: () {
-            if (mounted && _status == 'running')
-              setState(() => _status = 'error');
+            if (mounted && _status == 'running') {
+              _refresh(() => _status = 'error');
+            }
           },
           onError: (_) {
-            if (mounted && _status == 'running')
-              setState(() => _status = 'error');
+            if (mounted && _status == 'running') {
+              _refresh(() => _status = 'error');
+            }
           },
         );
   }
@@ -229,9 +237,9 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
     if (!mounted) return;
     switch (type) {
       case 'started':
-        setState(() => _logLines.add('Run iniciado: ${event['target']}'));
+        _refresh(() => _logLines.add('Run iniciado: ${event['target']}'));
       case 'collecting':
-        setState(() => _logLines.add('collected ${event['count']} items'));
+        _refresh(() => _logLines.add('collected ${event['count']} items'));
       case 'test':
         final status = (event['status'] ?? '').toString();
         final file = (event['file'] ?? '').toString();
@@ -240,7 +248,7 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
             ? (event['progress'] as num).toInt()
             : 0;
         final traceback = event['traceback'] as String?;
-        setState(() {
+        _refresh(() {
           _events.add(
             _TestEvent(
               file: file,
@@ -253,14 +261,15 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
           _progress = progress;
           _currentFile = file;
           _logLines.add('$file::$name ${status.toUpperCase()} [$progress%]');
-          if (traceback != null && traceback.isNotEmpty)
+          if (traceback != null && traceback.isNotEmpty) {
             _logLines.add(traceback);
+          }
         });
       case 'summary':
-        setState(() => _summary = event);
+        _refresh(() => _summary = event);
       case 'done':
         final failed = event['failed_ids'];
-        setState(() {
+        _refresh(() {
           _status = 'idle';
           _failedIds = failed is List
               ? failed.map((e) => e.toString()).toList()
@@ -268,10 +277,10 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
         });
         _loadHistory();
       case 'aborted':
-        setState(() => _status = 'idle');
+        _refresh(() => _status = 'idle');
         _loadHistory();
       case 'error':
-        setState(() => _status = 'error');
+        _refresh(() => _status = 'error');
         _showMessage(
           (event['message'] ?? 'Error en el run').toString(),
           isError: true,
@@ -292,8 +301,9 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
   List<_TestEvent> get _filteredEvents {
     if (_resultFilter == 'all') return _events;
     return _events.where((e) {
-      if (_resultFilter == 'failed')
+      if (_resultFilter == 'failed') {
         return e.status == 'failed' || e.status == 'error';
+      }
       return e.status == _resultFilter;
     }).toList();
   }
@@ -375,7 +385,7 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
       runSpacing: 8,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        FilledButton.icon(
+        PrimaryButton.icon(
           onPressed: (_status == 'running' || nothingSelected || _starting)
               ? null
               : () => _startRun(),
@@ -383,7 +393,7 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
           label: Text(_tx('centinel.actions_run', 'Ejecutar')),
         ),
         if (_failedIds.isNotEmpty && _status != 'running')
-          OutlinedButton.icon(
+          SecondaryButton.icon(
             onPressed: _starting ? null : () => _startRun(rerunFailed: true),
             icon: const Icon(Icons.replay),
             label: Text(
@@ -391,12 +401,12 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
             ),
           ),
         if (_status == 'running')
-          FilledButton.tonalIcon(
+          PrimaryButton.tonalIcon(
             onPressed: _abort,
             icon: const Icon(Icons.stop_circle_outlined),
             label: Text(_tx('centinel.actions_abort', 'Abortar')),
           ),
-        OutlinedButton.icon(
+        SecondaryButton.icon(
           onPressed: () {
             _loadTree();
             _loadHistory();
@@ -434,414 +444,6 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
           style: Theme.of(context).textTheme.bodySmall,
         ),
       ],
-    );
-  }
-
-  Widget _buildSummaryBar() {
-    final passed = _summary['passed'] ?? 0;
-    final failed = _summary['failed'] ?? 0;
-    final skipped = _summary['skipped'] ?? 0;
-    final error = _summary['error'] ?? 0;
-    final duration = _summary['duration_s'];
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        _summaryChip(
-          '${_tx('centinel.results_filter_passed', 'Pasados')}: $passed',
-          const Color(0xFF059669),
-        ),
-        _summaryChip(
-          '${_tx('centinel.results_filter_failed', 'Fallidos')}: $failed',
-          const Color(0xFFDC2626),
-        ),
-        _summaryChip(
-          '${_tx('centinel.results_filter_skipped', 'Omitidos')}: $skipped',
-          const Color(0xFFD97706),
-        ),
-        if (error is num && error > 0)
-          _summaryChip('Error: $error', const Color(0xFFDC2626)),
-        if (duration != null) _summaryChip('${duration}s', Colors.grey),
-      ],
-    );
-  }
-
-  Widget _summaryChip(String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.w700,
-          fontSize: 12,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTreePanel() {
-    return Card(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _tx('centinel.tree_modules_title', 'Módulos'),
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: _treeSearchController,
-                  decoration: InputDecoration(
-                    isDense: true,
-                    labelText: _tx(
-                      'centinel.tree_filter_placeholder',
-                      'Filtrar…',
-                    ),
-                    prefixIcon: const Icon(Icons.search, size: 18),
-                  ),
-                  onChanged: (_) => setState(() {}),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          Expanded(child: _buildTreeBody()),
-          const Divider(height: 1),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            child: Row(
-              children: [
-                TextButton(
-                  onPressed: _selectAll,
-                  child: Text(_tx('centinel.tree_select_all', 'Todo')),
-                ),
-                TextButton(
-                  onPressed: _deselectAll,
-                  child: Text(_tx('centinel.tree_deselect_all', 'Ninguno')),
-                ),
-                const Spacer(),
-                Text(
-                  _selectionLabel(),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _selectionLabel() {
-    final total = _allFiles.length;
-    if (total == 0) return '';
-    final selected = _selectedFiles?.length ?? total;
-    return selected == total ? '$total' : '$selected/$total';
-  }
-
-  void _selectAll() => setState(() => _selectedFiles = null);
-
-  void _deselectAll() => setState(() => _selectedFiles = {});
-
-  Widget _buildTreeBody() {
-    if (_treeLoading) return const Center(child: CircularProgressIndicator());
-    if (_treeError != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Text(
-            _treeError!,
-            style: TextStyle(color: Colors.red.shade700),
-          ),
-        ),
-      );
-    }
-    final dirs = (_tree?['dirs'] as List?) ?? const [];
-    if (dirs.isEmpty)
-      return Center(
-        child: Text(_tx('centinel.tree_discovering', 'Descubriendo tests…')),
-      );
-
-    final q = _treeSearchController.text.trim().toLowerCase();
-    return ListView(
-      children: dirs.map((raw) {
-        final dir = raw as Map;
-        final files = (dir['files'] as List? ?? const []).cast<Map>().where((
-          f,
-        ) {
-          if (q.isEmpty) return true;
-          return f['file'].toString().toLowerCase().contains(q);
-        }).toList();
-        if (files.isEmpty) return const SizedBox.shrink();
-        return ExpansionTile(
-          title: Text(
-            dir['dir'].toString(),
-            style: const TextStyle(fontSize: 13),
-          ),
-          trailing: Text(
-            '${dir['count']}',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          initiallyExpanded: q.isNotEmpty,
-          children: files.map((f) {
-            final file = f['file'].toString();
-            final checked =
-                _selectedFiles == null || _selectedFiles!.contains(file);
-            return CheckboxListTile(
-              dense: true,
-              controlAffinity: ListTileControlAffinity.leading,
-              value: checked,
-              title: Text(
-                file.split('/').last,
-                style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
-                overflow: TextOverflow.ellipsis,
-              ),
-              secondary: Text(
-                '${f['count']}',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              onChanged: (value) => _onFileCheck(file, value ?? true),
-            );
-          }).toList(),
-        );
-      }).toList(),
-    );
-  }
-
-  void _onFileCheck(String file, bool checked) {
-    setState(() {
-      if (checked) {
-        if (_selectedFiles != null) _selectedFiles!.add(file);
-      } else {
-        _selectedFiles ??= {..._allFiles};
-        _selectedFiles!.remove(file);
-      }
-    });
-  }
-
-  Widget _buildResultsPanel() {
-    return Card(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
-            child: Row(
-              children: [
-                Text(
-                  _tx('centinel.results_title', 'Resultados'),
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        _filterTab(
-                          'all',
-                          _tx('centinel.results_filter_all', 'Todos'),
-                        ),
-                        _filterTab(
-                          'failed',
-                          _tx('centinel.results_filter_failed', 'Fallidos'),
-                        ),
-                        _filterTab(
-                          'passed',
-                          _tx('centinel.results_filter_passed', 'Pasados'),
-                        ),
-                        _filterTab(
-                          'skipped',
-                          _tx('centinel.results_filter_skipped', 'Omitidos'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                IconButton(
-                  tooltip: _tx(
-                    'centinel.results_log_toggle_title',
-                    'Ver log en tiempo real',
-                  ),
-                  onPressed: () => setState(() => _logView = !_logView),
-                  icon: Icon(
-                    _logView ? Icons.list_alt : Icons.terminal_outlined,
-                    size: 18,
-                  ),
-                  isSelected: _logView,
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          Expanded(child: _logView ? _buildLogPane() : _buildResultsList()),
-        ],
-      ),
-    );
-  }
-
-  Widget _filterTab(String value, String label) {
-    final selected = _resultFilter == value;
-    return Padding(
-      padding: const EdgeInsets.only(right: 6),
-      child: ChoiceChip(
-        label: Text(label, style: const TextStyle(fontSize: 12)),
-        selected: selected,
-        onSelected: (_) => setState(() => _resultFilter = value),
-      ),
-    );
-  }
-
-  Widget _buildLogPane() {
-    if (_logLines.isEmpty) {
-      return Center(
-        child: Text(
-          _tx(
-            'centinel.results_empty_state',
-            'Ejecuta los tests para ver los resultados',
-          ),
-        ),
-      );
-    }
-    return ListView.builder(
-      padding: const EdgeInsets.all(8),
-      itemCount: _logLines.length,
-      itemBuilder: (context, index) => Text(
-        _logLines[index],
-        style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
-      ),
-    );
-  }
-
-  Widget _buildResultsList() {
-    final items = _filteredEvents;
-    if (items.isEmpty) {
-      return Center(
-        child: Text(
-          _tx(
-            'centinel.results_empty_state',
-            'Ejecuta los tests para ver los resultados',
-          ),
-        ),
-      );
-    }
-    final byFile = <String, List<_TestEvent>>{};
-    for (final e in items) {
-      byFile.putIfAbsent(e.file, () => []).add(e);
-    }
-    // Lista aplanada de filas (encabezado de fichero o evento de test) para
-    // que ListView.builder solo construya las filas visibles: con cientos de
-    // eventos SSE llegando en vivo, un ListView(children:[...Column/map]) los
-    // construiría todos en cada setState.
-    final rows = <Object>[];
-    for (final entry in byFile.entries) {
-      rows.add(entry.key);
-      rows.addAll(entry.value);
-    }
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      itemCount: rows.length,
-      itemBuilder: (context, index) {
-        final row = rows[index];
-        if (row is String) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 2),
-            child: Text(
-              row,
-              style: const TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          );
-        }
-        final e = row as _TestEvent;
-        return ListTile(
-          dense: true,
-          visualDensity: VisualDensity.compact,
-          leading: Icon(
-            _statusIcon(e.status),
-            color: _statusColor(e.status),
-            size: 18,
-          ),
-          title: Text(
-            e.name,
-            style: const TextStyle(fontSize: 12),
-            overflow: TextOverflow.ellipsis,
-          ),
-          subtitle: e.traceback != null && e.traceback!.isNotEmpty
-              ? Text(
-                  e.traceback!,
-                  style: const TextStyle(fontFamily: 'monospace', fontSize: 10),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                )
-              : null,
-        );
-      },
-    );
-  }
-
-  Widget _buildHistory() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _tx('centinel.history_title', 'Historial reciente'),
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 10),
-            if (_history.isEmpty)
-              Text(_tx('centinel.history_empty', 'Sin ejecuciones previas'))
-            else
-              ..._history.map((entry) {
-                final status = (entry['status'] ?? '-').toString();
-                final target = (entry['target'] ?? '-').toString();
-                final summary =
-                    entry['summary'] as Map<String, dynamic>? ?? const {};
-                final passed = summary['passed'] ?? 0;
-                final failed = summary['failed'] ?? 0;
-                final skipped = summary['skipped'] ?? 0;
-                return ListTile(
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(
-                    status == 'aborted'
-                        ? Icons.stop_circle_outlined
-                        : Icons.check_circle_outline,
-                    color: failed is num && failed > 0
-                        ? const Color(0xFFDC2626)
-                        : const Color(0xFF059669),
-                  ),
-                  title: Text(
-                    target,
-                    style: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 12,
-                    ),
-                  ),
-                  subtitle: Text(
-                    '$status · $passed passed · $failed failed · $skipped skipped',
-                  ),
-                );
-              }),
-          ],
-        ),
-      ),
     );
   }
 }

@@ -1,10 +1,8 @@
-import '../../../core/network/api_client.dart';
+import '../../../core/network/api_repository.dart';
 import '../../../models/connections/connection_models.dart';
 
-class ConnectionsRepository {
-  ConnectionsRepository({required this.apiClient});
-
-  final ApiClient apiClient;
+class ConnectionsRepository extends ApiRepository {
+  ConnectionsRepository({required super.apiClient});
 
   Future<List<ConnectionItem>> listConnections(
     String token, {

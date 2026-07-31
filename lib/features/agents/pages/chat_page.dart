@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../../shared/widgets/buttons/app_buttons.dart';
+
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../features/connections/repositories/connections_repository.dart';
@@ -14,6 +16,8 @@ import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
+
+part '../dialogs/connection_preference_dialog.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({
@@ -356,7 +360,7 @@ class _ChatPageState extends State<ChatPage> {
       appBar: AppBar(
         title: Text(widget.agent.name),
         actions: [
-          IconButton(
+          AppIconButton(
             icon: const Icon(Icons.tune),
             tooltip: _tx(
               'agents.preferences_tooltip',
@@ -367,9 +371,10 @@ class _ChatPageState extends State<ChatPage> {
           Builder(
             builder: (context) => LayoutBuilder(
               builder: (context, constraints) {
-                if (MediaQuery.of(context).size.width >= 760)
+                if (MediaQuery.of(context).size.width >= 760) {
                   return const SizedBox.shrink();
-                return IconButton(
+                }
+                return AppIconButton(
                   icon: const Icon(Icons.history),
                   onPressed: () => Scaffold.of(context).openEndDrawer(),
                 );
@@ -408,7 +413,7 @@ class _ChatPageState extends State<ChatPage> {
       children: [
         Padding(
           padding: const EdgeInsets.all(12),
-          child: FilledButton.icon(
+          child: PrimaryButton.icon(
             onPressed: _newConversation,
             icon: const Icon(Icons.add),
             label: const Text('Nueva conversación'),
@@ -438,7 +443,7 @@ class _ChatPageState extends State<ChatPage> {
                     Navigator.of(context).maybePop();
                     _selectConversation(item.id);
                   },
-                  trailing: IconButton(
+                  trailing: AppIconButton(
                     icon: const Icon(Icons.close, size: 16),
                     onPressed: () => _deleteConversation(item.id),
                   ),
@@ -458,7 +463,7 @@ class _ChatPageState extends State<ChatPage> {
           children: [
             Text(_error!),
             const SizedBox(height: 12),
-            FilledButton.icon(
+            PrimaryButton.icon(
               onPressed: _bootstrap,
               icon: const Icon(Icons.refresh),
               label: const Text('Reintentar'),
@@ -517,12 +522,12 @@ class _ChatPageState extends State<ChatPage> {
                 ),
                 const SizedBox(width: 8),
                 if (_streaming)
-                  IconButton.filledTonal(
+                  AppIconButton.filledTonal(
                     onPressed: _stop,
                     icon: const Icon(Icons.stop),
                   )
                 else
-                  IconButton.filled(
+                  AppIconButton.filled(
                     onPressed: _send,
                     icon: const Icon(Icons.send),
                   ),
@@ -582,87 +587,3 @@ class _ChatPageState extends State<ChatPage> {
 /// Permite a este usuario elegir su propia conexión/modelo para un agente,
 /// sin afectar a la conexión predeterminada que ven el resto de usuarios
 /// (relevante sobre todo en agentes compartidos o enlazados).
-class _ConnectionPreferenceDialog extends StatefulWidget {
-  const _ConnectionPreferenceDialog({
-    required this.connections,
-    required this.initialConnectionId,
-    required this.tx,
-    required this.onSave,
-  });
-
-  final List<ConnectionItem> connections;
-  final String? initialConnectionId;
-  final String Function(String path, String fallback) tx;
-  final Future<void> Function(String? connectionId) onSave;
-
-  @override
-  State<_ConnectionPreferenceDialog> createState() =>
-      _ConnectionPreferenceDialogState();
-}
-
-class _ConnectionPreferenceDialogState
-    extends State<_ConnectionPreferenceDialog> {
-  String? _connectionId;
-  bool _saving = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _connectionId = widget.initialConnectionId;
-  }
-
-  Future<void> _save() async {
-    setState(() => _saving = true);
-    await widget.onSave(_connectionId);
-    if (mounted) Navigator.of(context).pop();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final tx = widget.tx;
-    return AlertDialog(
-      title: Text(tx('agents.preferences_title', 'Preferencia de conexión')),
-      content: SizedBox(
-        width: dialogContentWidth(context, 360),
-        child: DropdownButtonFormField<String?>(
-          initialValue: _connectionId,
-          isExpanded: true,
-          decoration: InputDecoration(
-            labelText: tx('agents.field_connection', 'Conexión LLM'),
-          ),
-          items: [
-            DropdownMenuItem<String?>(
-              value: null,
-              child: Text(
-                tx(
-                  'agents.preferences_use_default',
-                  'Usar la conexión del agente',
-                ),
-              ),
-            ),
-            ...widget.connections.map(
-              (conn) => DropdownMenuItem<String?>(
-                value: conn.id,
-                child: Text(
-                  '${conn.name} (${conn.type})',
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ),
-          ],
-          onChanged: (value) => setState(() => _connectionId = value),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: _saving ? null : () => Navigator.of(context).pop(),
-          child: Text(tx('common.cancel', 'Cancelar')),
-        ),
-        FilledButton(
-          onPressed: _saving ? null : _save,
-          child: Text(tx('common.save', 'Guardar')),
-        ),
-      ],
-    );
-  }
-}
