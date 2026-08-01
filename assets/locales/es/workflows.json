@@ -187,5 +187,8 @@
     "save": "Guardar acceso",
     "saving": "Guardando…",
     "success": "“{{name}}” compartida correctamente"
-  }
+  },
+  "activated": "Orquestación activada",
+  "deactivated": "Orquestación desactivada",
+  "toggle_error": "No se pudo cambiar el estado"
 }

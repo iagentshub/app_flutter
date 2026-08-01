@@ -5,6 +5,7 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../models/agents/agent_models.dart';
 import '../../../shared/graph/graph_models.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
+import '../../../shared/widgets/inactive_badge.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/origin_badge.dart';
 import '../../../shared/widgets/resource_graph_button.dart';
@@ -25,6 +26,7 @@ class AgentCard extends StatelessWidget {
     required this.onHistory,
     required this.onEdit,
     required this.onDelete,
+    this.onToggleActive,
     super.key,
   });
 
@@ -36,6 +38,10 @@ class AgentCard extends StatelessWidget {
   final VoidCallback onHistory;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+
+  /// Activar/desactivar (borrado suave). Si es null, no se ofrece la acción
+  /// (p. ej. en recursos compartidos de solo lectura).
+  final VoidCallback? onToggleActive;
 
   /// Nodos del grafo de contenido: el agente en el centro y sus skills,
   /// knowledge, conexión y memoria alrededor.
@@ -87,16 +93,30 @@ class AgentCard extends StatelessWidget {
     }
     final graphNodes = _graphNodes();
 
-    return Card(
+    final card = Card(
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              item.name,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    item.name,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                if (!item.isActive) ...[
+                  const SizedBox(width: 8),
+                  InactiveBadge(label: tx('common.inactive', 'Inactivo')),
+                ],
+              ],
             ),
             const SizedBox(height: 6),
             Text(subtitleParts.join(' · ')),
@@ -213,6 +233,16 @@ class AgentCard extends StatelessWidget {
                   tooltip: tx('common.edit', 'Editar'),
                   onPressed: onEdit,
                 ),
+                if (onToggleActive != null)
+                  ActionIconButton(
+                    icon: item.isActive
+                        ? Icons.toggle_on_outlined
+                        : Icons.toggle_off_outlined,
+                    tooltip: item.isActive
+                        ? tx('common.deactivate', 'Desactivar')
+                        : tx('common.activate', 'Activar'),
+                    onPressed: onToggleActive,
+                  ),
                 ActionIconButton(
                   icon: Icons.delete_outline,
                   tooltip: tx('common.delete', 'Eliminar'),
@@ -225,5 +255,8 @@ class AgentCard extends StatelessWidget {
         ),
       ),
     );
+
+    if (item.isActive) return card;
+    return Opacity(opacity: 0.6, child: card);
   }
 }

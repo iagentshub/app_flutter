@@ -6,9 +6,13 @@ import '../../../models/workflows/workflow_models.dart';
 class WorkflowsRepository extends ApiRepository {
   WorkflowsRepository({required super.apiClient});
 
-  Future<List<WorkflowItem>> listWorkflows(String token) async {
+  Future<List<WorkflowItem>> listWorkflows(
+    String token, {
+    bool includeInactive = false,
+  }) async {
+    final query = includeInactive ? '?include_inactive=true' : '';
     final response = await apiClient.get(
-      '/api/workflows',
+      '/api/workflows$query',
       gaToken: token,
       cache: true,
     );
@@ -46,6 +50,9 @@ class WorkflowsRepository extends ApiRepository {
       gaToken: token,
     );
   }
+
+  Future<void> setWorkflowActive(String token, String id, bool active) =>
+      setActive(token, 'workflows', id, active);
 
   /// Ejecuta el workflow y transmite cada evento SSE a medida que llega
   /// (stage_started/stage_done/evaluation_*/workflow_done/error).

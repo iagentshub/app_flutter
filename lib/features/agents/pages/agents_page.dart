@@ -190,6 +190,7 @@ class _AgentsPageState extends State<AgentsPage> {
       final agents = await _repository.listAgents(
         token,
         groupId: _activeGroupId,
+        includeInactive: true,
       );
       if (!mounted) return;
       setState(() {
@@ -509,6 +510,21 @@ class _AgentsPageState extends State<AgentsPage> {
       _showMessage(error.message, isError: true);
     } catch (_) {
       _showMessage('No se pudo eliminar el agente', isError: true);
+    }
+  }
+
+  Future<void> _toggleAgentActive(AgentItem item) async {
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+    final activate = !item.isActive;
+    try {
+      await _repository.setAgentActive(token, item.id, activate);
+      _showMessage(activate ? 'Agente activado' : 'Agente desactivado');
+      await _load();
+    } on ApiError catch (error) {
+      _showMessage(error.message, isError: true);
+    } catch (_) {
+      _showMessage('No se pudo cambiar el estado del agente', isError: true);
     }
   }
 

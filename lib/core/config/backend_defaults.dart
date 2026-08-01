@@ -10,11 +10,6 @@ abstract final class BackendDefaults {
       id: 'iagentshub_www',
       label: 'www.iagentshub.com',
       baseUrl: 'https://www.iagentshub.com',
-    ),
-    BackendOption(
-      id: 'localhost',
-      label: 'Localhost',
-      baseUrl: 'http://127.0.0.1:8765',
-    ),
+    )
   ];
 }

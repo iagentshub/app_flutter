@@ -252,7 +252,7 @@ extension _KnowledgeSections on _KnowledgePageState {
     if (item.category.isNotEmpty) metaParts.add(item.category);
     if (item.tags.isNotEmpty) metaParts.add(item.tags.join(', '));
 
-    return Card(
+    final card = Card(
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -272,6 +272,10 @@ extension _KnowledgeSections on _KnowledgePageState {
                     ),
                   ),
                 ),
+                if (!item.isActive) ...[
+                  const SizedBox(width: 8),
+                  InactiveBadge(label: _tx('common.inactive', 'Inactivo')),
+                ],
               ],
             ),
             const SizedBox(height: 6),
@@ -317,6 +321,16 @@ extension _KnowledgeSections on _KnowledgePageState {
                   tooltip: _tx('common.edit', 'Editar'),
                   onPressed: () => _openEditSkillDialog(item),
                 ),
+                if (!item.readOnly)
+                  ActionIconButton(
+                    icon: item.isActive
+                        ? Icons.toggle_on_outlined
+                        : Icons.toggle_off_outlined,
+                    tooltip: item.isActive
+                        ? _tx('common.deactivate', 'Desactivar')
+                        : _tx('common.activate', 'Activar'),
+                    onPressed: () => _toggleSkillActive(item),
+                  ),
                 ActionIconButton(
                   icon: Icons.delete_outline,
                   tooltip: _tx('common.delete', 'Eliminar'),
@@ -329,6 +343,9 @@ extension _KnowledgeSections on _KnowledgePageState {
         ),
       ),
     );
+
+    if (item.isActive) return card;
+    return Opacity(opacity: 0.6, child: card);
   }
 
   Widget _buildItemCard(KnowledgeItem item) {
@@ -341,7 +358,7 @@ extension _KnowledgeSections on _KnowledgePageState {
     final metaParts = <String>[item.type, '${item.charCount} chars'];
     if (item.source.isNotEmpty) metaParts.add(item.source);
 
-    return Card(
+    final card = Card(
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -361,6 +378,10 @@ extension _KnowledgeSections on _KnowledgePageState {
                     ),
                   ),
                 ),
+                if (!item.isActive) ...[
+                  const SizedBox(width: 8),
+                  InactiveBadge(label: _tx('common.inactive', 'Inactivo')),
+                ],
               ],
             ),
             const SizedBox(height: 6),
@@ -388,6 +409,16 @@ extension _KnowledgeSections on _KnowledgePageState {
                   tooltip: _tx('common.share_group', 'Compartir con grupo'),
                   onPressed: () => _shareItem(item),
                 ),
+                if (!item.readOnly)
+                  ActionIconButton(
+                    icon: item.isActive
+                        ? Icons.toggle_on_outlined
+                        : Icons.toggle_off_outlined,
+                    tooltip: item.isActive
+                        ? _tx('common.deactivate', 'Desactivar')
+                        : _tx('common.activate', 'Activar'),
+                    onPressed: () => _toggleItemActive(item),
+                  ),
                 ActionIconButton(
                   icon: Icons.delete_outline,
                   tooltip: _tx('common.delete', 'Eliminar'),
@@ -400,5 +431,8 @@ extension _KnowledgeSections on _KnowledgePageState {
         ),
       ),
     );
+
+    if (item.isActive) return card;
+    return Opacity(opacity: 0.6, child: card);
   }
 }

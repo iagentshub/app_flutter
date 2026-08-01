@@ -1,14 +1,7 @@
-class WorkflowItem {
-  const WorkflowItem({required this.raw});
+import '../common/resource_item.dart';
 
-  final Map<String, dynamic> raw;
-
-  String get id => raw['id'] as String? ?? '';
-  String get ownerId => raw['owner_id'] as String? ?? '';
-  String get name => raw['name'] as String? ?? '(sin nombre)';
-  String get description => raw['description'] as String? ?? '';
-  String get scope => raw['scope'] as String? ?? 'private';
-  bool get shared => raw['_shared'] == true;
+class WorkflowItem extends ResourceItem {
+  const WorkflowItem({required super.raw});
 
   Map<String, dynamic> get definition {
     final value = raw['definition'];
@@ -28,6 +21,7 @@ class WorkflowItem {
     return const [];
   }
 
+  @override
   List<String> get labels {
     final value = raw['labels'];
     if (value is List) {

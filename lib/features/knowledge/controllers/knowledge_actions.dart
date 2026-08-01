@@ -20,6 +20,7 @@ extension _KnowledgeActions on _KnowledgePageState {
       final skills = await _skillsRepository.listSkills(
         token,
         groupId: _activeGroupId,
+        includeInactive: true,
       );
       if (!mounted) return;
       _refresh(() {
@@ -88,6 +89,21 @@ extension _KnowledgeActions on _KnowledgePageState {
     }
   }
 
+  Future<void> _toggleSkillActive(SkillItem item) async {
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+    final activate = !item.isActive;
+    try {
+      await _skillsRepository.setSkillActive(token, item.id, activate);
+      _showMessage(activate ? 'Skill activada' : 'Skill desactivada');
+      await _loadSkills();
+    } on ApiError catch (error) {
+      _showMessage(error.message, isError: true);
+    } catch (_) {
+      _showMessage('No se pudo cambiar el estado de la skill', isError: true);
+    }
+  }
+
   Future<void> _deleteSkill(SkillItem item) async {
     if (item.readOnly) {
       _showMessage('Esta skill no se puede eliminar (pública o compartida)');
@@ -131,7 +147,11 @@ extension _KnowledgeActions on _KnowledgePageState {
     });
 
     try {
-      final items = await _repository.listItems(token, groupId: _activeGroupId);
+      final items = await _repository.listItems(
+        token,
+        groupId: _activeGroupId,
+        includeInactive: true,
+      );
       if (!mounted) return;
       _refresh(() {
         _items = items;
@@ -236,6 +256,21 @@ extension _KnowledgeActions on _KnowledgePageState {
       _showMessage('No se pudo subir el documento', isError: true);
     } finally {
       if (mounted) _refresh(() => _uploading = false);
+    }
+  }
+
+  Future<void> _toggleItemActive(KnowledgeItem item) async {
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+    final activate = !item.isActive;
+    try {
+      await _repository.setItemActive(token, item.id, activate);
+      _showMessage(activate ? 'Conocimiento activado' : 'Conocimiento desactivado');
+      await _load();
+    } on ApiError catch (error) {
+      _showMessage(error.message, isError: true);
+    } catch (_) {
+      _showMessage('No se pudo cambiar el estado del item', isError: true);
     }
   }
 

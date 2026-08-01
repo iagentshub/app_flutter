@@ -7,10 +7,14 @@ class ConnectionsRepository extends ApiRepository {
   Future<List<ConnectionItem>> listConnections(
     String token, {
     String? groupId,
+    bool includeInactive = false,
   }) async {
-    final query = groupId == null || groupId.isEmpty
-        ? ''
-        : '?group_id=${Uri.encodeComponent(groupId)}';
+    final params = <String>[
+      if (groupId != null && groupId.isNotEmpty)
+        'group_id=${Uri.encodeComponent(groupId)}',
+      if (includeInactive) 'include_inactive=true',
+    ];
+    final query = params.isEmpty ? '' : '?${params.join('&')}';
     final response = await apiClient.get(
       '/api/connections$query',
       gaToken: token,
@@ -65,6 +69,9 @@ class ConnectionsRepository extends ApiRepository {
       gaToken: token,
     );
   }
+
+  Future<void> setConnectionActive(String token, String id, bool active) =>
+      setActive(token, 'connections', id, active);
 
   Future<ConnectionTestResult> testConnection(String token, String id) async {
     final response = await apiClient.post(

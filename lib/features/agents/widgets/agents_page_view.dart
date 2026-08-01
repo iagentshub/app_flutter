@@ -124,6 +124,7 @@ extension _AgentsPageView on _AgentsPageState {
       onHistory: () => _showHistory(item),
       onEdit: () => _openEditDialog(item),
       onDelete: () => _deleteAgent(item),
+      onToggleActive: item.readOnly ? null : () => _toggleAgentActive(item),
     );
   }
 }

@@ -1,6 +1,9 @@
 {
   "cancel": "Cancelar",
   "save": "Guardar",
+  "inactive": "Inactivo",
+  "activate": "Activar",
+  "deactivate": "Desactivar",
   "nav": {
     "dashboard": "Dashboard",
     "agents": "Agentes",

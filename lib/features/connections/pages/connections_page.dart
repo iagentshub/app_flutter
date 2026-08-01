@@ -174,7 +174,11 @@ class _ConnectionsPageState extends State<ConnectionsPage>
 
     try {
       final results = await Future.wait([
-        _repository.listConnections(token, groupId: _activeGroupId),
+        _repository.listConnections(
+          token,
+          groupId: _activeGroupId,
+          includeInactive: true,
+        ),
         _repository.listProviders(token),
       ]);
 
@@ -279,6 +283,21 @@ class _ConnectionsPageState extends State<ConnectionsPage>
     }
   }
 
+  Future<void> _toggleConnectionActive(ConnectionItem item) async {
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+    final activate = !item.isActive;
+    try {
+      await _repository.setConnectionActive(token, item.id, activate);
+      _showMessage(activate ? 'Conexión activada' : 'Conexión desactivada');
+      await _load();
+    } on ApiError catch (error) {
+      _showMessage(error.message, isError: true);
+    } catch (_) {
+      _showMessage('No se pudo cambiar el estado de la conexión', isError: true);
+    }
+  }
+
   Future<void> _deleteConnection(ConnectionItem item) async {
     if (item.isVirtual) {
       _showMessage(
@@ -340,8 +359,10 @@ class _ConnectionsPageState extends State<ConnectionsPage>
     final token = _token;
     if (token == null || token.isEmpty) return;
 
-    final ids = _filteredConnections.map((item) => item.id).toList();
+    final connections = _filteredConnections;
+    final ids = connections.map((item) => item.id).toList();
     if (ids.isEmpty) return;
+    final namesById = {for (final c in connections) c.id: c.name};
 
     setState(() => _testingAll = true);
     try {
@@ -373,7 +394,7 @@ class _ConnectionsPageState extends State<ConnectionsPage>
                                   ? Icons.check_circle_outline
                                   : Icons.error_outline,
                             ),
-                            title: Text(r.id),
+                            title: Text(namesById[r.id] ?? r.id),
                             subtitle: Text(r.message),
                             trailing: r.latencyMs == null
                                 ? null

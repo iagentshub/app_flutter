@@ -1,20 +1,26 @@
-class KnowledgeItem {
-  const KnowledgeItem({required this.raw});
+import '../common/resource_item.dart';
 
-  final Map<String, dynamic> raw;
+class KnowledgeItem extends ResourceItem {
+  const KnowledgeItem({required super.raw});
 
-  String get id => raw['id'] as String? ?? '';
   String get type => raw['type'] as String? ?? 'text';
-  String get title => raw['title'] as String? ?? '(sin título)';
+
+  /// El backend expone `name` (canónico) y `title` (compat). Preferimos `name`
+  /// y caemos a `title` para respuestas antiguas.
+  @override
+  String get name =>
+      raw['name'] as String? ?? raw['title'] as String? ?? '(sin título)';
+
+  /// Alias histórico usado por la UI de conocimiento.
+  String get title => name;
+
   String get source => raw['source'] as String? ?? '';
+  String get preview => raw['content'] as String? ?? '';
+
   int get charCount {
     final value = raw['char_count'];
     if (value is int) return value;
     if (value is num) return value.toInt();
     return 0;
   }
-
-  String get updatedAt => raw['updated_at'] as String? ?? '';
-  String get preview => raw['content'] as String? ?? '';
-  bool get shared => raw['_shared'] == true;
 }

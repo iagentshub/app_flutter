@@ -1,23 +1,14 @@
-class ConnectionItem {
-  const ConnectionItem({required this.raw});
+import '../common/resource_item.dart';
 
-  final Map<String, dynamic> raw;
+class ConnectionItem extends ResourceItem {
+  const ConnectionItem({required super.raw});
 
-  String get id => raw['id'] as String? ?? '';
-  String get name => raw['name'] as String? ?? '(sin nombre)';
   String get type => raw['type'] as String? ?? 'unknown';
   String get model => raw['model'] as String? ?? '';
   String get host => raw['host'] as String? ?? '';
   String get url => raw['url'] as String? ?? '';
-  bool get shared => raw['_shared'] == true;
   bool get personalKey => raw['_personal_key'] == true;
   bool get isVirtual => id.contains('::');
-
-  List<String> get labels {
-    final value = raw['labels'];
-    if (value is List) return value.map((item) => item.toString()).toList();
-    return const ['private'];
-  }
 }
 
 class ProviderFieldOption {

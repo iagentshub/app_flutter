@@ -187,5 +187,8 @@
     "save": "Save access",
     "saving": "Saving…",
     "success": "“{{name}}” shared successfully"
-  }
+  },
+  "activated": "Orchestration activated",
+  "deactivated": "Orchestration deactivated",
+  "toggle_error": "Couldn't change the state"
 }

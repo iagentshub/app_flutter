@@ -8,6 +8,7 @@ class KnowledgeRepository extends ApiRepository {
     String token, {
     String? type,
     String? groupId,
+    bool includeInactive = false,
   }) async {
     final params = <String>[];
     if (type != null && type.isNotEmpty) {
@@ -15,6 +16,9 @@ class KnowledgeRepository extends ApiRepository {
     }
     if (groupId != null && groupId.isNotEmpty) {
       params.add('group_id=${Uri.encodeQueryComponent(groupId)}');
+    }
+    if (includeInactive) {
+      params.add('include_inactive=true');
     }
     final query = params.isEmpty ? '' : '?${params.join('&')}';
     final response = await apiClient.get(
@@ -87,4 +91,7 @@ class KnowledgeRepository extends ApiRepository {
       gaToken: token,
     );
   }
+
+  Future<void> setItemActive(String token, String id, bool active) =>
+      setActive(token, 'knowledge', id, active);
 }

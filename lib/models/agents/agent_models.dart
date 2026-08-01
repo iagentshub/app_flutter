@@ -1,17 +1,12 @@
-class AgentItem {
-  const AgentItem({required this.raw});
+import '../common/resource_item.dart';
 
-  final Map<String, dynamic> raw;
+class AgentItem extends ResourceItem {
+  const AgentItem({required super.raw});
 
-  String get id => raw['id'] as String? ?? '';
-  String get name => raw['name'] as String? ?? '(sin nombre)';
-  String get scope => raw['scope'] as String? ?? 'private';
   String get agentType => raw['agent_type'] as String? ?? 'generic';
   String get model => raw['model'] as String? ?? '';
-  String get description => raw['description'] as String? ?? '';
   String get systemPrompt => raw['system_prompt'] as String? ?? '';
   String get connectionId => raw['connection_id'] as String? ?? '';
-  bool get shared => raw['_shared'] == true;
   bool get useMemory => raw['use_memory'] == true;
   String get memoryFile => raw['memory_file'] as String? ?? '';
 
@@ -25,15 +20,5 @@ class AgentItem {
     final value = raw['knowledge'];
     if (value is List) return value.map((item) => item.toString()).toList();
     return const [];
-  }
-
-  /// Solo es de solo-lectura si llegó vía group share (no soy el dueño).
-  /// Ser público (scope == 'public') no impide editar lo que es mío.
-  bool get readOnly => shared;
-
-  List<String> get labels {
-    final value = raw['labels'];
-    if (value is List) return value.map((item) => item.toString()).toList();
-    return const ['private'];
   }
 }

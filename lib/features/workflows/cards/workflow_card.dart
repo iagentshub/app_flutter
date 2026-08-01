@@ -5,6 +5,7 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../models/agents/agent_models.dart';
 import '../../../shared/graph/graph_models.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
+import '../../../shared/widgets/inactive_badge.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/origin_badge.dart';
 import '../../../shared/widgets/resource_graph_button.dart';
@@ -36,6 +37,10 @@ class WorkflowCard extends StatelessWidget {
     required this.onRun,
     required this.onEdit,
     required this.onDelete,
+    this.inactiveLabel = 'Inactivo',
+    this.activateTooltip = 'Activar',
+    this.deactivateTooltip = 'Desactivar',
+    this.onToggleActive,
     super.key,
   });
 
@@ -67,6 +72,12 @@ class WorkflowCard extends StatelessWidget {
   final VoidCallback onRun;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final String inactiveLabel;
+  final String activateTooltip;
+  final String deactivateTooltip;
+
+  /// Activar/desactivar (borrado suave). Null = acción no disponible.
+  final VoidCallback? onToggleActive;
 
   /// Grafo de contenido a 3 niveles: la orquestación en el centro, sus
   /// pasos (agentes/evaluadores) con las conexiones del editor visual
@@ -179,7 +190,7 @@ class WorkflowCard extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final (graphNodes, graphEdges) = _buildGraph();
 
-    return Card(
+    final card = Card(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       child: Padding(
@@ -214,6 +225,10 @@ class WorkflowCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (!item.isActive) ...[
+                  const SizedBox(width: 8),
+                  InactiveBadge(label: inactiveLabel),
+                ],
                 ActionIconButton(
                   icon: Icons.edit_outlined,
                   tooltip: editTooltip,
@@ -293,6 +308,16 @@ class WorkflowCard extends StatelessWidget {
                   emptyLabel: graphEmptyLabel,
                 ),
                 const SizedBox(width: 8),
+                if (onToggleActive != null) ...[
+                  ActionIconButton(
+                    icon: item.isActive
+                        ? Icons.toggle_on_outlined
+                        : Icons.toggle_off_outlined,
+                    tooltip: item.isActive ? deactivateTooltip : activateTooltip,
+                    onPressed: onToggleActive,
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 ActionIconButton(
                   icon: Icons.delete_outline,
                   tooltip: deleteTooltip,
@@ -305,6 +330,9 @@ class WorkflowCard extends StatelessWidget {
         ),
       ),
     );
+
+    if (item.isActive) return card;
+    return Opacity(opacity: 0.6, child: card);
   }
 }
 

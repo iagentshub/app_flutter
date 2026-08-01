@@ -129,7 +129,10 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
     });
 
     try {
-      final workflows = await _repository.listWorkflows(token);
+      final workflows = await _repository.listWorkflows(
+        token,
+        includeInactive: true,
+      );
       final agents = await _agentsRepository
           .listAgents(token)
           .catchError((_) => <AgentItem>[]);
@@ -216,6 +219,28 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
     } catch (_) {
       _showMessage(
         _tx('workflows.save_error', 'No se pudo guardar el workflow'),
+        isError: true,
+      );
+    }
+  }
+
+  Future<void> _toggleWorkflowActive(WorkflowItem item) async {
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+    final activate = !item.isActive;
+    try {
+      await _repository.setWorkflowActive(token, item.id, activate);
+      _showMessage(
+        activate
+            ? _tx('workflows.activated', 'Orquestación activada')
+            : _tx('workflows.deactivated', 'Orquestación desactivada'),
+      );
+      await _load();
+    } on ApiError catch (error) {
+      _showMessage(error.message, isError: true);
+    } catch (_) {
+      _showMessage(
+        _tx('workflows.toggle_error', 'No se pudo cambiar el estado'),
         isError: true,
       );
     }
@@ -448,9 +473,15 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
                       'graph.quick_view_no_connections',
                       'Sin conexiones',
                     ),
+                    inactiveLabel: _tx('common.inactive', 'Inactivo'),
+                    activateTooltip: _tx('common.activate', 'Activar'),
+                    deactivateTooltip: _tx('common.deactivate', 'Desactivar'),
                     onRun: () => _runWorkflow(item),
                     onEdit: () => _openEditDialog(item),
                     onDelete: () => _deleteWorkflow(item),
+                    onToggleActive: item.readOnly
+                        ? null
+                        : () => _toggleWorkflowActive(item),
                   );
                 },
               ),

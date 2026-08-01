@@ -6,12 +6,17 @@ import '../../../models/agents/agent_models.dart';
 class AgentsRepository extends ApiRepository {
   AgentsRepository({required super.apiClient});
 
-  Future<List<AgentItem>> listAgents(String token, {String? groupId}) async {
+  Future<List<AgentItem>> listAgents(
+    String token, {
+    String? groupId,
+    bool includeInactive = false,
+  }) async {
     final query = groupId == null || groupId.isEmpty
         ? ''
         : '&group_id=${Uri.encodeComponent(groupId)}';
+    final inactive = includeInactive ? '&include_inactive=true' : '';
     final response = await apiClient.get(
-      '/api/agents?scope=all$query',
+      '/api/agents?scope=all$query$inactive',
       gaToken: token,
       cache: true,
     );
@@ -49,6 +54,9 @@ class AgentsRepository extends ApiRepository {
       gaToken: token,
     );
   }
+
+  Future<void> setAgentActive(String token, String id, bool active) =>
+      setActive(token, 'agents', id, active);
 
   /// Exporta el agente en el formato dado (openai/claude/github/mcp) como un
   /// paquete .zip con el propio agente, sus skills, knowledge y memoria.

@@ -18,6 +18,7 @@ import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
 import '../../../shared/widgets/label_chips_row.dart';
+import '../../../shared/widgets/inactive_badge.dart';
 import '../../../shared/widgets/origin_badge.dart';
 import '../../../shared/widgets/resource_history_dialog.dart';
 import '../../../shared/widgets/responsive_dialog.dart';

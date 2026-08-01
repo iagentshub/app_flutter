@@ -107,33 +107,9 @@ class _LabelsPageState extends State<LabelsPage>
       final workflows = results[2] as List<WorkflowItem>;
 
       final items = <LabeledItem>[
-        for (final a in agents)
-          LabeledItem(
-            id: a.id,
-            name: a.name,
-            description: a.description,
-            type: 'agent',
-            labels: a.labels,
-            shared: a.shared,
-          ),
-        for (final s in skills)
-          LabeledItem(
-            id: s.id,
-            name: s.name,
-            description: s.description,
-            type: 'skill',
-            labels: s.labels,
-            shared: s.shared,
-          ),
-        for (final w in workflows)
-          LabeledItem(
-            id: w.id,
-            name: w.name,
-            description: w.description,
-            type: 'workflow',
-            labels: w.labels,
-            shared: w.shared,
-          ),
+        for (final a in agents) LabeledItem.fromResource(a, 'agent'),
+        for (final s in skills) LabeledItem.fromResource(s, 'skill'),
+        for (final w in workflows) LabeledItem.fromResource(w, 'workflow'),
       ];
 
       if (!mounted) return;

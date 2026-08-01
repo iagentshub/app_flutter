@@ -8,12 +8,14 @@ class SkillsRepository extends ApiRepository {
     String token, {
     String scope = 'all',
     String? groupId,
+    bool includeInactive = false,
   }) async {
     final query = groupId == null || groupId.isEmpty
         ? ''
         : '&group_id=${Uri.encodeQueryComponent(groupId)}';
+    final inactive = includeInactive ? '&include_inactive=true' : '';
     final response = await apiClient.get(
-      '/api/skills?scope=$scope$query',
+      '/api/skills?scope=$scope$query$inactive',
       gaToken: token,
       cache: true,
     );
@@ -56,4 +58,7 @@ class SkillsRepository extends ApiRepository {
       gaToken: token,
     );
   }
+
+  Future<void> setSkillActive(String token, String id, bool active) =>
+      setActive(token, 'skills', id, active);
 }

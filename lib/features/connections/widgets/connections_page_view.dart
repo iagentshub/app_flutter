@@ -178,6 +178,9 @@ extension _ConnectionsPageView on _ConnectionsPageState {
       onShare: () => _shareConnection(item),
       onEdit: () => _openEditDialog(item),
       onDelete: () => _deleteConnection(item),
+      onToggleActive: (item.readOnly || item.isVirtual)
+          ? null
+          : () => _toggleConnectionActive(item),
     );
   }
 }
