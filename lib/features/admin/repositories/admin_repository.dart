@@ -335,4 +335,12 @@ class AdminRepository extends ApiRepository {
     );
     return response.json;
   }
+
+  Future<Map<String, dynamic>> triggerUpdateNow(String token) async {
+    final response = await apiClient.post(
+      '/api/admin/update-now',
+      gaToken: token,
+    );
+    return response.json;
+  }
 }

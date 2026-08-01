@@ -30,6 +30,8 @@ class _AdminUpdatesCardState extends State<_AdminUpdatesCard> {
   bool? _checkOk;
   String? _autoUpdateResult;
   List<({String text, Color? color})> _commitLines = [];
+  bool _triggeringUpdate = false;
+  String? _triggerResult;
 
   String _tx(String path, String fallback) => widget.tx(path, fallback);
 
@@ -202,6 +204,43 @@ class _AdminUpdatesCardState extends State<_AdminUpdatesCard> {
     }
   }
 
+  /// Dispara /api/admin/update-now (API HTTP de Watchtower) en vez de
+  /// esperar hasta 1h a que Watchtower haga su siguiente comprobación
+  /// periódica. Si aplica una actualización real, este mismo contenedor se
+  /// reinicia a mitad de la operación — por eso un error de red aquí no
+  /// necesariamente significa que haya fallado.
+  Future<void> _triggerUpdateNow() async {
+    setState(() {
+      _triggeringUpdate = true;
+      _triggerResult = null;
+    });
+    try {
+      await widget.repository.triggerUpdateNow(widget.token);
+      if (!mounted) return;
+      setState(() {
+        _triggerResult = _tx(
+          'admin.config_update_now_triggered',
+          'Actualización disparada. Si el contenedor se reinicia para '
+              'aplicarla, la conexión puede cortarse unos segundos — vuelve '
+              'a comprobar en breve.',
+        );
+      });
+    } on ApiError catch (error) {
+      if (!mounted) return;
+      setState(() => _triggerResult = error.message);
+    } catch (_) {
+      if (!mounted) return;
+      setState(
+        () => _triggerResult = _tx(
+          'admin.error_generic',
+          'No se pudo completar la acción',
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _triggeringUpdate = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return _sectionCard(
@@ -224,13 +263,30 @@ class _AdminUpdatesCardState extends State<_AdminUpdatesCard> {
             style: Theme.of(context).textTheme.bodySmall,
           ),
         const SizedBox(height: 8),
-        SecondaryButton(
-          onPressed: _checkingUpdate ? null : _checkUpdate,
-          child: Text(
-            _checkingUpdate
-                ? _tx('admin.config_check_update_loading', 'Buscando...')
-                : _tx('admin.config_check_update_btn', 'Buscar actualización'),
-          ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            SecondaryButton(
+              onPressed: _checkingUpdate ? null : _checkUpdate,
+              child: Text(
+                _checkingUpdate
+                    ? _tx('admin.config_check_update_loading', 'Buscando...')
+                    : _tx(
+                        'admin.config_check_update_btn',
+                        'Buscar actualización',
+                      ),
+              ),
+            ),
+            SecondaryButton(
+              onPressed: _triggeringUpdate ? null : _triggerUpdateNow,
+              child: Text(
+                _triggeringUpdate
+                    ? _tx('admin.config_update_now_loading', 'Actualizando...')
+                    : _tx('admin.config_update_now_btn', 'Actualizar ahora'),
+              ),
+            ),
+          ],
         ),
         if (_checkResult != null) ...[
           const SizedBox(height: 6),
@@ -242,6 +298,10 @@ class _AdminUpdatesCardState extends State<_AdminUpdatesCard> {
                   : (_checkOk == true ? _statusOkColor : _statusWarnColor),
             ),
           ),
+        ],
+        if (_triggerResult != null) ...[
+          const SizedBox(height: 6),
+          Text(_triggerResult!, style: Theme.of(context).textTheme.bodySmall),
         ],
         for (final line in _commitLines)
           Padding(

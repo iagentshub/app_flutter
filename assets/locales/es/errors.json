@@ -11,6 +11,7 @@
   "check_update_failed": "No se pudo consultar GitHub Container Registry",
   "auto_update_proxy_unavailable": "Esta instalación no tiene el proxy de Docker configurado. Actualiza docker-compose.hub.yml (docker compose pull && docker compose up -d) para poder controlar la auto-actualización desde aquí.",
   "auto_update_apply_failed": "No se pudo aplicar el cambio de auto-actualización",
+  "update_now_unavailable": "Esta instalación no tiene la API HTTP de Watchtower activada. Actualiza docker-compose.hub.yml y vuelve a desplegar (docker compose pull && docker compose up -d) para poder disparar actualizaciones desde aquí.",
 
   "invalid_pat": "Token inválido, revocado o caducado",
   "invalid_token": "Token inválido o expirado",
