@@ -7,7 +7,7 @@ extension _ExploreResourceCard on _ExplorePageState {
     final key = _itemKey(item);
     final busy = _busyKeys.contains(key);
     final myUsername = widget.sessionController.user?.username ?? '';
-    final isOwn = myUsername.isNotEmpty && item.owner == myUsername;
+    final isOwn = myUsername.isNotEmpty && item.ownerUsername == myUsername;
     final isLinkable = !isOwn && _linkableTypes.contains(item.resourceType);
     final linked = _linkedKeys.contains(key);
     final starred = _starredKeys.contains(key);
@@ -38,7 +38,7 @@ extension _ExploreResourceCard on _ExplorePageState {
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
-                    item.owner,
+                    item.ownerUsername,
                     style: Theme.of(context).textTheme.bodySmall,
                     overflow: TextOverflow.ellipsis,
                   ),

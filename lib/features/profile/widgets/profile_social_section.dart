@@ -84,15 +84,21 @@ extension _ProfileSocialSection on _ProfilePageState {
                   ],
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
-                  controller: _emailPublicController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: _tx(
-                      'profile.email_public_label',
-                      'Email público',
-                    ),
-                    prefixIcon: const Icon(Icons.alternate_email, size: 20),
+                SwitchListTile.adaptive(
+                  contentPadding: EdgeInsets.zero,
+                  value: _isEmailPublic,
+                  onChanged: (value) => _refresh(() => _isEmailPublic = value),
+                  secondary: const Icon(Icons.alternate_email, size: 20),
+                  title: Text(
+                    _tx('profile.email_public_label', 'Mostrar mi email'),
+                  ),
+                  subtitle: Text(
+                    _isEmailPublic
+                        ? (_bundle?.session.email ?? '')
+                        : _tx(
+                            'profile.email_private_hint',
+                            'Tu email permanece privado.',
+                          ),
                   ),
                 ),
                 const SizedBox(height: 10),

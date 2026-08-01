@@ -265,7 +265,9 @@ extension _KnowledgeActions on _KnowledgePageState {
     final activate = !item.isActive;
     try {
       await _repository.setItemActive(token, item.id, activate);
-      _showMessage(activate ? 'Conocimiento activado' : 'Conocimiento desactivado');
+      _showMessage(
+        activate ? 'Conocimiento activado' : 'Conocimiento desactivado',
+      );
       await _load();
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);

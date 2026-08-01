@@ -5,7 +5,8 @@ class ExploreItem {
 
   String get resourceType => raw['resource_type'] as String? ?? 'unknown';
   String get resourceId => raw['resource_id'] as String? ?? '';
-  String get owner => raw['owner'] as String? ?? '';
+  String get ownerId => raw['owner'] as String? ?? '';
+  String get ownerUsername => raw['owner_username'] as String? ?? '';
   String get name => raw['name'] as String? ?? '(sin nombre)';
   String get description => raw['description'] as String? ?? '';
   String get category => raw['category'] as String? ?? 'Other';

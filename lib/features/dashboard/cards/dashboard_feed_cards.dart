@@ -110,10 +110,13 @@ class _FeedBodyState extends State<_FeedBody> {
           subtitle: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ResourceTypeBadge(type: type, label: feedTypeLabel(type, widget.tx)),
-              if (item['owner'] != null) ...[
+              ResourceTypeBadge(
+                type: type,
+                label: feedTypeLabel(type, widget.tx),
+              ),
+              if ((item['owner_username']?.toString() ?? '').isNotEmpty) ...[
                 const SizedBox(width: 6),
-                Text('@${item['owner']}'),
+                Text('@${item['owner_username']}'),
               ],
             ],
           ),

@@ -175,6 +175,7 @@ class _UserCreateDialog extends StatefulWidget {
 
 class _UserCreateDialogState extends State<_UserCreateDialog> {
   final _formKey = GlobalKey<FormState>();
+  final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _displayNameController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -182,6 +183,7 @@ class _UserCreateDialogState extends State<_UserCreateDialog> {
 
   @override
   void dispose() {
+    _usernameController.dispose();
     _emailController.dispose();
     _displayNameController.dispose();
     _passwordController.dispose();
@@ -192,6 +194,7 @@ class _UserCreateDialogState extends State<_UserCreateDialog> {
     final form = _formKey.currentState;
     if (form == null || !form.validate()) return;
     Navigator.of(context).pop({
+      'username': _usernameController.text.trim().toLowerCase(),
       'email': _emailController.text.trim(),
       'display_name': _displayNameController.text.trim(),
       'password': _passwordController.text.trim(),
@@ -210,6 +213,19 @@ class _UserCreateDialogState extends State<_UserCreateDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              TextFormField(
+                controller: _usernameController,
+                autocorrect: false,
+                textCapitalization: TextCapitalization.none,
+                decoration: InputDecoration(
+                  labelText: widget.tx(
+                    'admin.field_username',
+                    'Usuario público',
+                  ),
+                ),
+                validator: Validators.username,
+              ),
+              const SizedBox(height: 10),
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,

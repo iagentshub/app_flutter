@@ -14,6 +14,7 @@ abstract class ResourceItem {
   String get description => raw['description'] as String? ?? '';
   String get scope => raw['scope'] as String? ?? 'private';
   String get ownerId => raw['owner_id'] as String? ?? '';
+  String get ownerUsername => raw['owner_username'] as String? ?? '';
   String get resourceType => raw['resource_type'] as String? ?? '';
   String get createdAt => raw['created_at'] as String? ?? '';
   String get updatedAt => raw['updated_at'] as String? ?? '';

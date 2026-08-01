@@ -104,7 +104,7 @@ extension _AdminFilterDialogs on _AdminPageState {
     if (q.isEmpty) return _groups;
     return _groups.where((group) {
       final name = (group['name'] ?? '').toString().toLowerCase();
-      final creator = (group['created_by'] ?? '').toString().toLowerCase();
+      final creator = (group['created_by_username'] ?? '').toString().toLowerCase();
       return name.contains(q) || creator.contains(q);
     }).toList();
   }

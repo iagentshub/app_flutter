@@ -86,7 +86,7 @@ class _ProfilePageState extends State<ProfilePage>
   int _avatarVersion = 0;
 
   final _bioController = TextEditingController();
-  final _emailPublicController = TextEditingController();
+  bool _isEmailPublic = false;
   final _githubController = TextEditingController();
   final _cvController = TextEditingController();
   Set<String> _selectedLanguages = {};
@@ -122,7 +122,6 @@ class _ProfilePageState extends State<ProfilePage>
   @override
   void dispose() {
     _bioController.dispose();
-    _emailPublicController.dispose();
     _githubController.dispose();
     _cvController.dispose();
     _currentPasswordController.dispose();
@@ -159,7 +158,7 @@ class _ProfilePageState extends State<ProfilePage>
         _theme = bundle.settings.theme;
         _language = bundle.settings.language;
         _bioController.text = bundle.social.bio ?? '';
-        _emailPublicController.text = bundle.social.emailPublic ?? '';
+        _isEmailPublic = bundle.session.isEmailPublic;
         _githubController.text = _githubUsernameFromUrl(bundle.social.github);
         _cvController.text = bundle.social.cv ?? '';
         _selectedLanguages = bundle.social.languages.toSet();
@@ -217,7 +216,7 @@ class _ProfilePageState extends State<ProfilePage>
       await _repository.updateSocialProfile(
         token,
         bio: _bioController.text.trim(),
-        emailPublic: _emailPublicController.text.trim(),
+        isEmailPublic: _isEmailPublic,
         github: _githubUrlFromUsername(_githubController.text) ?? '',
         cv: _cvController.text.trim(),
         languages: _selectedLanguages.toList(),

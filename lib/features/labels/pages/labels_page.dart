@@ -168,7 +168,9 @@ class _LabelsPageState extends State<LabelsPage>
   }
 
   void _applyOwnership(String value) {
-    setState(() => _selectedOwnership = _selectedOwnership == value ? '' : value);
+    setState(
+      () => _selectedOwnership = _selectedOwnership == value ? '' : value,
+    );
   }
 
   void _showMessage(String text) {

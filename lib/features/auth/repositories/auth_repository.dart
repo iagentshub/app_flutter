@@ -9,12 +9,12 @@ class AuthRepository {
   final ApiClient _apiClient;
 
   Future<(AuthResult, String)> login({
-    required String email,
+    required String identifier,
     required String password,
   }) async {
     final response = await _apiClient.post(
       '/api/auth/login',
-      body: {'email': email.trim(), 'password': password},
+      body: {'identifier': identifier.trim(), 'password': password},
     );
 
     final token = _apiClient.extractGaToken(response.headers);
@@ -57,12 +57,17 @@ class AuthRepository {
   }
 
   Future<bool> register({
+    required String username,
     required String email,
     required String password,
   }) async {
     final response = await _apiClient.post(
       '/api/auth/register',
-      body: {'email': email.trim(), 'password': password},
+      body: {
+        'username': username.trim().toLowerCase(),
+        'email': email.trim().toLowerCase(),
+        'password': password,
+      },
     );
     return response.json['ok'] == true;
   }

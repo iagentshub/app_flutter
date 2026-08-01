@@ -85,6 +85,7 @@ extension _AdminActions on _AdminPageState {
     await _run(
       () => _repository.createUser(
         token,
+        username: result['username'] as String,
         email: result['email'] as String,
         password: result['password'] as String,
         displayName: result['display_name'] as String?,

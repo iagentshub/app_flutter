@@ -1,25 +1,34 @@
 class ProfileSession {
   const ProfileSession({
+    this.id = '',
     required this.username,
     required this.role,
     this.groupId,
     this.groupName,
     this.authMethod,
+    this.email,
+    this.isEmailPublic = false,
   });
 
+  final String id;
   final String username;
   final String role;
   final String? groupId;
   final String? groupName;
   final String? authMethod;
+  final String? email;
+  final bool isEmailPublic;
 
   factory ProfileSession.fromJson(Map<String, dynamic> json) {
     return ProfileSession(
+      id: json['id'] as String? ?? '',
       username: json['username'] as String? ?? '',
       role: json['role'] as String? ?? 'user',
       groupId: json['group_id'] as String?,
       groupName: json['group_name'] as String?,
       authMethod: json['auth_method'] as String?,
+      email: json['email'] as String?,
+      isEmailPublic: json['is_email_public'] == true,
     );
   }
 }
