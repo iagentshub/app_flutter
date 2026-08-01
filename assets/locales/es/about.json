@@ -8,7 +8,7 @@
   },
   "description": {
     "title": "¿Qué es iAgents?",
-    "body": "iAgents es una plataforma self-hosted para crear, gestionar y colaborar con agentes de IA. Conecta cualquier proveedor —Anthropic, OpenAI, Google, Ollama y otros— con tu propia API key, organiza tus agentes en carpetas, compártelos con grupos de trabajo con un simple arrastre y exporta al formato nativo de Claude Code, GitHub Copilot u OpenAI Assistants con un clic. Todo desde una interfaz unificada, sin datos en la nube."
+    "body": "iAgents es una plataforma self-hosted para crear, gestionar y colaborar con agentes de IA. Conecta cualquier proveedor —Anthropic, OpenAI, Google, Ollama y otros— con tu propia API key, organiza y comparte recursos mediante grupos de trabajo, y exporta al formato nativo de Claude Code, GitHub Copilot u OpenAI Assistants con un clic. Todo desde una interfaz unificada, sin datos en la nube."
   },
   "features": {
     "title": "Funcionalidades"
