@@ -287,6 +287,12 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
   }
 
   Future<void> _runWorkflow(WorkflowItem item) async {
+    final runIssue = _workflowRunIssue(item);
+    if (runIssue != null) {
+      _showMessage(runIssue, isError: true);
+      return;
+    }
+
     final input = await showDialog<String>(
       context: context,
       builder: (context) =>
@@ -311,6 +317,43 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
         ),
       ),
     );
+  }
+
+  String? _workflowRunIssue(WorkflowItem item) {
+    if (item.nodes.isEmpty) {
+      return _tx(
+        'workflows.run_error_no_steps',
+        'Añade al menos un paso antes de ejecutar la orquestación.',
+      );
+    }
+
+    for (final rawNode in item.nodes) {
+      if (rawNode is! Map) continue;
+      final agentId = rawNode['agent_id']?.toString() ?? '';
+      final stepLabel = rawNode['label']?.toString().trim();
+      final displayStep = stepLabel == null || stepLabel.isEmpty
+          ? agentId
+          : stepLabel;
+      final agent = _agentsById[agentId];
+      if (agent == null) {
+        return _tx(
+          'workflows.run_error_agent_missing',
+          'El agente del paso “{{step}}” ya no está disponible. Edita el workflow y selecciona otro agente.',
+        ).replaceAll(
+          '{{step}}',
+          displayStep.isEmpty
+              ? _tx('workflows.default_agent_label', 'agente')
+              : displayStep,
+        );
+      }
+      if (agent.connectionId.isEmpty) {
+        return _tx(
+          'workflows.run_error_agent_connection',
+          'El agente “{{agent}}” no tiene una conexión configurada.',
+        ).replaceAll('{{agent}}', agent.name);
+      }
+    }
+    return null;
   }
 
   void _showMessage(String text, {bool isError = false}) {
@@ -343,10 +386,6 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
     }
 
     final filteredWorkflows = _filteredWorkflows;
-    final totalNodes = _workflows.fold<int>(
-      0,
-      (total, workflow) => total + workflow.nodes.length,
-    );
     final toolbar = ResourceToolbar(
       actions: [
         AppIconButton.outlined(
@@ -375,15 +414,6 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
             sliver: SliverToBoxAdapter(
               child: WorkflowOverviewHeader(
-                title: _tx('workflows.page_title', 'Orquestación visual'),
-                subtitle: _tx(
-                  'workflows.page_subtitle',
-                  'Conecta agentes y automatiza procesos de principio a fin.',
-                ),
-                workflowCount: _workflows.length,
-                nodeCount: totalNodes,
-                workflowsLabel: _tx('workflows.count_label', 'Workflows'),
-                nodesLabel: _tx('workflows.nodes_label', 'Nodos'),
                 createLabel: _tx('workflows.create_action', 'Crear workflow'),
                 onCreate: _openCreateDialog,
               ),

@@ -101,7 +101,9 @@ class WorkflowCard extends StatelessWidget {
 
     void addEdge(String source, String target, {bool dashed = false}) {
       if (edgeKeys.add('$source>$target')) {
-        edges.add(GraphEdge(sourceId: source, targetId: target, dashed: dashed));
+        edges.add(
+          GraphEdge(sourceId: source, targetId: target, dashed: dashed),
+        );
       }
     }
 
@@ -139,7 +141,11 @@ class WorkflowCard extends StatelessWidget {
       }
       for (final skill in agent.skills) {
         final childId = 'skill:$skill';
-        nodesById[childId] = GraphNode(id: childId, label: skill, type: 'skill');
+        nodesById[childId] = GraphNode(
+          id: childId,
+          label: skill,
+          type: 'skill',
+        );
         addEdge(id, childId);
       }
       for (final knowledge in agent.knowledge) {
@@ -192,29 +198,14 @@ class WorkflowCard extends StatelessWidget {
 
     final card = Card(
       margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: colors.primaryContainer,
-                    borderRadius: BorderRadius.circular(11),
-                  ),
-                  child: Icon(
-                    Icons.account_tree_outlined,
-                    color: colors.primary,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 11),
                 Expanded(
                   child: Text(
                     item.name,
@@ -229,14 +220,9 @@ class WorkflowCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   InactiveBadge(label: inactiveLabel),
                 ],
-                ActionIconButton(
-                  icon: Icons.edit_outlined,
-                  tooltip: editTooltip,
-                  onPressed: onEdit,
-                ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -281,13 +267,20 @@ class WorkflowCard extends StatelessWidget {
             const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(
-                  child: SecondaryButton.icon(
-                    onPressed: onRun,
-                    icon: const Icon(Icons.play_arrow_rounded),
-                    label: Text(runLabel),
+                PrimaryButton.icon(
+                  onPressed: onRun,
+                  style: FilledButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 9,
+                    ),
+                    minimumSize: const Size(0, 36),
                   ),
+                  icon: const Icon(Icons.play_arrow_rounded, size: 18),
+                  label: Text(runLabel),
                 ),
+                const Spacer(),
                 const SizedBox(width: 8),
                 ResourceGraphButton(
                   tooltip: graphTooltip,
@@ -299,7 +292,8 @@ class WorkflowCard extends StatelessWidget {
                   searchHint: graphSearchHint,
                   sortTooltip: graphSortTooltip,
                   sortHierarchyVerticalLabel: graphSortHierarchyVerticalLabel,
-                  sortHierarchyHorizontalLabel: graphSortHierarchyHorizontalLabel,
+                  sortHierarchyHorizontalLabel:
+                      graphSortHierarchyHorizontalLabel,
                   sortRadialLabel: graphSortRadialLabel,
                   quickViewDescriptionLabel: graphQuickViewDescriptionLabel,
                   quickViewNoDescriptionLabel: graphQuickViewNoDescriptionLabel,
@@ -313,11 +307,19 @@ class WorkflowCard extends StatelessWidget {
                     icon: item.isActive
                         ? Icons.toggle_on_outlined
                         : Icons.toggle_off_outlined,
-                    tooltip: item.isActive ? deactivateTooltip : activateTooltip,
+                    tooltip: item.isActive
+                        ? deactivateTooltip
+                        : activateTooltip,
                     onPressed: onToggleActive,
                   ),
                   const SizedBox(width: 8),
                 ],
+                ActionIconButton(
+                  icon: Icons.edit_outlined,
+                  tooltip: editTooltip,
+                  onPressed: onEdit,
+                ),
+                const SizedBox(width: 4),
                 ActionIconButton(
                   icon: Icons.delete_outline,
                   tooltip: deleteTooltip,

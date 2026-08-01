@@ -9,12 +9,6 @@ Widget _host(double width, VoidCallback onCreate) {
         child: SizedBox(
           width: width,
           child: WorkflowOverviewHeader(
-            title: 'Orquestación visual',
-            subtitle: 'Conecta agentes y automatiza procesos.',
-            workflowCount: 4,
-            nodeCount: 12,
-            workflowsLabel: 'Workflows',
-            nodesLabel: 'Nodos',
             createLabel: 'Crear workflow',
             onCreate: onCreate,
           ),
@@ -30,9 +24,8 @@ void main() {
       var created = false;
       await tester.pumpWidget(_host(width, () => created = true));
 
-      expect(find.text('Orquestación visual'), findsOneWidget);
-      expect(find.text('4'), findsOneWidget);
-      expect(find.text('12'), findsOneWidget);
+      expect(find.text('Crear workflow'), findsOneWidget);
+      expect(find.byIcon(Icons.add_rounded), findsOneWidget);
       expect(tester.takeException(), isNull);
 
       await tester.tap(find.text('Crear workflow'));
