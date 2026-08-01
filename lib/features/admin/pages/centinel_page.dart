@@ -10,7 +10,7 @@ import '../widgets/centinel_probe_tab.dart';
 import '../widgets/centinel_stress_tab.dart';
 
 /// Página Centinel: 3 pestañas (Funcionalidad/Rendimiento/Buscar límite),
-/// igual que /admin/centinel/ en frontend_vanilla.
+/// Página principal de administración de Centinel.
 class CentinelPage extends StatefulWidget {
   const CentinelPage({
     required this.apiClient,

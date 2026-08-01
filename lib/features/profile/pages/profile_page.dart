@@ -27,7 +27,7 @@ part '../widgets/profile_view_helpers.dart';
 
 /// Idiomas disponibles para el perfil público. Por ahora la plataforma solo
 /// soporta Español e Inglés (a diferencia del listado más amplio de
-/// frontend_vanilla, aún no habilitado aquí).
+/// la interfaz web, aún no habilitado aquí).
 const _languageOptions = [('es', 'Español', '🇪🇸'), ('en', 'English', '🇬🇧')];
 
 /// El backend exige que `github` sea una URL https:// completa, pero pedirle

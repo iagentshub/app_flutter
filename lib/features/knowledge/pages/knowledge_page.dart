@@ -103,7 +103,7 @@ class _KnowledgePageState extends State<KnowledgePage>
   late final TranslatedTexts _t;
   late final TabController _tabController;
 
-  /// 4 pestañas independientes, igual que knowledge.js en frontend_vanilla
+  /// Cuatro pestañas independientes para cada tipo de conocimiento.
   /// (no una sección "Conocimiento" genérica con filtro de tipo).
   static const _sectionIds = ['skills', 'urls', 'documents', 'memory'];
 

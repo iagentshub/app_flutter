@@ -18,7 +18,7 @@ part '../dialogs/manage_group_dialog.dart';
 
 /// Sección "Grupos" de Profile: mis grupos (con gestión inline: miembros,
 /// invitar, abandonar, eliminar) e invitaciones recibidas pendientes.
-/// Equivalente a profile-groups.js en frontend_vanilla.
+/// Sección de grupos del perfil.
 class ProfileGroupsSection extends StatefulWidget {
   const ProfileGroupsSection({
     required this.apiClient,

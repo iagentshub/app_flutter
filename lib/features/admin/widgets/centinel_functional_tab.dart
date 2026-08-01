@@ -27,7 +27,7 @@ class _TestEvent {
 
 /// Pestaña "Funcionalidad" de Centinel: árbol de módulos pytest, resultados
 /// en vivo vía SSE con filtros, log en bruto, e historial — igual que
-/// centinel.js en frontend_vanilla.
+/// Panel de pruebas funcionales de Centinel.
 class CentinelFunctionalTab extends StatefulWidget {
   const CentinelFunctionalTab({
     required this.repository,

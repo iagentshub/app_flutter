@@ -36,7 +36,6 @@
   },
   "install": {
     "title": "Instalación",
-    "frontend_vanilla": "Frontend: Vanilla",
     "frontend_react": "Frontend: React",
     "mode_docker": "Con Docker",
     "mode_nodocker": "Sin Docker",

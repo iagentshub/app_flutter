@@ -20,7 +20,7 @@ String _fmtBytes(int bytes) {
 }
 
 /// Página "Sistema": Logs + Tablas de la base de datos, igual que
-/// /admin/metadata/ en frontend_vanilla (título "Sistema" en el nav).
+/// Pantalla de metadatos del sistema.
 class MetadataPage extends StatefulWidget {
   const MetadataPage({
     required this.apiClient,

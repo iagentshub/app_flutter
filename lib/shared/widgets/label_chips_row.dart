@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../labels/label_catalog.dart';
 
 /// Fila de chips de labels de un recurso, igual a `.label-chip` en
-/// frontend_vanilla: píldora de color fijo por clave + punto antes del texto.
+/// Píldora de color fijo por clave con un punto antes del texto.
 /// [leading] permite insertar otros chips (p. ej. OriginBadge) en la misma
 /// fila, igual que el originChip que va junto a los label-chips en web.
 class LabelChipsRow extends StatelessWidget {

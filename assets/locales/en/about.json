@@ -21,7 +21,7 @@
     "postgresql": "Relational database for production",
     "nginx": "Web server and reverse proxy",
     "docker": "Containerisation and deployment",
-    "vanillajs": "Frontend with no external dependencies"
+    "typescript": "Typed application frontend"
   },
   "creators": {
     "title": "Creators",

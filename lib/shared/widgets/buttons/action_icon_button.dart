@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Botón de acción secundaria solo-icono (editar, eliminar, renombrar...),
-/// equivalente a `.agent-action-icon` en frontend_vanilla: 34x34, radius 10,
+/// Botón de acción compacto: 34x34, radius 10,
 /// sin fondo hasta el hover, y una variante `danger` para acciones
 /// destructivas (eliminar).
 class ActionIconButton extends StatelessWidget {

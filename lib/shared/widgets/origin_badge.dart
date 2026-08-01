@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Chip de origen del recurso: si es tuyo directamente ("Propietario") o
 /// llegó vía group share ("Enlazado"), igual al originChip de
-/// agent-card.js en frontend_vanilla (mismo estilo que un label-chip).
+/// Usa el mismo estilo visual que un label-chip.
 class OriginBadge extends StatelessWidget {
   const OriginBadge({
     required this.shared,

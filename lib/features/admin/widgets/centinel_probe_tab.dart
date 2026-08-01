@@ -12,7 +12,7 @@ part '../centinel/probe_results.dart';
 
 /// Pestaña "Buscar límite" de Centinel: sube la carga paso a paso hasta el
 /// primer error, para encontrar el techo estable de la plataforma — igual
-/// que la sección "probe" de centinel-stress.js en frontend_vanilla.
+/// para la sección de búsqueda de límites de Centinel.
 class CentinelProbeTab extends StatefulWidget {
   const CentinelProbeTab({
     required this.repository,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Tabla de colores de labels, igual a GROUPS en frontend_vanilla
+/// Tabla canónica de colores para labels.
 /// (assets/js/labels.js): 3 grupos exclusivos (visibilidad, entorno, estado).
 /// Incluye también "owner"/"linked", usados por el badge de origen
 /// (OriginBadge) y por el grupo informativo de propiedad del catálogo.
@@ -32,7 +32,7 @@ const Map<String, Color> _labelColors = {
 Color labelColor(String key) => _labelColors[key] ?? const Color(0xFF64748B);
 
 /// Claves de label conocidas por el catálogo, en el mismo orden que
-/// GROUPS en frontend_vanilla (visibilidad, entorno, estado).
+/// Los grupos representan visibilidad, entorno y estado.
 const List<String> kLabelKeys = [
   'private',
   'public',
@@ -49,7 +49,7 @@ const List<String> kLabelKeys = [
   'delete',
 ];
 
-/// Los 3 grupos de GROUPS en frontend_vanilla son excluyentes entre sí
+/// Los tres grupos son excluyentes entre sí
 /// (algo no puede ser "private" y "public" a la vez). `required` marca si
 /// el grupo siempre debe tener exactamente una selección (visibilidad) o
 /// puede quedar vacío (entorno). "Estado" no es excluyente: un recurso

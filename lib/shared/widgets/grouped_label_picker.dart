@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../labels/label_catalog.dart';
 
 /// Selector de labels organizado por grupo excluyente (visibilidad, entorno)
-/// y no excluyente (estado), igual que GROUPS en frontend_vanilla — evita
+/// y no excluyente (estado); evita
 /// que se puedan marcar a la vez dos labels que son mutuamente excluyentes
 /// (p. ej. "private" y "public").
 class GroupedLabelPicker extends StatelessWidget {

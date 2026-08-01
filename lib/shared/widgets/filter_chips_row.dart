@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Fila de chips tipo pill para un filtro categórico de pocas opciones,
-/// equivalente a `.fco-chip`/`.fa-chip` en frontend_vanilla.
+/// Fila compacta y reutilizable de filtros seleccionables.
 class FilterChipsRow extends StatelessWidget {
   const FilterChipsRow({
     required this.options,

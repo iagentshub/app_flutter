@@ -23,7 +23,7 @@ class ChartSeries {
 }
 
 /// Gráfica de líneas en vivo (avg/p95/usuarios/rps de Centinel), portada del
-/// canvas de frontend_vanilla (centinel-stress.js `_doDrawChart`): un eje
+/// Gráfico de estrés con un eje
 /// principal etiquetado en segundos compartido por las series de latencia, y
 /// el resto de series normalizadas a su propio máximo sin etiquetar (su
 /// significado va en la leyenda, no en el eje).

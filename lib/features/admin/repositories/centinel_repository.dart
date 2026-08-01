@@ -3,7 +3,7 @@ import 'dart:convert';
 import '../../../core/network/api_repository.dart';
 
 /// Cliente de Centinel: test runner funcional (pytest), prueba de estrés y
-/// "buscar límite" (probe), igual que /admin/centinel/ en frontend_vanilla.
+/// "buscar límite" (probe) de Centinel.
 class CentinelRepository extends ApiRepository {
   CentinelRepository({required super.apiClient});
 

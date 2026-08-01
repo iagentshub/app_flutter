@@ -23,8 +23,7 @@ const _predefinedEndpoints = [
 
 /// Pestaña "Rendimiento" de Centinel: prueba de estrés configurable con
 /// gráfica en vivo, resumen y tabla de errores — igual que
-/// centinel-stress.js en frontend_vanilla. El estado se sondea por HTTP
-/// (no SSE) a propósito, igual que vanilla, para no competir con el stream
+/// El estado se sondea por HTTP (no SSE) a propósito para no competir con el stream
 /// SSE de la pestaña Funcionalidad.
 class CentinelStressTab extends StatefulWidget {
   const CentinelStressTab({
