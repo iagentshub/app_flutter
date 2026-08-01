@@ -272,13 +272,17 @@ class WorkflowCard extends StatelessWidget {
                   style: FilledButton.styleFrom(
                     visualDensity: VisualDensity.compact,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 9,
+                      horizontal: 11,
+                      vertical: 6,
                     ),
-                    minimumSize: const Size(0, 36),
+                    minimumSize: const Size(0, 32),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                  icon: const Icon(Icons.play_arrow_rounded, size: 18),
-                  label: Text(runLabel),
+                  icon: const Icon(Icons.play_arrow_rounded, size: 16),
+                  label: Text(
+                    runLabel,
+                    style: const TextStyle(fontSize: 12),
+                  ),
                 ),
                 const Spacer(),
                 const SizedBox(width: 8),

@@ -309,6 +309,8 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
       barrierDismissible: false,
       builder: (context) => _RunProgressDialog(
         workflowName: item.name,
+        nodes: item.nodes,
+        edges: item.edges,
         tx: _tx,
         stream: _repository.streamRun(
           token,
