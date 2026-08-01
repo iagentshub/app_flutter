@@ -43,6 +43,7 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
   String? _checkResult;
   bool? _checkOk;
   String? _autoUpdateResult;
+  List<String> _commitLines = [];
 
   String _tx(String path, String fallback) => widget.tx(path, fallback);
 
@@ -192,15 +193,76 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
     }
   }
 
+  /// Línea "Backend: al día (abc1234)" / "App (Flutter): desactualizado…"
+  /// para un componente — o `null` si ese repo no se horneó en la imagen
+  /// (`commit == 'dev'`, instalaciones sin BACKEND_COMMIT/FRONTEND_COMMIT/
+  /// APP_COMMIT, o builds locales).
+  String? _commitLine(
+    String label,
+    dynamic commit,
+    dynamic latest,
+    dynamic upToDate,
+  ) {
+    final commitStr = commit?.toString() ?? 'dev';
+    if (commitStr == 'dev') return null;
+    final String description;
+    if (upToDate == true) {
+      description = _tx(
+        'admin.config_commit_up_to_date',
+        'Up to date ({commit})',
+      ).replaceAll('{commit}', commitStr);
+    } else if (upToDate == false) {
+      description =
+          _tx(
+                'admin.config_commit_outdated',
+                'Outdated: {commit} (latest {latest})',
+              )
+              .replaceAll('{commit}', commitStr)
+              .replaceAll('{latest}', '${latest ?? '?'}');
+    } else {
+      description = _tx(
+        'admin.config_commit_unchecked',
+        '{commit} (unverified)',
+      ).replaceAll('{commit}', commitStr);
+    }
+    return '$label: $description';
+  }
+
+  List<String> _buildCommitLines(Map<String, dynamic> data) {
+    final lines = <String?>[
+      _commitLine(
+        _tx('admin.config_backend_commit_label', 'Backend'),
+        data['backend_commit'],
+        data['backend_commit_latest'],
+        data['backend_up_to_date'],
+      ),
+      _commitLine(
+        _tx('admin.config_frontend_commit_label', 'Web frontend'),
+        data['frontend_commit'],
+        data['frontend_commit_latest'],
+        data['frontend_up_to_date'],
+      ),
+      _commitLine(
+        _tx('admin.config_app_commit_label', 'App (Flutter)'),
+        data['app_commit'],
+        data['app_commit_latest'],
+        data['app_up_to_date'],
+      ),
+    ].whereType<String>().toList();
+    return lines;
+  }
+
   Future<void> _checkUpdate() async {
     setState(() {
       _checkingUpdate = true;
       _checkResult = null;
       _checkOk = null;
+      _commitLines = [];
     });
     try {
       final data = await widget.repository.checkUpdate(widget.token);
       if (!mounted) return;
+      final commitLines = _buildCommitLines(data);
       if (data['checked'] != true) {
         setState(() {
           _checkResult = _tx(
@@ -208,6 +270,7 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
             'No se pudo comprobar actualizaciones',
           );
           _checkOk = null;
+          _commitLines = commitLines;
         });
       } else if (data['update_available'] == true) {
         setState(() {
@@ -219,6 +282,7 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
                   .replaceAll('{latest}', '${data['latest_version']}')
                   .replaceAll('{current}', '${data['current_version']}');
           _checkOk = false;
+          _commitLines = commitLines;
         });
       } else {
         setState(() {
@@ -227,6 +291,7 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
             'Al día (versión {version})',
           ).replaceAll('{version}', '${data['current_version']}');
           _checkOk = true;
+          _commitLines = commitLines;
         });
       }
     } on ApiError catch (error) {
@@ -476,6 +541,11 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
             ),
           ),
         ],
+        for (final line in _commitLines)
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(line, style: Theme.of(context).textTheme.bodySmall),
+          ),
       ]),
     ];
     return CustomScrollView(
