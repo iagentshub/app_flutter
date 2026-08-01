@@ -44,8 +44,8 @@
   "confirm_delete": "¿Eliminar esta skill?",
   "deleted": "Skill eliminada",
   "dialog": {
-    "title_new": "Nueva habilidad privada",
-    "title_edit": "Editar skill privada",
+    "title_new": "Nueva skill",
+    "title_edit": "Editar skill",
     "field_icon": "Icono",
     "field_name": "Nombre",
     "field_description": "Descripción",

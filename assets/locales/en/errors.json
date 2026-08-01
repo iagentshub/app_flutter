@@ -79,7 +79,7 @@
   "agent_delete_forbidden": "This agent can't be deleted",
   "export_format_unsupported": "Format '{{format}}' isn't supported for agent type '{{agent_type}}'",
   "invalid_skill_data": "Invalid skill data",
-  "public_skill_readonly": "Public skills are read-only",
+  "public_skill_readonly": "System public skills are read-only",
   "missing_group_id": "group_id is required",
 
   "url_fetch_failed": "Couldn't fetch the URL",

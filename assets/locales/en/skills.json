@@ -44,8 +44,8 @@
   "confirm_delete": "Delete this skill?",
   "deleted": "Skill deleted",
   "dialog": {
-    "title_new": "New private skill",
-    "title_edit": "Edit private skill",
+    "title_new": "New skill",
+    "title_edit": "Edit skill",
     "field_icon": "Icon",
     "field_name": "Name",
     "field_description": "Description",

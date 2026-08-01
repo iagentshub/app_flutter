@@ -94,11 +94,11 @@
     "tokens_body": "LLMs charge by tokens: text units of roughly 4 characters each. Each connection accumulates the total input and output tokens consumed. You can view this in the Dashboard and in the Connections list."
   },
   "skills": {
-    "intro": "Skills are reusable instruction blocks that are injected into the agent's system prompt when active.",
+    "intro": "Skills are reusable instruction blocks that are injected into the agent's system prompt when active. Their category comes from a closed catalog; free-form tags are not supported.",
     "public_title": "Public skills",
-    "public_body": "Automatically synced from the official repository. Covers common use cases: writing, code analysis, translation, etc.",
+    "public_body": "They include read-only official skills and skills published by registered users. Everyone, including guests, can browse them.",
     "private_title": "Private skills",
-    "private_body": "You can create your own skills from the Skills section. Only you can see and assign them.",
+    "private_body": "You can create skills in the Skills section and choose whether they are private or public. In guest mode they are private, temporary, and kept only in session memory.",
     "activate_title": "Activating a skill",
     "activate_body": "When editing an agent, the Skills tab shows the list of available skills. Enable the ones you want to include in the agent."
   },

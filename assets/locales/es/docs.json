@@ -94,11 +94,11 @@
     "tokens_body": "Los LLM cobran por tokens: unidades de texto de aproximadamente 4 caracteres. Cada conexión acumula el total de tokens de entrada y salida consumidos. Puedes consultarlo en el Dashboard y en la lista de Conexiones."
   },
   "skills": {
-    "intro": "Las skills son bloques de instrucciones reutilizables que se inyectan en el system prompt del agente cuando están activas.",
+    "intro": "Las skills son bloques de instrucciones reutilizables que se inyectan en el system prompt del agente cuando están activas. Su categoría se elige de un catálogo cerrado; no admiten tags libres.",
     "public_title": "Skills públicas",
-    "public_body": "Se sincronizan automáticamente desde el repositorio oficial. Cubre casos de uso comunes: redacción, análisis de código, traducción, etc.",
+    "public_body": "Incluyen las skills oficiales de solo lectura y las que publican usuarios registrados. Todos, incluidos los invitados, pueden consultarlas.",
     "private_title": "Skills privadas",
-    "private_body": "Puedes crear skills propias desde la sección Skills. Solo tú puedes verlas y asignarlas.",
+    "private_body": "Puedes crear skills propias desde la sección Skills y decidir si serán privadas o públicas. En modo invitado son privadas, temporales y solo viven en memoria durante la sesión.",
     "activate_title": "Activar una skill",
     "activate_body": "Al editar un agente, en la pestaña Skills verás la lista de skills disponibles. Activa las que quieras incluir en el agente."
   },

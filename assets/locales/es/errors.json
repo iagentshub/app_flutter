@@ -79,7 +79,7 @@
   "agent_delete_forbidden": "No se puede eliminar este agente",
   "export_format_unsupported": "Formato '{{format}}' no soportado para el tipo de agente '{{agent_type}}'",
   "invalid_skill_data": "Datos de la skill inválidos",
-  "public_skill_readonly": "Las skills públicas son de solo lectura",
+  "public_skill_readonly": "Las skills públicas del sistema son de solo lectura",
   "missing_group_id": "group_id es obligatorio",
 
   "url_fetch_failed": "No se pudo obtener la URL",

@@ -43,9 +43,10 @@ extension _KnowledgeActions on _KnowledgePageState {
   }
 
   Future<void> _openCreateSkillDialog() async {
+    final allowPublic = widget.sessionController.user?.role != 'guest';
     final payload = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) => const _SkillFormDialog(),
+      builder: (context) => _SkillFormDialog(allowPublic: allowPublic),
     );
     if (payload == null) return;
     await _saveSkill(payload);
@@ -53,7 +54,7 @@ extension _KnowledgeActions on _KnowledgePageState {
 
   Future<void> _openEditSkillDialog(SkillItem item) async {
     if (item.readOnly) {
-      _showMessage('Esta skill no es editable (pública o compartida)');
+      _showMessage('Esta skill no es editable (del sistema o compartida)');
       return;
     }
     final token = _token;
@@ -65,9 +66,11 @@ extension _KnowledgeActions on _KnowledgePageState {
     } catch (_) {}
 
     if (!mounted) return;
+    final allowPublic = widget.sessionController.user?.role != 'guest';
     final payload = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) => _SkillFormDialog(initial: initial),
+      builder: (context) =>
+          _SkillFormDialog(initial: initial, allowPublic: allowPublic),
     );
     if (payload == null) return;
     payload['id'] = item.id;
@@ -106,7 +109,9 @@ extension _KnowledgeActions on _KnowledgePageState {
 
   Future<void> _deleteSkill(SkillItem item) async {
     if (item.readOnly) {
-      _showMessage('Esta skill no se puede eliminar (pública o compartida)');
+      _showMessage(
+        'Esta skill no se puede eliminar (del sistema o compartida)',
+      );
       return;
     }
     final confirm = await showConfirmActionDialog(

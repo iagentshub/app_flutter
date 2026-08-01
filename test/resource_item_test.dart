@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:app_flutter/models/agents/agent_models.dart';
+import 'package:app_flutter/models/skills/skill_models.dart';
 
 void main() {
   group('ResourceItem.isActive', () {
@@ -15,6 +16,23 @@ void main() {
 
     test('mantiene activo por defecto para respuestas antiguas', () {
       expect(const AgentItem(raw: {}).isActive, isTrue);
+    });
+  });
+
+  group('SkillItem.readOnly', () {
+    test('permite editar una skill pública propia', () {
+      const item = SkillItem(raw: {'scope': 'public', 'origin_type': 'owner'});
+      expect(item.readOnly, isFalse);
+    });
+
+    test('protege skills públicas ajenas o del sistema', () {
+      expect(const SkillItem(raw: {'scope': 'public'}).readOnly, isTrue);
+      expect(
+        const SkillItem(
+          raw: {'scope': 'public', 'origin_type': 'linked'},
+        ).readOnly,
+        isTrue,
+      );
     });
   });
 }

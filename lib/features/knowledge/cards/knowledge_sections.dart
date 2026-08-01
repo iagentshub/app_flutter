@@ -250,7 +250,6 @@ extension _KnowledgeSections on _KnowledgePageState {
   Widget _buildSkillCard(SkillItem item) {
     final metaParts = <String>[item.scope];
     if (item.category.isNotEmpty) metaParts.add(item.category);
-    if (item.tags.isNotEmpty) metaParts.add(item.tags.join(', '));
 
     final card = Card(
       margin: EdgeInsets.zero,
