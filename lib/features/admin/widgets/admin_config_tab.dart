@@ -43,7 +43,7 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
   String? _checkResult;
   bool? _checkOk;
   String? _autoUpdateResult;
-  List<String> _commitLines = [];
+  List<({String text, Color? color})> _commitLines = [];
 
   String _tx(String path, String fallback) => widget.tx(path, fallback);
 
@@ -193,11 +193,15 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
     }
   }
 
+  static const _statusOkColor = Color(0xFF059669);
+  static const _statusWarnColor = Color(0xFFD97706);
+
   /// Línea "Backend: al día (abc1234)" / "App (Flutter): desactualizado…"
-  /// para un componente — o `null` si ese repo no se horneó en la imagen
-  /// (`commit == 'dev'`, instalaciones sin BACKEND_COMMIT/FRONTEND_COMMIT/
-  /// APP_COMMIT, o builds locales).
-  String? _commitLine(
+  /// para un componente, con el color de estado ya resuelto (verde al día,
+  /// ámbar desactualizado, sin color si no se pudo verificar) — o `null` si
+  /// ese repo no se horneó en la imagen (`commit == 'dev'`, instalaciones sin
+  /// BACKEND_COMMIT/FRONTEND_COMMIT/APP_COMMIT, o builds locales).
+  ({String text, Color? color})? _commitLine(
     String label,
     dynamic commit,
     dynamic latest,
@@ -206,11 +210,13 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
     final commitStr = commit?.toString() ?? 'dev';
     if (commitStr == 'dev') return null;
     final String description;
+    Color? color;
     if (upToDate == true) {
       description = _tx(
         'admin.config_commit_up_to_date',
         'Up to date ({commit})',
       ).replaceAll('{commit}', commitStr);
+      color = _statusOkColor;
     } else if (upToDate == false) {
       description =
           _tx(
@@ -219,17 +225,21 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
               )
               .replaceAll('{commit}', commitStr)
               .replaceAll('{latest}', '${latest ?? '?'}');
+      color = _statusWarnColor;
     } else {
       description = _tx(
         'admin.config_commit_unchecked',
         '{commit} (unverified)',
       ).replaceAll('{commit}', commitStr);
+      color = null;
     }
-    return '$label: $description';
+    return (text: '$label: $description', color: color);
   }
 
-  List<String> _buildCommitLines(Map<String, dynamic> data) {
-    final lines = <String?>[
+  List<({String text, Color? color})> _buildCommitLines(
+    Map<String, dynamic> data,
+  ) {
+    final lines = <({String text, Color? color})?>[
       _commitLine(
         _tx('admin.config_backend_commit_label', 'Backend'),
         data['backend_commit'],
@@ -248,8 +258,8 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
         data['app_commit_latest'],
         data['app_up_to_date'],
       ),
-    ].whereType<String>().toList();
-    return lines;
+    ];
+    return [for (final line in lines) ?line];
   }
 
   Future<void> _checkUpdate() async {
@@ -535,16 +545,19 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: _checkOk == null
                   ? null
-                  : (_checkOk == true
-                        ? const Color(0xFF059669)
-                        : const Color(0xFFD97706)),
+                  : (_checkOk == true ? _statusOkColor : _statusWarnColor),
             ),
           ),
         ],
         for (final line in _commitLines)
           Padding(
             padding: const EdgeInsets.only(top: 2),
-            child: Text(line, style: Theme.of(context).textTheme.bodySmall),
+            child: Text(
+              line.text,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: line.color),
+            ),
           ),
       ]),
     ];
@@ -578,7 +591,7 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
                 if (_saveMsg != null)
                   Text(
                     _saveMsg!,
-                    style: const TextStyle(color: Color(0xFF059669)),
+                    style: const TextStyle(color: _statusOkColor),
                   ),
               ],
             ),
