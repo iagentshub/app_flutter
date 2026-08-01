@@ -133,110 +133,126 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
-    final isAdmin = widget.sessionController.user?.role == 'admin';
-    final location = widget.location;
-
+    // El rol de sessionController.user puede revalidarse de forma asíncrona
+    // después de este primer build (ver _AppState._revalidatePersistedSession
+    // en app.dart) sin que cambie de ruta — sin este ListenableBuilder,
+    // isAdmin/username/etc. quedarían congelados en su valor inicial hasta la
+    // siguiente navegación, porque go_router solo repinta el árbol cuando
+    // cambia el RouteMatchList, no cuando sessionController.notifyListeners()
+    // se dispara estando en la misma pantalla.
     return ListenableBuilder(
-      listenable: widget.dashboardEditState,
+      listenable: widget.sessionController,
       builder: (context, _) {
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final wide = constraints.maxWidth >= _wideNavBreakpoint;
-            final navContent = widget.dashboardEditState.editing
-                ? _WidgetPickerDrawerContent(
-                    state: widget.dashboardEditState,
-                    t: _texts,
-                  )
-                : AppSidebarNavigation(
-                    isAdmin: isAdmin,
-                    location: location,
-                    username:
-                        widget.sessionController.user?.username ?? 'Usuario',
-                    displayName: widget.sessionController.user?.displayName,
-                    email: widget.sessionController.user?.email,
-                    role: widget.sessionController.user?.role ?? 'user',
-                    tx: _tx,
-                    showCloseButton: !wide,
-                    onNavigate: (route) =>
-                        _navigateTo(context, route, wide: wide),
-                    onLogout: () => _logout(context),
-                  );
+        final isAdmin = widget.sessionController.user?.role == 'admin';
+        final location = widget.location;
 
-            final body = ListenableBuilder(
-              listenable: widget.apiClient.backendController,
-              builder: (context, _) => Column(
-                children: [
-                  _ConnectionIssueBanner(apiClient: widget.apiClient, tx: _tx),
-                  Expanded(
-                    child: TerminalViewTransition(
-                      key: ValueKey(location),
-                      child: widget.child,
-                    ),
+        return ListenableBuilder(
+          listenable: widget.dashboardEditState,
+          builder: (context, _) {
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final wide = constraints.maxWidth >= _wideNavBreakpoint;
+                final navContent = widget.dashboardEditState.editing
+                    ? _WidgetPickerDrawerContent(
+                        state: widget.dashboardEditState,
+                        t: _texts,
+                      )
+                    : AppSidebarNavigation(
+                        isAdmin: isAdmin,
+                        location: location,
+                        username:
+                            widget.sessionController.user?.username ??
+                            'Usuario',
+                        displayName: widget.sessionController.user?.displayName,
+                        email: widget.sessionController.user?.email,
+                        role: widget.sessionController.user?.role ?? 'user',
+                        tx: _tx,
+                        showCloseButton: !wide,
+                        onNavigate: (route) =>
+                            _navigateTo(context, route, wide: wide),
+                        onLogout: () => _logout(context),
+                      );
+
+                final body = ListenableBuilder(
+                  listenable: widget.apiClient.backendController,
+                  builder: (context, _) => Column(
+                    children: [
+                      _ConnectionIssueBanner(
+                        apiClient: widget.apiClient,
+                        tx: _tx,
+                      ),
+                      Expanded(
+                        child: TerminalViewTransition(
+                          key: ValueKey(location),
+                          child: widget.child,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            );
+                );
 
-            if (wide) {
-              return Scaffold(
-                body: Row(
-                  children: [
-                    SizedBox(
-                      width: _sidebarWidth,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surface,
-                          border: Border(
-                            right: BorderSide(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.outlineVariant,
+                if (wide) {
+                  return Scaffold(
+                    body: Row(
+                      children: [
+                        SizedBox(
+                          width: _sidebarWidth,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface,
+                              border: Border(
+                                right: BorderSide(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.outlineVariant,
+                                ),
+                              ),
                             ),
+                            child: SafeArea(right: false, child: navContent),
                           ),
                         ),
-                        child: SafeArea(right: false, child: navContent),
-                      ),
-                    ),
-                    Expanded(
-                      child: Column(
-                        children: [
-                          _ShellTopBar(
-                            title: _titleForLocation(location, _texts),
+                        Expanded(
+                          child: Column(
+                            children: [
+                              _ShellTopBar(
+                                title: _titleForLocation(location, _texts),
+                              ),
+                              Expanded(child: body),
+                            ],
                           ),
-                          Expanded(child: body),
-                        ],
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return Scaffold(
+                  appBar: AppBar(
+                    toolbarHeight: 68,
+                    titleSpacing: 4,
+                    title: Text(
+                      _titleForLocation(location, _texts),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                  ],
-                ),
-              );
-            }
-
-            return Scaffold(
-              appBar: AppBar(
-                toolbarHeight: 68,
-                titleSpacing: 4,
-                title: Text(
-                  _titleForLocation(location, _texts),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
                   ),
-                ),
-              ),
-              drawer: Drawer(
-                width: _drawerWidth,
-                elevation: 12,
-                surfaceTintColor: Colors.transparent,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.horizontal(
-                    right: Radius.circular(24),
+                  drawer: Drawer(
+                    width: _drawerWidth,
+                    elevation: 12,
+                    surfaceTintColor: Colors.transparent,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.horizontal(
+                        right: Radius.circular(24),
+                      ),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: SafeArea(child: navContent),
                   ),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: SafeArea(child: navContent),
-              ),
-              body: body,
+                  body: body,
+                );
+              },
             );
           },
         );
