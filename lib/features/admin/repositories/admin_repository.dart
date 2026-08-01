@@ -280,6 +280,11 @@ class AdminRepository extends ApiRepository {
     return response.json;
   }
 
+  Future<Map<String, dynamic>> getUserSettings(String token) async {
+    final response = await apiClient.get('/api/settings', gaToken: token);
+    return response.json;
+  }
+
   Future<Map<String, dynamic>> checkUpdate(String token) async {
     final response = await apiClient.get(
       '/api/admin/check-update',

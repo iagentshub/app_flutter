@@ -15,6 +15,7 @@ import '../../../shared/state/backend_controller.dart';
 import '../../../shared/state/boot_platform_cache.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/state/theme_controller.dart';
 import '../../../utils/safe_redirect.dart';
 import '../../../utils/validators.dart';
 
@@ -156,6 +157,12 @@ class _LoginPageState extends State<LoginPage> {
         _oauthAppleEnabled = platform['oauth_apple_enabled'] != false;
         _oauthMicrosoftEnabled = platform['oauth_microsoft_enabled'] != false;
       });
+      unawaited(
+        ThemeControllerScope.of(
+          context,
+          listen: false,
+        ).syncFromBackend(platform['default_theme'] as String?),
+      );
     } else {
       setState(() {
         _platformLoaded = true;
@@ -187,7 +194,23 @@ class _LoginPageState extends State<LoginPage> {
   bool get _showAnyOauth =>
       _oauthGoogleEnabled || _oauthAppleEnabled || _oauthMicrosoftEnabled;
 
+  Future<void> _syncUserSettings(
+    String token,
+    ThemeController themeController,
+  ) async {
+    try {
+      final settings = await widget.authRepository.getSettings(token);
+      await widget.localeController.syncFromBackend(
+        settings['language'] as String?,
+      );
+      await themeController.syncFromBackend(settings['theme'] as String?);
+    } catch (_) {
+      // El login sigue siendo válido aunque fallen preferencias no críticas.
+    }
+  }
+
   Future<void> _submit() async {
+    final themeController = ThemeControllerScope.of(context, listen: false);
     final form = _formKey.currentState;
     if (form == null || !form.validate()) return;
 
@@ -218,11 +241,7 @@ class _LoginPageState extends State<LoginPage> {
         remember: _rememberAccount,
       );
       await _persistRememberedAccount();
-      unawaited(
-        widget.authRepository
-            .getLanguage(token)
-            .then(widget.localeController.syncFromBackend),
-      );
+      unawaited(_syncUserSettings(token, themeController));
 
       if (!mounted) return;
       final destination = safeRedirect(widget.redirectTo);
@@ -247,6 +266,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _submitGuest() async {
+    final themeController = ThemeControllerScope.of(context, listen: false);
     final texts = await _authTextsFuture;
 
     setState(() {
@@ -273,6 +293,7 @@ class _LoginPageState extends State<LoginPage> {
         user: me,
         remember: false,
       );
+      await _syncUserSettings(token, themeController);
       if (!mounted) return;
       final destination = safeRedirect(widget.redirectTo);
       context.go(destination);

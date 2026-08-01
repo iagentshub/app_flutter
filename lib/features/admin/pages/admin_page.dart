@@ -10,6 +10,7 @@ import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/state/theme_controller.dart';
 import '../../../shared/utils/debouncer.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';

@@ -32,9 +32,10 @@ class _RunProgressDialogState extends State<_RunProgressDialog> {
   String? _errorMessage;
   bool _running = true;
 
-  List<Map<String, dynamic>> get _nodes => widget.nodes.whereType<Map>().map(
-    (node) => Map<String, dynamic>.from(node),
-  ).toList();
+  List<Map<String, dynamic>> get _nodes => widget.nodes
+      .whereType<Map>()
+      .map((node) => Map<String, dynamic>.from(node))
+      .toList();
 
   int get _completedCount => _nodeStatus.values
       .where((status) => status == _RunNodeStatus.done)
@@ -110,8 +111,12 @@ class _RunProgressDialogState extends State<_RunProgressDialog> {
         case 'error':
           if (nodeId.isNotEmpty) _nodeStatus[nodeId] = _RunNodeStatus.error;
           _activeNodeId = nodeId.isEmpty ? _activeNodeId : nodeId;
-          _errorMessage = event['message']?.toString() ??
-              widget.tx('workflows.error_running_generic', 'Error ejecutando workflow');
+          _errorMessage =
+              event['message']?.toString() ??
+              widget.tx(
+                'workflows.error_running_generic',
+                'Error ejecutando workflow',
+              );
           _running = false;
           break;
         case 'workflow_done':
@@ -147,13 +152,17 @@ class _RunProgressDialogState extends State<_RunProgressDialog> {
     final message = error.toString().trim();
     return message.isNotEmpty && message != 'Exception'
         ? message
-        : widget.tx('workflows.error_connection', 'Error de conexión durante la ejecución');
+        : widget.tx(
+            'workflows.error_connection',
+            'Error de conexión durante la ejecución',
+          );
   }
 
   String _nodeLabel(Map<String, dynamic> node) {
     final label = node['label']?.toString().trim() ?? '';
     if (label.isNotEmpty) return label;
-    return node['agent_id']?.toString() ?? widget.tx('workflows.default_agent_label', 'Agente');
+    return node['agent_id']?.toString() ??
+        widget.tx('workflows.default_agent_label', 'Agente');
   }
 
   String _statusLabel(_RunNodeStatus status) => switch (status) {
@@ -173,12 +182,14 @@ class _RunProgressDialogState extends State<_RunProgressDialog> {
     };
   }
 
-  IconData _statusIcon(_RunNodeStatus status, bool evaluator) => switch (status) {
-    _RunNodeStatus.waiting => evaluator ? Icons.rule_outlined : Icons.smart_toy_outlined,
-    _RunNodeStatus.running => Icons.play_arrow_rounded,
-    _RunNodeStatus.done => Icons.check_rounded,
-    _RunNodeStatus.error => Icons.priority_high_rounded,
-  };
+  IconData _statusIcon(_RunNodeStatus status, bool evaluator) =>
+      switch (status) {
+        _RunNodeStatus.waiting =>
+          evaluator ? Icons.rule_outlined : Icons.smart_toy_outlined,
+        _RunNodeStatus.running => Icons.play_arrow_rounded,
+        _RunNodeStatus.done => Icons.check_rounded,
+        _RunNodeStatus.error => Icons.priority_high_rounded,
+      };
 
   Widget _flowNode(BuildContext context, Map<String, dynamic> node, int index) {
     final colors = Theme.of(context).colorScheme;
@@ -195,9 +206,14 @@ class _RunProgressDialogState extends State<_RunProgressDialog> {
         duration: const Duration(milliseconds: 220),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: selected ? accent.withValues(alpha: .10) : colors.surfaceContainerLow,
+          color: selected
+              ? accent.withValues(alpha: .10)
+              : colors.surfaceContainerLow,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: selected ? accent : colors.outlineVariant, width: selected ? 1.5 : 1),
+          border: Border.all(
+            color: selected ? accent : colors.outlineVariant,
+            width: selected ? 1.5 : 1,
+          ),
         ),
         child: Row(
           children: [
@@ -205,24 +221,44 @@ class _RunProgressDialogState extends State<_RunProgressDialog> {
               duration: const Duration(milliseconds: 220),
               width: 36,
               height: 36,
-              decoration: BoxDecoration(color: accent.withValues(alpha: .14), shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: .14),
+                shape: BoxShape.circle,
+              ),
               child: status == _RunNodeStatus.running
                   ? Padding(
                       padding: const EdgeInsets.all(10),
-                      child: CircularProgressIndicator(strokeWidth: 2.5, color: accent),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: accent,
+                      ),
                     )
-                  : Icon(_statusIcon(status, evaluator), size: 19, color: accent),
+                  : Icon(
+                      _statusIcon(status, evaluator),
+                      size: 19,
+                      color: accent,
+                    ),
             ),
             const SizedBox(width: 11),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${index + 1}. ${_nodeLabel(node)}', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700)),
+                  Text(
+                    '${index + 1}. ${_nodeLabel(node)}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
                   const SizedBox(height: 2),
                   Text(
-                    iteration > 1 ? '${_statusLabel(status)} · Vuelta $iteration' : _statusLabel(status),
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: accent, fontWeight: FontWeight.w600),
+                    iteration > 1
+                        ? '${_statusLabel(status)} · Vuelta $iteration'
+                        : _statusLabel(status),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: accent,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
@@ -261,7 +297,12 @@ class _RunProgressDialogState extends State<_RunProgressDialog> {
     }
     final output = _activeNodeId == null ? null : _nodeOutputs[_activeNodeId!];
     final title = selectedNode == null
-        ? (_running ? widget.tx('workflows.run_waiting_first_event', 'Preparando la orquestación…') : widget.tx('workflows.final_output_title', 'Resultado final'))
+        ? (_running
+              ? widget.tx(
+                  'workflows.run_waiting_first_event',
+                  'Preparando la orquestación…',
+                )
+              : widget.tx('workflows.final_output_title', 'Resultado final'))
         : _nodeLabel(selectedNode);
     final body = _errorMessage ?? output ?? _finalOutput;
     return Container(
@@ -276,9 +317,24 @@ class _RunProgressDialogState extends State<_RunProgressDialog> {
         children: [
           Row(
             children: [
-              Icon(_errorMessage != null ? Icons.error_outline : selectedNode == null ? Icons.flag_outlined : Icons.notes_rounded, size: 19, color: _errorMessage != null ? colors.error : colors.primary),
+              Icon(
+                _errorMessage != null
+                    ? Icons.error_outline
+                    : selectedNode == null
+                    ? Icons.flag_outlined
+                    : Icons.notes_rounded,
+                size: 19,
+                color: _errorMessage != null ? colors.error : colors.primary,
+              ),
               const SizedBox(width: 8),
-              Expanded(child: Text(title, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700))),
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 14),
@@ -286,16 +342,39 @@ class _RunProgressDialogState extends State<_RunProgressDialog> {
             child: body == null || body.trim().isEmpty
                 ? Center(
                     child: Text(
-                      _running ? widget.tx('workflows.node_output_waiting', 'Aquí aparecerá el resultado de este paso.') : widget.tx('workflows.no_output', 'Sin resultado disponible'),
+                      _running
+                          ? widget.tx(
+                              'workflows.node_output_waiting',
+                              'Aquí aparecerá el resultado de este paso.',
+                            )
+                          : widget.tx(
+                              'workflows.no_output',
+                              'Sin resultado disponible',
+                            ),
                       textAlign: TextAlign.center,
                       style: TextStyle(color: colors.onSurfaceVariant),
                     ),
                   )
-                : SingleChildScrollView(child: SelectableText(body, style: TextStyle(height: 1.5, color: _errorMessage != null ? colors.error : colors.onSurface))),
+                : SingleChildScrollView(
+                    child: SelectableText(
+                      body,
+                      style: TextStyle(
+                        height: 1.5,
+                        color: _errorMessage != null
+                            ? colors.error
+                            : colors.onSurface,
+                      ),
+                    ),
+                  ),
           ),
           if (_events.isNotEmpty) ...[
             const SizedBox(height: 12),
-            Text('${_events.length} eventos recibidos', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: colors.onSurfaceVariant)),
+            Text(
+              '${_events.length} eventos recibidos',
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: colors.onSurfaceVariant),
+            ),
           ],
         ],
       ),
@@ -313,7 +392,11 @@ class _RunProgressDialogState extends State<_RunProgressDialog> {
     final colors = Theme.of(context).colorScheme;
     final total = _nodes.length;
     final progress = total == 0 ? 0.0 : _completedCount / total;
-    final statusColor = _errorMessage != null ? colors.error : _running ? colors.primary : Colors.green.shade600;
+    final statusColor = _errorMessage != null
+        ? colors.error
+        : _running
+        ? colors.primary
+        : Colors.green.shade600;
     final statusLabel = _errorMessage != null
         ? widget.tx('workflows.run_status_error', 'Error')
         : _running
@@ -329,16 +412,34 @@ class _RunProgressDialogState extends State<_RunProgressDialog> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(widget.tx('workflows.run_live_title', 'Ejecución en vivo')),
+                Text(
+                  widget.tx('workflows.run_live_title', 'Ejecución en vivo'),
+                ),
                 const SizedBox(height: 3),
-                Text(widget.workflowName, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant, fontWeight: FontWeight.w400)),
+                Text(
+                  widget.workflowName,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
               ],
             ),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(color: statusColor.withValues(alpha: .12), borderRadius: BorderRadius.circular(999)),
-            child: Text(statusLabel, style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.w700)),
+            decoration: BoxDecoration(
+              color: statusColor.withValues(alpha: .12),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              statusLabel,
+              style: TextStyle(
+                color: statusColor,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ],
       ),
@@ -349,9 +450,23 @@ class _RunProgressDialogState extends State<_RunProgressDialog> {
           children: [
             Row(
               children: [
-                Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(99), child: LinearProgressIndicator(value: progress, minHeight: 6, backgroundColor: colors.surfaceContainerHighest))),
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(99),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 6,
+                      backgroundColor: colors.surfaceContainerHighest,
+                    ),
+                  ),
+                ),
                 const SizedBox(width: 12),
-                Text('$_completedCount/$total pasos', style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700)),
+                Text(
+                  '$_completedCount/$total pasos',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 18),
@@ -359,9 +474,21 @@ class _RunProgressDialogState extends State<_RunProgressDialog> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   if (constraints.maxWidth < 650) {
-                    return Column(children: [Expanded(flex: 3, child: _flow(context)), const SizedBox(height: 12), Expanded(flex: 2, child: _detailPanel(context))]);
+                    return Column(
+                      children: [
+                        Expanded(flex: 3, child: _flow(context)),
+                        const SizedBox(height: 12),
+                        Expanded(flex: 2, child: _detailPanel(context)),
+                      ],
+                    );
                   }
-                  return Row(children: [SizedBox(width: 320, child: _flow(context)), const SizedBox(width: 14), Expanded(child: _detailPanel(context))]);
+                  return Row(
+                    children: [
+                      SizedBox(width: 320, child: _flow(context)),
+                      const SizedBox(width: 14),
+                      Expanded(child: _detailPanel(context)),
+                    ],
+                  );
                 },
               ),
             ),
@@ -371,7 +498,11 @@ class _RunProgressDialogState extends State<_RunProgressDialog> {
       actions: [
         PrimaryButton(
           onPressed: _running ? null : () => Navigator.of(context).pop(),
-          child: Text(_running ? widget.tx('workflows.running_label', 'Ejecutando…') : widget.tx('common.close', 'Cerrar')),
+          child: Text(
+            _running
+                ? widget.tx('workflows.running_label', 'Ejecutando…')
+                : widget.tx('common.close', 'Cerrar'),
+          ),
         ),
       ],
     );

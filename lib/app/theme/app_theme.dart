@@ -2,12 +2,46 @@ import 'package:flutter/material.dart';
 
 abstract final class AppTheme {
   static const _red = Color(0xFFD90429);
+  static const _blue = Color(0xFF2563EB);
+  static const _orange = Color(0xFFF97316);
+  static const _purple = Color(0xFF7C3AED);
+  static const _teal = Color(0xFF0891B2);
+  static const _green = Color(0xFF059669);
+  static const _slate = Color(0xFF64748B);
   static const _black = Color(0xFF0B0B0B);
   static const _white = Color(0xFFFFFFFF);
 
-  static ThemeData light() {
-    final scheme = const ColorScheme.light(
-      primary: _red,
+  static String canonicalId(String themeId) => switch (themeId) {
+    'noir' => 'dark-red',
+    'marble' => 'light-red',
+    'ember' => 'dark-orange',
+    'ocean' => 'dark-blue',
+    'forest' => 'dark-blue',
+    'dusk' => 'dark-purple',
+    _ => themeId,
+  };
+
+  static ThemeMode mode(String themeId) =>
+      canonicalId(themeId).startsWith('light-')
+      ? ThemeMode.light
+      : ThemeMode.dark;
+
+  static Color accent(String themeId) => switch (themeId) {
+    'marble' => _slate,
+    'ocean' => _teal,
+    'forest' => _green,
+    _ => switch (canonicalId(themeId)) {
+      String id when id.endsWith('-blue') => _blue,
+      String id when id.endsWith('-orange') => _orange,
+      String id when id.endsWith('-purple') => _purple,
+      _ => _red,
+    },
+  };
+
+  static ThemeData light([String themeId = 'light-red']) {
+    final accentColor = accent(themeId);
+    final scheme = ColorScheme.light(
+      primary: accentColor,
       onPrimary: _white,
       secondary: _black,
       onSecondary: _white,
@@ -16,7 +50,7 @@ abstract final class AppTheme {
       error: Color(0xFFB00020),
       onError: _white,
       outline: Color(0xFF2A2A2A),
-      surfaceTint: _red,
+      surfaceTint: accentColor,
       inverseSurface: _black,
       onInverseSurface: _white,
     );
@@ -57,7 +91,7 @@ abstract final class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: _red, width: 1.4),
+          borderSide: BorderSide(color: accentColor, width: 1.4),
         ),
         labelStyle: const TextStyle(color: Color(0x8A000000)),
       ),
@@ -68,7 +102,7 @@ abstract final class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: _red,
+          backgroundColor: accentColor,
           foregroundColor: _white,
         ),
       ),
@@ -78,12 +112,12 @@ abstract final class AppTheme {
           side: const BorderSide(color: _black),
         ),
       ),
-      chipTheme: const ChipThemeData(
-        backgroundColor: Color(0xFFFEECEE),
-        selectedColor: Color(0xFFFAD2D9),
-        side: BorderSide(color: Color(0xFFFFCBD4)),
-        labelStyle: TextStyle(color: _black),
-        shape: StadiumBorder(),
+      chipTheme: ChipThemeData(
+        backgroundColor: accentColor.withValues(alpha: 0.08),
+        selectedColor: accentColor.withValues(alpha: 0.18),
+        side: BorderSide(color: accentColor.withValues(alpha: 0.28)),
+        labelStyle: const TextStyle(color: _black),
+        shape: const StadiumBorder(),
       ),
       dividerTheme: const DividerThemeData(color: Color(0xFFD4D4D4)),
       snackBarTheme: const SnackBarThemeData(
@@ -93,9 +127,10 @@ abstract final class AppTheme {
     );
   }
 
-  static ThemeData dark() {
-    final scheme = const ColorScheme.dark(
-      primary: _red,
+  static ThemeData dark([String themeId = 'dark-red']) {
+    final accentColor = accent(themeId);
+    final scheme = ColorScheme.dark(
+      primary: accentColor,
       onPrimary: _white,
       secondary: _white,
       onSecondary: _black,
@@ -104,7 +139,7 @@ abstract final class AppTheme {
       error: Color(0xFFFF6B6B),
       onError: _black,
       outline: Color(0xFFB8B8B8),
-      surfaceTint: _red,
+      surfaceTint: accentColor,
     );
 
     const cardColor = Color(0xFF141414);
@@ -143,7 +178,7 @@ abstract final class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: _red, width: 1.4),
+          borderSide: BorderSide(color: accentColor, width: 1.4),
         ),
         labelStyle: const TextStyle(color: Color(0x8AFFFFFF)),
       ),
@@ -157,7 +192,7 @@ abstract final class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: _red,
+          backgroundColor: accentColor,
           foregroundColor: _white,
         ),
       ),
@@ -167,12 +202,12 @@ abstract final class AppTheme {
           side: const BorderSide(color: _white),
         ),
       ),
-      chipTheme: const ChipThemeData(
-        backgroundColor: Color(0x1FFF3B30),
-        selectedColor: Color(0x38FF3B30),
-        side: BorderSide(color: Color(0x59FF3B30)),
-        labelStyle: TextStyle(color: _white),
-        shape: StadiumBorder(),
+      chipTheme: ChipThemeData(
+        backgroundColor: accentColor.withValues(alpha: 0.12),
+        selectedColor: accentColor.withValues(alpha: 0.24),
+        side: BorderSide(color: accentColor.withValues(alpha: 0.36)),
+        labelStyle: const TextStyle(color: _white),
+        shape: const StadiumBorder(),
       ),
       snackBarTheme: const SnackBarThemeData(
         backgroundColor: _white,

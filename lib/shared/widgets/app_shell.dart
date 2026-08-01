@@ -11,6 +11,7 @@ import '../navigation/shell_navigation.dart';
 import '../state/dashboard_edit_state.dart';
 import '../state/locale_controller.dart';
 import '../state/session_controller.dart';
+import '../state/theme_controller.dart';
 import 'terminal_view_transition.dart';
 
 part 'shell/app_shell_navigation.dart';
@@ -90,6 +91,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   Future<void> _logout(BuildContext context) async {
+    final themeController = ThemeControllerScope.of(context, listen: false);
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -117,6 +119,14 @@ class _AppShellState extends State<AppShell> {
     }
     await widget.sessionController.logout();
     widget.apiClient.invalidateCache();
+    try {
+      final platform = await widget.authRepository.platformPublic();
+      await themeController.syncFromBackend(
+        platform['default_theme'] as String?,
+      );
+    } catch (_) {
+      // Sin red se conserva el último tema efectivo hasta reconectar.
+    }
     if (!context.mounted) return;
     context.go(RouteNames.login);
   }

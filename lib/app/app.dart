@@ -9,6 +9,7 @@ import '../shared/state/backend_controller.dart';
 import '../shared/state/dashboard_edit_state.dart';
 import '../shared/state/locale_controller.dart';
 import '../shared/state/session_controller.dart';
+import '../shared/state/theme_controller.dart';
 import 'router/app_router.dart';
 import 'theme/app_theme.dart';
 
@@ -17,12 +18,14 @@ class App extends StatefulWidget {
     required this.backendController,
     required this.sessionController,
     required this.localeController,
+    required this.themeController,
     super.key,
   });
 
   final BackendController backendController;
   final SessionController sessionController;
   final LocaleController localeController;
+  final ThemeController themeController;
 
   @override
   State<App> createState() => _AppState();
@@ -56,18 +59,28 @@ class _AppState extends State<App> {
 
   Future<void> _revalidatePersistedSession() async {
     final token = widget.sessionController.gaToken;
-    if (token == null || token.isEmpty) return;
+    if (token == null || token.isEmpty) {
+      await _syncPublicTheme();
+      return;
+    }
     try {
-      final userFuture = _authRepository.me(token);
-      final languageFuture = _authRepository.getLanguage(token);
-      final user = await userFuture;
-      final language = await languageFuture;
+      final user = await _authRepository.me(token);
       await widget.sessionController.login(
         token: token,
         user: user,
         remember: true,
       );
-      await widget.localeController.syncFromBackend(language);
+      try {
+        final settings = await _authRepository.getSettings(token);
+        await widget.localeController.syncFromBackend(
+          settings['language'] as String?,
+        );
+        await widget.themeController.syncFromBackend(
+          settings['theme'] as String?,
+        );
+      } catch (_) {
+        // Las preferencias visuales no deben invalidar una sesión válida.
+      }
     } on ApiError catch (error) {
       if (error.statusCode == 401 || error.statusCode == 403) {
         await widget.sessionController.logout();
@@ -76,6 +89,17 @@ class _AppState extends State<App> {
     } catch (_) {
       // Sin red se conserva la sesión con rol mínimo. Nunca se confía en el
       // rol persistido hasta recibir una respuesta válida del backend.
+    }
+  }
+
+  Future<void> _syncPublicTheme() async {
+    try {
+      final platform = await _authRepository.platformPublic();
+      await widget.themeController.syncFromBackend(
+        platform['default_theme'] as String?,
+      );
+    } catch (_) {
+      // Conserva el último tema efectivo cuando el backend no está disponible.
     }
   }
 
@@ -89,13 +113,16 @@ class _AppState extends State<App> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      debugShowCheckedModeBanner: false,
-      title: 'iAgents',
-      theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
-      themeMode: ThemeMode.dark,
-      routerConfig: _router,
+    return ListenableBuilder(
+      listenable: widget.themeController,
+      builder: (context, _) => MaterialApp.router(
+        debugShowCheckedModeBanner: false,
+        title: 'iAgents',
+        theme: AppTheme.light(widget.themeController.themeId),
+        darkTheme: AppTheme.dark(widget.themeController.themeId),
+        themeMode: AppTheme.mode(widget.themeController.themeId),
+        routerConfig: _router,
+      ),
     );
   }
 }

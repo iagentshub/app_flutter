@@ -59,13 +59,13 @@ class ProfileRepository extends ApiRepository {
 
   Future<ProfileSettings> updateSettings(
     String token, {
-    required String theme,
+    String? theme,
     required String language,
   }) async {
     final response = await apiClient.put(
       '/api/settings',
       gaToken: token,
-      body: {'theme': theme, 'language': language},
+      body: {'theme': ?theme, 'language': language},
     );
     return ProfileSettings.fromJson(response.json);
   }

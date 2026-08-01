@@ -8,6 +8,7 @@ import '../../../core/network/api_error.dart';
 import '../../../shared/i18n/locale_loader.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/state/theme_controller.dart';
 import '../repositories/auth_repository.dart';
 
 class VerifyPage extends StatefulWidget {
@@ -47,6 +48,7 @@ class _VerifyPageState extends State<VerifyPage> {
   }
 
   Future<void> _verify() async {
+    final themeController = ThemeControllerScope.of(context, listen: false);
     final t = await _textsFuture;
     final token = widget.token?.trim() ?? '';
     if (token.isEmpty) {
@@ -89,6 +91,12 @@ class _VerifyPageState extends State<VerifyPage> {
 
       final me = await widget.authRepository.me(gaToken);
       await widget.sessionController.login(token: gaToken, user: me);
+      try {
+        final settings = await widget.authRepository.getSettings(gaToken);
+        await themeController.syncFromBackend(settings['theme'] as String?);
+      } catch (_) {
+        // La verificación no debe fallar por una preferencia visual.
+      }
 
       if (!mounted) return;
       context.go(RouteNames.dashboard);

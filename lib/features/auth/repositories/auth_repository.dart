@@ -120,11 +120,15 @@ class AuthRepository {
   /// no se pudo obtener (sesión inválida, backend caído, etc.).
   Future<String?> getLanguage(String gaToken) async {
     try {
-      final response = await _apiClient.get('/api/settings', gaToken: gaToken);
-      return response.json['language'] as String?;
+      return (await getSettings(gaToken))['language'] as String?;
     } catch (_) {
       return null;
     }
+  }
+
+  Future<Map<String, dynamic>> getSettings(String gaToken) async {
+    final response = await _apiClient.get('/api/settings', gaToken: gaToken);
+    return response.json;
   }
 
   /// Limpia la caché de peticiones (ver ApiClient) — se llama tras iniciar

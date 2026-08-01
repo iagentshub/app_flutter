@@ -8,6 +8,7 @@ import 'shared/state/backend_controller.dart';
 import 'shared/state/brand_icon_controller.dart';
 import 'shared/state/locale_controller.dart';
 import 'shared/state/session_controller.dart';
+import 'shared/state/theme_controller.dart';
 import 'shared/widgets/brand_icon.dart';
 import 'shared/widgets/launch_splash.dart';
 import 'shared/widgets/terminal_view_transition.dart';
@@ -19,7 +20,7 @@ Future<void> main() async {
     Stripe.publishableKey = stripePublishableKey;
     await Stripe.instance.applySettings();
   }
-  // Los 4 bootstrap son independientes entre sí (cada uno lee su propia
+  // Los bootstrap son independientes entre sí (cada uno lee su propia
   // clave de SharedPreferences) — en paralelo en vez de en cadena ahorra
   // esperas de plugin channel en el arranque.
   final results = await Future.wait([
@@ -27,11 +28,13 @@ Future<void> main() async {
     SessionController.bootstrap(),
     LocaleController.bootstrap(),
     BrandIconController.bootstrap(),
+    ThemeController.bootstrap(),
   ]);
   final backendController = results[0] as BackendController;
   final sessionController = results[1] as SessionController;
   final localeController = results[2] as LocaleController;
   final brandIconController = results[3] as BrandIconController;
+  final themeController = results[4] as ThemeController;
 
   runApp(
     _BootApp(
@@ -39,6 +42,7 @@ Future<void> main() async {
       sessionController: sessionController,
       localeController: localeController,
       brandIconController: brandIconController,
+      themeController: themeController,
     ),
   );
 }
@@ -49,12 +53,14 @@ class _BootApp extends StatefulWidget {
     required this.sessionController,
     required this.localeController,
     required this.brandIconController,
+    required this.themeController,
   });
 
   final BackendController backendController;
   final SessionController sessionController;
   final LocaleController localeController;
   final BrandIconController brandIconController;
+  final ThemeController themeController;
 
   @override
   State<_BootApp> createState() => _BootAppState();
@@ -70,23 +76,27 @@ class _BootAppState extends State<_BootApp> {
 
   @override
   Widget build(BuildContext context) {
-    return BrandIconScope(
-      controller: widget.brandIconController,
-      child: _showSplash
-          ? MaterialApp(
-              debugShowCheckedModeBanner: false,
-              home: LaunchSplash(
-                backendController: widget.backendController,
-                onFinished: _onSplashFinished,
+    return ThemeControllerScope(
+      controller: widget.themeController,
+      child: BrandIconScope(
+        controller: widget.brandIconController,
+        child: _showSplash
+            ? MaterialApp(
+                debugShowCheckedModeBanner: false,
+                home: LaunchSplash(
+                  backendController: widget.backendController,
+                  onFinished: _onSplashFinished,
+                ),
+              )
+            : TerminalViewTransition(
+                child: App(
+                  backendController: widget.backendController,
+                  sessionController: widget.sessionController,
+                  localeController: widget.localeController,
+                  themeController: widget.themeController,
+                ),
               ),
-            )
-          : TerminalViewTransition(
-              child: App(
-                backendController: widget.backendController,
-                sessionController: widget.sessionController,
-                localeController: widget.localeController,
-              ),
-            ),
+      ),
     );
   }
 }

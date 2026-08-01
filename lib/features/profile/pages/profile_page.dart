@@ -15,6 +15,7 @@ import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/brand_icon_controller.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/state/theme_controller.dart';
 import '../../../shared/widgets/brand_icon.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../widgets/profile_groups_section.dart';
@@ -94,6 +95,8 @@ class _ProfilePageState extends State<ProfilePage>
   final _newPasswordController = TextEditingController();
 
   String _theme = 'dark-red';
+  String _defaultTheme = 'dark-red';
+  bool _themeConfigurable = true;
   String _language = 'es';
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
@@ -156,6 +159,8 @@ class _ProfilePageState extends State<ProfilePage>
       setState(() {
         _bundle = bundle;
         _theme = bundle.settings.theme;
+        _defaultTheme = bundle.settings.defaultTheme;
+        _themeConfigurable = bundle.settings.themeConfigurable;
         _language = bundle.settings.language;
         _bioController.text = bundle.social.bio ?? '';
         _isEmailPublic = bundle.session.isEmailPublic;
@@ -165,6 +170,10 @@ class _ProfilePageState extends State<ProfilePage>
         _loading = false;
       });
       widget.localeController.syncFromBackend(bundle.settings.language);
+      ThemeControllerScope.of(
+        context,
+        listen: false,
+      ).syncFromBackend(bundle.settings.theme);
     } on ApiError catch (error) {
       if (!mounted) return;
       setState(() {
@@ -188,15 +197,21 @@ class _ProfilePageState extends State<ProfilePage>
     try {
       final updated = await _repository.updateSettings(
         token,
-        theme: _theme,
+        theme: _themeConfigurable ? _theme : null,
         language: _language,
       );
       if (!mounted) return;
       setState(() {
         _theme = updated.theme;
+        _defaultTheme = updated.defaultTheme;
+        _themeConfigurable = updated.themeConfigurable;
         _language = updated.language;
       });
       widget.localeController.syncFromBackend(updated.language);
+      await ThemeControllerScope.of(
+        context,
+        listen: false,
+      ).syncFromBackend(updated.theme);
       _showMessage('Preferencias guardadas');
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);

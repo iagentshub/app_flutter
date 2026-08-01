@@ -90,20 +90,3 @@ class _BrandIconChoice extends StatelessWidget {
     );
   }
 }
-
-const _themes = [
-  'dark-red',
-  'dark-blue',
-  'dark-orange',
-  'dark-purple',
-  'light-red',
-  'light-blue',
-  'light-orange',
-  'light-purple',
-  'noir',
-  'marble',
-  'ember',
-  'ocean',
-  'forest',
-  'dusk',
-];

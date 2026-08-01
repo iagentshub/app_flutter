@@ -13,9 +13,7 @@ void main() {
         home: Navigator(
           key: navigatorKey,
           pages: const [
-            MaterialPage<void>(
-              child: Scaffold(body: Text('Sección base')),
-            ),
+            MaterialPage<void>(child: Scaffold(body: Text('Sección base'))),
           ],
           onDidRemovePage: (page) {},
         ),

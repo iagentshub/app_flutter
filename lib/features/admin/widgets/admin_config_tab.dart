@@ -34,6 +34,8 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
   late bool _oauthApple;
   late bool _oauthMicrosoft;
   late bool _autoUpdate;
+  late bool _usersCanConfigureTheme;
+  late String _defaultTheme;
 
   bool _saving = false;
   String? _saveMsg;
@@ -71,6 +73,9 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
     _oauthApple = cfg['oauth_apple_enabled'] != false;
     _oauthMicrosoft = cfg['oauth_microsoft_enabled'] != false;
     _autoUpdate = cfg['auto_update_enabled'] != false;
+    _usersCanConfigureTheme = cfg['users_can_configure_theme'] != false;
+    _defaultTheme = (cfg['default_theme'] ?? 'dark-red').toString();
+    if (!kThemeIds.contains(_defaultTheme)) _defaultTheme = 'dark-red';
   }
 
   @override
@@ -93,6 +98,7 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
   }
 
   Future<void> _save() async {
+    final themeController = ThemeControllerScope.of(context, listen: false);
     setState(() {
       _saving = true;
       _saveMsg = null;
@@ -114,12 +120,22 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
         'oauth_google_enabled': _oauthGoogle,
         'oauth_apple_enabled': _oauthApple,
         'oauth_microsoft_enabled': _oauthMicrosoft,
+        'users_can_configure_theme': _usersCanConfigureTheme,
+        'default_theme': _defaultTheme,
       };
       final updated = await widget.repository.updatePlatformSettings(
         widget.token,
         payload,
       );
       widget.onSaved(updated);
+      try {
+        final effective = await widget.repository.getUserSettings(widget.token);
+        await themeController.syncFromBackend(effective['theme'] as String?);
+      } catch (_) {
+        if (!_usersCanConfigureTheme) {
+          await themeController.syncFromBackend(_defaultTheme);
+        }
+      }
       if (!mounted) return;
       setState(
         () => _saveMsg = _tx('admin.config_saved', 'Configuración guardada'),
@@ -327,6 +343,47 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
               labelText:
                   '${_tx('admin.config_max_sessions', 'Máx. sesiones simultáneas')} ${_tx('admin.config_unlimited_hint', '(0=∞)')}',
             ),
+          ),
+        ]),
+        _sectionCard(_tx('admin.config_section_appearance', 'Apariencia'), [
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(
+              _tx(
+                'admin.config_user_theme_enabled',
+                'Permitir que los usuarios elijan el tema',
+              ),
+            ),
+            subtitle: Text(
+              _tx(
+                'admin.config_user_theme_hint',
+                'Si se desactiva, toda la aplicación usará el tema definido aquí.',
+              ),
+            ),
+            value: _usersCanConfigureTheme,
+            onChanged: (value) =>
+                setState(() => _usersCanConfigureTheme = value),
+          ),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            initialValue: _defaultTheme,
+            decoration: InputDecoration(
+              labelText: _tx(
+                'admin.config_default_theme',
+                'Tema predeterminado',
+              ),
+            ),
+            items: kThemeIds
+                .map(
+                  (theme) => DropdownMenuItem<String>(
+                    value: theme,
+                    child: Text(theme),
+                  ),
+                )
+                .toList(),
+            onChanged: (value) {
+              if (value != null) setState(() => _defaultTheme = value);
+            },
           ),
         ]),
         _sectionCard(

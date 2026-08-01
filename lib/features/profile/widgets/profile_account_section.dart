@@ -87,24 +87,36 @@ extension _ProfileAccountSection on _ProfilePageState {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                DropdownButtonFormField<String>(
-                  initialValue: _theme,
-                  decoration: InputDecoration(
-                    labelText: _tx('profile.theme_label', 'Tema'),
+                if (_themeConfigurable)
+                  DropdownButtonFormField<String>(
+                    initialValue: _theme,
+                    decoration: InputDecoration(
+                      labelText: _tx('profile.theme_label', 'Tema'),
+                    ),
+                    items: kThemeIds
+                        .map(
+                          (theme) => DropdownMenuItem<String>(
+                            value: theme,
+                            child: Text(theme),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      _refresh(() => _theme = value);
+                    },
+                  )
+                else
+                  InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: _tx('profile.theme_label', 'Tema'),
+                      helperText: _tx(
+                        'profile.theme_managed_hint',
+                        'El tema está definido por el administrador.',
+                      ),
+                    ),
+                    child: Text(_defaultTheme),
                   ),
-                  items: _themes
-                      .map(
-                        (theme) => DropdownMenuItem<String>(
-                          value: theme,
-                          child: Text(theme),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value == null) return;
-                    _refresh(() => _theme = value);
-                  },
-                ),
                 const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
                   initialValue: _language,

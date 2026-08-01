@@ -34,15 +34,24 @@ class ProfileSession {
 }
 
 class ProfileSettings {
-  const ProfileSettings({required this.theme, required this.language});
+  const ProfileSettings({
+    required this.theme,
+    required this.language,
+    required this.themeConfigurable,
+    required this.defaultTheme,
+  });
 
   final String theme;
   final String language;
+  final bool themeConfigurable;
+  final String defaultTheme;
 
   factory ProfileSettings.fromJson(Map<String, dynamic> json) {
     return ProfileSettings(
       theme: json['theme'] as String? ?? 'dark-red',
       language: json['language'] as String? ?? 'es',
+      themeConfigurable: json['theme_configurable'] != false,
+      defaultTheme: json['default_theme'] as String? ?? 'dark-red',
     );
   }
 }

@@ -279,10 +279,7 @@ class WorkflowCard extends StatelessWidget {
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   icon: const Icon(Icons.play_arrow_rounded, size: 16),
-                  label: Text(
-                    runLabel,
-                    style: const TextStyle(fontSize: 12),
-                  ),
+                  label: Text(runLabel, style: const TextStyle(fontSize: 12)),
                 ),
                 const Spacer(),
                 const SizedBox(width: 8),
