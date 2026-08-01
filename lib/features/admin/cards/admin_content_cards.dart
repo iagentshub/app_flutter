@@ -137,19 +137,13 @@ extension _AdminContentCards on _AdminPageState {
   Widget _buildConfigTab() {
     final token = _token;
     if (token == null) return const SizedBox.shrink();
-    return Align(
-      alignment: Alignment.topCenter,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 900),
-        child: _AdminConfigTab(
-          key: ValueKey(_platformSettings.hashCode),
-          repository: _repository,
-          token: token,
-          initialSettings: _platformSettings ?? const {},
-          tx: _tx,
-          onSaved: (settings) => _refresh(() => _platformSettings = settings),
-        ),
-      ),
+    return _AdminConfigTab(
+      key: ValueKey(_platformSettings.hashCode),
+      repository: _repository,
+      token: token,
+      initialSettings: _platformSettings ?? const {},
+      tx: _tx,
+      onSaved: (settings) => _refresh(() => _platformSettings = settings),
     );
   }
 }

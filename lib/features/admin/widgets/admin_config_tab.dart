@@ -247,7 +247,7 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
 
   Widget _sectionCard(String title, List<Widget> children) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -267,248 +267,253 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        _sectionCard(_tx('admin.config_section_registration', 'Registro'), [
-          DropdownButtonFormField<String>(
-            initialValue: _registration,
-            decoration: InputDecoration(
-              labelText: _tx('admin.config_mode_label', 'Modo'),
-            ),
-            items: [
-              DropdownMenuItem(
-                value: 'open',
-                child: Text(_tx('admin.config_mode_open', 'Abierto')),
-              ),
-              DropdownMenuItem(
-                value: 'closed',
-                child: Text(_tx('admin.config_mode_closed', 'Cerrado')),
-              ),
-            ],
-            onChanged: (v) => setState(() => _registration = v ?? 'open'),
+    final sections = <Widget>[
+      _sectionCard(_tx('admin.config_section_registration', 'Registro'), [
+        DropdownButtonFormField<String>(
+          initialValue: _registration,
+          decoration: InputDecoration(
+            labelText: _tx('admin.config_mode_label', 'Modo'),
           ),
-          const SizedBox(height: 10),
+          items: [
+            DropdownMenuItem(
+              value: 'open',
+              child: Text(_tx('admin.config_mode_open', 'Abierto')),
+            ),
+            DropdownMenuItem(
+              value: 'closed',
+              child: Text(_tx('admin.config_mode_closed', 'Cerrado')),
+            ),
+          ],
+          onChanged: (v) => setState(() => _registration = v ?? 'open'),
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: _maxUsersController,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            labelText:
+                '${_tx('admin.config_max_users', 'Máx. usuarios')} ${_tx('admin.config_unlimited_hint', '(0=∞)')}',
+          ),
+        ),
+        const SizedBox(height: 6),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            _tx('admin.config_email_verify', 'Verificar email al registrarse'),
+          ),
+          value: _emailVerify,
+          onChanged: (v) => setState(() => _emailVerify = v),
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            _tx('admin.config_guest_enabled', 'Acceso como invitado'),
+          ),
+          value: _guestEnabled,
+          onChanged: (v) => setState(() => _guestEnabled = v),
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            _tx(
+              'admin.config_landing_enabled',
+              'Landing de presentación en "/"',
+            ),
+          ),
+          subtitle: Text(
+            _tx(
+              'admin.config_landing_hint',
+              'Si está desactivado, "/" redirige directo a /login/',
+            ),
+          ),
+          value: _landingEnabled,
+          onChanged: (v) => setState(() => _landingEnabled = v),
+        ),
+      ]),
+      _sectionCard(_tx('admin.config_section_sessions', 'Sesiones'), [
+        TextField(
+          controller: _maxSessionsController,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            labelText:
+                '${_tx('admin.config_max_sessions', 'Máx. sesiones simultáneas')} ${_tx('admin.config_unlimited_hint', '(0=∞)')}',
+          ),
+        ),
+      ]),
+      _sectionCard(_tx('admin.config_section_appearance', 'Apariencia'), [
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            _tx(
+              'admin.config_user_theme_enabled',
+              'Permitir que los usuarios elijan el tema',
+            ),
+          ),
+          subtitle: Text(
+            _tx(
+              'admin.config_user_theme_hint',
+              'Si se desactiva, toda la aplicación usará el tema definido aquí.',
+            ),
+          ),
+          value: _usersCanConfigureTheme,
+          onChanged: (value) => setState(() => _usersCanConfigureTheme = value),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          initialValue: _defaultTheme,
+          decoration: InputDecoration(
+            labelText: _tx('admin.config_default_theme', 'Tema predeterminado'),
+          ),
+          items: kThemeIds
+              .map(
+                (theme) =>
+                    DropdownMenuItem<String>(value: theme, child: Text(theme)),
+              )
+              .toList(),
+          onChanged: (value) {
+            if (value != null) setState(() => _defaultTheme = value);
+          },
+        ),
+      ]),
+      _sectionCard(
+        _tx('admin.config_section_centinel', 'Centinel · Stress Test'),
+        [
           TextField(
-            controller: _maxUsersController,
+            controller: _stressConcurrencyController,
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
               labelText:
-                  '${_tx('admin.config_max_users', 'Máx. usuarios')} ${_tx('admin.config_unlimited_hint', '(0=∞)')}',
+                  '${_tx('admin.config_stress_concurrency', 'Concurrencia máx.')} ${_tx('admin.config_unlimited_500_hint', '(0=∞, máx 500)')}',
             ),
           ),
+        ],
+      ),
+      _sectionCard(_tx('admin.config_section_logs', 'Logs'), [
+        TextField(
+          controller: _logRetentionController,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            labelText:
+                '${_tx('admin.config_retention', 'Retención')} ${_tx('admin.config_days_hint', '(días)')}',
+          ),
+        ),
+      ]),
+      _sectionCard(_tx('admin.config_section_billing', 'Facturación'), [
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            _tx(
+              'admin.config_billing_enabled',
+              'Activar planes de suscripción',
+            ),
+          ),
+          value: _billingEnabled,
+          onChanged: (v) => setState(() => _billingEnabled = v),
+        ),
+      ]),
+      _sectionCard(_tx('admin.config_section_oauth', 'Login social'), [
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            _tx('admin.config_oauth_google', 'Mostrar botón de Google'),
+          ),
+          value: _oauthGoogle,
+          onChanged: (v) => setState(() => _oauthGoogle = v),
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            _tx('admin.config_oauth_apple', 'Mostrar botón de Apple'),
+          ),
+          value: _oauthApple,
+          onChanged: (v) => setState(() => _oauthApple = v),
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            _tx('admin.config_oauth_microsoft', 'Mostrar botón de Microsoft'),
+          ),
+          value: _oauthMicrosoft,
+          onChanged: (v) => setState(() => _oauthMicrosoft = v),
+        ),
+      ]),
+      _sectionCard(_tx('admin.config_section_updates', 'Actualizaciones'), [
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            _tx(
+              'admin.config_auto_update',
+              'Actualización automática (Watchtower)',
+            ),
+          ),
+          value: _autoUpdate,
+          onChanged: _toggleAutoUpdate,
+        ),
+        if (_autoUpdateResult != null)
+          Text(
+            _autoUpdateResult!,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        const SizedBox(height: 8),
+        SecondaryButton(
+          onPressed: _checkingUpdate ? null : _checkUpdate,
+          child: Text(
+            _checkingUpdate
+                ? _tx('admin.config_check_update_loading', 'Buscando...')
+                : _tx('admin.config_check_update_btn', 'Buscar actualización'),
+          ),
+        ),
+        if (_checkResult != null) ...[
           const SizedBox(height: 6),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(
-              _tx(
-                'admin.config_email_verify',
-                'Verificar email al registrarse',
-              ),
-            ),
-            value: _emailVerify,
-            onChanged: (v) => setState(() => _emailVerify = v),
-          ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(
-              _tx('admin.config_guest_enabled', 'Acceso como invitado'),
-            ),
-            value: _guestEnabled,
-            onChanged: (v) => setState(() => _guestEnabled = v),
-          ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(
-              _tx(
-                'admin.config_landing_enabled',
-                'Landing de presentación en "/"',
-              ),
-            ),
-            subtitle: Text(
-              _tx(
-                'admin.config_landing_hint',
-                'Si está desactivado, "/" redirige directo a /login/',
-              ),
-            ),
-            value: _landingEnabled,
-            onChanged: (v) => setState(() => _landingEnabled = v),
-          ),
-        ]),
-        _sectionCard(_tx('admin.config_section_sessions', 'Sesiones'), [
-          TextField(
-            controller: _maxSessionsController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText:
-                  '${_tx('admin.config_max_sessions', 'Máx. sesiones simultáneas')} ${_tx('admin.config_unlimited_hint', '(0=∞)')}',
+          Text(
+            _checkResult!,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: _checkOk == null
+                  ? null
+                  : (_checkOk == true
+                        ? const Color(0xFF059669)
+                        : const Color(0xFFD97706)),
             ),
           ),
-        ]),
-        _sectionCard(_tx('admin.config_section_appearance', 'Apariencia'), [
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(
-              _tx(
-                'admin.config_user_theme_enabled',
-                'Permitir que los usuarios elijan el tema',
-              ),
-            ),
-            subtitle: Text(
-              _tx(
-                'admin.config_user_theme_hint',
-                'Si se desactiva, toda la aplicación usará el tema definido aquí.',
-              ),
-            ),
-            value: _usersCanConfigureTheme,
-            onChanged: (value) =>
-                setState(() => _usersCanConfigureTheme = value),
+        ],
+      ]),
+    ];
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.all(16),
+          sliver: ResponsiveSliverMasonryGrid(
+            minCardWidth: 320,
+            maxColumns: 3,
+            itemCount: sections.length,
+            itemBuilder: (context, index) => sections[index],
           ),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            initialValue: _defaultTheme,
-            decoration: InputDecoration(
-              labelText: _tx(
-                'admin.config_default_theme',
-                'Tema predeterminado',
-              ),
-            ),
-            items: kThemeIds
-                .map(
-                  (theme) => DropdownMenuItem<String>(
-                    value: theme,
-                    child: Text(theme),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          sliver: SliverToBoxAdapter(
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                PrimaryButton(
+                  onPressed: _saving ? null : _save,
+                  child: Text(
+                    _saving
+                        ? _tx('admin.config_save_loading', 'Guardando...')
+                        : _tx('admin.config_save_btn', 'Guardar configuración'),
                   ),
-                )
-                .toList(),
-            onChanged: (value) {
-              if (value != null) setState(() => _defaultTheme = value);
-            },
-          ),
-        ]),
-        _sectionCard(
-          _tx('admin.config_section_centinel', 'Centinel · Stress Test'),
-          [
-            TextField(
-              controller: _stressConcurrencyController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText:
-                    '${_tx('admin.config_stress_concurrency', 'Concurrencia máx.')} ${_tx('admin.config_unlimited_500_hint', '(0=∞, máx 500)')}',
-              ),
+                ),
+                if (_saveMsg != null)
+                  Text(
+                    _saveMsg!,
+                    style: const TextStyle(color: Color(0xFF059669)),
+                  ),
+              ],
             ),
-          ],
+          ),
         ),
-        _sectionCard(_tx('admin.config_section_logs', 'Logs'), [
-          TextField(
-            controller: _logRetentionController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText:
-                  '${_tx('admin.config_retention', 'Retención')} ${_tx('admin.config_days_hint', '(días)')}',
-            ),
-          ),
-        ]),
-        _sectionCard(_tx('admin.config_section_billing', 'Facturación'), [
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(
-              _tx(
-                'admin.config_billing_enabled',
-                'Activar planes de suscripción',
-              ),
-            ),
-            value: _billingEnabled,
-            onChanged: (v) => setState(() => _billingEnabled = v),
-          ),
-        ]),
-        _sectionCard(_tx('admin.config_section_oauth', 'Login social'), [
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(
-              _tx('admin.config_oauth_google', 'Mostrar botón de Google'),
-            ),
-            value: _oauthGoogle,
-            onChanged: (v) => setState(() => _oauthGoogle = v),
-          ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(
-              _tx('admin.config_oauth_apple', 'Mostrar botón de Apple'),
-            ),
-            value: _oauthApple,
-            onChanged: (v) => setState(() => _oauthApple = v),
-          ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(
-              _tx('admin.config_oauth_microsoft', 'Mostrar botón de Microsoft'),
-            ),
-            value: _oauthMicrosoft,
-            onChanged: (v) => setState(() => _oauthMicrosoft = v),
-          ),
-        ]),
-        _sectionCard(_tx('admin.config_section_updates', 'Actualizaciones'), [
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(
-              _tx(
-                'admin.config_auto_update',
-                'Actualización automática (Watchtower)',
-              ),
-            ),
-            value: _autoUpdate,
-            onChanged: _toggleAutoUpdate,
-          ),
-          if (_autoUpdateResult != null)
-            Text(
-              _autoUpdateResult!,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          const SizedBox(height: 8),
-          SecondaryButton(
-            onPressed: _checkingUpdate ? null : _checkUpdate,
-            child: Text(
-              _checkingUpdate
-                  ? _tx('admin.config_check_update_loading', 'Buscando...')
-                  : _tx(
-                      'admin.config_check_update_btn',
-                      'Buscar actualización',
-                    ),
-            ),
-          ),
-          if (_checkResult != null) ...[
-            const SizedBox(height: 6),
-            Text(
-              _checkResult!,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: _checkOk == null
-                    ? null
-                    : (_checkOk == true
-                          ? const Color(0xFF059669)
-                          : const Color(0xFFD97706)),
-              ),
-            ),
-          ],
-        ]),
-        Wrap(
-          spacing: 12,
-          runSpacing: 8,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            PrimaryButton(
-              onPressed: _saving ? null : _save,
-              child: Text(
-                _saving
-                    ? _tx('admin.config_save_loading', 'Guardando...')
-                    : _tx('admin.config_save_btn', 'Guardar configuración'),
-              ),
-            ),
-            if (_saveMsg != null)
-              Text(_saveMsg!, style: const TextStyle(color: Color(0xFF059669))),
-          ],
-        ),
-        const SizedBox(height: 24),
       ],
     );
   }
