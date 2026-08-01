@@ -64,7 +64,10 @@ class LabelGroupCard extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               group.exclusive
-                  ? text('labels.exclusive_hint', 'Exclusivas (solo una activa)')
+                  ? text(
+                      'labels.exclusive_hint',
+                      'Exclusivas (solo una activa)',
+                    )
                   : text('labels.multi_hint', 'Multi-selección'),
               style: Theme.of(context).textTheme.labelSmall,
             ),
@@ -94,9 +97,9 @@ class _LabelEntryCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(
-          alpha: 0.4,
-        ),
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(

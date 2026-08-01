@@ -14,6 +14,17 @@ class Validators {
     return null;
   }
 
+  static String? username(String? value) {
+    final normalized = value?.trim().toLowerCase() ?? '';
+    if (normalized.isEmpty) return 'El usuario es obligatorio';
+    if (!RegExp(r'^[a-z0-9._-]{5,32}$').hasMatch(normalized) ||
+        normalized == 'guest' ||
+        normalized.startsWith('guest_')) {
+      return 'Usa entre 5 y 32 caracteres: a-z, 0-9, punto, guion o guion bajo';
+    }
+    return null;
+  }
+
   static String? backendUrl(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'La URL del backend es obligatoria';

@@ -10,6 +10,6 @@ abstract final class BackendDefaults {
       id: 'iagentshub_www',
       label: 'www.iagentshub.com',
       baseUrl: 'https://www.iagentshub.com',
-    )
+    ),
   ];
 }

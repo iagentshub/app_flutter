@@ -73,7 +73,7 @@ class ProfileRepository extends ApiRepository {
   Future<void> updateSocialProfile(
     String token, {
     required String bio,
-    required String emailPublic,
+    required bool isEmailPublic,
     required String github,
     required String cv,
     required List<String> languages,
@@ -83,7 +83,7 @@ class ProfileRepository extends ApiRepository {
       gaToken: token,
       body: {
         'bio': bio,
-        'email_public': emailPublic,
+        'is_email_public': isEmailPublic,
         'github': github,
         'cv': cv,
         'languages': languages,

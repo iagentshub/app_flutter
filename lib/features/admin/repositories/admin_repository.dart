@@ -45,7 +45,7 @@ class AdminRepository extends ApiRepository {
     await apiClient.put(
       '/api/admin/resources/${Uri.encodeComponent(resourceType)}/${Uri.encodeComponent(resourceId)}/owner',
       gaToken: token,
-      body: {'owner_id': newOwner},
+      body: {'username': newOwner},
     );
   }
 
@@ -102,6 +102,7 @@ class AdminRepository extends ApiRepository {
 
   Future<void> createUser(
     String token, {
+    required String username,
     required String email,
     required String password,
     String? displayName,
@@ -111,6 +112,7 @@ class AdminRepository extends ApiRepository {
       '/api/admin/users',
       gaToken: token,
       body: {
+        'username': username.trim().toLowerCase(),
         'email': email,
         'password': password,
         if (displayName != null && displayName.isNotEmpty)

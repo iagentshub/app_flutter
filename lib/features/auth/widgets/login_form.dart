@@ -28,7 +28,11 @@ extension _LoginForm on _LoginPageState {
                   ? 'Access your agent platform'
                   : 'Accede a tu espacio de agentes',
             );
-            final fieldEmail = _txt(t, 'field_email', 'Email');
+            final fieldIdentifier = _txt(
+              t,
+              'field_identifier',
+              _isEnglish ? 'Username or email' : 'Usuario o email',
+            );
             final fieldPassword = _txt(
               t,
               'field_password',
@@ -149,13 +153,19 @@ extension _LoginForm on _LoginPageState {
 
                   // -- Credenciales --------------------------------------------------
                   TextFormField(
-                    controller: _emailController,
-                    validator: Validators.email,
-                    keyboardType: TextInputType.emailAddress,
+                    controller: _identifierController,
+                    validator: (value) => Validators.requiredField(
+                      value,
+                      message: _isEnglish
+                          ? 'Username or email is required'
+                          : 'El usuario o email es obligatorio',
+                    ),
+                    autocorrect: false,
+                    textCapitalization: TextCapitalization.none,
                     decoration: InputDecoration(
-                      labelText: fieldEmail,
+                      labelText: fieldIdentifier,
                       border: const OutlineInputBorder(),
-                      prefixIcon: const Icon(Icons.mail_outline, size: 20),
+                      prefixIcon: const Icon(Icons.person_outline, size: 20),
                     ),
                   ),
                   const SizedBox(height: 12),

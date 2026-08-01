@@ -44,7 +44,7 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _loading = false;
   bool _showPassword = false;
@@ -59,7 +59,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _oauthMicrosoftEnabled = false;
   _BackendStatus _backendStatus = _BackendStatus.checking;
 
-  static const _rememberedEmailKey = 'remembered_email';
+  static const _rememberedAccountKey = 'remembered_account';
 
   bool get _isEnglish => widget.localeController.isEnglish;
 
@@ -87,10 +87,14 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _loadRememberedAccount() async {
     final prefs = await LocalStore.instance();
-    final rememberedEmail = prefs.getString(_rememberedEmailKey);
-    if (!mounted || rememberedEmail == null || rememberedEmail.isEmpty) return;
+    final rememberedAccount =
+        prefs.getString(_rememberedAccountKey) ??
+        prefs.getString('remembered_email');
+    if (!mounted || rememberedAccount == null || rememberedAccount.isEmpty) {
+      return;
+    }
     setState(() {
-      _emailController.text = rememberedEmail;
+      _identifierController.text = rememberedAccount;
       _rememberAccount = true;
     });
   }
@@ -98,16 +102,21 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _persistRememberedAccount() async {
     final prefs = await LocalStore.instance();
     if (_rememberAccount) {
-      await prefs.setString(_rememberedEmailKey, _emailController.text.trim());
+      await prefs.setString(
+        _rememberedAccountKey,
+        _identifierController.text.trim(),
+      );
+      await prefs.remove('remembered_email');
     } else {
-      await prefs.remove(_rememberedEmailKey);
+      await prefs.remove(_rememberedAccountKey);
+      await prefs.remove('remembered_email');
     }
   }
 
   @override
   void dispose() {
     widget.localeController.removeListener(_onLocaleChanged);
-    _emailController.dispose();
+    _identifierController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -191,7 +200,7 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       final (result, token) = await widget.authRepository.login(
-        email: _emailController.text,
+        identifier: _identifierController.text,
         password: _passwordController.text,
       );
       if (!result.ok) {

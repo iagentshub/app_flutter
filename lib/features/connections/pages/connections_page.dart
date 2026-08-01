@@ -294,7 +294,10 @@ class _ConnectionsPageState extends State<ConnectionsPage>
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo cambiar el estado de la conexión', isError: true);
+      _showMessage(
+        'No se pudo cambiar el estado de la conexión',
+        isError: true,
+      );
     }
   }
 

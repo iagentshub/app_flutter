@@ -173,7 +173,7 @@ extension _AdminPeopleCards on _AdminPageState {
   Widget _buildGroupCard(Map<String, dynamic> group) {
     final name = (group['name'] ?? group['id'] ?? '').toString();
     final disabled = (group['status'] ?? 'active').toString() == 'disabled';
-    final creator = (group['created_by'] ?? '—').toString();
+    final creator = (group['created_by_username'] ?? '—').toString();
     final members = _asInt(group['member_count']);
     final connections = _asInt(group['connections_count']);
     final agents = _asInt(group['agents_count']);

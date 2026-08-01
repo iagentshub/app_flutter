@@ -358,9 +358,7 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     final canvasPointUnderFocal = startLocalFocal / startScale;
     final focalDelta = focalGlobal - _gestureStartFocalGlobal;
     final newPan =
-        startPan +
-        focalDelta +
-        canvasPointUnderFocal * (startScale - newScale);
+        startPan + focalDelta + canvasPointUnderFocal * (startScale - newScale);
     setState(() {
       _scale = newScale;
       _panOffset = _clampPan(newPan, viewport, canvasSize, newScale);

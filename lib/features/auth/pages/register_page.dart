@@ -26,6 +26,7 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
+  final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _loading = false;
@@ -57,6 +58,7 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   void dispose() {
     widget.localeController.removeListener(_onLocaleChanged);
+    _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -85,6 +87,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
     try {
       final ok = await widget.authRepository.register(
+        username: _usernameController.text,
         email: _emailController.text,
         password: _passwordController.text,
       );
@@ -176,6 +179,27 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                               const SizedBox(height: 12),
                             ],
+                            TextFormField(
+                              controller: _usernameController,
+                              validator: Validators.username,
+                              enabled: _registrationEnabled,
+                              autocorrect: false,
+                              textCapitalization: TextCapitalization.none,
+                              decoration: InputDecoration(
+                                labelText: _txt(
+                                  t,
+                                  'register.username_label',
+                                  'Usuario público *',
+                                ),
+                                helperText: _txt(
+                                  t,
+                                  'register.username_hint',
+                                  '5–32 caracteres. No se podrá cambiar.',
+                                ),
+                                border: const OutlineInputBorder(),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
                             TextFormField(
                               controller: _emailController,
                               validator: Validators.email,

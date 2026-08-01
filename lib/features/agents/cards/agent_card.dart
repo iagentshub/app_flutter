@@ -56,7 +56,11 @@ class AgentCard extends StatelessWidget {
     ];
     if (item.connectionId.isNotEmpty) {
       nodes.add(
-        GraphNode(id: 'connection', label: item.connectionId, type: 'connection'),
+        GraphNode(
+          id: 'connection',
+          label: item.connectionId,
+          type: 'connection',
+        ),
       );
     }
     for (final skill in item.skills) {
@@ -64,7 +68,11 @@ class AgentCard extends StatelessWidget {
     }
     for (final knowledge in item.knowledge) {
       nodes.add(
-        GraphNode(id: 'knowledge-$knowledge', label: knowledge, type: 'knowledge'),
+        GraphNode(
+          id: 'knowledge-$knowledge',
+          label: knowledge,
+          type: 'knowledge',
+        ),
       );
     }
     if (item.useMemory) {

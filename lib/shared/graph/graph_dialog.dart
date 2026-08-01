@@ -110,7 +110,11 @@ class _ResourceGraphDialogContentState
         widget.sortHierarchyHorizontalLabel,
         Icons.align_horizontal_left,
       ),
-      _sortMenuItem(GraphSortMode.radial, widget.sortRadialLabel, Icons.hub_outlined),
+      _sortMenuItem(
+        GraphSortMode.radial,
+        widget.sortRadialLabel,
+        Icons.hub_outlined,
+      ),
     ];
   }
 

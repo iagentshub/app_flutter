@@ -16,6 +16,7 @@ import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
+import '../../../utils/validators.dart';
 
 part '../dialogs/admin_agent_dialog.dart';
 part '../dialogs/admin_filter_dialogs.dart';
@@ -52,7 +53,7 @@ String _fmtDate(Object? raw) {
 }
 
 String _ownerOf(Map<String, dynamic> item) =>
-    (item['owner_email'] ?? item['owner_id'] ?? '').toString();
+    (item['owner_username'] ?? '').toString();
 
 class AdminPage extends StatefulWidget {
   const AdminPage({
