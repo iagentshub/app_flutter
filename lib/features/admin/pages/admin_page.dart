@@ -28,6 +28,7 @@ part '../cards/admin_content_cards.dart';
 part '../cards/admin_integration_cards.dart';
 part '../cards/admin_people_cards.dart';
 part '../widgets/admin_config_tab.dart';
+part '../widgets/admin_config_updates_card.dart';
 part '../widgets/admin_explore_tab.dart';
 part '../widgets/admin_actions.dart';
 part '../widgets/admin_overview_section.dart';

@@ -33,17 +33,11 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
   late bool _oauthGoogle;
   late bool _oauthApple;
   late bool _oauthMicrosoft;
-  late bool _autoUpdate;
   late bool _usersCanConfigureTheme;
   late String _defaultTheme;
 
   bool _saving = false;
   String? _saveMsg;
-  bool _checkingUpdate = false;
-  String? _checkResult;
-  bool? _checkOk;
-  String? _autoUpdateResult;
-  List<({String text, Color? color})> _commitLines = [];
 
   String _tx(String path, String fallback) => widget.tx(path, fallback);
 
@@ -73,7 +67,6 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
     _oauthGoogle = cfg['oauth_google_enabled'] != false;
     _oauthApple = cfg['oauth_apple_enabled'] != false;
     _oauthMicrosoft = cfg['oauth_microsoft_enabled'] != false;
-    _autoUpdate = cfg['auto_update_enabled'] != false;
     _usersCanConfigureTheme = cfg['users_can_configure_theme'] != false;
     _defaultTheme = (cfg['default_theme'] ?? 'dark-red').toString();
     if (!kThemeIds.contains(_defaultTheme)) _defaultTheme = 'dark-red';
@@ -152,192 +145,6 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
-  }
-
-  Future<void> _toggleAutoUpdate(bool desired) async {
-    setState(() {
-      _autoUpdate = desired;
-      _autoUpdateResult = null;
-    });
-    try {
-      final result = await widget.repository.setAutoUpdate(
-        widget.token,
-        desired,
-      );
-      final enabled = result['auto_update_enabled'] == true;
-      if (!mounted) return;
-      setState(() {
-        _autoUpdate = enabled;
-        _autoUpdateResult = enabled
-            ? _tx('admin.config_auto_update_on', 'Auto-actualización activada')
-            : _tx(
-                'admin.config_auto_update_off',
-                'Auto-actualización desactivada',
-              );
-      });
-    } on ApiError catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _autoUpdate = !desired;
-        _autoUpdateResult = error.message;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _autoUpdate = !desired;
-        _autoUpdateResult = _tx(
-          'admin.error_generic',
-          'No se pudo completar la acción',
-        );
-      });
-    }
-  }
-
-  static const _statusOkColor = Color(0xFF059669);
-  static const _statusWarnColor = Color(0xFFD97706);
-
-  /// Línea "Backend: al día (abc1234)" / "App (Flutter): desactualizado…"
-  /// para un componente, con el color de estado ya resuelto (verde al día,
-  /// ámbar desactualizado, sin color si no se pudo verificar) — o `null` si
-  /// ese repo no se horneó en la imagen (`commit == 'dev'`, instalaciones sin
-  /// BACKEND_COMMIT/FRONTEND_COMMIT/APP_COMMIT, o builds locales).
-  ({String text, Color? color})? _commitLine(
-    String label,
-    dynamic commit,
-    dynamic latest,
-    dynamic upToDate,
-  ) {
-    final commitStr = commit?.toString() ?? 'dev';
-    if (commitStr == 'dev') return null;
-    final String description;
-    Color? color;
-    if (upToDate == true) {
-      description = _tx(
-        'admin.config_commit_up_to_date',
-        'Up to date ({commit})',
-      ).replaceAll('{commit}', commitStr);
-      color = _statusOkColor;
-    } else if (upToDate == false) {
-      description =
-          _tx(
-                'admin.config_commit_outdated',
-                'Outdated: {commit} (latest {latest})',
-              )
-              .replaceAll('{commit}', commitStr)
-              .replaceAll('{latest}', '${latest ?? '?'}');
-      color = _statusWarnColor;
-    } else {
-      description = _tx(
-        'admin.config_commit_unchecked',
-        '{commit} (unverified)',
-      ).replaceAll('{commit}', commitStr);
-      color = null;
-    }
-    return (text: '$label: $description', color: color);
-  }
-
-  List<({String text, Color? color})> _buildCommitLines(
-    Map<String, dynamic> data,
-  ) {
-    final lines = <({String text, Color? color})?>[
-      _commitLine(
-        _tx('admin.config_backend_commit_label', 'Backend'),
-        data['backend_commit'],
-        data['backend_commit_latest'],
-        data['backend_up_to_date'],
-      ),
-      _commitLine(
-        _tx('admin.config_frontend_commit_label', 'Web frontend'),
-        data['frontend_commit'],
-        data['frontend_commit_latest'],
-        data['frontend_up_to_date'],
-      ),
-      _commitLine(
-        _tx('admin.config_app_commit_label', 'App (Flutter)'),
-        data['app_commit'],
-        data['app_commit_latest'],
-        data['app_up_to_date'],
-      ),
-    ];
-    return [for (final line in lines) ?line];
-  }
-
-  Future<void> _checkUpdate() async {
-    setState(() {
-      _checkingUpdate = true;
-      _checkResult = null;
-      _checkOk = null;
-      _commitLines = [];
-    });
-    try {
-      final data = await widget.repository.checkUpdate(widget.token);
-      if (!mounted) return;
-      final commitLines = _buildCommitLines(data);
-      if (data['checked'] != true) {
-        setState(() {
-          _checkResult = _tx(
-            'admin.config_check_error',
-            'No se pudo comprobar actualizaciones',
-          );
-          _checkOk = null;
-          _commitLines = commitLines;
-        });
-      } else if (data['update_available'] == true) {
-        setState(() {
-          _checkResult =
-              _tx(
-                    'admin.config_update_available',
-                    'Actualización disponible: {latest} (actual: {current})',
-                  )
-                  .replaceAll('{latest}', '${data['latest_version']}')
-                  .replaceAll('{current}', '${data['current_version']}');
-          _checkOk = false;
-          _commitLines = commitLines;
-        });
-      } else {
-        setState(() {
-          _checkResult = _tx(
-            'admin.config_up_to_date',
-            'Al día (versión {version})',
-          ).replaceAll('{version}', '${data['current_version']}');
-          _checkOk = true;
-          _commitLines = commitLines;
-        });
-      }
-    } on ApiError catch (error) {
-      if (!mounted) return;
-      setState(() => _checkResult = error.message);
-    } catch (_) {
-      if (!mounted) return;
-      setState(
-        () => _checkResult = _tx(
-          'admin.config_check_error',
-          'No se pudo comprobar actualizaciones',
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _checkingUpdate = false);
-    }
-  }
-
-  Widget _sectionCard(String title, List<Widget> children) {
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 10),
-            ...children,
-          ],
-        ),
-      ),
-    );
   }
 
   @override
@@ -512,54 +319,13 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
           onChanged: (v) => setState(() => _oauthMicrosoft = v),
         ),
       ]),
-      _sectionCard(_tx('admin.config_section_updates', 'Actualizaciones'), [
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(
-            _tx(
-              'admin.config_auto_update',
-              'Actualización automática (Watchtower)',
-            ),
-          ),
-          value: _autoUpdate,
-          onChanged: _toggleAutoUpdate,
-        ),
-        if (_autoUpdateResult != null)
-          Text(
-            _autoUpdateResult!,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        const SizedBox(height: 8),
-        SecondaryButton(
-          onPressed: _checkingUpdate ? null : _checkUpdate,
-          child: Text(
-            _checkingUpdate
-                ? _tx('admin.config_check_update_loading', 'Buscando...')
-                : _tx('admin.config_check_update_btn', 'Buscar actualización'),
-          ),
-        ),
-        if (_checkResult != null) ...[
-          const SizedBox(height: 6),
-          Text(
-            _checkResult!,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: _checkOk == null
-                  ? null
-                  : (_checkOk == true ? _statusOkColor : _statusWarnColor),
-            ),
-          ),
-        ],
-        for (final line in _commitLines)
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Text(
-              line.text,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: line.color),
-            ),
-          ),
-      ]),
+      _AdminUpdatesCard(
+        repository: widget.repository,
+        token: widget.token,
+        initialAutoUpdate:
+            widget.initialSettings['auto_update_enabled'] != false,
+        tx: _tx,
+      ),
     ];
     return CustomScrollView(
       slivers: [
@@ -600,4 +366,31 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
       ],
     );
   }
+}
+
+// Colores de estado compartidos por _AdminConfigTab y _AdminUpdatesCard
+// (guardado correcto, commit al día / desactualizado).
+const _statusOkColor = Color(0xFF059669);
+const _statusWarnColor = Color(0xFFD97706);
+
+/// Tarjeta genérica de una sección de la pestaña Configuración — usada tanto
+/// por los campos de este archivo como por _AdminUpdatesCard.
+Widget _sectionCard(String title, List<Widget> children) {
+  return Card(
+    margin: EdgeInsets.zero,
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 10),
+          ...children,
+        ],
+      ),
+    ),
+  );
 }
