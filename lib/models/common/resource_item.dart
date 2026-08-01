@@ -24,8 +24,14 @@ abstract class ResourceItem {
   /// Solo-lectura si es un recurso compartido por otro.
   bool get readOnly => shared;
 
-  /// Activo por defecto: tolera respuestas de un backend anterior a is_active.
-  bool get isActive => raw['is_active'] != false;
+  /// Activo por defecto: tolera respuestas anteriores a `is_active` y acepta
+  /// tanto el booleano de la API como el flag entero 0/1 de persistencia.
+  bool get isActive {
+    final value = raw['is_active'];
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    return true;
+  }
 
   String? get deactivatedAt => raw['deactivated_at'] as String?;
 
