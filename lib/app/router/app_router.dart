@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/network/api_client.dart';
@@ -44,6 +45,8 @@ GoRouter createRouter({
   required ApiClient apiClient,
   required DashboardEditState dashboardEditState,
 }) {
+  final shellNavigatorKey = GlobalKey<NavigatorState>();
+
   bool isPublicPath(String path) {
     const publicPaths = {
       RouteNames.home,
@@ -161,12 +164,14 @@ GoRouter createRouter({
       ),
 
       ShellRoute(
+        navigatorKey: shellNavigatorKey,
         builder: (context, state, child) => AppShell(
           sessionController: sessionController,
           authRepository: authRepository,
           dashboardEditState: dashboardEditState,
           localeController: localeController,
           apiClient: apiClient,
+          contentNavigatorKey: shellNavigatorKey,
           location: state.matchedLocation,
           child: child,
         ),

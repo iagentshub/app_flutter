@@ -7,6 +7,7 @@ import '../../features/auth/repositories/auth_repository.dart';
 import '../../models/dashboard/dashboard_widget_config.dart';
 import '../../models/dashboard/dashboard_widget_registry.dart';
 import '../i18n/locale_loader.dart';
+import '../navigation/shell_navigation.dart';
 import '../state/dashboard_edit_state.dart';
 import '../state/locale_controller.dart';
 import '../state/session_controller.dart';
@@ -28,6 +29,7 @@ class AppShell extends StatefulWidget {
     required this.dashboardEditState,
     required this.localeController,
     required this.apiClient,
+    required this.contentNavigatorKey,
     required this.location,
     required this.child,
     super.key,
@@ -38,6 +40,7 @@ class AppShell extends StatefulWidget {
   final DashboardEditState dashboardEditState;
   final LocaleController localeController;
   final ApiClient apiClient;
+  final GlobalKey<NavigatorState> contentNavigatorKey;
   final String location;
   final Widget child;
 
@@ -74,6 +77,17 @@ class _AppShellState extends State<AppShell> {
 
   String _tx(String key, String fallback) =>
       LocaleLoader.text(_texts, key, fallback: fallback);
+
+  void _navigateTo(BuildContext context, String route, {required bool wide}) {
+    if (!wide) Navigator.of(context).pop();
+
+    // Los editores guiados se abren sobre GoRouter con MaterialPageRoute.
+    // Los retiramos antes de cambiar de sección para que no queden visibles
+    // encima del nuevo destino.
+    final contentNavigator = widget.contentNavigatorKey.currentState;
+    if (contentNavigator != null) closeShellOverlays(contentNavigator);
+    context.go(route);
+  }
 
   Future<void> _logout(BuildContext context) async {
     final confirm = await showDialog<bool>(
@@ -133,10 +147,8 @@ class _AppShellState extends State<AppShell> {
                     role: widget.sessionController.user?.role ?? 'user',
                     tx: _tx,
                     showCloseButton: !wide,
-                    onNavigate: (route) {
-                      if (!wide) Navigator.of(context).pop();
-                      context.go(route);
-                    },
+                    onNavigate: (route) =>
+                        _navigateTo(context, route, wide: wide),
                     onLogout: () => _logout(context),
                   );
 

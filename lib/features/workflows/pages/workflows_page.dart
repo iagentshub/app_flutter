@@ -20,7 +20,6 @@ import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/resource_toolbar.dart';
 import '../cards/workflow_card.dart';
-import '../widgets/workflow_overview_header.dart';
 import 'workflow_editor_page.dart';
 
 part '../dialogs/run_progress_dialog.dart';
@@ -390,6 +389,11 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
     final filteredWorkflows = _filteredWorkflows;
     final toolbar = ResourceToolbar(
       actions: [
+        AppIconButton.filled(
+          onPressed: _openCreateDialog,
+          icon: const Icon(Icons.add),
+          tooltip: _tx('workflows.create_action', 'Crear workflow'),
+        ),
         AppIconButton.outlined(
           onPressed: _load,
           icon: const Icon(Icons.refresh),
@@ -413,37 +417,10 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
-            sliver: SliverToBoxAdapter(
-              child: WorkflowOverviewHeader(
-                createLabel: _tx('workflows.create_action', 'Crear workflow'),
-                onCreate: _openCreateDialog,
-              ),
-            ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             sliver: SliverToBoxAdapter(child: toolbar),
           ),
-          if (filteredWorkflows.isEmpty)
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              sliver: SliverToBoxAdapter(
-                child: WorkflowEmptyState(
-                  title: _tx(
-                    'workflows.empty_title',
-                    'Crea tu primera orquestación',
-                  ),
-                  description: _tx(
-                    'workflows.empty_description',
-                    'Combina agentes en un flujo visual, define decisiones y ejecútalo desde un único lugar.',
-                  ),
-                  actionLabel: _tx('workflows.create_action', 'Crear workflow'),
-                  onCreate: _openCreateDialog,
-                ),
-              ),
-            )
-          else
+          if (filteredWorkflows.isNotEmpty)
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               sliver: ResponsiveSliverMasonryGrid(
