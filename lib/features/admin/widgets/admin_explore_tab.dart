@@ -1,0 +1,263 @@
+part of '../pages/admin_page.dart';
+
+extension _AdminExploreTab on _AdminPageState {
+  String _resourceTypeLabel(AdminResourceType? type) {
+    return switch (type) {
+      AdminResourceType.user => _tx('admin.type_user', 'Usuario'),
+      AdminResourceType.group => _tx('admin.type_group', 'Grupo'),
+      AdminResourceType.agent => _tx('admin.type_agent', 'Agente'),
+      AdminResourceType.connection => _tx('admin.type_connection', 'Conexión'),
+      AdminResourceType.knowledge => _tx(
+        'admin.type_knowledge',
+        'Conocimiento',
+      ),
+      AdminResourceType.workflow => _tx('admin.type_workflow', 'Orquestación'),
+      null => _tx('admin.type_all', 'Todos'),
+    };
+  }
+
+  Color _resourceTypeColor(AdminResourceType type) {
+    return switch (type) {
+      AdminResourceType.user => const Color(0xFF2563EB),
+      AdminResourceType.group => const Color(0xFF7C3AED),
+      AdminResourceType.agent => const Color(0xFFDC2626),
+      AdminResourceType.connection => const Color(0xFF0891B2),
+      AdminResourceType.knowledge => const Color(0xFF059669),
+      AdminResourceType.workflow => const Color(0xFFD97706),
+    };
+  }
+
+  Widget _resourceTypeBadge(AdminResourceType type) {
+    return _badge(_resourceTypeLabel(type), _resourceTypeColor(type));
+  }
+
+  List<AdminExploreItem> get _filteredExploreItems {
+    final allowed = <AdminResourceType, Set<String>>{
+      AdminResourceType.user: _filteredUsers
+          .map((item) => (item['id'] ?? '').toString())
+          .toSet(),
+      AdminResourceType.group: _filteredGroups
+          .map((item) => (item['id'] ?? '').toString())
+          .toSet(),
+      AdminResourceType.agent: _filteredAgents
+          .map((item) => (item['id'] ?? '').toString())
+          .toSet(),
+      AdminResourceType.connection: _filteredConnections
+          .map((item) => (item['id'] ?? '').toString())
+          .toSet(),
+      AdminResourceType.knowledge: _filteredKnowledge
+          .map((item) => (item['id'] ?? '').toString())
+          .toSet(),
+      AdminResourceType.workflow: _filteredWorkflows
+          .map((item) => (item['id'] ?? '').toString())
+          .toSet(),
+    };
+    return _exploreItems
+        .where((item) {
+          if (_exploreType != null && item.type != _exploreType) return false;
+          return allowed[item.type]?.contains(item.id) ?? false;
+        })
+        .toList(growable: false);
+  }
+
+  int get _exploreActiveFilterCount {
+    final type = _exploreType;
+    return switch (type) {
+      AdminResourceType.user => _usersActiveFilterCount,
+      AdminResourceType.agent => _agentOwner.isNotEmpty ? 1 : 0,
+      AdminResourceType.connection => _connOwner.isNotEmpty ? 1 : 0,
+      AdminResourceType.knowledge =>
+        (_knowledgeType.isNotEmpty ? 1 : 0) +
+            (_knowledgeOwner.isNotEmpty ? 1 : 0),
+      AdminResourceType.workflow => _workflowOwner.isNotEmpty ? 1 : 0,
+      _ => 0,
+    };
+  }
+
+  void _openExploreFilters() {
+    switch (_exploreType) {
+      case AdminResourceType.user:
+        _openUsersFiltersDialog();
+      case AdminResourceType.agent:
+        _openOwnerFilterDialog(
+          owners: _ownersOf(_agents),
+          currentOwner: _agentOwner,
+          onChanged: (value) => _refresh(() => _agentOwner = value),
+        );
+      case AdminResourceType.connection:
+        _openOwnerFilterDialog(
+          owners: _ownersOf(_connections),
+          currentOwner: _connOwner,
+          onChanged: (value) => _refresh(() => _connOwner = value),
+        );
+      case AdminResourceType.knowledge:
+        _openKnowledgeFiltersDialog();
+      case AdminResourceType.workflow:
+        _openOwnerFilterDialog(
+          owners: _ownersOf(_workflows),
+          currentOwner: _workflowOwner,
+          onChanged: (value) => _refresh(() => _workflowOwner = value),
+        );
+      case AdminResourceType.group:
+      case null:
+        return;
+    }
+  }
+
+  Widget _buildExploreTab() {
+    final items = _filteredExploreItems;
+    return _buildFilterableList<AdminExploreItem>(
+      items: items,
+      itemBuilder: _buildExploreCard,
+      emptyText: _tx(
+        'admin.explore_empty',
+        'No hay objetos que coincidan con los filtros',
+      ),
+      toolbar: _toolbar(
+        search: TextField(
+          controller: _exploreSearchController,
+          decoration: InputDecoration(
+            labelText: _tx(
+              'admin.explore_search_hint',
+              'Buscar objetos por nombre, usuario o propietario',
+            ),
+            prefixIcon: const Icon(Icons.search, size: 20),
+          ),
+          onChanged: (_) => _onSearchChanged(),
+        ),
+        buttons: [
+          for (final type in <AdminResourceType?>[
+            null,
+            ...AdminResourceType.values,
+          ])
+            FilterChip(
+              selected: _exploreType == type,
+              label: Text(
+                type == null
+                    ? '${_resourceTypeLabel(null)} (${_exploreCounts.values.fold<int>(0, (sum, value) => sum + value)})'
+                    : '${_resourceTypeLabel(type)} (${_exploreCounts[type] ?? 0})',
+              ),
+              avatar: type == null
+                  ? const Icon(Icons.apps_outlined, size: 17)
+                  : Icon(
+                      _resourceTypeIcon(type),
+                      size: 17,
+                      color: _resourceTypeColor(type),
+                    ),
+              onSelected: (_) => _refresh(() => _exploreType = type),
+            ),
+          AppIconButton.outlined(
+            onPressed: _load,
+            icon: const Icon(Icons.refresh),
+            tooltip: _tx('admin.refresh', 'Actualizar'),
+          ),
+          if ((_exploreType == null ||
+                  _exploreType == AdminResourceType.user) &&
+              (_platformSettings?['registration'] ?? 'open').toString() ==
+                  'closed')
+            AppIconButton.filled(
+              onPressed: _openCreateUserDialog,
+              icon: const Icon(Icons.add),
+              tooltip: _tx('admin.users_new_btn', 'Nuevo usuario'),
+            ),
+          if (_exploreType != null && _exploreType != AdminResourceType.group)
+            FilterButton(
+              activeCount: _exploreActiveFilterCount,
+              tooltip: _tx('common.filters', 'Filtros'),
+              onPressed: _openExploreFilters,
+            ),
+        ],
+      ),
+    );
+  }
+
+  IconData _resourceTypeIcon(AdminResourceType type) {
+    return switch (type) {
+      AdminResourceType.user => Icons.person_outline,
+      AdminResourceType.group => Icons.groups_outlined,
+      AdminResourceType.agent => Icons.smart_toy_outlined,
+      AdminResourceType.connection => Icons.cable_outlined,
+      AdminResourceType.knowledge => Icons.menu_book_outlined,
+      AdminResourceType.workflow => Icons.account_tree_outlined,
+    };
+  }
+
+  Widget _buildExploreCard(AdminExploreItem item) {
+    return switch (item.type) {
+      AdminResourceType.user => _buildUserCard(item.data),
+      AdminResourceType.group => _buildGroupCard(item.data),
+      AdminResourceType.agent => _buildAgentCard(item.data),
+      AdminResourceType.connection => _buildAdminConnectionCard(item.data),
+      AdminResourceType.knowledge => _buildAdminKnowledgeCard(item.data),
+      AdminResourceType.workflow => _buildAdminWorkflowCard(item.data),
+    };
+  }
+
+  Widget _resourceGraphAction(
+    AdminResourceType type,
+    Map<String, dynamic> item,
+  ) {
+    return ActionIconButton(
+      icon: Icons.hub_outlined,
+      tooltip: _tx('admin.action_graph', 'Ver relaciones'),
+      onPressed: () => _openResourceGraph(type, item),
+    );
+  }
+
+  Future<void> _openResourceGraph(
+    AdminResourceType type,
+    Map<String, dynamic> item,
+  ) async {
+    final token = _token;
+    final resourceId = (item['id'] ?? '').toString();
+    if (token == null || resourceId.isEmpty) return;
+    try {
+      final graph = await _repository.getResourceGraph(token, type, resourceId);
+      if (!mounted) return;
+      await showResourceGraphDialog(
+        context: context,
+        title:
+            '${_tx('admin.graph_title', 'Relaciones de')} ${_resourceTypeLabel(type).toLowerCase()}',
+        nodes: graph.nodes,
+        edges: graph.edges,
+        rootId: graph.rootId,
+        closeLabel: _tx('common.close', 'Cerrar'),
+        searchHint: _tx('graph.search_hint', 'Buscar en el grafo...'),
+        sortTooltip: _tx('graph.sort_tooltip', 'Ordenar'),
+        sortHierarchyVerticalLabel: _tx(
+          'graph.sort_hierarchy_vertical',
+          'Jerarquía vertical',
+        ),
+        sortHierarchyHorizontalLabel: _tx(
+          'graph.sort_hierarchy_horizontal',
+          'Jerarquía horizontal',
+        ),
+        sortRadialLabel: _tx('graph.sort_radial', 'Radial'),
+        quickViewDescriptionLabel: _tx(
+          'graph.quick_view_description',
+          'Descripción',
+        ),
+        quickViewNoDescriptionLabel: _tx(
+          'graph.quick_view_no_description',
+          'Sin descripción',
+        ),
+        quickViewConnectionsLabel: _tx(
+          'graph.quick_view_connections',
+          'Relaciones',
+        ),
+        quickViewNoConnectionsLabel: _tx(
+          'graph.quick_view_no_connections',
+          'Sin relaciones',
+        ),
+        emptyLabel: _tx('admin.graph_empty', 'Este objeto no tiene relaciones'),
+      );
+    } on ApiError catch (error) {
+      _showMessage(error.message, isError: true);
+    } catch (_) {
+      _showMessage(
+        _tx('admin.graph_error', 'No se pudieron cargar las relaciones'),
+        isError: true,
+      );
+    }
+  }
+}

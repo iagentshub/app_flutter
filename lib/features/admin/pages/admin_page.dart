@@ -5,7 +5,9 @@ import '../../../shared/widgets/async_state_panel.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
+import '../../../models/admin/admin_explore_models.dart';
 import '../repositories/admin_repository.dart';
+import '../../../shared/graph/graph_dialog.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/locale_controller.dart';
@@ -26,6 +28,7 @@ part '../cards/admin_content_cards.dart';
 part '../cards/admin_integration_cards.dart';
 part '../cards/admin_people_cards.dart';
 part '../widgets/admin_config_tab.dart';
+part '../widgets/admin_explore_tab.dart';
 part '../widgets/admin_actions.dart';
 part '../widgets/admin_overview_section.dart';
 part '../widgets/admin_page_view.dart';
@@ -78,25 +81,13 @@ class _AdminPageState extends State<AdminPage>
   late final TranslatedTexts _t;
   late final TabController _tabController;
 
-  static const _tabIds = [
-    'general',
-    'users',
-    'groups',
-    'agents',
-    'connections',
-    'knowledge',
-    'workflows',
-    'config',
-  ];
+  static const _tabIds = ['general', 'explore', 'config'];
 
-  final TextEditingController _userSearchController = TextEditingController();
-  final TextEditingController _groupSearchController = TextEditingController();
-  final TextEditingController _agentSearchController = TextEditingController();
-  final TextEditingController _knowledgeSearchController =
-      TextEditingController();
-  final TextEditingController _workflowSearchController =
+  final TextEditingController _exploreSearchController =
       TextEditingController();
   final Debouncer _searchDebouncer = Debouncer();
+
+  AdminResourceType? _exploreType;
 
   String _userRole = '';
   String _userActive = '';
@@ -114,6 +105,8 @@ class _AdminPageState extends State<AdminPage>
   List<Map<String, dynamic>> _connections = const [];
   List<Map<String, dynamic>> _knowledge = const [];
   List<Map<String, dynamic>> _workflows = const [];
+  List<AdminExploreItem> _exploreItems = const [];
+  Map<AdminResourceType, int> _exploreCounts = const {};
   Map<String, dynamic>? _platformSettings;
 
   bool _loading = true;
@@ -156,11 +149,7 @@ class _AdminPageState extends State<AdminPage>
   @override
   void dispose() {
     _searchDebouncer.dispose();
-    _userSearchController.dispose();
-    _groupSearchController.dispose();
-    _agentSearchController.dispose();
-    _knowledgeSearchController.dispose();
-    _workflowSearchController.dispose();
+    _exploreSearchController.dispose();
     _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
     _t.removeListener(_onTextsChanged);
@@ -186,25 +175,27 @@ class _AdminPageState extends State<AdminPage>
     try {
       final results = await Future.wait([
         _repository.getStats(token),
-        _repository.listUsers(token),
-        _repository.listGroups(token),
-        _repository.listAgents(token),
-        _repository.listAdminConnections(token),
-        _repository.listAdminKnowledge(token),
-        _repository.listAdminWorkflows(token),
+        _repository.explore(token),
         _repository.getPlatformSettings(token),
       ]);
 
       if (!mounted) return;
+      final explore = results[1] as AdminExploreResult;
+      List<Map<String, dynamic>> ofType(AdminResourceType type) => explore.items
+          .where((item) => item.type == type)
+          .map((item) => item.data)
+          .toList(growable: false);
       setState(() {
         _stats = results[0] as AdminStats;
-        _users = results[1] as List<Map<String, dynamic>>;
-        _groups = results[2] as List<Map<String, dynamic>>;
-        _agents = results[3] as List<Map<String, dynamic>>;
-        _connections = results[4] as List<Map<String, dynamic>>;
-        _knowledge = results[5] as List<Map<String, dynamic>>;
-        _workflows = results[6] as List<Map<String, dynamic>>;
-        _platformSettings = results[7] as Map<String, dynamic>;
+        _exploreItems = explore.items;
+        _exploreCounts = explore.counts;
+        _users = ofType(AdminResourceType.user);
+        _groups = ofType(AdminResourceType.group);
+        _agents = ofType(AdminResourceType.agent);
+        _connections = ofType(AdminResourceType.connection);
+        _knowledge = ofType(AdminResourceType.knowledge);
+        _workflows = ofType(AdminResourceType.workflow);
+        _platformSettings = results[2] as Map<String, dynamic>;
         _loading = false;
       });
     } on ApiError catch (error) {
@@ -240,6 +231,7 @@ class _AdminPageState extends State<AdminPage>
   ) async {
     try {
       await action();
+      widget.apiClient.invalidateCache();
       _showMessage(successMessage);
       await _load();
     } on ApiError catch (error) {

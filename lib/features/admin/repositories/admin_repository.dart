@@ -1,4 +1,5 @@
 import '../../../core/network/api_repository.dart';
+import '../../../models/admin/admin_explore_models.dart';
 
 class AdminStats {
   const AdminStats({required this.raw});
@@ -24,6 +25,39 @@ class AdminStats {
 
 class AdminRepository extends ApiRepository {
   AdminRepository({required super.apiClient});
+
+  Future<AdminExploreResult> explore(String token) async {
+    const pageSize = 200;
+    var offset = 0;
+    var total = 0;
+    var counts = const <AdminResourceType, int>{};
+    final items = <AdminExploreItem>[];
+    do {
+      final response = await apiClient.get(
+        '/api/admin/explore?limit=$pageSize&offset=$offset',
+        gaToken: token,
+      );
+      final page = AdminExploreResult.fromJson(response.json);
+      total = page.total;
+      counts = page.counts;
+      items.addAll(page.items);
+      offset += page.items.length;
+      if (page.items.isEmpty) break;
+    } while (items.length < total);
+    return AdminExploreResult(items: items, total: total, counts: counts);
+  }
+
+  Future<AdminResourceGraph> getResourceGraph(
+    String token,
+    AdminResourceType type,
+    String resourceId,
+  ) async {
+    final response = await apiClient.get(
+      '/api/admin/resources/${Uri.encodeComponent(type.wireName)}/${Uri.encodeComponent(resourceId)}/graph',
+      gaToken: token,
+    );
+    return AdminResourceGraph.fromJson(response.json);
+  }
 
   Future<AdminStats> getStats(String token) async {
     final response = await apiClient.get(

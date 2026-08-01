@@ -1,40 +1,6 @@
 part of '../pages/admin_page.dart';
 
 extension _AdminIntegrationCards on _AdminPageState {
-  Widget _buildAgentsTab() {
-    return _buildFilterableList(
-      items: _filteredAgents,
-      itemBuilder: _buildAgentCard,
-      emptyText: _tx('admin.agents_empty', 'Sin agentes'),
-      toolbar: _toolbar(
-        search: TextField(
-          controller: _agentSearchController,
-          decoration: InputDecoration(
-            labelText: _tx('admin.agents_search_hint', 'Buscar agente'),
-            prefixIcon: const Icon(Icons.search, size: 20),
-          ),
-          onChanged: (_) => _onSearchChanged(),
-        ),
-        buttons: [
-          AppIconButton.outlined(
-            onPressed: _load,
-            icon: const Icon(Icons.refresh),
-            tooltip: _tx('admin.refresh', 'Actualizar'),
-          ),
-          FilterButton(
-            activeCount: _agentOwner.isNotEmpty ? 1 : 0,
-            tooltip: _tx('common.filters', 'Filtros'),
-            onPressed: () => _openOwnerFilterDialog(
-              owners: _ownersOf(_agents),
-              currentOwner: _agentOwner,
-              onChanged: (v) => _refresh(() => _agentOwner = v),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildAgentCard(Map<String, dynamic> agent) {
     final name = (agent['name'] ?? agent['id'] ?? '').toString();
     final type = (agent['agent_type'] ?? '—').toString();
@@ -65,6 +31,7 @@ extension _AdminIntegrationCards on _AdminPageState {
               spacing: 6,
               runSpacing: 6,
               children: [
+                _resourceTypeBadge(AdminResourceType.agent),
                 _badge(type, const Color(0xFF64748B)),
                 _badge(scope, labelColor(scope)),
                 if (tokens > 0)
@@ -75,6 +42,7 @@ extension _AdminIntegrationCards on _AdminPageState {
             Row(
               children: [
                 const Spacer(),
+                _resourceGraphAction(AdminResourceType.agent, agent),
                 ActionIconButton(
                   icon: Icons.edit_outlined,
                   tooltip: _tx('common.edit', 'Editar'),
@@ -98,34 +66,6 @@ extension _AdminIntegrationCards on _AdminPageState {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  // ── Tab: Conexiones ──────────────────────────────────────────────────
-
-  Widget _buildConnectionsTab() {
-    return _buildFilterableList(
-      items: _filteredConnections,
-      itemBuilder: _buildAdminConnectionCard,
-      emptyText: _tx('admin.connections_empty', 'Sin conexiones'),
-      toolbar: _toolbar(
-        buttons: [
-          AppIconButton.outlined(
-            onPressed: _load,
-            icon: const Icon(Icons.refresh),
-            tooltip: _tx('admin.refresh', 'Actualizar'),
-          ),
-          FilterButton(
-            activeCount: _connOwner.isNotEmpty ? 1 : 0,
-            tooltip: _tx('common.filters', 'Filtros'),
-            onPressed: () => _openOwnerFilterDialog(
-              owners: _ownersOf(_connections),
-              currentOwner: _connOwner,
-              onChanged: (v) => _refresh(() => _connOwner = v),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -158,6 +98,7 @@ extension _AdminIntegrationCards on _AdminPageState {
               spacing: 6,
               runSpacing: 6,
               children: [
+                _resourceTypeBadge(AdminResourceType.connection),
                 _badge(type, const Color(0xFF64748B)),
                 if (tokens > 0)
                   _badge(_fmtTokens(tokens), const Color(0xFF0891B2)),
@@ -167,6 +108,7 @@ extension _AdminIntegrationCards on _AdminPageState {
             Row(
               children: [
                 const Spacer(),
+                _resourceGraphAction(AdminResourceType.connection, conn),
                 ActionIconButton(
                   icon: Icons.swap_horiz,
                   tooltip: _tx(

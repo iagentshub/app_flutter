@@ -14,7 +14,7 @@ extension _AdminFilterDialogs on _AdminPageState {
   // ── Filtros ───────────────────────────────────────────────────────────
 
   List<Map<String, dynamic>> get _filteredUsers {
-    final q = _userSearchController.text.trim().toLowerCase();
+    final q = _exploreSearchController.text.trim().toLowerCase();
     return _users.where((u) {
       if (q.isNotEmpty) {
         final email = (u['email'] ?? '').toString().toLowerCase();
@@ -100,7 +100,7 @@ extension _AdminFilterDialogs on _AdminPageState {
   }
 
   List<Map<String, dynamic>> get _filteredGroups {
-    final q = _groupSearchController.text.trim().toLowerCase();
+    final q = _exploreSearchController.text.trim().toLowerCase();
     if (q.isEmpty) return _groups;
     return _groups.where((group) {
       final name = (group['name'] ?? '').toString().toLowerCase();
@@ -112,7 +112,7 @@ extension _AdminFilterDialogs on _AdminPageState {
   }
 
   List<Map<String, dynamic>> get _filteredAgents {
-    final q = _agentSearchController.text.trim().toLowerCase();
+    final q = _exploreSearchController.text.trim().toLowerCase();
     return _agents.where((a) {
       if (q.isNotEmpty) {
         final name = (a['name'] ?? '').toString().toLowerCase();
@@ -125,12 +125,22 @@ extension _AdminFilterDialogs on _AdminPageState {
   }
 
   List<Map<String, dynamic>> get _filteredConnections {
-    if (_connOwner.isEmpty) return _connections;
-    return _connections.where((c) => _ownerOf(c) == _connOwner).toList();
+    final q = _exploreSearchController.text.trim().toLowerCase();
+    return _connections.where((connection) {
+      if (q.isNotEmpty) {
+        final name = (connection['name'] ?? '').toString().toLowerCase();
+        final id = (connection['id'] ?? '').toString().toLowerCase();
+        final owner = _ownerOf(connection).toLowerCase();
+        if (!name.contains(q) && !id.contains(q) && !owner.contains(q)) {
+          return false;
+        }
+      }
+      return _connOwner.isEmpty || _ownerOf(connection) == _connOwner;
+    }).toList();
   }
 
   List<Map<String, dynamic>> get _filteredKnowledge {
-    final q = _knowledgeSearchController.text.trim().toLowerCase();
+    final q = _exploreSearchController.text.trim().toLowerCase();
     return _knowledge.where((k) {
       if (q.isNotEmpty) {
         final title = (k['title'] ?? '').toString().toLowerCase();
@@ -149,7 +159,7 @@ extension _AdminFilterDialogs on _AdminPageState {
   }
 
   List<Map<String, dynamic>> get _filteredWorkflows {
-    final q = _workflowSearchController.text.trim().toLowerCase();
+    final q = _exploreSearchController.text.trim().toLowerCase();
     return _workflows.where((w) {
       if (q.isNotEmpty) {
         final name = (w['name'] ?? '').toString().toLowerCase();

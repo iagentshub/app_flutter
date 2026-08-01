@@ -1,47 +1,6 @@
 part of '../pages/admin_page.dart';
 
 extension _AdminPeopleCards on _AdminPageState {
-  Widget _buildUsersTab() {
-    final showNewUser =
-        (_platformSettings?['registration'] ?? 'open').toString() == 'closed';
-    return _buildFilterableList(
-      items: _filteredUsers,
-      itemBuilder: _buildUserCard,
-      emptyText: _tx('admin.users_empty', 'Sin usuarios para ese filtro'),
-      toolbar: _toolbar(
-        search: TextField(
-          controller: _userSearchController,
-          decoration: InputDecoration(
-            labelText: _tx(
-              'admin.users_search_hint',
-              'Buscar por email o usuario',
-            ),
-            prefixIcon: const Icon(Icons.search, size: 20),
-          ),
-          onChanged: (_) => _onSearchChanged(),
-        ),
-        buttons: [
-          if (showNewUser)
-            AppIconButton.filled(
-              onPressed: _openCreateUserDialog,
-              icon: const Icon(Icons.add),
-              tooltip: _tx('admin.users_new_btn', 'Nuevo usuario'),
-            ),
-          AppIconButton.outlined(
-            onPressed: _load,
-            icon: const Icon(Icons.refresh),
-            tooltip: _tx('admin.refresh', 'Actualizar'),
-          ),
-          FilterButton(
-            activeCount: _usersActiveFilterCount,
-            tooltip: _tx('common.filters', 'Filtros'),
-            onPressed: _openUsersFiltersDialog,
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildUserCard(Map<String, dynamic> user) {
     final email = (user['email'] ?? user['username'] ?? '').toString();
     final role = (user['role'] ?? 'standard').toString();
@@ -78,6 +37,7 @@ extension _AdminPeopleCards on _AdminPageState {
               spacing: 6,
               runSpacing: 6,
               children: [
+                _resourceTypeBadge(AdminResourceType.user),
                 _badge(
                   isAdmin
                       ? _tx('admin.role_admin', 'Admin')
@@ -106,6 +66,7 @@ extension _AdminPeopleCards on _AdminPageState {
             Row(
               children: [
                 const Spacer(),
+                _resourceGraphAction(AdminResourceType.user, user),
                 ActionIconButton(
                   icon: Icons.edit_outlined,
                   tooltip: _tx('common.edit', 'Editar'),
@@ -136,36 +97,6 @@ extension _AdminPeopleCards on _AdminPageState {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  // ── Tab: Grupos ──────────────────────────────────────────────────────
-
-  Widget _buildGroupsTab() {
-    return _buildFilterableList(
-      items: _filteredGroups,
-      itemBuilder: _buildGroupCard,
-      emptyText: _tx('admin.group_empty', 'Sin grupos'),
-      toolbar: _toolbar(
-        search: TextField(
-          controller: _groupSearchController,
-          decoration: InputDecoration(
-            labelText: _tx(
-              'admin.group_search_hint',
-              'Buscar por nombre o creador',
-            ),
-            prefixIcon: const Icon(Icons.search, size: 20),
-          ),
-          onChanged: (_) => _onSearchChanged(),
-        ),
-        buttons: [
-          AppIconButton.outlined(
-            onPressed: _load,
-            icon: const Icon(Icons.refresh),
-            tooltip: _tx('admin.refresh', 'Actualizar'),
-          ),
-        ],
       ),
     );
   }
@@ -217,6 +148,7 @@ extension _AdminPeopleCards on _AdminPageState {
               spacing: 6,
               runSpacing: 6,
               children: [
+                _resourceTypeBadge(AdminResourceType.group),
                 _badge(
                   '${_tx('admin.table_members', 'Miembros')}: $members',
                   const Color(0xFF64748B),
@@ -241,6 +173,7 @@ extension _AdminPeopleCards on _AdminPageState {
             Row(
               children: [
                 const Spacer(),
+                _resourceGraphAction(AdminResourceType.group, group),
                 ActionIconButton(
                   icon: disabled
                       ? Icons.check_circle_outline

@@ -1,41 +1,6 @@
 part of '../pages/admin_page.dart';
 
 extension _AdminContentCards on _AdminPageState {
-  Widget _buildKnowledgeTab() {
-    return _buildFilterableList(
-      items: _filteredKnowledge,
-      itemBuilder: _buildAdminKnowledgeCard,
-      emptyText: _tx('admin.knowledge_empty', 'Sin elementos de Knowledge'),
-      toolbar: _toolbar(
-        search: TextField(
-          controller: _knowledgeSearchController,
-          decoration: InputDecoration(
-            labelText: _tx(
-              'admin.knowledge_search_hint',
-              'Buscar por título o propietario',
-            ),
-            prefixIcon: const Icon(Icons.search, size: 20),
-          ),
-          onChanged: (_) => _onSearchChanged(),
-        ),
-        buttons: [
-          AppIconButton.outlined(
-            onPressed: _load,
-            icon: const Icon(Icons.refresh),
-            tooltip: _tx('admin.refresh', 'Actualizar'),
-          ),
-          FilterButton(
-            activeCount:
-                (_knowledgeType.isNotEmpty ? 1 : 0) +
-                (_knowledgeOwner.isNotEmpty ? 1 : 0),
-            tooltip: _tx('common.filters', 'Filtros'),
-            onPressed: _openKnowledgeFiltersDialog,
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildAdminKnowledgeCard(Map<String, dynamic> item) {
     final title = (item['title'] ?? item['id'] ?? '').toString();
     final type = (item['type'] ?? '').toString();
@@ -64,6 +29,7 @@ extension _AdminContentCards on _AdminPageState {
               spacing: 6,
               runSpacing: 6,
               children: [
+                _resourceTypeBadge(AdminResourceType.knowledge),
                 _badge(
                   type == 'url'
                       ? 'URL'
@@ -82,6 +48,7 @@ extension _AdminContentCards on _AdminPageState {
             Row(
               children: [
                 const Spacer(),
+                _resourceGraphAction(AdminResourceType.knowledge, item),
                 ActionIconButton(
                   icon: Icons.swap_horiz,
                   tooltip: _tx(
@@ -100,45 +67,6 @@ extension _AdminContentCards on _AdminPageState {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  // ── Tab: Orquestaciones ──────────────────────────────────────────────
-
-  Widget _buildWorkflowsTab() {
-    return _buildFilterableList(
-      items: _filteredWorkflows,
-      itemBuilder: _buildAdminWorkflowCard,
-      emptyText: _tx('admin.workflows_empty', 'Sin orquestaciones'),
-      toolbar: _toolbar(
-        search: TextField(
-          controller: _workflowSearchController,
-          decoration: InputDecoration(
-            labelText: _tx(
-              'admin.workflows_search_hint',
-              'Buscar orquestación',
-            ),
-            prefixIcon: const Icon(Icons.search, size: 20),
-          ),
-          onChanged: (_) => _onSearchChanged(),
-        ),
-        buttons: [
-          AppIconButton.outlined(
-            onPressed: _load,
-            icon: const Icon(Icons.refresh),
-            tooltip: _tx('admin.refresh', 'Actualizar'),
-          ),
-          FilterButton(
-            activeCount: _workflowOwner.isNotEmpty ? 1 : 0,
-            tooltip: _tx('common.filters', 'Filtros'),
-            onPressed: () => _openOwnerFilterDialog(
-              owners: _ownersOf(_workflows),
-              currentOwner: _workflowOwner,
-              onChanged: (v) => _refresh(() => _workflowOwner = v),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -166,14 +94,22 @@ extension _AdminContentCards on _AdminPageState {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 8),
-            _badge(
-              '${_tx('admin.table_steps', 'Pasos')}: $steps',
-              const Color(0xFF64748B),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                _resourceTypeBadge(AdminResourceType.workflow),
+                _badge(
+                  '${_tx('admin.table_steps', 'Pasos')}: $steps',
+                  const Color(0xFF64748B),
+                ),
+              ],
             ),
             const SizedBox(height: 4),
             Row(
               children: [
                 const Spacer(),
+                _resourceGraphAction(AdminResourceType.workflow, item),
                 ActionIconButton(
                   icon: Icons.swap_horiz,
                   tooltip: _tx(

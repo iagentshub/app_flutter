@@ -87,10 +87,10 @@ extension _AdminPageSections on _AdminPageState {
     );
   }
 
-  Widget _buildFilterableList({
+  Widget _buildFilterableList<T>({
     required Widget toolbar,
-    required List<Map<String, dynamic>> items,
-    required Widget Function(Map<String, dynamic>) itemBuilder,
+    required List<T> items,
+    required Widget Function(T) itemBuilder,
     required String emptyText,
   }) {
     return RefreshIndicator(

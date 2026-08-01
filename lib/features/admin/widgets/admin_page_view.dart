@@ -19,12 +19,7 @@ extension _AdminPageView on _AdminPageState {
 
     final tabLabels = [
       _tx('admin.tab_general', 'General'),
-      _tx('admin.tab_users', 'Usuarios'),
-      _tx('admin.tab_groups', 'Grupos'),
-      _tx('admin.tab_agents', 'Agentes'),
-      _tx('admin.tab_connections', 'Conexiones'),
-      _tx('admin.tab_knowledge', 'Conocimiento'),
-      _tx('admin.tab_workflows', 'Orquestaciones'),
+      _tx('admin.tab_explore', 'Explorar'),
       _tx('admin.tab_config', 'Configuración'),
     ];
     final section = _AdminPageState._tabIds[_tabController.index];
@@ -50,12 +45,7 @@ extension _AdminPageView on _AdminPageState {
 
   Widget _buildSection(String section) {
     return switch (section) {
-      'users' => _buildUsersTab(),
-      'groups' => _buildGroupsTab(),
-      'agents' => _buildAgentsTab(),
-      'connections' => _buildConnectionsTab(),
-      'knowledge' => _buildKnowledgeTab(),
-      'workflows' => _buildWorkflowsTab(),
+      'explore' => _buildExploreTab(),
       'config' => _buildConfigTab(),
       _ => _buildGeneralTab(),
     };
