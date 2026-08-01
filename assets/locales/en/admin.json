@@ -170,7 +170,7 @@
     "saved_msg": "✓ Configuration saved",
     "save_error_fallback": "Could not save the configuration.",
     "no_version": "This installation has no associated version (image built without versioning, or a very old installation).",
-    "no_remote_versions": "Docker Hub doesn't have any version published with this scheme yet.",
+    "no_remote_versions": "GitHub Container Registry doesn't have any version published with this scheme yet.",
     "check_update_unknown": "Could not determine whether updates are available.",
     "update_available": "⬆ A newer version is available: {{latest}} (current: {{current}}). It will apply on its own within ≤1h (Watchtower), or run now: docker compose pull && docker compose up -d",
     "up_to_date": "✓ You're up to date (version {{version}})",

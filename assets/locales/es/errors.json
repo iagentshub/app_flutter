@@ -8,7 +8,7 @@
   "license_required": "Se requiere una licencia activa para usar esta función",
   "payload_too_large": "El archivo supera el tamaño máximo permitido",
   "agent_no_connection": "El agente no tiene conexión configurada",
-  "check_update_failed": "No se pudo consultar Docker Hub",
+  "check_update_failed": "No se pudo consultar GitHub Container Registry",
   "auto_update_proxy_unavailable": "Esta instalación no tiene el proxy de Docker configurado. Actualiza docker-compose.hub.yml (docker compose pull && docker compose up -d) para poder controlar la auto-actualización desde aquí.",
   "auto_update_apply_failed": "No se pudo aplicar el cambio de auto-actualización",
 
