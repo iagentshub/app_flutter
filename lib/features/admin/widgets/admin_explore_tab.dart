@@ -12,6 +12,7 @@ extension _AdminExploreTab on _AdminPageState {
         'Conocimiento',
       ),
       AdminResourceType.workflow => _tx('admin.type_workflow', 'Orquestación'),
+      AdminResourceType.skill => _tx('admin.type_skill', 'Skill'),
       null => _tx('admin.type_all', 'Todos'),
     };
   }
@@ -24,6 +25,7 @@ extension _AdminExploreTab on _AdminPageState {
       AdminResourceType.connection => const Color(0xFF0891B2),
       AdminResourceType.knowledge => const Color(0xFF059669),
       AdminResourceType.workflow => const Color(0xFFD97706),
+      AdminResourceType.skill => const Color(0xFF9333EA),
     };
   }
 
@@ -51,6 +53,9 @@ extension _AdminExploreTab on _AdminPageState {
       AdminResourceType.workflow: _filteredWorkflows
           .map((item) => (item['id'] ?? '').toString())
           .toSet(),
+      AdminResourceType.skill: _filteredSkills
+          .map((item) => (item['id'] ?? '').toString())
+          .toSet(),
     };
     return _exploreItems
         .where((item) {
@@ -74,6 +79,7 @@ extension _AdminExploreTab on _AdminPageState {
         (_knowledgeType.isNotEmpty ? 1 : 0) +
             (_knowledgeOwner.isNotEmpty ? 1 : 0),
       AdminResourceType.workflow => _workflowOwner.isNotEmpty ? 1 : 0,
+      AdminResourceType.skill => _skillOwner.isNotEmpty ? 1 : 0,
       AdminResourceType.group => 0,
     };
   }
@@ -102,6 +108,12 @@ extension _AdminExploreTab on _AdminPageState {
           owners: _ownersOf(_workflows),
           currentOwner: _workflowOwner,
           onChanged: (value) => _refresh(() => _workflowOwner = value),
+        );
+      case AdminResourceType.skill:
+        _openOwnerFilterDialog(
+          owners: _ownersOf(_skills),
+          currentOwner: _skillOwner,
+          onChanged: (value) => _refresh(() => _skillOwner = value),
         );
       case AdminResourceType.group:
         return;
@@ -274,6 +286,7 @@ extension _AdminExploreTab on _AdminPageState {
       AdminResourceType.connection => Icons.cable_outlined,
       AdminResourceType.knowledge => Icons.menu_book_outlined,
       AdminResourceType.workflow => Icons.account_tree_outlined,
+      AdminResourceType.skill => Icons.bolt_outlined,
     };
   }
 
@@ -285,6 +298,7 @@ extension _AdminExploreTab on _AdminPageState {
       AdminResourceType.connection => _buildAdminConnectionCard(item.data),
       AdminResourceType.knowledge => _buildAdminKnowledgeCard(item.data),
       AdminResourceType.workflow => _buildAdminWorkflowCard(item.data),
+      AdminResourceType.skill => _buildAdminSkillCard(item.data),
     };
   }
 

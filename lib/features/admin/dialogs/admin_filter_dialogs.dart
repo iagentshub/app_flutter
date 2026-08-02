@@ -173,5 +173,20 @@ extension _AdminFilterDialogs on _AdminPageState {
     }).toList();
   }
 
+  List<Map<String, dynamic>> get _filteredSkills {
+    final q = _exploreSearchController.text.trim().toLowerCase();
+    return _skills.where((s) {
+      if (q.isNotEmpty) {
+        final name = (s['name'] ?? '').toString().toLowerCase();
+        final owner = _ownerOf(s).toLowerCase();
+        if (!name.contains(q) && !owner.contains(q)) return false;
+      }
+      if (_skillOwner.isNotEmpty && _ownerOf(s) != _skillOwner) {
+        return false;
+      }
+      return true;
+    }).toList();
+  }
+
   // ── Acciones: usuarios ───────────────────────────────────────────────
 }

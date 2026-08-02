@@ -310,6 +310,15 @@ class AdminRepository extends ApiRepository {
     );
   }
 
+  // ── Skills ────────────────────────────────────────────────────────────
+
+  Future<void> deleteAdminSkill(String token, String skillId) async {
+    await apiClient.delete(
+      '/api/admin/skills/${Uri.encodeComponent(skillId)}',
+      gaToken: token,
+    );
+  }
+
   // ── Configuración de plataforma ──────────────────────────────────────
 
   Future<Map<String, dynamic>> getPlatformSettings(String token) async {

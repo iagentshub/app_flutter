@@ -102,6 +102,7 @@ class _AdminPageState extends State<AdminPage>
   String _knowledgeType = '';
   String _knowledgeOwner = '';
   String _workflowOwner = '';
+  String _skillOwner = '';
 
   AdminStats? _stats;
   List<Map<String, dynamic>> _users = const [];
@@ -110,6 +111,7 @@ class _AdminPageState extends State<AdminPage>
   List<Map<String, dynamic>> _connections = const [];
   List<Map<String, dynamic>> _knowledge = const [];
   List<Map<String, dynamic>> _workflows = const [];
+  List<Map<String, dynamic>> _skills = const [];
   List<AdminExploreItem> _exploreItems = const [];
   Map<AdminResourceType, int> _exploreCounts = const {};
   Map<String, dynamic>? _platformSettings;
@@ -200,6 +202,7 @@ class _AdminPageState extends State<AdminPage>
         _connections = ofType(AdminResourceType.connection);
         _knowledge = ofType(AdminResourceType.knowledge);
         _workflows = ofType(AdminResourceType.workflow);
+        _skills = ofType(AdminResourceType.skill);
         _platformSettings = results[2] as Map<String, dynamic>;
         _loading = false;
       });

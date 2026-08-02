@@ -132,6 +132,65 @@ extension _AdminContentCards on _AdminPageState {
     );
   }
 
+  Widget _buildAdminSkillCard(Map<String, dynamic> item) {
+    final name = (item['name'] ?? item['id'] ?? '').toString();
+    final category = (item['category'] ?? '').toString();
+    final owner = _ownerOf(item);
+    final date = _fmtDate(item['created_at']);
+
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              name,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${owner.isEmpty ? '—' : owner} · $date',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                _resourceTypeBadge(AdminResourceType.skill),
+                if (category.isNotEmpty)
+                  _badge(category, const Color(0xFF64748B)),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const Spacer(),
+                _resourceGraphAction(AdminResourceType.skill, item),
+                ActionIconButton(
+                  icon: Icons.swap_horiz,
+                  tooltip: _tx(
+                    'admin.action_change_owner',
+                    'Cambiar propietario',
+                  ),
+                  onPressed: () => _changeOwner(item, 'skill'),
+                ),
+                ActionIconButton(
+                  icon: Icons.delete_outline,
+                  tooltip: _tx('common.delete', 'Eliminar'),
+                  danger: true,
+                  onPressed: () => _deleteSkill(item),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ── Tab: Configuración ───────────────────────────────────────────────
 
   Widget _buildConfigTab() {

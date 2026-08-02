@@ -235,6 +235,24 @@ extension _AdminActions on _AdminPageState {
     );
   }
 
+  Future<void> _deleteSkill(Map<String, dynamic> item) async {
+    final token = _token;
+    if (token == null) return;
+    final id = (item['id'] ?? '').toString();
+    final ok = await _confirm(
+      _tx('common.delete', 'Eliminar'),
+      _tx(
+        'admin.confirm_delete_skill',
+        '¿Seguro que quieres eliminar esta skill?',
+      ),
+    );
+    if (!ok) return;
+    await _run(
+      () => _repository.deleteAdminSkill(token, id),
+      _tx('admin.toast_skill_deleted', 'Skill eliminada'),
+    );
+  }
+
   // ── Acciones: cambiar propietario (agentes/conexiones/knowledge/orquest.) ─
 
   Future<void> _changeOwner(
