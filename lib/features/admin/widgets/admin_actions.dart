@@ -253,6 +253,24 @@ extension _AdminActions on _AdminPageState {
     );
   }
 
+  Future<void> _deleteMemory(Map<String, dynamic> item) async {
+    final token = _token;
+    if (token == null) return;
+    final id = (item['id'] ?? '').toString();
+    final ok = await _confirm(
+      _tx('common.delete', 'Eliminar'),
+      _tx(
+        'admin.confirm_delete_memory',
+        '¿Seguro que quieres eliminar este fichero de memoria?',
+      ),
+    );
+    if (!ok) return;
+    await _run(
+      () => _repository.deleteAdminMemory(token, id),
+      _tx('admin.toast_memory_deleted', 'Fichero de memoria eliminado'),
+    );
+  }
+
   // ── Acciones: cambiar propietario (agentes/conexiones/knowledge/orquest.) ─
 
   Future<void> _changeOwner(

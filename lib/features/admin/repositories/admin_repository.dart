@@ -319,6 +319,15 @@ class AdminRepository extends ApiRepository {
     );
   }
 
+  // ── Memoria ───────────────────────────────────────────────────────────
+
+  Future<void> deleteAdminMemory(String token, String memoryId) async {
+    await apiClient.delete(
+      '/api/admin/memory/${Uri.encodeComponent(memoryId)}',
+      gaToken: token,
+    );
+  }
+
   // ── Configuración de plataforma ──────────────────────────────────────
 
   Future<Map<String, dynamic>> getPlatformSettings(String token) async {

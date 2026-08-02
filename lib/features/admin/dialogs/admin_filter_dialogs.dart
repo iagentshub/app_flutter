@@ -188,5 +188,20 @@ extension _AdminFilterDialogs on _AdminPageState {
     }).toList();
   }
 
+  List<Map<String, dynamic>> get _filteredMemories {
+    final q = _exploreSearchController.text.trim().toLowerCase();
+    return _memories.where((m) {
+      if (q.isNotEmpty) {
+        final filename = (m['filename'] ?? '').toString().toLowerCase();
+        final owner = _ownerOf(m).toLowerCase();
+        if (!filename.contains(q) && !owner.contains(q)) return false;
+      }
+      if (_memoryOwner.isNotEmpty && _ownerOf(m) != _memoryOwner) {
+        return false;
+      }
+      return true;
+    }).toList();
+  }
+
   // ── Acciones: usuarios ───────────────────────────────────────────────
 }
