@@ -18,6 +18,7 @@ import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
+import '../../../shared/widgets/arc_gauge.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../utils/validators.dart';
 
