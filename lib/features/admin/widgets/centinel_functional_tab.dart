@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../shared/widgets/buttons/app_buttons.dart';
 
@@ -66,6 +67,16 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
   bool _logView = false;
   final List<String> _logLines = [];
   bool _starting = false;
+
+  /// El selector de módulos ocupa media pantalla y ya no hace falta una vez
+  /// se lanzó un run con la selección hecha — se colapsa solo (el usuario
+  /// puede volver a abrirlo con el botón de la barra de acciones).
+  bool _treeCollapsed = false;
+
+  /// El panel de resultados no debe reservar espacio antes del primer run de
+  /// la sesión — nunca vuelve a false: aunque el run termine y _status
+  /// vuelva a 'idle', los resultados ya son relevantes de mostrar.
+  bool _hasRunActivity = false;
 
   String _tx(String path, String fallback) => widget.tx(path, fallback);
   void _refresh(VoidCallback update) => setState(update);
@@ -145,6 +156,7 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
         _failedIds = failed is List
             ? failed.map((e) => e.toString()).toList()
             : const [];
+        if (runStatus != 'idle') _hasRunActivity = true;
       });
       if (runStatus == 'running' && _runId != null) {
         _connectStream(_runId!);
@@ -185,6 +197,8 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
         _status = 'running';
         _runId = result['run_id'] as String?;
         _starting = false;
+        _hasRunActivity = true;
+        _treeCollapsed = true;
       });
       if (_runId != null) _connectStream(_runId!);
     } on ApiError catch (error) {
@@ -296,6 +310,11 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
     }
   }
 
+  Future<void> _copyLog() async {
+    await Clipboard.setData(ClipboardData(text: _logLines.join('\n')));
+    _showMessage(_tx('centinel.toast_log_copied', 'Log copiado'));
+  }
+
   void _showMessage(String text, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -347,8 +366,8 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
   @override
   Widget build(BuildContext context) {
     final wide = MediaQuery.sizeOf(context).width >= 900;
-    final tree = _buildTreePanel();
-    final results = _buildResultsPanel();
+    final tree = _treeCollapsed ? null : _buildTreePanel();
+    final results = _hasRunActivity ? _buildResultsPanel() : null;
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -362,23 +381,29 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
           const SizedBox(height: 10),
           _buildSummaryBar(),
         ],
-        const SizedBox(height: 12),
-        if (wide)
-          SizedBox(
-            height: 520,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(width: 280, child: tree),
-                const SizedBox(width: 12),
-                Expanded(child: results),
-              ],
-            ),
-          )
-        else ...[
-          SizedBox(height: 320, child: tree),
+        if (tree != null || results != null) ...[
           const SizedBox(height: 12),
-          SizedBox(height: 420, child: results),
+          if (wide)
+            SizedBox(
+              height: 520,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (tree != null)
+                    results != null
+                        ? SizedBox(width: 280, child: tree)
+                        : Expanded(child: tree),
+                  if (tree != null && results != null)
+                    const SizedBox(width: 12),
+                  if (results != null) Expanded(child: results),
+                ],
+              ),
+            )
+          else ...[
+            if (tree != null) SizedBox(height: 320, child: tree),
+            if (tree != null && results != null) const SizedBox(height: 12),
+            if (results != null) SizedBox(height: 420, child: results),
+          ],
         ],
         const SizedBox(height: 16),
         _buildHistory(),
@@ -421,6 +446,18 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
           },
           icon: const Icon(Icons.refresh),
           label: Text(_tx('admin.refresh', 'Actualizar')),
+        ),
+        AppIconButton(
+          tooltip: _treeCollapsed
+              ? _tx('centinel.tree_show', 'Mostrar selector de tests')
+              : _tx('centinel.tree_hide', 'Ocultar selector de tests'),
+          onPressed: () => _refresh(() => _treeCollapsed = !_treeCollapsed),
+          icon: Icon(
+            _treeCollapsed
+                ? Icons.view_sidebar_outlined
+                : Icons.view_sidebar,
+          ),
+          isSelected: !_treeCollapsed,
         ),
       ],
     );

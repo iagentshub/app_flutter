@@ -245,6 +245,11 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
                   ),
                   isSelected: _logView,
                 ),
+                AppIconButton(
+                  tooltip: _tx('centinel.results_copy_log', 'Copiar log'),
+                  onPressed: _logLines.isEmpty ? null : _copyLog,
+                  icon: const Icon(Icons.copy_all_outlined, size: 18),
+                ),
               ],
             ),
           ),

@@ -945,6 +945,7 @@
     "results_filter_failed": "Failed",
     "results_filter_passed": "Passed",
     "results_filter_skipped": "Skipped",
+    "results_copy_log": "Copy log",
     "results_log_toggle_title": "View live log",
     "results_title": "Results",
     "stress_cap_notice": "{requested} users were requested but the server capped it at {effective} for thread safety.",
@@ -973,12 +974,15 @@
     "tab_probe": "Find limit",
     "tab_stress": "Performance",
     "toast_abort_failed": "Couldn't abort the run",
+    "toast_log_copied": "Log copied",
     "toast_run_aborted": "Run aborted",
     "toast_stream_dropped": "Lost the live connection to the run. Refresh to see its status.",
     "tree_deselect_all": "None",
     "tree_discovering": "Discovering tests…",
     "tree_filter_placeholder": "Filter…",
+    "tree_hide": "Hide test selector",
     "tree_modules_title": "Modules",
-    "tree_select_all": "All"
+    "tree_select_all": "All",
+    "tree_show": "Show test selector"
   }
 }

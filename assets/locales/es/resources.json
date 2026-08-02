@@ -945,6 +945,7 @@
     "results_filter_failed": "Fallidos",
     "results_filter_passed": "Pasados",
     "results_filter_skipped": "Omitidos",
+    "results_copy_log": "Copiar log",
     "results_log_toggle_title": "Ver log en tiempo real",
     "results_title": "Resultados",
     "stress_cap_notice": "Se pidieron {requested} usuarios pero el servidor limitó a {effective} por seguridad de hilos.",
@@ -973,12 +974,15 @@
     "tab_probe": "Buscar límite",
     "tab_stress": "Rendimiento",
     "toast_abort_failed": "No se pudo abortar el run",
+    "toast_log_copied": "Log copiado",
     "toast_run_aborted": "Run abortado",
     "toast_stream_dropped": "Se perdió la conexión en vivo con el run. Actualiza para ver su estado.",
     "tree_deselect_all": "Ninguno",
     "tree_discovering": "Descubriendo tests…",
     "tree_filter_placeholder": "Filtrar…",
+    "tree_hide": "Ocultar selector de tests",
     "tree_modules_title": "Módulos",
-    "tree_select_all": "Todo"
+    "tree_select_all": "Todo",
+    "tree_show": "Mostrar selector de tests"
   }
 }
