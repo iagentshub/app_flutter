@@ -6,7 +6,8 @@ enum AdminResourceType {
   agent('agent'),
   connection('connection'),
   knowledge('knowledge'),
-  workflow('workflow');
+  workflow('workflow'),
+  skill('skill');
 
   const AdminResourceType(this.wireName);
 

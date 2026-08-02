@@ -26,12 +26,19 @@ class AgentCard extends StatelessWidget {
     required this.onHistory,
     required this.onEdit,
     required this.onDelete,
+    this.skillNames = const {},
+    this.knowledgeNames = const {},
     this.onToggleActive,
     super.key,
   });
 
   final AgentItem item;
   final AgentCardText tx;
+
+  /// id → nombre — el agente solo guarda IDs de sus skills/knowledge, así
+  /// que sin esto el grafo de contenido mostraría el ID en vez del nombre.
+  final Map<String, String> skillNames;
+  final Map<String, String> knowledgeNames;
   final VoidCallback onChat;
   final ValueChanged<String> onExport;
   final VoidCallback onShare;
@@ -64,13 +71,19 @@ class AgentCard extends StatelessWidget {
       );
     }
     for (final skill in item.skills) {
-      nodes.add(GraphNode(id: 'skill-$skill', label: skill, type: 'skill'));
+      nodes.add(
+        GraphNode(
+          id: 'skill-$skill',
+          label: skillNames[skill] ?? skill,
+          type: 'skill',
+        ),
+      );
     }
     for (final knowledge in item.knowledge) {
       nodes.add(
         GraphNode(
           id: 'knowledge-$knowledge',
-          label: knowledge,
+          label: knowledgeNames[knowledge] ?? knowledge,
           type: 'knowledge',
         ),
       );

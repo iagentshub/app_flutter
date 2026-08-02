@@ -117,6 +117,8 @@ extension _AgentsPageView on _AgentsPageState {
   Widget _buildAgentCard(AgentItem item) {
     return AgentCard(
       item: item,
+      skillNames: _skillNames,
+      knowledgeNames: _knowledgeNames,
       tx: _tx,
       onChat: () => _openChat(item),
       onExport: (format) => _exportAgent(item, format),
