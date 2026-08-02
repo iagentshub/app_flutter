@@ -38,6 +38,8 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
   late bool _maintenanceEnabled;
   late final TextEditingController _maintenanceMessageController;
   DateTime? _maintenanceAt;
+  late final TextEditingController _splashCyclesController;
+  late bool _splashEndOnLogo;
 
   bool _saving = false;
   String? _saveMsg;
@@ -80,6 +82,10 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
     _maintenanceAt = DateTime.tryParse(
       (cfg['maintenance_at'] ?? '').toString(),
     );
+    _splashCyclesController = TextEditingController(
+      text: (cfg['splash_cycles'] ?? 1).toString(),
+    );
+    _splashEndOnLogo = cfg['splash_end_on_logo'] != false;
   }
 
   @override
@@ -88,6 +94,7 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
     _maxSessionsController.dispose();
     _logRetentionController.dispose();
     _stressConcurrencyController.dispose();
+    _splashCyclesController.dispose();
     _maintenanceMessageController.dispose();
     super.dispose();
   }
@@ -157,6 +164,9 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
         'maintenance_enabled': _maintenanceEnabled,
         'maintenance_message': _maintenanceMessageController.text.trim(),
         'maintenance_at': _maintenanceAt?.toIso8601String(),
+        'splash_cycles':
+            int.tryParse(_splashCyclesController.text.trim()) ?? 1,
+        'splash_end_on_logo': _splashEndOnLogo,
       };
       final updated = await widget.repository.updatePlatformSettings(
         widget.token,
@@ -419,6 +429,34 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
           ),
         ],
       ),
+      _sectionCard(_tx('admin.config_section_splash', 'Animación de inicio'), [
+        TextField(
+          controller: _splashCyclesController,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            labelText: _tx('admin.config_splash_cycles', 'Ciclos'),
+            helperText: _tx(
+              'admin.config_splash_cycles_hint',
+              'Cada ciclo es una ida y vuelta completa del logo (1-10).',
+            ),
+          ),
+        ),
+        const SizedBox(height: 6),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            _tx('admin.config_splash_end_on_logo', 'Terminar en el logo'),
+          ),
+          subtitle: Text(
+            _tx(
+              'admin.config_splash_end_on_logo_hint',
+              'Si se desactiva, el splash se cierra en la forma inicial en vez de en el logo iA.',
+            ),
+          ),
+          value: _splashEndOnLogo,
+          onChanged: (v) => setState(() => _splashEndOnLogo = v),
+        ),
+      ]),
       _AdminUpdatesCard(
         repository: widget.repository,
         token: widget.token,

@@ -28,7 +28,16 @@ class _LaunchSplashState extends State<LaunchSplash>
   static const _animationDuration = Duration(milliseconds: 1050);
   static const _finalPause = Duration(milliseconds: 260);
 
+  /// Máximo que se espera a que llegue la config de plataforma (ciclos/modo
+  /// final) antes de arrancar la animación igualmente con los valores por
+  /// defecto — un backend lento o inalcanzable no debe congelar el splash.
+  static const _configTimeout = Duration(milliseconds: 400);
+
   late final AnimationController _controller;
+
+  /// Un ciclo = una ida y vuelta completa A→B→A del logo.
+  int _cycles = 1;
+  bool _endOnLogo = true;
 
   @override
   void initState() {
@@ -37,7 +46,6 @@ class _LaunchSplashState extends State<LaunchSplash>
       vsync: this,
       duration: _animationDuration,
     );
-    unawaited(_checkBackend());
     unawaited(_runSequence());
   }
 
@@ -47,21 +55,53 @@ class _LaunchSplashState extends State<LaunchSplash>
     super.dispose();
   }
 
-  Future<void> _checkBackend() async {
+  Future<void> _loadPlatformConfig() async {
     final apiClient = ApiClient(widget.backendController);
     final authRepository = AuthRepository(apiClient);
     try {
       final platform = await authRepository.platformPublic();
       BootPlatformCache.set(platform: platform, reachable: true);
+      if (!mounted) return;
+      _cycles = _asCycles(platform['splash_cycles']);
+      _endOnLogo = platform['splash_end_on_logo'] != false;
     } catch (_) {
       BootPlatformCache.set(platform: null, reachable: false);
     }
   }
 
+  int _asCycles(Object? value) {
+    if (value is num) return value.toInt().clamp(1, 10);
+    return 1;
+  }
+
   Future<void> _runSequence() async {
     await Future<void>.delayed(_initialPause);
     if (!mounted) return;
-    await _controller.forward();
+
+    // Se espera un poco a la config real (ciclos/modo final), pero sin
+    // bloquear el splash si el backend tarda o no responde — mejor arrancar
+    // con los valores por defecto que dejar la pantalla congelada.
+    await Future.any([
+      _loadPlatformConfig(),
+      Future<void>.delayed(_configTimeout),
+    ]);
+    if (!mounted) return;
+
+    // Instantánea local: si _loadPlatformConfig sigue en vuelo tras el
+    // timeout y termina a mitad del bucle, no debe alterar cuántas vueltas
+    // ya decidimos dar.
+    final cycles = _cycles;
+    final endOnLogo = _endOnLogo;
+    for (var i = 0; i < cycles; i++) {
+      await _controller.forward();
+      if (!mounted) return;
+      await _controller.reverse();
+      if (!mounted) return;
+    }
+    if (endOnLogo) {
+      await _controller.forward();
+      if (!mounted) return;
+    }
     await Future<void>.delayed(_finalPause);
     if (mounted) widget.onFinished();
   }
