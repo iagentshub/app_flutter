@@ -12,6 +12,8 @@ import '../../../features/knowledge/repositories/skills_repository.dart';
 import '../../../models/agents/agent_builder_models.dart';
 import '../../../models/chat/chat_models.dart';
 import '../../../models/connections/connection_models.dart';
+import '../../../models/knowledge/knowledge_models.dart';
+import '../../../models/skills/skill_models.dart';
 import '../repositories/agent_builder_repository.dart';
 import '../repositories/agents_repository.dart';
 import '../dialogs/agent_form_dialog.dart';
@@ -99,11 +101,34 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
   Future<void> _bootstrap() async {
     final token = _token;
     if (token == null || token.isEmpty) return;
+    final failures = <String>[];
+
+    Future<T> load<T>(String label, Future<T> request, T fallback) async {
+      try {
+        return await request;
+      } catch (_) {
+        failures.add(label);
+        return fallback;
+      }
+    }
+
     try {
       final results = await Future.wait([
-        _connectionsRepository.listConnections(token),
-        _skillsRepository.listSkills(token, scope: 'all'),
-        _knowledgeRepository.listItems(token),
+        load(
+          'conexiones',
+          _connectionsRepository.listConnections(token),
+          const <ConnectionItem>[],
+        ),
+        load(
+          'skills',
+          _skillsRepository.listSkills(token, scope: 'all'),
+          const <SkillItem>[],
+        ),
+        load(
+          'conocimiento',
+          _knowledgeRepository.listItems(token),
+          const <KnowledgeItem>[],
+        ),
       ]);
       if (!mounted) return;
       final connections = results[0] as List<ConnectionItem>;
@@ -117,6 +142,9 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
         _knowledgeCatalog = (results[2] as List)
             .map((k) => {'id': k.id as String, 'name': k.title as String})
             .toList();
+        if (failures.isNotEmpty) {
+          _error = 'No se pudieron cargar: ${failures.join(', ')}';
+        }
       });
     } catch (_) {
       if (!mounted) return;
@@ -206,12 +234,15 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
           },
           onError: (error) {
             if (!mounted) return;
-            setState(
-              () => _error = _tx(
+            setState(() {
+              _streaming = false;
+              _thinking = false;
+              _error = _tx(
                 'agents.builder_connection_error',
                 'Error de conexión con el constructor de agentes',
-              ),
-            );
+              );
+            });
+            if (!completer.isCompleted) completer.complete();
           },
           onDone: () {
             if (!mounted) return;
@@ -250,6 +281,7 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
         token: token,
         initial: initial,
         tx: _tx,
+        requireQualityPrompt: true,
       ),
     );
     if (payload == null || !mounted) return;

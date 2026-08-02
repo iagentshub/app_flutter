@@ -26,6 +26,7 @@ class AgentFormDialog extends StatefulWidget {
     required this.token,
     required this.tx,
     this.initial,
+    this.requireQualityPrompt = false,
     super.key,
   });
 
@@ -33,6 +34,7 @@ class AgentFormDialog extends StatefulWidget {
   final String token;
   final String Function(String path, String fallback) tx;
   final Map<String, dynamic>? initial;
+  final bool requireQualityPrompt;
 
   @override
   State<AgentFormDialog> createState() => _AgentFormDialogState();

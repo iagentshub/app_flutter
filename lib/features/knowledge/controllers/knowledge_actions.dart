@@ -149,8 +149,11 @@ extension _KnowledgeActions on _KnowledgePageState {
     final initial = <String, dynamic>{...draft, 'scope': 'private'};
     final payload = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) =>
-          _SkillFormDialog(initial: initial, allowPublic: allowPublic),
+      builder: (context) => _SkillFormDialog(
+        initial: initial,
+        allowPublic: allowPublic,
+        requireQualityContent: true,
+      ),
     );
     if (payload == null) return false;
     return _saveSkill(payload);

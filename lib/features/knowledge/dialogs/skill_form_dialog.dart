@@ -1,10 +1,15 @@
 part of '../pages/knowledge_page.dart';
 
 class _SkillFormDialog extends StatefulWidget {
-  const _SkillFormDialog({this.initial, this.allowPublic = true});
+  const _SkillFormDialog({
+    this.initial,
+    this.allowPublic = true,
+    this.requireQualityContent = false,
+  });
 
   final Map<String, dynamic>? initial;
   final bool allowPublic;
+  final bool requireQualityContent;
 
   @override
   State<_SkillFormDialog> createState() => _SkillFormDialogState();
@@ -136,6 +141,13 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
                 decoration: const InputDecoration(
                   labelText: 'Contenido de la skill',
                 ),
+                validator: (value) {
+                  if (!widget.requireQualityContent) return null;
+                  if (value == null || value.trim().length < 180) {
+                    return 'Añade instrucciones más completas (mínimo 180 caracteres)';
+                  }
+                  return null;
+                },
               ),
             ],
           ),

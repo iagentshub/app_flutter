@@ -49,6 +49,16 @@ extension _AgentFormSections on _AgentFormDialogState {
             decoration: InputDecoration(
               labelText: widget.tx('agents.field_prompt', 'System prompt'),
             ),
+            validator: (value) {
+              if (!widget.requireQualityPrompt) return null;
+              if (value == null || value.trim().length < 90) {
+                return widget.tx(
+                  'agents.prompt_too_short',
+                  'Añade instrucciones más completas (mínimo 90 caracteres)',
+                );
+              }
+              return null;
+            },
           ),
         ],
       ),

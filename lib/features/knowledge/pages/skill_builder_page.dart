@@ -175,6 +175,8 @@ class _SkillBuilderPageState extends State<SkillBuilderPage> {
           onError: (_) {
             if (!mounted) return;
             setState(() {
+              _streaming = false;
+              _thinking = false;
               _error = _tx(
                 'skill_builder.connection_error',
                 'Error de conexión con el constructor de skills',
