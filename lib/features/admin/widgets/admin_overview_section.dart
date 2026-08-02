@@ -111,6 +111,53 @@ extension _AdminPageSections on _AdminPageState {
       ),
     ];
 
+    // None cuando el backend no pudo leer la métrica (p.ej. memoria fuera de
+    // Linux, ver _server_health() en admin.py) — se omite la tarjeta en vez
+    // de mostrar un "0%" engañoso.
+    final serverHealthTiles = <KpiTile>[
+      if (stats.diskUsedPct != null)
+        KpiTile(
+          label: _tx('admin.stat_disk_usage', 'Disco'),
+          value: stats.diskUsedPct!.round(),
+          icon: Icons.storage_outlined,
+          tint: _healthColor(context, stats.diskUsedPct! < 85),
+          unit: '%',
+          progress: (stats.diskUsedPct! / 100).clamp(0.0, 1.0),
+          progressLabel: stats.diskTotalGb == null
+              ? null
+              : '${stats.diskUsedGb!.toStringAsFixed(1)} / '
+                    '${stats.diskTotalGb!.toStringAsFixed(1)} GB',
+        ),
+      if (stats.memoryUsedPct != null)
+        KpiTile(
+          label: _tx('admin.stat_memory_usage', 'Memoria'),
+          value: stats.memoryUsedPct!.round(),
+          icon: Icons.memory_outlined,
+          tint: _healthColor(context, stats.memoryUsedPct! < 85),
+          unit: '%',
+          progress: (stats.memoryUsedPct! / 100).clamp(0.0, 1.0),
+          progressLabel: stats.memoryTotalGb == null
+              ? null
+              : '${stats.memoryUsedGb!.toStringAsFixed(1)} / '
+                    '${stats.memoryTotalGb!.toStringAsFixed(1)} GB',
+        ),
+      if (stats.cpuLoadPct != null)
+        KpiTile(
+          label: _tx('admin.stat_cpu_load', 'Carga CPU'),
+          value: stats.cpuLoadPct!.round(),
+          icon: Icons.speed_outlined,
+          tint: _healthColor(context, stats.cpuLoadPct! < 85),
+          unit: '%',
+          progress: (stats.cpuLoadPct! / 100).clamp(0.0, 1.0),
+          progressLabel: stats.cpuCores == null
+              ? null
+              : _tx('admin.stat_cpu_cores', '{n} núcleos').replaceAll(
+                  '{n}',
+                  '${stats.cpuCores}',
+                ),
+        ),
+    ];
+
     return RefreshIndicator(
       onRefresh: _load,
       child: CustomScrollView(
@@ -164,6 +211,27 @@ extension _AdminPageSections on _AdminPageState {
               itemBuilder: (context, index) => healthTiles[index],
             ),
           ),
+          if (serverHealthTiles.isNotEmpty) ...[
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              sliver: SliverToBoxAdapter(
+                child: Text(
+                  _tx('admin.stat_section_server', 'Salud del servidor'),
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+              sliver: ResponsiveSliverMasonryGrid(
+                minCardWidth: 190,
+                itemCount: serverHealthTiles.length,
+                itemBuilder: (context, index) => serverHealthTiles[index],
+              ),
+            ),
+          ],
         ],
       ),
     );

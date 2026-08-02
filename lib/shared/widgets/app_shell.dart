@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -52,18 +54,56 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   Map<String, dynamic> _texts = const {};
 
+  bool _maintenanceEnabled = false;
+  String _maintenanceMessage = '';
+  DateTime? _maintenanceAt;
+  String? _maintenanceDismissedKey;
+  Timer? _maintenanceTimer;
+
   @override
   void initState() {
     super.initState();
     _loadTexts();
+    _loadMaintenance();
+    // El aviso lo activa un admin en cualquier momento durante una sesión ya
+    // abierta — sin este refresco periódico, un usuario con la app abierta
+    // desde antes nunca lo vería hasta recargar.
+    _maintenanceTimer = Timer.periodic(
+      const Duration(minutes: 5),
+      (_) => _loadMaintenance(),
+    );
     widget.localeController.addListener(_onLocaleChanged);
   }
 
   @override
   void dispose() {
+    _maintenanceTimer?.cancel();
     widget.localeController.removeListener(_onLocaleChanged);
     super.dispose();
   }
+
+  Future<void> _loadMaintenance() async {
+    try {
+      final platform = await widget.authRepository.platformPublic();
+      if (!mounted) return;
+      setState(() {
+        _maintenanceEnabled = platform['maintenance_enabled'] == true;
+        _maintenanceMessage = (platform['maintenance_message'] ?? '')
+            .toString();
+        _maintenanceAt = DateTime.tryParse(
+          (platform['maintenance_at'] ?? '').toString(),
+        );
+      });
+    } catch (_) {
+      // Aviso informativo — sin red se mantiene el último estado conocido.
+    }
+  }
+
+  /// Clave del aviso actual — si el admin cambia el mensaje/fecha tras un
+  /// cierre previo, debe volver a mostrarse aunque el usuario ya lo hubiera
+  /// descartado.
+  String get _maintenanceKey =>
+      '$_maintenanceMessage|${_maintenanceAt?.toIso8601String()}';
 
   void _onLocaleChanged() => _loadTexts();
 
@@ -181,6 +221,16 @@ class _AppShellState extends State<AppShell> {
                         apiClient: widget.apiClient,
                         tx: _tx,
                       ),
+                      if (_maintenanceEnabled &&
+                          _maintenanceMessage.isNotEmpty &&
+                          _maintenanceDismissedKey != _maintenanceKey)
+                        _MaintenanceBanner(
+                          message: _maintenanceMessage,
+                          at: _maintenanceAt,
+                          onDismiss: () => setState(
+                            () => _maintenanceDismissedKey = _maintenanceKey,
+                          ),
+                        ),
                       Expanded(
                         child: TerminalViewTransition(
                           key: ValueKey(location),

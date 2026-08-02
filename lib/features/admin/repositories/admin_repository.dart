@@ -29,6 +29,17 @@ class AdminStats {
   int get avgLatencyMs => _asInt(raw['avg_latency_ms']);
   String? get topErrorEndpoint => raw['top_error_endpoint'] as String?;
   int get topErrorCount => _asInt(raw['top_error_count']);
+
+  // Salud del host — None cuando el backend no pudo leer la métrica (p.ej.
+  // memoria fuera de Linux); ver _server_health() en admin.py.
+  double? get diskUsedPct => (raw['disk_used_pct'] as num?)?.toDouble();
+  double? get diskUsedGb => (raw['disk_used_gb'] as num?)?.toDouble();
+  double? get diskTotalGb => (raw['disk_total_gb'] as num?)?.toDouble();
+  double? get memoryUsedPct => (raw['memory_used_pct'] as num?)?.toDouble();
+  double? get memoryUsedGb => (raw['memory_used_gb'] as num?)?.toDouble();
+  double? get memoryTotalGb => (raw['memory_total_gb'] as num?)?.toDouble();
+  double? get cpuLoadPct => (raw['cpu_load_pct'] as num?)?.toDouble();
+  int? get cpuCores => raw['cpu_cores'] == null ? null : _asInt(raw['cpu_cores']);
 }
 
 class AdminRepository extends ApiRepository {

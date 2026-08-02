@@ -35,6 +35,9 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
   late bool _oauthMicrosoft;
   late bool _usersCanConfigureTheme;
   late String _defaultTheme;
+  late bool _maintenanceEnabled;
+  late final TextEditingController _maintenanceMessageController;
+  DateTime? _maintenanceAt;
 
   bool _saving = false;
   String? _saveMsg;
@@ -70,6 +73,13 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
     _usersCanConfigureTheme = cfg['users_can_configure_theme'] != false;
     _defaultTheme = (cfg['default_theme'] ?? 'dark-red').toString();
     if (!kThemeIds.contains(_defaultTheme)) _defaultTheme = 'dark-red';
+    _maintenanceEnabled = cfg['maintenance_enabled'] == true;
+    _maintenanceMessageController = TextEditingController(
+      text: (cfg['maintenance_message'] ?? '').toString(),
+    );
+    _maintenanceAt = DateTime.tryParse(
+      (cfg['maintenance_at'] ?? '').toString(),
+    );
   }
 
   @override
@@ -78,7 +88,35 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
     _maxSessionsController.dispose();
     _logRetentionController.dispose();
     _stressConcurrencyController.dispose();
+    _maintenanceMessageController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickMaintenanceAt() async {
+    final now = DateTime.now();
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _maintenanceAt ?? now,
+      firstDate: now.subtract(const Duration(days: 1)),
+      lastDate: now.add(const Duration(days: 365)),
+    );
+    if (date == null || !mounted) return;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: _maintenanceAt != null
+          ? TimeOfDay.fromDateTime(_maintenanceAt!)
+          : TimeOfDay.fromDateTime(now),
+    );
+    if (time == null) return;
+    setState(() {
+      _maintenanceAt = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
+    });
   }
 
   void _showMessage(String text, {bool isError = false}) {
@@ -116,6 +154,9 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
         'oauth_microsoft_enabled': _oauthMicrosoft,
         'users_can_configure_theme': _usersCanConfigureTheme,
         'default_theme': _defaultTheme,
+        'maintenance_enabled': _maintenanceEnabled,
+        'maintenance_message': _maintenanceMessageController.text.trim(),
+        'maintenance_at': _maintenanceAt?.toIso8601String(),
       };
       final updated = await widget.repository.updatePlatformSettings(
         widget.token,
@@ -319,6 +360,65 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
           onChanged: (v) => setState(() => _oauthMicrosoft = v),
         ),
       ]),
+      _sectionCard(
+        _tx('admin.config_section_maintenance', 'Mantenimiento'),
+        [
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(
+              _tx('admin.config_maintenance_enabled', 'Aviso activo'),
+            ),
+            subtitle: Text(
+              _tx(
+                'admin.config_maintenance_hint',
+                'Muestra un banner informativo a todos los usuarios — no bloquea la app.',
+              ),
+            ),
+            value: _maintenanceEnabled,
+            onChanged: (v) => setState(() => _maintenanceEnabled = v),
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: _maintenanceMessageController,
+            maxLength: 500,
+            maxLines: 3,
+            decoration: InputDecoration(
+              labelText: _tx('admin.config_maintenance_message', 'Mensaje'),
+              hintText: _tx(
+                'admin.config_maintenance_message_hint',
+                'Ej: mantenimiento el viernes a las 20h, puede haber cortes breves',
+              ),
+            ),
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _maintenanceAt == null
+                      ? _tx(
+                          'admin.config_maintenance_no_date',
+                          'Sin fecha programada',
+                        )
+                      : _fmtDateTime(_maintenanceAt!),
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ),
+              TertiaryButton(
+                onPressed: _pickMaintenanceAt,
+                child: Text(
+                  _tx('admin.config_maintenance_pick_date', 'Elegir fecha'),
+                ),
+              ),
+              if (_maintenanceAt != null)
+                AppIconButton(
+                  tooltip: _tx('common.clear', 'Quitar'),
+                  icon: const Icon(Icons.close),
+                  onPressed: () => setState(() => _maintenanceAt = null),
+                ),
+            ],
+          ),
+        ],
+      ),
       _AdminUpdatesCard(
         repository: widget.repository,
         token: widget.token,
@@ -372,6 +472,11 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
 // (guardado correcto, commit al día / desactualizado).
 const _statusOkColor = Color(0xFF059669);
 const _statusWarnColor = Color(0xFFD97706);
+
+String _fmtDateTime(DateTime dt) {
+  String two(int v) => v.toString().padLeft(2, '0');
+  return '${two(dt.day)}/${two(dt.month)}/${dt.year} ${two(dt.hour)}:${two(dt.minute)}';
+}
 
 /// Tarjeta genérica de una sección de la pestaña Configuración — usada tanto
 /// por los campos de este archivo como por _AdminUpdatesCard.
