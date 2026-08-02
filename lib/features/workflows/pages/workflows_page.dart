@@ -16,14 +16,12 @@ import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
-import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/resource_toolbar.dart';
 import '../cards/workflow_card.dart';
+import '../dialogs/run_progress_dialog.dart';
+import '../dialogs/run_workflow_dialog.dart';
 import 'workflow_editor_page.dart';
-
-part '../dialogs/run_progress_dialog.dart';
-part '../dialogs/run_workflow_dialog.dart';
 
 class WorkflowsPage extends StatefulWidget {
   const WorkflowsPage({
@@ -294,8 +292,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
 
     final input = await showDialog<String>(
       context: context,
-      builder: (context) =>
-          _RunWorkflowDialog(workflowName: item.name, tx: _tx),
+      builder: (context) => RunWorkflowDialog(workflowName: item.name, tx: _tx),
     );
     if (input == null || input.trim().isEmpty) return;
 
@@ -306,10 +303,10 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (context) => _RunProgressDialog(
+      builder: (context) => RunProgressDialog(
         workflowName: item.name,
-        nodes: item.nodes,
-        edges: item.edges,
+        definition: item.definition,
+        agents: _agentsById.values.toList(),
         tx: _tx,
         stream: _repository.streamRun(
           token,

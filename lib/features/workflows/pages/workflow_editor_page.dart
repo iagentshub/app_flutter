@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/buttons/app_buttons.dart';
@@ -8,11 +10,19 @@ import '../../agents/repositories/agents_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/widgets/confirm_action_dialog.dart';
+import '../cards/workflow_metadata_card.dart';
+import '../dialogs/run_progress_dialog.dart';
+import '../dialogs/run_workflow_dialog.dart';
+import '../models/workflow_graph_validation.dart';
 import '../models/workflow_step_draft.dart';
+import '../repositories/workflows_repository.dart';
 import '../widgets/workflow_editor_toolbar.dart';
+import '../widgets/workflow_issues_panel.dart';
 import '../widgets/workflow_visual_canvas.dart';
 
 part '../cards/workflow_step_editor_card.dart';
+part 'workflow_editor_graph_actions.dart';
 
 class WorkflowEditorPage extends StatefulWidget {
   const WorkflowEditorPage({
@@ -36,10 +46,12 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _descriptionController;
-  late final TextEditingController _labelsController;
   late final TranslatedTexts _t;
   late List<WorkflowStepDraft> _steps;
+  late List<String> _labels;
+  late String _savedFingerprint;
   String? _selectedStepId;
+  List<WorkflowIssue> _issues = const [];
   int _stepCounter = 0;
 
   List<AgentItem> _agents = const [];
@@ -47,7 +59,13 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
   String? _error;
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
-  void _refresh(VoidCallback update) => setState(update);
+
+  void _refresh(VoidCallback update) {
+    setState(() {
+      update();
+      _issues = validateWorkflowGraph(_steps);
+    });
+  }
 
   @override
   void initState() {
@@ -63,21 +81,27 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
     _descriptionController = TextEditingController(
       text: initial?['description']?.toString() ?? '',
     );
-    final labels = (initial?['labels'] is List)
-        ? (initial?['labels'] as List).map((item) => item.toString()).join(', ')
-        : 'private';
-    _labelsController = TextEditingController(text: labels);
+    _labels = (initial?['labels'] is List)
+        ? (initial!['labels'] as List).map((item) => item.toString()).toList()
+        : ['private'];
+    if (_labels.isEmpty) _labels = ['private'];
 
     final definition = initial?['definition'];
     _steps = definition is Map<String, dynamic>
-        ? _stepsFromDefinition(definition)
-        : [_newStep()];
+        ? stepsFromDefinition(definition)
+        : const [];
+    if (_steps.isEmpty) _steps = [_newStep()];
+    _applyMissingPositions();
     _selectedStepId = _steps.first.id;
+    _issues = validateWorkflowGraph(_steps);
+    // Se calcula después de asignar posiciones para que abrir y cerrar sin
+    // tocar nada no cuente como cambio pendiente.
+    _savedFingerprint = _fingerprint();
     _loadAgents();
   }
 
   void _onTextsChanged() {
-    if (mounted) _refresh(() {});
+    if (mounted) setState(() {});
   }
 
   @override
@@ -86,11 +110,12 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
     _t.dispose();
     _nameController.dispose();
     _descriptionController.dispose();
-    _labelsController.dispose();
     super.dispose();
   }
 
   String? get _token => widget.sessionController.gaToken;
+
+  String? get _workflowId => widget.initial?['id']?.toString();
 
   Future<void> _loadAgents() async {
     final token = _token;
@@ -129,296 +154,110 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
     );
   }
 
-  List<WorkflowStepDraft> _stepsFromDefinition(
-    Map<String, dynamic> definition,
-  ) {
-    final nodes = (definition['nodes'] as List? ?? [])
-        .whereType<Map<String, dynamic>>()
-        .toList();
-    final edges = (definition['edges'] as List? ?? [])
-        .whereType<Map<String, dynamic>>()
-        .toList();
-    if (nodes.isEmpty) return [_newStep()];
+  // ── Estado del borrador ────────────────────────────────────────────────────
 
-    final sequenceEdges = edges
-        .where((e) => (e['type'] ?? 'sequence') == 'sequence')
-        .toList();
-    final loopEdges = edges.where((e) => e['type'] == 'loop').toList();
+  String _fingerprint() => jsonEncode({
+    'name': _nameController.text.trim(),
+    'description': _descriptionController.text.trim(),
+    'labels': [..._labels]..sort(),
+    'definition': buildDefinition(_steps),
+  });
 
-    return nodes.map((n) {
-      final id = n['id'].toString();
-      final loop = loopEdges
-          .where((e) => e['source']?.toString() == id)
-          .toList();
-      final evaluator = n['evaluator'] as Map<String, dynamic>?;
-      final nextIds = sequenceEdges
-          .where((e) => e['source']?.toString() == id)
-          .map((e) => e['target'].toString())
-          .toList();
-      return WorkflowStepDraft(
-        id: id,
-        agentId: n['agent_id']?.toString() ?? '',
-        label: n['label']?.toString() ?? '',
-        instruction: n['instruction']?.toString() ?? '',
-        kind: n['kind']?.toString() ?? 'agent',
-        evaluatorCondition: evaluator?['condition']?.toString() ?? '',
-        evaluatorMaxIterations:
-            (evaluator?['max_iterations'] as num?)?.toInt() ?? 5,
-        loopTargetId: loop.isEmpty ? null : loop.first['target']?.toString(),
-        loopIterations: loop.isEmpty
-            ? 2
-            : ((loop.first['iterations'] as num?)?.toInt() ?? 2),
-        positionX: ((n['position'] as Map?)?['x'] as num?)?.toDouble(),
-        positionY: ((n['position'] as Map?)?['y'] as num?)?.toDouble(),
-        nextStepIds: nextIds,
-      );
-    }).toList();
+  bool get _isDirty => _fingerprint() != _savedFingerprint;
+
+  Map<String, dynamic> _payload() {
+    final payload = <String, dynamic>{
+      'name': _nameController.text.trim(),
+      'description': _descriptionController.text.trim(),
+      'labels': _labels.isEmpty ? ['private'] : _labels,
+      'definition': buildDefinition(_steps),
+    };
+    final id = _workflowId;
+    if (id != null) payload['id'] = id;
+    return payload;
   }
 
-  Map<String, dynamic> _buildDefinition() {
-    final nodes = _steps.map((step) {
-      final node = <String, dynamic>{
-        'id': step.id,
-        'agent_id': step.agentId,
-        'label': step.label,
-        'instruction': step.instruction,
-        'kind': step.kind,
-        if (step.positionX != null && step.positionY != null)
-          'position': {'x': step.positionX, 'y': step.positionY},
-      };
-      if (step.kind == 'evaluator') {
-        node['evaluator'] = {
-          'condition': step.evaluatorCondition,
-          'max_iterations': step.evaluatorMaxIterations,
-        };
-      }
-      return node;
-    }).toList();
-
-    final edges = <Map<String, dynamic>>[];
+  /// Coloca los pasos que aún no tienen posición siguiendo el flujo.
+  void _applyMissingPositions() {
+    final positions = layeredLayout(_steps);
     for (final step in _steps) {
-      for (final nextId in step.nextStepIds) {
-        edges.add({'source': step.id, 'target': nextId, 'type': 'sequence'});
-      }
+      if (step.positionX != null && step.positionY != null) continue;
+      final position = positions[step.id];
+      if (position == null) continue;
+      step.positionX = position.dx;
+      step.positionY = position.dy;
     }
-    for (final step in _steps) {
-      if (step.loopTargetId == null) continue;
-      final edge = <String, dynamic>{
-        'source': step.id,
-        'target': step.loopTargetId,
-        'type': 'loop',
-        'mode': step.kind == 'evaluator' ? 'condition' : 'fixed',
-      };
-      if (step.kind != 'evaluator') edge['iterations'] = step.loopIterations;
-      edges.add(edge);
-    }
-
-    return {'nodes': nodes, 'edges': edges};
   }
 
-  String? _validate() {
-    if (_steps.isEmpty) {
-      return _tx(
-        'workflow_editor.validate_no_steps',
-        'La orquestación necesita al menos un paso',
-      );
-    }
-    for (var i = 0; i < _steps.length; i++) {
-      final step = _steps[i];
-      if (step.agentId.isEmpty) {
-        return _tx(
-          'workflow_editor.validate_select_agent',
-          'Selecciona un agente para el paso {{step}}',
-        ).replaceAll('{{step}}', '${i + 1}');
+  void _autoLayout() {
+    final positions = layeredLayout(_steps);
+    _refresh(() {
+      for (final step in _steps) {
+        final position = positions[step.id];
+        if (position == null) continue;
+        step.positionX = position.dx;
+        step.positionY = position.dy;
       }
-      if (step.kind == 'evaluator') {
-        if (step.evaluatorCondition.trim().isEmpty) {
-          return _tx(
-            'workflow_editor.validate_evaluator_condition',
-            'El paso {{step}} es un evaluador y necesita una condición',
-          ).replaceAll('{{step}}', '${i + 1}');
-        }
-        if (step.loopTargetId == null) {
-          return _tx(
-            'workflow_editor.validate_evaluator_loop',
-            'El paso {{step}} es un evaluador y debe volver a un paso anterior',
-          ).replaceAll('{{step}}', '${i + 1}');
-        }
-      }
-    }
-    if (_steps.length > 1 && _steps.every((s) => s.nextStepIds.isEmpty)) {
-      return _tx(
-        'workflow_editor.validate_connect_steps',
-        'Conecta los pasos entre sí ("Continúa hacia") para formar el flujo',
-      );
-    }
-    return null;
+    });
   }
 
   void _save() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    final validationError = _validate();
-    if (validationError != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(validationError),
-          backgroundColor: Colors.red.shade700,
-        ),
-      );
+    if (_issues.isNotEmpty) {
+      final first = _issues.first;
+      _refresh(() => _selectedStepId = first.nodeId ?? _selectedStepId);
       return;
     }
-
-    final labels = _labelsController.text
-        .split(',')
-        .map((item) => item.trim())
-        .where((item) => item.isNotEmpty)
-        .toList();
-
-    final payload = <String, dynamic>{
-      'name': _nameController.text.trim(),
-      'description': _descriptionController.text.trim(),
-      'labels': labels.isEmpty ? ['private'] : labels,
-      'definition': _buildDefinition(),
-    };
-    if (widget.initial?['id'] != null) payload['id'] = widget.initial!['id'];
-    Navigator.of(context).pop(payload);
+    _savedFingerprint = _fingerprint();
+    Navigator.of(context).pop(_payload());
   }
 
-  void _addStep() {
-    final newStep = _newStep();
-    _refresh(() {
-      // Si el último paso todavía no continúa hacia ningún sitio, lo
-      // enlazamos automáticamente al nuevo — mantiene el caso lineal
-      // (el más común) tan simple como antes; las ramas se añaden luego
-      // a mano con "Continúa hacia".
-      if (_steps.isNotEmpty && _steps.last.nextStepIds.isEmpty) {
-        _steps.last.nextStepIds.add(newStep.id);
-      }
-      _steps = [..._steps, newStep];
-      _selectedStepId = newStep.id;
-    });
-  }
-
-  void _removeStep(int index) {
-    if (_steps.length <= 1) return;
-    final removedId = _steps[index].id;
-    _refresh(() {
-      _steps = [..._steps]..removeAt(index);
-      for (final step in _steps) {
-        if (step.loopTargetId == removedId) step.loopTargetId = null;
-        step.nextStepIds.remove(removedId);
-      }
-      if (_selectedStepId == removedId) {
-        _selectedStepId = _steps.first.id;
-      }
-    });
-  }
-
-  void _removeStepById(String stepId) {
-    final index = _steps.indexWhere((step) => step.id == stepId);
-    if (index >= 0) _removeStep(index);
-  }
-
-  void _moveStep(String stepId, Offset position) {
-    final step = _steps.where((item) => item.id == stepId).firstOrNull;
-    if (step == null) return;
-    step.positionX = position.dx;
-    step.positionY = position.dy;
-  }
-
-  void _createConnection(String sourceId, String targetId, String type) {
-    _refresh(() {
-      final source = _steps.where((item) => item.id == sourceId).firstOrNull;
-      if (source == null) return;
-      if (type == 'loop') {
-        source.loopTargetId = targetId;
-      } else if (!source.nextStepIds.contains(targetId)) {
-        source.nextStepIds.add(targetId);
-      }
-    });
-  }
-
-  void _deleteConnection(String sourceId, String targetId, String type) {
-    _refresh(() {
-      final source = _steps.where((item) => item.id == sourceId).firstOrNull;
-      if (source == null) return;
-      if (type == 'loop') {
-        if (source.loopTargetId == targetId) source.loopTargetId = null;
-      } else {
-        source.nextStepIds.remove(targetId);
-      }
-    });
-  }
-
-  bool _canCreateConnection(String sourceId, String targetId) {
-    if (sourceId == targetId) return false;
-    final source = _steps.where((item) => item.id == sourceId).firstOrNull;
-    if (source == null || source.nextStepIds.contains(targetId)) return false;
-
-    final pending = <String>[targetId];
-    final visited = <String>{};
-    while (pending.isNotEmpty) {
-      final current = pending.removeLast();
-      if (!visited.add(current)) continue;
-      if (current == sourceId) return false;
-      final step = _steps.where((item) => item.id == current).firstOrNull;
-      if (step != null) pending.addAll(step.nextStepIds);
+  Future<void> _confirmDiscard() async {
+    if (!_isDirty) {
+      Navigator.of(context).pop();
+      return;
     }
-    return true;
+    final discard = await showConfirmActionDialog(
+      context,
+      title: _tx('workflow_editor.unsaved_title', 'Cambios sin guardar'),
+      message: _tx(
+        'workflow_editor.unsaved_body',
+        'Si sales ahora perderás los cambios de esta orquestación.',
+      ),
+      cancelLabel: _tx('workflow_editor.keep_editing', 'Seguir editando'),
+      confirmLabel: _tx('workflow_editor.discard_btn', 'Descartar'),
+    );
+    if (discard && mounted) Navigator.of(context).pop();
   }
 
-  Widget _buildMetadataCard() {
-    final colors = Theme.of(context).colorScheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.outlineVariant),
-      ),
-      child: ExpansionTile(
-        initiallyExpanded: widget.initial == null,
-        leading: const Icon(Icons.description_outlined),
-        title: Text(
-          _tx('workflow_editor.details_title', 'Datos del workflow'),
-          style: const TextStyle(fontWeight: FontWeight.w700),
-        ),
-        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        children: [
-          TextFormField(
-            controller: _nameController,
-            decoration: InputDecoration(
-              labelText: _tx('workflow_editor.name_label', 'Nombre'),
-            ),
-            validator: (value) => (value == null || value.trim().isEmpty)
-                ? _tx('workflow_editor.name_required', 'Nombre obligatorio')
-                : null,
-          ),
-          const SizedBox(height: 10),
-          TextFormField(
-            controller: _descriptionController,
-            minLines: 2,
-            maxLines: 4,
-            decoration: InputDecoration(
-              labelText: _tx(
-                'workflow_editor.description_label',
-                'Descripción',
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          TextFormField(
-            controller: _labelsController,
-            decoration: InputDecoration(
-              labelText: _tx(
-                'workflow_editor.labels_label',
-                'Labels (coma separada)',
-              ),
-            ),
-          ),
-        ],
+  Future<void> _testRun() async {
+    final id = _workflowId;
+    final token = _token;
+    if (id == null || id.isEmpty || token == null || token.isEmpty) return;
+    final name = _nameController.text.trim();
+
+    final input = await showDialog<String>(
+      context: context,
+      builder: (context) => RunWorkflowDialog(workflowName: name, tx: _tx),
+    );
+    if (input == null || input.trim().isEmpty || !mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => RunProgressDialog(
+        workflowName: name,
+        definition: buildDefinition(_steps),
+        agents: _agents,
+        tx: _tx,
+        stream: WorkflowsRepository(
+          apiClient: widget.apiClient,
+        ).streamRun(token, workflowId: id, input: input.trim()),
       ),
     );
   }
+
+  // ── Composición ────────────────────────────────────────────────────────────
 
   Widget _buildInspector() {
     final index = _steps.indexWhere((step) => step.id == _selectedStepId);
@@ -463,6 +302,10 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
       steps: _steps,
       agents: _agents,
       selectedStepId: _selectedStepId,
+      issueNodeIds: {
+        for (final issue in _issues)
+          if (issue.nodeId != null) issue.nodeId!,
+      },
       onStepSelected: (id) => _refresh(() => _selectedStepId = id),
       onStepMoved: _moveStep,
       onStepDeleted: _removeStepById,
@@ -500,8 +343,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final wide = constraints.maxWidth >= 980;
-        if (wide) {
+        if (constraints.maxWidth >= 980) {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -522,75 +364,139 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
     );
   }
 
+  List<Widget> _appBarActions() {
+    final canRun = _workflowId != null && _issues.isEmpty && !_isDirty;
+    return [
+      if (_workflowId != null)
+        Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: Tooltip(
+            message: canRun
+                ? _tx('workflow_editor.test_run_btn', 'Probar')
+                : _tx(
+                    'workflow_editor.test_run_disabled',
+                    'Guarda los cambios para poder probar la orquestación',
+                  ),
+            child: SecondaryButton.icon(
+              onPressed: canRun ? _testRun : null,
+              icon: const Icon(Icons.play_arrow_rounded, size: 18),
+              label: Text(_tx('workflow_editor.test_run_btn', 'Probar')),
+            ),
+          ),
+        ),
+      PrimaryButton.icon(
+        onPressed: _issues.isEmpty ? _save : null,
+        icon: const Icon(Icons.check_rounded, size: 18),
+        label: Text(_tx('workflow_editor.save_btn', 'Guardar')),
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    return Scaffold(
-      backgroundColor: colors.surfaceContainerLowest,
-      appBar: AppBar(
-        title: Text(
-          widget.initial == null
-              ? _tx('workflow_editor.title_new', 'Nuevo workflow')
-              : _tx('workflow_editor.title_edit', 'Editar workflow'),
-        ),
-        actions: [
-          PrimaryButton.icon(
-            onPressed: _save,
-            icon: const Icon(Icons.check_rounded, size: 18),
-            label: Text(_tx('workflow_editor.save_btn', 'Guardar')),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _confirmDiscard();
+      },
+      child: Scaffold(
+        backgroundColor: colors.surfaceContainerLowest,
+        appBar: AppBar(
+          title: Text(
+            widget.initial == null
+                ? _tx('workflow_editor.title_new', 'Nuevo workflow')
+                : _tx('workflow_editor.title_edit', 'Editar workflow'),
           ),
-        ],
-      ),
-      body: _loadingAgents
-          ? const Center(child: CircularProgressIndicator())
-          : Form(
-              key: _formKey,
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  children: [
-                    if (_error != null) ...[
-                      MaterialBanner(
-                        content: Text(_error!),
-                        actions: [
-                          TertiaryButton(
-                            onPressed: () => _refresh(() => _error = null),
-                            child: Text(_tx('common.close', 'Cerrar')),
-                          ),
-                        ],
+          actions: _appBarActions(),
+        ),
+        body: _loadingAgents
+            ? const Center(child: CircularProgressIndicator())
+            : Form(
+                key: _formKey,
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    children: [
+                      if (_error != null) ...[
+                        MaterialBanner(
+                          content: Text(_error!),
+                          actions: [
+                            TertiaryButton(
+                              onPressed: () => setState(() => _error = null),
+                              child: Text(_tx('common.close', 'Cerrar')),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+                      WorkflowMetadataCard(
+                        nameController: _nameController,
+                        descriptionController: _descriptionController,
+                        isPublic: _labels.contains('public'),
+                        onChanged: () => setState(() {}),
+                        onVisibilityChanged: (isPublic) => _refresh(() {
+                          // Se conservan las etiquetas propias del usuario;
+                          // solo cambia el par private/public.
+                          _labels = [
+                            for (final label in _labels)
+                              if (label != 'private' && label != 'public')
+                                label,
+                            isPublic ? 'public' : 'private',
+                          ];
+                        }),
+                        tx: _tx,
+                      ),
+                      const SizedBox(height: 12),
+                      WorkflowEditorToolbar(
+                        title: _tx(
+                          'workflow_editor.canvas_title',
+                          'Lienzo de orquestación',
+                        ),
+                        subtitle: _tx(
+                          'workflow_editor.canvas_subtitle',
+                          'Diseña el flujo conectando agentes visualmente',
+                        ),
+                        stepCount: _steps.length,
+                        connectionCount: _steps.connectionCount,
+                        issueCount: _issues.length,
+                        stepsLabel: _tx('workflows.steps_suffix', 'pasos'),
+                        connectionsLabel: _tx(
+                          'workflows.connections_suffix',
+                          'conexiones',
+                        ),
+                        issuesLabel: _tx(
+                          'workflow_editor.issues_suffix',
+                          'problemas',
+                        ),
+                        autoLayoutLabel: _tx(
+                          'workflow_editor.auto_layout',
+                          'Auto-organizar',
+                        ),
+                        onAutoLayout: _autoLayout,
+                        addLabel: _tx(
+                          'workflow_editor.add_step_btn',
+                          'Añadir paso',
+                        ),
+                        onAdd: _addStep,
                       ),
                       const SizedBox(height: 10),
+                      WorkflowIssuesPanel(
+                        issues: _issues,
+                        title: _tx(
+                          'workflow_editor.issues_title',
+                          '{{n}} problemas impiden guardar',
+                        ),
+                        translate: _tx,
+                        onSelectNode: (id) =>
+                            _refresh(() => _selectedStepId = id),
+                      ),
+                      Expanded(child: _buildWorkspace()),
                     ],
-                    _buildMetadataCard(),
-                    const SizedBox(height: 12),
-                    WorkflowEditorToolbar(
-                      title: _tx(
-                        'workflow_editor.canvas_title',
-                        'Lienzo de orquestación',
-                      ),
-                      subtitle: _tx(
-                        'workflow_editor.canvas_subtitle',
-                        'Diseña el flujo conectando agentes visualmente',
-                      ),
-                      stepCount: _steps.length,
-                      connectionCount: _steps.connectionCount,
-                      stepsLabel: _tx('workflows.steps_suffix', 'pasos'),
-                      connectionsLabel: _tx(
-                        'workflows.connections_suffix',
-                        'conexiones',
-                      ),
-                      addLabel: _tx(
-                        'workflow_editor.add_step_btn',
-                        'Añadir paso',
-                      ),
-                      onAdd: _addStep,
-                    ),
-                    const SizedBox(height: 10),
-                    Expanded(child: _buildWorkspace()),
-                  ],
+                  ),
                 ),
               ),
-            ),
+      ),
     );
   }
 }

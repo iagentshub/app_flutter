@@ -12,6 +12,10 @@ class WorkflowEditorToolbar extends StatelessWidget {
     required this.connectionsLabel,
     required this.addLabel,
     required this.onAdd,
+    this.issueCount = 0,
+    this.issuesLabel = '',
+    this.autoLayoutLabel = '',
+    this.onAutoLayout,
     super.key,
   });
 
@@ -23,6 +27,10 @@ class WorkflowEditorToolbar extends StatelessWidget {
   final String connectionsLabel;
   final String addLabel;
   final VoidCallback onAdd;
+  final int issueCount;
+  final String issuesLabel;
+  final String autoLayoutLabel;
+  final VoidCallback? onAutoLayout;
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +60,18 @@ class WorkflowEditorToolbar extends StatelessWidget {
       children: [
         _EditorMetric(value: stepCount, label: stepsLabel),
         _EditorMetric(value: connectionCount, label: connectionsLabel),
+        if (issueCount > 0)
+          _EditorMetric(
+            value: issueCount,
+            label: issuesLabel,
+            color: colors.error,
+          ),
+        if (onAutoLayout != null)
+          SecondaryButton.icon(
+            onPressed: onAutoLayout,
+            icon: const Icon(Icons.auto_awesome_mosaic_outlined, size: 18),
+            label: Text(autoLayoutLabel),
+          ),
         PrimaryButton.tonalIcon(
           onPressed: onAdd,
           icon: const Icon(Icons.add_rounded),
@@ -81,24 +101,28 @@ class WorkflowEditorToolbar extends StatelessWidget {
 }
 
 class _EditorMetric extends StatelessWidget {
-  const _EditorMetric({required this.value, required this.label});
+  const _EditorMetric({required this.value, required this.label, this.color});
 
   final int value;
   final String label;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final accent = color ?? colors.onSurfaceVariant;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: colors.surfaceContainerHigh,
+        color: color == null
+            ? colors.surfaceContainerHigh
+            : color!.withValues(alpha: .12),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
         '$value $label',
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: colors.onSurfaceVariant,
+          color: accent,
           fontWeight: FontWeight.w600,
         ),
       ),

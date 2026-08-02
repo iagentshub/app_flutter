@@ -1,16 +1,24 @@
-part of '../pages/workflows_page.dart';
+import 'package:flutter/material.dart';
 
-class _RunWorkflowDialog extends StatefulWidget {
-  const _RunWorkflowDialog({required this.workflowName, required this.tx});
+import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/responsive_dialog.dart';
+
+/// Pide el input inicial antes de lanzar una orquestación.
+class RunWorkflowDialog extends StatefulWidget {
+  const RunWorkflowDialog({
+    required this.workflowName,
+    required this.tx,
+    super.key,
+  });
 
   final String workflowName;
   final String Function(String path, String fallback) tx;
 
   @override
-  State<_RunWorkflowDialog> createState() => _RunWorkflowDialogState();
+  State<RunWorkflowDialog> createState() => _RunWorkflowDialogState();
 }
 
-class _RunWorkflowDialogState extends State<_RunWorkflowDialog> {
+class _RunWorkflowDialogState extends State<RunWorkflowDialog> {
   final _formKey = GlobalKey<FormState>();
   final _inputController = TextEditingController();
 
@@ -41,6 +49,7 @@ class _RunWorkflowDialogState extends State<_RunWorkflowDialog> {
             controller: _inputController,
             minLines: 5,
             maxLines: 10,
+            autofocus: true,
             decoration: InputDecoration(
               labelText: widget.tx(
                 'workflows.run_input_label',

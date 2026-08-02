@@ -1,150 +1,90 @@
-part of '../pages/workflows_page.dart';
+import 'dart:async';
 
-enum _RunNodeStatus { waiting, running, done, error }
+import 'package:flutter/material.dart';
+import 'package:vyuh_node_flow/vyuh_node_flow.dart';
 
-class _RunProgressDialog extends StatefulWidget {
-  const _RunProgressDialog({
+import '../../../core/network/api_error.dart';
+import '../../../models/agents/agent_models.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/responsive_dialog.dart';
+import '../cards/workflow_node_card.dart';
+import '../cards/workflow_run_detail_card.dart';
+import '../models/workflow_run_state.dart';
+import '../models/workflow_step_draft.dart';
+import '../widgets/workflow_visual_canvas.dart';
+
+/// Visor de una ejecución en vivo.
+///
+/// Pinta el estado sobre el mismo grafo que el usuario diseñó, en vez de una
+/// lista plana: así se ven las oleadas paralelas y los rebobinados de ciclo tal
+/// y como los ejecuta `backend/app/services/workflow_runner.py`.
+class RunProgressDialog extends StatefulWidget {
+  const RunProgressDialog({
     required this.workflowName,
-    required this.nodes,
-    required this.edges,
+    required this.definition,
+    required this.agents,
     required this.stream,
     required this.tx,
+    super.key,
   });
 
   final String workflowName;
-  final List<dynamic> nodes;
-  final List<dynamic> edges;
+  final Map<String, dynamic> definition;
+  final List<AgentItem> agents;
   final Stream<Map<String, dynamic>> stream;
   final String Function(String path, String fallback) tx;
 
   @override
-  State<_RunProgressDialog> createState() => _RunProgressDialogState();
+  State<RunProgressDialog> createState() => _RunProgressDialogState();
 }
 
-class _RunProgressDialogState extends State<_RunProgressDialog> {
-  final List<Map<String, dynamic>> _events = [];
-  final Map<String, _RunNodeStatus> _nodeStatus = {};
-  final Map<String, String> _nodeOutputs = {};
-  final Map<String, int> _nodeIterations = {};
+class _RunProgressDialogState extends State<RunProgressDialog> {
+  late final List<WorkflowStepDraft> _steps;
+  late final WorkflowRunState _state;
   StreamSubscription<Map<String, dynamic>>? _subscription;
-  String? _activeNodeId;
-  String? _finalOutput;
-  String? _errorMessage;
-  bool _running = true;
-
-  List<Map<String, dynamic>> get _nodes => widget.nodes
-      .whereType<Map>()
-      .map((node) => Map<String, dynamic>.from(node))
-      .toList();
-
-  int get _completedCount => _nodeStatus.values
-      .where((status) => status == _RunNodeStatus.done)
-      .length;
+  Timer? _ticker;
+  String? _selectedStepId;
 
   @override
   void initState() {
     super.initState();
-    for (final node in _nodes) {
-      final id = node['id']?.toString() ?? '';
-      if (id.isNotEmpty) _nodeStatus[id] = _RunNodeStatus.waiting;
-    }
+    _steps = stepsFromDefinition(widget.definition);
+    _state = WorkflowRunState(steps: _steps);
     _subscription = widget.stream.listen(
-      _handleEvent,
+      _onEvent,
       onError: (Object error) {
         if (!mounted) return;
-        setState(() {
-          _errorMessage = _readError(error);
-          if (_activeNodeId != null) {
-            _nodeStatus[_activeNodeId!] = _RunNodeStatus.error;
-          }
-          _running = false;
-        });
+        setState(
+          () => _state.markStreamError(_readError(error), DateTime.now()),
+        );
       },
       onDone: () {
-        if (mounted) setState(() => _running = false);
+        if (!mounted) return;
+        setState(() => _state.markStreamClosed(DateTime.now()));
       },
     );
-  }
-
-  void _handleEvent(Map<String, dynamic> event) {
-    if (!mounted || event['type'] == 'heartbeat') return;
-    setState(() {
-      _events.add(event);
-      final type = event['type']?.toString() ?? '';
-      final nodeId = event['node_id']?.toString() ?? '';
-      if (nodeId.isNotEmpty && event['iteration'] is num) {
-        _nodeIterations[nodeId] = (event['iteration'] as num).toInt();
-      }
-      switch (type) {
-        case 'stage_started':
-        case 'evaluation_started':
-          _activeNodeId = nodeId;
-          if (nodeId.isNotEmpty) {
-            _nodeStatus[nodeId] = _RunNodeStatus.running;
-          }
-          break;
-        case 'stage_done':
-          _activeNodeId = nodeId;
-          if (nodeId.isNotEmpty) {
-            _nodeStatus[nodeId] = _RunNodeStatus.done;
-            _nodeOutputs[nodeId] = event['output']?.toString() ?? '';
-          }
-          break;
-        case 'evaluation_done':
-          _activeNodeId = nodeId;
-          if (nodeId.isNotEmpty) {
-            _nodeStatus[nodeId] = event['approved'] == true
-                ? _RunNodeStatus.done
-                : _RunNodeStatus.running;
-          }
-          break;
-        case 'loop_iteration_started':
-          final targetId = event['target_node_id']?.toString() ?? '';
-          for (final id in _loopResetIds(nodeId, targetId)) {
-            _nodeStatus[id] = id == targetId
-                ? _RunNodeStatus.running
-                : _RunNodeStatus.waiting;
-          }
-          _activeNodeId = targetId.isEmpty ? nodeId : targetId;
-          break;
-        case 'loop_limit_reached':
-        case 'error':
-          if (nodeId.isNotEmpty) _nodeStatus[nodeId] = _RunNodeStatus.error;
-          _activeNodeId = nodeId.isEmpty ? _activeNodeId : nodeId;
-          _errorMessage =
-              event['message']?.toString() ??
-              widget.tx(
-                'workflows.error_running_generic',
-                'Error ejecutando workflow',
-              );
-          _running = false;
-          break;
-        case 'workflow_done':
-          _finalOutput = event['output']?.toString();
-          _activeNodeId = null;
-          _running = false;
-          break;
-      }
+    // Mantiene vivo el cronómetro del paso en curso entre eventos: una llamada
+    // a un LLM puede tardar minutos y sin esto la UI parece congelada.
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted && _state.running) setState(() {});
     });
   }
 
-  Set<String> _loopResetIds(String sourceId, String targetId) {
-    if (targetId.isEmpty) return {sourceId};
-    final result = <String>{targetId, sourceId};
-    var changed = true;
-    while (changed) {
-      changed = false;
-      for (final rawEdge in widget.edges.whereType<Map>()) {
-        if (rawEdge['type']?.toString() == 'loop') continue;
-        final source = rawEdge['source']?.toString() ?? '';
-        final target = rawEdge['target']?.toString() ?? '';
-        if (result.contains(source) && !result.contains(target)) {
-          result.add(target);
-          changed = true;
-        }
-      }
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    _subscription?.cancel();
+    super.dispose();
+  }
+
+  void _onEvent(Map<String, dynamic> event) {
+    if (!mounted) return;
+    final changed = _state.apply(event, DateTime.now());
+    if (changed) {
+      setState(() {
+        _selectedStepId ??= _state.activeNodeId;
+      });
     }
-    return result;
   }
 
   String _readError(Object error) {
@@ -152,256 +92,154 @@ class _RunProgressDialogState extends State<_RunProgressDialog> {
     final message = error.toString().trim();
     return message.isNotEmpty && message != 'Exception'
         ? message
-        : widget.tx(
+        : _tx(
             'workflows.error_connection',
             'Error de conexión durante la ejecución',
           );
   }
 
-  String _nodeLabel(Map<String, dynamic> node) {
-    final label = node['label']?.toString().trim() ?? '';
-    if (label.isNotEmpty) return label;
-    return node['agent_id']?.toString() ??
-        widget.tx('workflows.default_agent_label', 'Agente');
+  String _tx(String path, String fallback) => widget.tx(path, fallback);
+
+  String _agentName(String agentId) {
+    for (final agent in widget.agents) {
+      if (agent.id == agentId) return agent.name;
+    }
+    return _tx('workflows.default_agent_label', 'Agente');
   }
 
-  String _statusLabel(_RunNodeStatus status) => switch (status) {
-    _RunNodeStatus.waiting => widget.tx('workflows.node_waiting', 'Pendiente'),
-    _RunNodeStatus.running => widget.tx('workflows.node_running', 'En curso'),
-    _RunNodeStatus.done => widget.tx('workflows.node_done', 'Completado'),
-    _RunNodeStatus.error => widget.tx('workflows.run_status_error', 'Error'),
-  };
-
-  Color _statusColor(BuildContext context, _RunNodeStatus status) {
-    final colors = Theme.of(context).colorScheme;
-    return switch (status) {
-      _RunNodeStatus.waiting => colors.outline,
-      _RunNodeStatus.running => colors.primary,
-      _RunNodeStatus.done => Colors.green.shade600,
-      _RunNodeStatus.error => colors.error,
-    };
+  /// ponytail: cancelar solo cierra el stream del cliente. El backend no tiene
+  /// endpoint de cancelación, así que las tareas del servidor siguen corriendo
+  /// y consumiendo tokens. Cancelación real = endpoint nuevo en workflow_runner.
+  void _cancel() {
+    _subscription?.cancel();
+    _subscription = null;
+    setState(() => _state.markCancelled(DateTime.now()));
   }
 
-  IconData _statusIcon(_RunNodeStatus status, bool evaluator) =>
+  WorkflowNodeVisualStatus _visualStatus(RunNodeStatus status) =>
       switch (status) {
-        _RunNodeStatus.waiting =>
-          evaluator ? Icons.rule_outlined : Icons.smart_toy_outlined,
-        _RunNodeStatus.running => Icons.play_arrow_rounded,
-        _RunNodeStatus.done => Icons.check_rounded,
-        _RunNodeStatus.error => Icons.priority_high_rounded,
+        RunNodeStatus.waiting => WorkflowNodeVisualStatus.waiting,
+        RunNodeStatus.running => WorkflowNodeVisualStatus.running,
+        RunNodeStatus.done => WorkflowNodeVisualStatus.done,
+        RunNodeStatus.error => WorkflowNodeVisualStatus.error,
       };
 
-  Widget _flowNode(BuildContext context, Map<String, dynamic> node, int index) {
+  Color _statusColor(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final id = node['id']?.toString() ?? '';
-    final status = _nodeStatus[id] ?? _RunNodeStatus.waiting;
-    final accent = _statusColor(context, status);
-    final selected = _activeNodeId == id;
-    final iteration = _nodeIterations[id] ?? 1;
-    final evaluator = node['kind']?.toString() == 'evaluator';
-    return InkWell(
-      onTap: () => setState(() => _activeNodeId = id),
-      borderRadius: BorderRadius.circular(14),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: selected
-              ? accent.withValues(alpha: .10)
-              : colors.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: selected ? accent : colors.outlineVariant,
-            width: selected ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: .14),
-                shape: BoxShape.circle,
-              ),
-              child: status == _RunNodeStatus.running
-                  ? Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        color: accent,
-                      ),
-                    )
-                  : Icon(
-                      _statusIcon(status, evaluator),
-                      size: 19,
-                      color: accent,
-                    ),
-            ),
-            const SizedBox(width: 11),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${index + 1}. ${_nodeLabel(node)}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    iteration > 1
-                        ? '${_statusLabel(status)} · Vuelta $iteration'
-                        : _statusLabel(status),
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: accent,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    if (_state.error != null) return colors.error;
+    if (_state.cancelled) return colors.onSurfaceVariant;
+    return _state.running ? colors.primary : Colors.green.shade600;
   }
 
-  Widget _flow(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final nodes = _nodes;
-    if (nodes.isEmpty) return const SizedBox.shrink();
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(2, 2, 12, 2),
-      itemCount: nodes.length,
-      itemBuilder: (context, index) => Column(
-        children: [
-          _flowNode(context, nodes[index], index),
-          if (index < nodes.length - 1)
-            Container(width: 2, height: 14, color: colors.outlineVariant),
-        ],
-      ),
-    );
-  }
-
-  Widget _detailPanel(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    Map<String, dynamic>? selectedNode;
-    for (final node in _nodes) {
-      if (node['id']?.toString() == _activeNodeId) {
-        selectedNode = node;
-        break;
-      }
+  String _statusLabel() {
+    if (_state.error != null) return _tx('workflows.run_status_error', 'Error');
+    if (_state.cancelled) {
+      return _tx('workflows.run_cancelled', 'Cancelada');
     }
-    final output = _activeNodeId == null ? null : _nodeOutputs[_activeNodeId!];
-    final title = selectedNode == null
-        ? (_running
-              ? widget.tx(
-                  'workflows.run_waiting_first_event',
-                  'Preparando la orquestación…',
-                )
-              : widget.tx('workflows.final_output_title', 'Resultado final'))
-        : _nodeLabel(selectedNode);
-    final body = _errorMessage ?? output ?? _finalOutput;
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.outlineVariant),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                _errorMessage != null
-                    ? Icons.error_outline
-                    : selectedNode == null
-                    ? Icons.flag_outlined
-                    : Icons.notes_rounded,
-                size: 19,
-                color: _errorMessage != null ? colors.error : colors.primary,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  title,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Expanded(
-            child: body == null || body.trim().isEmpty
-                ? Center(
-                    child: Text(
-                      _running
-                          ? widget.tx(
-                              'workflows.node_output_waiting',
-                              'Aquí aparecerá el resultado de este paso.',
-                            )
-                          : widget.tx(
-                              'workflows.no_output',
-                              'Sin resultado disponible',
-                            ),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: colors.onSurfaceVariant),
-                    ),
-                  )
-                : SingleChildScrollView(
-                    child: SelectableText(
-                      body,
-                      style: TextStyle(
-                        height: 1.5,
-                        color: _errorMessage != null
-                            ? colors.error
-                            : colors.onSurface,
-                      ),
-                    ),
-                  ),
-          ),
-          if (_events.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text(
-              '${_events.length} eventos recibidos',
-              style: Theme.of(
-                context,
-              ).textTheme.labelSmall?.copyWith(color: colors.onSurfaceVariant),
-            ),
-          ],
-        ],
-      ),
+    return _state.running
+        ? _tx('workflows.run_status_running', 'En curso')
+        : _tx('workflows.run_status_done', 'Completada');
+  }
+
+  Widget _canvas() {
+    return WorkflowVisualCanvas(
+      steps: _steps,
+      agents: widget.agents,
+      selectedStepId: _selectedStepId,
+      onStepSelected: (id) => setState(() => _selectedStepId = id),
+      behavior: NodeFlowBehavior.inspect,
+      nodeStatuses: {
+        for (final entry in _state.status.entries)
+          entry.key: _visualStatus(entry.value),
+      },
+      iterations: _state.iterations,
+      fitTooltip: _tx('workflow_editor.fit_view', 'Encajar diagrama'),
+      zoomInTooltip: _tx('workflow_editor.zoom_in', 'Acercar'),
+      zoomOutTooltip: _tx('workflow_editor.zoom_out', 'Alejar'),
+      connectionHint: '',
+      inputLabel: _tx('workflow_editor.input_port', 'Entrada'),
+      outputLabel: _tx('workflow_editor.output_port', 'Salida'),
+      missingAgentLabel: _tx('workflow_editor.no_agent', 'Sin agente'),
+      agentKindLabel: _tx('workflow_editor.kind_agent', 'Agente'),
+      evaluatorKindLabel: _tx('workflow_editor.kind_evaluator', 'Evaluador'),
+      loopLabel: _tx('workflow_editor.loop_label', 'Bucle'),
+      invalidConnectionMessage: '',
     );
   }
 
-  @override
-  void dispose() {
-    _subscription?.cancel();
-    super.dispose();
+  Widget _progressBar(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final total = _state.totalCount;
+    final done = _state.completedCount;
+    final progress = total == 0 ? 0.0 : done / total;
+    final active = _state.activeSince;
+
+    return Row(
+      children: [
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(99),
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: progress),
+              duration: const Duration(milliseconds: 320),
+              builder: (context, value, _) => LinearProgressIndicator(
+                value: value,
+                minHeight: 6,
+                backgroundColor: colors.surfaceContainerHighest,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          _tx(
+            'workflows.run_progress_steps',
+            '{{done}}/{{total}} pasos',
+          ).replaceAll('{{done}}', '$done').replaceAll('{{total}}', '$total'),
+          style: Theme.of(
+            context,
+          ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700),
+        ),
+        if (_state.maxIteration > 1) ...[
+          const SizedBox(width: 10),
+          Text(
+            _tx(
+              'workflows.loop_round',
+              'Vuelta {{n}}',
+            ).replaceAll('{{n}}', '${_state.maxIteration}'),
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: colors.tertiary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+        if (_state.running && active != null) ...[
+          const SizedBox(width: 10),
+          Text(
+            _tx('workflows.still_working', 'trabajando {{time}}').replaceAll(
+              '{{time}}',
+              formatRunDuration(DateTime.now().difference(active)),
+            ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(color: colors.onSurfaceVariant),
+          ),
+        ],
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final total = _nodes.length;
-    final progress = total == 0 ? 0.0 : _completedCount / total;
-    final statusColor = _errorMessage != null
-        ? colors.error
-        : _running
-        ? colors.primary
-        : Colors.green.shade600;
-    final statusLabel = _errorMessage != null
-        ? widget.tx('workflows.run_status_error', 'Error')
-        : _running
-        ? widget.tx('workflows.run_status_running', 'En curso')
-        : widget.tx('workflows.run_status_done', 'Completada');
+    final statusColor = _statusColor(context);
+    final detail = WorkflowRunDetailCard(
+      state: _state,
+      steps: _steps,
+      selectedStepId: _selectedStepId,
+      agentNameFor: _agentName,
+      tx: widget.tx,
+    );
 
     return AlertDialog(
       titlePadding: const EdgeInsets.fromLTRB(24, 22, 16, 0),
@@ -412,9 +250,7 @@ class _RunProgressDialogState extends State<_RunProgressDialog> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  widget.tx('workflows.run_live_title', 'Ejecución en vivo'),
-                ),
+                Text(_tx('workflows.run_live_title', 'Ejecución en vivo')),
                 const SizedBox(height: 3),
                 Text(
                   widget.workflowName,
@@ -433,7 +269,7 @@ class _RunProgressDialogState extends State<_RunProgressDialog> {
               borderRadius: BorderRadius.circular(999),
             ),
             child: Text(
-              statusLabel,
+              '${_statusLabel()} · ${formatRunDuration(_state.elapsed)}',
               style: TextStyle(
                 color: statusColor,
                 fontSize: 12,
@@ -444,49 +280,29 @@ class _RunProgressDialogState extends State<_RunProgressDialog> {
         ],
       ),
       content: SizedBox(
-        width: dialogContentWidth(context, 820),
-        height: dialogContentHeight(context, 540),
+        width: dialogContentWidth(context, 1080),
+        height: dialogContentHeight(context, 620),
         child: Column(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(99),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      minHeight: 6,
-                      backgroundColor: colors.surfaceContainerHighest,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  '$_completedCount/$total pasos',
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
+            _progressBar(context),
             const SizedBox(height: 18),
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  if (constraints.maxWidth < 650) {
+                  if (constraints.maxWidth < 780) {
                     return Column(
                       children: [
-                        Expanded(flex: 3, child: _flow(context)),
+                        Expanded(flex: 3, child: _canvas()),
                         const SizedBox(height: 12),
-                        Expanded(flex: 2, child: _detailPanel(context)),
+                        Expanded(flex: 2, child: detail),
                       ],
                     );
                   }
                   return Row(
                     children: [
-                      SizedBox(width: 320, child: _flow(context)),
+                      Expanded(flex: 3, child: _canvas()),
                       const SizedBox(width: 14),
-                      Expanded(child: _detailPanel(context)),
+                      SizedBox(width: 360, child: detail),
                     ],
                   );
                 },
@@ -496,13 +312,14 @@ class _RunProgressDialogState extends State<_RunProgressDialog> {
         ),
       ),
       actions: [
-        PrimaryButton(
-          onPressed: _running ? null : () => Navigator.of(context).pop(),
-          child: Text(
-            _running
-                ? widget.tx('workflows.running_label', 'Ejecutando…')
-                : widget.tx('common.close', 'Cerrar'),
+        if (_state.running)
+          TertiaryButton(
+            onPressed: _cancel,
+            child: Text(_tx('workflows.run_cancel_btn', 'Cancelar ejecución')),
           ),
+        PrimaryButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(_tx('common.close', 'Cerrar')),
         ),
       ],
     );

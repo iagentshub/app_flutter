@@ -3,25 +3,30 @@ import 'package:vyuh_node_flow/vyuh_node_flow.dart';
 
 import '../../../models/agents/agent_models.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../cards/workflow_node_card.dart';
+import '../models/workflow_graph_validation.dart';
 import '../models/workflow_step_draft.dart';
 
 typedef WorkflowConnectionCallback =
     void Function(String sourceId, String targetId, String type);
 
+void _ignoreConnection(String _, String _, String _) {}
+
 /// Interactive node canvas that mirrors the workflow definition used by the
 /// backend. Sequence edges are created by dragging between ports; loop edges
 /// remain editable from the inspector and are rendered in orange.
+///
+/// El mismo lienzo se usa en dos modos:
+/// * edición ([NodeFlowBehavior.design]), donde marca el nodo seleccionado y
+///   los que tienen errores de validación;
+/// * ejecución ([NodeFlowBehavior.inspect]), donde pinta el estado que llega
+///   por SSE sobre el grafo que el usuario diseñó.
 class WorkflowVisualCanvas extends StatefulWidget {
   const WorkflowVisualCanvas({
     required this.steps,
     required this.agents,
     required this.selectedStepId,
     required this.onStepSelected,
-    required this.onStepMoved,
-    required this.onStepDeleted,
-    required this.onConnectionCreated,
-    required this.onConnectionDeleted,
-    required this.canCreateConnection,
     required this.fitTooltip,
     required this.zoomInTooltip,
     required this.zoomOutTooltip,
@@ -33,6 +38,15 @@ class WorkflowVisualCanvas extends StatefulWidget {
     required this.evaluatorKindLabel,
     required this.loopLabel,
     required this.invalidConnectionMessage,
+    this.onStepMoved,
+    this.onStepDeleted,
+    this.onConnectionCreated = _ignoreConnection,
+    this.onConnectionDeleted = _ignoreConnection,
+    this.canCreateConnection,
+    this.behavior = NodeFlowBehavior.design,
+    this.nodeStatuses = const {},
+    this.issueNodeIds = const {},
+    this.iterations = const {},
     super.key,
   });
 
@@ -40,11 +54,11 @@ class WorkflowVisualCanvas extends StatefulWidget {
   final List<AgentItem> agents;
   final String? selectedStepId;
   final ValueChanged<String> onStepSelected;
-  final void Function(String stepId, Offset position) onStepMoved;
-  final ValueChanged<String> onStepDeleted;
+  final void Function(String stepId, Offset position)? onStepMoved;
+  final ValueChanged<String>? onStepDeleted;
   final WorkflowConnectionCallback onConnectionCreated;
   final WorkflowConnectionCallback onConnectionDeleted;
-  final bool Function(String sourceId, String targetId) canCreateConnection;
+  final bool Function(String sourceId, String targetId)? canCreateConnection;
   final String fitTooltip;
   final String zoomInTooltip;
   final String zoomOutTooltip;
@@ -56,6 +70,18 @@ class WorkflowVisualCanvas extends StatefulWidget {
   final String evaluatorKindLabel;
   final String loopLabel;
   final String invalidConnectionMessage;
+
+  /// Qué puede hacer el usuario con el lienzo.
+  final NodeFlowBehavior behavior;
+
+  /// Estado de ejecución por nodo; vacío en modo edición.
+  final Map<String, WorkflowNodeVisualStatus> nodeStatuses;
+
+  /// Nodos que incumplen alguna regla de validación.
+  final Set<String> issueNodeIds;
+
+  /// Vuelta actual por nodo, para los ciclos.
+  final Map<String, int> iterations;
 
   @override
   State<WorkflowVisualCanvas> createState() => _WorkflowVisualCanvasState();
@@ -91,17 +117,17 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
     super.dispose();
   }
 
-  Offset _positionFor(WorkflowStepDraft step, int index) {
+  Offset _positionFor(WorkflowStepDraft step) {
     if (step.positionX != null && step.positionY != null) {
       return Offset(step.positionX!, step.positionY!);
     }
-    const columns = 3;
-    return Offset(80 + (index % columns) * 310, 80 + (index ~/ columns) * 200);
+    // Un workflow guardado sin posiciones se coloca siguiendo el sentido del
+    // flujo en vez de por índice de array, que no significaba nada.
+    return layeredLayout(widget.steps)[step.id] ?? const Offset(80, 80);
   }
 
   Node<WorkflowStepDraft> _nodeForStep(WorkflowStepDraft step) {
-    final index = widget.steps.indexWhere((item) => item.id == step.id);
-    final position = _positionFor(step, index < 0 ? 0 : index);
+    final position = _positionFor(step);
     step.positionX ??= position.dx;
     step.positionY ??= position.dy;
     return Node<WorkflowStepDraft>(
@@ -109,6 +135,7 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
       type: step.kind,
       position: position,
       size: _nodeSize,
+      locked: !widget.behavior.canDrag,
       data: step,
       ports: [
         Port(
@@ -186,8 +213,16 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
         if (!desiredNodeIds.contains(nodeId)) _controller.removeNode(nodeId);
       }
       for (final step in widget.steps) {
-        if (_controller.getNode(step.id) == null) {
+        final existing = _controller.getNode(step.id);
+        if (existing == null) {
           _controller.addNode(_nodeForStep(step));
+          continue;
+        }
+        // "Auto-organizar" reescribe las posiciones del borrador; sin esto el
+        // lienzo se quedaría con las viejas.
+        final desired = _positionFor(step);
+        if (existing.position.value != desired) {
+          _controller.setNodePosition(step.id, desired);
         }
       }
 
@@ -298,6 +333,7 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
               controller: _controller,
               theme: _canvasTheme(context),
               nodeBuilder: _buildNode,
+              behavior: widget.behavior,
               events: NodeFlowEvents<WorkflowStepDraft, String>(
                 onInit: () => WidgetsBinding.instance.addPostFrameCallback(
                   (_) => _controller.fitToView(),
@@ -310,21 +346,25 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
                   onDragStop: (node) {
                     final position = node.visualPosition.value;
                     _controller.setNodePosition(node.id, position);
-                    widget.onStepMoved(node.id, position);
+                    widget.onStepMoved?.call(node.id, position);
                   },
-                  onBeforeDelete: (node) async => widget.steps.length > 1,
+                  onBeforeDelete: (node) async =>
+                      widget.behavior.canDelete && widget.steps.length > 1,
                   onDeleted: (node) {
-                    if (!_syncing) widget.onStepDeleted(node.id);
+                    if (!_syncing) widget.onStepDeleted?.call(node.id);
                   },
                 ),
                 connection: ConnectionEvents<WorkflowStepDraft, String>(
                   onCreated: _handleConnectionCreated,
                   onDeleted: _handleConnectionDeleted,
                   onBeforeComplete: (connection) {
-                    final allowed = widget.canCreateConnection(
-                      connection.sourceNode.id,
-                      connection.targetNode.id,
-                    );
+                    final allowed =
+                        widget.behavior.canCreate &&
+                        (widget.canCreateConnection?.call(
+                              connection.sourceNode.id,
+                              connection.targetNode.id,
+                            ) ??
+                            true);
                     return allowed
                         ? const ConnectionValidationResult.allow()
                         : ConnectionValidationResult.deny(
@@ -347,33 +387,35 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
                 onZoomOut: () => _controller.zoomBy(-.15),
               ),
             ),
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: 12,
-              child: IgnorePointer(
-                child: Center(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: colors.surface.withValues(alpha: .9),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: colors.outlineVariant),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 7,
+            // La pista de "arrastra para conectar" solo aplica al editor.
+            if (widget.behavior.canCreate)
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: 12,
+                child: IgnorePointer(
+                  child: Center(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: colors.surface.withValues(alpha: .9),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: colors.outlineVariant),
                       ),
-                      child: Text(
-                        widget.connectionHint,
-                        style: Theme.of(context).textTheme.bodySmall,
-                        textAlign: TextAlign.center,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 7,
+                        ),
+                        child: Text(
+                          widget.connectionHint,
+                          style: Theme.of(context).textTheme.bodySmall,
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
           ],
         ),
       ),
@@ -382,83 +424,15 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
 
   Widget _buildNode(BuildContext context, Node<WorkflowStepDraft> node) {
     final step = node.data;
-    final colors = Theme.of(context).colorScheme;
-    final evaluator = step.kind == 'evaluator';
-    final selected = widget.selectedStepId == step.id;
-    final accent = evaluator ? colors.tertiary : colors.primary;
-    final label = step.label.trim().isEmpty
-        ? _agentName(step.agentId)
-        : step.label;
-
-    return Container(
-      key: ValueKey('workflow-node-${step.id}'),
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 11),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainer,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: selected ? accent : colors.outlineVariant,
-          width: selected ? 2 : 1,
-        ),
-        boxShadow: [
-          if (selected)
-            BoxShadow(
-              color: accent.withValues(alpha: .16),
-              blurRadius: 18,
-              offset: const Offset(0, 6),
-            ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 30,
-                height: 30,
-                decoration: BoxDecoration(
-                  color: accent.withValues(alpha: .15),
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: Icon(
-                  evaluator ? Icons.rule_rounded : Icons.smart_toy_outlined,
-                  size: 17,
-                  color: accent,
-                ),
-              ),
-              const SizedBox(width: 9),
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _agentName(step.agentId),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
-          ),
-          const Spacer(),
-          Text(
-            (evaluator ? widget.evaluatorKindLabel : widget.agentKindLabel)
-                .toUpperCase(),
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: accent,
-              fontWeight: FontWeight.w800,
-              letterSpacing: .7,
-            ),
-          ),
-        ],
-      ),
+    return WorkflowNodeCard(
+      step: step,
+      agentName: _agentName(step.agentId),
+      agentKindLabel: widget.agentKindLabel,
+      evaluatorKindLabel: widget.evaluatorKindLabel,
+      selected: widget.selectedStepId == step.id,
+      hasIssue: widget.issueNodeIds.contains(step.id),
+      status: widget.nodeStatuses[step.id] ?? WorkflowNodeVisualStatus.none,
+      iteration: widget.iterations[step.id] ?? 1,
     );
   }
 }

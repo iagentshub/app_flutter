@@ -8,12 +8,45 @@ extension _WorkflowStepEditorCard on _WorkflowEditorPageState {
     return '$stepPrefix ${index + 1}${name.isEmpty ? '' : ': $name'}';
   }
 
+  /// Chip de "Continúa hacia" que respeta las mismas reglas que el lienzo.
+  ///
+  /// Antes escribía directo en `nextStepIds`, así que por aquí se podían crear
+  /// ciclos que arrastrando en el lienzo estaban prohibidos.
+  Widget _connectionChip(WorkflowStepDraft step, int otherIndex) {
+    final targetId = _steps[otherIndex].id;
+    final selected = step.nextStepIds.contains(targetId);
+    final allowed = selected || _canCreateConnection(step.id, targetId);
+    final chip = FilterChip(
+      label: Text(_stepLabel(otherIndex)),
+      selected: selected,
+      onSelected: allowed
+          ? (value) => _refresh(() {
+              if (value) {
+                step.nextStepIds.add(targetId);
+              } else {
+                step.nextStepIds.remove(targetId);
+              }
+            })
+          : null,
+    );
+    if (allowed) return chip;
+    return Tooltip(
+      message: _tx(
+        'workflow_editor.invalid_connection',
+        'La conexión crearía un ciclo o ya existe',
+      ),
+      child: chip,
+    );
+  }
+
   Widget _buildStepCard(int index, {required Key key}) {
     final step = _steps[index];
     final otherSteps = [
       for (var i = 0; i < _steps.length; i++)
         if (i != index) i,
     ];
+    final loopTargets = _loopTargetsFor(step.id);
+    final loopTargetId = step.loopTargetId;
     final stepPrefix = _tx('workflow_editor.step_prefix', 'Paso');
 
     return Container(
@@ -59,26 +92,31 @@ extension _WorkflowStepEditorCard on _WorkflowEditorPageState {
           const SizedBox(height: 10),
           TextFormField(
             initialValue: step.label,
+            maxLength: maxLabelLength,
+            buildCounter:
+                (_, {required currentLength, required isFocused, maxLength}) =>
+                    null,
             decoration: InputDecoration(
               labelText: _tx(
                 'workflow_editor.step_label_field',
                 'Etiqueta (opcional)',
               ),
             ),
-            onChanged: (value) => step.label = value,
+            onChanged: (value) => _refresh(() => step.label = value),
           ),
           const SizedBox(height: 10),
           TextFormField(
             initialValue: step.instruction,
             minLines: 2,
             maxLines: 5,
+            maxLength: maxInstructionLength,
             decoration: InputDecoration(
               labelText: _tx(
                 'workflow_editor.instruction_label',
                 'Instrucción para este paso',
               ),
             ),
-            onChanged: (value) => step.instruction = value,
+            onChanged: (value) => _refresh(() => step.instruction = value),
           ),
           const SizedBox(height: 10),
           SegmentedButton<String>(
@@ -102,13 +140,24 @@ extension _WorkflowStepEditorCard on _WorkflowEditorPageState {
             const SizedBox(height: 10),
             TextFormField(
               initialValue: step.evaluatorCondition,
+              maxLength: maxConditionLength,
+              buildCounter:
+                  (
+                    _, {
+                    required currentLength,
+                    required isFocused,
+                    maxLength,
+                  }) => null,
               decoration: InputDecoration(
                 labelText: _tx(
                   'workflow_editor.evaluator_condition_label',
                   'Condición de evaluación',
                 ),
               ),
-              onChanged: (value) => step.evaluatorCondition = value,
+              // Sin _refresh el problema "necesita una condición" seguía
+              // listado aunque ya la hubieras escrito.
+              onChanged: (value) =>
+                  _refresh(() => step.evaluatorCondition = value),
             ),
             const SizedBox(height: 10),
             Row(
@@ -147,25 +196,16 @@ extension _WorkflowStepEditorCard on _WorkflowEditorPageState {
               runSpacing: 6,
               children: [
                 for (final otherIndex in otherSteps)
-                  FilterChip(
-                    label: Text(_stepLabel(otherIndex)),
-                    selected: step.nextStepIds.contains(_steps[otherIndex].id),
-                    onSelected: (selected) => _refresh(() {
-                      final targetId = _steps[otherIndex].id;
-                      if (selected) {
-                        step.nextStepIds.add(targetId);
-                      } else {
-                        step.nextStepIds.remove(targetId);
-                      }
-                    }),
-                  ),
+                  _connectionChip(step, otherIndex),
               ],
             ),
             const SizedBox(height: 10),
             DropdownButtonFormField<String>(
-              initialValue: step.loopTargetId,
+              initialValue: loopTargets.any((item) => item.id == loopTargetId)
+                  ? loopTargetId
+                  : null,
               decoration: InputDecoration(
-                labelText: step.kind == 'evaluator'
+                labelText: step.isEvaluator
                     ? _tx(
                         'workflow_editor.loop_target_required',
                         'Cierra ciclo hacia (obligatorio)',
@@ -174,16 +214,24 @@ extension _WorkflowStepEditorCard on _WorkflowEditorPageState {
                         'workflow_editor.loop_target_optional',
                         'Cierra ciclo hacia (opcional)',
                       ),
+                helperText: loopTargets.isEmpty
+                    ? _tx(
+                        'workflow_editor.loop_needs_ancestor',
+                        'Un ciclo solo puede volver a un paso anterior del flujo',
+                      )
+                    : null,
               ),
               items: [
                 DropdownMenuItem(
                   value: null,
                   child: Text(_tx('workflow_editor.no_loop', 'Sin ciclo')),
                 ),
-                for (final otherIndex in otherSteps)
+                // Solo los pasos anteriores: el backend rechaza un ciclo que
+                // salte hacia delante (workflow_validator.py:211-214).
+                for (final target in loopTargets)
                   DropdownMenuItem(
-                    value: _steps[otherIndex].id,
-                    child: Text(_stepLabel(otherIndex)),
+                    value: target.id,
+                    child: Text(_stepLabel(_steps.indexOf(target))),
                   ),
               ],
               onChanged: (value) => _refresh(() => step.loopTargetId = value),
