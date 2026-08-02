@@ -360,6 +360,56 @@ class _ConnectionIssueBanner extends StatelessWidget {
   }
 }
 
+/// Aviso informativo de mantenimiento programado — no bloquea la app, solo
+/// avisa. Descartable por sesión (ver _AppShellState._maintenanceDismissedKey);
+/// vuelve a aparecer si el admin cambia el mensaje o la fecha.
+class _MaintenanceBanner extends StatelessWidget {
+  const _MaintenanceBanner({
+    required this.message,
+    required this.at,
+    required this.onDismiss,
+  });
+
+  final String message;
+  final DateTime? at;
+  final VoidCallback onDismiss;
+
+  String _fmtAt(DateTime dt) {
+    String two(int v) => v.toString().padLeft(2, '0');
+    return '${two(dt.day)}/${two(dt.month)}/${dt.year} ${two(dt.hour)}:${two(dt.minute)}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final text = at == null ? message : '$message (${_fmtAt(at!)})';
+    return Material(
+      color: Colors.amber.shade800,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          children: [
+            const Icon(Icons.build_outlined, color: Colors.white, size: 16),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                text,
+                style: const TextStyle(color: Colors.white, fontSize: 12),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: onDismiss,
+              child: const Icon(Icons.close, color: Colors.white, size: 16),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _NavItemTile extends StatelessWidget {
   const _NavItemTile({
     required this.icon,
