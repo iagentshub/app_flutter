@@ -533,7 +533,7 @@ class _AgentsPageState extends State<AgentsPage> {
     if (token == null || token.isEmpty) return;
     try {
       final result = await _repository.exportAgent(token, item.id, format);
-      await FilePicker.platform.saveFile(
+      await FilePicker.saveFile(
         dialogTitle: _tx('agents.export_dialog_title', 'Guardar exportación'),
         fileName: result.filename ?? '${item.id}-$format.zip',
         bytes: result.bytes,

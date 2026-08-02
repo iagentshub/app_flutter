@@ -258,7 +258,7 @@ class _ProfilePageState extends State<ProfilePage>
     final token = _token;
     if (token == null || token.isEmpty) return;
 
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       withData: true,
       type: FileType.custom,
       allowedExtensions: const ['jpg', 'jpeg', 'png', 'webp'],

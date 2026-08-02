@@ -189,7 +189,7 @@ class _LogsPageViewState extends State<LogsPageView> {
           .toIso8601String()
           .replaceAll(RegExp(r'[^0-9]'), '')
           .substring(0, 14);
-      await FilePicker.platform.saveFile(
+      await FilePicker.saveFile(
         dialogTitle: _tx('logs.save_dialog_title', 'Guardar logs'),
         fileName: 'logs_$stamp.csv',
         bytes: bytes,

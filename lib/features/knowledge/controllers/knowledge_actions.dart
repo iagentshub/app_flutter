@@ -232,7 +232,7 @@ extension _KnowledgeActions on _KnowledgePageState {
     final token = _token;
     if (token == null || token.isEmpty) return;
 
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       withData: true,
       type: FileType.custom,
       allowedExtensions: const ['txt', 'md', 'pdf'],
