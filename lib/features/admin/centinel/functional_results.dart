@@ -363,55 +363,94 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
     );
   }
 
-  Widget _buildHistory() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _tx('centinel.history_title', 'Historial reciente'),
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+  Future<void> _showHistoryDialog() async {
+    await _loadHistory();
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: Text(_tx('centinel.history_title', 'Historial reciente')),
+          content: SizedBox(
+            width: 480,
+            child: _buildHistoryList(setDialogState),
+          ),
+          actions: [
+            TertiaryButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(_tx('common.close', 'Cerrar')),
             ),
-            const SizedBox(height: 10),
-            if (_history.isEmpty)
-              Text(_tx('centinel.history_empty', 'Sin ejecuciones previas'))
-            else
-              ..._history.map((entry) {
-                final status = (entry['status'] ?? '-').toString();
-                final target = (entry['target'] ?? '-').toString();
-                final summary =
-                    entry['summary'] as Map<String, dynamic>? ?? const {};
-                final passed = summary['passed'] ?? 0;
-                final failed = summary['failed'] ?? 0;
-                final skipped = summary['skipped'] ?? 0;
-                return ListTile(
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(
-                    status == 'aborted'
-                        ? Icons.stop_circle_outlined
-                        : Icons.check_circle_outline,
-                    color: failed is num && failed > 0
-                        ? const Color(0xFFDC2626)
-                        : const Color(0xFF059669),
-                  ),
-                  title: Text(
-                    target,
-                    style: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 12,
-                    ),
-                  ),
-                  subtitle: Text(
-                    '$status · $passed passed · $failed failed · $skipped skipped',
-                  ),
-                );
-              }),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildHistoryList(StateSetter setDialogState) {
+    if (_history.isEmpty) {
+      return Text(_tx('centinel.history_empty', 'Sin ejecuciones previas'));
+    }
+    return ListView(
+      shrinkWrap: true,
+      children: _history.map((entry) {
+        final runId = (entry['run_id'] ?? '').toString();
+        final status = (entry['status'] ?? '-').toString();
+        final target = (entry['target'] ?? '-').toString();
+        final summary = entry['summary'] as Map<String, dynamic>? ?? const {};
+        final passed = summary['passed'] ?? 0;
+        final failed = summary['failed'] ?? 0;
+        final skipped = summary['skipped'] ?? 0;
+        return ListTile(
+          dense: true,
+          contentPadding: EdgeInsets.zero,
+          leading: Icon(
+            status == 'aborted'
+                ? Icons.stop_circle_outlined
+                : Icons.check_circle_outline,
+            color: failed is num && failed > 0
+                ? const Color(0xFFDC2626)
+                : const Color(0xFF059669),
+          ),
+          title: Text(
+            target,
+            style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+          ),
+          subtitle: Text(
+            '$status · $passed passed · $failed failed · $skipped skipped',
+          ),
+          trailing: AppIconButton(
+            tooltip: _tx('centinel.history_delete_action', 'Borrar'),
+            icon: const Icon(Icons.delete_outline, size: 18),
+            onPressed: () => _deleteHistoryEntry(runId, setDialogState),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Future<void> _deleteHistoryEntry(String runId, StateSetter setDialogState) async {
+    final confirmed = await showConfirmActionDialog(
+      context,
+      title: _tx('centinel.history_delete_title', 'Borrar ejecución'),
+      message: _tx(
+        'centinel.history_delete_body',
+        '¿Seguro que quieres borrar esta ejecución del historial?',
+      ),
+      cancelLabel: _tx('common.cancel', 'Cancelar'),
+      confirmLabel: _tx('common.delete', 'Eliminar'),
+    );
+    if (!confirmed) return;
+    try {
+      await widget.repository.deleteHistoryEntry(widget.token, runId);
+      _history = _history
+          .where((h) => (h['run_id'] ?? '').toString() != runId)
+          .toList();
+      setDialogState(() {});
+    } catch (_) {
+      _showMessage(
+        _tx('centinel.history_delete_failed', 'No se pudo borrar la ejecución'),
+        isError: true,
+      );
+    }
   }
 }

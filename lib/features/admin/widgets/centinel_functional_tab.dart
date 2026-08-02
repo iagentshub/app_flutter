@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/confirm_action_dialog.dart';
 
 import '../../../core/network/api_error.dart';
 import '../repositories/centinel_repository.dart';
@@ -396,8 +397,6 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
         ],
         const SizedBox(height: 12),
         SizedBox(height: wide ? 520 : 420, child: panel),
-        const SizedBox(height: 16),
-        _buildHistory(),
       ],
     );
   }
@@ -443,12 +442,9 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
             ),
           ),
         SecondaryButton.icon(
-          onPressed: () {
-            _loadTree();
-            _loadHistory();
-          },
-          icon: const Icon(Icons.refresh),
-          label: Text(_tx('admin.refresh', 'Actualizar')),
+          onPressed: _showHistoryDialog,
+          icon: const Icon(Icons.history),
+          label: Text(_tx('centinel.history_title', 'Historial reciente')),
         ),
       ],
     );

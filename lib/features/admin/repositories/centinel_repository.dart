@@ -45,6 +45,13 @@ class CentinelRepository extends ApiRepository {
     return payload.whereType<Map<String, dynamic>>().toList();
   }
 
+  Future<void> deleteHistoryEntry(String token, String runId) async {
+    await apiClient.delete(
+      '$_base/history/${Uri.encodeComponent(runId)}',
+      gaToken: token,
+    );
+  }
+
   /// Eventos del run en curso (o replay si ya terminó): started, collecting,
   /// test, summary, done, aborted, error.
   Stream<Map<String, dynamic>> stream(String token, String runId) {
