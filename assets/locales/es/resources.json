@@ -896,6 +896,7 @@
     "actions_probe_start": "Iniciar búsqueda",
     "actions_probe_stop": "Detener",
     "actions_rerun_failed": "Re-run fallidos",
+    "actions_restart": "Reiniciar",
     "actions_run": "Ejecutar",
     "actions_stress_start": "Iniciar prueba",
     "actions_stress_stop": "Detener",
@@ -980,9 +981,7 @@
     "tree_deselect_all": "Ninguno",
     "tree_discovering": "Descubriendo tests…",
     "tree_filter_placeholder": "Filtrar…",
-    "tree_hide": "Ocultar selector de tests",
     "tree_modules_title": "Módulos",
-    "tree_select_all": "Todo",
-    "tree_show": "Mostrar selector de tests"
+    "tree_select_all": "Todo"
   }
 }

@@ -68,15 +68,12 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
   final List<String> _logLines = [];
   bool _starting = false;
 
-  /// El selector de módulos ocupa media pantalla y ya no hace falta una vez
-  /// se lanzó un run con la selección hecha — se colapsa solo (el usuario
-  /// puede volver a abrirlo con el botón de la barra de acciones).
-  bool _treeCollapsed = false;
-
-  /// El panel de resultados no debe reservar espacio antes del primer run de
-  /// la sesión — nunca vuelve a false: aunque el run termine y _status
-  /// vuelva a 'idle', los resultados ya son relevantes de mostrar.
-  bool _hasRunActivity = false;
+  /// false = modo selección (solo "Módulos", sin resultados). true = modo
+  /// resultados (solo "Resultados", en vivo o ya terminados) — nunca ambos a
+  /// la vez. El botón principal de la barra de acciones es quien conduce la
+  /// transición: Ejecutar (false→true) y Reiniciar (true→false); mientras
+  /// está en true y _status == 'running' el mismo botón hace de Abortar.
+  bool _showingResults = false;
 
   String _tx(String path, String fallback) => widget.tx(path, fallback);
   void _refresh(VoidCallback update) => setState(update);
@@ -156,7 +153,7 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
         _failedIds = failed is List
             ? failed.map((e) => e.toString()).toList()
             : const [];
-        if (runStatus != 'idle') _hasRunActivity = true;
+        if (runStatus != 'idle') _showingResults = true;
       });
       if (runStatus == 'running' && _runId != null) {
         _connectStream(_runId!);
@@ -197,8 +194,7 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
         _status = 'running';
         _runId = result['run_id'] as String?;
         _starting = false;
-        _hasRunActivity = true;
-        _treeCollapsed = true;
+        _showingResults = true;
       });
       if (_runId != null) _connectStream(_runId!);
     } on ApiError catch (error) {
@@ -225,6 +221,23 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
         isError: true,
       );
     }
+  }
+
+  /// Vuelve al modo selección — la selección de ficheros se conserva, solo se
+  /// descarta lo relativo al run ya visto (eventos, log, resumen).
+  void _resetToSelecting() {
+    _sub?.cancel();
+    _refresh(() {
+      _showingResults = false;
+      _status = 'idle';
+      _runId = null;
+      _events.clear();
+      _logLines.clear();
+      _summary = const {};
+      _progress = 0;
+      _currentFile = '';
+      _failedIds = const [];
+    });
   }
 
   void _connectStream(String runId) {
@@ -366,8 +379,8 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
   @override
   Widget build(BuildContext context) {
     final wide = MediaQuery.sizeOf(context).width >= 900;
-    final tree = _treeCollapsed ? null : _buildTreePanel();
-    final results = _hasRunActivity ? _buildResultsPanel() : null;
+    // Nunca ambos a la vez: selección de tests O resultados, nunca las dos.
+    final panel = _showingResults ? _buildResultsPanel() : _buildTreePanel();
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -381,30 +394,8 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
           const SizedBox(height: 10),
           _buildSummaryBar(),
         ],
-        if (tree != null || results != null) ...[
-          const SizedBox(height: 12),
-          if (wide)
-            SizedBox(
-              height: 520,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (tree != null)
-                    results != null
-                        ? SizedBox(width: 280, child: tree)
-                        : Expanded(child: tree),
-                  if (tree != null && results != null)
-                    const SizedBox(width: 12),
-                  if (results != null) Expanded(child: results),
-                ],
-              ),
-            )
-          else ...[
-            if (tree != null) SizedBox(height: 320, child: tree),
-            if (tree != null && results != null) const SizedBox(height: 12),
-            if (results != null) SizedBox(height: 420, child: results),
-          ],
-        ],
+        const SizedBox(height: 12),
+        SizedBox(height: wide ? 520 : 420, child: panel),
         const SizedBox(height: 16),
         _buildHistory(),
       ],
@@ -413,31 +404,43 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
 
   Widget _buildActionsBar() {
     final nothingSelected = _selectedFiles != null && _selectedFiles!.isEmpty;
+
+    // Un único botón conduce el ciclo completo: Ejecutar (selección→en vivo)
+    // → Abortar (mientras corre) → Reiniciar (resultados→vuelta a selección).
+    final Widget primaryAction;
+    if (!_showingResults) {
+      primaryAction = PrimaryButton.icon(
+        onPressed: (nothingSelected || _starting) ? null : () => _startRun(),
+        icon: const Icon(Icons.play_arrow),
+        label: Text(_tx('centinel.actions_run', 'Ejecutar')),
+      );
+    } else if (_status == 'running') {
+      primaryAction = PrimaryButton.tonalIcon(
+        onPressed: _abort,
+        icon: const Icon(Icons.stop_circle_outlined),
+        label: Text(_tx('centinel.actions_abort', 'Abortar')),
+      );
+    } else {
+      primaryAction = PrimaryButton.icon(
+        onPressed: _resetToSelecting,
+        icon: const Icon(Icons.restart_alt),
+        label: Text(_tx('centinel.actions_restart', 'Reiniciar')),
+      );
+    }
+
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        PrimaryButton.icon(
-          onPressed: (_status == 'running' || nothingSelected || _starting)
-              ? null
-              : () => _startRun(),
-          icon: const Icon(Icons.play_arrow),
-          label: Text(_tx('centinel.actions_run', 'Ejecutar')),
-        ),
-        if (_failedIds.isNotEmpty && _status != 'running')
+        primaryAction,
+        if (_showingResults && _status != 'running' && _failedIds.isNotEmpty)
           SecondaryButton.icon(
             onPressed: _starting ? null : () => _startRun(rerunFailed: true),
             icon: const Icon(Icons.replay),
             label: Text(
               _tx('centinel.actions_rerun_failed', 'Re-run fallidos'),
             ),
-          ),
-        if (_status == 'running')
-          PrimaryButton.tonalIcon(
-            onPressed: _abort,
-            icon: const Icon(Icons.stop_circle_outlined),
-            label: Text(_tx('centinel.actions_abort', 'Abortar')),
           ),
         SecondaryButton.icon(
           onPressed: () {
@@ -446,18 +449,6 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
           },
           icon: const Icon(Icons.refresh),
           label: Text(_tx('admin.refresh', 'Actualizar')),
-        ),
-        AppIconButton(
-          tooltip: _treeCollapsed
-              ? _tx('centinel.tree_show', 'Mostrar selector de tests')
-              : _tx('centinel.tree_hide', 'Ocultar selector de tests'),
-          onPressed: () => _refresh(() => _treeCollapsed = !_treeCollapsed),
-          icon: Icon(
-            _treeCollapsed
-                ? Icons.view_sidebar_outlined
-                : Icons.view_sidebar,
-          ),
-          isSelected: !_treeCollapsed,
         ),
       ],
     );

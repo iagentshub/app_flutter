@@ -896,6 +896,7 @@
     "actions_probe_start": "Start search",
     "actions_probe_stop": "Stop",
     "actions_rerun_failed": "Re-run failed",
+    "actions_restart": "Restart",
     "actions_run": "Run",
     "actions_stress_start": "Start test",
     "actions_stress_stop": "Stop",
@@ -980,9 +981,7 @@
     "tree_deselect_all": "None",
     "tree_discovering": "Discovering tests…",
     "tree_filter_placeholder": "Filter…",
-    "tree_hide": "Hide test selector",
     "tree_modules_title": "Modules",
-    "tree_select_all": "All",
-    "tree_show": "Show test selector"
+    "tree_select_all": "All"
   }
 }
