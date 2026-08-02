@@ -6,6 +6,14 @@ extension _AdminPageSections on _AdminPageState {
     '{pct}% del total',
   ).replaceAll('{pct}', '${(progress * 100).round()}');
 
+  static const _healthOkColor = Color(0xFF059669);
+
+  /// Verde si la métrica está sana, el color de error del tema si no —
+  /// las KPI de recursos usan tinte decorativo por afinidad, pero estas son
+  /// literalmente un semáforo de estado y deben leerse como tal.
+  Color _healthColor(BuildContext context, bool healthy) =>
+      healthy ? _healthOkColor : Theme.of(context).colorScheme.error;
+
   Widget _buildGeneralTab() {
     final stats = _stats;
     if (stats == null) return const Center(child: Text('—'));
@@ -64,6 +72,45 @@ extension _AdminPageSections on _AdminPageState {
         progressLabel: _pctLabel(privatePct),
       ),
     ];
+
+    final noErrorsToday = stats.errorsToday == 0;
+    final healthTiles = <KpiTile>[
+      KpiTile(
+        label: _tx('admin.stat_requests_today', 'Peticiones hoy'),
+        value: stats.requestsToday,
+        icon: Icons.swap_horiz,
+        tint: scheme.primary,
+      ),
+      KpiTile(
+        label: _tx('admin.stat_errors_today', 'Errores hoy'),
+        value: stats.errorsToday,
+        icon: Icons.error_outline,
+        tint: _healthColor(context, noErrorsToday),
+      ),
+      KpiTile(
+        label: _tx('admin.stat_failure_rate', '% de fallo'),
+        value: stats.failureRatePct.round(),
+        icon: Icons.percent,
+        tint: _healthColor(context, stats.failureRatePct == 0),
+        unit: '%',
+      ),
+      KpiTile(
+        label: _tx('admin.stat_avg_latency', 'Latencia media'),
+        value: stats.avgLatencyMs,
+        icon: Icons.speed_outlined,
+        tint: scheme.secondary,
+        unit: 'ms',
+      ),
+      KpiTile(
+        label:
+            stats.topErrorEndpoint ??
+            _tx('admin.stat_no_errors_today', 'Sin fallos hoy'),
+        value: stats.topErrorCount,
+        icon: Icons.report_gmailerrorred_outlined,
+        tint: _healthColor(context, noErrorsToday),
+      ),
+    ];
+
     return RefreshIndicator(
       onRefresh: _load,
       child: CustomScrollView(
@@ -91,11 +138,30 @@ extension _AdminPageSections on _AdminPageState {
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             sliver: ResponsiveSliverMasonryGrid(
               minCardWidth: 190,
               itemCount: tiles.length,
               itemBuilder: (context, index) => tiles[index],
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+            sliver: SliverToBoxAdapter(
+              child: Text(
+                _tx('admin.stat_section_health', 'Estado de la aplicación'),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+            sliver: ResponsiveSliverMasonryGrid(
+              minCardWidth: 190,
+              itemCount: healthTiles.length,
+              itemBuilder: (context, index) => healthTiles[index],
             ),
           ),
         ],

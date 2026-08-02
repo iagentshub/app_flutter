@@ -12,6 +12,7 @@ class KpiTile extends StatelessWidget {
     required this.tint,
     this.progress,
     this.progressLabel,
+    this.unit,
     super.key,
   });
 
@@ -28,6 +29,10 @@ class KpiTile extends StatelessWidget {
   /// sentido junto a [progress].
   final String? progressLabel;
 
+  /// Sufijo pegado al valor (p. ej. "ms") — para métricas que no son un
+  /// conteo puro.
+  final String? unit;
+
   @override
   Widget build(BuildContext context) {
     return kpiCardChrome(
@@ -36,13 +41,28 @@ class KpiTile extends StatelessWidget {
         children: [
           kpiIconBadge(icon: icon, tint: tint, progress: progress),
           const SizedBox(height: 12),
-          Text(
-            '$value',
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
-              height: 1.1,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                '$value',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  height: 1.1,
+                ),
+              ),
+              if (unit != null) ...[
+                const SizedBox(width: 3),
+                Text(
+                  unit!,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: 2),
           Text(

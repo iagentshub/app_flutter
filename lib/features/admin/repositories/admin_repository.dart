@@ -21,6 +21,14 @@ class AdminStats {
   int get conversationsTotal => _asInt(raw['conversations_total']);
   int get agentsPublic => _asInt(raw['agents_public']);
   int get agentsPrivate => _asInt(raw['agents_private']);
+
+  int get requestsToday => _asInt(raw['requests_today']);
+  int get errorsToday => _asInt(raw['errors_today']);
+  double get failureRatePct =>
+      (raw['failure_rate_pct'] as num?)?.toDouble() ?? 0.0;
+  int get avgLatencyMs => _asInt(raw['avg_latency_ms']);
+  String? get topErrorEndpoint => raw['top_error_endpoint'] as String?;
+  int get topErrorCount => _asInt(raw['top_error_count']);
 }
 
 class AdminRepository extends ApiRepository {
