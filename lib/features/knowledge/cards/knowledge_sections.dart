@@ -220,7 +220,7 @@ extension _KnowledgeSections on _KnowledgePageState {
             runSpacing: 6,
             children: [
               AppIconButton.filled(
-                onPressed: _openCreateSkillDialog,
+                onPressed: _openCreateSkillChoiceDialog,
                 icon: const Icon(Icons.add),
                 tooltip: 'Nueva skill',
               ),

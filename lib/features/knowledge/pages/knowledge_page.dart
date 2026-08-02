@@ -11,6 +11,7 @@ import '../../../models/knowledge/knowledge_models.dart';
 import '../../../models/skills/skill_models.dart';
 import '../repositories/knowledge_repository.dart';
 import '../repositories/skills_repository.dart';
+import 'skill_builder_page.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';

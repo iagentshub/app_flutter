@@ -52,6 +52,110 @@ extension _KnowledgeActions on _KnowledgePageState {
     await _saveSkill(payload);
   }
 
+  Future<void> _openCreateSkillChoiceDialog() async {
+    final choice = await showDialog<String>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text(
+          _tx(
+            'skill_builder.create_choice_title',
+            '¿Cómo quieres crear la skill?',
+          ),
+        ),
+        children: [
+          _skillCreateChoiceOption(
+            context,
+            icon: Icons.edit_note_outlined,
+            title: _tx('skill_builder.create_choice_scratch', 'Desde cero'),
+            subtitle: _tx(
+              'skill_builder.create_choice_scratch_desc',
+              'Un formulario en blanco para definir cada campo.',
+            ),
+            value: 'scratch',
+          ),
+          _skillCreateChoiceOption(
+            context,
+            icon: Icons.auto_awesome_outlined,
+            title: _tx('skill_builder.create_choice_ai', 'Con ayuda de IA'),
+            subtitle: _tx(
+              'skill_builder.create_choice_ai_desc',
+              'Descríbela en una conversación y revisa el borrador.',
+            ),
+            value: 'ai',
+          ),
+        ],
+      ),
+    );
+    if (choice == null || !mounted) return;
+    if (choice == 'scratch') {
+      await _openCreateSkillDialog();
+    } else if (choice == 'ai') {
+      await _openSkillBuilder();
+    }
+  }
+
+  Widget _skillCreateChoiceOption(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required String value,
+  }) {
+    return SimpleDialogOption(
+      onPressed: () => Navigator.of(context).pop(value),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openSkillBuilder() async {
+    final created = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (context) => SkillBuilderPage(
+          apiClient: widget.apiClient,
+          sessionController: widget.sessionController,
+          localeController: widget.localeController,
+          onReviewDraft: _reviewAndSaveSkillDraft,
+        ),
+      ),
+    );
+    if (created == true) await _loadSkills();
+  }
+
+  Future<bool> _reviewAndSaveSkillDraft(Map<String, dynamic> draft) async {
+    if (!mounted) return false;
+    final allowPublic = widget.sessionController.user?.role != 'guest';
+    final initial = <String, dynamic>{...draft, 'scope': 'private'};
+    final payload = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) =>
+          _SkillFormDialog(initial: initial, allowPublic: allowPublic),
+    );
+    if (payload == null) return false;
+    return _saveSkill(payload);
+  }
+
   Future<void> _openEditSkillDialog(SkillItem item) async {
     if (item.readOnly) {
       _showMessage('Esta skill no es editable (del sistema o compartida)');
@@ -77,19 +181,21 @@ extension _KnowledgeActions on _KnowledgePageState {
     await _saveSkill(payload);
   }
 
-  Future<void> _saveSkill(Map<String, dynamic> payload) async {
+  Future<bool> _saveSkill(Map<String, dynamic> payload) async {
     final token = _token;
-    if (token == null || token.isEmpty) return;
+    if (token == null || token.isEmpty) return false;
     final scope = (payload.remove('scope') as String?) ?? 'private';
     try {
       await _skillsRepository.saveSkill(token, scope, payload);
       _showMessage('Skill guardada');
       await _loadSkills();
+      return true;
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
     } catch (_) {
       _showMessage('No se pudo guardar la skill', isError: true);
     }
+    return false;
   }
 
   Future<void> _toggleSkillActive(SkillItem item) async {
