@@ -687,6 +687,7 @@
     "stat_conversations": "Conversaciones",
     "stat_agents_public": "Agentes públicos",
     "stat_agents_private": "Agentes privados",
+    "stat_pct_of_total": "{pct}% del total",
     "users_search_hint": "Buscar por email o usuario",
     "filter_role": "Rol",
     "filter_status": "Estado",
