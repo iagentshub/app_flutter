@@ -214,62 +214,49 @@ class _SkillBuilderPageState extends State<SkillBuilderPage> {
     );
   }
 
-  Widget _buildSetupPanel({required bool compact}) {
+  Widget _buildConnectionBar() {
     final colors = Theme.of(context).colorScheme;
-    return Card(
-      margin: EdgeInsets.zero,
-      elevation: 0,
+    return Material(
+      color: colors.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: colors.outlineVariant),
       ),
       child: Padding(
-        padding: EdgeInsets.all(compact ? 14 : 18),
+        padding: const EdgeInsets.all(12),
         child: Column(
-          mainAxisSize: compact ? MainAxisSize.min : MainAxisSize.max,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (!compact) ...[
-              Text(
-                _tx('skill_builder.setup_title', 'Configura tu skill'),
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                _tx(
-                  'skill_builder.setup_subtitle',
-                  'Elige el modelo que te ayudará a diseñarla.',
-                ),
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
-              ),
-              const SizedBox(height: 20),
-            ],
             if (_loadingConnections)
               const LinearProgressIndicator(minHeight: 2)
             else
-              DropdownButtonFormField<String>(
-                initialValue: _connectionId,
-                isExpanded: true,
-                decoration: InputDecoration(
-                  labelText: _tx('agents.field_connection', 'Conexión LLM'),
-                  prefixIcon: const Icon(Icons.hub_outlined),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 460),
+                  child: DropdownButtonFormField<String>(
+                    initialValue: _connectionId,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      labelText: _tx('agents.field_connection', 'Conexión LLM'),
+                      isDense: true,
+                    ),
+                    items: _connections
+                        .map(
+                          (connection) => DropdownMenuItem<String>(
+                            value: connection.id,
+                            child: Text(
+                              '${connection.name} (${connection.type})',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: _streaming
+                        ? null
+                        : (value) => setState(() => _connectionId = value),
+                  ),
                 ),
-                items: _connections
-                    .map(
-                      (connection) => DropdownMenuItem<String>(
-                        value: connection.id,
-                        child: Text(
-                          '${connection.name} (${connection.type})',
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    )
-                    .toList(),
-                onChanged: _streaming
-                    ? null
-                    : (value) => setState(() => _connectionId = value),
               ),
             if (!_loadingConnections && _connections.isEmpty) ...[
               const SizedBox(height: 10),
@@ -283,48 +270,8 @@ class _SkillBuilderPageState extends State<SkillBuilderPage> {
                 ).textTheme.bodySmall?.copyWith(color: colors.error),
               ),
             ],
-            if (!compact) ...[
-              const SizedBox(height: 24),
-              _buildStep(
-                Icons.chat_bubble_outline,
-                '1',
-                _tx('skill_builder.step_describe', 'Describe la capacidad'),
-              ),
-              _buildStep(
-                Icons.tune,
-                '2',
-                _tx('skill_builder.step_refine', 'Responde y afina detalles'),
-              ),
-              _buildStep(
-                Icons.fact_check_outlined,
-                '3',
-                _tx('skill_builder.step_review', 'Revisa el borrador'),
-              ),
-            ],
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildStep(IconData icon, String number, String label) {
-    final colors = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: colors.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 18, color: colors.primary),
-          ),
-          const SizedBox(width: 10),
-          Expanded(child: Text('$number. $label')),
-        ],
       ),
     );
   }
@@ -348,7 +295,6 @@ class _SkillBuilderPageState extends State<SkillBuilderPage> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final wide = constraints.maxWidth >= 900;
-          final setup = _buildSetupPanel(compact: !wide);
           final chat = AgentBuilderChatPanel(
             messages: _messages,
             streaming: _streaming,
@@ -360,14 +306,9 @@ class _SkillBuilderPageState extends State<SkillBuilderPage> {
             onStop: _stop,
             onSuggestion: _sendSuggestion,
             title: _tx('skill_builder.assistant_title', 'Asistente de diseño'),
-            subtitle: _tx(
-              'skill_builder.assistant_subtitle',
-              'Te hará preguntas y preparará un borrador editable',
-            ),
             intro: _tx(
               'skill_builder.intro',
-              'Describe qué capacidad reutilizable quieres crear. El asistente '
-                  'preparará unas instrucciones que podrás revisar antes de guardarlas.',
+              'Describe qué debe hacer la skill y cuándo debería utilizarse.',
             ),
             inputHint: _tx(
               'skill_builder.input_hint',
@@ -394,25 +335,16 @@ class _SkillBuilderPageState extends State<SkillBuilderPage> {
 
           return Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1280),
+              constraints: const BoxConstraints(maxWidth: 1120),
               child: Padding(
-                padding: EdgeInsets.all(wide ? 24 : 12),
-                child: wide
-                    ? Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          SizedBox(width: 300, child: setup),
-                          const SizedBox(width: 16),
-                          Expanded(child: chat),
-                        ],
-                      )
-                    : Column(
-                        children: [
-                          setup,
-                          const SizedBox(height: 10),
-                          Expanded(child: chat),
-                        ],
-                      ),
+                padding: EdgeInsets.all(wide ? 20 : 10),
+                child: Column(
+                  children: [
+                    _buildConnectionBar(),
+                    const SizedBox(height: 10),
+                    Expanded(child: chat),
+                  ],
+                ),
               ),
             ),
           );

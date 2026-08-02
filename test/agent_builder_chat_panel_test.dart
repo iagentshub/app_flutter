@@ -42,7 +42,6 @@ void main() {
               onStop: () {},
               onSuggestion: onSuggestion ?? (_) {},
               title: 'Asistente de diseno',
-              subtitle: 'Prepara un borrador editable',
               intro: 'Describe el agente que quieres crear.',
               inputHint: 'Escribe tu idea',
               sendTooltip: 'Enviar mensaje',
