@@ -27,6 +27,7 @@ void main() {
   Widget buildNavigation({
     required bool isAdmin,
     required ValueChanged<String> onNavigate,
+    VoidCallback? onCollapse,
   }) {
     return MaterialApp(
       home: Scaffold(
@@ -41,6 +42,7 @@ void main() {
             role: isAdmin ? 'admin' : 'user',
             tx: tx,
             showCloseButton: false,
+            onCollapse: onCollapse,
             onNavigate: onNavigate,
             onLogout: () {},
           ),
@@ -84,5 +86,20 @@ void main() {
     expect(find.text('Admin'), findsOneWidget);
     expect(find.text('Sistema'), findsOneWidget);
     expect(find.text('Centinel'), findsOneWidget);
+  });
+
+  testWidgets('permite contraer el menú lateral de escritorio', (tester) async {
+    var collapsed = false;
+    await tester.pumpWidget(
+      buildNavigation(
+        isAdmin: false,
+        onNavigate: (_) {},
+        onCollapse: () => collapsed = true,
+      ),
+    );
+
+    await tester.tap(find.byIcon(Icons.keyboard_double_arrow_left_rounded));
+
+    expect(collapsed, isTrue);
   });
 }

@@ -53,6 +53,7 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   Map<String, dynamic> _texts = const {};
+  bool _sidebarCollapsed = false;
 
   bool _maintenanceEnabled = false;
   String _maintenanceMessage = '';
@@ -208,6 +209,9 @@ class _AppShellState extends State<AppShell> {
                         role: widget.sessionController.user?.role ?? 'user',
                         tx: _tx,
                         showCloseButton: !wide,
+                        onCollapse: wide
+                            ? () => setState(() => _sidebarCollapsed = true)
+                            : null,
                         onNavigate: (route) =>
                             _navigateTo(context, route, wide: wide),
                         onLogout: () => _logout(context),
@@ -242,30 +246,44 @@ class _AppShellState extends State<AppShell> {
                 );
 
                 if (wide) {
+                  final showSidebar =
+                      !_sidebarCollapsed || widget.dashboardEditState.editing;
                   return Scaffold(
                     body: Row(
                       children: [
-                        SizedBox(
-                          width: _sidebarWidth,
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surface,
-                              border: Border(
-                                right: BorderSide(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.outlineVariant,
+                        if (showSidebar)
+                          SizedBox(
+                            width: _sidebarWidth,
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.surface,
+                                border: Border(
+                                  right: BorderSide(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outlineVariant,
+                                  ),
                                 ),
                               ),
+                              child: SafeArea(right: false, child: navContent),
                             ),
-                            child: SafeArea(right: false, child: navContent),
                           ),
-                        ),
                         Expanded(
                           child: Column(
                             children: [
                               _ShellTopBar(
                                 title: _titleForLocation(location, _texts),
+                                onOpenMenu:
+                                    _sidebarCollapsed &&
+                                        !widget.dashboardEditState.editing
+                                    ? () => setState(
+                                        () => _sidebarCollapsed = false,
+                                      )
+                                    : null,
+                                openMenuTooltip: _tx(
+                                  'sidebar_show',
+                                  'Mostrar menú',
+                                ),
                               ),
                               Expanded(child: body),
                             ],

@@ -12,6 +12,8 @@
   "admin_centinel": "Centinel",
   "admin_logs": "Logs",
   "logout": "Log out",
+  "sidebar_hide": "Hide menu",
+  "sidebar_show": "Show menu",
   "logout_confirm_title": "Log out",
   "logout_confirm_body": "Are you sure you want to log out?",
   "cancel": "Cancel",

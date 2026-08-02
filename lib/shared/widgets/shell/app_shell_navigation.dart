@@ -11,6 +11,7 @@ class AppSidebarNavigation extends StatelessWidget {
     required this.role,
     required this.tx,
     required this.showCloseButton,
+    this.onCollapse,
     required this.onNavigate,
     required this.onLogout,
     super.key,
@@ -24,6 +25,7 @@ class AppSidebarNavigation extends StatelessWidget {
   final String role;
   final String Function(String key, String fallback) tx;
   final bool showCloseButton;
+  final VoidCallback? onCollapse;
   final ValueChanged<String> onNavigate;
   final VoidCallback onLogout;
 
@@ -45,7 +47,11 @@ class AppSidebarNavigation extends StatelessWidget {
 
     return Column(
       children: [
-        _SidebarBrand(showCloseButton: showCloseButton),
+        _SidebarBrand(
+          showCloseButton: showCloseButton,
+          onCollapse: onCollapse,
+          collapseTooltip: tx('sidebar_hide', 'Ocultar menú'),
+        ),
         Expanded(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
@@ -143,9 +149,15 @@ class AppSidebarNavigation extends StatelessWidget {
 }
 
 class _SidebarBrand extends StatelessWidget {
-  const _SidebarBrand({required this.showCloseButton});
+  const _SidebarBrand({
+    required this.showCloseButton,
+    required this.onCollapse,
+    required this.collapseTooltip,
+  });
 
   final bool showCloseButton;
+  final VoidCallback? onCollapse;
+  final String collapseTooltip;
 
   @override
   Widget build(BuildContext context) {
@@ -208,6 +220,13 @@ class _SidebarBrand extends StatelessWidget {
               icon: const Icon(Icons.close_rounded),
               color: scheme.onSurfaceVariant,
             ),
+          if (!showCloseButton && onCollapse != null)
+            IconButton(
+              tooltip: collapseTooltip,
+              onPressed: onCollapse,
+              icon: const Icon(Icons.keyboard_double_arrow_left_rounded),
+              color: scheme.onSurfaceVariant,
+            ),
         ],
       ),
     );
@@ -263,9 +282,15 @@ class _NavigationSection extends StatelessWidget {
 }
 
 class _ShellTopBar extends StatelessWidget {
-  const _ShellTopBar({required this.title});
+  const _ShellTopBar({
+    required this.title,
+    required this.openMenuTooltip,
+    this.onOpenMenu,
+  });
 
   final String title;
+  final String openMenuTooltip;
+  final VoidCallback? onOpenMenu;
 
   @override
   Widget build(BuildContext context) {
@@ -280,6 +305,15 @@ class _ShellTopBar extends StatelessWidget {
       ),
       child: Row(
         children: [
+          if (onOpenMenu != null) ...[
+            IconButton(
+              tooltip: openMenuTooltip,
+              onPressed: onOpenMenu,
+              icon: const Icon(Icons.keyboard_double_arrow_right_rounded),
+              color: scheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 4),
+          ],
           Container(
             width: 4,
             height: 24,
