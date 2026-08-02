@@ -664,6 +664,8 @@
     "tab_config": "Configuración",
     "explore_search_hint": "Buscar objetos por nombre, usuario o propietario",
     "explore_empty": "No hay objetos que coincidan con los filtros",
+    "explore_filter_type": "Filtrar por tipo",
+    "explore_types_selected": "{count} tipos",
     "type_all": "Todos",
     "type_user": "Usuario",
     "type_group": "Grupo",

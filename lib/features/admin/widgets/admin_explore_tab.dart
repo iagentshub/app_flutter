@@ -54,15 +54,19 @@ extension _AdminExploreTab on _AdminPageState {
     };
     return _exploreItems
         .where((item) {
-          if (_exploreType != null && item.type != _exploreType) return false;
+          if (_exploreTypes.isNotEmpty && !_exploreTypes.contains(item.type)) {
+            return false;
+          }
           return allowed[item.type]?.contains(item.id) ?? false;
         })
         .toList(growable: false);
   }
 
+  /// Los sub-filtros (propietario, tipo de knowledge...) son específicos de
+  /// un tipo — solo tienen sentido cuando hay exactamente uno seleccionado.
   int get _exploreActiveFilterCount {
-    final type = _exploreType;
-    return switch (type) {
+    if (_exploreTypes.length != 1) return 0;
+    return switch (_exploreTypes.single) {
       AdminResourceType.user => _usersActiveFilterCount,
       AdminResourceType.agent => _agentOwner.isNotEmpty ? 1 : 0,
       AdminResourceType.connection => _connOwner.isNotEmpty ? 1 : 0,
@@ -70,12 +74,13 @@ extension _AdminExploreTab on _AdminPageState {
         (_knowledgeType.isNotEmpty ? 1 : 0) +
             (_knowledgeOwner.isNotEmpty ? 1 : 0),
       AdminResourceType.workflow => _workflowOwner.isNotEmpty ? 1 : 0,
-      _ => 0,
+      AdminResourceType.group => 0,
     };
   }
 
   void _openExploreFilters() {
-    switch (_exploreType) {
+    if (_exploreTypes.length != 1) return;
+    switch (_exploreTypes.single) {
       case AdminResourceType.user:
         _openUsersFiltersDialog();
       case AdminResourceType.agent:
@@ -99,9 +104,109 @@ extension _AdminExploreTab on _AdminPageState {
           onChanged: (value) => _refresh(() => _workflowOwner = value),
         );
       case AdminResourceType.group:
-      case null:
         return;
     }
+  }
+
+  /// Botón tipo "desplegable" que abre un menú con una casilla por tipo
+  /// (más "Todos" para volver de un tirón al conjunto vacío = sin filtro).
+  /// Un `PopupMenuItem` único y `enabled: false` para que el menú no se
+  /// cierre al marcar cada casilla — solo el `StatefulBuilder` interno se
+  /// repinta, y `_refresh` mantiene la lista filtrada en vivo por debajo.
+  Widget _exploreTypeDropdown() {
+    final scheme = Theme.of(context).colorScheme;
+    final totalCount = _exploreCounts.values.fold<int>(
+      0,
+      (sum, value) => sum + value,
+    );
+    final label = _exploreTypes.isEmpty
+        ? '${_tx('admin.type_all', 'Todos')} ($totalCount)'
+        : _exploreTypes.length == 1
+        ? _resourceTypeLabel(_exploreTypes.single)
+        : _tx(
+            'admin.explore_types_selected',
+            '{count} tipos',
+          ).replaceAll('{count}', '${_exploreTypes.length}');
+
+    return PopupMenuButton<void>(
+      key: const Key('exploreTypeDropdown'),
+      tooltip: _tx('admin.explore_filter_type', 'Filtrar por tipo'),
+      position: PopupMenuPosition.under,
+      itemBuilder: (context) => [
+        PopupMenuItem<void>(
+          enabled: false,
+          padding: EdgeInsets.zero,
+          child: StatefulBuilder(
+            builder: (context, setMenuState) => SizedBox(
+              width: 240,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CheckboxListTile(
+                    dense: true,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    value: _exploreTypes.isEmpty,
+                    title: Text(
+                      '${_tx('admin.type_all', 'Todos')} ($totalCount)',
+                    ),
+                    onChanged: (_) {
+                      setMenuState(() => _exploreTypes.clear());
+                      _refresh(() {});
+                    },
+                  ),
+                  const Divider(height: 1),
+                  for (final type in AdminResourceType.values)
+                    CheckboxListTile(
+                      dense: true,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      value: _exploreTypes.contains(type),
+                      secondary: Icon(
+                        _resourceTypeIcon(type),
+                        size: 18,
+                        color: _resourceTypeColor(type),
+                      ),
+                      title: Text(
+                        '${_resourceTypeLabel(type)} (${_exploreCounts[type] ?? 0})',
+                      ),
+                      onChanged: (checked) {
+                        setMenuState(() {
+                          if (checked == true) {
+                            _exploreTypes.add(type);
+                          } else {
+                            _exploreTypes.remove(type);
+                          }
+                        });
+                        _refresh(() {});
+                      },
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+      child: IntrinsicWidth(
+        child: InputDecorator(
+          decoration: const InputDecoration(
+            isDense: true,
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            border: OutlineInputBorder(),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(width: 4),
+              Icon(Icons.arrow_drop_down, color: scheme.onSurfaceVariant),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildExploreTab() {
@@ -114,45 +219,34 @@ extension _AdminExploreTab on _AdminPageState {
         'No hay objetos que coincidan con los filtros',
       ),
       toolbar: _toolbar(
-        search: TextField(
-          controller: _exploreSearchController,
-          decoration: InputDecoration(
-            labelText: _tx(
-              'admin.explore_search_hint',
-              'Buscar objetos por nombre, usuario o propietario',
+        search: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _exploreSearchController,
+                decoration: InputDecoration(
+                  labelText: _tx(
+                    'admin.explore_search_hint',
+                    'Buscar objetos por nombre, usuario o propietario',
+                  ),
+                  prefixIcon: const Icon(Icons.search, size: 20),
+                ),
+                onChanged: (_) => _onSearchChanged(),
+              ),
             ),
-            prefixIcon: const Icon(Icons.search, size: 20),
-          ),
-          onChanged: (_) => _onSearchChanged(),
+            const SizedBox(width: 8),
+            _exploreTypeDropdown(),
+          ],
         ),
         buttons: [
-          for (final type in <AdminResourceType?>[
-            null,
-            ...AdminResourceType.values,
-          ])
-            FilterChip(
-              selected: _exploreType == type,
-              label: Text(
-                type == null
-                    ? '${_resourceTypeLabel(null)} (${_exploreCounts.values.fold<int>(0, (sum, value) => sum + value)})'
-                    : '${_resourceTypeLabel(type)} (${_exploreCounts[type] ?? 0})',
-              ),
-              avatar: type == null
-                  ? const Icon(Icons.apps_outlined, size: 17)
-                  : Icon(
-                      _resourceTypeIcon(type),
-                      size: 17,
-                      color: _resourceTypeColor(type),
-                    ),
-              onSelected: (_) => _refresh(() => _exploreType = type),
-            ),
           AppIconButton.outlined(
             onPressed: _load,
             icon: const Icon(Icons.refresh),
             tooltip: _tx('admin.refresh', 'Actualizar'),
           ),
-          if ((_exploreType == null ||
-                  _exploreType == AdminResourceType.user) &&
+          if ((_exploreTypes.isEmpty ||
+                  _exploreTypes.contains(AdminResourceType.user)) &&
               (_platformSettings?['registration'] ?? 'open').toString() ==
                   'closed')
             AppIconButton.filled(
@@ -160,7 +254,8 @@ extension _AdminExploreTab on _AdminPageState {
               icon: const Icon(Icons.add),
               tooltip: _tx('admin.users_new_btn', 'Nuevo usuario'),
             ),
-          if (_exploreType != null && _exploreType != AdminResourceType.group)
+          if (_exploreTypes.length == 1 &&
+              _exploreTypes.single != AdminResourceType.group)
             FilterButton(
               activeCount: _exploreActiveFilterCount,
               tooltip: _tx('common.filters', 'Filtros'),

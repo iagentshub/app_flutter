@@ -90,7 +90,9 @@ class _AdminPageState extends State<AdminPage>
       TextEditingController();
   final Debouncer _searchDebouncer = Debouncer();
 
-  AdminResourceType? _exploreType;
+  /// Vacío = sin filtro de tipo (se muestran todos) — igual que antes hacía
+  /// `_exploreType == null`, pero ahora admite seleccionar varios a la vez.
+  final Set<AdminResourceType> _exploreTypes = {};
 
   String _userRole = '';
   String _userActive = '';

@@ -149,8 +149,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Todos (6)'), findsOneWidget);
-    expect(find.text('Usuario (1)'), findsWidgets);
-    expect(find.text('Agente (1)'), findsWidgets);
     expect(find.text('Researcher'), findsOneWidget);
     expect(find.text('Platform team'), findsOneWidget);
     expect(find.text('OpenAI'), findsWidgets);
@@ -158,8 +156,16 @@ void main() {
     expect(find.text('Release workflow'), findsOneWidget);
     expect(find.byIcon(Icons.hub_outlined), findsNWidgets(6));
 
-    await tester.tap(find.text('Agente (1)').first);
-    await tester.pump();
+    // Abre el desplegable de tipo, marca solo "Agente" y cierra el menú.
+    await tester.tap(find.byKey(const Key('exploreTypeDropdown')));
+    await tester.pumpAndSettle();
+    expect(find.text('Usuario (1)'), findsWidgets);
+    expect(find.text('Agente (1)'), findsWidgets);
+    await tester.tap(find.text('Agente (1)').last);
+    await tester.pumpAndSettle();
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
     expect(find.text('Researcher'), findsOneWidget);
     expect(find.text('admin@example.com'), findsNothing);
     expect(find.byIcon(Icons.hub_outlined), findsOneWidget);
@@ -167,8 +173,13 @@ void main() {
     expect(find.byIcon(Icons.swap_horiz), findsOneWidget);
     expect(find.byIcon(Icons.delete_outline), findsOneWidget);
 
-    await tester.tap(find.text('Todos (6)'));
-    await tester.pump();
+    // Reabre el desplegable y marca "Todos" para volver a ver todo.
+    await tester.tap(find.byKey(const Key('exploreTypeDropdown')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Todos (6)').last);
+    await tester.pumpAndSettle();
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.byIcon(Icons.hub_outlined).first);
     await tester.pump();

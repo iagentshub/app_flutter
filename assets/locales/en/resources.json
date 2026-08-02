@@ -664,6 +664,8 @@
     "tab_config": "Settings",
     "explore_search_hint": "Search objects by name, user or owner",
     "explore_empty": "No objects match the selected filters",
+    "explore_filter_type": "Filter by type",
+    "explore_types_selected": "{count} types",
     "type_all": "All",
     "type_user": "User",
     "type_group": "Group",
