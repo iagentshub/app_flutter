@@ -19,6 +19,7 @@ import '../../../shared/state/backend_controller.dart';
 import '../../../shared/state/dashboard_edit_state.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/widgets/kpi/kpi_row_tile.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/resource_type_badge.dart';
 import '../widgets/responsive_dashboard_grid.dart';

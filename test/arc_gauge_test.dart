@@ -1,4 +1,4 @@
-import 'package:app_flutter/shared/widgets/arc_gauge.dart';
+import 'package:app_flutter/shared/widgets/kpi/arc_gauge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

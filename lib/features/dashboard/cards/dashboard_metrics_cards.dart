@@ -37,6 +37,18 @@ class _SummaryBody extends StatelessWidget {
       'knowledge': Icons.menu_book_outlined,
       'workflows': Icons.account_tree_outlined,
     };
+    // Agrupadas por afinidad (construcción / integraciones / contenido) con
+    // el mismo criterio de 3 bloques de color que las KPI de Admin → General,
+    // en vez de un icono monocromo igual para las 6.
+    final scheme = Theme.of(context).colorScheme;
+    final tints = <String, Color>{
+      'agents': scheme.primary,
+      'workflows': scheme.primary,
+      'connections': scheme.secondary,
+      'skills': scheme.secondary,
+      'memory': scheme.tertiary,
+      'knowledge': scheme.tertiary,
+    };
     final items = config.items ?? kSummaryItems;
 
     return GridView.builder(
@@ -51,41 +63,12 @@ class _SummaryBody extends StatelessWidget {
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
-        return Card(
-          child: InkWell(
-            onTap: () => context.go(routes[item] ?? RouteNames.dashboard),
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Row(
-                children: [
-                  Icon(
-                    icons[item] ?? Icons.circle_outlined,
-                    size: 22,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        '${counts[item] ?? 0}',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      Text(
-                        summaryItemLabel(item, tx),
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
+        return KpiRowTile(
+          label: summaryItemLabel(item, tx),
+          value: counts[item] ?? 0,
+          icon: icons[item] ?? Icons.circle_outlined,
+          tint: tints[item] ?? scheme.primary,
+          onTap: () => context.go(routes[item] ?? RouteNames.dashboard),
         );
       },
     );
