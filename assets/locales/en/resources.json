@@ -962,6 +962,7 @@
     "tab_stress": "Performance",
     "toast_abort_failed": "Couldn't abort the run",
     "toast_run_aborted": "Run aborted",
+    "toast_stream_dropped": "Lost the live connection to the run. Refresh to see its status.",
     "tree_deselect_all": "None",
     "tree_discovering": "Discovering tests…",
     "tree_filter_placeholder": "Filter…",

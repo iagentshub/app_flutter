@@ -219,17 +219,25 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
         .stream(widget.token, runId)
         .listen(
           _handleEvent,
-          onDone: () {
-            if (mounted && _status == 'running') {
-              _refresh(() => _status = 'error');
-            }
-          },
-          onError: (_) {
-            if (mounted && _status == 'running') {
-              _refresh(() => _status = 'error');
-            }
-          },
+          onDone: () => _handleStreamDropped(),
+          onError: (_) => _handleStreamDropped(),
         );
+  }
+
+  /// La conexión SSE se cerró sin un evento terminal (done/aborted/error) —
+  /// p.ej. un proxy intermedio la cortó. El run puede seguir vivo en el
+  /// backend, así que avisamos en vez de dejar la UI en "running" para
+  /// siempre, pero sin fingir que el run en sí falló.
+  void _handleStreamDropped() {
+    if (!mounted || _status != 'running') return;
+    _refresh(() => _status = 'error');
+    _showMessage(
+      _tx(
+        'centinel.toast_stream_dropped',
+        'Se perdió la conexión en vivo con el run. Actualiza para ver su estado.',
+      ),
+      isError: true,
+    );
   }
 
   void _handleEvent(Map<String, dynamic> event) {
