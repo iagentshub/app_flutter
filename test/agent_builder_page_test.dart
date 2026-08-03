@@ -47,6 +47,7 @@ void main() {
                     'id': 'stale-connection',
                     'name': 'Conexión antigua',
                     'type': 'openai',
+                    'model': 'modelo-antiguo',
                   },
                 ]
               : [
@@ -54,6 +55,7 @@ void main() {
                     'id': 'available-connection',
                     'name': 'Conexión disponible',
                     'type': 'openai',
+                    'model': 'modelo-disponible',
                   },
                 ],
         );
@@ -98,8 +100,11 @@ void main() {
       find.text('La conexión seleccionada no existe o no está disponible'),
       findsOneWidget,
     );
-    expect(find.text('Conexión disponible (openai)'), findsOneWidget);
-    expect(find.text('Conexión antigua (openai)'), findsNothing);
+    expect(
+      find.text('Conexión disponible · modelo-disponible'),
+      findsOneWidget,
+    );
+    expect(find.text('Conexión antigua · modelo-antiguo'), findsNothing);
     final composer = tester.widget<TextField>(
       find.byKey(const ValueKey('agent-builder-composer')),
     );

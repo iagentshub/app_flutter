@@ -560,7 +560,9 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
                   (conn) => DropdownMenuItem<String>(
                     value: conn.id,
                     child: Text(
-                      '${conn.name} (${conn.type})',
+                      conn.model.isEmpty
+                          ? '${conn.name} (${conn.type})'
+                          : '${conn.name} · ${conn.model}',
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
