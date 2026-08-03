@@ -16,6 +16,7 @@ class AgentBuilderChatPanel extends StatelessWidget {
     required this.onStop,
     required this.onSuggestion,
     required this.title,
+    required this.subtitle,
     required this.intro,
     required this.inputHint,
     required this.sendTooltip,
@@ -35,6 +36,7 @@ class AgentBuilderChatPanel extends StatelessWidget {
   final VoidCallback onStop;
   final ValueChanged<String> onSuggestion;
   final String title;
+  final String subtitle;
   final String intro;
   final String inputHint;
   final String sendTooltip;
@@ -55,7 +57,12 @@ class AgentBuilderChatPanel extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _ChatHeader(title: title),
+          _ChatHeader(
+            title: title,
+            subtitle: subtitle,
+            active: enabled,
+            busy: streaming,
+          ),
           Divider(height: 1, color: colors.outlineVariant),
           Expanded(
             child: messages.isEmpty && !streaming
@@ -91,22 +98,73 @@ class AgentBuilderChatPanel extends StatelessWidget {
 }
 
 class _ChatHeader extends StatelessWidget {
-  const _ChatHeader({required this.title});
+  const _ChatHeader({
+    required this.title,
+    required this.subtitle,
+    required this.active,
+    required this.busy,
+  });
 
   final String title;
+  final String subtitle;
+  final bool active;
+  final bool busy;
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: colors.primaryContainer,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              Icons.auto_awesome_rounded,
+              size: 21,
+              color: colors.onPrimaryContainer,
+            ),
+          ),
+          const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              title,
-              style: Theme.of(
-                context,
-              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            width: 9,
+            height: 9,
+            decoration: BoxDecoration(
+              color: busy
+                  ? colors.tertiary
+                  : active
+                  ? const Color(0xFF22A06B)
+                  : colors.outline,
+              shape: BoxShape.circle,
             ),
           ),
         ],
@@ -132,30 +190,70 @@ class _EmptyConversation extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) => SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+        padding: const EdgeInsets.fromLTRB(24, 32, 24, 20),
         child: ConstrainedBox(
           constraints: BoxConstraints(minHeight: constraints.maxHeight - 40),
           child: Align(
-            alignment: Alignment.topLeft,
+            alignment: Alignment.topCenter,
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 680),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text(intro, style: Theme.of(context).textTheme.bodyMedium),
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.edit_note_rounded,
+                      size: 28,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    intro,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      height: 1.45,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                   if (suggestions.isNotEmpty) ...[
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 22),
                     Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                      alignment: WrapAlignment.center,
+                      spacing: 10,
+                      runSpacing: 10,
                       children: suggestions
+                          .asMap()
+                          .entries
                           .map(
-                            (suggestion) => ActionChip(
+                            (entry) => ActionChip(
                               onPressed: enabled
-                                  ? () => onSuggestion(suggestion)
+                                  ? () => onSuggestion(entry.value)
                                   : null,
-                              label: Text(suggestion),
-                              visualDensity: VisualDensity.compact,
+                              avatar: Icon(
+                                [
+                                  Icons.support_agent_rounded,
+                                  Icons.trending_up_rounded,
+                                  Icons.campaign_rounded,
+                                ][entry.key % 3],
+                                size: 18,
+                              ),
+                              label: Text(entry.value),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 8,
+                              ),
+                              side: BorderSide(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.outlineVariant,
+                              ),
                             ),
                           )
                           .toList(),
@@ -189,7 +287,7 @@ class _MessageList extends StatelessWidget {
     return ListView.builder(
       key: const ValueKey('agent-builder-messages'),
       controller: scrollController,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
       itemCount: messages.length + (streaming ? 1 : 0),
       itemBuilder: (context, index) {
         if (index >= messages.length) {
@@ -219,19 +317,22 @@ class _MessageBubble extends StatelessWidget {
       child: Align(
         alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
         child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: isUser ? 680 : double.infinity),
+          constraints: BoxConstraints(maxWidth: isUser ? 680 : 760),
           child: DecoratedBox(
             decoration: BoxDecoration(
               color: isUser
-                  ? colors.surfaceContainerHighest
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(10),
+                  ? colors.primaryContainer.withValues(alpha: 0.65)
+                  : colors.surfaceContainerLow,
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(16),
+                topRight: const Radius.circular(16),
+                bottomLeft: Radius.circular(isUser ? 16 : 4),
+                bottomRight: Radius.circular(isUser ? 4 : 16),
+              ),
+              border: isUser ? null : Border.all(color: colors.outlineVariant),
             ),
             child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: isUser ? 14 : 0,
-                vertical: isUser ? 10 : 4,
-              ),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: thinking
                   ? const SizedBox(
                       width: 18,
@@ -308,7 +409,7 @@ class _Composer extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
@@ -323,13 +424,23 @@ class _Composer extends StatelessWidget {
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
                   hintText: hint,
-                  filled: false,
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surfaceContainerLow,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 14,
                     vertical: 12,
                   ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
                   ),
                 ),
                 onSubmitted: enabled ? (_) => onSend() : null,
