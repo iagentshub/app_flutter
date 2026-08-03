@@ -1,5 +1,6 @@
 import '../../../core/network/api_repository.dart';
 import '../../../models/accounts/account_models.dart';
+import '../../../models/github/github_device_flow.dart';
 
 class AccountsRepository extends ApiRepository {
   AccountsRepository({required super.apiClient});

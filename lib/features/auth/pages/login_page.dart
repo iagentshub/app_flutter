@@ -1,14 +1,17 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import 'package:go_router/go_router.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/router/route_names.dart';
 import '../../../core/network/api_error.dart';
 import '../../../core/storage/local_store.dart';
+import '../../../models/github/github_device_flow.dart';
 import '../../../shared/i18n/locale_loader.dart';
 import '../repositories/auth_repository.dart';
 import '../../../shared/state/backend_controller.dart';
@@ -16,10 +19,12 @@ import '../../../shared/state/boot_platform_cache.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/state/theme_controller.dart';
+import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../utils/safe_redirect.dart';
 import '../../../utils/validators.dart';
 
 part '../widgets/login_form.dart';
+part '../widgets/login_github_dialog.dart';
 part '../widgets/login_hero.dart';
 part '../widgets/login_support_widgets.dart';
 
@@ -58,6 +63,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _oauthGoogleEnabled = false;
   bool _oauthAppleEnabled = false;
   bool _oauthMicrosoftEnabled = false;
+  bool _oauthGithubEnabled = false;
   _BackendStatus _backendStatus = _BackendStatus.checking;
 
   static const _rememberedAccountKey = 'remembered_account';
@@ -172,6 +178,7 @@ class _LoginPageState extends State<LoginPage> {
         _oauthGoogleEnabled = platform['oauth_google_enabled'] != false;
         _oauthAppleEnabled = platform['oauth_apple_enabled'] != false;
         _oauthMicrosoftEnabled = platform['oauth_microsoft_enabled'] != false;
+        _oauthGithubEnabled = platform['oauth_github_enabled'] == true;
       });
       unawaited(
         ThemeControllerScope.of(
@@ -188,6 +195,7 @@ class _LoginPageState extends State<LoginPage> {
         _oauthGoogleEnabled = false;
         _oauthAppleEnabled = false;
         _oauthMicrosoftEnabled = false;
+        _oauthGithubEnabled = false;
       });
     }
   }
@@ -208,7 +216,10 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   bool get _showAnyOauth =>
-      _oauthGoogleEnabled || _oauthAppleEnabled || _oauthMicrosoftEnabled;
+      _oauthGoogleEnabled ||
+      _oauthAppleEnabled ||
+      _oauthMicrosoftEnabled ||
+      _oauthGithubEnabled;
 
   Future<void> _syncUserSettings(
     String token,
@@ -278,6 +289,51 @@ class _LoginPageState extends State<LoginPage> {
       if (mounted) {
         setState(() => _loading = false);
       }
+    }
+  }
+
+  /// Login con GitHub (OAuth Device Flow): abre el diálogo, que hace todo el
+  /// intercambio y sondeo por su cuenta y devuelve el resultado ya listo
+  /// para abrir sesión — mismos pasos finales que [_submit] tras un login
+  /// por contraseña.
+  Future<void> _loginWithGithub() async {
+    final themeController = ThemeControllerScope.of(context, listen: false);
+    final texts = await _authTextsFuture;
+    String tx(String path, String fallback) => _txt(texts, path, fallback);
+
+    if (!mounted) return;
+    final result = await showDialog<GithubLoginPollResult>(
+      context: context,
+      builder: (context) => _GithubLoginDialog(
+        authRepository: widget.authRepository,
+        tx: tx,
+      ),
+    );
+    if (result == null || !result.isReady) return;
+
+    setState(() {
+      _loading = true;
+      _errorMessage = null;
+    });
+    try {
+      final token = result.gaToken!;
+      final me = await widget.authRepository.me(token);
+      widget.authRepository.clearCache();
+      await widget.sessionController.login(token: token, user: me, remember: true);
+      unawaited(_syncUserSettings(token, themeController));
+      if (!mounted) return;
+      final destination = safeRedirect(widget.redirectTo);
+      context.go(destination);
+    } on ApiError catch (error) {
+      if (!mounted) return;
+      setState(() => _errorMessage = error.message);
+    } catch (_) {
+      if (!mounted) return;
+      setState(
+        () => _errorMessage = tx('error_connection', 'Error de conexión'),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 

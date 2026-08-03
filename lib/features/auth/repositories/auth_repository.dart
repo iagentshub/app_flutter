@@ -2,6 +2,21 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/auth/auth_result.dart';
 import '../../../models/auth/session_user.dart';
+import '../../../models/github/github_device_flow.dart';
+
+/// Resultado de sondear el login con GitHub: si [isReady] es true, [gaToken]
+/// y [authResult] ya están listos para pasar a `SessionController.login`
+/// (igual que tras `AuthRepository.login`); si no, mira [tokenResult] para
+/// saber si sigue pendiente o hubo un error.
+class GithubLoginPollResult {
+  const GithubLoginPollResult({required this.tokenResult, this.authResult, this.gaToken});
+
+  final GithubDeviceTokenResult tokenResult;
+  final AuthResult? authResult;
+  final String? gaToken;
+
+  bool get isReady => authResult != null && gaToken != null && gaToken!.isNotEmpty;
+}
 
 class AuthRepository {
   AuthRepository(this._apiClient);
@@ -41,6 +56,38 @@ class AuthRepository {
 
     final result = AuthResult.fromJson(response.json);
     return (result, token);
+  }
+
+  /// Inicia el login con GitHub (OAuth Device Flow) — sin sesión previa.
+  Future<GithubDeviceCode> startGithubLogin() async {
+    final response = await _apiClient.post('/api/auth/github/device-code');
+    return GithubDeviceCode.fromJson(response.json);
+  }
+
+  /// Sondea si el usuario ya autorizó el login iniciado con
+  /// [startGithubLogin]. Sigue el mismo patrón que [login]: el token real
+  /// llega en la cookie `Set-Cookie`, no en el JSON.
+  Future<GithubLoginPollResult> pollGithubLogin(String deviceCode) async {
+    final response = await _apiClient.post(
+      '/api/auth/github/device-token',
+      body: {'device_code': deviceCode},
+    );
+    final tokenResult = GithubDeviceTokenResult.fromJson(response.json);
+    if (!tokenResult.ok) {
+      return GithubLoginPollResult(tokenResult: tokenResult);
+    }
+    final gaToken = _apiClient.extractGaToken(response.headers);
+    if (gaToken == null || gaToken.isEmpty) {
+      throw ApiError(
+        statusCode: 500,
+        message: 'El backend no devolvio cookie de sesion ga_token',
+      );
+    }
+    return GithubLoginPollResult(
+      tokenResult: tokenResult,
+      authResult: AuthResult.fromJson(response.json),
+      gaToken: gaToken,
+    );
   }
 
   Future<SessionUser> me(String gaToken) async {

@@ -11,6 +11,7 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/accounts/account_models.dart';
 import '../../../models/connections/connection_models.dart';
+import '../../../models/github/github_device_flow.dart';
 import '../cards/connection_card.dart';
 import '../repositories/accounts_repository.dart';
 import '../repositories/connections_repository.dart';
