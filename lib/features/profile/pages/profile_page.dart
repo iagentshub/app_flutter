@@ -9,7 +9,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router/route_names.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
-import '../../../features/connections/pages/connections_page.dart';
+import '../../../features/connections/widgets/providers_section.dart';
 import '../../../models/profile/profile_models.dart';
 import '../repositories/profile_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
@@ -75,7 +75,7 @@ class _ProfilePageState extends State<ProfilePage>
   late final TranslatedTexts _t;
   late final TabController _tabController;
 
-  static const _sectionIds = ['account', 'social', 'groups', 'connections'];
+  static const _sectionIds = ['account', 'social', 'groups', 'providers'];
 
   ProfileBundle? _bundle;
   bool _loading = true;
@@ -530,9 +530,10 @@ class _ProfilePageState extends State<ProfilePage>
       _tx('profile.tab_account', 'Mi cuenta'),
       _tx('profile.tab_social', 'Perfil público'),
       _tx('profile.tab_groups', 'Grupos'),
-      _tx('profile.tab_connections', 'Conexiones'),
+      _tx('connections.tab_providers', 'Proveedores'),
     ];
     final section = _sectionIds[_tabController.index];
+    final token = _token;
 
     return Column(
       children: [
@@ -546,15 +547,17 @@ class _ProfilePageState extends State<ProfilePage>
           ),
         ),
         Expanded(
-          // Conexiones trae su propia página completa (TabBar + Expanded +
-          // scroll interno), incompatible con el ListView de ancho acotado
-          // que usan el resto de secciones — se monta a pantalla completa.
-          child: section == 'connections'
-              ? ConnectionsPage(
-                  apiClient: widget.apiClient,
-                  sessionController: widget.sessionController,
-                  localeController: widget.localeController,
-                )
+          // Proveedores trae su propio ListView con scroll interno,
+          // incompatible con el ListView de ancho acotado que usan el resto
+          // de secciones — se monta a pantalla completa.
+          child: section == 'providers'
+              ? (token == null || token.isEmpty
+                    ? const SizedBox.shrink()
+                    : ProvidersSection(
+                        apiClient: widget.apiClient,
+                        token: token,
+                        localeController: widget.localeController,
+                      ))
               : RefreshIndicator(
                   onRefresh: _load,
                   child: Align(

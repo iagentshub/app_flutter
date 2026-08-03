@@ -1,4 +1,4 @@
-part of '../pages/connections_page.dart';
+part of '../widgets/providers_section.dart';
 
 class _AccountFormDialog extends StatefulWidget {
   const _AccountFormDialog({
@@ -80,7 +80,9 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(widget.tx('providers.github_connected', 'Conectado con GitHub')),
+        content: Text(
+          widget.tx('providers.github_connected', 'Conectado con GitHub'),
+        ),
       ),
     );
   }
@@ -93,14 +95,16 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
     });
   }
 
-  String? get _apiKeyOrNull =>
-      _apiKeyController.text.trim().isEmpty ? null : _apiKeyController.text.trim();
+  String? get _apiKeyOrNull => _apiKeyController.text.trim().isEmpty
+      ? null
+      : _apiKeyController.text.trim();
   String? get _hostOrNull =>
       _hostController.text.trim().isEmpty ? null : _hostController.text.trim();
   String? get _urlOrNull =>
       _urlController.text.trim().isEmpty ? null : _urlController.text.trim();
-  String? get _usernameOrNull =>
-      _usernameController.text.trim().isEmpty ? null : _usernameController.text.trim();
+  String? get _usernameOrNull => _usernameController.text.trim().isEmpty
+      ? null
+      : _usernameController.text.trim();
   String? get _nameOrNull =>
       _nameController.text.trim().isEmpty ? null : _nameController.text.trim();
 
@@ -159,7 +163,10 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
       if (!mounted) return;
       setState(() {
         _testOk = false;
-        _testMessage = widget.tx('providers.error_generic', 'No se pudo probar la conexión');
+        _testMessage = widget.tx(
+          'providers.error_generic',
+          'No se pudo probar la conexión',
+        );
       });
     } finally {
       if (mounted) setState(() => _testing = false);
@@ -196,7 +203,10 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message), backgroundColor: Colors.red.shade700),
+        SnackBar(
+          content: Text(error.message),
+          backgroundColor: Colors.red.shade700,
+        ),
       );
     } catch (_) {
       if (!mounted) return;
@@ -204,7 +214,10 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            widget.tx('providers.error_generic', 'No se pudo guardar la cuenta'),
+            widget.tx(
+              'providers.error_generic',
+              'No se pudo guardar la cuenta',
+            ),
           ),
           backgroundColor: Colors.red.shade700,
         ),
@@ -241,7 +254,10 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
                   child: DropdownButtonFormField<String>(
                     initialValue: _selectedProvider,
                     decoration: InputDecoration(
-                      labelText: widget.tx('providers.provider_label', 'Proveedor'),
+                      labelText: widget.tx(
+                        'providers.provider_label',
+                        'Proveedor',
+                      ),
                     ),
                     items: widget.providers
                         .map(
@@ -259,7 +275,10 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
               TextField(
                 controller: _nameController,
                 decoration: InputDecoration(
-                  labelText: widget.tx('providers.name_label', 'Nombre (opcional)'),
+                  labelText: widget.tx(
+                    'providers.name_label',
+                    'Nombre (opcional)',
+                  ),
                   hintText: _meta.label,
                 ),
               ),
@@ -290,7 +309,10 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
                     onPressed: _connectWithGithub,
                     icon: const Icon(Icons.open_in_new),
                     label: Text(
-                      widget.tx('providers.github_connect_action', 'Conectar con GitHub'),
+                      widget.tx(
+                        'providers.github_connect_action',
+                        'Conectar con GitHub',
+                      ),
                     ),
                   ),
                 ),
@@ -304,7 +326,10 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
                     labelText: _isHub
                         ? widget.tx('providers.password_label', 'Contraseña')
                         : _meta.provider == 'github'
-                        ? widget.tx('providers.github_token_label', 'Token (o conecta arriba)')
+                        ? widget.tx(
+                            'providers.github_token_label',
+                            'Token (o conecta arriba)',
+                          )
                         : 'API Key',
                     hintText: _isEdit ? widget.existing?.apiKeyMasked : null,
                   ),

@@ -282,7 +282,10 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
           labelText: field.label,
           hintText: field.placeholder.isEmpty ? null : field.placeholder,
           suffixIcon: AppIconButton(
-            tooltip: widget.tx('connections.discover_models', 'Descubrir modelos'),
+            tooltip: widget.tx(
+              'connections.discover_models',
+              'Descubrir modelos',
+            ),
             icon: _discoveringModels
                 ? const SizedBox(
                     width: 16,

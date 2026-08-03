@@ -488,6 +488,7 @@ const _mainItems = [
   _NavItem(RouteNames.agents, 'agents', Icons.smart_toy_outlined),
   _NavItem(RouteNames.orchestrations, 'workflows', Icons.hub_outlined),
   _NavItem(RouteNames.knowledge, 'knowledge', Icons.school_outlined),
+  _NavItem(RouteNames.connections, 'connections', Icons.cable_outlined),
 ];
 
 const _secondaryItems = [
@@ -505,20 +506,8 @@ const _adminItems = [
   _NavItem(RouteNames.adminCentinel, 'admin_centinel', Icons.security_outlined),
 ];
 
-// Conexiones ya no vive en el sidebar (se movió dentro de Perfil), pero la
-// ruta /connections sigue existiendo para los accesos directos del dashboard
-// — se mantiene aquí solo para resolver el título de la barra superior.
-const _hiddenTitleOnlyItems = [
-  _NavItem(RouteNames.connections, 'connections', Icons.cable_outlined),
-];
-
 String _titleForLocation(String location, Map<String, dynamic> t) {
-  for (final item in [
-    ..._mainItems,
-    ..._secondaryItems,
-    ..._adminItems,
-    ..._hiddenTitleOnlyItems,
-  ]) {
+  for (final item in [..._mainItems, ..._secondaryItems, ..._adminItems]) {
     if (location == item.route) {
       return LocaleLoader.text(t, item.labelKey, fallback: item.labelKey);
     }

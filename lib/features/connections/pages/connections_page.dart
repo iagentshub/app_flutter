@@ -1,25 +1,17 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
-import '../../../models/accounts/account_models.dart';
 import '../../../models/connections/connection_models.dart';
-import '../../../models/github/github_device_flow.dart';
 import '../cards/connection_card.dart';
-import '../repositories/accounts_repository.dart';
 import '../repositories/connections_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/debouncer.dart';
-import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
@@ -28,12 +20,8 @@ import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/resource_toolbar.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 
-part '../dialogs/account_form_dialog.dart';
-part '../dialogs/account_sync_dialog.dart';
 part '../dialogs/connection_form_dialog.dart';
-part '../dialogs/github_device_flow_dialog.dart';
 part '../widgets/connections_page_view.dart';
-part '../widgets/connections_providers_tab.dart';
 
 class ConnectionsPage extends StatefulWidget {
   const ConnectionsPage({
@@ -54,16 +42,12 @@ class ConnectionsPage extends StatefulWidget {
 class _ConnectionsPageState extends State<ConnectionsPage>
     with SingleTickerProviderStateMixin {
   late final ConnectionsRepository _repository;
-  late final AccountsRepository _accountsRepository;
   late final TranslatedTexts _t;
   late final TabController _tabController;
   final TextEditingController _queryController = TextEditingController();
   final Debouncer _searchDebouncer = Debouncer();
   List<ConnectionItem> _connections = const [];
   List<ConnectionProvider> _providers = const [];
-  List<AccountItem> _accounts = const [];
-  bool _accountsLoading = true;
-  final Set<String> _syncingAccounts = {};
   bool _loading = true;
   bool _testingAll = false;
   String? _error;
@@ -72,7 +56,7 @@ class _ConnectionsPageState extends State<ConnectionsPage>
   String _providerFilter = 'all';
   int _lastCategoryIndex = 0;
 
-  static const _categoryIds = ['llm', 'machine', 'database', 'providers'];
+  static const _categoryIds = ['llm', 'machine', 'database'];
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
@@ -137,7 +121,6 @@ class _ConnectionsPageState extends State<ConnectionsPage>
   void initState() {
     super.initState();
     _repository = ConnectionsRepository(apiClient: widget.apiClient);
-    _accountsRepository = AccountsRepository(apiClient: widget.apiClient);
     _tabController = TabController(length: _categoryIds.length, vsync: this)
       ..addListener(_onTabChanged);
     _t = TranslatedTexts(
@@ -145,7 +128,6 @@ class _ConnectionsPageState extends State<ConnectionsPage>
       namespace: 'resources',
     )..addListener(_onTextsChanged);
     _load();
-    _loadAccounts();
   }
 
   void _onTabChanged() {

@@ -1,13 +1,95 @@
-part of '../pages/connections_page.dart';
+import 'dart:async';
 
-/// Contenido de la pestaña "Proveedores" dentro de Connections: vincular una
-/// o varias cuentas externas (Anthropic/OpenAI/GitHub Copilot/Ollama/NVIDIA/
-/// Google — varias del mismo proveedor son válidas) y elegir qué modelos
-/// traer de cada una como Connections normales, indistinguibles de una
-/// creada a mano. Solo se muestran las cuentas realmente vinculadas — la
-/// lista empieza vacía; "Añadir cuenta" es lo que pregunta qué proveedor
-/// conectar.
-extension _ConnectionsProvidersTab on _ConnectionsPageState {
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../../../core/network/api_client.dart';
+import '../../../core/network/api_error.dart';
+import '../../../models/accounts/account_models.dart';
+import '../../../models/github/github_device_flow.dart';
+import '../../../shared/i18n/translated_texts.dart';
+import '../../../shared/state/locale_controller.dart';
+import '../../../shared/widgets/async_state_panel.dart';
+import '../../../shared/widgets/buttons/action_icon_button.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/confirm_action_dialog.dart';
+import '../../../shared/widgets/resource_toolbar.dart';
+import '../../../shared/widgets/responsive_dialog.dart';
+import '../repositories/accounts_repository.dart';
+
+part '../dialogs/account_form_dialog.dart';
+part '../dialogs/account_sync_dialog.dart';
+part '../dialogs/github_device_flow_dialog.dart';
+
+/// Sección "Proveedores": vincular una o varias cuentas externas
+/// (Anthropic/OpenAI/GitHub Copilot/Ollama/NVIDIA/Google — varias del mismo
+/// proveedor son válidas) y elegir qué modelos traer de cada una como
+/// Connections normales, indistinguibles de una creada a mano. Solo se
+/// muestran las cuentas realmente vinculadas — la lista empieza vacía;
+/// "Añadir cuenta" es lo que pregunta qué proveedor conectar.
+///
+/// Vive en el perfil del usuario (antes era una pestaña dentro de
+/// Connections); es autónoma y no depende de _ConnectionsPageState.
+class ProvidersSection extends StatefulWidget {
+  const ProvidersSection({
+    required this.apiClient,
+    required this.token,
+    required this.localeController,
+    super.key,
+  });
+
+  final ApiClient apiClient;
+  final String token;
+  final LocaleController localeController;
+
+  @override
+  State<ProvidersSection> createState() => _ProvidersSectionState();
+}
+
+class _ProvidersSectionState extends State<ProvidersSection> {
+  late final AccountsRepository _accountsRepository;
+  late final TranslatedTexts _t;
+  List<AccountItem> _accounts = const [];
+  bool _accountsLoading = true;
+  final Set<String> _syncingAccounts = {};
+
+  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+
+  @override
+  void initState() {
+    super.initState();
+    _accountsRepository = AccountsRepository(apiClient: widget.apiClient);
+    _t = TranslatedTexts(
+      localeController: widget.localeController,
+      namespace: 'resources',
+    )..addListener(_onTextsChanged);
+    _loadAccounts();
+  }
+
+  void _onTextsChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _t.removeListener(_onTextsChanged);
+    _t.dispose();
+    super.dispose();
+  }
+
+  void _refresh(VoidCallback update) => setState(update);
+
+  void _showMessage(String text, {bool isError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(text),
+        backgroundColor: isError ? Colors.red.shade700 : null,
+      ),
+    );
+  }
+
   AccountProviderMeta _metaForProvider(String provider) {
     return AccountProviderMeta.all.firstWhere(
       (m) => m.provider == provider,
@@ -21,8 +103,8 @@ extension _ConnectionsProvidersTab on _ConnectionsPageState {
   }
 
   Future<void> _loadAccounts() async {
-    final token = _token;
-    if (token == null || token.isEmpty) return;
+    final token = widget.token;
+    if (token.isEmpty) return;
     _refresh(() => _accountsLoading = true);
     try {
       final items = await _accountsRepository.listAccounts(token);
@@ -38,8 +120,8 @@ extension _ConnectionsProvidersTab on _ConnectionsPageState {
   }
 
   Future<void> _openCreateAccountDialog() async {
-    final token = _token;
-    if (token == null || token.isEmpty) return;
+    final token = widget.token;
+    if (token.isEmpty) return;
     final changed = await showDialog<bool>(
       context: context,
       builder: (context) => _AccountFormDialog(
@@ -53,8 +135,8 @@ extension _ConnectionsProvidersTab on _ConnectionsPageState {
   }
 
   Future<void> _openEditAccountDialog(AccountItem account) async {
-    final token = _token;
-    if (token == null || token.isEmpty) return;
+    final token = widget.token;
+    if (token.isEmpty) return;
     final changed = await showDialog<bool>(
       context: context,
       builder: (context) => _AccountFormDialog(
@@ -80,8 +162,8 @@ extension _ConnectionsProvidersTab on _ConnectionsPageState {
       confirmLabel: _tx('providers.unlink_action', 'Desvincular'),
     );
     if (!confirm) return;
-    final token = _token;
-    if (token == null || token.isEmpty) return;
+    final token = widget.token;
+    if (token.isEmpty) return;
     try {
       await _accountsRepository.unlinkAccount(token, account.id);
       _showMessage(_tx('providers.unlinked', 'Cuenta desvinculada'));
@@ -101,15 +183,18 @@ extension _ConnectionsProvidersTab on _ConnectionsPageState {
       await _syncHubAccount(account);
       return;
     }
-    final token = _token;
-    if (token == null || token.isEmpty) return;
+    final token = widget.token;
+    if (token.isEmpty) return;
     _refresh(() => _syncingAccounts.add(account.id));
     try {
       final preview = await _accountsRepository.testAccount(token, account.id);
       if (!mounted) return;
       if (preview.models.isEmpty) {
         _showMessage(
-          _tx('providers.no_models_found', 'No se encontraron modelos disponibles'),
+          _tx(
+            'providers.no_models_found',
+            'No se encontraron modelos disponibles',
+          ),
           isError: true,
         );
         return;
@@ -158,8 +243,8 @@ extension _ConnectionsProvidersTab on _ConnectionsPageState {
   /// comportamiento que el botón "Sincronizar" de una Connection tipo
   /// iagentshub, reutilizado por el backend vía `_run_hub_sync`).
   Future<void> _syncHubAccount(AccountItem account) async {
-    final token = _token;
-    if (token == null || token.isEmpty) return;
+    final token = widget.token;
+    if (token.isEmpty) return;
     _refresh(() => _syncingAccounts.add(account.id));
     try {
       final updated = await _accountsRepository.syncAccount(token, account.id);
@@ -197,7 +282,8 @@ extension _ConnectionsProvidersTab on _ConnectionsPageState {
     }
   }
 
-  Widget _buildProvidersTabBody() {
+  @override
+  Widget build(BuildContext context) {
     if (_accountsLoading) {
       return const AsyncStatePanel.loading();
     }
@@ -222,7 +308,10 @@ extension _ConnectionsProvidersTab on _ConnectionsPageState {
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Center(
                 child: Text(
-                  _tx('providers.not_linked', 'Aún no has vinculado ninguna cuenta'),
+                  _tx(
+                    'providers.not_linked',
+                    'Aún no has vinculado ninguna cuenta',
+                  ),
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),

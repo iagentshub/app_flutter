@@ -1,4 +1,4 @@
-part of '../pages/connections_page.dart';
+part of '../widgets/providers_section.dart';
 
 /// Diálogo genérico "¿qué te quieres traer?" — igual para los 6 proveedores.
 /// Sirve tanto para Ollama (solo LLMs) como para OpenAI/Anthropic/GitHub
@@ -50,7 +50,10 @@ class _AccountSyncDialogState extends State<_AccountSyncDialog> {
                 TertiaryButton(
                   onPressed: () => _selectAll(true),
                   child: Text(
-                    widget.tx('providers.sync_dialog_select_all', 'Seleccionar todo'),
+                    widget.tx(
+                      'providers.sync_dialog_select_all',
+                      'Seleccionar todo',
+                    ),
                   ),
                 ),
                 TertiaryButton(
@@ -103,7 +106,10 @@ class _AccountSyncDialogState extends State<_AccountSyncDialog> {
         PrimaryButton(
           onPressed: () => Navigator.of(context).pop(_selected.toList()),
           child: Text(
-            widget.tx('providers.sync_dialog_confirm', 'Sincronizar seleccionados'),
+            widget.tx(
+              'providers.sync_dialog_confirm',
+              'Sincronizar seleccionados',
+            ),
           ),
         ),
       ],

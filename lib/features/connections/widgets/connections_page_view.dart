@@ -23,9 +23,7 @@ extension _ConnectionsPageView on _ConnectionsPageState {
       _tx('connections.tab_llm', 'APIs LLM'),
       _tx('connections.tab_machine', 'Máquinas'),
       _tx('connections.tab_database', 'Bases de datos'),
-      _tx('connections.tab_providers', 'Proveedores'),
     ];
-    final category = _ConnectionsPageState._categoryIds[_tabController.index];
 
     return Column(
       children: [
@@ -42,9 +40,7 @@ extension _ConnectionsPageView on _ConnectionsPageState {
           ),
         ),
         Expanded(
-          child: category == 'providers'
-              ? _buildProvidersTabBody()
-              : Builder(
+          child: Builder(
             builder: (context) {
               final filteredConnections = _filteredConnections;
               return RefreshIndicator(

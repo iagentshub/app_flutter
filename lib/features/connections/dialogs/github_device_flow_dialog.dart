@@ -1,4 +1,4 @@
-part of '../pages/connections_page.dart';
+part of '../widgets/providers_section.dart';
 
 /// Login con GitHub vía OAuth Device Flow: en vez de pegar un Personal
 /// Access Token a mano, el usuario visita una URL, introduce un código y
@@ -144,14 +144,20 @@ class _GithubDeviceFlowDialogState extends State<_GithubDeviceFlowDialog> {
     if (code == null || code.isEmpty) return;
     Clipboard.setData(ClipboardData(text: code));
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(widget.tx('providers.github_code_copied', 'Código copiado'))),
+      SnackBar(
+        content: Text(
+          widget.tx('providers.github_code_copied', 'Código copiado'),
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.tx('providers.github_connect_title', 'Conectar con GitHub')),
+      title: Text(
+        widget.tx('providers.github_connect_title', 'Conectar con GitHub'),
+      ),
       content: SizedBox(
         width: dialogContentWidth(context, 380),
         child: _buildBody(),
@@ -162,7 +168,10 @@ class _GithubDeviceFlowDialogState extends State<_GithubDeviceFlowDialog> {
           child: Text(widget.tx('common.cancel', 'Cancelar')),
         ),
         if (_error != null)
-          PrimaryButton(onPressed: _start, child: Text(widget.tx('common.retry', 'Reintentar'))),
+          PrimaryButton(
+            onPressed: _start,
+            child: Text(widget.tx('common.retry', 'Reintentar')),
+          ),
       ],
     );
   }
@@ -215,7 +224,9 @@ class _GithubDeviceFlowDialogState extends State<_GithubDeviceFlowDialog> {
         SecondaryButton.icon(
           onPressed: _openGithub,
           icon: const Icon(Icons.open_in_new),
-          label: Text(widget.tx('providers.github_open_action', 'Abrir GitHub')),
+          label: Text(
+            widget.tx('providers.github_open_action', 'Abrir GitHub'),
+          ),
         ),
         const SizedBox(height: 16),
         Row(
@@ -228,7 +239,10 @@ class _GithubDeviceFlowDialogState extends State<_GithubDeviceFlowDialog> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                widget.tx('providers.github_waiting', 'Esperando autorización...'),
+                widget.tx(
+                  'providers.github_waiting',
+                  'Esperando autorización...',
+                ),
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
