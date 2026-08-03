@@ -303,6 +303,12 @@ extension _LoginForm on _LoginPageState {
                                 size: 17,
                               ),
                             ),
+                          if (_oauthGithubEnabled)
+                            _OauthButton(
+                              label: 'GitHub',
+                              icon: const FaIcon(FontAwesomeIcons.github, size: 18),
+                              onPressed: _loading ? null : _loginWithGithub,
+                            ),
                         ],
                       ),
                     if (_guestEnabled) ...[

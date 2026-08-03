@@ -33,7 +33,7 @@ Each has its English twin under the `/en` prefix.
 
 | Screen | Address | What it does |
 |---|---|---|
-| Sign in | `/login` | Account access, or guest access |
+| Sign in | `/login` | Account access, guest access, or GitHub (if the server has the OAuth App configured) |
 | Register | `/register` | New account |
 | Forgot password | `/forgot-password` | Recovery request |
 | New password | `/reset-password` | Change via the emailed link |

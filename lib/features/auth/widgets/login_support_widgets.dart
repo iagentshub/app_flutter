@@ -21,32 +21,37 @@ class _OauthDivider extends StatelessWidget {
 }
 
 class _OauthButton extends StatelessWidget {
-  const _OauthButton({required this.label, required this.icon});
+  const _OauthButton({required this.label, required this.icon, this.onPressed});
 
   final String label;
   final Widget icon;
 
+  /// Null (Google/Apple/Microsoft, sin implementación real todavía) deja el
+  /// botón deshabilitado con el tooltip "Próximamente". Con callback
+  /// (GitHub) el botón es real.
+  final VoidCallback? onPressed;
+
   @override
   Widget build(BuildContext context) {
+    final button = SecondaryButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        minimumSize: const Size(44, 44),
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [icon, const SizedBox(width: 8), Text(label)],
+      ),
+    );
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6),
-      child: Tooltip(
-        message: 'Próximamente',
-        child: SecondaryButton(
-          onPressed: null,
-          style: OutlinedButton.styleFrom(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            minimumSize: const Size(44, 44),
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [icon, const SizedBox(width: 8), Text(label)],
-          ),
-        ),
-      ),
+      child: onPressed == null
+          ? Tooltip(message: 'Próximamente', child: button)
+          : button,
     );
   }
 }

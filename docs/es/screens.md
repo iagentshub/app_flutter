@@ -33,7 +33,7 @@ Cada una tiene su gemela en inglés con el prefijo `/en`.
 
 | Pantalla | Dirección | Qué hace |
 |---|---|---|
-| Entrar | `/login` | Acceso con cuenta, o como invitado |
+| Entrar | `/login` | Acceso con cuenta, como invitado, o con GitHub (si el servidor tiene configurada la OAuth App) |
 | Registro | `/register` | Alta de cuenta nueva |
 | Olvidé mi contraseña | `/forgot-password` | Solicitud de recuperación |
 | Nueva contraseña | `/reset-password` | Cambio con el enlace recibido |
