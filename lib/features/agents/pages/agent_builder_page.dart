@@ -234,14 +234,7 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
           },
           onError: (error) {
             if (!mounted) return;
-            setState(() {
-              _streaming = false;
-              _thinking = false;
-              _error = _tx(
-                'agents.builder_connection_error',
-                'Error de conexión con el constructor de agentes',
-              );
-            });
+            unawaited(_handleStreamError(error, connectionId, text));
             if (!completer.isCompleted) completer.complete();
           },
           onDone: () {
@@ -255,6 +248,62 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
           cancelOnError: true,
         );
     await completer.future;
+  }
+
+  Future<void> _handleStreamError(
+    Object error,
+    String failedConnectionId,
+    String failedText,
+  ) async {
+    if (!mounted) return;
+    final apiError = error is ApiError ? error : null;
+    setState(() {
+      _streaming = false;
+      _thinking = false;
+      _error =
+          apiError?.message ??
+          _tx(
+            'agents.builder_connection_error',
+            'Error de conexión con el constructor de agentes',
+          );
+      if (_messages.isNotEmpty &&
+          _messages.last.role == 'user' &&
+          _messages.last.content == failedText) {
+        _messages.removeLast();
+      }
+      if (_textController.text.isEmpty) {
+        _textController.text = failedText;
+        _textController.selection = TextSelection.collapsed(
+          offset: failedText.length,
+        );
+      }
+    });
+
+    if (apiError?.statusCode != 404) return;
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+    try {
+      final refreshed = await _connectionsRepository.listConnections(
+        token,
+        cache: false,
+      );
+      if (!mounted) return;
+      final available = refreshed
+          .where((connection) => connection.id != failedConnectionId)
+          .toList();
+      setState(() {
+        _connections = available;
+        final selectedStillExists = available.any(
+          (connection) => connection.id == _connectionId,
+        );
+        if (!selectedStillExists) {
+          _connectionId = available.isNotEmpty ? available.first.id : null;
+        }
+      });
+    } catch (_) {
+      // Se conserva el error original del backend, que es más útil que un
+      // segundo fallo al refrescar el selector.
+    }
   }
 
   Future<void> _openDraftReview(Map<String, dynamic> draft) async {

@@ -8,6 +8,7 @@ class ConnectionsRepository extends ApiRepository {
     String token, {
     String? groupId,
     bool includeInactive = false,
+    bool cache = true,
   }) async {
     final params = <String>[
       if (groupId != null && groupId.isNotEmpty)
@@ -18,7 +19,7 @@ class ConnectionsRepository extends ApiRepository {
     final response = await apiClient.get(
       '/api/connections$query',
       gaToken: token,
-      cache: true,
+      cache: cache,
     );
     final payload = response.body;
     if (payload is! List) return const [];
