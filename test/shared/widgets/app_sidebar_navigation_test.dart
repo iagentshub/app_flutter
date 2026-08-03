@@ -20,6 +20,11 @@ void main() {
     'admin_metadata': 'Sistema',
     'admin_centinel': 'Centinel',
     'logout': 'Cerrar sesión',
+    'public_home': 'Inicio',
+    'public_pricing': 'Precios',
+    'public_docs': 'Documentación',
+    'public_support': 'Soporte',
+    'public_about': 'Acerca de',
   };
 
   String tx(String key, String fallback) => translations[key] ?? fallback;
@@ -27,12 +32,16 @@ void main() {
   Widget buildNavigation({
     required bool isAdmin,
     required ValueChanged<String> onNavigate,
+    ValueChanged<String>? onOpenPublicRoute,
+    bool isEnglish = false,
+    double width = 304,
     VoidCallback? onCollapse,
+    VoidCallback? onLogout,
   }) {
     return MaterialApp(
       home: Scaffold(
         body: SizedBox(
-          width: 304,
+          width: width,
           child: AppSidebarNavigation(
             isAdmin: isAdmin,
             location: RouteNames.dashboard,
@@ -40,11 +49,13 @@ void main() {
             displayName: 'Javier',
             email: 'javier@example.com',
             role: isAdmin ? 'admin' : 'user',
+            isEnglish: isEnglish,
             tx: tx,
             showCloseButton: false,
             onCollapse: onCollapse,
             onNavigate: onNavigate,
-            onLogout: () {},
+            onOpenPublicRoute: onOpenPublicRoute ?? (_) {},
+            onLogout: onLogout ?? () {},
           ),
         ),
       ),
@@ -66,10 +77,110 @@ void main() {
     expect(find.text('ORGANIZACIÓN'), findsOneWidget);
     expect(find.text('ADMINISTRACIÓN'), findsNothing);
     expect(find.text('Javier'), findsOneWidget);
+    expect(find.text('javier@example.com'), findsNothing);
+
+    await tester.longPress(find.text('Javier'));
+    await tester.pump();
     expect(find.text('javier@example.com'), findsOneWidget);
 
     await tester.tap(find.text('Agentes'));
     expect(selectedRoute, RouteNames.agents);
+  });
+
+  testWidgets('abre las páginas públicas de React en español', (tester) async {
+    final openedRoutes = <String>[];
+    await tester.pumpWidget(
+      buildNavigation(
+        isAdmin: false,
+        onNavigate: (_) {},
+        onOpenPublicRoute: openedRoutes.add,
+      ),
+    );
+
+    final tooltips = tester
+        .widgetList<Tooltip>(find.byType(Tooltip))
+        .map((tooltip) => tooltip.message);
+    expect(
+      tooltips,
+      containsAll([
+        'Inicio',
+        'Precios',
+        'Documentación',
+        'Soporte',
+        'Acerca de',
+      ]),
+    );
+
+    for (final icon in const [
+      Icons.home_outlined,
+      Icons.sell_outlined,
+      Icons.menu_book_outlined,
+      Icons.support_agent_outlined,
+      Icons.info_outline_rounded,
+    ]) {
+      await tester.tap(find.byIcon(icon));
+    }
+
+    expect(openedRoutes, ['/', '/pricing/', '/docs', '/support', '/about']);
+  });
+
+  testWidgets('abre las variantes inglesas de las páginas públicas', (
+    tester,
+  ) async {
+    final openedRoutes = <String>[];
+    await tester.pumpWidget(
+      buildNavigation(
+        isAdmin: false,
+        isEnglish: true,
+        onNavigate: (_) {},
+        onOpenPublicRoute: openedRoutes.add,
+      ),
+    );
+
+    for (final icon in const [
+      Icons.home_outlined,
+      Icons.sell_outlined,
+      Icons.menu_book_outlined,
+      Icons.support_agent_outlined,
+      Icons.info_outline_rounded,
+    ]) {
+      await tester.tap(find.byIcon(icon));
+    }
+
+    expect(openedRoutes, [
+      '/en/',
+      '/en/pricing/',
+      '/en/docs',
+      '/en/support',
+      '/en/about',
+    ]);
+  });
+
+  testWidgets('mantiene disponible el cierre de sesión', (tester) async {
+    var loggedOut = false;
+    await tester.pumpWidget(
+      buildNavigation(
+        isAdmin: false,
+        onNavigate: (_) {},
+        onLogout: () => loggedOut = true,
+      ),
+    );
+
+    await tester.tap(find.byIcon(Icons.logout_rounded));
+
+    expect(loggedOut, isTrue);
+  });
+
+  testWidgets('el pie compacto cabe en el sidebar de escritorio', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      buildNavigation(isAdmin: false, width: 276, onNavigate: (_) {}),
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.byIcon(Icons.home_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.logout_rounded), findsOneWidget);
   });
 
   testWidgets('muestra las herramientas administrativas solo a admins', (

@@ -1,9 +1,12 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/router/route_names.dart';
+import '../../core/navigation/public_site_uri.dart';
 import '../../core/network/api_client.dart';
 import '../../features/auth/repositories/auth_repository.dart';
 import '../../models/dashboard/dashboard_widget_config.dart';
@@ -17,6 +20,7 @@ import '../state/theme_controller.dart';
 import 'terminal_view_transition.dart';
 
 part 'shell/app_shell_navigation.dart';
+part 'shell/app_sidebar_footer.dart';
 part 'shell/widget_picker_drawer.dart';
 
 /// En viewports estrechos la navegación vive en un drawer; desde 960 px se
@@ -120,6 +124,14 @@ class _AppShellState extends State<AppShell> {
   String _tx(String key, String fallback) =>
       LocaleLoader.text(_texts, key, fallback: fallback);
 
+  Future<void> _openPublicRoute(String path) async {
+    await launchUrl(
+      resolvePublicSiteUri(path: path, useSameOrigin: kIsWeb),
+      mode: LaunchMode.externalApplication,
+      webOnlyWindowName: '_self',
+    );
+  }
+
   void _navigateTo(BuildContext context, String route, {required bool wide}) {
     if (!wide) Navigator.of(context).pop();
 
@@ -207,6 +219,7 @@ class _AppShellState extends State<AppShell> {
                         displayName: widget.sessionController.user?.displayName,
                         email: widget.sessionController.user?.email,
                         role: widget.sessionController.user?.role ?? 'user',
+                        isEnglish: widget.localeController.isEnglish,
                         tx: _tx,
                         showCloseButton: !wide,
                         onCollapse: wide
@@ -214,6 +227,7 @@ class _AppShellState extends State<AppShell> {
                             : null,
                         onNavigate: (route) =>
                             _navigateTo(context, route, wide: wide),
+                        onOpenPublicRoute: _openPublicRoute,
                         onLogout: () => _logout(context),
                       );
 

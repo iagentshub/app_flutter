@@ -9,10 +9,12 @@ class AppSidebarNavigation extends StatelessWidget {
     required this.displayName,
     required this.email,
     required this.role,
+    required this.isEnglish,
     required this.tx,
     required this.showCloseButton,
     this.onCollapse,
     required this.onNavigate,
+    required this.onOpenPublicRoute,
     required this.onLogout,
     super.key,
   });
@@ -23,16 +25,16 @@ class AppSidebarNavigation extends StatelessWidget {
   final String? displayName;
   final String? email;
   final String role;
+  final bool isEnglish;
   final String Function(String key, String fallback) tx;
   final bool showCloseButton;
   final VoidCallback? onCollapse;
   final ValueChanged<String> onNavigate;
+  final ValueChanged<String> onOpenPublicRoute;
   final VoidCallback onLogout;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     final visibleName = displayName?.trim().isNotEmpty == true
         ? displayName!.trim()
         : username;
@@ -84,64 +86,14 @@ class AppSidebarNavigation extends StatelessWidget {
             ],
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: scheme.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: scheme.outlineVariant),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(10, 10, 6, 10),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 19,
-                    backgroundColor: scheme.primary,
-                    foregroundColor: scheme.onPrimary,
-                    child: Text(
-                      initial,
-                      style: const TextStyle(fontWeight: FontWeight.w800),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          visibleName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          accountDetail,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Tooltip(
-                    message: tx('logout', 'Cerrar sesión'),
-                    child: IconButton(
-                      onPressed: onLogout,
-                      icon: const Icon(Icons.logout_rounded, size: 20),
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+        _SidebarFooter(
+          visibleName: visibleName,
+          accountDetail: accountDetail,
+          initial: initial,
+          isEnglish: isEnglish,
+          tx: tx,
+          onOpenPublicRoute: onOpenPublicRoute,
+          onLogout: onLogout,
         ),
       ],
     );
