@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router/route_names.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
+import '../../../features/connections/pages/connections_page.dart';
 import '../../../models/profile/profile_models.dart';
 import '../repositories/profile_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
@@ -22,7 +23,7 @@ import '../widgets/profile_groups_section.dart';
 
 part '../widgets/brand_icon_selector.dart';
 part '../widgets/profile_account_section.dart';
-part '../widgets/profile_security_section.dart';
+part '../widgets/profile_groups_tab_section.dart';
 part '../widgets/profile_social_section.dart';
 part '../widgets/profile_view_helpers.dart';
 
@@ -74,14 +75,13 @@ class _ProfilePageState extends State<ProfilePage>
   late final TranslatedTexts _t;
   late final TabController _tabController;
 
-  static const _sectionIds = ['account', 'social', 'groups', 'security'];
+  static const _sectionIds = ['account', 'social', 'groups', 'connections'];
 
   ProfileBundle? _bundle;
   bool _loading = true;
   String? _error;
   bool _savingSettings = false;
   bool _savingProfile = false;
-  bool _changingPassword = false;
   bool _requestingDeletion = false;
   bool _uploadingAvatar = false;
   int _avatarVersion = 0;
@@ -352,25 +352,91 @@ class _ProfilePageState extends State<ProfilePage>
     if (result != null) setState(() => _selectedLanguages = result);
   }
 
-  Future<void> _changePassword() async {
+  Future<void> _openChangePasswordDialog() async {
+    var submitting = false;
+    await showDialog<void>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(_tx('profile.tab_security', 'Seguridad')),
+          content: SizedBox(
+            width: dialogContentWidth(context, 360),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: _currentPasswordController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: _tx(
+                      'profile.current_password_label',
+                      'Contraseña actual',
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: _newPasswordController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: _tx(
+                      'profile.new_password_label',
+                      'Nueva contraseña',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TertiaryButton(
+              onPressed: submitting ? null : () => Navigator.of(context).pop(),
+              child: Text(_tx('common.cancel', 'Cancelar')),
+            ),
+            PrimaryButton.icon(
+              onPressed: submitting
+                  ? null
+                  : () async {
+                      setDialogState(() => submitting = true);
+                      final ok = await _changePassword();
+                      if (!context.mounted) return;
+                      if (ok) {
+                        Navigator.of(context).pop();
+                      } else {
+                        setDialogState(() => submitting = false);
+                      }
+                    },
+              icon: const Icon(Icons.lock_reset_outlined),
+              label: Text(
+                submitting
+                    ? _tx('profile.updating', 'Actualizando...')
+                    : _tx('profile.change_password', 'Cambiar contraseña'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<bool> _changePassword() async {
     final token = _token;
-    if (token == null || token.isEmpty) return;
+    if (token == null || token.isEmpty) return false;
 
     final current = _currentPasswordController.text;
     final next = _newPasswordController.text;
     if (current.isEmpty || next.isEmpty) {
       _showMessage('Completa contraseña actual y nueva', isError: true);
-      return;
+      return false;
     }
     if (next.trim().length < 8) {
       _showMessage(
         'La nueva contraseña debe tener al menos 8 caracteres',
         isError: true,
       );
-      return;
+      return false;
     }
 
-    setState(() => _changingPassword = true);
     try {
       await _repository.changePassword(
         token,
@@ -380,12 +446,13 @@ class _ProfilePageState extends State<ProfilePage>
       _currentPasswordController.clear();
       _newPasswordController.clear();
       _showMessage('Contraseña actualizada');
+      return true;
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
+      return false;
     } catch (_) {
       _showMessage('No se pudo actualizar la contraseña', isError: true);
-    } finally {
-      if (mounted) setState(() => _changingPassword = false);
+      return false;
     }
   }
 
@@ -463,7 +530,7 @@ class _ProfilePageState extends State<ProfilePage>
       _tx('profile.tab_account', 'Mi cuenta'),
       _tx('profile.tab_social', 'Perfil público'),
       _tx('profile.tab_groups', 'Grupos'),
-      _tx('profile.tab_security', 'Seguridad'),
+      _tx('profile.tab_connections', 'Conexiones'),
     ];
     final section = _sectionIds[_tabController.index];
 
@@ -479,27 +546,35 @@ class _ProfilePageState extends State<ProfilePage>
           ),
         ),
         Expanded(
-          child: RefreshIndicator(
-            onRefresh: _load,
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 700),
-                child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    switch (section) {
-                      'social' => _buildSocialSection(bundle),
-                      'groups' => _buildGroupsSection(bundle),
-                      'security' => _buildSecuritySection(),
-                      _ => _buildAccountSection(bundle),
-                    },
-                  ],
+          // Conexiones trae su propia página completa (TabBar + Expanded +
+          // scroll interno), incompatible con el ListView de ancho acotado
+          // que usan el resto de secciones — se monta a pantalla completa.
+          child: section == 'connections'
+              ? ConnectionsPage(
+                  apiClient: widget.apiClient,
+                  sessionController: widget.sessionController,
+                  localeController: widget.localeController,
+                )
+              : RefreshIndicator(
+                  onRefresh: _load,
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 700),
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.all(16),
+                        children: [
+                          switch (section) {
+                            'social' => _buildSocialSection(bundle),
+                            'groups' => _buildGroupsSection(bundle),
+                            _ => _buildAccountSection(bundle),
+                          },
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ),
         ),
       ],
     );

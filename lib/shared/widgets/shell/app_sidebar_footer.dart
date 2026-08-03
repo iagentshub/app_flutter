@@ -6,6 +6,7 @@ class _SidebarFooter extends StatelessWidget {
     required this.accountDetail,
     required this.initial,
     required this.isEnglish,
+    required this.landingEnabled,
     required this.tx,
     required this.onOpenPublicRoute,
     required this.onLogout,
@@ -15,6 +16,7 @@ class _SidebarFooter extends StatelessWidget {
   final String accountDetail;
   final String initial;
   final bool isEnglish;
+  final bool landingEnabled;
   final String Function(String key, String fallback) tx;
   final ValueChanged<String> onOpenPublicRoute;
   final VoidCallback onLogout;
@@ -33,22 +35,27 @@ class _SidebarFooter extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              // El link de Precios lleva a la página pública de ventas/planes:
+              // sin sitio de marketing activo (landingEnabled=false) no tiene
+              // destino útil, así que se oculta junto con el resto del sitio
+              // público.
               for (final item in _publicItems)
-                Tooltip(
-                  message: tx(item.labelKey, item.fallback),
-                  child: IconButton(
-                    onPressed: () =>
-                        onOpenPublicRoute(item.route(isEnglish: isEnglish)),
-                    constraints: const BoxConstraints.tightFor(
-                      width: 40,
-                      height: 40,
+                if (item.labelKey != 'public_pricing' || landingEnabled)
+                  Tooltip(
+                    message: tx(item.labelKey, item.fallback),
+                    child: IconButton(
+                      onPressed: () =>
+                          onOpenPublicRoute(item.route(isEnglish: isEnglish)),
+                      constraints: const BoxConstraints.tightFor(
+                        width: 40,
+                        height: 40,
+                      ),
+                      padding: EdgeInsets.zero,
+                      visualDensity: VisualDensity.compact,
+                      icon: Icon(item.icon, size: 19),
+                      color: scheme.onSurfaceVariant,
                     ),
-                    padding: EdgeInsets.zero,
-                    visualDensity: VisualDensity.compact,
-                    icon: Icon(item.icon, size: 19),
-                    color: scheme.onSurfaceVariant,
                   ),
-                ),
             ],
           ),
           const SizedBox(height: 4),

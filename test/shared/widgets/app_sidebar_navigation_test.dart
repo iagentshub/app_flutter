@@ -1,9 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app_flutter/app/router/route_names.dart';
+import 'package:app_flutter/shared/services/native_app_icon_service.dart';
+import 'package:app_flutter/shared/state/brand_icon_controller.dart';
 import 'package:app_flutter/shared/widgets/app_shell.dart';
+import 'package:app_flutter/shared/widgets/brand_icon.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  late BrandIconController brandIconController;
+
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({});
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel(NativeAppIconService.channelName),
+          (_) async => null,
+        );
+    brandIconController = await BrandIconController.bootstrap();
+  });
+
+  tearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel(NativeAppIconService.channelName),
+          null,
+        );
+  });
+
   const translations = <String, String>{
     'workspace': 'Espacio de trabajo',
     'organization': 'Organización',
@@ -34,28 +61,33 @@ void main() {
     required ValueChanged<String> onNavigate,
     ValueChanged<String>? onOpenPublicRoute,
     bool isEnglish = false,
+    bool landingEnabled = true,
     double width = 304,
     VoidCallback? onCollapse,
     VoidCallback? onLogout,
   }) {
-    return MaterialApp(
-      home: Scaffold(
-        body: SizedBox(
-          width: width,
-          child: AppSidebarNavigation(
-            isAdmin: isAdmin,
-            location: RouteNames.dashboard,
-            username: 'jariv',
-            displayName: 'Javier',
-            email: 'javier@example.com',
-            role: isAdmin ? 'admin' : 'user',
-            isEnglish: isEnglish,
-            tx: tx,
-            showCloseButton: false,
-            onCollapse: onCollapse,
-            onNavigate: onNavigate,
-            onOpenPublicRoute: onOpenPublicRoute ?? (_) {},
-            onLogout: onLogout ?? () {},
+    return BrandIconScope(
+      controller: brandIconController,
+      child: MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: width,
+            child: AppSidebarNavigation(
+              isAdmin: isAdmin,
+              location: RouteNames.dashboard,
+              username: 'jariv',
+              displayName: 'Javier',
+              email: 'javier@example.com',
+              role: isAdmin ? 'admin' : 'user',
+              isEnglish: isEnglish,
+              landingEnabled: landingEnabled,
+              tx: tx,
+              showCloseButton: false,
+              onCollapse: onCollapse,
+              onNavigate: onNavigate,
+              onOpenPublicRoute: onOpenPublicRoute ?? (_) {},
+              onLogout: onLogout ?? () {},
+            ),
           ),
         ),
       ),
@@ -197,6 +229,22 @@ void main() {
     expect(find.text('Admin'), findsOneWidget);
     expect(find.text('Sistema'), findsOneWidget);
     expect(find.text('Centinel'), findsOneWidget);
+  });
+
+  testWidgets('oculta el icono de Precios cuando landing está desactivado', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      buildNavigation(
+        isAdmin: false,
+        onNavigate: (_) {},
+        landingEnabled: false,
+      ),
+    );
+
+    expect(find.byIcon(Icons.sell_outlined), findsNothing);
+    expect(find.text('Precios'), findsNothing);
+    expect(find.byIcon(Icons.home_outlined), findsOneWidget);
   });
 
   testWidgets('permite contraer el menú lateral de escritorio', (tester) async {

@@ -10,6 +10,7 @@ class AppSidebarNavigation extends StatelessWidget {
     required this.email,
     required this.role,
     required this.isEnglish,
+    required this.landingEnabled,
     required this.tx,
     required this.showCloseButton,
     this.onCollapse,
@@ -26,6 +27,7 @@ class AppSidebarNavigation extends StatelessWidget {
   final String? email;
   final String role;
   final bool isEnglish;
+  final bool landingEnabled;
   final String Function(String key, String fallback) tx;
   final bool showCloseButton;
   final VoidCallback? onCollapse;
@@ -91,6 +93,7 @@ class AppSidebarNavigation extends StatelessWidget {
           accountDetail: accountDetail,
           initial: initial,
           isEnglish: isEnglish,
+          landingEnabled: landingEnabled,
           tx: tx,
           onOpenPublicRoute: onOpenPublicRoute,
           onLogout: onLogout,
@@ -122,9 +125,7 @@ class _SidebarBrand extends StatelessWidget {
           Container(
             width: 38,
             height: 38,
-            alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: scheme.primary,
               borderRadius: BorderRadius.circular(11),
               boxShadow: [
                 BoxShadow(
@@ -134,14 +135,7 @@ class _SidebarBrand extends StatelessWidget {
                 ),
               ],
             ),
-            child: Text(
-              'iA',
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: scheme.onPrimary,
-                fontWeight: FontWeight.w900,
-                letterSpacing: -1,
-              ),
-            ),
+            child: const BrandIcon(size: 38, borderRadius: 11),
           ),
           const SizedBox(width: 11),
           Expanded(
@@ -494,7 +488,6 @@ const _mainItems = [
   _NavItem(RouteNames.agents, 'agents', Icons.smart_toy_outlined),
   _NavItem(RouteNames.orchestrations, 'workflows', Icons.hub_outlined),
   _NavItem(RouteNames.knowledge, 'knowledge', Icons.school_outlined),
-  _NavItem(RouteNames.connections, 'connections', Icons.cable_outlined),
 ];
 
 const _secondaryItems = [
@@ -512,8 +505,20 @@ const _adminItems = [
   _NavItem(RouteNames.adminCentinel, 'admin_centinel', Icons.security_outlined),
 ];
 
+// Conexiones ya no vive en el sidebar (se movió dentro de Perfil), pero la
+// ruta /connections sigue existiendo para los accesos directos del dashboard
+// — se mantiene aquí solo para resolver el título de la barra superior.
+const _hiddenTitleOnlyItems = [
+  _NavItem(RouteNames.connections, 'connections', Icons.cable_outlined),
+];
+
 String _titleForLocation(String location, Map<String, dynamic> t) {
-  for (final item in [..._mainItems, ..._secondaryItems, ..._adminItems]) {
+  for (final item in [
+    ..._mainItems,
+    ..._secondaryItems,
+    ..._adminItems,
+    ..._hiddenTitleOnlyItems,
+  ]) {
     if (location == item.route) {
       return LocaleLoader.text(t, item.labelKey, fallback: item.labelKey);
     }

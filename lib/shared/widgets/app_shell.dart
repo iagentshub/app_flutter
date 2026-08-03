@@ -17,6 +17,7 @@ import '../state/dashboard_edit_state.dart';
 import '../state/locale_controller.dart';
 import '../state/session_controller.dart';
 import '../state/theme_controller.dart';
+import 'brand_icon.dart';
 import 'terminal_view_transition.dart';
 
 part 'shell/app_shell_navigation.dart';
@@ -64,6 +65,7 @@ class _AppShellState extends State<AppShell> {
   DateTime? _maintenanceAt;
   String? _maintenanceDismissedKey;
   Timer? _maintenanceTimer;
+  bool _landingEnabled = false;
 
   @override
   void initState() {
@@ -98,6 +100,7 @@ class _AppShellState extends State<AppShell> {
         _maintenanceAt = DateTime.tryParse(
           (platform['maintenance_at'] ?? '').toString(),
         );
+        _landingEnabled = platform['landing_enabled'] == true;
       });
     } catch (_) {
       // Aviso informativo — sin red se mantiene el último estado conocido.
@@ -220,6 +223,7 @@ class _AppShellState extends State<AppShell> {
                         email: widget.sessionController.user?.email,
                         role: widget.sessionController.user?.role ?? 'user',
                         isEnglish: widget.localeController.isEnglish,
+                        landingEnabled: _landingEnabled,
                         tx: _tx,
                         showCloseButton: !wide,
                         onCollapse: wide

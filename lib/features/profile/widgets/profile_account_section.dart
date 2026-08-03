@@ -168,6 +168,31 @@ extension _ProfileAccountSection on _ProfilePageState {
         ),
         const SizedBox(height: 24),
         _sectionHeader(
+          Icons.lock_outline,
+          _tx('profile.tab_security', 'Seguridad'),
+        ),
+        const SizedBox(height: 8),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(_tx('profile.security_hint', 'Contraseña')),
+                ),
+                SecondaryButton.icon(
+                  onPressed: _openChangePasswordDialog,
+                  icon: const Icon(Icons.lock_reset_outlined),
+                  label: Text(
+                    _tx('profile.change_password', 'Cambiar contraseña'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        _sectionHeader(
           Icons.warning_amber_outlined,
           _tx('profile.account_zone_title', 'Zona de cuenta'),
           color: Colors.red,
