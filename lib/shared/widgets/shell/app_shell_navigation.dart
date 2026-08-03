@@ -10,7 +10,7 @@ class AppSidebarNavigation extends StatelessWidget {
     required this.email,
     required this.role,
     required this.isEnglish,
-    required this.landingEnabled,
+    required this.billingEnabled,
     required this.tx,
     required this.showCloseButton,
     this.onCollapse,
@@ -27,7 +27,7 @@ class AppSidebarNavigation extends StatelessWidget {
   final String? email;
   final String role;
   final bool isEnglish;
-  final bool landingEnabled;
+  final bool billingEnabled;
   final String Function(String key, String fallback) tx;
   final bool showCloseButton;
   final VoidCallback? onCollapse;
@@ -93,7 +93,7 @@ class AppSidebarNavigation extends StatelessWidget {
           accountDetail: accountDetail,
           initial: initial,
           isEnglish: isEnglish,
-          landingEnabled: landingEnabled,
+          billingEnabled: billingEnabled,
           tx: tx,
           onOpenPublicRoute: onOpenPublicRoute,
           onLogout: onLogout,

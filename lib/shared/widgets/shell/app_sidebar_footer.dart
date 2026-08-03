@@ -6,7 +6,7 @@ class _SidebarFooter extends StatelessWidget {
     required this.accountDetail,
     required this.initial,
     required this.isEnglish,
-    required this.landingEnabled,
+    required this.billingEnabled,
     required this.tx,
     required this.onOpenPublicRoute,
     required this.onLogout,
@@ -16,7 +16,7 @@ class _SidebarFooter extends StatelessWidget {
   final String accountDetail;
   final String initial;
   final bool isEnglish;
-  final bool landingEnabled;
+  final bool billingEnabled;
   final String Function(String key, String fallback) tx;
   final ValueChanged<String> onOpenPublicRoute;
   final VoidCallback onLogout;
@@ -35,12 +35,11 @@ class _SidebarFooter extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // El link de Precios lleva a la página pública de ventas/planes:
-              // sin sitio de marketing activo (landingEnabled=false) no tiene
-              // destino útil, así que se oculta junto con el resto del sitio
-              // público.
+              // El link de Precios solo tiene sentido si hay planes de
+              // suscripción activos — se oculta cuando el admin desactiva
+              // "Activar planes de suscripción" (billing_enabled).
               for (final item in _publicItems)
-                if (item.labelKey != 'public_pricing' || landingEnabled)
+                if (item.labelKey != 'public_pricing' || billingEnabled)
                   Tooltip(
                     message: tx(item.labelKey, item.fallback),
                     child: IconButton(

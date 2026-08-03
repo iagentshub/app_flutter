@@ -61,7 +61,7 @@ void main() {
     required ValueChanged<String> onNavigate,
     ValueChanged<String>? onOpenPublicRoute,
     bool isEnglish = false,
-    bool landingEnabled = true,
+    bool billingEnabled = true,
     double width = 304,
     VoidCallback? onCollapse,
     VoidCallback? onLogout,
@@ -80,7 +80,7 @@ void main() {
               email: 'javier@example.com',
               role: isAdmin ? 'admin' : 'user',
               isEnglish: isEnglish,
-              landingEnabled: landingEnabled,
+              billingEnabled: billingEnabled,
               tx: tx,
               showCloseButton: false,
               onCollapse: onCollapse,
@@ -231,21 +231,22 @@ void main() {
     expect(find.text('Centinel'), findsOneWidget);
   });
 
-  testWidgets('oculta el icono de Precios cuando landing está desactivado', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      buildNavigation(
-        isAdmin: false,
-        onNavigate: (_) {},
-        landingEnabled: false,
-      ),
-    );
+  testWidgets(
+    'oculta el icono de Precios cuando los planes de suscripción están desactivados',
+    (tester) async {
+      await tester.pumpWidget(
+        buildNavigation(
+          isAdmin: false,
+          onNavigate: (_) {},
+          billingEnabled: false,
+        ),
+      );
 
-    expect(find.byIcon(Icons.sell_outlined), findsNothing);
-    expect(find.text('Precios'), findsNothing);
-    expect(find.byIcon(Icons.home_outlined), findsOneWidget);
-  });
+      expect(find.byIcon(Icons.sell_outlined), findsNothing);
+      expect(find.text('Precios'), findsNothing);
+      expect(find.byIcon(Icons.home_outlined), findsOneWidget);
+    },
+  );
 
   testWidgets('permite contraer el menú lateral de escritorio', (tester) async {
     var collapsed = false;
