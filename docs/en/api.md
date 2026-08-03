@@ -49,7 +49,8 @@ The app consumes the public iAgentsHub API. By family:
 | `auth`, `users`, `settings` | Access, account and preferences |
 | `agents`, `chats` | Agents and their conversations |
 | `workflows` | Orchestrations |
-| `connections` | AI providers and credentials |
+| `connections` | AI, machine and database credentials (includes discovering Ollama models and syncing with another hub) |
+| `accounts` | Linked provider accounts (Anthropic, OpenAI, GitHub Copilot, Ollama, NVIDIA, Google): link, test and sync models as connections |
 | `knowledge`, `skills`, `resources` | Documents and skills |
 | `memory` | Agent memory |
 | `workspaces`, `sharing` | Workspaces, groups and sharing |

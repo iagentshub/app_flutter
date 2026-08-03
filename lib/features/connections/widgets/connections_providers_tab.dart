@@ -1,0 +1,371 @@
+part of '../pages/connections_page.dart';
+
+/// Contenido de la pestaña "Proveedores" dentro de Connections: vincular una
+/// o varias cuentas externas (Anthropic/OpenAI/GitHub Copilot/Ollama/NVIDIA/
+/// Google — varias del mismo proveedor son válidas) y elegir qué modelos
+/// traer de cada una como Connections normales, indistinguibles de una
+/// creada a mano. Solo se muestran las cuentas realmente vinculadas — la
+/// lista empieza vacía; "Añadir cuenta" es lo que pregunta qué proveedor
+/// conectar.
+extension _ConnectionsProvidersTab on _ConnectionsPageState {
+  AccountProviderMeta _metaForProvider(String provider) {
+    return AccountProviderMeta.all.firstWhere(
+      (m) => m.provider == provider,
+      orElse: () => AccountProviderMeta(
+        provider: provider,
+        label: provider,
+        requiresApiKey: true,
+        usesHost: false,
+      ),
+    );
+  }
+
+  Future<void> _loadAccounts() async {
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+    _refresh(() => _accountsLoading = true);
+    try {
+      final items = await _accountsRepository.listAccounts(token);
+      if (!mounted) return;
+      _refresh(() {
+        _accounts = items;
+        _accountsLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      _refresh(() => _accountsLoading = false);
+    }
+  }
+
+  Future<void> _openCreateAccountDialog() async {
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+    final changed = await showDialog<bool>(
+      context: context,
+      builder: (context) => _AccountFormDialog(
+        apiClient: widget.apiClient,
+        token: token,
+        providers: AccountProviderMeta.all,
+        tx: _tx,
+      ),
+    );
+    if (changed == true) await _loadAccounts();
+  }
+
+  Future<void> _openEditAccountDialog(AccountItem account) async {
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+    final changed = await showDialog<bool>(
+      context: context,
+      builder: (context) => _AccountFormDialog(
+        apiClient: widget.apiClient,
+        token: token,
+        providers: [_metaForProvider(account.provider)],
+        existing: account,
+        tx: _tx,
+      ),
+    );
+    if (changed == true) await _loadAccounts();
+  }
+
+  Future<void> _unlinkAccount(AccountItem account) async {
+    final confirm = await showConfirmActionDialog(
+      context,
+      title: _tx('providers.unlink_confirm_title', 'Desvincular cuenta'),
+      message: _tx(
+        'providers.unlink_confirm_body',
+        '¿Seguro que quieres desvincular esta cuenta? Las conexiones ya creadas no se eliminarán.',
+      ),
+      cancelLabel: _tx('common.cancel', 'Cancelar'),
+      confirmLabel: _tx('providers.unlink_action', 'Desvincular'),
+    );
+    if (!confirm) return;
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+    try {
+      await _accountsRepository.unlinkAccount(token, account.id);
+      _showMessage(_tx('providers.unlinked', 'Cuenta desvinculada'));
+      await _loadAccounts();
+    } on ApiError catch (error) {
+      _showMessage(error.message, isError: true);
+    } catch (_) {
+      _showMessage(
+        _tx('providers.error_generic', 'No se pudo desvincular la cuenta'),
+        isError: true,
+      );
+    }
+  }
+
+  Future<void> _syncAccount(AccountItem account) async {
+    if (account.provider == 'iagentshub') {
+      await _syncHubAccount(account);
+      return;
+    }
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+    _refresh(() => _syncingAccounts.add(account.id));
+    try {
+      final preview = await _accountsRepository.testAccount(token, account.id);
+      if (!mounted) return;
+      if (preview.models.isEmpty) {
+        _showMessage(
+          _tx('providers.no_models_found', 'No se encontraron modelos disponibles'),
+          isError: true,
+        );
+        return;
+      }
+      final selected = await showDialog<List<String>>(
+        context: context,
+        builder: (context) => _AccountSyncDialog(
+          models: preview.models,
+          alreadySynced: account.models.toSet(),
+          tx: _tx,
+        ),
+      );
+      if (selected == null) return;
+      final updated = await _accountsRepository.syncAccount(
+        token,
+        account.id,
+        models: selected,
+      );
+      if (!mounted) return;
+      _refresh(() {
+        final idx = _accounts.indexWhere((a) => a.id == account.id);
+        if (idx != -1) _accounts[idx] = updated;
+      });
+      final summary = updated.syncSummary;
+      final parts = <String>[
+        '${summary?.connectionsCreated ?? 0} ${_tx('providers.summary_created', 'creadas')}',
+        '${summary?.connectionsUpdated ?? 0} ${_tx('providers.summary_updated', 'actualizadas')}',
+      ];
+      _showMessage(
+        '${_tx('providers.sync_done', 'Sincronización completada')}: ${parts.join(' · ')}',
+      );
+    } on ApiError catch (error) {
+      _showMessage(error.message, isError: true);
+    } catch (_) {
+      _showMessage(
+        _tx('providers.error_generic', 'No se pudo sincronizar'),
+        isError: true,
+      );
+    } finally {
+      if (mounted) _refresh(() => _syncingAccounts.remove(account.id));
+    }
+  }
+
+  /// Para `iagentshub` no hay modelos que elegir: el sync trae de golpe
+  /// agentes/skills/conocimiento/conexiones del hub remoto (mismo
+  /// comportamiento que el botón "Sincronizar" de una Connection tipo
+  /// iagentshub, reutilizado por el backend vía `_run_hub_sync`).
+  Future<void> _syncHubAccount(AccountItem account) async {
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+    _refresh(() => _syncingAccounts.add(account.id));
+    try {
+      final updated = await _accountsRepository.syncAccount(token, account.id);
+      if (!mounted) return;
+      _refresh(() {
+        final idx = _accounts.indexWhere((a) => a.id == account.id);
+        if (idx != -1) _accounts[idx] = updated;
+      });
+      final summary = updated.hubSyncSummary;
+      if (summary == null) {
+        _showMessage(_tx('providers.sync_done', 'Sincronización completada'));
+        return;
+      }
+      final parts = <String>[
+        '${summary.agents} ${_tx('providers.summary_agents', 'agentes')}',
+        '${summary.skills} ${_tx('providers.summary_skills', 'skills')}',
+        '${summary.knowledge} ${_tx('providers.summary_knowledge', 'conocimiento')}',
+        '${summary.connections} ${_tx('providers.summary_connections', 'conexiones')}',
+      ];
+      _showMessage(
+        summary.ok
+            ? '${_tx('providers.sync_done', 'Sincronización completada')}: ${parts.join(' · ')}'
+            : '${_tx('providers.sync_partial', 'Sincronización con errores')}: ${summary.errors.join(', ')}',
+        isError: !summary.ok,
+      );
+    } on ApiError catch (error) {
+      _showMessage(error.message, isError: true);
+    } catch (_) {
+      _showMessage(
+        _tx('providers.error_generic', 'No se pudo sincronizar'),
+        isError: true,
+      );
+    } finally {
+      if (mounted) _refresh(() => _syncingAccounts.remove(account.id));
+    }
+  }
+
+  Widget _buildProvidersTabBody() {
+    if (_accountsLoading) {
+      return const AsyncStatePanel.loading();
+    }
+    return RefreshIndicator(
+      onRefresh: _loadAccounts,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        children: [
+          ResourceToolbar(
+            actions: [
+              AppIconButton.filled(
+                onPressed: _openCreateAccountDialog,
+                icon: const Icon(Icons.add),
+                tooltip: _tx('providers.add_account', 'Añadir cuenta'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (_accounts.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Center(
+                child: Text(
+                  _tx('providers.not_linked', 'Aún no has vinculado ninguna cuenta'),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            )
+          else
+            for (final account in _accounts)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _buildAccountCard(account),
+              ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAccountCard(AccountItem account) {
+    final meta = _metaForProvider(account.provider);
+    final syncing = _syncingAccounts.contains(account.id);
+    final hasCustomName = account.name.isNotEmpty;
+    final title = hasCustomName ? account.name : meta.label;
+
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                if (hasCustomName) ...[
+                  const SizedBox(width: 8),
+                  _accountSummaryChip(meta.label),
+                ],
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              [
+                if (account.provider == 'iagentshub') ...[
+                  if (account.username.isNotEmpty) account.username,
+                  if (account.url.isNotEmpty) account.url,
+                ] else ...[
+                  if (account.apiKeyMasked.isNotEmpty) account.apiKeyMasked,
+                  if (account.host.isNotEmpty) account.host,
+                ],
+                if (account.lastSyncedAt.isNotEmpty)
+                  '${_tx('providers.last_synced', 'Última sincronización')}: ${account.lastSyncedAt}',
+              ].join(' · '),
+              style: const TextStyle(fontSize: 12),
+            ),
+            if (account.hubSyncSummary != null) ...[
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  _accountSummaryChip(
+                    '${account.hubSyncSummary!.agents} ${_tx('providers.summary_agents', 'agentes')}',
+                  ),
+                  _accountSummaryChip(
+                    '${account.hubSyncSummary!.skills} ${_tx('providers.summary_skills', 'skills')}',
+                  ),
+                  _accountSummaryChip(
+                    '${account.hubSyncSummary!.knowledge} ${_tx('providers.summary_knowledge', 'conocimiento')}',
+                  ),
+                  _accountSummaryChip(
+                    '${account.hubSyncSummary!.connections} ${_tx('providers.summary_connections', 'conexiones')}',
+                  ),
+                ],
+              ),
+            ] else if (account.syncSummary != null) ...[
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  _accountSummaryChip(
+                    '${account.models.length} ${_tx('providers.summary_connections', 'conexiones')}',
+                  ),
+                  _accountSummaryChip(
+                    '${account.syncSummary!.agentsCount} ${_tx('providers.summary_agents', 'agentes')}',
+                  ),
+                  _accountSummaryChip(
+                    '${account.syncSummary!.skillsPrivateCount} ${_tx('providers.summary_skills', 'skills')}',
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                SecondaryButton.icon(
+                  onPressed: syncing ? null : () => _syncAccount(account),
+                  icon: syncing
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.sync),
+                  label: Text(_tx('providers.sync_action', 'Sincronizar')),
+                ),
+                const Spacer(),
+                ActionIconButton(
+                  icon: Icons.edit_outlined,
+                  tooltip: _tx('common.edit', 'Editar'),
+                  onPressed: () => _openEditAccountDialog(account),
+                ),
+                ActionIconButton(
+                  icon: Icons.link_off,
+                  tooltip: _tx('providers.unlink_action', 'Desvincular'),
+                  danger: true,
+                  onPressed: () => _unlinkAccount(account),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _accountSummaryChip(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(label, style: const TextStyle(fontSize: 11)),
+    );
+  }
+}

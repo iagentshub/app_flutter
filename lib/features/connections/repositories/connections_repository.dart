@@ -82,6 +82,30 @@ class ConnectionsRepository extends ApiRepository {
     return ConnectionTestResult.fromJson(response.json);
   }
 
+  /// Modelos instalados en un host Ollama en vivo (`GET {host}/api/tags`),
+  /// para rellenar el selector de modelo al dar de alta la conexión sin
+  /// tener que escribir el nombre a mano.
+  Future<List<String>> fetchOllamaModels(String token, String host) async {
+    final response = await apiClient.post(
+      '/api/connections/ollama-models',
+      gaToken: token,
+      body: {'host': host},
+    );
+    final payload = response.json['models'];
+    if (payload is! List) return const [];
+    return payload.map((item) => item.toString()).toList();
+  }
+
+  /// Sincroniza agentes/skills/conocimiento/conexiones desde otra instancia
+  /// de iAgents Hub, para una conexión de tipo `iagentshub`.
+  Future<Map<String, dynamic>> syncHub(String token, String id) async {
+    final response = await apiClient.post(
+      '/api/connections/${Uri.encodeComponent(id)}/hub-sync',
+      gaToken: token,
+    );
+    return response.json;
+  }
+
   Future<List<ConnectionTestResult>> testAllConnections(
     String token, {
     List<String>? ids,

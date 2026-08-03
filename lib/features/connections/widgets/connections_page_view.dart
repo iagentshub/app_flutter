@@ -23,7 +23,9 @@ extension _ConnectionsPageView on _ConnectionsPageState {
       _tx('connections.tab_llm', 'APIs LLM'),
       _tx('connections.tab_machine', 'Máquinas'),
       _tx('connections.tab_database', 'Bases de datos'),
+      _tx('connections.tab_providers', 'Proveedores'),
     ];
+    final category = _ConnectionsPageState._categoryIds[_tabController.index];
 
     return Column(
       children: [
@@ -40,7 +42,9 @@ extension _ConnectionsPageView on _ConnectionsPageState {
           ),
         ),
         Expanded(
-          child: Builder(
+          child: category == 'providers'
+              ? _buildProvidersTabBody()
+              : Builder(
             builder: (context) {
               final filteredConnections = _filteredConnections;
               return RefreshIndicator(
@@ -181,6 +185,7 @@ extension _ConnectionsPageView on _ConnectionsPageState {
       onToggleActive: (item.readOnly || item.isVirtual)
           ? null
           : () => _toggleConnectionActive(item),
+      onSyncHub: item.type == 'iagentshub' ? () => _syncHub(item) : null,
     );
   }
 }

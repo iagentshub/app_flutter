@@ -19,6 +19,7 @@ class ConnectionCard extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     this.onToggleActive,
+    this.onSyncHub,
     super.key,
   });
 
@@ -31,6 +32,10 @@ class ConnectionCard extends StatelessWidget {
 
   /// Activar/desactivar (borrado suave). Null = acción no disponible.
   final VoidCallback? onToggleActive;
+
+  /// Sincronizar con el hub remoto (solo conexiones tipo `iagentshub`).
+  /// Null = acción no disponible (no es una conexión de este tipo).
+  final VoidCallback? onSyncHub;
 
   @override
   Widget build(BuildContext context) {
@@ -89,6 +94,14 @@ class ConnectionCard extends StatelessWidget {
                   icon: const Icon(Icons.health_and_safety_outlined),
                   label: Text(tx('connections.test', 'Test')),
                 ),
+                if (onSyncHub != null) ...[
+                  const SizedBox(width: 8),
+                  SecondaryButton.icon(
+                    onPressed: onSyncHub,
+                    icon: const Icon(Icons.sync),
+                    label: Text(tx('connections.sync_hub', 'Sincronizar')),
+                  ),
+                ],
                 const Spacer(),
                 ActionIconButton(
                   icon: Icons.group_add_outlined,

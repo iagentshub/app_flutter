@@ -50,7 +50,7 @@ Cada una tiene su gemela en inglés con el prefijo `/en`.
 | Panel | `/dashboard` | Vista de inicio, con bloques reordenables |
 | Agentes | `/agents` | Crear, editar y conversar con agentes |
 | Orquestaciones | `/orchestrations` | Encadenar agentes en un flujo, con editor visual |
-| Conexiones | `/connections` | Proveedores de IA y credenciales |
+| Conexiones | `/connections` | Credenciales de IA, máquinas y bases de datos, y pestaña Proveedores para vincular cuentas externas (Anthropic, OpenAI, GitHub Copilot, Ollama, NVIDIA, Google) y elegir qué modelos traer; para Ollama se pueden descubrir modelos en vivo, y las conexiones de tipo iAgents Hub se pueden sincronizar con el hub remoto |
 | Memoria | `/memory` | Lo que los agentes recuerdan |
 | Conocimiento | `/knowledge` | Documentos y habilidades que los agentes consultan |
 | Explorar | `/explore` | Recursos compartidos por la comunidad |

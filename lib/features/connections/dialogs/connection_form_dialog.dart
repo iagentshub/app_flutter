@@ -1,10 +1,19 @@
 part of '../pages/connections_page.dart';
 
 class _ConnectionFormDialog extends StatefulWidget {
-  const _ConnectionFormDialog({required this.providers, this.initial});
+  const _ConnectionFormDialog({
+    required this.providers,
+    required this.tx,
+    required this.onDiscoverOllamaModels,
+    this.initial,
+  });
 
   final List<ConnectionProvider> providers;
   final Map<String, dynamic>? initial;
+  final String Function(String path, String fallback) tx;
+
+  /// Modelos instalados en el host Ollama indicado (lista vacía si falla).
+  final Future<List<String>> Function(String host) onDiscoverOllamaModels;
 
   @override
   State<_ConnectionFormDialog> createState() => _ConnectionFormDialogState();
@@ -17,6 +26,7 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
   String _selectedType = '';
   final Map<String, TextEditingController> _textControllers = {};
   final Map<String, bool> _boolValues = {};
+  bool _discoveringModels = false;
 
   @override
   void initState() {
@@ -207,7 +217,85 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
     );
   }
 
+  Future<void> _discoverOllamaModels() async {
+    final host = _textControllers['host']?.text.trim() ?? '';
+    setState(() => _discoveringModels = true);
+    try {
+      final models = await widget.onDiscoverOllamaModels(host);
+      if (!mounted) return;
+      if (models.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              widget.tx(
+                'connections.discover_models_empty',
+                'No se encontraron modelos en ese host',
+              ),
+            ),
+          ),
+        );
+        return;
+      }
+      final selected = await showModalBottomSheet<String>(
+        context: context,
+        builder: (sheetContext) => SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              for (final model in models)
+                ListTile(
+                  title: Text(model),
+                  onTap: () => Navigator.of(sheetContext).pop(model),
+                ),
+            ],
+          ),
+        ),
+      );
+      if (selected != null) {
+        setState(() => _textControllers['model']!.text = selected);
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            widget.tx(
+              'connections.discover_models_error',
+              'No se pudo conectar con Ollama en ese host',
+            ),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _discoveringModels = false);
+    }
+  }
+
   Widget _buildField(ProviderField field) {
+    if (_selectedType == 'ollama' && field.key == 'model') {
+      final controller = _textControllers[field.key] ??= TextEditingController(
+        text: field.defaultValue,
+      );
+      return TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: field.label,
+          hintText: field.placeholder.isEmpty ? null : field.placeholder,
+          suffixIcon: AppIconButton(
+            tooltip: widget.tx('connections.discover_models', 'Descubrir modelos'),
+            icon: _discoveringModels
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.search),
+            onPressed: _discoveringModels ? null : _discoverOllamaModels,
+          ),
+        ),
+      );
+    }
+
     if (field.type == 'checkbox') {
       final value = _boolValues[field.key] ?? false;
       return SwitchListTile(

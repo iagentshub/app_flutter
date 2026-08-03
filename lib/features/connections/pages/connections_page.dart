@@ -1,17 +1,24 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
+import '../../../models/accounts/account_models.dart';
 import '../../../models/connections/connection_models.dart';
 import '../cards/connection_card.dart';
+import '../repositories/accounts_repository.dart';
 import '../repositories/connections_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/debouncer.dart';
+import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
@@ -20,8 +27,12 @@ import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/resource_toolbar.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 
+part '../dialogs/account_form_dialog.dart';
+part '../dialogs/account_sync_dialog.dart';
 part '../dialogs/connection_form_dialog.dart';
+part '../dialogs/github_device_flow_dialog.dart';
 part '../widgets/connections_page_view.dart';
+part '../widgets/connections_providers_tab.dart';
 
 class ConnectionsPage extends StatefulWidget {
   const ConnectionsPage({
@@ -42,12 +53,16 @@ class ConnectionsPage extends StatefulWidget {
 class _ConnectionsPageState extends State<ConnectionsPage>
     with SingleTickerProviderStateMixin {
   late final ConnectionsRepository _repository;
+  late final AccountsRepository _accountsRepository;
   late final TranslatedTexts _t;
   late final TabController _tabController;
   final TextEditingController _queryController = TextEditingController();
   final Debouncer _searchDebouncer = Debouncer();
   List<ConnectionItem> _connections = const [];
   List<ConnectionProvider> _providers = const [];
+  List<AccountItem> _accounts = const [];
+  bool _accountsLoading = true;
+  final Set<String> _syncingAccounts = {};
   bool _loading = true;
   bool _testingAll = false;
   String? _error;
@@ -56,7 +71,7 @@ class _ConnectionsPageState extends State<ConnectionsPage>
   String _providerFilter = 'all';
   int _lastCategoryIndex = 0;
 
-  static const _categoryIds = ['llm', 'machine', 'database'];
+  static const _categoryIds = ['llm', 'machine', 'database', 'providers'];
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
@@ -121,6 +136,7 @@ class _ConnectionsPageState extends State<ConnectionsPage>
   void initState() {
     super.initState();
     _repository = ConnectionsRepository(apiClient: widget.apiClient);
+    _accountsRepository = AccountsRepository(apiClient: widget.apiClient);
     _tabController = TabController(length: _categoryIds.length, vsync: this)
       ..addListener(_onTabChanged);
     _t = TranslatedTexts(
@@ -128,6 +144,7 @@ class _ConnectionsPageState extends State<ConnectionsPage>
       namespace: 'resources',
     )..addListener(_onTextsChanged);
     _load();
+    _loadAccounts();
   }
 
   void _onTabChanged() {
@@ -232,11 +249,26 @@ class _ConnectionsPageState extends State<ConnectionsPage>
       context: context,
       builder: (context) => _ConnectionFormDialog(
         providers: providers.isEmpty ? _providers : providers,
+        tx: _tx,
+        onDiscoverOllamaModels: _discoverOllamaModels,
       ),
     );
 
     if (payload == null) return;
     await _saveConnection(payload);
+  }
+
+  /// Modelos instalados en un host Ollama en vivo, para el selector del
+  /// formulario de alta/edición — lista vacía si falla (host no accesible,
+  /// timeout, etc.), el diálogo se encarga de avisar al usuario.
+  Future<List<String>> _discoverOllamaModels(String host) async {
+    final token = _token;
+    if (token == null || token.isEmpty) return const [];
+    try {
+      return await _repository.fetchOllamaModels(token, host);
+    } catch (_) {
+      return const [];
+    }
   }
 
   Future<void> _openEditDialog(ConnectionItem item) async {
@@ -260,8 +292,12 @@ class _ConnectionsPageState extends State<ConnectionsPage>
     if (!mounted) return;
     final payload = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) =>
-          _ConnectionFormDialog(providers: _providers, initial: initial),
+      builder: (context) => _ConnectionFormDialog(
+        providers: _providers,
+        initial: initial,
+        tx: _tx,
+        onDiscoverOllamaModels: _discoverOllamaModels,
+      ),
     );
 
     if (payload == null) return;
@@ -298,6 +334,26 @@ class _ConnectionsPageState extends State<ConnectionsPage>
         'No se pudo cambiar el estado de la conexión',
         isError: true,
       );
+    }
+  }
+
+  Future<void> _syncHub(ConnectionItem item) async {
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+    try {
+      final result = await _repository.syncHub(token, item.id);
+      final parts = <String>[
+        '${result['agents'] ?? 0} agentes',
+        '${result['skills'] ?? 0} skills',
+        '${result['knowledge'] ?? 0} conocimiento',
+        '${result['connections'] ?? 0} conexiones',
+      ];
+      _showMessage('Sincronizado: ${parts.join(' · ')}');
+      await _load();
+    } on ApiError catch (error) {
+      _showMessage(error.message, isError: true);
+    } catch (_) {
+      _showMessage('No se pudo sincronizar con el hub', isError: true);
     }
   }
 

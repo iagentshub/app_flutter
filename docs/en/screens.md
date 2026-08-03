@@ -50,7 +50,7 @@ Each has its English twin under the `/en` prefix.
 | Dashboard | `/dashboard` | Home view, with reorderable blocks |
 | Agents | `/agents` | Create, edit and chat with agents |
 | Orchestrations | `/orchestrations` | Chain agents into a flow, with a visual editor |
-| Connections | `/connections` | AI providers and credentials |
+| Connections | `/connections` | AI, machine and database credentials, plus a Providers tab to link external accounts (Anthropic, OpenAI, GitHub Copilot, Ollama, NVIDIA, Google) and choose which models to bring in; Ollama connections can discover models live, and iAgents Hub connections can sync with the remote hub |
 | Memory | `/memory` | What the agents remember |
 | Knowledge | `/knowledge` | Documents and skills the agents consult |
 | Explore | `/explore` | Resources shared by the community |
