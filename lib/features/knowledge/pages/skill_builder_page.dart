@@ -308,6 +308,10 @@ class _SkillBuilderPageState extends State<SkillBuilderPage> {
             onStop: _stop,
             onSuggestion: _sendSuggestion,
             title: _tx('skill_builder.assistant_title', 'Asistente de diseño'),
+            subtitle: _tx(
+              'skill_builder.assistant_subtitle',
+              'Te hará preguntas y preparará un borrador editable',
+            ),
             intro: _tx(
               'skill_builder.intro',
               'Describe qué debe hacer la skill y cuándo debería utilizarse.',
