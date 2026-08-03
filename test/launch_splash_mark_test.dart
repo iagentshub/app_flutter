@@ -3,12 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  Future<void> pumpMark(WidgetTester tester, double progress) {
+  Future<void> pumpMark(
+    WidgetTester tester,
+    double progress, {
+    SplashMark mark = SplashMark.ia,
+  }) {
     return tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           body: CoordinatorToIaMark(
             animation: AlwaysStoppedAnimation<double>(progress),
+            mark: mark,
           ),
         ),
       ),
@@ -43,5 +48,17 @@ void main() {
 
     expect(morphProgress(tester), greaterThan(0));
     expect(morphProgress(tester), lessThan(1));
+  });
+
+  testWidgets('la marca Ai también interpola correctamente', (tester) async {
+    await pumpMark(tester, 0, mark: SplashMark.ai);
+    expect(morphProgress(tester), 0);
+
+    await pumpMark(tester, 0.5, mark: SplashMark.ai);
+    expect(morphProgress(tester), greaterThan(0));
+    expect(morphProgress(tester), lessThan(1));
+
+    await pumpMark(tester, 1, mark: SplashMark.ai);
+    expect(morphProgress(tester), 1);
   });
 }

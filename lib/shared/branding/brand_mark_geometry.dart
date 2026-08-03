@@ -84,15 +84,53 @@ abstract final class BrandMarkGeometry {
     BrandPoint(0.580, 0.410),
   ];
 
+  static const aiLeft = [
+    BrandPoint(0.507, 0.678),
+    BrandPoint(0.493, 0.630),
+    BrandPoint(0.479, 0.582),
+    BrandPoint(0.465, 0.534),
+    BrandPoint(0.451, 0.486),
+    BrandPoint(0.437, 0.438),
+    BrandPoint(0.423, 0.390),
+    BrandPoint(0.409, 0.342),
+    BrandPoint(0.395, 0.305),
+    BrandPoint(0.470, 0.305),
+    BrandPoint(0.494, 0.370),
+    BrandPoint(0.535, 0.480),
+    BrandPoint(0.576, 0.590),
+    BrandPoint(0.616, 0.678),
+  ];
+
+  static const aiRight = [
+    BrandPoint(0.410, 0.305),
+    BrandPoint(0.362, 0.305),
+    BrandPoint(0.344, 0.353),
+    BrandPoint(0.326, 0.401),
+    BrandPoint(0.308, 0.449),
+    BrandPoint(0.290, 0.497),
+    BrandPoint(0.272, 0.545),
+    BrandPoint(0.254, 0.593),
+    BrandPoint(0.236, 0.641),
+    BrandPoint(0.220, 0.678),
+    BrandPoint(0.326, 0.678),
+    BrandPoint(0.358, 0.590),
+    BrandPoint(0.390, 0.500),
+    BrandPoint(0.420, 0.410),
+  ];
+
   static const coordinatorConnector = BrandRect(0.46, 0.52, 0.54, 0.60);
   static const iaConnector = BrandRect(0.50, 0.522, 0.660, 0.606);
+  static const aiConnector = BrandRect(0.340, 0.522, 0.500, 0.606);
 
   static const coordinatorStem = BrandRect(0.455, 0.38, 0.545, 0.80);
   static const iaStem = BrandRect(0.278, 0.414, 0.365, 0.678);
+  static const aiStem = BrandRect(0.635, 0.414, 0.722, 0.678);
 
   static const coordinatorDot = BrandPoint(0.50, 0.25);
   static const iaDot = BrandPoint(0.321, 0.346);
+  static const aiDot = BrandPoint(0.679, 0.346);
   static const coordinatorDotRadius = 0.052;
   static const iaDotRadius = 0.048;
+  static const aiDotRadius = 0.048;
   static const coordinatorCornerRadius = 0.045;
 }

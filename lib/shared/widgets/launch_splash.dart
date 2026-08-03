@@ -22,6 +22,11 @@ class LaunchSplash extends StatefulWidget {
   State<LaunchSplash> createState() => _LaunchSplashState();
 }
 
+/// Las tres formas del icono del splash. `ia` es la marca canónica
+/// ("i" + "A"); `ai` es su espejo horizontal, usado como variación en el
+/// ciclo de la animación de arranque.
+enum SplashMark { ia, ai }
+
 class _LaunchSplashState extends State<LaunchSplash>
     with SingleTickerProviderStateMixin {
   static const _initialPause = Duration(milliseconds: 140);
@@ -38,6 +43,7 @@ class _LaunchSplashState extends State<LaunchSplash>
   /// Un ciclo = una ida y vuelta completa A→B→A del logo.
   int _cycles = 1;
   bool _endOnLogo = true;
+  SplashMark _targetMark = SplashMark.ia;
 
   @override
   void initState() {
@@ -93,17 +99,26 @@ class _LaunchSplashState extends State<LaunchSplash>
     final cycles = _cycles;
     final endOnLogo = _endOnLogo;
     for (var i = 0; i < cycles; i++) {
-      await _controller.forward();
+      await _playMark(SplashMark.ia);
       if (!mounted) return;
-      await _controller.reverse();
+      await _playMark(SplashMark.ai);
       if (!mounted) return;
     }
     if (endOnLogo) {
+      setState(() => _targetMark = SplashMark.ia);
       await _controller.forward();
       if (!mounted) return;
     }
     await Future<void>.delayed(_finalPause);
     if (mounted) widget.onFinished();
+  }
+
+  /// Una "pata" del ciclo: símbolo → [mark] → símbolo.
+  Future<void> _playMark(SplashMark mark) async {
+    setState(() => _targetMark = mark);
+    await _controller.forward();
+    if (!mounted) return;
+    await _controller.reverse();
   }
 
   @override
@@ -117,7 +132,9 @@ class _LaunchSplashState extends State<LaunchSplash>
             colors: [Color(0xFF050505), Color(0xFF101010), Color(0xFF161616)],
           ),
         ),
-        child: Center(child: CoordinatorToIaMark(animation: _controller)),
+        child: Center(
+          child: CoordinatorToIaMark(animation: _controller, mark: _targetMark),
+        ),
       ),
     );
   }
@@ -129,11 +146,13 @@ class _LaunchSplashState extends State<LaunchSplash>
 class CoordinatorToIaMark extends StatelessWidget {
   const CoordinatorToIaMark({
     required this.animation,
+    required this.mark,
     this.size = 124,
     super.key,
   });
 
   final Animation<double> animation;
+  final SplashMark mark;
   final double size;
 
   @override
@@ -164,6 +183,7 @@ class CoordinatorToIaMark extends StatelessWidget {
                   key: const Key('splash-icon-morph'),
                   painter: CoordinatorToIaPainter(
                     progress: Curves.easeInOutCubic.transform(animation.value),
+                    mark: mark,
                   ),
                 ),
               ),
@@ -178,9 +198,29 @@ class CoordinatorToIaMark extends StatelessWidget {
 /// Morph vectorial con correspondencia entre trazos:
 /// punto → punto de la i, tronco → cuerpo de la i y brazos → patas de la A.
 class CoordinatorToIaPainter extends CustomPainter {
-  const CoordinatorToIaPainter({required this.progress});
+  const CoordinatorToIaPainter({required this.progress, required this.mark});
 
   final double progress;
+  final SplashMark mark;
+
+  List<BrandPoint> get _targetLeft => mark == SplashMark.ia
+      ? BrandMarkGeometry.iaLeft
+      : BrandMarkGeometry.aiLeft;
+  List<BrandPoint> get _targetRight => mark == SplashMark.ia
+      ? BrandMarkGeometry.iaRight
+      : BrandMarkGeometry.aiRight;
+  BrandRect get _targetConnector => mark == SplashMark.ia
+      ? BrandMarkGeometry.iaConnector
+      : BrandMarkGeometry.aiConnector;
+  BrandRect get _targetStem => mark == SplashMark.ia
+      ? BrandMarkGeometry.iaStem
+      : BrandMarkGeometry.aiStem;
+  BrandPoint get _targetDot => mark == SplashMark.ia
+      ? BrandMarkGeometry.iaDot
+      : BrandMarkGeometry.aiDot;
+  double get _targetDotRadius => mark == SplashMark.ia
+      ? BrandMarkGeometry.iaDotRadius
+      : BrandMarkGeometry.aiDotRadius;
 
   Offset _point(Size size, BrandPoint start, BrandPoint end) {
     return Offset.lerp(
@@ -227,30 +267,30 @@ class CoordinatorToIaPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final shortestSide = size.shortestSide;
-    final mark = Paint()
+    final fillPaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.fill;
 
     _drawPolygon(
       canvas,
       size,
-      mark,
+      fillPaint,
       BrandMarkGeometry.coordinatorLeft,
-      BrandMarkGeometry.iaLeft,
+      _targetLeft,
     );
 
     _drawPolygon(
       canvas,
       size,
-      mark,
+      fillPaint,
       BrandMarkGeometry.coordinatorRight,
-      BrandMarkGeometry.iaRight,
+      _targetRight,
     );
 
     final connectorRect = _rect(
       size,
       BrandMarkGeometry.coordinatorConnector,
-      BrandMarkGeometry.iaConnector,
+      _targetConnector,
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(
@@ -261,13 +301,13 @@ class CoordinatorToIaPainter extends CustomPainter {
               (1 - progress),
         ),
       ),
-      mark,
+      fillPaint,
     );
 
     final stemRect = _rect(
       size,
       BrandMarkGeometry.coordinatorStem,
-      BrandMarkGeometry.iaStem,
+      _targetStem,
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(
@@ -278,27 +318,26 @@ class CoordinatorToIaPainter extends CustomPainter {
               (1 - progress),
         ),
       ),
-      mark,
+      fillPaint,
     );
 
     final dotCenter = _point(
       size,
       BrandMarkGeometry.coordinatorDot,
-      BrandMarkGeometry.iaDot,
+      _targetDot,
     );
     canvas.drawCircle(
       dotCenter,
       shortestSide *
           (BrandMarkGeometry.coordinatorDotRadius -
-              ((BrandMarkGeometry.coordinatorDotRadius -
-                      BrandMarkGeometry.iaDotRadius) *
+              ((BrandMarkGeometry.coordinatorDotRadius - _targetDotRadius) *
                   progress)),
-      mark,
+      fillPaint,
     );
   }
 
   @override
   bool shouldRepaint(CoordinatorToIaPainter oldDelegate) {
-    return oldDelegate.progress != progress;
+    return oldDelegate.progress != progress || oldDelegate.mark != mark;
   }
 }

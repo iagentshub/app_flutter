@@ -72,6 +72,7 @@ class _LoginPageState extends State<LoginPage> {
       namespace: 'auth',
     );
     widget.localeController.addListener(_onLocaleChanged);
+    widget.backendController.addListener(_onBackendConnectivityChanged);
     _loadPlatformSettings();
     _loadRememberedAccount();
   }
@@ -84,6 +85,20 @@ class _LoginPageState extends State<LoginPage> {
         namespace: 'auth',
       ),
     );
+  }
+
+  // El chequeo inicial (_loadPlatformSettings) solo toma una foto puntual del
+  // backend. Sin esto, si la conexión se cae DESPUÉS (p.ej. al intentar
+  // entrar) el LED se queda en verde aunque ApiClient ya haya reportado el
+  // fallo a BackendController. Reflejamos aquí esa señal en vivo.
+  void _onBackendConnectivityChanged() {
+    if (!mounted || !_platformLoaded) return;
+    final next = widget.backendController.hasConnectionIssue
+        ? _BackendStatus.down
+        : _BackendStatus.ok;
+    if (next != _backendStatus) {
+      setState(() => _backendStatus = next);
+    }
   }
 
   Future<void> _loadRememberedAccount() async {
@@ -117,6 +132,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void dispose() {
     widget.localeController.removeListener(_onLocaleChanged);
+    widget.backendController.removeListener(_onBackendConnectivityChanged);
     _identifierController.dispose();
     _passwordController.dispose();
     super.dispose();
