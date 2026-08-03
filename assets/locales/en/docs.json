@@ -1,7 +1,7 @@
 {
   "page": {
     "title": "Documentation",
-    "subtitle": "Guides and reference for iAgents"
+    "subtitle": "Guides and reference for iAgents Hub"
   },
   "nav": {
     "keywords": "Key terms",
@@ -57,10 +57,10 @@
     "fine_tuning_title": "Fine-tuning",
     "fine_tuning_body": "The process of retraining an LLM on your own data to specialize it for a specific domain. This is different from configuring an agent: fine-tuning modifies the model itself, which involves significant cost, time, and technical resources.",
     "multimodal_title": "Multimodal",
-    "multimodal_body": "Models capable of processing not just text, but also images, audio, or video. Several LLMs available in iAgents are already multimodal (GPT-4o, Claude 3), enabling use cases such as analysing screenshots or describing scanned documents."
+    "multimodal_body": "Models capable of processing not just text, but also images, audio, or video. Several LLMs available in iAgents Hub are already multimodal (GPT-4o, Claude 3), enabling use cases such as analysing screenshots or describing scanned documents."
   },
   "getting_started": {
-    "intro": "iAgents is a self-hosted AI agent platform, accessible from any device — the interface is responsive and adapts to both mobile and desktop. Follow these three steps to get started:",
+    "intro": "iAgents Hub is a self-hosted AI agent platform, accessible from any device — the interface is responsive and adapts to both mobile and desktop. Follow these three steps to get started:",
     "accounts_title": "Account types",
     "accounts_registered_title": "Registered account",
     "accounts_registered_body": "Full, permanent access: agents, conversation history, memory, skills, and settings are preserved across sessions.",
@@ -74,11 +74,11 @@
     "step3_body": "In the agent list, click on an agent and select «New chat». Your conversation history is saved automatically."
   },
   "agents": {
-    "intro": "Every AI platform (Claude, ChatGPT, Copilot…) has its own agent format. iAgents abstracts that difference: you configure an agent once — instructions, skills, memory, knowledge base — and can test it in the browser with any LLM before exporting it to the target platform.",
+    "intro": "Every AI platform (Claude, ChatGPT, Copilot…) has its own agent format. iAgents Hub abstracts that difference: you configure an agent once — instructions, skills, memory, knowledge base — and can test it in the browser with any LLM before exporting it to the target platform.",
     "test_title": "Test with any LLM",
     "test_body": "Connect any provider and switch the agent's model with one click. Compare responses between Claude, GPT-4o, or others without reconfiguring anything.",
     "export_title": "Configure once, deploy on any platform",
-    "export_body": "The system prompt, skills, and context are defined once in iAgents. Export the agent to the native format of each target platform — Claude Code, OpenAI Assistants, or GitHub Copilot — or import existing agents with a content preview before confirming.",
+    "export_body": "The system prompt, skills, and context are defined once in iAgents Hub. Export the agent to the native format of each target platform — Claude Code, OpenAI Assistants, or GitHub Copilot — or import existing agents with a content preview before confirming.",
     "config_title": "What defines an agent",
     "config_body": "Name, system instructions (system prompt), model and active connection, enabled skills, persistent memory, knowledge base, and scheduled routines.",
     "memory_title": "Memory",
@@ -127,7 +127,7 @@
     "rename_body": "Hover over a folder to reveal the edit buttons. Use the pencil icon to rename it or the bin icon to delete it. Deleting a folder does not delete its contents — items return to the «All» view."
   },
   "memory_knowledge": {
-    "intro": "iAgents has two ways to give an agent persistent context: conversational memory and a knowledge base.",
+    "intro": "iAgents Hub has two ways to give an agent persistent context: conversational memory and a knowledge base.",
     "memory_title": "Memory",
     "memory_body": "Memory stores text snippets that the agent remembers between conversations. Useful for user preferences, context data, or notes. Enabled per agent.",
     "knowledge_title": "Knowledge base",
