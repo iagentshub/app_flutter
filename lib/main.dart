@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 
@@ -16,6 +17,13 @@ import 'shared/widgets/terminal_view_transition.dart';
 Future<void> main() async {
   configureUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
+  // El splash (más abajo) monta un MaterialApp normal, que en Flutter Web
+  // sincroniza su propia ruta inicial con la barra de direcciones y así
+  // pisa cualquier deep link (state/callback del login de VS Code, tokens
+  // de verificación/reset, etc.) antes de que exista el GoRouter real.
+  // Capturamos la URL original aquí, antes de que nada la toque, para
+  // poder restaurarla en App una vez el router de verdad está montado.
+  final initialLocation = _captureInitialLocation();
   if (stripePublishableKey.isNotEmpty) {
     Stripe.publishableKey = stripePublishableKey;
     await Stripe.instance.applySettings();
@@ -43,8 +51,34 @@ Future<void> main() async {
       localeController: localeController,
       brandIconController: brandIconController,
       themeController: themeController,
+      initialLocation: initialLocation,
     ),
   );
+}
+
+/// Ruta (path + query) de la URL con la que cargó la pestaña, relativa al
+/// `<base href="/app/">` del index.html — el mismo espacio de rutas que usa
+/// GoRouter. `null` fuera de la web o si la URL no cuelga de `/app`.
+String? _captureInitialLocation() {
+  if (!kIsWeb) return null;
+  const base = '/app';
+  final uri = Uri.base;
+  String path;
+  if (uri.path == base) {
+    path = '/';
+  } else if (uri.path.startsWith('$base/')) {
+    path = uri.path.substring(base.length);
+  } else {
+    return null;
+  }
+  final location = Uri(
+    path: path,
+    query: uri.query.isEmpty ? null : uri.query,
+    fragment: uri.fragment.isEmpty ? null : uri.fragment,
+  ).toString();
+  // "/" es el destino por defecto de todas formas — no merece la pena
+  // forzar una navegación explícita para él.
+  return location == '/' ? null : location;
 }
 
 class _BootApp extends StatefulWidget {
@@ -54,6 +88,7 @@ class _BootApp extends StatefulWidget {
     required this.localeController,
     required this.brandIconController,
     required this.themeController,
+    required this.initialLocation,
   });
 
   final BackendController backendController;
@@ -61,6 +96,7 @@ class _BootApp extends StatefulWidget {
   final LocaleController localeController;
   final BrandIconController brandIconController;
   final ThemeController themeController;
+  final String? initialLocation;
 
   @override
   State<_BootApp> createState() => _BootAppState();
@@ -94,6 +130,7 @@ class _BootAppState extends State<_BootApp> {
                   sessionController: widget.sessionController,
                   localeController: widget.localeController,
                   themeController: widget.themeController,
+                  initialLocation: widget.initialLocation,
                 ),
               ),
       ),

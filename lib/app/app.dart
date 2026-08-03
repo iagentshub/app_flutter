@@ -19,6 +19,7 @@ class App extends StatefulWidget {
     required this.sessionController,
     required this.localeController,
     required this.themeController,
+    this.initialLocation,
     super.key,
   });
 
@@ -26,6 +27,11 @@ class App extends StatefulWidget {
   final SessionController sessionController;
   final LocaleController localeController;
   final ThemeController themeController;
+
+  /// URL con la que cargó la pestaña originalmente (capturada en main.dart
+  /// antes de que el splash la sobrescribiera). Si difiere de dónde arranca
+  /// el router, se restaura en [initState].
+  final String? initialLocation;
 
   @override
   State<App> createState() => _AppState();
@@ -54,6 +60,11 @@ class _AppState extends State<App> {
       apiClient: _apiClient,
       dashboardEditState: _dashboardEditState,
     );
+    final initialLocation = widget.initialLocation;
+    if (initialLocation != null &&
+        initialLocation != _router.routeInformationProvider.value.uri.toString()) {
+      _router.go(initialLocation);
+    }
     _revalidatePersistedSession();
   }
 
