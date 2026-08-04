@@ -442,6 +442,11 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
             onSend: _send,
             onStop: _stop,
             onSuggestion: _sendSuggestion,
+            title: _tx('agents.builder_assistant_title', 'Asistente de diseño'),
+            subtitle: _tx(
+              'agents.builder_assistant_subtitle',
+              'Define el agente y revisa el borrador antes de crearlo',
+            ),
             partialReply: _partialReply,
             thinkingLabel: _thinkingLabel,
             draft: _pendingDraft,

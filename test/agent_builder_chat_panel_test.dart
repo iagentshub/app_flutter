@@ -44,6 +44,8 @@ void main() {
               onSend: () {},
               onStop: () {},
               onSuggestion: onSuggestion ?? (_) {},
+              title: 'Asistente de diseño',
+              subtitle: 'Define el agente antes de crearlo',
               partialReply: partialReply,
               draft: draft,
               draftTitle: 'Borrador propuesto',

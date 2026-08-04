@@ -4,8 +4,7 @@ import '../../../models/chat/chat_models.dart';
 
 /// Transcripción de los constructores por IA de agentes y skills.
 ///
-/// Sin burbujas ni avatares: cada turno es una etiqueta de autor y su texto,
-/// separados por espacio en blanco. La jerarquía la da la tipografía.
+/// Cada turno usa una superficie discreta, autor visible y tipografía legible.
 class AgentBuilderMessageList extends StatelessWidget {
   const AgentBuilderMessageList({
     required this.messages,
@@ -36,7 +35,7 @@ class AgentBuilderMessageList extends StatelessWidget {
     return ListView.builder(
       key: const ValueKey('agent-builder-messages'),
       controller: scrollController,
-      padding: const EdgeInsets.fromLTRB(4, 8, 4, 24),
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
       itemCount: messages.length + (streaming ? 1 : 0),
       itemBuilder: (context, index) {
         if (index >= messages.length) {
@@ -79,24 +78,39 @@ class _Turn extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final isUser = message.isUser;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 22),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            isUser ? userLabel : assistantLabel,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: isUser ? colors.onSurfaceVariant : colors.primary,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.4,
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Align(
+        alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            decoration: BoxDecoration(
+              color: isUser
+                  ? colors.primaryContainer.withValues(alpha: 0.38)
+                  : colors.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: colors.outlineVariant),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isUser ? userLabel : assistantLabel,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 7),
+                if (thinking)
+                  _ThinkingState(label: thinkingLabel)
+                else
+                  _ReadableMessageText(content: message.content),
+              ],
             ),
           ),
-          const SizedBox(height: 6),
-          if (thinking)
-            _ThinkingState(label: thinkingLabel)
-          else
-            _ReadableMessageText(content: message.content),
-        ],
+        ),
       ),
     );
   }

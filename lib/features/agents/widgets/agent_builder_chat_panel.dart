@@ -7,8 +7,7 @@ import 'builder_draft_card.dart';
 
 /// Superficie de conversación de los constructores por IA de agentes y skills.
 ///
-/// Vive directamente sobre el fondo de la página: sin tarjeta contenedora ni
-/// bordes. La única línea es la que separa el compositor de la transcripción.
+/// Organiza cabecera, transcripción y compositor en una superficie sobria.
 class AgentBuilderChatPanel extends StatelessWidget {
   const AgentBuilderChatPanel({
     required this.messages,
@@ -20,6 +19,8 @@ class AgentBuilderChatPanel extends StatelessWidget {
     required this.onSend,
     required this.onStop,
     required this.onSuggestion,
+    required this.title,
+    required this.subtitle,
     required this.intro,
     required this.inputHint,
     required this.sendTooltip,
@@ -27,6 +28,8 @@ class AgentBuilderChatPanel extends StatelessWidget {
     required this.suggestions,
     this.assistantLabel = 'Asistente IA',
     this.userLabel = 'Tú',
+    this.readyLabel = 'Disponible',
+    this.workingLabel = 'Generando respuesta',
     this.thinkingLabel = 'Analizando tu solicitud…',
     this.partialReply = '',
     this.draft,
@@ -46,6 +49,8 @@ class AgentBuilderChatPanel extends StatelessWidget {
   final VoidCallback onSend;
   final VoidCallback onStop;
   final ValueChanged<String> onSuggestion;
+  final String title;
+  final String subtitle;
   final String intro;
   final String inputHint;
   final String sendTooltip;
@@ -53,6 +58,8 @@ class AgentBuilderChatPanel extends StatelessWidget {
   final List<String> suggestions;
   final String assistantLabel;
   final String userLabel;
+  final String readyLabel;
+  final String workingLabel;
   final String thinkingLabel;
 
   /// Texto visible ya recibido mientras el modelo sigue redactando.
@@ -68,47 +75,144 @@ class AgentBuilderChatPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final pendingDraft = draft;
-    return Column(
-      children: [
-        Expanded(
-          child: messages.isEmpty && !streaming
-              ? _EmptyConversation(
-                  intro: intro,
-                  suggestions: suggestions,
-                  enabled: enabled,
-                  onSuggestion: onSuggestion,
-                )
-              : AgentBuilderMessageList(
-                  messages: messages,
-                  streaming: streaming,
-                  thinking: thinking,
-                  scrollController: scrollController,
-                  assistantLabel: assistantLabel,
-                  userLabel: userLabel,
-                  thinkingLabel: thinkingLabel,
-                  partialReply: partialReply,
-                ),
-        ),
-        if (pendingDraft != null && onReviewDraft != null)
-          BuilderDraftCard(
-            draft: pendingDraft,
-            title: draftTitle,
-            actionLabel: draftActionLabel,
-            onReview: onReviewDraft!,
+    return Material(
+      color: colors.surface,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: colors.outlineVariant),
+      ),
+      child: Column(
+        children: [
+          _ChatHeader(
+            title: title,
+            subtitle: subtitle,
+            active: enabled,
+            busy: streaming,
+            readyLabel: readyLabel,
+            workingLabel: workingLabel,
           ),
-        if (error != null && error!.isNotEmpty) _ErrorNotice(message: error!),
-        Divider(height: 1, thickness: 1, color: colors.outlineVariant),
-        _Composer(
-          controller: textController,
-          enabled: enabled && !streaming,
-          streaming: streaming,
-          hint: inputHint,
-          sendTooltip: sendTooltip,
-          stopTooltip: stopTooltip,
-          onSend: onSend,
-          onStop: onStop,
-        ),
-      ],
+          Divider(height: 1, thickness: 1, color: colors.outlineVariant),
+          Expanded(
+            child: messages.isEmpty && !streaming
+                ? _EmptyConversation(
+                    intro: intro,
+                    suggestions: suggestions,
+                    enabled: enabled,
+                    onSuggestion: onSuggestion,
+                  )
+                : AgentBuilderMessageList(
+                    messages: messages,
+                    streaming: streaming,
+                    thinking: thinking,
+                    scrollController: scrollController,
+                    assistantLabel: assistantLabel,
+                    userLabel: userLabel,
+                    thinkingLabel: thinkingLabel,
+                    partialReply: partialReply,
+                  ),
+          ),
+          if (pendingDraft != null && onReviewDraft != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: BuilderDraftCard(
+                draft: pendingDraft,
+                title: draftTitle,
+                actionLabel: draftActionLabel,
+                onReview: onReviewDraft!,
+              ),
+            ),
+          if (error != null && error!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _ErrorNotice(message: error!),
+            ),
+          Divider(height: 1, thickness: 1, color: colors.outlineVariant),
+          _Composer(
+            controller: textController,
+            enabled: enabled && !streaming,
+            streaming: streaming,
+            hint: inputHint,
+            sendTooltip: sendTooltip,
+            stopTooltip: stopTooltip,
+            onSend: onSend,
+            onStop: onStop,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChatHeader extends StatelessWidget {
+  const _ChatHeader({
+    required this.title,
+    required this.subtitle,
+    required this.active,
+    required this.busy,
+    required this.readyLabel,
+    required this.workingLabel,
+  });
+
+  final String title;
+  final String subtitle;
+  final bool active;
+  final bool busy;
+  final String readyLabel;
+  final String workingLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(
+              color: busy
+                  ? colors.primary
+                  : active
+                  ? const Color(0xFF27845A)
+                  : colors.outline,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 7),
+          Text(
+            busy ? workingLabel : readyLabel,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: colors.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -130,7 +234,7 @@ class _EmptyConversation extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(4, 20, 4, 20),
+      padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -144,10 +248,13 @@ class _EmptyConversation extends StatelessWidget {
           if (suggestions.isNotEmpty) ...[
             const SizedBox(height: 20),
             for (final suggestion in suggestions)
-              _SuggestionRow(
-                label: suggestion,
-                enabled: enabled,
-                onPressed: () => onSuggestion(suggestion),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _SuggestionRow(
+                  label: suggestion,
+                  enabled: enabled,
+                  onPressed: () => onSuggestion(suggestion),
+                ),
               ),
           ],
         ],
@@ -172,25 +279,19 @@ class _SuggestionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: TertiaryButton(
+    return SizedBox(
+      width: double.infinity,
+      child: SecondaryButton(
         onPressed: enabled ? onPressed : null,
-        style: TextButton.styleFrom(
+        style: OutlinedButton.styleFrom(
           foregroundColor: colors.onSurface,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-          minimumSize: Size.zero,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          side: BorderSide(color: colors.outlineVariant),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           textStyle: Theme.of(context).textTheme.bodyMedium,
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.north_east, size: 15, color: colors.onSurfaceVariant),
-            const SizedBox(width: 10),
-            Flexible(child: Text(label)),
-          ],
-        ),
+        child: Text(label),
       ),
     );
   }
@@ -252,7 +353,7 @@ class _Composer extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.only(top: 8, bottom: 8),
+        padding: const EdgeInsets.all(12),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
@@ -273,27 +374,38 @@ class _Composer extends StatelessWidget {
                   hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: colors.onSurfaceVariant,
                   ),
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
+                  filled: true,
+                  fillColor: colors.surfaceContainerLowest,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: colors.outlineVariant),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: colors.outlineVariant),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: colors.primary, width: 1.4),
+                  ),
                   isDense: true,
                   contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 8,
+                    horizontal: 14,
                     vertical: 12,
                   ),
                 ),
                 onSubmitted: enabled ? (_) => onSend() : null,
               ),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: 8),
             if (streaming)
-              AppIconButton(
+              AppIconButton.filledTonal(
                 tooltip: stopTooltip,
                 onPressed: onStop,
                 icon: const Icon(Icons.stop_rounded, size: 20),
               )
             else
-              AppIconButton(
+              AppIconButton.filled(
                 tooltip: sendTooltip,
                 onPressed: enabled ? onSend : null,
                 icon: const Icon(Icons.arrow_upward_rounded, size: 20),

@@ -310,6 +310,11 @@ class _SkillBuilderPageState extends State<SkillBuilderPage> {
             onSend: _send,
             onStop: _stop,
             onSuggestion: _sendSuggestion,
+            title: _tx('skill_builder.assistant_title', 'Asistente de diseño'),
+            subtitle: _tx(
+              'skill_builder.assistant_subtitle',
+              'Define la skill y revisa el borrador antes de crearla',
+            ),
             partialReply: _partialReply,
             thinkingLabel: _thinkingLabel,
             draft: _pendingDraft,
