@@ -968,6 +968,8 @@
     "config_oauth_google": "Show Google button",
     "config_oauth_apple": "Show Apple button",
     "config_oauth_microsoft": "Show Microsoft button",
+    "config_oauth_github": "Show GitHub button",
+    "config_oauth_github_hint": "Unlike the others, this button actually works. It will only appear on /login if, besides being enabled here, the server has a GitHub OAuth App configured.",
     "config_section_maintenance": "Maintenance",
     "config_maintenance_enabled": "Notice active",
     "config_maintenance_hint": "Shows an informational banner to all users — it does not block the app.",
