@@ -317,7 +317,10 @@
     "unlink_confirm_title": "Desvincular cuenta",
     "unlink_confirm_body": "¿Seguro que quieres desvincular esta cuenta? Las conexiones ya creadas no se eliminarán.",
     "unlinked": "Cuenta desvinculada",
-    "error_generic": "No se pudo completar la operación"
+    "error_generic": "No se pudo completar la operación",
+    "ollama_host_local": "Local",
+    "ollama_host_cloud": "Oficial (ollama.com)",
+    "ollama_cloud_hint": "Para Ollama Cloud, pega tu API Key de ollama.com/settings/keys"
   },
   "explore": {
     "search_hint": "Buscar",

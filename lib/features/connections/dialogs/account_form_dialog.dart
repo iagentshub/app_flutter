@@ -36,8 +36,16 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
   String? _testMessage;
   bool? _testOk;
 
+  static const _ollamaLocalHost = 'http://localhost:11434';
+  static const _ollamaCloudHost = 'https://ollama.com';
+
   bool get _isEdit => widget.existing != null;
   bool get _isHub => _meta.provider == 'iagentshub';
+  bool get _isOllama => _meta.provider == 'ollama';
+
+  void _setOllamaHost(String host) {
+    setState(() => _hostController.text = host);
+  }
 
   AccountProviderMeta get _meta =>
       widget.providers.firstWhere((m) => m.provider == _selectedProvider);
@@ -336,10 +344,50 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
                 ),
               if (_meta.usesHost) ...[
                 const SizedBox(height: 12),
+                if (_isOllama) ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SecondaryButton(
+                          onPressed: () => _setOllamaHost(_ollamaLocalHost),
+                          child: Text(
+                            widget.tx('providers.ollama_host_local', 'Local'),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: SecondaryButton(
+                          onPressed: () => _setOllamaHost(_ollamaCloudHost),
+                          child: Text(
+                            widget.tx(
+                              'providers.ollama_host_cloud',
+                              'Oficial (ollama.com)',
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 TextField(
                   controller: _hostController,
                   decoration: const InputDecoration(labelText: 'Host'),
                 ),
+                if (_isOllama) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.tx(
+                      'providers.ollama_cloud_hint',
+                      'Para Ollama Cloud, pega tu API Key de ollama.com/settings/keys',
+                    ),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ],
               const SizedBox(height: 12),
               SecondaryButton.icon(

@@ -45,7 +45,7 @@ class AccountProviderMeta {
     AccountProviderMeta(
       provider: 'ollama',
       label: 'Ollama',
-      requiresApiKey: false,
+      requiresApiKey: true,
       usesHost: true,
     ),
     AccountProviderMeta(

@@ -317,7 +317,10 @@
     "unlink_confirm_title": "Unlink account",
     "unlink_confirm_body": "Are you sure you want to unlink this account? Connections already created won't be removed.",
     "unlinked": "Account unlinked",
-    "error_generic": "Couldn't complete the operation"
+    "error_generic": "Couldn't complete the operation",
+    "ollama_host_local": "Local",
+    "ollama_host_cloud": "Official (ollama.com)",
+    "ollama_cloud_hint": "For Ollama Cloud, paste your API Key from ollama.com/settings/keys"
   },
   "explore": {
     "search_hint": "Search",
