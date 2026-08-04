@@ -269,7 +269,11 @@
     "close": "Close",
     "new_conversation": "New conversation",
     "timeout_msg": "Timed out — the agent did not respond in time.",
-    "stream_error": "Response without stream"
+    "stream_error": "Response without stream",
+    "history_tooltip": "Conversation history",
+    "delete_conversation": "Delete conversation",
+    "stop": "Stop response",
+    "send": "Send message"
   },
   "builder_actions": {
     "saving": "Saving…",

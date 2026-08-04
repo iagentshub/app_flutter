@@ -126,6 +126,10 @@ class _FeedBodyState extends State<_FeedBody> {
               color: starred ? Colors.amber : null,
               size: 20,
             ),
+            tooltip: widget.tx(
+              'toggle_favorite',
+              'Marcar o quitar de favoritos',
+            ),
             onPressed: () => _toggleStar(item),
           ),
         );

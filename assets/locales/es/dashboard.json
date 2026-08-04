@@ -149,5 +149,7 @@
     "top_label": "Top {{n}}",
     "total_label": "tokens",
     "empty": "Sin actividad de tokens"
-  }
+  },
+  "test_connections": "Probar todas las conexiones",
+  "toggle_favorite": "Marcar o quitar de favoritos"
 }

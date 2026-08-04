@@ -97,6 +97,7 @@ class _TableDataDialogState extends State<_TableDataDialog> {
                   ),
                   AppIconButton(
                     onPressed: () => Navigator.of(context).pop(),
+                    tooltip: widget.tx('common.actions.close', 'Cerrar'),
                     icon: const Icon(Icons.close),
                   ),
                 ],

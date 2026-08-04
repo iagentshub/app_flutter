@@ -103,6 +103,10 @@ class _ConnectionStatusBodyState extends State<_ConnectionStatusBody> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.refresh, size: 20),
+              tooltip: widget.tx(
+                'test_connections',
+                'Probar todas las conexiones',
+              ),
               onPressed: _testing ? null : _runTest,
             ),
           ],

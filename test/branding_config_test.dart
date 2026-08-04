@@ -79,6 +79,23 @@ void main() {
       }
     }
   });
+
+  test('el producto se escribe «iAgents Hub», nunca pegado', () {
+    // Tercera grafía en aparecer: la fase 2 unificó about/docs/seo y se dejó
+    // «iAgentsHub» en pricing, legacy y la navegación. Sin esta comprobación
+    // la cuarta llega sola, porque nadie lee los .json de locales enteros.
+    //
+    // Ojo: el nombre NATIVO de la app sí es «iAgents» a secas (ver el test de
+    // arriba). Aquí solo se persigue el pegado sin espacio.
+    final offenders = <String>[];
+    for (final dir in ['lib', 'assets/locales']) {
+      for (final f in Directory(dir).listSync(recursive: true).whereType<File>()) {
+        if (!f.path.endsWith('.dart') && !f.path.endsWith('.json')) continue;
+        if (f.readAsStringSync().contains('iAgentsHub')) offenders.add(f.path);
+      }
+    }
+    expect(offenders, isEmpty, reason: 'Escríbelo «iAgents Hub», con espacio');
+  });
 }
 
 String _read(String path) => File(path).readAsStringSync();

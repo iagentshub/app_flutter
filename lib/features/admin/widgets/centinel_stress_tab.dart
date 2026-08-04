@@ -444,6 +444,10 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
                 AppIconButton(
                   onPressed: () =>
                       setState(() => _showRampupInfo = !_showRampupInfo),
+                  tooltip: _tx(
+                    'centinel.stress_rampup_info',
+                    'Qué es el ramp-up',
+                  ),
                   icon: const Icon(Icons.info_outline, size: 16),
                   visualDensity: VisualDensity.compact,
                 ),

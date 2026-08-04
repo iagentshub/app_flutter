@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 Widget buildPaymentElement(String clientSecret) => const Padding(
   padding: EdgeInsets.symmetric(vertical: 16),
-  child: Text('Completa la suscripción desde la versión web de iAgentsHub.'),
+  child: Text('Completa la suscripción desde la versión web de iAgents Hub.'),
 );
 
 Future<void> confirmPaymentElement(String returnUrl) {

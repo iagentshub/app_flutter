@@ -132,7 +132,7 @@ class _SidebarBrand extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'iAgentsHub',
+              'iAgents Hub',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.titleMedium?.copyWith(

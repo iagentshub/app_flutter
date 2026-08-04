@@ -181,6 +181,25 @@ extension _LoginForm on _LoginPageState {
                       border: const OutlineInputBorder(),
                       prefixIcon: const Icon(Icons.lock_outline, size: 20),
                       suffixIcon: AppIconButton(
+                        // Sin tooltip, un lector de pantalla anunciaba solo
+                        // «botón»: ni qué hace ni si la contraseña está ya
+                        // visible. Las cadenas llevaban traducidas desde el
+                        // principio, sin que nadie las usara.
+                        tooltip: _showPassword
+                            ? _txt(
+                                t,
+                                'hide_password',
+                                _isEnglish
+                                    ? 'Hide password'
+                                    : 'Ocultar contraseña',
+                              )
+                            : _txt(
+                                t,
+                                'show_password',
+                                _isEnglish
+                                    ? 'Show password'
+                                    : 'Mostrar contraseña',
+                              ),
                         onPressed: () =>
                             _refresh(() => _showPassword = !_showPassword),
                         icon: Icon(

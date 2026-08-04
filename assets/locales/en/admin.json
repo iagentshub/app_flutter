@@ -39,7 +39,8 @@
     "filter_skipped": "Skipped",
     "running": "Running…",
     "run_empty": "Run the tests to see the results",
-    "none": "None"
+    "none": "None",
+    "stress_rampup_info": "What ramp-up means"
   },
   "open_webmail": "Open mailbox",
   "error_load": "Error loading users.",

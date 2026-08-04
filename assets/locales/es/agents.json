@@ -269,7 +269,11 @@
     "close": "Cerrar",
     "new_conversation": "Nueva conversación",
     "timeout_msg": "Tiempo agotado — el agente no respondió en el tiempo configurado.",
-    "stream_error": "Respuesta sin stream"
+    "stream_error": "Respuesta sin stream",
+    "history_tooltip": "Historial de conversaciones",
+    "delete_conversation": "Borrar conversación",
+    "stop": "Detener respuesta",
+    "send": "Enviar mensaje"
   },
   "builder_actions": {
     "saving": "Guardando…",

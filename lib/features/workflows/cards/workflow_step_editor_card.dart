@@ -68,6 +68,7 @@ extension _WorkflowStepEditorCard on _WorkflowEditorPageState {
               const Spacer(),
               AppIconButton(
                 icon: const Icon(Icons.delete_outline),
+                tooltip: _tx('common.actions.delete', 'Eliminar'),
                 onPressed: _steps.length > 1 ? () => _removeStep(index) : null,
               ),
             ],

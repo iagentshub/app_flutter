@@ -39,7 +39,8 @@
     "filter_skipped": "Omitidos",
     "running": "Ejecutando…",
     "run_empty": "Ejecuta los tests para ver los resultados",
-    "none": "Ninguno"
+    "none": "Ninguno",
+    "stress_rampup_info": "Qué es el ramp-up"
   },
   "open_webmail": "Ver correos",
   "error_load": "Error al cargar usuarios.",

@@ -400,6 +400,10 @@ class _ChatPageState extends State<ChatPage> {
                 }
                 return AppIconButton(
                   icon: const Icon(Icons.history),
+                  tooltip: _tx(
+                    'agents.chat.history_tooltip',
+                    'Historial de conversaciones',
+                  ),
                   onPressed: () => Scaffold.of(context).openEndDrawer(),
                 );
               },
@@ -469,6 +473,10 @@ class _ChatPageState extends State<ChatPage> {
                   },
                   trailing: AppIconButton(
                     icon: const Icon(Icons.close, size: 16),
+                    tooltip: _tx(
+                      'agents.chat.delete_conversation',
+                      'Borrar conversación',
+                    ),
                     onPressed: () => _deleteConversation(item.id),
                   ),
                 );
@@ -551,11 +559,13 @@ class _ChatPageState extends State<ChatPage> {
                 if (_streaming)
                   AppIconButton.filledTonal(
                     onPressed: _stop,
+                    tooltip: _tx('agents.chat.stop', 'Detener respuesta'),
                     icon: const Icon(Icons.stop),
                   )
                 else
                   AppIconButton.filled(
                     onPressed: _send,
+                    tooltip: _tx('agents.chat.send', 'Enviar mensaje'),
                     icon: const Icon(Icons.send),
                   ),
               ],
