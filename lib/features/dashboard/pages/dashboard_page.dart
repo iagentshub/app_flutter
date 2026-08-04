@@ -9,6 +9,7 @@ import '../../../models/dashboard/dashboard_data.dart';
 import '../../../models/dashboard/dashboard_widget_config.dart';
 import '../../../models/dashboard/dashboard_widget_instance.dart';
 import '../../../models/dashboard/dashboard_widget_registry.dart';
+import '../../../models/dashboard/notification_banner.dart';
 import '../../auth/repositories/auth_repository.dart';
 import '../../explore/repositories/explore_repository.dart';
 import '../cards/dashboard_widget_card.dart';
@@ -27,6 +28,7 @@ import '../widgets/responsive_dashboard_grid.dart';
 part '../cards/dashboard_activity_cards.dart';
 part '../cards/dashboard_feed_cards.dart';
 part '../cards/dashboard_metrics_cards.dart';
+part '../cards/dashboard_notification_banner_card.dart';
 part '../cards/dashboard_resource_cards.dart';
 part '../dialogs/dashboard_widget_config_dialog.dart';
 
@@ -60,6 +62,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   DashboardData? _data;
   List<DashboardWidgetInstance> _layout = defaultDashboardInstances();
+  List<NotificationBanner> _banners = [];
   bool _loading = true;
   bool _editing = false;
   String? _error;
@@ -115,10 +118,14 @@ class _DashboardPageState extends State<DashboardPage> {
         gaToken: token,
         sources: dashboardDataSourcesFor(preferences.instances),
       );
+      final banners = await widget.dashboardRepository.getActiveBanners(
+        token,
+      );
       if (!mounted) return;
       setState(() {
         _data = data;
         _layout = preferences.instances;
+        _banners = banners;
         _loading = false;
       });
       if (!preferences.isVersioned) _persistLayout();
@@ -275,6 +282,16 @@ class _DashboardPageState extends State<DashboardPage> {
             ],
           ),
         ),
+        if (_banners.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Column(
+              children: [
+                for (final banner in _banners)
+                  _NotificationBannerCard(banner: banner),
+              ],
+            ),
+          ),
         Expanded(
           child: RefreshIndicator(
             onRefresh: _load,
