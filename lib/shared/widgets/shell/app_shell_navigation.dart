@@ -1,5 +1,15 @@
 part of '../app_shell.dart';
 
+/// Nombre a mostrar en el pie y en el rail: el `displayName` si lo hay, si no
+/// el usuario. Compartido para que ambas variantes muestren lo mismo.
+String sidebarVisibleName(String username, String? displayName) =>
+    displayName?.trim().isNotEmpty == true ? displayName!.trim() : username;
+
+/// Inicial del avatar, derivada de [sidebarVisibleName].
+String sidebarAvatarInitial(String visibleName) => visibleName.trim().isEmpty
+    ? 'U'
+    : visibleName.trimLeft().substring(0, 1).toUpperCase();
+
 /// Navegación principal compartida por el sidebar de escritorio y el drawer.
 class AppSidebarNavigation extends StatelessWidget {
   const AppSidebarNavigation({
@@ -37,17 +47,13 @@ class AppSidebarNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final visibleName = displayName?.trim().isNotEmpty == true
-        ? displayName!.trim()
-        : username;
+    final visibleName = sidebarVisibleName(username, displayName);
     final accountDetail = email?.trim().isNotEmpty == true
         ? email!.trim()
         : role == 'admin'
         ? tx('role_admin', 'Administrador')
         : tx('role_user', 'Usuario');
-    final initial = visibleName.trim().isEmpty
-        ? 'U'
-        : visibleName.trimLeft().substring(0, 1).toUpperCase();
+    final initial = sidebarAvatarInitial(visibleName);
 
     return Column(
       children: [
@@ -58,7 +64,7 @@ class AppSidebarNavigation extends StatelessWidget {
         ),
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+            padding: const EdgeInsets.fromLTRB(10, 10, 10, 16),
             children: [
               _NavigationSection(
                 label: tx('workspace', 'Espacio de trabajo'),
@@ -67,7 +73,7 @@ class AppSidebarNavigation extends StatelessWidget {
                 tx: tx,
                 onNavigate: onNavigate,
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 24),
               _NavigationSection(
                 label: tx('organization', 'Organización'),
                 items: _secondaryItems,
@@ -76,7 +82,7 @@ class AppSidebarNavigation extends StatelessWidget {
                 onNavigate: onNavigate,
               ),
               if (isAdmin) ...[
-                const SizedBox(height: 18),
+                const SizedBox(height: 24),
                 _NavigationSection(
                   label: tx('administration', 'Administración'),
                   items: _adminItems,
@@ -117,46 +123,22 @@ class _SidebarBrand extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    final tokens = _SidebarTokens.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 12, 12),
+      padding: const EdgeInsets.fromLTRB(16, 16, 12, 12),
       child: Row(
         children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(11),
-              boxShadow: [
-                BoxShadow(
-                  color: scheme.primary.withValues(alpha: 0.22),
-                  blurRadius: 14,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: const BrandIcon(size: 38, borderRadius: 11),
-          ),
-          const SizedBox(width: 11),
+          const BrandIcon(size: 34, borderRadius: 10),
+          const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'iAgentsHub',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                Text(
-                  'AI workspace',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ],
+            child: Text(
+              'iAgentsHub',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.2,
+              ),
             ),
           ),
           if (showCloseButton)
@@ -164,14 +146,14 @@ class _SidebarBrand extends StatelessWidget {
               tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
               onPressed: () => Navigator.of(context).maybePop(),
               icon: const Icon(Icons.close_rounded),
-              color: scheme.onSurfaceVariant,
+              color: tokens.muted,
             ),
           if (!showCloseButton && onCollapse != null)
             IconButton(
               tooltip: collapseTooltip,
               onPressed: onCollapse,
               icon: const Icon(Icons.keyboard_double_arrow_left_rounded),
-              color: scheme.onSurfaceVariant,
+              color: tokens.muted,
             ),
         ],
       ),
@@ -197,23 +179,24 @@ class _NavigationSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final tokens = _SidebarTokens.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(12, 0, 12, 7),
+          padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
           child: Text(
             label.toUpperCase(),
             style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+              color: tokens.muted,
               fontWeight: FontWeight.w700,
-              letterSpacing: 1.1,
+              letterSpacing: 0.8,
             ),
           ),
         ),
         ...items.map(
           (item) => Padding(
-            padding: const EdgeInsets.only(bottom: 3),
+            padding: const EdgeInsets.only(bottom: 2),
             child: _NavItemTile(
               icon: item.icon,
               label: tx(item.labelKey, item.labelKey),
@@ -228,38 +211,24 @@ class _NavigationSection extends StatelessWidget {
 }
 
 class _ShellTopBar extends StatelessWidget {
-  const _ShellTopBar({
-    required this.title,
-    required this.openMenuTooltip,
-    this.onOpenMenu,
-  });
+  const _ShellTopBar({required this.title});
 
   final String title;
-  final String openMenuTooltip;
-  final VoidCallback? onOpenMenu;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final tokens = _SidebarTokens.of(context);
     return Container(
       height: 68,
       padding: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
         color: scheme.surface,
-        border: Border(bottom: BorderSide(color: scheme.outlineVariant)),
+        border: Border(bottom: BorderSide(color: tokens.border)),
       ),
       child: Row(
         children: [
-          if (onOpenMenu != null) ...[
-            IconButton(
-              tooltip: openMenuTooltip,
-              onPressed: onOpenMenu,
-              icon: const Icon(Icons.keyboard_double_arrow_right_rounded),
-              color: scheme.onSurfaceVariant,
-            ),
-            const SizedBox(width: 4),
-          ],
           Container(
             width: 4,
             height: 24,
@@ -407,7 +376,7 @@ class _NavItemTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final foreground = selected ? scheme.primary : scheme.onSurfaceVariant;
+    final tokens = _SidebarTokens.of(context);
     return Semantics(
       selected: selected,
       button: true,
@@ -415,33 +384,26 @@ class _NavItemTile extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
+          hoverColor: tokens.hover,
+          focusColor: tokens.hover,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 160),
             curve: Curves.easeOut,
-            constraints: const BoxConstraints(minHeight: 46),
+            constraints: const BoxConstraints(minHeight: 44),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: selected
-                  ? scheme.primary.withValues(alpha: 0.10)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
+              color: selected ? tokens.selectedBg : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
               children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? scheme.primary.withValues(alpha: 0.12)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: Icon(icon, size: 20, color: foreground),
+                Icon(
+                  icon,
+                  size: 19,
+                  color: selected ? scheme.primary : tokens.muted,
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     label,
@@ -449,19 +411,7 @@ class _NavItemTile extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: selected ? scheme.primary : scheme.onSurface,
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                    ),
-                  ),
-                ),
-                AnimatedOpacity(
-                  duration: const Duration(milliseconds: 160),
-                  opacity: selected ? 1 : 0,
-                  child: Container(
-                    width: 3,
-                    height: 18,
-                    decoration: BoxDecoration(
-                      color: scheme.primary,
-                      borderRadius: BorderRadius.circular(99),
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                     ),
                   ),
                 ),

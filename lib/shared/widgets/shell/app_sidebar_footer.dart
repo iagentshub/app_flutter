@@ -25,15 +25,19 @@ class _SidebarFooter extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final tokens = _SidebarTokens.of(context);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+      padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
       child: Column(
         children: [
-          const Divider(height: 1),
-          const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Container(height: 1, color: tokens.border),
+          const SizedBox(height: 8),
+          // Centrados y con hueco fijo: repartirlos con `spaceBetween` los
+          // lanzaba contra los bordes, y el hueco cambiaba al ocultar Precios.
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 4,
             children: [
               // El link de Precios solo tiene sentido si hay planes de
               // suscripción activos — se oculta cuando el admin desactiva
@@ -46,18 +50,18 @@ class _SidebarFooter extends StatelessWidget {
                       onPressed: () =>
                           onOpenPublicRoute(item.route(isEnglish: isEnglish)),
                       constraints: const BoxConstraints.tightFor(
-                        width: 40,
-                        height: 40,
+                        width: 38,
+                        height: 38,
                       ),
                       padding: EdgeInsets.zero,
                       visualDensity: VisualDensity.compact,
-                      icon: Icon(item.icon, size: 19),
-                      color: scheme.onSurfaceVariant,
+                      icon: Icon(item.icon, size: 18),
+                      color: tokens.muted,
                     ),
                   ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Row(
             children: [
               Expanded(
@@ -68,25 +72,25 @@ class _SidebarFooter extends StatelessWidget {
                     child: Row(
                       children: [
                         CircleAvatar(
-                          radius: 16,
+                          radius: 15,
                           backgroundColor: scheme.primary,
                           foregroundColor: scheme.onPrimary,
                           child: Text(
                             initial,
                             style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w800,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 9),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             visibleName,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.labelLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
@@ -100,13 +104,13 @@ class _SidebarFooter extends StatelessWidget {
                 child: IconButton(
                   onPressed: onLogout,
                   constraints: const BoxConstraints.tightFor(
-                    width: 40,
-                    height: 40,
+                    width: 38,
+                    height: 38,
                   ),
                   padding: EdgeInsets.zero,
                   visualDensity: VisualDensity.compact,
-                  icon: const Icon(Icons.logout_rounded, size: 20),
-                  color: scheme.onSurfaceVariant,
+                  icon: const Icon(Icons.logout_rounded, size: 19),
+                  color: tokens.muted,
                 ),
               ),
             ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 abstract final class AppTheme {
   static const _red = Color(0xFFD90429);
@@ -65,6 +66,9 @@ abstract final class AppTheme {
       scaffoldBackgroundColor: pageBackground,
       cardColor: cardColor,
       useMaterial3: true,
+      textTheme: GoogleFonts.interTextTheme(
+        ThemeData.light(useMaterial3: true).textTheme,
+      ),
       cardTheme: CardThemeData(
         color: cardColor,
         elevation: 0,
@@ -182,9 +186,9 @@ abstract final class AppTheme {
         ),
         labelStyle: const TextStyle(color: Color(0x8AFFFFFF)),
       ),
-      textTheme: ThemeData.dark(
-        useMaterial3: true,
-      ).textTheme.apply(bodyColor: _white, displayColor: _white),
+      textTheme: GoogleFonts.interTextTheme(
+        ThemeData.dark(useMaterial3: true).textTheme,
+      ).apply(bodyColor: _white, displayColor: _white),
       appBarTheme: const AppBarTheme(
         backgroundColor: _black,
         foregroundColor: _white,

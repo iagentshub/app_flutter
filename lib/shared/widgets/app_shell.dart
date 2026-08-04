@@ -22,12 +22,18 @@ import 'terminal_view_transition.dart';
 
 part 'shell/app_shell_navigation.dart';
 part 'shell/app_sidebar_footer.dart';
+part 'shell/app_sidebar_rail.dart';
+part 'shell/sidebar_tokens.dart';
 part 'shell/widget_picker_drawer.dart';
 
 /// En viewports estrechos la navegación vive en un drawer; desde 960 px se
 /// convierte en un sidebar persistente para aprovechar el espacio web.
 const _wideNavBreakpoint = 960.0;
 const _sidebarWidth = 276.0;
+
+/// Ancho contraído. El sidebar no desaparece: queda un rail de iconos, así la
+/// navegación sigue a un clic en vez de esconderse tras la barra superior.
+const _railWidth = 72.0;
 const _drawerWidth = 304.0;
 
 class AppShell extends StatefulWidget {
@@ -264,44 +270,64 @@ class _AppShellState extends State<AppShell> {
                 );
 
                 if (wide) {
-                  final showSidebar =
-                      !_sidebarCollapsed || widget.dashboardEditState.editing;
+                  // Mientras se edita el dashboard el sidebar aloja el panel de
+                  // widgets: ahí no cabe el rail, se fuerza expandido.
+                  final collapsed =
+                      _sidebarCollapsed && !widget.dashboardEditState.editing;
+                  final tokens = _SidebarTokens.of(context);
                   return Scaffold(
                     body: Row(
                       children: [
-                        if (showSidebar)
-                          SizedBox(
-                            width: _sidebarWidth,
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.surface,
-                                border: Border(
-                                  right: BorderSide(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.outlineVariant,
-                                  ),
-                                ),
-                              ),
-                              child: SafeArea(right: false, child: navContent),
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          curve: Curves.easeOutCubic,
+                          width: collapsed ? _railWidth : _sidebarWidth,
+                          decoration: BoxDecoration(
+                            color: tokens.surface,
+                            border: Border(
+                              right: BorderSide(color: tokens.border),
                             ),
                           ),
+                          child: ClipRect(
+                            child: SafeArea(
+                              right: false,
+                              child: collapsed
+                                  ? AppSidebarRail(
+                                      isAdmin: isAdmin,
+                                      location: location,
+                                      initial: sidebarAvatarInitial(
+                                        sidebarVisibleName(
+                                          widget
+                                                  .sessionController
+                                                  .user
+                                                  ?.username ??
+                                              'Usuario',
+                                          widget
+                                              .sessionController
+                                              .user
+                                              ?.displayName,
+                                        ),
+                                      ),
+                                      tx: _tx,
+                                      onNavigate: (route) => _navigateTo(
+                                        context,
+                                        route,
+                                        wide: wide,
+                                      ),
+                                      onExpand: () => setState(
+                                        () => _sidebarCollapsed = false,
+                                      ),
+                                      onLogout: () => _logout(context),
+                                    )
+                                  : navContent,
+                            ),
+                          ),
+                        ),
                         Expanded(
                           child: Column(
                             children: [
                               _ShellTopBar(
                                 title: _titleForLocation(location, _texts),
-                                onOpenMenu:
-                                    _sidebarCollapsed &&
-                                        !widget.dashboardEditState.editing
-                                    ? () => setState(
-                                        () => _sidebarCollapsed = false,
-                                      )
-                                    : null,
-                                openMenuTooltip: _tx(
-                                  'sidebar_show',
-                                  'Mostrar menú',
-                                ),
                               ),
                               Expanded(child: body),
                             ],

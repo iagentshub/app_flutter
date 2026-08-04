@@ -262,4 +262,95 @@ void main() {
 
     expect(collapsed, isTrue);
   });
+
+  Widget buildRail({
+    required bool isAdmin,
+    required ValueChanged<String> onNavigate,
+    VoidCallback? onExpand,
+    VoidCallback? onLogout,
+  }) {
+    return BrandIconScope(
+      controller: brandIconController,
+      child: MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 72,
+            child: AppSidebarRail(
+              isAdmin: isAdmin,
+              location: RouteNames.dashboard,
+              initial: 'J',
+              tx: tx,
+              onNavigate: onNavigate,
+              onExpand: onExpand ?? () {},
+              onLogout: onLogout ?? () {},
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  testWidgets('el rail rotula cada icono con su etiqueta traducida', (
+    tester,
+  ) async {
+    await tester.pumpWidget(buildRail(isAdmin: false, onNavigate: (_) {}));
+
+    final tooltips = tester
+        .widgetList<Tooltip>(find.byType(Tooltip))
+        .map((tooltip) => tooltip.message);
+    expect(
+      tooltips,
+      containsAll([
+        'Dashboard',
+        'Explorar',
+        'Agentes',
+        'Orquestación',
+        'Conocimiento',
+        'Conexiones',
+        'Etiquetas',
+        'Perfil',
+      ]),
+    );
+  });
+
+  testWidgets('el rail navega a la ruta del icono pulsado', (tester) async {
+    String? selectedRoute;
+    await tester.pumpWidget(
+      buildRail(isAdmin: false, onNavigate: (route) => selectedRoute = route),
+    );
+
+    await tester.tap(find.byIcon(Icons.smart_toy_outlined));
+
+    expect(selectedRoute, RouteNames.agents);
+  });
+
+  testWidgets('el rail ofrece expandir el menú', (tester) async {
+    var expanded = false;
+    await tester.pumpWidget(
+      buildRail(
+        isAdmin: false,
+        onNavigate: (_) {},
+        onExpand: () => expanded = true,
+      ),
+    );
+
+    await tester.tap(find.byIcon(Icons.keyboard_double_arrow_right_rounded));
+
+    expect(expanded, isTrue);
+  });
+
+  testWidgets('el rail incluye las herramientas administrativas de un admin', (
+    tester,
+  ) async {
+    await tester.pumpWidget(buildRail(isAdmin: true, onNavigate: (_) {}));
+    await tester.scrollUntilVisible(
+      find.byIcon(Icons.security_outlined),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+
+    expect(find.byIcon(Icons.admin_panel_settings_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.table_rows_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.security_outlined), findsOneWidget);
+  });
 }
