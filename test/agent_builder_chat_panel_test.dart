@@ -99,4 +99,27 @@ void main() {
     expect(find.text('No se pudo completar la respuesta'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('presenta identidad y estructura legible en las respuestas', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      subject(
+        messages: const [
+          ChatMessage(role: 'user', content: 'Necesito un agente profesional'),
+          ChatMessage(
+            role: 'assistant',
+            content: '# Propuesta\n\n- Objetivo claro\n- Límites definidos',
+          ),
+        ],
+      ),
+    );
+
+    expect(find.text('Tú'), findsOneWidget);
+    expect(find.text('Asistente IA'), findsOneWidget);
+    expect(find.text('Propuesta'), findsOneWidget);
+    expect(find.text('Objetivo claro'), findsOneWidget);
+    expect(find.text('Límites definidos'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
