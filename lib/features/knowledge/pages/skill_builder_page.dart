@@ -350,9 +350,10 @@ class _SkillBuilderPageState extends State<SkillBuilderPage> {
 
           return Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1120),
+              // Ancho de lectura, no de pantalla: el texto es el contenido.
+              constraints: const BoxConstraints(maxWidth: 760),
               child: Padding(
-                padding: EdgeInsets.all(wide ? 20 : 10),
+                padding: EdgeInsets.symmetric(horizontal: wide ? 24 : 16),
                 child: Column(
                   children: [
                     BuilderConnectionBar(
@@ -365,7 +366,6 @@ class _SkillBuilderPageState extends State<SkillBuilderPage> {
                       tx: _tx,
                       emptyMessagePath: 'skill_builder.connection_required',
                     ),
-                    const SizedBox(height: 10),
                     Expanded(child: chat),
                   ],
                 ),

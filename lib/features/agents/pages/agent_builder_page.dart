@@ -483,14 +483,10 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
 
           return Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1120),
+              // Ancho de lectura, no de pantalla: el texto es el contenido.
+              constraints: const BoxConstraints(maxWidth: 760),
               child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  wide ? 24 : 12,
-                  wide ? 20 : 12,
-                  wide ? 24 : 12,
-                  wide ? 24 : 12,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: wide ? 24 : 16),
                 child: Column(
                   children: [
                     BuilderConnectionBar(
@@ -502,7 +498,6 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
                           setState(() => _connectionId = value),
                       tx: _tx,
                     ),
-                    const SizedBox(height: 10),
                     Expanded(child: chat),
                   ],
                 ),
