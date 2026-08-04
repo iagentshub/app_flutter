@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../models/chat/chat_models.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import 'agent_builder_message_list.dart';
+import 'builder_draft_card.dart';
 
-/// Responsive conversation surface used by the AI agent builder.
+/// Superficie de conversación de los constructores por IA de agentes y skills.
 class AgentBuilderChatPanel extends StatelessWidget {
   const AgentBuilderChatPanel({
     required this.messages,
@@ -16,8 +17,6 @@ class AgentBuilderChatPanel extends StatelessWidget {
     required this.onSend,
     required this.onStop,
     required this.onSuggestion,
-    required this.title,
-    required this.subtitle,
     required this.intro,
     required this.inputHint,
     required this.sendTooltip,
@@ -25,9 +24,12 @@ class AgentBuilderChatPanel extends StatelessWidget {
     required this.suggestions,
     this.assistantLabel = 'Asistente IA',
     this.userLabel = 'Tú',
-    this.readyLabel = 'Disponible',
-    this.workingLabel = 'Diseñando',
     this.thinkingLabel = 'Analizando tu solicitud…',
+    this.partialReply = '',
+    this.draft,
+    this.draftTitle = '',
+    this.draftActionLabel = '',
+    this.onReviewDraft,
     this.error,
     super.key,
   });
@@ -41,8 +43,6 @@ class AgentBuilderChatPanel extends StatelessWidget {
   final VoidCallback onSend;
   final VoidCallback onStop;
   final ValueChanged<String> onSuggestion;
-  final String title;
-  final String subtitle;
   final String intro;
   final String inputHint;
   final String sendTooltip;
@@ -50,34 +50,30 @@ class AgentBuilderChatPanel extends StatelessWidget {
   final List<String> suggestions;
   final String assistantLabel;
   final String userLabel;
-  final String readyLabel;
-  final String workingLabel;
   final String thinkingLabel;
+
+  /// Texto visible ya recibido mientras el modelo sigue redactando.
+  final String partialReply;
+
+  final Map<String, dynamic>? draft;
+  final String draftTitle;
+  final String draftActionLabel;
+  final VoidCallback? onReviewDraft;
   final String? error;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final pendingDraft = draft;
     return Material(
       color: colors.surfaceContainerLowest,
       clipBehavior: Clip.antiAlias,
-      elevation: 1,
-      shadowColor: colors.shadow.withValues(alpha: 0.08),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: colors.outlineVariant),
       ),
       child: Column(
         children: [
-          _ChatHeader(
-            title: title,
-            subtitle: subtitle,
-            active: enabled,
-            busy: streaming,
-            readyLabel: readyLabel,
-            workingLabel: workingLabel,
-          ),
-          Divider(height: 1, color: colors.outlineVariant),
           Expanded(
             child: messages.isEmpty && !streaming
                 ? _EmptyConversation(
@@ -94,8 +90,16 @@ class AgentBuilderChatPanel extends StatelessWidget {
                     assistantLabel: assistantLabel,
                     userLabel: userLabel,
                     thinkingLabel: thinkingLabel,
+                    partialReply: partialReply,
                   ),
           ),
+          if (pendingDraft != null && onReviewDraft != null)
+            BuilderDraftCard(
+              draft: pendingDraft,
+              title: draftTitle,
+              actionLabel: draftActionLabel,
+              onReview: onReviewDraft!,
+            ),
           if (error != null && error!.isNotEmpty) _ErrorBanner(message: error!),
           Divider(height: 1, color: colors.outlineVariant),
           _Composer(
@@ -110,127 +114,6 @@ class AgentBuilderChatPanel extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _ChatHeader extends StatelessWidget {
-  const _ChatHeader({
-    required this.title,
-    required this.subtitle,
-    required this.active,
-    required this.busy,
-    required this.readyLabel,
-    required this.workingLabel,
-  });
-
-  final String title;
-  final String subtitle;
-  final bool active;
-  final bool busy;
-  final String readyLabel;
-  final String workingLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final compact = constraints.maxWidth < 520;
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 17),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [colors.primary, colors.tertiary],
-                  ),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(
-                  Icons.auto_awesome_rounded,
-                  size: 21,
-                  color: colors.onPrimary,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colors.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 11,
-                  vertical: 7,
-                ),
-                decoration: BoxDecoration(
-                  color: busy
-                      ? colors.tertiaryContainer
-                      : active
-                      ? const Color(0xFFE7F7EF)
-                      : colors.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 7,
-                      height: 7,
-                      decoration: BoxDecoration(
-                        color: busy
-                            ? colors.tertiary
-                            : active
-                            ? const Color(0xFF168A5B)
-                            : colors.outline,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    if (!compact) ...[
-                      const SizedBox(width: 7),
-                      Text(
-                        busy ? workingLabel : readyLabel,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: busy
-                              ? colors.onTertiaryContainer
-                              : active
-                              ? const Color(0xFF126B49)
-                              : colors.onSurfaceVariant,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }
@@ -250,75 +133,41 @@ class _EmptyConversation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return LayoutBuilder(
       builder: (context, constraints) => SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 32, 24, 20),
+        padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
         child: ConstrainedBox(
-          constraints: BoxConstraints(minHeight: constraints.maxHeight - 40),
+          constraints: BoxConstraints(minHeight: constraints.maxHeight - 48),
           child: Align(
-            alignment: Alignment.topCenter,
+            alignment: Alignment.topLeft,
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 680),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primaryContainer,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.edit_note_rounded,
-                      size: 28,
-                      color: Theme.of(context).colorScheme.onPrimaryContainer,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
                   Text(
                     intro,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      height: 1.45,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      height: 1.5,
+                      color: colors.onSurfaceVariant,
                     ),
                   ),
                   if (suggestions.isNotEmpty) ...[
-                    const SizedBox(height: 22),
+                    const SizedBox(height: 18),
                     Wrap(
-                      alignment: WrapAlignment.center,
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: suggestions
-                          .asMap()
-                          .entries
-                          .map(
-                            (entry) => ActionChip(
-                              onPressed: enabled
-                                  ? () => onSuggestion(entry.value)
-                                  : null,
-                              avatar: Icon(
-                                [
-                                  Icons.support_agent_rounded,
-                                  Icons.trending_up_rounded,
-                                  Icons.campaign_rounded,
-                                ][entry.key % 3],
-                                size: 18,
-                              ),
-                              label: Text(entry.value),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 8,
-                              ),
-                              side: BorderSide(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.outlineVariant,
-                              ),
-                            ),
-                          )
-                          .toList(),
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final suggestion in suggestions)
+                          ActionChip(
+                            onPressed: enabled
+                                ? () => onSuggestion(suggestion)
+                                : null,
+                            label: Text(suggestion),
+                            side: BorderSide(color: colors.outlineVariant),
+                          ),
+                      ],
                     ),
                   ],
                 ],
@@ -386,6 +235,14 @@ class _Composer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    OutlineInputBorder border(Color color, {double width = 1}) {
+      return OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: color, width: width),
+      );
+    }
+
     return SafeArea(
       top: false,
       child: Padding(
@@ -406,34 +263,14 @@ class _Composer extends StatelessWidget {
                 decoration: InputDecoration(
                   hintText: hint,
                   filled: true,
-                  fillColor: Theme.of(context).colorScheme.surface,
-                  prefixIcon: const Icon(
-                    Icons.chat_bubble_outline_rounded,
-                    size: 19,
-                  ),
+                  fillColor: colors.surface,
                   contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
+                    horizontal: 14,
+                    vertical: 13,
                   ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(
-                      color: Theme.of(context).colorScheme.primary,
-                      width: 1.5,
-                    ),
-                  ),
+                  border: border(colors.outlineVariant),
+                  enabledBorder: border(colors.outlineVariant),
+                  focusedBorder: border(colors.primary, width: 1.5),
                 ),
                 onSubmitted: enabled ? (_) => onSend() : null,
               ),

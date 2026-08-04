@@ -18,7 +18,7 @@ import '../repositories/agent_builder_repository.dart';
 import '../repositories/agents_repository.dart';
 import '../dialogs/agent_form_dialog.dart';
 import '../widgets/agent_builder_chat_panel.dart';
-import '../widgets/agent_builder_setup_panel.dart';
+import '../widgets/builder_connection_bar.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
@@ -64,6 +64,9 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
   final List<ChatMessage> _messages = [];
   bool _streaming = false;
   bool _thinking = false;
+  String _partialReply = '';
+  String? _stage;
+  Map<String, dynamic>? _pendingDraft;
   String? _error;
   bool _agentSaved = false;
   StreamSubscription<AgentBuilderEvent>? _subscription;
@@ -116,17 +119,17 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
     try {
       final results = await Future.wait([
         load(
-          'conexiones',
+          _tx('agents.builder_resource_connections', 'conexiones'),
           _connectionsRepository.listConnections(token),
           const <ConnectionItem>[],
         ),
         load(
-          'skills',
+          _tx('agents.builder_resource_skills', 'skills'),
           _skillsRepository.listSkills(token, scope: 'all'),
           const <SkillItem>[],
         ),
         load(
-          'conocimiento',
+          _tx('agents.builder_resource_knowledge', 'conocimiento'),
           _knowledgeRepository.listItems(token),
           const <KnowledgeItem>[],
         ),
@@ -144,7 +147,9 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
             .map((k) => {'id': k.id as String, 'name': k.title as String})
             .toList();
         if (failures.isNotEmpty) {
-          _error = 'No se pudieron cargar: ${failures.join(', ')}';
+          _error =
+              '${_tx('agents.builder_load_failed', 'No se pudieron cargar')}: '
+              '${failures.join(', ')}';
         }
       });
     } catch (_) {
@@ -192,6 +197,9 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
       _messages.add(ChatMessage(role: 'user', content: text));
       _streaming = true;
       _thinking = true;
+      _partialReply = '';
+      _stage = null;
+      _pendingDraft = null;
     });
     _scrollToEnd();
 
@@ -207,6 +215,11 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
         .listen(
           (event) {
             if (event.type == 'progress') {
+              final visible = event.assistantMessage ?? '';
+              setState(() {
+                _stage = event.stage;
+                if (visible.isNotEmpty) _partialReply = visible;
+              });
               _scrollToEnd();
             } else if (event.type == 'error') {
               setState(
@@ -220,17 +233,22 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
             } else if (event.type == 'builder_done') {
               final assistantMessage = event.assistantMessage ?? '';
               setState(() {
+                // Cerrar el turno aquí y no en onDone evita que quede una
+                // burbuja de espera vacía junto al mensaje ya recibido.
+                _streaming = false;
                 _thinking = false;
+                _partialReply = '';
+                _stage = null;
                 if (assistantMessage.isNotEmpty) {
                   _messages.add(
                     ChatMessage(role: 'assistant', content: assistantMessage),
                   );
                 }
+                if (event.isReady && event.draft != null) {
+                  _pendingDraft = event.draft;
+                }
               });
               _scrollToEnd();
-              if (event.isReady && event.draft != null) {
-                _openDraftReview(event.draft!);
-              }
             }
           },
           onError: (error) {
@@ -261,6 +279,8 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
     setState(() {
       _streaming = false;
       _thinking = false;
+      _partialReply = '';
+      _stage = null;
       _error =
           apiError?.message ??
           _tx(
@@ -338,7 +358,10 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
     try {
       await _agentsRepository.saveAgent(token, payload);
       if (!mounted) return;
-      setState(() => _agentSaved = true);
+      setState(() {
+        _agentSaved = true;
+        _pendingDraft = null;
+      });
       _showMessage(_tx('agents.builder_agent_created', 'Agente creado'));
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
@@ -356,7 +379,29 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
     setState(() {
       _streaming = false;
       _thinking = false;
+      _partialReply = '';
+      _stage = null;
     });
+  }
+
+  /// Etiqueta de espera correspondiente a la fase informada por el backend.
+  String get _thinkingLabel {
+    switch (_stage) {
+      case 'replying':
+        return _tx('agents.builder_stage_replying', 'Redactando respuesta…');
+      case 'drafting':
+        return _tx('agents.builder_stage_drafting', 'Preparando el borrador…');
+      case 'writing_instructions':
+        return _tx(
+          'agents.builder_stage_writing',
+          'Escribiendo las instrucciones del agente…',
+        );
+      default:
+        return _tx(
+          'agents.builder_stage_analyzing',
+          'Analizando tu solicitud…',
+        );
+    }
   }
 
   void _showMessage(String text, {bool isError = false}) {
@@ -397,11 +442,17 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
             onSend: _send,
             onStop: _stop,
             onSuggestion: _sendSuggestion,
-            title: _tx('agents.builder_assistant_title', 'Asistente de diseño'),
-            subtitle: _tx(
-              'agents.builder_assistant_subtitle',
-              'Te hará preguntas y preparará un borrador editable',
+            partialReply: _partialReply,
+            thinkingLabel: _thinkingLabel,
+            draft: _pendingDraft,
+            draftTitle: _tx('agents.builder_draft_ready', 'Borrador propuesto'),
+            draftActionLabel: _tx(
+              'agents.builder_draft_review',
+              'Revisar y crear',
             ),
+            onReviewDraft: _pendingDraft == null
+                ? null
+                : () => _openDraftReview(_pendingDraft!),
             intro: _tx(
               'agents.builder_intro',
               'Describe el objetivo del agente. Incluye sus tareas, límites y '
@@ -442,19 +493,16 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
                 ),
                 child: Column(
                   children: [
-                    AgentBuilderSetupPanel(
-                      wide: wide,
+                    BuilderConnectionBar(
                       loadingConnections: _loadingConnections,
                       streaming: _streaming,
-                      agentSaved: _agentSaved,
-                      hasMessages: _messages.isNotEmpty,
                       connections: _connections,
                       connectionId: _connectionId,
                       onConnectionChanged: (value) =>
                           setState(() => _connectionId = value),
                       tx: _tx,
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 10),
                     Expanded(child: chat),
                   ],
                 ),

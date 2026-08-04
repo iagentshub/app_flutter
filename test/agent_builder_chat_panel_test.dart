@@ -22,6 +22,9 @@ void main() {
     bool streaming = false,
     bool thinking = false,
     bool enabled = true,
+    String partialReply = '',
+    Map<String, dynamic>? draft,
+    VoidCallback? onReviewDraft,
     String? error,
     ValueChanged<String>? onSuggestion,
   }) {
@@ -41,8 +44,11 @@ void main() {
               onSend: () {},
               onStop: () {},
               onSuggestion: onSuggestion ?? (_) {},
-              title: 'Asistente de diseno',
-              subtitle: 'Convierte tu idea en un borrador editable',
+              partialReply: partialReply,
+              draft: draft,
+              draftTitle: 'Borrador propuesto',
+              draftActionLabel: 'Revisar y crear',
+              onReviewDraft: onReviewDraft,
               intro: 'Describe el agente que quieres crear.',
               inputHint: 'Escribe tu idea',
               sendTooltip: 'Enviar mensaje',
@@ -121,5 +127,82 @@ void main() {
     expect(find.text('Objetivo claro'), findsOneWidget);
     expect(find.text('Límites definidos'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('el texto parcial sustituye al indicador de espera', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      subject(
+        messages: const [
+          ChatMessage(role: 'user', content: 'Necesito un agente de soporte'),
+        ],
+        streaming: true,
+        thinking: true,
+        partialReply: 'He preparado el bo',
+      ),
+    );
+
+    expect(find.text('He preparado el bo'), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('al cerrar el turno no queda una burbuja de espera vacia', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      subject(
+        messages: const [
+          ChatMessage(role: 'user', content: 'Necesito un agente de soporte'),
+          ChatMessage(role: 'assistant', content: 'He preparado el borrador.'),
+        ],
+      ),
+    );
+
+    expect(find.text('Asistente IA'), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('el borrador se revisa solo cuando el usuario lo pide', (
+    tester,
+  ) async {
+    var reviewed = 0;
+    await tester.pumpWidget(
+      subject(
+        messages: const [
+          ChatMessage(role: 'assistant', content: 'He preparado el borrador.'),
+        ],
+        draft: const {
+          'name': 'Asistente de soporte',
+          'description': 'Atiende consultas de clientes',
+        },
+        onReviewDraft: () => reviewed += 1,
+      ),
+    );
+
+    expect(find.byKey(const ValueKey('builder-draft-card')), findsOneWidget);
+    expect(find.text('Asistente de soporte'), findsOneWidget);
+    expect(find.text('Atiende consultas de clientes'), findsOneWidget);
+    expect(reviewed, 0);
+
+    await tester.tap(find.text('Revisar y crear'));
+    await tester.pump();
+
+    expect(reviewed, 1);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('sin borrador no se muestra la tarjeta', (tester) async {
+    await tester.pumpWidget(
+      subject(
+        messages: const [
+          ChatMessage(role: 'assistant', content: 'Que canales atendera?'),
+        ],
+      ),
+    );
+
+    expect(find.byKey(const ValueKey('builder-draft-card')), findsNothing);
   });
 }

@@ -12,6 +12,7 @@ class AgentBuilderMessageList extends StatelessWidget {
     required this.assistantLabel,
     required this.userLabel,
     required this.thinkingLabel,
+    this.partialReply = '',
     super.key,
   });
 
@@ -23,6 +24,10 @@ class AgentBuilderMessageList extends StatelessWidget {
   final String userLabel;
   final String thinkingLabel;
 
+  /// Texto visible ya recibido mientras el modelo sigue redactando. Cuando
+  /// llega, sustituye al indicador de espera en la burbuja en curso.
+  final String partialReply;
+
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
@@ -33,8 +38,8 @@ class AgentBuilderMessageList extends StatelessWidget {
       itemBuilder: (context, index) {
         if (index >= messages.length) {
           return _MessageBubble(
-            message: const ChatMessage(role: 'assistant', content: ''),
-            thinking: thinking,
+            message: ChatMessage(role: 'assistant', content: partialReply),
+            thinking: thinking && partialReply.isEmpty,
             assistantLabel: assistantLabel,
             userLabel: userLabel,
             thinkingLabel: thinkingLabel,
@@ -78,14 +83,6 @@ class _MessageBubble extends StatelessWidget {
             : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (!isUser) ...[
-            _MessageAvatar(
-              icon: Icons.auto_awesome_rounded,
-              background: colors.primary,
-              foreground: colors.onPrimary,
-            ),
-            const SizedBox(width: 10),
-          ],
           Flexible(
             child: ConstrainedBox(
               constraints: BoxConstraints(maxWidth: isUser ? 640 : 760),
@@ -111,14 +108,10 @@ class _MessageBubble extends StatelessWidget {
                   DecoratedBox(
                     decoration: BoxDecoration(
                       color: isUser
-                          ? colors.primaryContainer.withValues(alpha: 0.78)
+                          ? colors.surfaceContainerHigh
                           : colors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isUser
-                            ? colors.primary.withValues(alpha: 0.16)
-                            : colors.outlineVariant,
-                      ),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: colors.outlineVariant),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
@@ -134,38 +127,10 @@ class _MessageBubble extends StatelessWidget {
               ),
             ),
           ),
-          if (isUser) ...[
-            const SizedBox(width: 10),
-            _MessageAvatar(
-              icon: Icons.person_outline_rounded,
-              background: colors.secondaryContainer,
-              foreground: colors.onSecondaryContainer,
-            ),
-          ],
         ],
       ),
     );
   }
-}
-
-class _MessageAvatar extends StatelessWidget {
-  const _MessageAvatar({
-    required this.icon,
-    required this.background,
-    required this.foreground,
-  });
-
-  final IconData icon;
-  final Color background;
-  final Color foreground;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: 32,
-    height: 32,
-    decoration: BoxDecoration(color: background, shape: BoxShape.circle),
-    child: Icon(icon, size: 17, color: foreground),
-  );
 }
 
 class _ThinkingState extends StatelessWidget {

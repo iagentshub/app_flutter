@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_error.dart';
 import '../../../features/agents/widgets/agent_builder_chat_panel.dart';
+import '../../../features/agents/widgets/builder_connection_bar.dart';
 import '../../../features/connections/repositories/connections_repository.dart';
 import '../../../models/agents/agent_builder_models.dart';
 import '../../../models/chat/chat_models.dart';
@@ -46,6 +48,9 @@ class _SkillBuilderPageState extends State<SkillBuilderPage> {
   bool _streaming = false;
   bool _thinking = false;
   bool _skillSaved = false;
+  String _partialReply = '';
+  String? _stage;
+  Map<String, dynamic>? _pendingDraft;
   String? _error;
   StreamSubscription<AgentBuilderEvent>? _subscription;
 
@@ -133,6 +138,9 @@ class _SkillBuilderPageState extends State<SkillBuilderPage> {
       _messages.add(ChatMessage(role: 'user', content: text));
       _streaming = true;
       _thinking = true;
+      _partialReply = '';
+      _stage = null;
+      _pendingDraft = null;
     });
     _scrollToEnd();
 
@@ -140,9 +148,14 @@ class _SkillBuilderPageState extends State<SkillBuilderPage> {
     _subscription = _builderRepository
         .streamChat(token, connectionId: connectionId, messages: _messages)
         .listen(
-          (event) async {
+          (event) {
             if (!mounted) return;
             if (event.type == 'progress') {
+              final visible = event.assistantMessage ?? '';
+              setState(() {
+                _stage = event.stage;
+                if (visible.isNotEmpty) _partialReply = visible;
+              });
               _scrollToEnd();
             } else if (event.type == 'error') {
               setState(() {
@@ -156,32 +169,27 @@ class _SkillBuilderPageState extends State<SkillBuilderPage> {
             } else if (event.type == 'builder_done') {
               final assistantMessage = event.assistantMessage ?? '';
               setState(() {
+                // Igual que en el constructor de agentes: cerrar el turno aquí
+                // evita una burbuja de espera vacía junto al mensaje recibido.
+                _streaming = false;
                 _thinking = false;
+                _partialReply = '';
+                _stage = null;
                 if (assistantMessage.isNotEmpty) {
                   _messages.add(
                     ChatMessage(role: 'assistant', content: assistantMessage),
                   );
                 }
+                if (event.isReady && event.draft != null) {
+                  _pendingDraft = event.draft;
+                }
               });
               _scrollToEnd();
-              if (event.isReady && event.draft != null) {
-                final saved = await widget.onReviewDraft(event.draft!);
-                if (mounted && saved) {
-                  setState(() => _skillSaved = true);
-                }
-              }
             }
           },
-          onError: (_) {
+          onError: (error) {
             if (!mounted) return;
-            setState(() {
-              _streaming = false;
-              _thinking = false;
-              _error = _tx(
-                'skill_builder.connection_error',
-                'Error de conexión con el constructor de skills',
-              );
-            });
+            _handleStreamError(error, text);
             if (!completer.isCompleted) completer.complete();
           },
           onDone: () {
@@ -197,13 +205,70 @@ class _SkillBuilderPageState extends State<SkillBuilderPage> {
     await completer.future;
   }
 
+  /// Devuelve la conversación a un estado utilizable: sin el mensaje que no
+  /// llegó a responderse y con el texto del usuario de vuelta en el compositor.
+  void _handleStreamError(Object error, String failedText) {
+    final apiError = error is ApiError ? error : null;
+    setState(() {
+      _streaming = false;
+      _thinking = false;
+      _partialReply = '';
+      _stage = null;
+      _error =
+          apiError?.message ??
+          _tx(
+            'skill_builder.connection_error',
+            'Error de conexión con el constructor de skills',
+          );
+      if (_messages.isNotEmpty &&
+          _messages.last.role == 'user' &&
+          _messages.last.content == failedText) {
+        _messages.removeLast();
+      }
+      if (_textController.text.isEmpty) {
+        _textController.text = failedText;
+        _textController.selection = TextSelection.collapsed(
+          offset: failedText.length,
+        );
+      }
+    });
+  }
+
+  Future<void> _reviewDraft(Map<String, dynamic> draft) async {
+    final saved = await widget.onReviewDraft(draft);
+    if (!mounted || !saved) return;
+    setState(() {
+      _skillSaved = true;
+      _pendingDraft = null;
+    });
+  }
+
   void _stop() {
     _subscription?.cancel();
     _subscription = null;
     setState(() {
       _streaming = false;
       _thinking = false;
+      _partialReply = '';
+      _stage = null;
     });
+  }
+
+  /// Etiqueta de espera correspondiente a la fase informada por el backend.
+  String get _thinkingLabel {
+    switch (_stage) {
+      case 'replying':
+        return _tx('skill_builder.stage_replying', 'Redactando respuesta…');
+      case 'drafting':
+        return _tx('skill_builder.stage_drafting', 'Preparando el borrador…');
+      case 'writing_instructions':
+        return _tx(
+          'skill_builder.stage_writing',
+          'Escribiendo el contenido de la skill…',
+        );
+      default:
+        return _tx('skill_builder.stage_analyzing', 'Analizando tu solicitud…');
+    }
   }
 
   void _showMessage(String text, {bool isError = false}) {
@@ -212,68 +277,6 @@ class _SkillBuilderPageState extends State<SkillBuilderPage> {
       SnackBar(
         content: Text(text),
         backgroundColor: isError ? Colors.red.shade700 : null,
-      ),
-    );
-  }
-
-  Widget _buildConnectionBar() {
-    final colors = Theme.of(context).colorScheme;
-    return Material(
-      color: colors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: colors.outlineVariant),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (_loadingConnections)
-              const LinearProgressIndicator(minHeight: 2)
-            else
-              Align(
-                alignment: Alignment.centerLeft,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 460),
-                  child: DropdownButtonFormField<String>(
-                    initialValue: _connectionId,
-                    isExpanded: true,
-                    decoration: InputDecoration(
-                      labelText: _tx('agents.field_connection', 'Conexión LLM'),
-                      isDense: true,
-                    ),
-                    items: _connections
-                        .map(
-                          (connection) => DropdownMenuItem<String>(
-                            value: connection.id,
-                            child: Text(
-                              '${connection.name} (${connection.type})',
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: _streaming
-                        ? null
-                        : (value) => setState(() => _connectionId = value),
-                  ),
-                ),
-              ),
-            if (!_loadingConnections && _connections.isEmpty) ...[
-              const SizedBox(height: 10),
-              Text(
-                _tx(
-                  'skill_builder.connection_required',
-                  'Necesitas una conexión LLM para usar el asistente.',
-                ),
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: colors.error),
-              ),
-            ],
-          ],
-        ),
       ),
     );
   }
@@ -307,11 +310,17 @@ class _SkillBuilderPageState extends State<SkillBuilderPage> {
             onSend: _send,
             onStop: _stop,
             onSuggestion: _sendSuggestion,
-            title: _tx('skill_builder.assistant_title', 'Asistente de diseño'),
-            subtitle: _tx(
-              'skill_builder.assistant_subtitle',
-              'Te hará preguntas y preparará un borrador editable',
+            partialReply: _partialReply,
+            thinkingLabel: _thinkingLabel,
+            draft: _pendingDraft,
+            draftTitle: _tx('skill_builder.draft_ready', 'Borrador propuesto'),
+            draftActionLabel: _tx(
+              'skill_builder.draft_review',
+              'Revisar y crear',
             ),
+            onReviewDraft: _pendingDraft == null
+                ? null
+                : () => _reviewDraft(_pendingDraft!),
             intro: _tx(
               'skill_builder.intro',
               'Describe qué debe hacer la skill y cuándo debería utilizarse.',
@@ -346,7 +355,16 @@ class _SkillBuilderPageState extends State<SkillBuilderPage> {
                 padding: EdgeInsets.all(wide ? 20 : 10),
                 child: Column(
                   children: [
-                    _buildConnectionBar(),
+                    BuilderConnectionBar(
+                      loadingConnections: _loadingConnections,
+                      streaming: _streaming,
+                      connections: _connections,
+                      connectionId: _connectionId,
+                      onConnectionChanged: (value) =>
+                          setState(() => _connectionId = value),
+                      tx: _tx,
+                      emptyMessagePath: 'skill_builder.connection_required',
+                    ),
                     const SizedBox(height: 10),
                     Expanded(child: chat),
                   ],
