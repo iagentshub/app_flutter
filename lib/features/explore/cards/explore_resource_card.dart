@@ -1,7 +1,13 @@
 part of '../pages/explore_page.dart';
 
 extension _ExploreResourceCard on _ExplorePageState {
-  static const _linkableTypes = {'agent', 'skill', 'knowledge', 'workflow'};
+  static const _linkableTypes = {
+    'agent',
+    'skill',
+    'prompt',
+    'knowledge',
+    'workflow',
+  };
 
   Widget _buildItemCard(ExploreItem item) {
     final key = _itemKey(item);

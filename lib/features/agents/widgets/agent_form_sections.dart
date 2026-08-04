@@ -265,6 +265,54 @@ extension _AgentFormSections on _AgentFormDialogState {
                     }).toList(),
                   ),
                 ),
+          const SizedBox(height: 20),
+          Text(
+            widget.tx('agents.field_prompts', 'Prompts'),
+            style: Theme.of(context).textTheme.labelMedium,
+          ),
+          const SizedBox(height: 6),
+          _loadingPrompts
+              ? const LinearProgressIndicator(minHeight: 2)
+              : _prompts.isEmpty
+              ? Text(
+                  widget.tx('agents.no_prompts', 'No hay prompts disponibles.'),
+                  style: Theme.of(context).textTheme.bodySmall,
+                )
+              : Container(
+                  constraints: const BoxConstraints(maxHeight: 150),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Theme.of(context).dividerColor),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: _prompts.map((prompt) {
+                      return CheckboxListTile(
+                        dense: true,
+                        value: _selectedPromptIds.contains(prompt.id),
+                        title: Text(prompt.name),
+                        subtitle: Text(
+                          '@${prompt.alias}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        onChanged: (value) {
+                          _refresh(() {
+                            if (value == true) {
+                              _selectedPromptIds = {
+                                ..._selectedPromptIds,
+                                prompt.id,
+                              };
+                            } else {
+                              _selectedPromptIds = {..._selectedPromptIds}
+                                ..remove(prompt.id);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
         ],
       ),
     );

@@ -15,6 +15,8 @@ IconData iconForType(String type) {
       return Icons.smart_toy_outlined;
     case 'skill':
       return Icons.extension_outlined;
+    case 'prompt':
+      return Icons.bolt_outlined;
     case 'knowledge':
       return Icons.menu_book_outlined;
     case 'connection':

@@ -9,6 +9,7 @@ const Map<String, Color> _labelColors = {
   'linked': Color(0xFF0891B2),
   'agent': Color(0xFF2563EB),
   'skill': Color(0xFF9333EA),
+  'prompt': Color(0xFFD97706),
   'knowledge': Color(0xFF0D9488),
   'connection': Color(0xFFDB2777),
   'memory': Color(0xFFB45309),
@@ -90,7 +91,15 @@ const kOwnershipGroup = LabelGroupDef(
 const kResourceTypeGroup = LabelGroupDef(
   titleKey: 'labels.group_type',
   fallbackTitle: 'Tipo',
-  keys: ['agent', 'skill', 'knowledge', 'connection', 'memory', 'workflow'],
+  keys: [
+    'agent',
+    'skill',
+    'prompt',
+    'knowledge',
+    'connection',
+    'memory',
+    'workflow',
+  ],
   exclusive: true,
   required: true,
 );

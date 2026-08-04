@@ -9,9 +9,11 @@ import '../../../core/network/api_error.dart';
 import '../../../models/agents/agent_models.dart';
 import '../../../models/explore/explore_models.dart';
 import '../../../models/knowledge/knowledge_models.dart';
+import '../../../models/prompts/prompt_models.dart';
 import '../../../models/skills/skill_models.dart';
 import '../../explore/repositories/explore_repository.dart';
 import '../../knowledge/repositories/knowledge_repository.dart';
+import '../../knowledge/repositories/prompts_repository.dart';
 import '../../knowledge/repositories/skills_repository.dart';
 import '../cards/agent_card.dart';
 import '../repositories/agents_repository.dart';
@@ -55,15 +57,17 @@ class _AgentsPageState extends State<AgentsPage> {
   late final AgentsRepository _repository;
   late final SkillsRepository _skillsRepository;
   late final KnowledgeRepository _knowledgeRepository;
+  late final PromptsRepository _promptsRepository;
   late final TranslatedTexts _t;
   final TextEditingController _queryController = TextEditingController();
   final Debouncer _searchDebouncer = Debouncer();
   List<AgentItem> _agents = const [];
 
-  /// id → nombre, para resolver las skills/knowledge de un agente en el
-  /// grafo de contenido (AgentCard) — el agente solo guarda IDs.
+  /// id → nombre, para resolver las skills/knowledge/prompts de un agente en
+  /// el grafo de contenido (AgentCard) — el agente solo guarda IDs.
   Map<String, String> _skillNames = const {};
   Map<String, String> _knowledgeNames = const {};
+  Map<String, String> _promptNames = const {};
   bool _loading = true;
   String? _error;
   String _query = '';
@@ -163,6 +167,7 @@ class _AgentsPageState extends State<AgentsPage> {
     _repository = AgentsRepository(apiClient: widget.apiClient);
     _skillsRepository = SkillsRepository(apiClient: widget.apiClient);
     _knowledgeRepository = KnowledgeRepository(apiClient: widget.apiClient);
+    _promptsRepository = PromptsRepository(apiClient: widget.apiClient);
     _t = TranslatedTexts(
       localeController: widget.localeController,
       namespace: 'resources',
@@ -209,14 +214,17 @@ class _AgentsPageState extends State<AgentsPage> {
         ),
         _skillsRepository.listSkills(token, includeInactive: true),
         _knowledgeRepository.listItems(token, includeInactive: true),
+        _promptsRepository.listPrompts(token, includeInactive: true),
       ]);
       if (!mounted) return;
       final skills = results[1] as List<SkillItem>;
       final knowledge = results[2] as List<KnowledgeItem>;
+      final prompts = results[3] as List<PromptItem>;
       setState(() {
         _agents = results[0] as List<AgentItem>;
         _skillNames = {for (final s in skills) s.id: s.name};
         _knowledgeNames = {for (final k in knowledge) k.id: k.name};
+        _promptNames = {for (final p in prompts) p.id: p.name};
         _loading = false;
       });
     } on ApiError catch (error) {

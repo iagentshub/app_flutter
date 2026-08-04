@@ -191,6 +191,65 @@ extension _AdminContentCards on _AdminPageState {
     );
   }
 
+  Widget _buildAdminPromptCard(Map<String, dynamic> item) {
+    final name = (item['name'] ?? item['id'] ?? '').toString();
+    final alias = (item['alias'] ?? '').toString();
+    final owner = _ownerOf(item);
+    final date = _fmtDate(item['created_at']);
+
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              name,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${owner.isEmpty ? '—' : owner} · $date',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                _resourceTypeBadge(AdminResourceType.prompt),
+                if (alias.isNotEmpty)
+                  _badge('@$alias', const Color(0xFF64748B)),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const Spacer(),
+                _resourceGraphAction(AdminResourceType.prompt, item),
+                ActionIconButton(
+                  icon: Icons.swap_horiz,
+                  tooltip: _tx(
+                    'admin.action_change_owner',
+                    'Cambiar propietario',
+                  ),
+                  onPressed: () => _changeOwner(item, 'prompt'),
+                ),
+                ActionIconButton(
+                  icon: Icons.delete_outline,
+                  tooltip: _tx('common.delete', 'Eliminar'),
+                  danger: true,
+                  onPressed: () => _deletePrompt(item),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// Sin botón de "cambiar propietario": a diferencia del resto de recursos,
   /// el nombre de un fichero de memoria lo elige el usuario y solo es único
   /// por dueño — moverlo de propietario podría chocar con un fichero ya

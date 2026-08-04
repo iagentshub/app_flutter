@@ -119,6 +119,7 @@ extension _AgentsPageView on _AgentsPageState {
       item: item,
       skillNames: _skillNames,
       knowledgeNames: _knowledgeNames,
+      promptNames: _promptNames,
       tx: _tx,
       onChat: () => _openChat(item),
       onExport: (format) => _exportAgent(item, format),
