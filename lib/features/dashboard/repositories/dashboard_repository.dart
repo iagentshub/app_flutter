@@ -3,6 +3,7 @@ import '../../../models/dashboard/dashboard_data.dart';
 import '../../../models/dashboard/dashboard_widget_config.dart';
 import '../../../models/dashboard/dashboard_widget_instance.dart';
 import '../../../models/dashboard/dashboard_widget_registry.dart';
+import '../../../models/dashboard/notification_banner.dart';
 
 class DashboardPreferences {
   const DashboardPreferences({
@@ -40,6 +41,17 @@ class DashboardRepository {
     } catch (_) {
       return const [];
     }
+  }
+
+  /// Banners de notificación vigentes ahora, con el mensaje ya resuelto en
+  /// el idioma del usuario — lista vacía si falla, es un aviso informativo,
+  /// no debe romper el resto del dashboard.
+  Future<List<NotificationBanner>> getActiveBanners(String gaToken) async {
+    final items = await _safeList(
+      '/api/settings/notification-banners/active',
+      gaToken,
+    );
+    return items.map(NotificationBanner.fromJson).toList();
   }
 
   Future<DashboardData> fetchData({

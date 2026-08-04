@@ -21,7 +21,7 @@ class _AdminConfigTab extends StatefulWidget {
 }
 
 class _AdminConfigTabState extends State<_AdminConfigTab> {
-  late String _registration;
+  late bool _registrationOpen;
   late final TextEditingController _maxUsersController;
   late final TextEditingController _maxSessionsController;
   late final TextEditingController _logRetentionController;
@@ -36,9 +36,6 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
   late bool _oauthGithub;
   late bool _usersCanConfigureTheme;
   late String _defaultTheme;
-  late bool _maintenanceEnabled;
-  late final TextEditingController _maintenanceMessageController;
-  DateTime? _maintenanceAt;
   late final TextEditingController _splashCyclesController;
   late bool _splashEndOnLogo;
 
@@ -51,9 +48,7 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
   void initState() {
     super.initState();
     final cfg = widget.initialSettings;
-    var mode = (cfg['registration'] ?? 'open').toString();
-    if (mode == 'invite') mode = 'closed';
-    _registration = mode;
+    _registrationOpen = (cfg['registration'] ?? 'open').toString() == 'open';
     _maxUsersController = TextEditingController(
       text: (cfg['max_users'] ?? 0).toString(),
     );
@@ -77,13 +72,6 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
     _usersCanConfigureTheme = cfg['users_can_configure_theme'] != false;
     _defaultTheme = (cfg['default_theme'] ?? 'dark-red').toString();
     if (!kThemeIds.contains(_defaultTheme)) _defaultTheme = 'dark-red';
-    _maintenanceEnabled = cfg['maintenance_enabled'] == true;
-    _maintenanceMessageController = TextEditingController(
-      text: (cfg['maintenance_message'] ?? '').toString(),
-    );
-    _maintenanceAt = DateTime.tryParse(
-      (cfg['maintenance_at'] ?? '').toString(),
-    );
     _splashCyclesController = TextEditingController(
       text: (cfg['splash_cycles'] ?? 1).toString(),
     );
@@ -97,35 +85,7 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
     _logRetentionController.dispose();
     _stressConcurrencyController.dispose();
     _splashCyclesController.dispose();
-    _maintenanceMessageController.dispose();
     super.dispose();
-  }
-
-  Future<void> _pickMaintenanceAt() async {
-    final now = DateTime.now();
-    final date = await showDatePicker(
-      context: context,
-      initialDate: _maintenanceAt ?? now,
-      firstDate: now.subtract(const Duration(days: 1)),
-      lastDate: now.add(const Duration(days: 365)),
-    );
-    if (date == null || !mounted) return;
-    final time = await showTimePicker(
-      context: context,
-      initialTime: _maintenanceAt != null
-          ? TimeOfDay.fromDateTime(_maintenanceAt!)
-          : TimeOfDay.fromDateTime(now),
-    );
-    if (time == null) return;
-    setState(() {
-      _maintenanceAt = DateTime(
-        date.year,
-        date.month,
-        date.day,
-        time.hour,
-        time.minute,
-      );
-    });
   }
 
   void _showMessage(String text, {bool isError = false}) {
@@ -146,7 +106,7 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
     });
     try {
       final payload = {
-        'registration': _registration,
+        'registration': _registrationOpen ? 'open' : 'closed',
         'max_users': int.tryParse(_maxUsersController.text.trim()) ?? 0,
         'max_concurrent_sessions':
             int.tryParse(_maxSessionsController.text.trim()) ?? 0,
@@ -164,9 +124,6 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
         'oauth_github_enabled': _oauthGithub,
         'users_can_configure_theme': _usersCanConfigureTheme,
         'default_theme': _defaultTheme,
-        'maintenance_enabled': _maintenanceEnabled,
-        'maintenance_message': _maintenanceMessageController.text.trim(),
-        'maintenance_at': _maintenanceAt?.toIso8601String(),
         'splash_cycles':
             int.tryParse(_splashCyclesController.text.trim()) ?? 1,
         'splash_end_on_logo': _splashEndOnLogo,
@@ -205,22 +162,11 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
   Widget build(BuildContext context) {
     final sections = <Widget>[
       _sectionCard(_tx('admin.config_section_registration', 'Registro'), [
-        DropdownButtonFormField<String>(
-          initialValue: _registration,
-          decoration: InputDecoration(
-            labelText: _tx('admin.config_mode_label', 'Modo'),
-          ),
-          items: [
-            DropdownMenuItem(
-              value: 'open',
-              child: Text(_tx('admin.config_mode_open', 'Abierto')),
-            ),
-            DropdownMenuItem(
-              value: 'closed',
-              child: Text(_tx('admin.config_mode_closed', 'Cerrado')),
-            ),
-          ],
-          onChanged: (v) => setState(() => _registration = v ?? 'open'),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(_tx('admin.config_registration_open', 'Abrir registro')),
+          value: _registrationOpen,
+          onChanged: (v) => setState(() => _registrationOpen = v),
         ),
         const SizedBox(height: 10),
         TextField(
@@ -377,76 +323,14 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
           title: Text(
             _tx('admin.config_oauth_github', 'Mostrar botón de GitHub'),
           ),
-          subtitle: Text(
-            _tx(
-              'admin.config_oauth_github_hint',
-              'A diferencia de los anteriores, este botón funciona de verdad. '
-                  'Solo aparecerá en /login si, además de estar activado aquí, '
-                  'el servidor tiene configurada una GitHub OAuth App.',
-            ),
-          ),
           value: _oauthGithub,
           onChanged: (v) => setState(() => _oauthGithub = v),
         ),
       ]),
-      _sectionCard(
-        _tx('admin.config_section_maintenance', 'Mantenimiento'),
-        [
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(
-              _tx('admin.config_maintenance_enabled', 'Aviso activo'),
-            ),
-            subtitle: Text(
-              _tx(
-                'admin.config_maintenance_hint',
-                'Muestra un banner informativo a todos los usuarios — no bloquea la app.',
-              ),
-            ),
-            value: _maintenanceEnabled,
-            onChanged: (v) => setState(() => _maintenanceEnabled = v),
-          ),
-          const SizedBox(height: 6),
-          TextField(
-            controller: _maintenanceMessageController,
-            maxLength: 500,
-            maxLines: 3,
-            decoration: InputDecoration(
-              labelText: _tx('admin.config_maintenance_message', 'Mensaje'),
-              hintText: _tx(
-                'admin.config_maintenance_message_hint',
-                'Ej: mantenimiento el viernes a las 20h, puede haber cortes breves',
-              ),
-            ),
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  _maintenanceAt == null
-                      ? _tx(
-                          'admin.config_maintenance_no_date',
-                          'Sin fecha programada',
-                        )
-                      : _fmtDateTime(_maintenanceAt!),
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ),
-              TertiaryButton(
-                onPressed: _pickMaintenanceAt,
-                child: Text(
-                  _tx('admin.config_maintenance_pick_date', 'Elegir fecha'),
-                ),
-              ),
-              if (_maintenanceAt != null)
-                AppIconButton(
-                  tooltip: _tx('common.clear', 'Quitar'),
-                  icon: const Icon(Icons.close),
-                  onPressed: () => setState(() => _maintenanceAt = null),
-                ),
-            ],
-          ),
-        ],
+      _AdminBannersCard(
+        repository: widget.repository,
+        token: widget.token,
+        tx: _tx,
       ),
       _sectionCard(_tx('admin.config_section_splash', 'Animación de inicio'), [
         TextField(
@@ -529,11 +413,6 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
 // (guardado correcto, commit al día / desactualizado).
 const _statusOkColor = Color(0xFF059669);
 const _statusWarnColor = Color(0xFFD97706);
-
-String _fmtDateTime(DateTime dt) {
-  String two(int v) => v.toString().padLeft(2, '0');
-  return '${two(dt.day)}/${two(dt.month)}/${dt.year} ${two(dt.hour)}:${two(dt.minute)}';
-}
 
 /// Tarjeta genérica de una sección de la pestaña Configuración — usada tanto
 /// por los campos de este archivo como por _AdminUpdatesCard.

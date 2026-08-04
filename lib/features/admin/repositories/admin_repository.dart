@@ -389,4 +389,50 @@ class AdminRepository extends ApiRepository {
     );
     return response.json;
   }
+
+  // ── Banners de notificación ──────────────────────────────────────────
+
+  Future<List<Map<String, dynamic>>> listNotificationBanners(
+    String token,
+  ) async {
+    final response = await apiClient.get(
+      '/api/settings/notification-banners',
+      gaToken: token,
+    );
+    final payload = response.body;
+    if (payload is! List) return const [];
+    return payload.whereType<Map<String, dynamic>>().toList();
+  }
+
+  Future<Map<String, dynamic>> createNotificationBanner(
+    String token,
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await apiClient.post(
+      '/api/settings/notification-banners',
+      gaToken: token,
+      body: payload,
+    );
+    return response.json;
+  }
+
+  Future<Map<String, dynamic>> updateNotificationBanner(
+    String token,
+    String bannerId,
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await apiClient.put(
+      '/api/settings/notification-banners/${Uri.encodeComponent(bannerId)}',
+      gaToken: token,
+      body: payload,
+    );
+    return response.json;
+  }
+
+  Future<void> deleteNotificationBanner(String token, String bannerId) async {
+    await apiClient.delete(
+      '/api/settings/notification-banners/${Uri.encodeComponent(bannerId)}',
+      gaToken: token,
+    );
+  }
 }
