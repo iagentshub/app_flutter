@@ -428,6 +428,7 @@ extension _KnowledgeActions on _KnowledgePageState {
     _refresh(() => _activeGroupId = groupId);
     _load();
     _loadSkills();
+    _loadPrompts();
   }
 
   Future<void> _shareItem(KnowledgeItem item) async {

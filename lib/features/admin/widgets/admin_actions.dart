@@ -253,6 +253,24 @@ extension _AdminActions on _AdminPageState {
     );
   }
 
+  Future<void> _deletePrompt(Map<String, dynamic> item) async {
+    final token = _token;
+    if (token == null) return;
+    final id = (item['id'] ?? '').toString();
+    final ok = await _confirm(
+      _tx('common.delete', 'Eliminar'),
+      _tx(
+        'admin.confirm_delete_prompt',
+        '¿Seguro que quieres eliminar este prompt?',
+      ),
+    );
+    if (!ok) return;
+    await _run(
+      () => _repository.deleteAdminPrompt(token, id),
+      _tx('admin.toast_prompt_deleted', 'Prompt eliminado'),
+    );
+  }
+
   Future<void> _deleteMemory(Map<String, dynamic> item) async {
     final token = _token;
     if (token == null) return;

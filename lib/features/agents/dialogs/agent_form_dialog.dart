@@ -5,11 +5,13 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../core/network/api_client.dart';
 import '../../../features/connections/repositories/connections_repository.dart';
 import '../../../features/knowledge/repositories/knowledge_repository.dart';
+import '../../../features/knowledge/repositories/prompts_repository.dart';
 import '../../../features/knowledge/repositories/skills_repository.dart';
 import '../../../features/memory/repositories/memory_repository.dart';
 import '../../../models/connections/connection_models.dart';
 import '../../../models/knowledge/knowledge_models.dart';
 import '../../../models/memory/memory_models.dart';
+import '../../../models/prompts/prompt_models.dart';
 import '../../../models/skills/skill_models.dart';
 import '../../../shared/widgets/grouped_label_picker.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
@@ -51,6 +53,7 @@ class _AgentFormDialogState extends State<AgentFormDialog> {
   late final MemoryRepository _memoryRepository;
   late final SkillsRepository _skillsRepository;
   late final KnowledgeRepository _knowledgeRepository;
+  late final PromptsRepository _promptsRepository;
 
   List<ConnectionItem> _connections = const [];
   bool _loadingConnections = true;
@@ -71,6 +74,10 @@ class _AgentFormDialogState extends State<AgentFormDialog> {
   List<KnowledgeItem> _knowledgeItems = const [];
   bool _loadingKnowledge = true;
 
+  Set<String> _selectedPromptIds = {};
+  List<PromptItem> _prompts = const [];
+  bool _loadingPrompts = true;
+
   /// La visibilidad ya no es un campo aparte: es la label "private"/"public"
   /// del grupo excluyente de Visibilidad (una sola fuente de verdad).
   String get _scope =>
@@ -89,6 +96,7 @@ class _AgentFormDialogState extends State<AgentFormDialog> {
     _memoryRepository = MemoryRepository(apiClient: widget.apiClient);
     _skillsRepository = SkillsRepository(apiClient: widget.apiClient);
     _knowledgeRepository = KnowledgeRepository(apiClient: widget.apiClient);
+    _promptsRepository = PromptsRepository(apiClient: widget.apiClient);
     final initial = widget.initial;
     _nameController = TextEditingController(
       text: initial?['name']?.toString() ?? '',
@@ -133,11 +141,16 @@ class _AgentFormDialogState extends State<AgentFormDialog> {
     _selectedKnowledgeIds = knowledgeRaw is List
         ? knowledgeRaw.map((e) => e.toString()).toSet()
         : {};
+    final promptsRaw = initial?['prompts'];
+    _selectedPromptIds = promptsRaw is List
+        ? promptsRaw.map((e) => e.toString()).toSet()
+        : {};
 
     _loadConnections();
     _loadMemory();
     _loadSkills();
     _loadKnowledge();
+    _loadPrompts();
   }
 
   Future<void> _loadConnections() async {
@@ -199,6 +212,23 @@ class _AgentFormDialogState extends State<AgentFormDialog> {
     }
   }
 
+  Future<void> _loadPrompts() async {
+    try {
+      final list = await _promptsRepository.listPrompts(
+        widget.token,
+        scope: 'all',
+      );
+      if (!mounted) return;
+      _refresh(() {
+        _prompts = list;
+        _loadingPrompts = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      _refresh(() => _loadingPrompts = false);
+    }
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -227,6 +257,7 @@ class _AgentFormDialogState extends State<AgentFormDialog> {
           : null,
       'skills': _selectedSkillIds.toList(),
       'knowledge': _selectedKnowledgeIds.toList(),
+      'prompts': _selectedPromptIds.toList(),
     };
 
     Navigator.of(context).pop(payload);

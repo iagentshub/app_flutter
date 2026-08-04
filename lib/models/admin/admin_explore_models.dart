@@ -8,7 +8,8 @@ enum AdminResourceType {
   knowledge('knowledge'),
   workflow('workflow'),
   skill('skill'),
-  memory('memory');
+  memory('memory'),
+  prompt('prompt');
 
   const AdminResourceType(this.wireName);
 

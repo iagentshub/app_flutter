@@ -319,6 +319,15 @@ class AdminRepository extends ApiRepository {
     );
   }
 
+  // ── Prompts ───────────────────────────────────────────────────────────
+
+  Future<void> deleteAdminPrompt(String token, String promptId) async {
+    await apiClient.delete(
+      '/api/admin/prompts/${Uri.encodeComponent(promptId)}',
+      gaToken: token,
+    );
+  }
+
   // ── Memoria ───────────────────────────────────────────────────────────
 
   Future<void> deleteAdminMemory(String token, String memoryId) async {

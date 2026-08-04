@@ -395,6 +395,7 @@ class _ExplorePageState extends State<ExplorePage>
     ('all', _tx('explore.type_all', 'Todos')),
     ('agent', _tx('explore.type_agents', 'Agentes')),
     ('skill', _tx('explore.type_skills', 'Skills')),
+    ('prompt', _tx('explore.type_prompts', 'Prompts')),
     ('knowledge', _tx('explore.type_knowledge', 'Knowledge')),
     ('workflow', _tx('explore.type_workflows', 'Workflows')),
   ];

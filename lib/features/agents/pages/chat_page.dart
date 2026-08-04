@@ -7,17 +7,21 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../features/connections/repositories/connections_repository.dart';
+import '../../../features/knowledge/repositories/prompts_repository.dart';
 import '../../../models/agents/agent_models.dart';
 import '../../../models/chat/chat_models.dart';
 import '../../../models/connections/connection_models.dart';
+import '../../../models/prompts/prompt_models.dart';
 import '../repositories/agents_repository.dart';
 import '../repositories/chat_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
+import '../widgets/chat_message_bubble.dart';
 
 part '../dialogs/connection_preference_dialog.dart';
+part '../widgets/chat_mention_overlay.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({
@@ -41,9 +45,19 @@ class _ChatPageState extends State<ChatPage> {
   late final ChatRepository _repository;
   late final AgentsRepository _agentsRepository;
   late final ConnectionsRepository _connectionsRepository;
+  late final PromptsRepository _promptsRepository;
   late final TranslatedTexts _t;
   final _textController = TextEditingController();
   final _scrollController = ScrollController();
+
+  /// Ancla el overlay de sugerencias `@alias` justo debajo del composer.
+  final _mentionLink = LayerLink();
+  OverlayEntry? _mentionOverlay;
+  List<PromptItem> _mentionMatches = const [];
+
+  /// Universo completo de aliases sugeribles en este chat: solo los prompts
+  /// vinculados a `widget.agent` (no todos los prompts del usuario).
+  List<PromptItem> _agentPrompts = const [];
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
@@ -64,20 +78,29 @@ class _ChatPageState extends State<ChatPage> {
     _repository = ChatRepository(apiClient: widget.apiClient);
     _agentsRepository = AgentsRepository(apiClient: widget.apiClient);
     _connectionsRepository = ConnectionsRepository(apiClient: widget.apiClient);
+    _promptsRepository = PromptsRepository(apiClient: widget.apiClient);
     _t = TranslatedTexts(
       localeController: widget.localeController,
       namespace: 'resources',
     )..addListener(_onTextsChanged);
+    _textController.addListener(_onComposerTextChanged);
     _bootstrap();
+    _loadAgentPrompts();
   }
 
   void _onTextsChanged() {
     if (mounted) setState(() {});
   }
 
+  /// Expuesto a los `extension` en otros ficheros (`part of`): `setState` es
+  /// `@protected` y el analizador lo marca si se llama fuera de la clase.
+  void _refresh(VoidCallback update) => setState(update);
+
   @override
   void dispose() {
     _subscription?.cancel();
+    _textController.removeListener(_onComposerTextChanged);
+    _hideMentionOverlay();
     _textController.dispose();
     _scrollController.dispose();
     _t.removeListener(_onTextsChanged);
@@ -224,6 +247,7 @@ class _ChatPageState extends State<ChatPage> {
     final text = _textController.text.trim();
     if (token == null || text.isEmpty || _streaming) return;
 
+    _hideMentionOverlay();
     _textController.clear();
     setState(() {
       _error = null;
@@ -484,15 +508,15 @@ class _ChatPageState extends State<ChatPage> {
                   itemCount: _messages.length + (_streaming ? 1 : 0),
                   itemBuilder: (context, index) {
                     if (index >= _messages.length) {
-                      return _buildBubble(
-                        ChatMessage(
+                      return ChatMessageBubble(
+                        message: ChatMessage(
                           role: 'assistant',
                           content: _streamingReply,
                         ),
                         thinking: _thinking && _streamingReply.isEmpty,
                       );
                     }
-                    return _buildBubble(_messages[index]);
+                    return ChatMessageBubble(message: _messages[index]);
                   },
                 ),
         ),
@@ -508,16 +532,19 @@ class _ChatPageState extends State<ChatPage> {
             child: Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: _textController,
-                    minLines: 1,
-                    maxLines: 5,
-                    textInputAction: TextInputAction.send,
-                    decoration: const InputDecoration(
-                      hintText: 'Escribe un mensaje…',
-                      border: OutlineInputBorder(),
+                  child: CompositedTransformTarget(
+                    link: _mentionLink,
+                    child: TextField(
+                      controller: _textController,
+                      minLines: 1,
+                      maxLines: 5,
+                      textInputAction: TextInputAction.send,
+                      decoration: const InputDecoration(
+                        hintText: 'Escribe un mensaje…',
+                        border: OutlineInputBorder(),
+                      ),
+                      onSubmitted: (_) => _send(),
                     ),
-                    onSubmitted: (_) => _send(),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -539,49 +566,6 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  Widget _buildBubble(ChatMessage message, {bool thinking = false}) {
-    final isUser = message.isUser;
-    final bubbleColor = isUser
-        ? Theme.of(context).colorScheme.primaryContainer
-        : Theme.of(context).colorScheme.surfaceContainerHighest;
-
-    return Align(
-      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 640),
-        child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 6),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: bubbleColor,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (thinking)
-                const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              else
-                Text(message.content),
-              if (!isUser &&
-                  (message.tokensIn != null || message.tokensOut != null)) ...[
-                const SizedBox(height: 4),
-                Text(
-                  '↑ ${message.tokensIn ?? 0} ↓ ${message.tokensOut ?? 0} tokens',
-                  style: Theme.of(context).textTheme.labelSmall,
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 /// Permite a este usuario elegir su propia conexión/modelo para un agente,

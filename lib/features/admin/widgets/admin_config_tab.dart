@@ -33,6 +33,7 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
   late bool _oauthGoogle;
   late bool _oauthApple;
   late bool _oauthMicrosoft;
+  late bool _oauthGithub;
   late bool _usersCanConfigureTheme;
   late String _defaultTheme;
   late bool _maintenanceEnabled;
@@ -72,6 +73,7 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
     _oauthGoogle = cfg['oauth_google_enabled'] != false;
     _oauthApple = cfg['oauth_apple_enabled'] != false;
     _oauthMicrosoft = cfg['oauth_microsoft_enabled'] != false;
+    _oauthGithub = cfg['oauth_github_enabled'] != false;
     _usersCanConfigureTheme = cfg['users_can_configure_theme'] != false;
     _defaultTheme = (cfg['default_theme'] ?? 'dark-red').toString();
     if (!kThemeIds.contains(_defaultTheme)) _defaultTheme = 'dark-red';
@@ -159,6 +161,7 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
         'oauth_google_enabled': _oauthGoogle,
         'oauth_apple_enabled': _oauthApple,
         'oauth_microsoft_enabled': _oauthMicrosoft,
+        'oauth_github_enabled': _oauthGithub,
         'users_can_configure_theme': _usersCanConfigureTheme,
         'default_theme': _defaultTheme,
         'maintenance_enabled': _maintenanceEnabled,
@@ -368,6 +371,22 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
           ),
           value: _oauthMicrosoft,
           onChanged: (v) => setState(() => _oauthMicrosoft = v),
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            _tx('admin.config_oauth_github', 'Mostrar botón de GitHub'),
+          ),
+          subtitle: Text(
+            _tx(
+              'admin.config_oauth_github_hint',
+              'A diferencia de los anteriores, este botón funciona de verdad. '
+                  'Solo aparecerá en /login si, además de estar activado aquí, '
+                  'el servidor tiene configurada una GitHub OAuth App.',
+            ),
+          ),
+          value: _oauthGithub,
+          onChanged: (v) => setState(() => _oauthGithub = v),
         ),
       ]),
       _sectionCard(

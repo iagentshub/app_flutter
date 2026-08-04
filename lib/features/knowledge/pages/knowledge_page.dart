@@ -8,13 +8,16 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../features/memory/pages/memory_page.dart';
 import '../../../models/knowledge/knowledge_models.dart';
+import '../../../models/prompts/prompt_models.dart';
 import '../../../models/skills/skill_models.dart';
 import '../repositories/knowledge_repository.dart';
+import '../repositories/prompts_repository.dart';
 import '../repositories/skills_repository.dart';
 import 'skill_builder_page.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
@@ -27,9 +30,12 @@ import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 
 part '../cards/knowledge_sections.dart';
+part '../cards/prompt_sections.dart';
 part '../controllers/knowledge_actions.dart';
+part '../controllers/prompt_actions.dart';
 part '../dialogs/add_text_dialog.dart';
 part '../dialogs/add_url_dialog.dart';
+part '../dialogs/prompt_form_dialog.dart';
 part '../dialogs/skill_form_dialog.dart';
 
 /// Categorías de skill — mismo set de 9 valores que frontend_react
@@ -101,12 +107,19 @@ class _KnowledgePageState extends State<KnowledgePage>
     with SingleTickerProviderStateMixin {
   late final KnowledgeRepository _repository;
   late final SkillsRepository _skillsRepository;
+  late final PromptsRepository _promptsRepository;
   late final TranslatedTexts _t;
   late final TabController _tabController;
 
-  /// Cuatro pestañas independientes para cada tipo de conocimiento.
+  /// Cinco pestañas independientes para cada tipo de conocimiento.
   /// (no una sección "Conocimiento" genérica con filtro de tipo).
-  static const _sectionIds = ['skills', 'urls', 'documents', 'memory'];
+  static const _sectionIds = [
+    'skills',
+    'prompts',
+    'urls',
+    'documents',
+    'memory',
+  ];
 
   List<KnowledgeItem> _items = const [];
   bool _loading = true;
@@ -116,6 +129,12 @@ class _KnowledgePageState extends State<KnowledgePage>
   List<SkillItem> _skills = const [];
   bool _skillsLoading = true;
   String? _skillsError;
+
+  List<PromptItem> _prompts = const [];
+  bool _promptsLoading = true;
+  String? _promptsError;
+  String _promptScope = 'all';
+
   String? _activeGroupId;
   String _knowledgeOrigin = 'all';
   String _skillScope = 'all';
@@ -150,6 +169,13 @@ class _KnowledgePageState extends State<KnowledgePage>
     if (_skillCategory != 'all' && item.category != _skillCategory) {
       return false;
     }
+    return true;
+  }).toList();
+
+  int get _promptFilterCount => _promptScope != 'all' ? 1 : 0;
+
+  List<PromptItem> get _filteredPrompts => _prompts.where((item) {
+    if (_promptScope != 'all' && item.scope != _promptScope) return false;
     return true;
   }).toList();
 
@@ -229,11 +255,40 @@ class _KnowledgePageState extends State<KnowledgePage>
     );
   }
 
+  void _openPromptFiltersDialog() {
+    final optionAll = _tx('explore.option_all', 'Todas');
+    final scopeOptions = [
+      ('all', optionAll),
+      ('private', _tx('agents.scope_private', 'Privado')),
+      ('public', _tx('agents.scope_public', 'Público')),
+    ];
+
+    showFilterDialog(
+      context,
+      title: _tx('common.filters', 'Filtros'),
+      clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
+      closeLabel: _tx('common.close', 'Cerrar'),
+      onClear: () => _refresh(() => _promptScope = 'all'),
+      buildFields: (setDialogState) => [
+        FilterDropdown(
+          label: _tx('agents.scope_label', 'Visibilidad'),
+          value: _promptScope,
+          options: scopeOptions,
+          onChanged: (v) {
+            _refresh(() => _promptScope = v);
+            setDialogState(() {});
+          },
+        ),
+      ],
+    );
+  }
+
   @override
   void initState() {
     super.initState();
     _repository = KnowledgeRepository(apiClient: widget.apiClient);
     _skillsRepository = SkillsRepository(apiClient: widget.apiClient);
+    _promptsRepository = PromptsRepository(apiClient: widget.apiClient);
     _tabController = TabController(length: _sectionIds.length, vsync: this)
       ..addListener(_onTabChanged);
     _t = TranslatedTexts(
@@ -242,6 +297,7 @@ class _KnowledgePageState extends State<KnowledgePage>
     )..addListener(_onTextsChanged);
     _load();
     _loadSkills();
+    _loadPrompts();
   }
 
   void _onTextsChanged() {
@@ -266,6 +322,7 @@ class _KnowledgePageState extends State<KnowledgePage>
     final section = _sectionIds[_tabController.index];
     final tabLabels = [
       _tx('knowledge.tab_skills', 'Skills'),
+      _tx('knowledge.tab_prompts', 'Prompts'),
       _tx('knowledge.tab_urls', 'URLs'),
       _tx('knowledge.tab_documents', 'Documentos'),
       _tx('knowledge.tab_memory', 'Memoria'),
@@ -318,6 +375,7 @@ class _KnowledgePageState extends State<KnowledgePage>
 
   Widget _buildSection(String section) {
     return switch (section) {
+      'prompts' => _buildPromptsSection(),
       'urls' => _buildUrlsSection(),
       'documents' => _buildDocumentsSection(),
       'memory' => MemoryPage(

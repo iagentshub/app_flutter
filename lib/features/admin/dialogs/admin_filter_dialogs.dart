@@ -188,6 +188,24 @@ extension _AdminFilterDialogs on _AdminPageState {
     }).toList();
   }
 
+  List<Map<String, dynamic>> get _filteredPrompts {
+    final q = _exploreSearchController.text.trim().toLowerCase();
+    return _prompts.where((p) {
+      if (q.isNotEmpty) {
+        final name = (p['name'] ?? '').toString().toLowerCase();
+        final alias = (p['alias'] ?? '').toString().toLowerCase();
+        final owner = _ownerOf(p).toLowerCase();
+        if (!name.contains(q) && !alias.contains(q) && !owner.contains(q)) {
+          return false;
+        }
+      }
+      if (_promptOwner.isNotEmpty && _ownerOf(p) != _promptOwner) {
+        return false;
+      }
+      return true;
+    }).toList();
+  }
+
   List<Map<String, dynamic>> get _filteredMemories {
     final q = _exploreSearchController.text.trim().toLowerCase();
     return _memories.where((m) {

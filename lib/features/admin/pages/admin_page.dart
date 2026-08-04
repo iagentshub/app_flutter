@@ -104,6 +104,7 @@ class _AdminPageState extends State<AdminPage>
   String _workflowOwner = '';
   String _skillOwner = '';
   String _memoryOwner = '';
+  String _promptOwner = '';
 
   AdminStats? _stats;
   List<Map<String, dynamic>> _users = const [];
@@ -114,6 +115,7 @@ class _AdminPageState extends State<AdminPage>
   List<Map<String, dynamic>> _workflows = const [];
   List<Map<String, dynamic>> _skills = const [];
   List<Map<String, dynamic>> _memories = const [];
+  List<Map<String, dynamic>> _prompts = const [];
   List<AdminExploreItem> _exploreItems = const [];
   Map<AdminResourceType, int> _exploreCounts = const {};
   Map<String, dynamic>? _platformSettings;
@@ -206,6 +208,7 @@ class _AdminPageState extends State<AdminPage>
         _workflows = ofType(AdminResourceType.workflow);
         _skills = ofType(AdminResourceType.skill);
         _memories = ofType(AdminResourceType.memory);
+        _prompts = ofType(AdminResourceType.prompt);
         _platformSettings = results[2] as Map<String, dynamic>;
         _loading = false;
       });
