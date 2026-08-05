@@ -319,6 +319,7 @@
     "sync_dialog_select_none": "None",
     "sync_dialog_confirm": "Sync selected",
     "sync_dialog_search_hint": "Search model...",
+    "sync_dialog_clear_search": "Clear search",
     "sync_dialog_no_matches": "No models match your search",
     "sync_dialog_already_synced_hint": "Already synced",
     "unlink_confirm_title": "Unlink account",

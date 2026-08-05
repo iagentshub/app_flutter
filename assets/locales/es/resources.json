@@ -319,6 +319,7 @@
     "sync_dialog_select_none": "Ninguno",
     "sync_dialog_confirm": "Sincronizar seleccionados",
     "sync_dialog_search_hint": "Buscar modelo...",
+    "sync_dialog_clear_search": "Limpiar búsqueda",
     "sync_dialog_no_matches": "Ningún modelo coincide con la búsqueda",
     "sync_dialog_already_synced_hint": "Ya sincronizado",
     "unlink_confirm_title": "Desvincular cuenta",

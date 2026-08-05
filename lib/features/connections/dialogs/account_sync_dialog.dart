@@ -85,6 +85,10 @@ class _AccountSyncDialogState extends State<_AccountSyncDialog> {
                       ? null
                       : AppIconButton(
                           icon: const Icon(Icons.clear, size: 18),
+                          tooltip: widget.tx(
+                            'providers.sync_dialog_clear_search',
+                            'Limpiar búsqueda',
+                          ),
                           onPressed: _searchController.clear,
                         ),
                 ),
