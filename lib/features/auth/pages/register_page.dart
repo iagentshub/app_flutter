@@ -1,9 +1,12 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/router/route_names.dart';
+import '../../../core/navigation/public_site_uri.dart';
 import '../../../core/network/api_error.dart';
 import '../../../shared/i18n/locale_loader.dart';
 import '../../../shared/state/locale_controller.dart';
@@ -32,10 +35,23 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _loading = false;
   bool _configLoaded = false;
   bool _registrationEnabled = false;
+  bool _legalAccepted = false;
   String? _message;
   late Future<Map<String, dynamic>> _textsFuture;
 
   bool get _isEnglish => widget.localeController.isEnglish;
+
+  /// Las páginas legales las sirve React en la raíz del mismo origen, fuera de
+  /// /app/, así que son navegación del navegador y no una ruta de GoRouter.
+  /// Se abren en pestaña nueva a propósito: llevarse el formulario por delante
+  /// a medio rellenar por leer los términos es la forma de que nadie los lea.
+  Future<void> _openLegalDocument(String basePath) async {
+    final path = _isEnglish ? '/en$basePath' : basePath;
+    await launchUrl(
+      resolvePublicSiteUri(path: path, useSameOrigin: kIsWeb),
+      mode: LaunchMode.externalApplication,
+    );
+  }
 
   @override
   void initState() {
@@ -246,11 +262,59 @@ class _RegisterPageState extends State<RegisterPage> {
                                 border: const OutlineInputBorder(),
                               ),
                             ),
+                            const SizedBox(height: 8),
+                            CheckboxListTile(
+                              value: _legalAccepted,
+                              onChanged: _registrationEnabled
+                                  ? (value) => setState(
+                                      () => _legalAccepted = value ?? false,
+                                    )
+                                  : null,
+                              controlAffinity: ListTileControlAffinity.leading,
+                              contentPadding: EdgeInsets.zero,
+                              dense: true,
+                              title: Text(
+                                _txt(
+                                  t,
+                                  'register.accept_legal',
+                                  'He leído y acepto los términos y la política de privacidad',
+                                ),
+                              ),
+                            ),
+                            Wrap(
+                              spacing: 12,
+                              children: [
+                                TertiaryButton(
+                                  onPressed: () => _openLegalDocument('/terms'),
+                                  child: Text(
+                                    _txt(
+                                      t,
+                                      'register.terms_link',
+                                      'Términos y condiciones',
+                                    ),
+                                  ),
+                                ),
+                                TertiaryButton(
+                                  onPressed: () =>
+                                      _openLegalDocument('/privacy'),
+                                  child: Text(
+                                    _txt(
+                                      t,
+                                      'register.privacy_link',
+                                      'Política de privacidad',
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                             const SizedBox(height: 16),
                             SizedBox(
                               width: double.infinity,
                               child: PrimaryButton(
-                                onPressed: (_loading || !_registrationEnabled)
+                                onPressed:
+                                    (_loading ||
+                                        !_registrationEnabled ||
+                                        !_legalAccepted)
                                     ? null
                                     : () => _submit(t),
                                 child: Text(
