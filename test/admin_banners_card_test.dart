@@ -202,6 +202,38 @@ void main() {
     );
   });
 
+  testWidgets('no edita ni borra un banner sin identificador válido', (
+    tester,
+  ) async {
+    final calls = <_Call>[];
+    await _pumpConfigTab(
+      tester,
+      calls: calls,
+      banners: [
+        {
+          'start_at': '2030-03-01T10:00:00Z',
+          'end_at': '2030-03-02T10:00:00Z',
+          'message': {'es': 'Sin id', 'en': 'No id'},
+        },
+      ],
+    );
+    calls.clear();
+
+    await tester.tap(find.byIcon(Icons.edit_outlined));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('El banner no tiene un identificador válido.'),
+      findsOneWidget,
+    );
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(calls, isEmpty);
+
+    await tester.tap(find.byIcon(Icons.delete_outline));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(calls, isEmpty);
+  });
+
   testWidgets('muestra el error del backend si el listado falla', (
     tester,
   ) async {

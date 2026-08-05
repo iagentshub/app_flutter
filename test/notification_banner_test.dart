@@ -44,22 +44,23 @@ void main() {
       expect(nulos.message, isEmpty);
     });
 
-    // El backend guarda el mensaje como mapa por idioma y solo lo aplana en
-    // /active; si alguna vez sirviera el mapa crudo, el modelo no debe
-    // reventar con un CastError en mitad del dashboard.
-    test('tolera tipos que no son String sin lanzar', () {
-      final numerico = NotificationBanner.fromJson(const {
-        'id': 7,
-        'message': 42,
-      });
-      expect(numerico.id, '7');
-      expect(numerico.message, '42');
-
-      final mapa = NotificationBanner.fromJson(const {
-        'id': 'banner-1',
-        'message': {'es': 'Hola'},
-      });
-      expect(mapa.message, contains('es'));
+    // /active debe entregar el mensaje ya resuelto. Aceptar el mapa crudo
+    // pintaría su representación de depuración en el dashboard.
+    test('rechaza mensajes que el backend no haya aplanado', () {
+      expect(
+        () => NotificationBanner.fromJson(const {
+          'id': 'banner-1',
+          'message': {'es': 'Hola'},
+        }),
+        throwsFormatException,
+      );
+      expect(
+        () => NotificationBanner.fromJson(const {
+          'id': 'banner-1',
+          'message': 42,
+        }),
+        throwsFormatException,
+      );
     });
   });
 

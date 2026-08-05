@@ -987,6 +987,7 @@
     "config_banners_message_required": "Message is required",
     "config_banners_delete_title": "Delete banner",
     "config_banners_delete_confirm": "Are you sure you want to delete this banner?",
+    "config_banners_invalid_id": "The banner does not have a valid identifier.",
     "config_section_splash": "Startup animation",
     "config_splash_cycles": "Cycles",
     "config_splash_cycles_hint": "Each cycle is one full there-and-back of the logo (1-10).",

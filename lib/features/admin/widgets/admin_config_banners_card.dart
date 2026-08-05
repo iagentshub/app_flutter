@@ -74,22 +74,24 @@ class _AdminBannersCardState extends State<_AdminBannersCard> {
   }
 
   Future<void> _openEditDialog(Map<String, dynamic> banner) async {
+    final bannerId = _bannerId(banner);
+    if (bannerId == null) {
+      _showInvalidBannerId();
+      return;
+    }
     final payload = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) =>
           _NotificationBannerFormDialog(tx: _tx, initial: banner),
     );
     if (payload == null) return;
-    await _save(payload, bannerId: banner['id'] as String?);
+    await _save(payload, bannerId: bannerId);
   }
 
   Future<void> _save(Map<String, dynamic> payload, {String? bannerId}) async {
     try {
       if (bannerId == null) {
-        await widget.repository.createNotificationBanner(
-          widget.token,
-          payload,
-        );
+        await widget.repository.createNotificationBanner(widget.token, payload);
       } else {
         await widget.repository.updateNotificationBanner(
           widget.token,
@@ -109,6 +111,11 @@ class _AdminBannersCardState extends State<_AdminBannersCard> {
   }
 
   Future<void> _delete(Map<String, dynamic> banner) async {
+    final bannerId = _bannerId(banner);
+    if (bannerId == null) {
+      _showInvalidBannerId();
+      return;
+    }
     final confirmed = await showConfirmActionDialog(
       context,
       title: _tx('admin.config_banners_delete_title', 'Eliminar banner'),
@@ -121,10 +128,7 @@ class _AdminBannersCardState extends State<_AdminBannersCard> {
     );
     if (!confirmed) return;
     try {
-      await widget.repository.deleteNotificationBanner(
-        widget.token,
-        banner['id'] as String,
-      );
+      await widget.repository.deleteNotificationBanner(widget.token, bannerId);
       await _load();
     } on ApiError catch (error) {
       _showMessage(error.message, isError: true);
@@ -134,6 +138,22 @@ class _AdminBannersCardState extends State<_AdminBannersCard> {
         isError: true,
       );
     }
+  }
+
+  String? _bannerId(Map<String, dynamic> banner) {
+    final value = banner['id'];
+    if (value is! String || value.trim().isEmpty) return null;
+    return value;
+  }
+
+  void _showInvalidBannerId() {
+    _showMessage(
+      _tx(
+        'admin.config_banners_invalid_id',
+        'El banner no tiene un identificador válido.',
+      ),
+      isError: true,
+    );
   }
 
   void _showMessage(String text, {bool isError = false}) {
@@ -181,7 +201,9 @@ class _AdminBannersCardState extends State<_AdminBannersCard> {
             style: Theme.of(context).textTheme.bodySmall,
           )
         else
-          Column(children: [for (final banner in _banners) _bannerTile(banner)]),
+          Column(
+            children: [for (final banner in _banners) _bannerTile(banner)],
+          ),
         const SizedBox(height: 10),
         PrimaryButton.icon(
           onPressed: _openCreateDialog,
