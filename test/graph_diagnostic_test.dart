@@ -69,7 +69,9 @@ void main() {
                   sortHierarchyVerticalLabel: 'Jerárquico (arriba-abajo)',
                   sortHierarchyHorizontalLabel:
                       'Jerárquico (izquierda-derecha)',
-                  sortRadialLabel: 'Radial (círculos)',
+                  sortGalaxyLabel: 'Galaxia',
+                  showLabelsTooltip: 'Mostrar nombres',
+                  hideLabelsTooltip: 'Ocultar nombres',
                   quickViewDescriptionLabel: 'Descripción',
                   quickViewNoDescriptionLabel: 'Sin descripción',
                   quickViewConnectionsLabel: 'Conexiones',

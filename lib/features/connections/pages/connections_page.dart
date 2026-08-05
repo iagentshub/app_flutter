@@ -19,6 +19,7 @@ import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/resource_toolbar.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
+import '../../../shared/widgets/status_dot.dart';
 
 part '../dialogs/connection_form_dialog.dart';
 part '../widgets/connections_page_view.dart';
@@ -56,6 +57,11 @@ class _ConnectionsPageState extends State<ConnectionsPage>
   String _providerFilter = 'all';
   int _lastCategoryIndex = 0;
 
+  /// Resultado del último test por conexión, solo en memoria de esta
+  /// sesión — sin entrada = aún no se ha probado, la card no pinta punto.
+  final Map<String, StatusDotState> _testStatus = {};
+  final Map<String, String> _testMessages = {};
+
   static const _categoryIds = ['llm', 'machine', 'database'];
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
@@ -67,8 +73,28 @@ class _ConnectionsPageState extends State<ConnectionsPage>
     return 'llm';
   }
 
+  String _providerLabel(String type) {
+    for (final provider in _providers) {
+      if (provider.type == type) return provider.label;
+    }
+    return type;
+  }
+
   List<ConnectionProvider> _providersForCategory(String category) {
     return _providers.where((p) => p.category == category).toList();
+  }
+
+  /// Agrupa las conexiones filtradas por proveedor (label legible, orden
+  /// alfabético) — para pintar una cabecera por grupo en vez de una rejilla
+  /// plana con todos los tipos mezclados.
+  List<MapEntry<String, List<ConnectionItem>>> get _connectionsByProvider {
+    final groups = <String, List<ConnectionItem>>{};
+    for (final item in _filteredConnections) {
+      groups.putIfAbsent(_providerLabel(item.type), () => []).add(item);
+    }
+    final entries = groups.entries.toList()
+      ..sort((a, b) => a.key.toLowerCase().compareTo(b.key.toLowerCase()));
+    return entries;
   }
 
   int get _activeFilterCount => _providerFilter != 'all' ? 1 : 0;
@@ -381,20 +407,48 @@ class _ConnectionsPageState extends State<ConnectionsPage>
 
     final token = _token;
     if (token == null || token.isEmpty) return;
+    setState(() {
+      _testStatus[item.id] = StatusDotState.pending;
+      _testMessages[item.id] = '';
+    });
     try {
       final result = await _repository.testConnection(token, item.id);
       final detail = result.detail?.trim().isNotEmpty == true
           ? '\n${result.detail}'
           : '';
-      _showMessage(
-        '${result.ok ? 'OK' : 'ERROR'}: ${result.message}$detail',
-        isError: !result.ok,
-      );
+      if (!mounted) return;
+      setState(() {
+        _testStatus[item.id] = result.ok
+            ? StatusDotState.ok
+            : StatusDotState.error;
+        _testMessages[item.id] = '${result.message}$detail';
+      });
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      if (!mounted) return;
+      setState(() {
+        _testStatus[item.id] = StatusDotState.error;
+        _testMessages[item.id] = error.message;
+      });
     } catch (_) {
-      _showMessage('No se pudo testear la conexión', isError: true);
+      if (!mounted) return;
+      setState(() {
+        _testStatus[item.id] = StatusDotState.error;
+        _testMessages[item.id] = 'No se pudo testear la conexión';
+      });
     }
+  }
+
+  /// Si el test masivo falla antes de traer resultados por conexión, los
+  /// puntos que se dejaron en "pending" no deben quedarse así para siempre.
+  void _resetPendingStatus(List<String> ids) {
+    if (!mounted) return;
+    setState(() {
+      for (final id in ids) {
+        if (_testStatus[id] == StatusDotState.pending) {
+          _testStatus.remove(id);
+        }
+      }
+    });
   }
 
   Future<void> _testAll() async {
@@ -406,10 +460,25 @@ class _ConnectionsPageState extends State<ConnectionsPage>
     if (ids.isEmpty) return;
     final namesById = {for (final c in connections) c.id: c.name};
 
-    setState(() => _testingAll = true);
+    setState(() {
+      _testingAll = true;
+      for (final id in ids) {
+        _testStatus[id] = StatusDotState.pending;
+        _testMessages[id] = '';
+      }
+    });
     try {
       final results = await _repository.testAllConnections(token, ids: ids);
       if (!mounted) return;
+      setState(() {
+        for (final r in results) {
+          _testStatus[r.id] = r.ok ? StatusDotState.ok : StatusDotState.error;
+          final detail = r.detail?.trim().isNotEmpty == true
+              ? '\n${r.detail}'
+              : '';
+          _testMessages[r.id] = '${r.message}$detail';
+        }
+      });
       final ok = results.where((r) => r.ok).length;
       final fail = results.length - ok;
       await showDialog<void>(
@@ -458,8 +527,10 @@ class _ConnectionsPageState extends State<ConnectionsPage>
         ),
       );
     } on ApiError catch (error) {
+      _resetPendingStatus(ids);
       _showMessage(error.message, isError: true);
     } catch (_) {
+      _resetPendingStatus(ids);
       _showMessage('No se pudo ejecutar test masivo', isError: true);
     } finally {
       if (mounted) {

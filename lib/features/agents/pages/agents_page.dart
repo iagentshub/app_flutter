@@ -11,6 +11,8 @@ import '../../../models/explore/explore_models.dart';
 import '../../../models/knowledge/knowledge_models.dart';
 import '../../../models/prompts/prompt_models.dart';
 import '../../../models/skills/skill_models.dart';
+import '../../../models/connections/connection_models.dart';
+import '../../connections/repositories/connections_repository.dart';
 import '../../explore/repositories/explore_repository.dart';
 import '../../knowledge/repositories/knowledge_repository.dart';
 import '../../knowledge/repositories/prompts_repository.dart';
@@ -58,6 +60,7 @@ class _AgentsPageState extends State<AgentsPage> {
   late final SkillsRepository _skillsRepository;
   late final KnowledgeRepository _knowledgeRepository;
   late final PromptsRepository _promptsRepository;
+  late final ConnectionsRepository _connectionsRepository;
   late final TranslatedTexts _t;
   final TextEditingController _queryController = TextEditingController();
   final Debouncer _searchDebouncer = Debouncer();
@@ -68,6 +71,10 @@ class _AgentsPageState extends State<AgentsPage> {
   Map<String, String> _skillNames = const {};
   Map<String, String> _knowledgeNames = const {};
   Map<String, String> _promptNames = const {};
+
+  /// id de conexión → nombre del modelo — la card muestra el modelo en vez
+  /// del id crudo de la conexión.
+  Map<String, String> _connectionNames = const {};
   bool _loading = true;
   String? _error;
   String _query = '';
@@ -168,6 +175,7 @@ class _AgentsPageState extends State<AgentsPage> {
     _skillsRepository = SkillsRepository(apiClient: widget.apiClient);
     _knowledgeRepository = KnowledgeRepository(apiClient: widget.apiClient);
     _promptsRepository = PromptsRepository(apiClient: widget.apiClient);
+    _connectionsRepository = ConnectionsRepository(apiClient: widget.apiClient);
     _t = TranslatedTexts(
       localeController: widget.localeController,
       namespace: 'resources',
@@ -215,16 +223,22 @@ class _AgentsPageState extends State<AgentsPage> {
         _skillsRepository.listSkills(token, includeInactive: true),
         _knowledgeRepository.listItems(token, includeInactive: true),
         _promptsRepository.listPrompts(token, includeInactive: true),
+        _connectionsRepository.listConnections(token, includeInactive: true),
       ]);
       if (!mounted) return;
       final skills = results[1] as List<SkillItem>;
       final knowledge = results[2] as List<KnowledgeItem>;
       final prompts = results[3] as List<PromptItem>;
+      final connections = results[4] as List<ConnectionItem>;
       setState(() {
         _agents = results[0] as List<AgentItem>;
         _skillNames = {for (final s in skills) s.id: s.name};
         _knowledgeNames = {for (final k in knowledge) k.id: k.name};
         _promptNames = {for (final p in prompts) p.id: p.name};
+        _connectionNames = {
+          for (final c in connections)
+            c.id: c.model.isNotEmpty ? c.model : c.name,
+        };
         _loading = false;
       });
     } on ApiError catch (error) {

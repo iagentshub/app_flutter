@@ -369,7 +369,9 @@ extension _AdminExploreTab on _AdminPageState {
           'graph.sort_hierarchy_horizontal',
           'Jerarquía horizontal',
         ),
-        sortRadialLabel: _tx('graph.sort_radial', 'Radial'),
+        sortGalaxyLabel: _tx('graph.sort_galaxy', 'Galaxia'),
+        showLabelsTooltip: _tx('graph.show_labels_tooltip', 'Mostrar nombres'),
+        hideLabelsTooltip: _tx('graph.hide_labels_tooltip', 'Ocultar nombres'),
         quickViewDescriptionLabel: _tx(
           'graph.quick_view_description',
           'Descripción',

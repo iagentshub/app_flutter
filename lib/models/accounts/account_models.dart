@@ -75,6 +75,7 @@ class AccountSyncSummary {
   const AccountSyncSummary({
     required this.connectionsCreated,
     required this.connectionsUpdated,
+    required this.connectionsDeleted,
     required this.agentsCount,
     required this.routinesCount,
     required this.skillsPrivateCount,
@@ -82,6 +83,11 @@ class AccountSyncSummary {
 
   final int connectionsCreated;
   final int connectionsUpdated;
+
+  /// Conexiones borradas por desmarcar en el diálogo un modelo que ya
+  /// estaba sincronizado — solo pasa con selección explícita, nunca al
+  /// sincronizar "todo" sin elegir.
+  final int connectionsDeleted;
   final int agentsCount;
   final int routinesCount;
   final int skillsPrivateCount;
@@ -90,6 +96,7 @@ class AccountSyncSummary {
     return AccountSyncSummary(
       connectionsCreated: json['connections_created'] as int? ?? 0,
       connectionsUpdated: json['connections_updated'] as int? ?? 0,
+      connectionsDeleted: json['connections_deleted'] as int? ?? 0,
       agentsCount: json['agents_count'] as int? ?? 0,
       routinesCount: json['routines_count'] as int? ?? 0,
       skillsPrivateCount: json['skills_private_count'] as int? ?? 0,

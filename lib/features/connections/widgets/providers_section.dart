@@ -222,6 +222,8 @@ class _ProvidersSectionState extends State<ProvidersSection> {
       final parts = <String>[
         '${summary?.connectionsCreated ?? 0} ${_tx('providers.summary_created', 'creadas')}',
         '${summary?.connectionsUpdated ?? 0} ${_tx('providers.summary_updated', 'actualizadas')}',
+        if ((summary?.connectionsDeleted ?? 0) > 0)
+          '${summary!.connectionsDeleted} ${_tx('providers.summary_deleted', 'eliminadas')}',
       ];
       _showMessage(
         '${_tx('providers.sync_done', 'Sincronización completada')}: ${parts.join(' · ')}',

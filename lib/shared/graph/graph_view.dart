@@ -33,9 +33,9 @@ IconData iconForType(String type) {
 }
 
 /// Formas de ordenar automáticamente el grafo: dos variantes jerárquicas
-/// (raíz arriba/izquierda y capas hacia abajo/derecha) y la original en
-/// círculos concéntricos.
-enum GraphSortMode { hierarchyVertical, hierarchyHorizontal, radial }
+/// (raíz arriba/izquierda y capas hacia abajo/derecha) y "galaxia", un
+/// layout de fuerzas (repulsión/atracción) pensado para grafos grandes.
+enum GraphSortMode { hierarchyVertical, hierarchyHorizontal, galaxy }
 
 /// Controla el modo de ordenación desde fuera de [AnimatedResourceGraph]
 /// (p. ej. un botón desplegable en la cabecera del diálogo, junto al
@@ -70,6 +70,7 @@ class AnimatedResourceGraph extends StatefulWidget {
     required this.quickViewCloseTooltip,
     this.emptyLabel = '',
     this.highlightQuery = '',
+    this.showLabels = true,
     this.sortController,
     super.key,
   });
@@ -82,6 +83,12 @@ class AnimatedResourceGraph extends StatefulWidget {
   /// Texto de búsqueda: los nodos cuya etiqueta coincida parpadean para
   /// resaltarse, sin cambiar la vista (siempre es un grafo).
   final String highlightQuery;
+
+  /// Si es falso, se ocultan las etiquetas de texto bajo cada nodo (salvo
+  /// las que coincidan con [highlightQuery]) para despejar grafos grandes.
+  /// A diferencia de [sortController], cambiar este valor no reordena ni
+  /// reinicia el lienzo: solo afecta al texto.
+  final bool showLabels;
 
   /// Permite elegir el modo de ordenación desde fuera (p. ej. un botón
   /// desplegable en la cabecera del diálogo). Si no se provee, el grafo
@@ -100,13 +107,45 @@ class AnimatedResourceGraph extends StatefulWidget {
 
 class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     with TickerProviderStateMixin {
-  // Distancia entre anillos de niveles consecutivos (modo radial).
-  static const _ringSpacing = 170.0;
   // Distancia entre niveles/hermanos consecutivos (modos jerárquicos).
   static const _levelSpacing = 150.0;
   static const _siblingSpacing = 130.0;
-  static const _minScale = 0.4;
-  static const _maxScale = 2.5;
+  // Zoom mínimo habitual y tope absoluto de alejamiento: un grafo grande
+  // necesita alejarse más de lo normal para verse entero (ver
+  // [_minScaleFor]), pero nunca tanto como para volverse ilegible.
+  static const _minScaleDefault = 0.4;
+  static const _minScaleFloor = 0.1;
+  static const _maxScale = 4.0;
+  // La vista inicial nunca arranca más alejada que esto: un "fit to view"
+  // sin piso, con un lienzo mucho más grande que el visor, deja los
+  // nodos diminutos y todo apretado desde el primer vistazo. Se prefiere
+  // ver el núcleo con buen detalle y dejar el resto para explorar
+  // moviéndose y haciendo zoom, no forzar ver el grafo entero de entrada.
+  static const _initialFitFloor = 0.55;
+
+  // --- Modo galaxia (layout de fuerzas) ---
+  // Área objetivo (px²) por nodo: controla la densidad de puntos del
+  // lienzo a medida que crece el grafo.
+  static const _galaxyPerNodeArea = 8000.0;
+  // El lienzo del modo galaxia siempre es al menos esto de grande respecto
+  // al visor, aunque el grafo tenga pocos nodos: sin este mínimo, un
+  // grafo que ya "cabe" deja el lienzo del mismo tamaño que la pantalla y
+  // no queda espacio real para explorar con zoom/pan, aunque se calcule
+  // un "fit to view" — sencillamente no hay hacia dónde desplazarse. Un
+  // factor bajo también deja los nodos apretados contra el borde del
+  // visor, dando sensación de "límite" en vez de espacio para moverse.
+  static const _galaxyMinCanvasFactor = 3.2;
+  // Factor sobre la distancia ideal k = factor * sqrt(área / n).
+  static const _galaxyIdealLengthFactor = 1.0;
+  // Atracción uniforme de todos los nodos hacia el centro: con cientos de
+  // nodos, la suma de repulsiones que recibe cada uno (una por cada otro
+  // nodo del grafo) casi nunca se cancela del todo, y esa resultante neta
+  // crece con el tamaño del grafo. Sin una gravedad que la contrarreste
+  // con fuerza suficiente, los nodos acaban empujados hasta el borde del
+  // lienzo (donde el clamp los deja alineados en fila, nada orgánico).
+  static const _galaxyGravity = 0.06;
+  // Semilla fija: reabrir el mismo recurso reproduce el mismo layout.
+  static const _galaxySeed = 20260804;
 
   late final AnimationController _entrance = AnimationController(
     vsync: this,
@@ -211,12 +250,18 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
   }
 
   Size _canvasSizeFor(Size viewport, Map<String, int> levels) {
-    if (_sortMode == GraphSortMode.radial) {
-      final maxLevel = levels.values.fold(0, math.max);
-      final maxRadius = maxLevel * _ringSpacing + 70;
+    if (_sortMode == GraphSortMode.galaxy) {
+      // Área objetivo proporcional al número de nodos, con el mismo
+      // aspecto que el viewport (un layout de fuerzas no tiene un eje
+      // principal como los modos jerárquicos), para mantener una densidad
+      // de puntos razonable tanto con 60 como con 500+ nodos.
+      final targetArea = widget.nodes.length * _galaxyPerNodeArea;
+      final aspect = viewport.width / viewport.height;
+      final height = math.sqrt(targetArea / aspect);
+      final width = height * aspect;
       return Size(
-        math.max(viewport.width, maxRadius * 2),
-        math.max(viewport.height, maxRadius * 2),
+        math.max(viewport.width * _galaxyMinCanvasFactor, width),
+        math.max(viewport.height * _galaxyMinCanvasFactor, height),
       );
     }
     final perLevelCount = <int, int>{};
@@ -236,8 +281,8 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
 
   void _ensurePositions(Size canvasSize, Map<String, int> levels) {
     if (_positions.length == widget.nodes.length) return;
-    if (_sortMode == GraphSortMode.radial) {
-      _ensureRadialPositions(canvasSize, levels);
+    if (_sortMode == GraphSortMode.galaxy) {
+      _ensureGalaxyPositions(canvasSize);
     } else {
       _ensureLayeredPositions(
         canvasSize,
@@ -247,27 +292,142 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     }
   }
 
-  void _ensureRadialPositions(Size canvasSize, Map<String, int> levels) {
+  /// Cuántas iteraciones de la simulación de fuerzas correr según el
+  /// tamaño del grafo: menos nodos permiten más iteraciones (layout más
+  /// asentado) sin arriesgar un frame lento con grafos de cientos de nodos.
+  int _galaxyIterationsFor(int n) {
+    if (n <= 60) return 300;
+    if (n <= 150) return 220;
+    if (n <= 300) return 150;
+    return 90;
+  }
+
+  /// Layout de fuerzas (tipo Fruchterman-Reingold): cada nodo se repele de
+  /// todos los demás y se atrae a lo largo de sus aristas, con una leve
+  /// gravedad hacia el centro para no dispersarse sin límite. A diferencia
+  /// de los layouts jerárquicos, los clusters emergen del propio grafo en
+  /// vez de imponerse por niveles, lo que evita el amontonamiento típico
+  /// de grafos grandes (cientos de nodos) en una disposición fija.
+  ///
+  /// Se ejecuta con arrays indexados (no `Map<String,Offset>`) porque el
+  /// bucle de repulsión es O(n²) por iteración: con cientos de nodos el
+  /// coste de hashing/autoboxing de `Offset` sí se nota.
+  void _ensureGalaxyPositions(Size canvasSize) {
+    final n = widget.nodes.length;
+    if (n == 0) return;
+
+    final ids = [for (final node in widget.nodes) node.id];
+    final rootIndex = ids.indexOf(widget.rootId);
     final center = Offset(canvasSize.width / 2, canvasSize.height / 2);
-    final byLevel = <int, List<GraphNode>>{};
-    for (final node in widget.nodes) {
-      byLevel.putIfAbsent(levels[node.id] ?? 1, () => []).add(node);
-    }
-    for (final entry in byLevel.entries) {
-      final level = entry.key;
-      final nodesInLevel = entry.value;
-      final radius = level * _ringSpacing;
-      for (var i = 0; i < nodesInLevel.length; i++) {
-        final node = nodesInLevel[i];
-        if (_positions.containsKey(node.id)) continue;
-        _positions[node.id] = level == 0
-            ? center
-            : center +
-                  Offset.fromDirection(
-                    (2 * math.pi * i / nodesInLevel.length) - (math.pi / 2),
-                    radius,
-                  );
+    final random = math.Random(_galaxySeed);
+
+    final px = List<double>.filled(n, 0);
+    final py = List<double>.filled(n, 0);
+    final pinned = List<bool>.filled(n, false);
+    final seedRadius = math.min(canvasSize.width, canvasSize.height) * 0.35;
+    for (var i = 0; i < n; i++) {
+      final existing = _positions[ids[i]];
+      if (existing != null) {
+        px[i] = existing.dx;
+        py[i] = existing.dy;
+        pinned[i] = true;
+        continue;
       }
+      if (i == rootIndex) {
+        px[i] = center.dx;
+        py[i] = center.dy;
+        pinned[i] = true;
+        continue;
+      }
+      final angle = random.nextDouble() * 2 * math.pi;
+      final radius = seedRadius * math.sqrt(random.nextDouble());
+      px[i] = center.dx + radius * math.cos(angle);
+      py[i] = center.dy + radius * math.sin(angle);
+    }
+
+    final idIndex = {for (var i = 0; i < n; i++) ids[i]: i};
+    final edgesIdx = [
+      for (final edge in widget.edges)
+        if (idIndex.containsKey(edge.sourceId) &&
+            idIndex.containsKey(edge.targetId))
+          (idIndex[edge.sourceId]!, idIndex[edge.targetId]!),
+    ];
+
+    final area = canvasSize.width * canvasSize.height;
+    final k = _galaxyIdealLengthFactor * math.sqrt(area / n);
+    final iterations = _galaxyIterationsFor(n);
+    final t0 = math.max(canvasSize.width, canvasSize.height) * 0.05;
+    final dispX = List<double>.filled(n, 0);
+    final dispY = List<double>.filled(n, 0);
+
+    for (var iter = 0; iter < iterations; iter++) {
+      dispX.fillRange(0, n, 0);
+      dispY.fillRange(0, n, 0);
+
+      // Repulsión entre todos los pares.
+      for (var i = 0; i < n; i++) {
+        for (var j = i + 1; j < n; j++) {
+          var dx = px[i] - px[j];
+          var dy = py[i] - py[j];
+          var dist = math.sqrt(dx * dx + dy * dy);
+          if (dist < 0.01) {
+            final angle = random.nextDouble() * 2 * math.pi;
+            dx = math.cos(angle) * 0.01;
+            dy = math.sin(angle) * 0.01;
+            dist = 0.01;
+          }
+          final force = (k * k) / dist;
+          final ux = dx / dist * force;
+          final uy = dy / dist * force;
+          dispX[i] += ux;
+          dispY[i] += uy;
+          dispX[j] -= ux;
+          dispY[j] -= uy;
+        }
+      }
+
+      // Atracción a lo largo de cada arista.
+      for (final (a, b) in edgesIdx) {
+        final dx = px[a] - px[b];
+        final dy = py[a] - py[b];
+        final dist = math.sqrt(dx * dx + dy * dy);
+        if (dist < 0.01) continue;
+        final force = (dist * dist) / k;
+        final ux = dx / dist * force;
+        final uy = dy / dist * force;
+        dispX[a] -= ux;
+        dispY[a] -= uy;
+        dispX[b] += ux;
+        dispY[b] += uy;
+      }
+
+      // Gravedad uniforme hacia el centro.
+      for (var i = 0; i < n; i++) {
+        dispX[i] += (center.dx - px[i]) * _galaxyGravity;
+        dispY[i] += (center.dy - py[i]) * _galaxyGravity;
+      }
+
+      // Aplica el desplazamiento, acotado por la "temperatura" (cooling
+      // lineal) y por los bordes del lienzo.
+      final temperature = t0 * (1 - iter / iterations);
+      for (var i = 0; i < n; i++) {
+        if (pinned[i]) continue;
+        final len = math.sqrt(dispX[i] * dispX[i] + dispY[i] * dispY[i]);
+        if (len < 0.001) continue;
+        final capped = math.min(len, temperature) / len;
+        px[i] = (px[i] + dispX[i] * capped).clamp(
+          30.0,
+          math.max(30.0, canvasSize.width - 30.0),
+        );
+        py[i] = (py[i] + dispY[i] * capped).clamp(
+          30.0,
+          math.max(30.0, canvasSize.height - 30.0),
+        );
+      }
+    }
+
+    for (var i = 0; i < n; i++) {
+      _positions[ids[i]] = Offset(px[i], py[i]);
     }
   }
 
@@ -338,10 +498,45 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     return parentPositions.reduce((a, b) => a + b) / parentPositions.length;
   }
 
+  /// Cuando el lienzo escalado es más grande que el visor (el caso más
+  /// común), el pan solo puede ser negativo o cero, como antes: no debe
+  /// quedar hueco visible más allá del lienzo. Pero tras un zoom-out que
+  /// deja el lienzo más pequeño que el visor en algún eje (grafos que
+  /// caben de sobra, o el "fit to view" inicial ver [!_panInitialized]),
+  /// también debe poder ser positivo para centrarlo, en vez de pegarlo
+  /// siempre a la esquina superior-izquierda.
   Offset _clampPan(Offset offset, Size viewport, Size canvas, double scale) {
-    final minDx = math.min(0.0, viewport.width - canvas.width * scale);
-    final minDy = math.min(0.0, viewport.height - canvas.height * scale);
-    return Offset(offset.dx.clamp(minDx, 0.0), offset.dy.clamp(minDy, 0.0));
+    final scaledWidth = canvas.width * scale;
+    final scaledHeight = canvas.height * scale;
+    // En modo galaxia se permite pasear bastante más allá del lienzo (el
+    // fondo cubre todo el visor de todas formas, así que no hay ningún
+    // "borde" visible que romper): sin este margen extra, el pan se
+    // siente topado contra un muro duro justo al llegar al final de las
+    // estrellas, en vez de invitar a seguir explorando.
+    final extraMargin = _sortMode == GraphSortMode.galaxy
+        ? math.max(viewport.width, viewport.height) * 2.5
+        : 0.0;
+    final minDx = math.min(0.0, viewport.width - scaledWidth) - extraMargin;
+    final minDy = math.min(0.0, viewport.height - scaledHeight) - extraMargin;
+    final maxDx = math.max(0.0, viewport.width - scaledWidth) + extraMargin;
+    final maxDy = math.max(0.0, viewport.height - scaledHeight) + extraMargin;
+    return Offset(
+      offset.dx.clamp(minDx, maxDx),
+      offset.dy.clamp(minDy, maxDy),
+    );
+  }
+
+  /// Zoom mínimo permitido: normalmente [_minScaleDefault], pero un lienzo
+  /// grande (grafo de cientos de nodos, sobre todo en modo galaxia) puede
+  /// necesitar alejarse más que eso para verse completo de un vistazo, así
+  /// que el mínimo se relaja hasta el "fit to view" exacto (acotado por
+  /// [_minScaleFloor] para no volverlo ilegible).
+  double _minScaleFor(Size viewport, Size canvasSize) {
+    final fitScale = math.min(
+      viewport.width / canvasSize.width,
+      viewport.height / canvasSize.height,
+    );
+    return math.min(_minScaleDefault, fitScale).clamp(_minScaleFloor, 1.0);
   }
 
   /// Aplica un nuevo zoom manteniendo fijo el punto del lienzo que había
@@ -356,7 +551,10 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     required Size viewport,
     required Size canvasSize,
   }) {
-    final newScale = rawNewScale.clamp(_minScale, _maxScale);
+    final newScale = rawNewScale.clamp(
+      _minScaleFor(viewport, canvasSize),
+      _maxScale,
+    );
     final canvasPointUnderFocal = startLocalFocal / startScale;
     final focalDelta = focalGlobal - _gestureStartFocalGlobal;
     final newPan =
@@ -378,7 +576,13 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
         ),
       );
     }
-    return LayoutBuilder(
+    // Fondo del modo galaxia: el mismo negro del tema oscuro de la app
+    // (no un color propio), cubriendo todo el visor y no solo el lienzo
+    // (que puede ser más pequeño tras un zoom-out).
+    final galaxyBackground = Theme.of(context).scaffoldBackgroundColor;
+    return Container(
+      color: _sortMode == GraphSortMode.galaxy ? galaxyBackground : null,
+      child: LayoutBuilder(
       builder: (context, constraints) {
         final viewport = Size(constraints.maxWidth, constraints.maxHeight);
         final levels = _computeLevels();
@@ -386,11 +590,29 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
         _ensurePositions(canvasSize, levels);
         if (!_panInitialized) {
           _panInitialized = true;
-          // Centra la cámara en el centro del lienzo (donde está la raíz)
-          // en vez de mostrar su esquina superior-izquierda por defecto.
+          // Encuadre inicial: si el lienzo es más grande que el visor
+          // (grafos grandes, muy habitual en modo galaxia), arranca algo
+          // alejado para no mostrar recortada una esquina al 100% de
+          // zoom, pero sin forzar ver el lienzo entero de golpe (eso deja
+          // los nodos diminutos y todo apretado): [_initialFitFloor] pone
+          // un piso a ese alejamiento inicial. El resto del lienzo queda
+          // para explorar moviéndose y haciendo zoom manualmente, hasta
+          // [_minScaleFor] si se quiere ver el conjunto completo. Nunca
+          // acerca (scale > 1) grafos pequeños que ya caben de sobra.
+          final fitScale = math
+              .min(
+                1.0,
+                math.min(
+                  viewport.width / canvasSize.width,
+                  viewport.height / canvasSize.height,
+                ),
+              )
+              .clamp(_initialFitFloor, _maxScale);
+          _scale = fitScale;
+          // Centra la cámara en el centro del lienzo (donde está la raíz).
           _panOffset = Offset(
-            (viewport.width - canvasSize.width) / 2,
-            (viewport.height - canvasSize.height) / 2,
+            (viewport.width - canvasSize.width * fitScale) / 2,
+            (viewport.height - canvasSize.height * fitScale) / 2,
           );
         }
         _panOffset = _clampPan(_panOffset, viewport, canvasSize, _scale);
@@ -405,7 +627,7 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
             final canvasPointUnderCursor =
                 (event.localPosition - _panOffset) / _scale;
             final newScale = (_scale * math.exp(-event.scrollDelta.dy * 0.0015))
-                .clamp(_minScale, _maxScale);
+                .clamp(_minScaleFor(viewport, canvasSize), _maxScale);
             final newPan =
                 event.localPosition - canvasPointUnderCursor * newScale;
             setState(() {
@@ -419,12 +641,11 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
               children: [
                 // Fondo: arrastrar aquí (fuera de los nodos) desplaza el
                 // lienzo (pan) y pellizcar con dos dedos hace zoom, siempre
-                // centrado en el punto del gesto.
-                Positioned(
-                  left: _panOffset.dx,
-                  top: _panOffset.dy,
-                  width: scaledWidth,
-                  height: scaledHeight,
+                // centrado en el punto del gesto. Cubre todo el visor, no
+                // solo el rectángulo del lienzo escalado: tras un "fit to
+                // view" que no llena el visor entero (letterboxing), el
+                // pan debe poder iniciarse igual desde el margen vacío.
+                Positioned.fill(
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
                     onScaleStart: (details) {
@@ -473,6 +694,15 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
                                     progress: Curves.easeOutCubic.transform(
                                       _entrance.value,
                                     ),
+                                    lineColor: _sortMode == GraphSortMode.galaxy
+                                        ? Colors.white.withValues(alpha: 0.22)
+                                        : Colors.grey,
+                                    dashedColor:
+                                        _sortMode == GraphSortMode.galaxy
+                                        ? Colors.orangeAccent.withValues(
+                                            alpha: 0.35,
+                                          )
+                                        : Colors.orange,
                                   ),
                                 ),
                               ),
@@ -490,6 +720,7 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
           ),
         );
       },
+      ),
     );
   }
 
@@ -510,14 +741,34 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     final t = stagger.transform(_entrance.value).clamp(0.0, 1.0);
     final pulse = isRoot ? (1 + _pulse.value * 0.06) : 1.0;
     final color = labelColor(node.type);
-    final diameter = isRoot ? 72.0 : 54.0;
     final isMatch = _matches(node);
     final blinkOpacity = isMatch ? (0.35 + 0.65 * _blink.value) : 1.0;
+    final isGalaxy = _sortMode == GraphSortMode.galaxy;
+    final showLabel = widget.showLabels || isMatch;
+    // El círculo/punto es el primer hijo del Column de abajo, así que su
+    // centro debe coincidir exactamente con `pos` (donde termina la
+    // arista dibujada por `_GraphEdgePainter`): un offset fijo pensado
+    // para el nodo grande del modo jerárquico (72/54px) deja la línea
+    // notoriamente corta contra los puntos pequeños de la galaxia
+    // (8-26px), así que se calcula según el diámetro real de cada nodo.
+    final diameter = _nodeDiameter(node, isRoot: isRoot, isGalaxy: isGalaxy);
+    // El área táctil (invisible) de cada nodo: 92px de ancho tiene sentido
+    // para los círculos grandes del modo jerárquico (72/54px) con su
+    // etiqueta siempre visible debajo, pero con los puntos diminutos de
+    // la galaxia (8-26px) y las etiquetas ocultas por defecto, esa misma
+    // área tan generosa hace que cientos de nodos dispersos se solapen
+    // entre sí y tapen casi todo el espacio "vacío": el usuario intenta
+    // arrastrar el fondo para mover la cámara y termina moviendo un nodo
+    // individual por accidente. Se ajusta al tamaño real del punto salvo
+    // que haya texto visible debajo, que sigue necesitando ese ancho.
+    final hitboxWidth = (isGalaxy && !showLabel)
+        ? math.max(diameter + 18, 34.0)
+        : 92.0;
 
     return Positioned(
-      left: pos.dx - 46,
-      top: pos.dy - 46,
-      width: 92,
+      left: pos.dx - hitboxWidth / 2,
+      top: pos.dy - diameter / 2,
+      width: hitboxWidth,
       child: MouseRegion(
         cursor: SystemMouseCursors.grab,
         child: GestureDetector(
@@ -544,49 +795,113 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
                 children: [
                   Opacity(
                     opacity: blinkOpacity,
-                    child: Container(
-                      width: diameter,
-                      height: diameter,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: color.withValues(alpha: 0.45),
-                            blurRadius: isRoot ? 18 : 8,
-                          ),
-                          if (isMatch)
-                            BoxShadow(
-                              color: Colors.amber.withValues(alpha: 0.7),
-                              blurRadius: 20,
-                              spreadRadius: 3,
-                            ),
-                        ],
-                      ),
-                      alignment: Alignment.center,
-                      child: Icon(
-                        iconForType(node.type),
-                        color: Colors.white,
-                        size: isRoot ? 30 : 22,
+                    child: isGalaxy
+                        ? _buildStarDot(node, color, isRoot, isMatch, diameter)
+                        : _buildIconNode(node, color, isRoot, isMatch, diameter),
+                  ),
+                  if (showLabel) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      node.label,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: isRoot ? FontWeight.w700 : FontWeight.w500,
+                        color: isGalaxy ? Colors.white : null,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    node.label,
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: isRoot ? FontWeight.w700 : FontWeight.w500,
-                    ),
-                  ),
+                  ],
                 ],
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// Diámetro real del nodo, según el modo y si es la raíz: única fuente
+  /// de verdad tanto para dibujar el círculo/punto como para calcular su
+  /// posición (ver `_buildNode`), así ambos quedan siempre coordinados.
+  double _nodeDiameter(GraphNode node, {required bool isRoot, required bool isGalaxy}) {
+    if (isGalaxy) {
+      return isRoot ? 26.0 : 8.0 + (node.id.hashCode.abs() % 5);
+    }
+    return isRoot ? 72.0 : 54.0;
+  }
+
+  /// Nodo con icono dentro de un círculo de color, usado en los modos
+  /// jerárquicos (comportamiento sin cambios respecto al diseño original).
+  Widget _buildIconNode(
+    GraphNode node,
+    Color color,
+    bool isRoot,
+    bool isMatch,
+    double diameter,
+  ) {
+    return Container(
+      width: diameter,
+      height: diameter,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.45),
+            blurRadius: isRoot ? 18 : 8,
+          ),
+          if (isMatch)
+            BoxShadow(
+              color: Colors.amber.withValues(alpha: 0.7),
+              blurRadius: 20,
+              spreadRadius: 3,
+            ),
+        ],
+      ),
+      alignment: Alignment.center,
+      child: Icon(
+        iconForType(node.type),
+        color: Colors.white,
+        size: isRoot ? 30 : 22,
+      ),
+    );
+  }
+
+  /// Nodo "estrella" del modo galaxia: un punto pequeño con brillo, sin
+  /// icono, para que cientos de nodos quepan sin saturarse visualmente. El
+  /// tamaño de los nodos no-raíz varía levemente (según el hash del id)
+  /// para dar textura de cielo estrellado en vez de puntos uniformes.
+  Widget _buildStarDot(
+    GraphNode node,
+    Color color,
+    bool isRoot,
+    bool isMatch,
+    double diameter,
+  ) {
+    return Container(
+      width: diameter,
+      height: diameter,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [Colors.white, color],
+          stops: const [0.15, 1.0],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.6),
+            blurRadius: diameter * 1.6,
+            spreadRadius: diameter * 0.15,
+          ),
+          if (isMatch)
+            BoxShadow(
+              color: Colors.amber.withValues(alpha: 0.7),
+              blurRadius: 20,
+              spreadRadius: 3,
+            ),
+        ],
       ),
     );
   }
@@ -695,12 +1010,20 @@ class _GraphEdgePainter extends CustomPainter {
     required this.edges,
     required this.positions,
     required this.progress,
+    this.lineColor = Colors.grey,
+    this.dashedColor = Colors.orange,
   });
 
   final List<GraphNode> nodes;
   final List<GraphEdge> edges;
   final List<Offset> positions;
   final double progress;
+
+  /// Color de las aristas normales/discontinuas. Ya incluye la opacidad
+  /// deseada: el pintor no aplica ninguna adicional, para que el modo
+  /// galaxia pueda usar líneas más tenues sobre su fondo oscuro.
+  final Color lineColor;
+  final Color dashedColor;
 
   Offset? _posFor(String id) {
     final index = nodes.indexWhere((n) => n.id == id);
@@ -716,9 +1039,7 @@ class _GraphEdgePainter extends CustomPainter {
       if (start == null || end == null) continue;
       final current = Offset.lerp(start, end, progress.clamp(0.0, 1.0))!;
       final paint = Paint()
-        ..color = (edge.dashed ? Colors.orange : Colors.grey).withValues(
-          alpha: 0.55,
-        )
+        ..color = edge.dashed ? dashedColor : lineColor
         ..strokeWidth = edge.dashed ? 1.6 : 2.2
         ..style = PaintingStyle.stroke;
       if (edge.dashed) {
@@ -751,5 +1072,7 @@ class _GraphEdgePainter extends CustomPainter {
   bool shouldRepaint(covariant _GraphEdgePainter oldDelegate) =>
       oldDelegate.progress != progress ||
       oldDelegate.nodes != nodes ||
-      oldDelegate.edges != edges;
+      oldDelegate.edges != edges ||
+      oldDelegate.lineColor != lineColor ||
+      oldDelegate.dashedColor != dashedColor;
 }

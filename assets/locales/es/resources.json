@@ -4,7 +4,9 @@
     "sort_tooltip": "Ordenar",
     "sort_hierarchy_vertical": "Jerárquico (arriba-abajo)",
     "sort_hierarchy_horizontal": "Jerárquico (izquierda-derecha)",
-    "sort_radial": "Radial (círculos)",
+    "sort_galaxy": "Galaxia",
+    "show_labels_tooltip": "Mostrar nombres",
+    "hide_labels_tooltip": "Ocultar nombres",
     "quick_view_description": "Descripción",
     "quick_view_no_description": "Sin descripción",
     "quick_view_connections": "Conexiones",
@@ -132,6 +134,7 @@
     "avatar_too_large": "La imagen no puede superar 2 MB"
   },
   "agents": {
+    "tokens_tooltip": "Tokens consumidos",
     "new": "Nuevo agente",
     "search_hint": "Buscar agente",
     "count_label": "Agentes",
@@ -252,6 +255,7 @@
     "done_action": "Terminar"
   },
   "connections": {
+    "tokens_tooltip": "Tokens consumidos",
     "new": "Nueva conexión",
     "search_hint": "Buscar conexión",
     "provider_label": "Proveedor",
@@ -296,6 +300,7 @@
     "summary_knowledge": "conocimiento",
     "summary_created": "creadas",
     "summary_updated": "actualizadas",
+    "summary_deleted": "eliminadas",
     "sync_done": "Sincronización completada",
     "sync_partial": "Sincronización con errores",
     "github_connect_action": "Conectar con GitHub",
@@ -313,6 +318,8 @@
     "sync_dialog_select_all": "Seleccionar todo",
     "sync_dialog_select_none": "Ninguno",
     "sync_dialog_confirm": "Sincronizar seleccionados",
+    "sync_dialog_search_hint": "Buscar modelo...",
+    "sync_dialog_no_matches": "Ningún modelo coincide con la búsqueda",
     "sync_dialog_already_synced_hint": "Ya sincronizado",
     "unlink_confirm_title": "Desvincular cuenta",
     "unlink_confirm_body": "¿Seguro que quieres desvincular esta cuenta? Las conexiones ya creadas no se eliminarán.",

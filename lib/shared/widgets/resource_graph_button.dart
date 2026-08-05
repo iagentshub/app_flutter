@@ -20,7 +20,9 @@ class ResourceGraphButton extends StatelessWidget {
     required this.sortTooltip,
     required this.sortHierarchyVerticalLabel,
     required this.sortHierarchyHorizontalLabel,
-    required this.sortRadialLabel,
+    required this.sortGalaxyLabel,
+    required this.showLabelsTooltip,
+    required this.hideLabelsTooltip,
     required this.quickViewDescriptionLabel,
     required this.quickViewNoDescriptionLabel,
     required this.quickViewConnectionsLabel,
@@ -39,7 +41,9 @@ class ResourceGraphButton extends StatelessWidget {
   final String sortTooltip;
   final String sortHierarchyVerticalLabel;
   final String sortHierarchyHorizontalLabel;
-  final String sortRadialLabel;
+  final String sortGalaxyLabel;
+  final String showLabelsTooltip;
+  final String hideLabelsTooltip;
   final String quickViewDescriptionLabel;
   final String quickViewNoDescriptionLabel;
   final String quickViewConnectionsLabel;
@@ -62,7 +66,9 @@ class ResourceGraphButton extends StatelessWidget {
         sortTooltip: sortTooltip,
         sortHierarchyVerticalLabel: sortHierarchyVerticalLabel,
         sortHierarchyHorizontalLabel: sortHierarchyHorizontalLabel,
-        sortRadialLabel: sortRadialLabel,
+        sortGalaxyLabel: sortGalaxyLabel,
+        showLabelsTooltip: showLabelsTooltip,
+        hideLabelsTooltip: hideLabelsTooltip,
         quickViewDescriptionLabel: quickViewDescriptionLabel,
         quickViewNoDescriptionLabel: quickViewNoDescriptionLabel,
         quickViewConnectionsLabel: quickViewConnectionsLabel,

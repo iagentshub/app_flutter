@@ -18,6 +18,7 @@ import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
+import '../../../shared/widgets/token_usage_badge.dart';
 import '../widgets/chat_message_bubble.dart';
 
 part '../dialogs/connection_preference_dialog.dart';
@@ -467,6 +468,19 @@ class _ChatPageState extends State<ChatPage> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  subtitle: item.tokensIn + item.tokensOut > 0
+                      ? Align(
+                          alignment: Alignment.centerLeft,
+                          child: TokenUsageBadge(
+                            tokensIn: item.tokensIn,
+                            tokensOut: item.tokensOut,
+                            tooltip: _tx(
+                              'agents.tokens_tooltip',
+                              'Tokens consumidos',
+                            ),
+                          ),
+                        )
+                      : null,
                   onTap: () {
                     Navigator.of(context).maybePop();
                     _selectConversation(item.id);
@@ -575,7 +589,6 @@ class _ChatPageState extends State<ChatPage> {
       ],
     );
   }
-
 }
 
 /// Permite a este usuario elegir su propia conexión/modelo para un agente,

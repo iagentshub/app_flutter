@@ -9,6 +9,7 @@ import '../../../shared/widgets/inactive_badge.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/origin_badge.dart';
 import '../../../shared/widgets/resource_graph_button.dart';
+import '../../../shared/widgets/token_usage_badge.dart';
 
 typedef AgentCardText = String Function(String path, String fallback);
 
@@ -29,6 +30,7 @@ class AgentCard extends StatelessWidget {
     this.skillNames = const {},
     this.knowledgeNames = const {},
     this.promptNames = const {},
+    this.connectionNames = const {},
     this.onToggleActive,
     super.key,
   });
@@ -41,6 +43,10 @@ class AgentCard extends StatelessWidget {
   final Map<String, String> skillNames;
   final Map<String, String> knowledgeNames;
   final Map<String, String> promptNames;
+
+  /// id de conexión → nombre del modelo (ej. "gpt-4o") — igual que
+  /// [skillNames], sin esto la card mostraría el id crudo de la conexión.
+  final Map<String, String> connectionNames;
   final VoidCallback onChat;
   final ValueChanged<String> onExport;
   final VoidCallback onShare;
@@ -67,7 +73,7 @@ class AgentCard extends StatelessWidget {
       nodes.add(
         GraphNode(
           id: 'connection',
-          label: item.connectionId,
+          label: connectionNames[item.connectionId] ?? item.connectionId,
           type: 'connection',
         ),
       );
@@ -121,7 +127,9 @@ class AgentCard extends StatelessWidget {
     final subtitleParts = <String>[item.agentType];
     if (item.model.isNotEmpty) subtitleParts.add(item.model);
     if (item.connectionId.isNotEmpty) {
-      subtitleParts.add('conn: ${item.connectionId}');
+      subtitleParts.add(
+        connectionNames[item.connectionId] ?? item.connectionId,
+      );
     }
     final graphNodes = _graphNodes();
 
@@ -168,6 +176,11 @@ class AgentCard extends StatelessWidget {
                   shared: item.shared,
                   ownerLabel: tx('common.owner', 'Propietario'),
                   linkedLabel: tx('common.linked', 'Enlazado'),
+                ),
+                TokenUsageBadge(
+                  tokensIn: item.tokensIn,
+                  tokensOut: item.tokensOut,
+                  tooltip: tx('agents.tokens_tooltip', 'Tokens consumidos'),
                 ),
               ],
             ),
@@ -233,7 +246,15 @@ class AgentCard extends StatelessWidget {
                     'graph.sort_hierarchy_horizontal',
                     'Jerárquico (izquierda-derecha)',
                   ),
-                  sortRadialLabel: tx('graph.sort_radial', 'Radial (círculos)'),
+                  sortGalaxyLabel: tx('graph.sort_galaxy', 'Galaxia'),
+                  showLabelsTooltip: tx(
+                    'graph.show_labels_tooltip',
+                    'Mostrar nombres',
+                  ),
+                  hideLabelsTooltip: tx(
+                    'graph.hide_labels_tooltip',
+                    'Ocultar nombres',
+                  ),
                   quickViewDescriptionLabel: tx(
                     'graph.quick_view_description',
                     'Descripción',

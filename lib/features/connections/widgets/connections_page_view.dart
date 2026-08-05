@@ -152,14 +152,8 @@ extension _ConnectionsPageView on _ConnectionsPageState {
                         ),
                       )
                     else
-                      SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        sliver: ResponsiveSliverMasonryGrid(
-                          itemCount: filteredConnections.length,
-                          itemBuilder: (context, index) =>
-                              _buildConnectionCard(filteredConnections[index]),
-                        ),
-                      ),
+                      for (final group in _connectionsByProvider)
+                        ..._buildProviderGroupSlivers(group.key, group.value),
                   ],
                 ),
               );
@@ -170,14 +164,43 @@ extension _ConnectionsPageView on _ConnectionsPageState {
     );
   }
 
+  List<Widget> _buildProviderGroupSlivers(
+    String providerLabel,
+    List<ConnectionItem> items,
+  ) {
+    return [
+      SliverPadding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+        sliver: SliverToBoxAdapter(
+          child: Text(
+            '$providerLabel (${items.length})',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ),
+      SliverPadding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+        sliver: ResponsiveSliverMasonryGrid(
+          itemCount: items.length,
+          itemBuilder: (context, index) => _buildConnectionCard(items[index]),
+        ),
+      ),
+    ];
+  }
+
   Widget _buildConnectionCard(ConnectionItem item) {
     return ConnectionCard(
       item: item,
       tx: _tx,
+      providerLabel: _providerLabel(item.type),
       onTest: () => _testConnection(item),
       onShare: () => _shareConnection(item),
       onEdit: () => _openEditDialog(item),
       onDelete: () => _deleteConnection(item),
+      testState: _testStatus[item.id],
+      testMessage: _testMessages[item.id],
       onToggleActive: (item.readOnly || item.isVirtual)
           ? null
           : () => _toggleConnectionActive(item),
