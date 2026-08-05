@@ -4,7 +4,9 @@
     "sort_tooltip": "Sort",
     "sort_hierarchy_vertical": "Hierarchical (top-down)",
     "sort_hierarchy_horizontal": "Hierarchical (left-right)",
-    "sort_radial": "Radial (circles)",
+    "sort_galaxy": "Galaxy",
+    "show_labels_tooltip": "Show names",
+    "hide_labels_tooltip": "Hide names",
     "quick_view_description": "Description",
     "quick_view_no_description": "No description",
     "quick_view_connections": "Connections",
@@ -132,6 +134,7 @@
     "avatar_too_large": "The image can't be larger than 2 MB"
   },
   "agents": {
+    "tokens_tooltip": "Tokens consumed",
     "new": "New agent",
     "search_hint": "Search agent",
     "count_label": "Agents",
@@ -252,6 +255,7 @@
     "done_action": "Done"
   },
   "connections": {
+    "tokens_tooltip": "Tokens consumed",
     "new": "New connection",
     "search_hint": "Search connection",
     "provider_label": "Provider",
@@ -296,6 +300,7 @@
     "summary_knowledge": "knowledge",
     "summary_created": "created",
     "summary_updated": "updated",
+    "summary_deleted": "deleted",
     "sync_done": "Sync complete",
     "sync_partial": "Sync completed with errors",
     "github_connect_action": "Connect with GitHub",
@@ -313,6 +318,8 @@
     "sync_dialog_select_all": "Select all",
     "sync_dialog_select_none": "None",
     "sync_dialog_confirm": "Sync selected",
+    "sync_dialog_search_hint": "Search model...",
+    "sync_dialog_no_matches": "No models match your search",
     "sync_dialog_already_synced_hint": "Already synced",
     "unlink_confirm_title": "Unlink account",
     "unlink_confirm_body": "Are you sure you want to unlink this account? Connections already created won't be removed.",

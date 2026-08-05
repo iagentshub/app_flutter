@@ -18,7 +18,9 @@ Future<void> showResourceGraphDialog({
   required String sortTooltip,
   required String sortHierarchyVerticalLabel,
   required String sortHierarchyHorizontalLabel,
-  required String sortRadialLabel,
+  required String sortGalaxyLabel,
+  required String showLabelsTooltip,
+  required String hideLabelsTooltip,
   required String quickViewDescriptionLabel,
   required String quickViewNoDescriptionLabel,
   required String quickViewConnectionsLabel,
@@ -38,7 +40,9 @@ Future<void> showResourceGraphDialog({
       sortTooltip: sortTooltip,
       sortHierarchyVerticalLabel: sortHierarchyVerticalLabel,
       sortHierarchyHorizontalLabel: sortHierarchyHorizontalLabel,
-      sortRadialLabel: sortRadialLabel,
+      sortGalaxyLabel: sortGalaxyLabel,
+      showLabelsTooltip: showLabelsTooltip,
+      hideLabelsTooltip: hideLabelsTooltip,
       quickViewDescriptionLabel: quickViewDescriptionLabel,
       quickViewNoDescriptionLabel: quickViewNoDescriptionLabel,
       quickViewConnectionsLabel: quickViewConnectionsLabel,
@@ -59,7 +63,9 @@ class _ResourceGraphDialogContent extends StatefulWidget {
     required this.sortTooltip,
     required this.sortHierarchyVerticalLabel,
     required this.sortHierarchyHorizontalLabel,
-    required this.sortRadialLabel,
+    required this.sortGalaxyLabel,
+    required this.showLabelsTooltip,
+    required this.hideLabelsTooltip,
     required this.quickViewDescriptionLabel,
     required this.quickViewNoDescriptionLabel,
     required this.quickViewConnectionsLabel,
@@ -76,7 +82,9 @@ class _ResourceGraphDialogContent extends StatefulWidget {
   final String sortTooltip;
   final String sortHierarchyVerticalLabel;
   final String sortHierarchyHorizontalLabel;
-  final String sortRadialLabel;
+  final String sortGalaxyLabel;
+  final String showLabelsTooltip;
+  final String hideLabelsTooltip;
   final String quickViewDescriptionLabel;
   final String quickViewNoDescriptionLabel;
   final String quickViewConnectionsLabel;
@@ -89,11 +97,33 @@ class _ResourceGraphDialogContent extends StatefulWidget {
 
 class _ResourceGraphDialogContentState
     extends State<_ResourceGraphDialogContent> {
+  // Grafos grandes se abren directamente en modo galaxia (con nombres
+  // ocultos) porque los layouts jerárquicos/radiales quedan amontonados a
+  // partir de este tamaño; grafos pequeños siguen abriendo como antes.
+  static const _autoGalaxyThreshold = 60;
+
   String _query = '';
-  final _sortController = GraphSortController();
+  late final GraphSortController _sortController;
+  late bool _showLabels;
+
+  @override
+  void initState() {
+    super.initState();
+    final initialMode = widget.nodes.length > _autoGalaxyThreshold
+        ? GraphSortMode.galaxy
+        : GraphSortMode.hierarchyVertical;
+    _sortController = GraphSortController(initialMode);
+    _showLabels = initialMode != GraphSortMode.galaxy;
+    // El fondo del diálogo (ver `build`) depende del modo activo, así que
+    // hay que reconstruir cuando cambie, no solo cuando se reabra el menú.
+    _sortController.addListener(_handleSortModeChanged);
+  }
+
+  void _handleSortModeChanged() => setState(() {});
 
   @override
   void dispose() {
+    _sortController.removeListener(_handleSortModeChanged);
     _sortController.dispose();
     super.dispose();
   }
@@ -111,9 +141,9 @@ class _ResourceGraphDialogContentState
         Icons.align_horizontal_left,
       ),
       _sortMenuItem(
-        GraphSortMode.radial,
-        widget.sortRadialLabel,
-        Icons.hub_outlined,
+        GraphSortMode.galaxy,
+        widget.sortGalaxyLabel,
+        Icons.blur_on,
       ),
     ];
   }
@@ -141,8 +171,14 @@ class _ResourceGraphDialogContentState
   @override
   Widget build(BuildContext context) {
     // Pantalla completa real (sin márgenes ni esquinas redondeadas de
-    // diálogo) para aprovechar todo el espacio al explorar el grafo.
+    // diálogo) para aprovechar todo el espacio al explorar el grafo. En
+    // modo galaxia, el fondo del diálogo entero (incluido el margen
+    // alrededor del lienzo) usa el mismo negro que el resto de la app,
+    // para que no quede un marco de un tono distinto rodeando el grafo.
     return Dialog.fullscreen(
+      backgroundColor: _sortController.mode == GraphSortMode.galaxy
+          ? Theme.of(context).scaffoldBackgroundColor
+          : null,
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -187,6 +223,16 @@ class _ResourceGraphDialogContentState
                   ),
                 ),
                 const SizedBox(width: 8),
+                IconButton(
+                  tooltip: _showLabels
+                      ? widget.hideLabelsTooltip
+                      : widget.showLabelsTooltip,
+                  icon: Icon(
+                    _showLabels ? Icons.label : Icons.label_off_outlined,
+                  ),
+                  onPressed: () => setState(() => _showLabels = !_showLabels),
+                ),
+                const SizedBox(width: 8),
                 PopupMenuButton<GraphSortMode>(
                   tooltip: widget.sortTooltip,
                   icon: const Icon(Icons.sort),
@@ -203,6 +249,7 @@ class _ResourceGraphDialogContentState
                 rootId: widget.rootId,
                 emptyLabel: widget.emptyLabel,
                 highlightQuery: _query,
+                showLabels: _showLabels,
                 sortController: _sortController,
                 quickViewDescriptionLabel: widget.quickViewDescriptionLabel,
                 quickViewNoDescriptionLabel: widget.quickViewNoDescriptionLabel,

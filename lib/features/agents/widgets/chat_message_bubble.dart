@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../../models/chat/chat_models.dart';
 
+String _fmtTime(DateTime dt) {
+  final local = dt.toLocal();
+  String two(int v) => v.toString().padLeft(2, '0');
+  return '${two(local.hour)}:${two(local.minute)}';
+}
+
 /// Burbuja de un mensaje de chat (usuario o asistente), con indicador de
 /// "pensando" mientras llega la respuesta en streaming y el contador de
 /// tokens de entrada/salida en las respuestas del asistente.
@@ -50,6 +56,13 @@ class ChatMessageBubble extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   '↑ ${message.tokensIn ?? 0} ↓ ${message.tokensOut ?? 0} tokens',
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+              ],
+              if (!thinking && message.createdAt != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  _fmtTime(message.createdAt!),
                   style: Theme.of(context).textTheme.labelSmall,
                 ),
               ],

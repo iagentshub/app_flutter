@@ -459,9 +459,14 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
                       'graph.sort_hierarchy_horizontal',
                       'Jerárquico (izquierda-derecha)',
                     ),
-                    graphSortRadialLabel: _tx(
-                      'graph.sort_radial',
-                      'Radial (círculos)',
+                    graphSortGalaxyLabel: _tx('graph.sort_galaxy', 'Galaxia'),
+                    graphShowLabelsTooltip: _tx(
+                      'graph.show_labels_tooltip',
+                      'Mostrar nombres',
+                    ),
+                    graphHideLabelsTooltip: _tx(
+                      'graph.hide_labels_tooltip',
+                      'Ocultar nombres',
                     ),
                     graphQuickViewDescriptionLabel: _tx(
                       'graph.quick_view_description',

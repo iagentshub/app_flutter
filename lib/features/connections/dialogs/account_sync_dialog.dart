@@ -21,15 +21,41 @@ class _AccountSyncDialog extends StatefulWidget {
 
 class _AccountSyncDialogState extends State<_AccountSyncDialog> {
   late Set<String> _selected;
+  final _searchController = TextEditingController();
+  String _query = '';
 
   @override
   void initState() {
     super.initState();
     _selected = widget.models.toSet();
+    _searchController.addListener(() {
+      setState(() => _query = _searchController.text.trim().toLowerCase());
+    });
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<String> get _filteredModels {
+    if (_query.isEmpty) return widget.models;
+    return widget.models
+        .where((model) => model.toLowerCase().contains(_query))
+        .toList();
+  }
+
+  /// Con búsqueda activa, "todo"/"ninguno" solo afectan a lo visible en ese
+  /// momento — permite componer varias búsquedas para armar la selección.
   void _selectAll(bool value) {
-    setState(() => _selected = value ? widget.models.toSet() : {});
+    setState(() {
+      if (value) {
+        _selected = {..._selected, ..._filteredModels};
+      } else {
+        _selected = _selected.difference(_filteredModels.toSet());
+      }
+    });
   }
 
   @override
@@ -45,6 +71,26 @@ class _AccountSyncDialogState extends State<_AccountSyncDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (widget.models.length > 8) ...[
+              TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  isDense: true,
+                  prefixIcon: const Icon(Icons.search, size: 20),
+                  hintText: widget.tx(
+                    'providers.sync_dialog_search_hint',
+                    'Buscar modelo...',
+                  ),
+                  suffixIcon: _query.isEmpty
+                      ? null
+                      : AppIconButton(
+                          icon: const Icon(Icons.clear, size: 18),
+                          onPressed: _searchController.clear,
+                        ),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
             Row(
               children: [
                 TertiaryButton(
@@ -62,38 +108,59 @@ class _AccountSyncDialogState extends State<_AccountSyncDialog> {
                     widget.tx('providers.sync_dialog_select_none', 'Ninguno'),
                   ),
                 ),
+                const Spacer(),
+                Text(
+                  '${_selected.length}/${widget.models.length}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
               ],
             ),
             Flexible(
-              child: ListView(
-                shrinkWrap: true,
-                children: [
-                  for (final model in widget.models)
-                    CheckboxListTile(
-                      contentPadding: EdgeInsets.zero,
-                      value: _selected.contains(model),
-                      title: Text(model),
-                      subtitle: widget.alreadySynced.contains(model)
-                          ? Text(
-                              widget.tx(
-                                'providers.sync_dialog_already_synced_hint',
-                                'Ya sincronizado',
-                              ),
-                              style: const TextStyle(fontSize: 11),
-                            )
-                          : null,
-                      onChanged: (value) {
-                        setState(() {
-                          if (value == true) {
-                            _selected = {..._selected, model};
-                          } else {
-                            _selected = {..._selected}..remove(model);
-                          }
-                        });
-                      },
+              child: _filteredModels.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Text(
+                        widget.tx(
+                          'providers.sync_dialog_no_matches',
+                          'Ningún modelo coincide con la búsqueda',
+                        ),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    )
+                  : ListView(
+                      shrinkWrap: true,
+                      children: [
+                        for (final model in _filteredModels)
+                          CheckboxListTile(
+                            contentPadding: EdgeInsets.zero,
+                            value: _selected.contains(model),
+                            title: Text(model),
+                            subtitle: widget.alreadySynced.contains(model)
+                                ? Text(
+                                    widget.tx(
+                                      'providers.sync_dialog_already_synced_hint',
+                                      'Ya sincronizado',
+                                    ),
+                                    style: const TextStyle(fontSize: 11),
+                                  )
+                                : null,
+                            onChanged: (value) {
+                              setState(() {
+                                if (value == true) {
+                                  _selected = {..._selected, model};
+                                } else {
+                                  _selected = {..._selected}..remove(model);
+                                }
+                              });
+                            },
+                          ),
+                      ],
                     ),
-                ],
-              ),
             ),
           ],
         ),

@@ -29,7 +29,9 @@ class WorkflowCard extends StatelessWidget {
     required this.graphSortTooltip,
     required this.graphSortHierarchyVerticalLabel,
     required this.graphSortHierarchyHorizontalLabel,
-    required this.graphSortRadialLabel,
+    required this.graphSortGalaxyLabel,
+    required this.graphShowLabelsTooltip,
+    required this.graphHideLabelsTooltip,
     required this.graphQuickViewDescriptionLabel,
     required this.graphQuickViewNoDescriptionLabel,
     required this.graphQuickViewConnectionsLabel,
@@ -64,7 +66,9 @@ class WorkflowCard extends StatelessWidget {
   final String graphSortTooltip;
   final String graphSortHierarchyVerticalLabel;
   final String graphSortHierarchyHorizontalLabel;
-  final String graphSortRadialLabel;
+  final String graphSortGalaxyLabel;
+  final String graphShowLabelsTooltip;
+  final String graphHideLabelsTooltip;
   final String graphQuickViewDescriptionLabel;
   final String graphQuickViewNoDescriptionLabel;
   final String graphQuickViewConnectionsLabel;
@@ -295,7 +299,9 @@ class WorkflowCard extends StatelessWidget {
                   sortHierarchyVerticalLabel: graphSortHierarchyVerticalLabel,
                   sortHierarchyHorizontalLabel:
                       graphSortHierarchyHorizontalLabel,
-                  sortRadialLabel: graphSortRadialLabel,
+                  sortGalaxyLabel: graphSortGalaxyLabel,
+                  showLabelsTooltip: graphShowLabelsTooltip,
+                  hideLabelsTooltip: graphHideLabelsTooltip,
                   quickViewDescriptionLabel: graphQuickViewDescriptionLabel,
                   quickViewNoDescriptionLabel: graphQuickViewNoDescriptionLabel,
                   quickViewConnectionsLabel: graphQuickViewConnectionsLabel,

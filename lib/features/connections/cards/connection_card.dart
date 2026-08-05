@@ -7,6 +7,8 @@ import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/inactive_badge.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/origin_badge.dart';
+import '../../../shared/widgets/status_dot.dart';
+import '../../../shared/widgets/token_usage_badge.dart';
 
 typedef ConnectionCardText = String Function(String path, String fallback);
 
@@ -14,10 +16,13 @@ class ConnectionCard extends StatelessWidget {
   const ConnectionCard({
     required this.item,
     required this.tx,
+    required this.providerLabel,
     required this.onTest,
     required this.onShare,
     required this.onEdit,
     required this.onDelete,
+    this.testState,
+    this.testMessage,
     this.onToggleActive,
     this.onSyncHub,
     super.key,
@@ -25,10 +30,23 @@ class ConnectionCard extends StatelessWidget {
 
   final ConnectionItem item;
   final ConnectionCardText tx;
+
+  /// Nombre legible del proveedor (label de `/api/connections/providers`,
+  /// ej. "OpenAI") — la card ya no está agrupada por tipo internamente, la
+  /// agrupación la hace la página, pero cada card sigue mostrando su
+  /// proveedor como subtítulo.
+  final String providerLabel;
   final VoidCallback onTest;
   final VoidCallback onShare;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+
+  /// Resultado del último test lanzado desde esta card (o mientras está en
+  /// curso). Null = aún no se ha probado en esta sesión — no se pinta punto.
+  final StatusDotState? testState;
+
+  /// Mensaje del último test (tooltip del punto) — vacío si aún no se probó.
+  final String? testMessage;
 
   /// Activar/desactivar (borrado suave). Null = acción no disponible.
   final VoidCallback? onToggleActive;
@@ -39,10 +57,10 @@ class ConnectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final metaParts = <String>[item.type];
-    if (item.model.isNotEmpty) metaParts.add(item.model);
-    if (item.host.isNotEmpty) metaParts.add(item.host);
-    if (item.url.isNotEmpty) metaParts.add(item.url);
+    final title = item.model.isNotEmpty ? item.model : item.name;
+    final hostOrUrl = item.host.isNotEmpty
+        ? item.host
+        : (item.url.isNotEmpty ? item.url : '');
 
     final card = Card(
       margin: EdgeInsets.zero,
@@ -54,9 +72,21 @@ class ConnectionCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (testState != null) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(top: 5),
+                    child: Tooltip(
+                      message: testMessage?.isNotEmpty == true
+                          ? testMessage!
+                          : tx('connections.test', 'Test'),
+                      child: StatusDot(state: testState!, size: 9),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 Expanded(
                   child: Text(
-                    item.name,
+                    title,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -69,8 +99,24 @@ class ConnectionCard extends StatelessWidget {
                 ],
               ],
             ),
-            const SizedBox(height: 6),
-            Text(metaParts.join(' · ')),
+            const SizedBox(height: 4),
+            Text(
+              providerLabel,
+              style: TextStyle(
+                fontSize: 13,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            if (hostOrUrl.isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                hostOrUrl,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
             LabelChipsRow(
               labels: [
@@ -83,6 +129,14 @@ class ConnectionCard extends StatelessWidget {
                   shared: item.shared,
                   ownerLabel: tx('common.owner', 'Propietario'),
                   linkedLabel: tx('common.linked', 'Enlazado'),
+                ),
+                TokenUsageBadge(
+                  tokensIn: item.tokensIn,
+                  tokensOut: item.tokensOut,
+                  tooltip: tx(
+                    'connections.tokens_tooltip',
+                    'Tokens consumidos',
+                  ),
                 ),
               ],
             ),

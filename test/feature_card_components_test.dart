@@ -48,10 +48,7 @@ void main() {
     );
 
     expect(find.text('Coordinator'), findsOneWidget);
-    expect(
-      find.text('orchestrator · model-1 · conn: connection-1'),
-      findsOneWidget,
-    );
+    expect(find.text('orchestrator · model-1 · connection-1'), findsOneWidget);
 
     await tester.tap(find.byTooltip('Editar'));
     expect(edited, isTrue);
@@ -75,6 +72,7 @@ void main() {
         ConnectionCard(
           item: item,
           tx: _tx,
+          providerLabel: 'Test provider',
           onTest: () => tested = true,
           onShare: () {},
           onEdit: () {},

@@ -9,6 +9,8 @@ class AgentItem extends ResourceItem {
   String get connectionId => raw['connection_id'] as String? ?? '';
   bool get useMemory => raw['use_memory'] == true;
   String get memoryFile => raw['memory_file'] as String? ?? '';
+  int get tokensIn => (raw['tokens_in'] as num?)?.toInt() ?? 0;
+  int get tokensOut => (raw['tokens_out'] as num?)?.toInt() ?? 0;
 
   List<String> get skills {
     final value = raw['skills'];
