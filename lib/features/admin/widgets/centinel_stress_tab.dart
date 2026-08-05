@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/app_theme.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 
 import '../../../core/network/api_error.dart';
@@ -548,17 +549,15 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
   }
 
   Widget _capNotice() {
+    final surface = Theme.of(context).colorScheme.surface;
+    final iconColor = AppTheme.statusColor(Colors.orange, surface);
     return Card(
       color: Colors.orange.withValues(alpha: 0.12),
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
-            const Icon(
-              Icons.warning_amber_outlined,
-              color: Colors.orange,
-              size: 18,
-            ),
+            Icon(Icons.warning_amber_outlined, color: iconColor, size: 18),
             const SizedBox(width: 8),
             Expanded(
               child: Text(

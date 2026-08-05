@@ -133,13 +133,15 @@ extension _CentinelProbeResults on _CentinelProbeTabState {
   }
 
   Widget _verdictBanner(Color color, String text) {
+    final surface = Theme.of(context).colorScheme.surface;
+    final textColor = AppTheme.statusColor(color, surface);
     return Card(
       color: color.withValues(alpha: 0.12),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Text(
           text,
-          style: TextStyle(color: color, fontWeight: FontWeight.w600),
+          style: TextStyle(color: textColor, fontWeight: FontWeight.w600),
         ),
       ),
     );

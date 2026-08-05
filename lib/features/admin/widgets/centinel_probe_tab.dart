@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/app_theme.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 
 import '../../../core/network/api_error.dart';

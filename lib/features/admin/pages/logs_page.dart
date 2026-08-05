@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/app_theme.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 
 import '../../../core/network/api_client.dart';
@@ -326,16 +327,13 @@ class _LogsPageViewState extends State<LogsPageView> {
   }
 
   Color _levelColor(String level) {
-    switch (level) {
-      case 'ERROR':
-        return Colors.red.shade700;
-      case 'WARNING':
-        return Colors.orange.shade800;
-      case 'OK':
-        return Colors.green.shade700;
-      default:
-        return Colors.grey.shade600;
-    }
+    final base = switch (level) {
+      'ERROR' => Colors.red.shade700,
+      'WARNING' => Colors.orange.shade800,
+      'OK' => Colors.green.shade700,
+      _ => Colors.grey.shade600,
+    };
+    return AppTheme.statusColor(base, Theme.of(context).colorScheme.surface);
   }
 
   @override

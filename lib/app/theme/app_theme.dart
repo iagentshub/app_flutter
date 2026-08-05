@@ -25,6 +25,12 @@ abstract final class AppTheme {
       ? _black
       : _white;
 
+  /// Variante de [color] que supera 4.5:1 contra [surface], para colores de
+  /// estado que se pintan como texto/icono sobre `scheme.surface` en vez de
+  /// vivir en el `ColorScheme`.
+  static Color statusColor(Color color, Color surface) =>
+      _accessibleAccent(color, surface);
+
   static Color _accessibleAccent(Color accentColor, Color surface) {
     // `primary` también se usa como foreground seleccionado en navegación y
     // filtros; debe contrastar tanto con la superficie como con `onPrimary`.
