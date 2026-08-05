@@ -7,10 +7,12 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../features/connections/repositories/connections_repository.dart';
+import '../../../features/knowledge/repositories/knowledge_repository.dart';
 import '../../../features/knowledge/repositories/prompts_repository.dart';
 import '../../../models/agents/agent_models.dart';
 import '../../../models/chat/chat_models.dart';
 import '../../../models/connections/connection_models.dart';
+import '../../../models/knowledge/knowledge_models.dart';
 import '../../../models/prompts/prompt_models.dart';
 import '../repositories/agents_repository.dart';
 import '../repositories/chat_repository.dart';
@@ -19,6 +21,7 @@ import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/token_usage_badge.dart';
+import '../widgets/chat_composer.dart';
 import '../widgets/chat_message_bubble.dart';
 
 part '../dialogs/connection_preference_dialog.dart';
@@ -47,18 +50,25 @@ class _ChatPageState extends State<ChatPage> {
   late final AgentsRepository _agentsRepository;
   late final ConnectionsRepository _connectionsRepository;
   late final PromptsRepository _promptsRepository;
+  late final KnowledgeRepository _knowledgeRepository;
   late final TranslatedTexts _t;
   final _textController = TextEditingController();
   final _scrollController = ScrollController();
 
-  /// Ancla el overlay de sugerencias `@alias` justo debajo del composer.
+  /// Ancla el overlay de sugerencias `@` justo debajo del composer.
   final _mentionLink = LayerLink();
   OverlayEntry? _mentionOverlay;
-  List<PromptItem> _mentionMatches = const [];
+  List<PromptItem> _promptMentionMatches = const [];
+  List<KnowledgeItem> _knowledgeMentionMatches = const [];
 
-  /// Universo completo de aliases sugeribles en este chat: solo los prompts
-  /// vinculados a `widget.agent` (no todos los prompts del usuario).
-  List<PromptItem> _agentPrompts = const [];
+  /// Universo completo de menciones sugeribles: todos los prompts y
+  /// conocimientos accesibles al usuario (no solo los vinculados al agente).
+  List<PromptItem> _allPrompts = const [];
+  List<KnowledgeItem> _allKnowledge = const [];
+
+  /// Conocimientos adjuntados puntualmente a este mensaje vía `@` — se
+  /// mandan al enviar y se limpian después, sin quedar vinculados al agente.
+  List<KnowledgeItem> _attachedKnowledge = [];
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
@@ -80,13 +90,14 @@ class _ChatPageState extends State<ChatPage> {
     _agentsRepository = AgentsRepository(apiClient: widget.apiClient);
     _connectionsRepository = ConnectionsRepository(apiClient: widget.apiClient);
     _promptsRepository = PromptsRepository(apiClient: widget.apiClient);
+    _knowledgeRepository = KnowledgeRepository(apiClient: widget.apiClient);
     _t = TranslatedTexts(
       localeController: widget.localeController,
       namespace: 'resources',
     )..addListener(_onTextsChanged);
     _textController.addListener(_onComposerTextChanged);
     _bootstrap();
-    _loadAgentPrompts();
+    _loadMentionSources();
   }
 
   void _onTextsChanged() {
@@ -250,12 +261,17 @@ class _ChatPageState extends State<ChatPage> {
 
     _hideMentionOverlay();
     _textController.clear();
+    final attachedKnowledgeIds = _attachedKnowledge.map((k) => k.id).toList();
     setState(() {
       _error = null;
-      _messages = [..._messages, ChatMessage(role: 'user', content: text)];
+      _messages = [
+        ..._messages,
+        ChatMessage(role: 'user', content: text, createdAt: DateTime.now()),
+      ];
       _streaming = true;
       _thinking = true;
       _streamingReply = '';
+      _attachedKnowledge = [];
     });
     _scrollToEnd();
 
@@ -267,6 +283,7 @@ class _ChatPageState extends State<ChatPage> {
           widget.agent.id,
           messages: history,
           conversationId: _conversationId,
+          attachedKnowledgeIds: attachedKnowledgeIds,
         )
         .listen(
           (event) {
@@ -288,6 +305,7 @@ class _ChatPageState extends State<ChatPage> {
                       content: reply,
                       tokensIn: event.tokensIn,
                       tokensOut: event.tokensOut,
+                      createdAt: DateTime.now(),
                     ),
                   ];
                 }
@@ -547,44 +565,20 @@ class _ChatPageState extends State<ChatPage> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(_error!, style: TextStyle(color: Colors.red.shade700)),
           ),
-        SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: CompositedTransformTarget(
-                    link: _mentionLink,
-                    child: TextField(
-                      controller: _textController,
-                      minLines: 1,
-                      maxLines: 5,
-                      textInputAction: TextInputAction.send,
-                      decoration: const InputDecoration(
-                        hintText: 'Escribe un mensaje…',
-                        border: OutlineInputBorder(),
-                      ),
-                      onSubmitted: (_) => _send(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                if (_streaming)
-                  AppIconButton.filledTonal(
-                    onPressed: _stop,
-                    tooltip: _tx('agents.chat.stop', 'Detener respuesta'),
-                    icon: const Icon(Icons.stop),
-                  )
-                else
-                  AppIconButton.filled(
-                    onPressed: _send,
-                    tooltip: _tx('agents.chat.send', 'Enviar mensaje'),
-                    icon: const Icon(Icons.send),
-                  ),
-              ],
-            ),
-          ),
+        ChatComposer(
+          textController: _textController,
+          mentionLink: _mentionLink,
+          attachedKnowledge: _attachedKnowledge,
+          onRemoveKnowledge: (id) => setState(() {
+            _attachedKnowledge = _attachedKnowledge
+                .where((k) => k.id != id)
+                .toList();
+          }),
+          streaming: _streaming,
+          onSend: _send,
+          onStop: _stop,
+          sendTooltip: _tx('agents.chat.send', 'Enviar mensaje'),
+          stopTooltip: _tx('agents.chat.stop', 'Detener respuesta'),
         ),
       ],
     );

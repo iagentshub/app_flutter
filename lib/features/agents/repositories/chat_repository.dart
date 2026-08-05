@@ -70,6 +70,7 @@ class ChatRepository extends ApiRepository {
     String agentId, {
     required List<ChatMessage> messages,
     String? conversationId,
+    List<String>? attachedKnowledgeIds,
   }) async* {
     final lines = apiClient.postStream(
       '/api/agents/${Uri.encodeComponent(agentId)}/chat',
@@ -78,6 +79,8 @@ class ChatRepository extends ApiRepository {
         'messages': messages.map((m) => m.toJson()).toList(),
         if (conversationId != null && conversationId.isNotEmpty)
           'conversation_id': conversationId,
+        if (attachedKnowledgeIds != null && attachedKnowledgeIds.isNotEmpty)
+          'attached_knowledge_ids': attachedKnowledgeIds,
       },
     );
 

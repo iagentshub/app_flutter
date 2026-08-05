@@ -29,12 +29,14 @@ class ChatMessage {
     required this.content,
     this.tokensIn,
     this.tokensOut,
+    this.createdAt,
   });
 
   final String role;
   final String content;
   final int? tokensIn;
   final int? tokensOut;
+  final DateTime? createdAt;
 
   bool get isUser => role == 'user';
 
@@ -49,17 +51,24 @@ class ChatMessage {
       content: json['content']?.toString() ?? '',
       tokensIn: (tokensIn ?? 0) > 0 ? tokensIn : null,
       tokensOut: (tokensOut ?? 0) > 0 ? tokensOut : null,
+      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? ''),
     );
   }
 
   Map<String, dynamic> toJson() => {'role': role, 'content': content};
 
-  ChatMessage copyWith({String? content, int? tokensIn, int? tokensOut}) {
+  ChatMessage copyWith({
+    String? content,
+    int? tokensIn,
+    int? tokensOut,
+    DateTime? createdAt,
+  }) {
     return ChatMessage(
       role: role,
       content: content ?? this.content,
       tokensIn: tokensIn ?? this.tokensIn,
       tokensOut: tokensOut ?? this.tokensOut,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 }
