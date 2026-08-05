@@ -268,6 +268,9 @@ class _AppShellState extends State<AppShell> {
                               child: collapsed
                                   ? AppSidebarRail(
                                       isAdmin: isAdmin,
+                                      role:
+                                          widget.sessionController.user?.role ??
+                                          'user',
                                       location: location,
                                       initial: sidebarAvatarInitial(
                                         sidebarVisibleName(

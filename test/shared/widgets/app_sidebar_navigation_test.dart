@@ -60,6 +60,7 @@ void main() {
     required bool isAdmin,
     required ValueChanged<String> onNavigate,
     ValueChanged<String>? onOpenPublicRoute,
+    String? role,
     bool isEnglish = false,
     bool billingEnabled = true,
     double width = 304,
@@ -78,7 +79,7 @@ void main() {
               username: 'jariv',
               displayName: 'Javier',
               email: 'javier@example.com',
-              role: isAdmin ? 'admin' : 'user',
+              role: role ?? (isAdmin ? 'admin' : 'user'),
               isEnglish: isEnglish,
               billingEnabled: billingEnabled,
               tx: tx,
@@ -260,6 +261,17 @@ void main() {
     expect(find.text('Centinel'), findsOneWidget);
   });
 
+  testWidgets('oculta Workflows en el sidebar cuando la sesión es invitado', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      buildNavigation(isAdmin: false, role: 'guest', onNavigate: (_) {}),
+    );
+
+    expect(find.text('Orquestación'), findsNothing);
+    expect(find.text('Dashboard'), findsOneWidget);
+  });
+
   testWidgets(
     'oculta el icono de Precios cuando los planes de suscripción están desactivados',
     (tester) async {
@@ -295,6 +307,7 @@ void main() {
   Widget buildRail({
     required bool isAdmin,
     required ValueChanged<String> onNavigate,
+    String role = 'user',
     VoidCallback? onExpand,
     VoidCallback? onLogout,
   }) {
@@ -306,6 +319,7 @@ void main() {
             width: 72,
             child: AppSidebarRail(
               isAdmin: isAdmin,
+              role: role,
               location: RouteNames.dashboard,
               initial: 'J',
               tx: tx,
@@ -381,5 +395,16 @@ void main() {
     expect(find.byIcon(Icons.admin_panel_settings_outlined), findsOneWidget);
     expect(find.byIcon(Icons.table_rows_outlined), findsOneWidget);
     expect(find.byIcon(Icons.security_outlined), findsOneWidget);
+  });
+
+  testWidgets('oculta Workflows en el rail cuando la sesión es invitado', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      buildRail(isAdmin: false, role: 'guest', onNavigate: (_) {}),
+    );
+
+    expect(find.byIcon(Icons.hub_outlined), findsNothing);
+    expect(find.byIcon(Icons.dashboard_outlined), findsOneWidget);
   });
 }

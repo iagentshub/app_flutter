@@ -8,6 +8,7 @@ class AppSidebarRail extends StatelessWidget {
   const AppSidebarRail({
     super.key,
     required this.isAdmin,
+    required this.role,
     required this.location,
     required this.initial,
     required this.tx,
@@ -17,6 +18,7 @@ class AppSidebarRail extends StatelessWidget {
   });
 
   final bool isAdmin;
+  final String role;
   final String location;
   final String initial;
   final String Function(String key, String fallback) tx;
@@ -30,7 +32,7 @@ class AppSidebarRail extends StatelessWidget {
     final tokens = _SidebarTokens.of(context);
     final expandTooltip = tx('sidebar_show', 'Mostrar menú');
     final groups = <List<_NavItem>>[
-      _mainItems,
+      _visibleMainItems(role),
       _secondaryItems,
       if (isAdmin) _adminItems,
     ];

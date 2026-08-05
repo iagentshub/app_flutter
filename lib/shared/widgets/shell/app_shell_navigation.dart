@@ -68,7 +68,7 @@ class AppSidebarNavigation extends StatelessWidget {
             children: [
               _NavigationSection(
                 label: tx('workspace', 'Espacio de trabajo'),
-                items: _mainItems,
+                items: _visibleMainItems(role),
                 location: location,
                 tx: tx,
                 onNavigate: onNavigate,
@@ -381,6 +381,14 @@ class _NavItem {
   final String labelKey;
   final IconData icon;
 }
+
+/// Workflows queda cerrado al invitado en el backend (`require_auth`, sin
+/// rama `is_guest`): se oculta aquí para no llevarlo a un 403.
+List<_NavItem> _visibleMainItems(String role) => role == 'guest'
+    ? _mainItems
+          .where((item) => item.route != RouteNames.orchestrations)
+          .toList()
+    : _mainItems;
 
 const _mainItems = [
   _NavItem(RouteNames.dashboard, 'dashboard', Icons.dashboard_outlined),

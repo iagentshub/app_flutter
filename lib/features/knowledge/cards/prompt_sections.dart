@@ -150,7 +150,10 @@ extension _PromptSections on _KnowledgePageState {
                   tooltip: _tx('common.edit', 'Editar'),
                   onPressed: () => _openEditPromptDialog(item),
                 ),
-                if (!item.readOnly)
+                // activate/deactivate no tiene rama is_guest en el backend:
+                // sigue cerrado al invitado, así que se oculta aquí también.
+                if (!item.readOnly &&
+                    widget.sessionController.user?.role != 'guest')
                   ActionIconButton(
                     icon: item.isActive
                         ? Icons.toggle_on_outlined
