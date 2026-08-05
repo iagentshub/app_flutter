@@ -119,6 +119,35 @@ void main() {
     expect(selectedRoute, RouteNames.agents);
   });
 
+  testWidgets('Tab recorre la navegación principal y Enter la activa', (
+    tester,
+  ) async {
+    String? selectedRoute;
+    await tester.pumpWidget(
+      buildNavigation(
+        isAdmin: false,
+        onNavigate: (route) => selectedRoute = route,
+      ),
+    );
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    expect(selectedRoute, RouteNames.dashboard);
+
+    selectedRoute = null;
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    expect(selectedRoute, RouteNames.explore);
+
+    selectedRoute = null;
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    expect(selectedRoute, RouteNames.agents);
+  });
+
   testWidgets('abre las páginas públicas de React en español', (tester) async {
     final openedRoutes = <String>[];
     await tester.pumpWidget(

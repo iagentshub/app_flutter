@@ -1,9 +1,14 @@
 import 'package:app_flutter/app/theme/app_theme.dart';
 import 'package:app_flutter/models/profile/profile_models.dart';
+import 'package:app_flutter/shared/state/theme_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  GoogleFonts.config.allowRuntimeFetching = false;
+
   test('selecciona correctamente el modo claro u oscuro', () {
     expect(AppTheme.mode('dark-blue'), ThemeMode.dark);
     expect(AppTheme.mode('light-purple'), ThemeMode.light);
@@ -26,6 +31,37 @@ void main() {
     expect(AppTheme.mode('dusk'), ThemeMode.dark);
   });
 
+  test('todos los acentos mantienen contraste AA en botones rellenos', () {
+    for (final themeId in kThemeIds) {
+      final theme = AppTheme.mode(themeId) == ThemeMode.light
+          ? AppTheme.light(themeId)
+          : AppTheme.dark(themeId);
+      final scheme = theme.colorScheme;
+      final contrast = _contrastRatio(scheme.primary, scheme.onPrimary);
+
+      expect(
+        contrast,
+        greaterThanOrEqualTo(4.5),
+        reason: '$themeId tiene contraste ${contrast.toStringAsFixed(2)}:1',
+      );
+      final surfaceContrast = _contrastRatio(scheme.primary, scheme.surface);
+      expect(
+        surfaceContrast,
+        greaterThanOrEqualTo(4.5),
+        reason:
+            '$themeId usa primary como foreground con contraste '
+            '${surfaceContrast.toStringAsFixed(2)}:1',
+      );
+      expect(
+        theme.filledButtonTheme.style?.foregroundColor?.resolve(
+          const <WidgetState>{},
+        ),
+        scheme.onPrimary,
+        reason: '$themeId debe aplicar onPrimary también a FilledButton',
+      );
+    }
+  });
+
   test('interpreta la política de tema devuelta por el backend', () {
     final settings = ProfileSettings.fromJson({
       'theme': 'light-purple',
@@ -38,4 +74,9 @@ void main() {
     expect(settings.themeConfigurable, isFalse);
     expect(settings.defaultTheme, 'light-purple');
   });
+}
+
+double _contrastRatio(Color a, Color b) {
+  final luminances = [a.computeLuminance(), b.computeLuminance()]..sort();
+  return (luminances.last + 0.05) / (luminances.first + 0.05);
 }

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../labels/label_catalog.dart';
 import 'graph_models.dart';
@@ -125,6 +126,8 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
   // calcula el layout por niveles por defecto para los nodos que aún no
   // tienen una posición manual asignada.
   final Map<String, Offset> _positions = {};
+  final Map<String, FocusNode> _nodeFocusNodes = {};
+  String? _focusedNodeId;
 
   /// Desplazamiento del lienzo dentro del visor del diálogo: arrastrando el
   /// fondo (fuera de cualquier nodo) se exploran grafos más grandes que el
@@ -175,8 +178,29 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     _entrance.dispose();
     _pulse.dispose();
     _blink.dispose();
+    for (final focusNode in _nodeFocusNodes.values) {
+      focusNode.dispose();
+    }
     super.dispose();
   }
+
+  @override
+  void didUpdateWidget(covariant AnimatedResourceGraph oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final currentIds = widget.nodes.map((node) => node.id).toSet();
+    final removedIds = _nodeFocusNodes.keys
+        .where((id) => !currentIds.contains(id))
+        .toList();
+    for (final id in removedIds) {
+      _nodeFocusNodes.remove(id)?.dispose();
+      if (_focusedNodeId == id) _focusedNodeId = null;
+    }
+  }
+
+  FocusNode _focusNodeFor(GraphNode node) => _nodeFocusNodes.putIfAbsent(
+    node.id,
+    () => FocusNode(debugLabel: 'graph-node:${node.id}'),
+  );
 
   bool _matches(GraphNode node) =>
       widget.highlightQuery.isNotEmpty &&
@@ -512,7 +536,14 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     final color = labelColor(node.type);
     final diameter = isRoot ? 72.0 : 54.0;
     final isMatch = _matches(node);
+    final isFocused = _focusedNodeId == node.id;
     final blinkOpacity = isMatch ? (0.35 + 0.65 * _blink.value) : 1.0;
+    final focusColor =
+        ThemeData.estimateBrightnessForColor(color) == Brightness.dark
+        ? Colors.white
+        : Colors.black;
+
+    void openQuickView() => _showQuickView(context, node);
 
     return Positioned(
       left: pos.dx - 46,
@@ -520,69 +551,107 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
       width: 92,
       child: MouseRegion(
         cursor: SystemMouseCursors.grab,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () => _showQuickView(context, node),
-          onPanUpdate: (details) {
-            setState(() {
-              final updated = pos + details.delta / _scale;
-              _positions[node.id] = Offset(
-                updated.dx.clamp(30.0, math.max(30.0, canvasSize.width - 30.0)),
-                updated.dy.clamp(
-                  30.0,
-                  math.max(30.0, canvasSize.height - 30.0),
-                ),
-              );
-            });
-          },
-          child: Opacity(
-            opacity: t,
-            child: Transform.scale(
-              scale: (0.4 + 0.6 * t) * pulse,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Opacity(
-                    opacity: blinkOpacity,
-                    child: Container(
-                      width: diameter,
-                      height: diameter,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: color.withValues(alpha: 0.45),
-                            blurRadius: isRoot ? 18 : 8,
+        child: Semantics(
+          button: true,
+          label: node.label,
+          onTap: openQuickView,
+          excludeSemantics: true,
+          child: FocusableActionDetector(
+            focusNode: _focusNodeFor(node),
+            shortcuts: const <ShortcutActivator, Intent>{
+              SingleActivator(LogicalKeyboardKey.enter): ActivateIntent(),
+              SingleActivator(LogicalKeyboardKey.space): ActivateIntent(),
+            },
+            actions: <Type, Action<Intent>>{
+              ActivateIntent: CallbackAction<ActivateIntent>(
+                onInvoke: (_) {
+                  openQuickView();
+                  return null;
+                },
+              ),
+            },
+            onShowFocusHighlight: (focused) {
+              setState(() {
+                if (focused) {
+                  _focusedNodeId = node.id;
+                } else if (_focusedNodeId == node.id) {
+                  _focusedNodeId = null;
+                }
+              });
+            },
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: openQuickView,
+              onPanUpdate: (details) {
+                setState(() {
+                  final updated = pos + details.delta / _scale;
+                  _positions[node.id] = Offset(
+                    updated.dx.clamp(
+                      30.0,
+                      math.max(30.0, canvasSize.width - 30.0),
+                    ),
+                    updated.dy.clamp(
+                      30.0,
+                      math.max(30.0, canvasSize.height - 30.0),
+                    ),
+                  );
+                });
+              },
+              child: Opacity(
+                opacity: t,
+                child: Transform.scale(
+                  scale: (0.4 + 0.6 * t) * pulse,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Opacity(
+                        opacity: blinkOpacity,
+                        child: Container(
+                          width: diameter,
+                          height: diameter,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                            border: isFocused
+                                ? Border.all(color: focusColor, width: 3)
+                                : null,
+                            boxShadow: [
+                              BoxShadow(
+                                color: color.withValues(alpha: 0.45),
+                                blurRadius: isRoot ? 18 : 8,
+                              ),
+                              if (isMatch)
+                                BoxShadow(
+                                  color: Colors.amber.withValues(alpha: 0.7),
+                                  blurRadius: 20,
+                                  spreadRadius: 3,
+                                ),
+                            ],
                           ),
-                          if (isMatch)
-                            BoxShadow(
-                              color: Colors.amber.withValues(alpha: 0.7),
-                              blurRadius: 20,
-                              spreadRadius: 3,
-                            ),
-                        ],
+                          alignment: Alignment.center,
+                          child: Icon(
+                            iconForType(node.type),
+                            color: Colors.white,
+                            size: isRoot ? 30 : 22,
+                          ),
+                        ),
                       ),
-                      alignment: Alignment.center,
-                      child: Icon(
-                        iconForType(node.type),
-                        color: Colors.white,
-                        size: isRoot ? 30 : 22,
+                      const SizedBox(height: 4),
+                      Text(
+                        node.label,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: isRoot
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    node.label,
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: isRoot ? FontWeight.w700 : FontWeight.w500,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),

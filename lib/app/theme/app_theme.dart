@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -11,6 +13,29 @@ abstract final class AppTheme {
   static const _slate = Color(0xFF64748B);
   static const _black = Color(0xFF0B0B0B);
   static const _white = Color(0xFFFFFFFF);
+
+  static double _contrastRatio(Color a, Color b) {
+    final lighter = math.max(a.computeLuminance(), b.computeLuminance());
+    final darker = math.min(a.computeLuminance(), b.computeLuminance());
+    return (lighter + 0.05) / (darker + 0.05);
+  }
+
+  static Color _onAccent(Color background) =>
+      _contrastRatio(background, _black) >= _contrastRatio(background, _white)
+      ? _black
+      : _white;
+
+  static Color _accessibleAccent(Color accentColor, Color surface) {
+    // `primary` también se usa como foreground seleccionado en navegación y
+    // filtros; debe contrastar tanto con la superficie como con `onPrimary`.
+    if (_contrastRatio(accentColor, surface) >= 4.5) return accentColor;
+    final target = surface.computeLuminance() > 0.5 ? _black : _white;
+    for (var step = 1; step <= 100; step++) {
+      final candidate = Color.lerp(accentColor, target, step / 100)!;
+      if (_contrastRatio(candidate, surface) >= 4.5) return candidate;
+    }
+    return target;
+  }
 
   static String canonicalId(String themeId) => switch (themeId) {
     'noir' => 'dark-red',
@@ -40,10 +65,11 @@ abstract final class AppTheme {
   };
 
   static ThemeData light([String themeId = 'light-red']) {
-    final accentColor = accent(themeId);
+    final accentColor = _accessibleAccent(accent(themeId), _white);
+    final onAccentColor = _onAccent(accentColor);
     final scheme = ColorScheme.light(
       primary: accentColor,
-      onPrimary: _white,
+      onPrimary: onAccentColor,
       secondary: _black,
       onSecondary: _white,
       surface: _white,
@@ -107,7 +133,7 @@ abstract final class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: accentColor,
-          foregroundColor: _white,
+          foregroundColor: onAccentColor,
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -132,10 +158,11 @@ abstract final class AppTheme {
   }
 
   static ThemeData dark([String themeId = 'dark-red']) {
-    final accentColor = accent(themeId);
+    final accentColor = _accessibleAccent(accent(themeId), _black);
+    final onAccentColor = _onAccent(accentColor);
     final scheme = ColorScheme.dark(
       primary: accentColor,
-      onPrimary: _white,
+      onPrimary: onAccentColor,
       secondary: _white,
       onSecondary: _black,
       surface: _black,
@@ -197,7 +224,7 @@ abstract final class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: accentColor,
-          foregroundColor: _white,
+          foregroundColor: onAccentColor,
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(

@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:app_flutter/shared/graph/graph_dialog.dart';
@@ -90,6 +91,26 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('Test workflow'), findsOneWidget);
+
+      // Los nodos deben entrar en el recorrido de Tab y abrir su vista rápida
+      // con teclado, no solo mediante el GestureDetector del puntero.
+      var reachedGraphNode = false;
+      for (var i = 0; i < 20; i++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+        await tester.pump();
+        if (FocusManager.instance.primaryFocus?.debugLabel ==
+            'graph-node:step1') {
+          reachedGraphNode = true;
+          break;
+        }
+      }
+      expect(reachedGraphNode, isTrue);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      expect(find.text('Descripción'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump();
+      expect(find.text('Descripción'), findsNothing);
 
       // Arrastrar un nodo debe mover su posición.
       final nodeFinder = find.text('Agent 1');
