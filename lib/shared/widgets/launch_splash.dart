@@ -29,7 +29,8 @@ class LaunchSplash extends StatefulWidget {
 enum SplashMark { ia, ai }
 
 class _LaunchSplashState extends State<LaunchSplash>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
+  static const _entranceDuration = Duration(milliseconds: 950);
   static const _initialPause = Duration(milliseconds: 140);
   static const _animationDuration = Duration(milliseconds: 1050);
   static const _finalPause = Duration(milliseconds: 260);
@@ -39,6 +40,9 @@ class _LaunchSplashState extends State<LaunchSplash>
   /// defecto — un backend lento o inalcanzable no debe congelar el splash.
   static const _configTimeout = Duration(milliseconds: 400);
 
+  /// Formación inicial del icono: las líneas se trazan y el punto cae antes
+  /// de que arranque el ciclo de morph gobernado por [_controller].
+  late final AnimationController _entranceController;
   late final AnimationController _controller;
 
   /// Un ciclo = una ida y vuelta completa A→B→A del logo.
@@ -49,6 +53,10 @@ class _LaunchSplashState extends State<LaunchSplash>
   @override
   void initState() {
     super.initState();
+    _entranceController = AnimationController(
+      vsync: this,
+      duration: _entranceDuration,
+    );
     _controller = AnimationController(
       vsync: this,
       duration: _animationDuration,
@@ -58,6 +66,7 @@ class _LaunchSplashState extends State<LaunchSplash>
 
   @override
   void dispose() {
+    _entranceController.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -82,6 +91,9 @@ class _LaunchSplashState extends State<LaunchSplash>
   }
 
   Future<void> _runSequence() async {
+    await _entranceController.forward();
+    if (!mounted) return;
+
     await Future<void>.delayed(_initialPause);
     if (!mounted) return;
 
@@ -138,7 +150,11 @@ class _LaunchSplashState extends State<LaunchSplash>
           ),
         ),
         child: Center(
-          child: CoordinatorToIaMark(animation: _controller, mark: _targetMark),
+          child: CoordinatorToIaMark(
+            animation: _controller,
+            entrance: _entranceController,
+            mark: _targetMark,
+          ),
         ),
       ),
     );
@@ -152,11 +168,16 @@ class CoordinatorToIaMark extends StatelessWidget {
   const CoordinatorToIaMark({
     required this.animation,
     required this.mark,
+    Animation<double>? entrance,
     this.size = 124,
     super.key,
-  });
+  }) : entrance = entrance ?? const AlwaysStoppedAnimation<double>(1);
 
   final Animation<double> animation;
+
+  /// Animación de formación inicial del icono (líneas trazándose y punto
+  /// cayendo). Mientras no esté completa, sustituye al morph coordinador↔iA.
+  final Animation<double> entrance;
   final SplashMark mark;
   final double size;
 
@@ -183,14 +204,24 @@ class CoordinatorToIaMark extends StatelessWidget {
             child: ColoredBox(
               color: FncColors.red,
               child: AnimatedBuilder(
-                animation: animation,
-                builder: (context, _) => CustomPaint(
-                  key: const Key('splash-icon-morph'),
-                  painter: CoordinatorToIaPainter(
-                    progress: Curves.easeInOutCubic.transform(animation.value),
-                    mark: mark,
-                  ),
-                ),
+                animation: Listenable.merge([animation, entrance]),
+                builder: (context, _) {
+                  if (entrance.value < 1.0) {
+                    return CustomPaint(
+                      key: const Key('splash-icon-entrance'),
+                      painter: MarkEntrancePainter(progress: entrance.value),
+                    );
+                  }
+                  return CustomPaint(
+                    key: const Key('splash-icon-morph'),
+                    painter: CoordinatorToIaPainter(
+                      progress: Curves.easeInOutCubic.transform(
+                        animation.value,
+                      ),
+                      mark: mark,
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -198,6 +229,151 @@ class CoordinatorToIaMark extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Formación de entrada del símbolo del coordinador: cada línea (brazos,
+/// conector, tronco) se traza serpenteando su contorno y luego se rellena de
+/// sólido, mientras el punto cae desde arriba y rebota al posarse. El último
+/// frame coincide exactamente con `progress: 0` de [CoordinatorToIaPainter],
+/// así que el relevo entre ambos painters no da salto visual.
+class MarkEntrancePainter extends CustomPainter {
+  const MarkEntrancePainter({required this.progress});
+
+  /// 0..1 sobre la duración total de la entrada.
+  final double progress;
+
+  /// Fracción del intervalo de cada pieza dedicada a trazar su contorno; el
+  /// resto se dedica a desvanecer ese trazo mientras aparece el relleno.
+  static const _traceFraction = 0.65;
+  static const _strokeWidthFactor = 0.032;
+
+  /// Punto de partida del punto, por encima del lienzo (fracción de alto).
+  static const _dotDropStartY = -0.35;
+
+  static const _leftInterval = Interval(0, 0.55, curve: Curves.easeInOut);
+  static const _rightInterval = Interval(0.08, 0.62, curve: Curves.easeInOut);
+  static const _stemInterval = Interval(0.20, 0.68, curve: Curves.easeInOut);
+  static const _connectorInterval = Interval(
+    0.36,
+    0.80,
+    curve: Curves.easeInOut,
+  );
+  static const _dotInterval = Interval(0.55, 1);
+
+  Offset _scaled(Size size, BrandPoint point) =>
+      Offset(point.x * size.width, point.y * size.height);
+
+  Path _polygonPath(Size size, List<BrandPoint> points) {
+    final path = Path();
+    for (var index = 0; index < points.length; index++) {
+      final offset = _scaled(size, points[index]);
+      if (index == 0) {
+        path.moveTo(offset.dx, offset.dy);
+      } else {
+        path.lineTo(offset.dx, offset.dy);
+      }
+    }
+    return path..close();
+  }
+
+  Path _rectPath(Size size, BrandRect rect, double cornerRadius) {
+    final scaledRect = Rect.fromLTRB(
+      rect.left * size.width,
+      rect.top * size.height,
+      rect.right * size.width,
+      rect.bottom * size.height,
+    );
+    return Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(scaledRect, Radius.circular(cornerRadius)),
+      );
+  }
+
+  /// Traza el contorno de [path] hasta `pieceProgress`, después desvanece
+  /// ese trazo mientras aparece el relleno sólido — la "serpiente" se
+  /// convierte en la forma final.
+  void _paintSnakePiece(Canvas canvas, Size size, Path path, double pieceT) {
+    if (pieceT <= 0) return;
+    final traceT = (pieceT / _traceFraction).clamp(0.0, 1.0);
+    final fillT = ((pieceT - _traceFraction) / (1 - _traceFraction)).clamp(
+      0.0,
+      1.0,
+    );
+
+    if (traceT > 0 && fillT < 1) {
+      final metric = path.computeMetrics().first;
+      final traced = metric.extractPath(0, metric.length * traceT);
+      canvas.drawPath(
+        traced,
+        Paint()
+          ..color = FncColors.white.withValues(alpha: 1 - fillT)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = size.shortestSide * _strokeWidthFactor
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round,
+      );
+    }
+    if (fillT > 0) {
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = FncColors.white.withValues(alpha: fillT)
+          ..style = PaintingStyle.fill,
+      );
+    }
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final shortestSide = size.shortestSide;
+    final cornerRadius =
+        shortestSide * BrandMarkGeometry.coordinatorCornerRadius;
+
+    _paintSnakePiece(
+      canvas,
+      size,
+      _polygonPath(size, BrandMarkGeometry.coordinatorLeft),
+      _leftInterval.transform(progress),
+    );
+    _paintSnakePiece(
+      canvas,
+      size,
+      _polygonPath(size, BrandMarkGeometry.coordinatorRight),
+      _rightInterval.transform(progress),
+    );
+    _paintSnakePiece(
+      canvas,
+      size,
+      _rectPath(size, BrandMarkGeometry.coordinatorConnector, cornerRadius),
+      _connectorInterval.transform(progress),
+    );
+    _paintSnakePiece(
+      canvas,
+      size,
+      _rectPath(size, BrandMarkGeometry.coordinatorStem, cornerRadius),
+      _stemInterval.transform(progress),
+    );
+
+    final dotT = Curves.bounceOut.transform(
+      _dotInterval.transform(progress),
+    );
+    if (dotT > 0) {
+      final dotStart = Offset(
+        BrandMarkGeometry.coordinatorDot.x * size.width,
+        _dotDropStartY * size.height,
+      );
+      final dotEnd = _scaled(size, BrandMarkGeometry.coordinatorDot);
+      canvas.drawCircle(
+        Offset.lerp(dotStart, dotEnd, dotT)!,
+        shortestSide * BrandMarkGeometry.coordinatorDotRadius,
+        Paint()..color = FncColors.white,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(MarkEntrancePainter oldDelegate) =>
+      oldDelegate.progress != progress;
 }
 
 /// Morph vectorial con correspondencia entre trazos:
