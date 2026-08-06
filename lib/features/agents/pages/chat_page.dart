@@ -21,11 +21,14 @@ import '../repositories/chat_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/utils/scroll_to_end.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../widgets/chat_composer.dart';
 import '../widgets/chat_history_panel.dart';
-import '../widgets/chat_message_bubble.dart';
+import '../widgets/chat_message_list.dart';
 
+part 'chat_conversations.dart';
+part 'chat_streaming.dart';
 part '../dialogs/connection_preference_dialog.dart';
 part '../widgets/chat_mention_overlay.dart';
 
@@ -128,252 +131,6 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   String? get _token => widget.sessionController.gaToken;
-
-  Future<void> _bootstrap() async {
-    final token = _token;
-    if (token == null || token.isEmpty) {
-      setState(() {
-        _error = 'No hay sesión activa';
-        _loadingConversations = false;
-      });
-      return;
-    }
-    setState(() => _loadingConversations = true);
-    try {
-      final conversations = await _repository.listConversations(
-        token,
-        widget.agent.id,
-      );
-      if (!mounted) return;
-      if (conversations.isEmpty) {
-        final created = await _repository.createConversation(
-          token,
-          widget.agent.id,
-        );
-        if (!mounted) return;
-        setState(() {
-          _conversations = [created];
-          _conversationId = created.id;
-          _loadingConversations = false;
-        });
-      } else {
-        setState(() {
-          _conversations = conversations;
-          _conversationId = conversations.first.id;
-          _loadingConversations = false;
-        });
-      }
-      await _loadMessages();
-    } on ApiError catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _error = error.message;
-        _loadingConversations = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _error = 'No se pudo cargar el historial de chat';
-        _loadingConversations = false;
-      });
-    }
-  }
-
-  Future<void> _loadMessages() async {
-    final token = _token;
-    final conversationId = _conversationId;
-    if (token == null || conversationId == null) return;
-    setState(() => _loadingMessages = true);
-    try {
-      final messages = await _repository.getMessages(
-        token,
-        widget.agent.id,
-        conversationId,
-      );
-      if (!mounted) return;
-      setState(() {
-        _messages = messages;
-        _loadingMessages = false;
-      });
-      _scrollToEnd();
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _loadingMessages = false);
-    }
-  }
-
-  Future<void> _newConversation() async {
-    final token = _token;
-    if (token == null) return;
-    try {
-      final created = await _repository.createConversation(
-        token,
-        widget.agent.id,
-      );
-      if (!mounted) return;
-      setState(() {
-        _conversations = [created, ..._conversations];
-        _conversationId = created.id;
-        _messages = [];
-      });
-    } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
-    } catch (_) {
-      _showMessage('No se pudo crear la conversación', isError: true);
-    }
-  }
-
-  Future<void> _selectConversation(String id) async {
-    if (id == _conversationId) return;
-    setState(() {
-      _conversationId = id;
-      _messages = [];
-    });
-    await _loadMessages();
-  }
-
-  Future<void> _deleteConversation(String id) async {
-    final token = _token;
-    if (token == null) return;
-    try {
-      await _repository.deleteConversation(token, widget.agent.id, id);
-      if (!mounted) return;
-      final remaining = _conversations.where((c) => c.id != id).toList();
-      setState(() => _conversations = remaining);
-      if (_conversationId == id) {
-        if (remaining.isEmpty) {
-          await _newConversation();
-        } else {
-          await _selectConversation(remaining.first.id);
-        }
-      }
-    } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
-    } catch (_) {
-      _showMessage('No se pudo borrar la conversación', isError: true);
-    }
-  }
-
-  void _scrollToEnd() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_scrollController.hasClients) return;
-      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-    });
-  }
-
-  Future<void> _send() async {
-    final token = _token;
-    final text = _textController.text.trim();
-    if (token == null || text.isEmpty || _streaming) return;
-
-    _hideMentionOverlay();
-    _textController.clear();
-    final attachedKnowledgeIds = _attachedKnowledge.map((k) => k.id).toList();
-    final quoted = _replyTo;
-    final composedText = quoted == null
-        ? text
-        : '> ${_replyLabelFor(quoted)}: ${_quoteSnippet(quoted.content)}\n\n$text';
-    setState(() {
-      _error = null;
-      _messages = [
-        ..._messages,
-        ChatMessage(
-          role: 'user',
-          content: composedText,
-          createdAt: DateTime.now(),
-        ),
-      ];
-      _streaming = true;
-      _thinking = true;
-      _streamingReply = '';
-      _attachedKnowledge = [];
-      _replyTo = null;
-    });
-    _scrollToEnd();
-
-    final history = _messages.where((m) => m.role != 'system').toList();
-    final completer = Completer<void>();
-    _subscription = _repository
-        .streamChat(
-          token,
-          widget.agent.id,
-          messages: history,
-          conversationId: _conversationId,
-          attachedKnowledgeIds: attachedKnowledgeIds,
-        )
-        .listen(
-          (event) {
-            if (event.type == 'token') {
-              setState(() {
-                _streamingReply += event.token ?? '';
-                if (_streamingReply.isNotEmpty) _thinking = false;
-              });
-              _scrollToEnd();
-            } else if (event.type == 'done') {
-              final reply = event.reply ?? _streamingReply;
-              setState(() {
-                _thinking = false;
-                if (reply.isNotEmpty) {
-                  _messages = [
-                    ..._messages,
-                    ChatMessage(
-                      role: 'assistant',
-                      content: reply,
-                      tokensIn: event.tokensIn,
-                      tokensOut: event.tokensOut,
-                      createdAt: DateTime.now(),
-                    ),
-                  ];
-                }
-                _streamingReply = '';
-              });
-              _scrollToEnd();
-            } else if (event.type == 'error') {
-              setState(
-                () => _error = event.message ?? 'Error de respuesta del agente',
-              );
-            }
-          },
-          onError: (error) {
-            if (!mounted) return;
-            setState(() => _error = 'Error de conexión con el agente');
-          },
-          onDone: () {
-            if (!mounted) return;
-            setState(() {
-              _streaming = false;
-              _thinking = false;
-            });
-            if (!completer.isCompleted) completer.complete();
-          },
-          cancelOnError: true,
-        );
-    await completer.future;
-  }
-
-  void _stop() {
-    _subscription?.cancel();
-    _subscription = null;
-    setState(() {
-      _streaming = false;
-      _thinking = false;
-    });
-  }
-
-  void _setReply(ChatMessage message) => setState(() => _replyTo = message);
-
-  void _cancelReply() => setState(() => _replyTo = null);
-
-  String _replyLabelFor(ChatMessage message) =>
-      message.isUser ? _tx('agents.chat.reply_you', 'Tú') : widget.agent.name;
-
-  /// Aplana y recorta el mensaje citado a una sola línea, como hacen
-  /// Telegram/WhatsApp al previsualizar una respuesta.
-  String _quoteSnippet(String content) {
-    const maxLength = 160;
-    final flat = content.replaceAll('\n', ' ').replaceAll('`', '').trim();
-    return flat.length > maxLength ? '${flat.substring(0, maxLength)}…' : flat;
-  }
 
   void _showMessage(String text, {bool isError = false}) {
     if (!mounted) return;
@@ -543,30 +300,17 @@ class _ChatPageState extends State<ChatPage> {
         Expanded(
           child: _loadingMessages
               ? const Center(child: CircularProgressIndicator())
-              : ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _messages.length + (_streaming ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    final message = index >= _messages.length
-                        ? ChatMessage(
-                            role: 'assistant',
-                            content: _streamingReply,
-                          )
-                        : _messages[index];
-                    return ChatMessageBubble(
-                      message: message,
-                      thinking:
-                          index >= _messages.length &&
-                          _thinking &&
-                          _streamingReply.isEmpty,
-                      onReply: _setReply,
-                      copyCodeTooltip: copyCodeTooltip,
-                      replyActionLabel: replyActionLabel,
-                      copyActionLabel: copyActionLabel,
-                      messageCopiedLabel: messageCopiedLabel,
-                    );
-                  },
+              : ChatMessageList(
+                  messages: _messages,
+                  streaming: _streaming,
+                  thinking: _thinking,
+                  streamingReply: _streamingReply,
+                  scrollController: _scrollController,
+                  onReply: _setReply,
+                  copyCodeTooltip: copyCodeTooltip,
+                  replyActionLabel: replyActionLabel,
+                  copyActionLabel: copyActionLabel,
+                  messageCopiedLabel: messageCopiedLabel,
                 ),
         ),
         if (_error != null)

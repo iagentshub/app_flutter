@@ -23,6 +23,7 @@ import '../widgets/builder_connection_bar.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/utils/scroll_to_end.dart';
 
 /// Constructor de agentes por IA: conversación en streaming con el asistente
 /// hasta que propone un borrador completo, que se revisa/edita en el mismo
@@ -159,17 +160,6 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
     }
   }
 
-  void _scrollToEnd() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_scrollController.hasClients) return;
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOut,
-      );
-    });
-  }
-
   void _sendSuggestion(String suggestion) {
     _textController.text = suggestion;
     _textController.selection = TextSelection.collapsed(
@@ -202,7 +192,7 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
       _stage = null;
       _pendingDraft = null;
     });
-    _scrollToEnd();
+    scrollToEnd(_scrollController);
 
     final completer = Completer<void>();
     _subscription = _builderRepository
@@ -221,7 +211,7 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
                 _stage = event.stage;
                 if (visible.isNotEmpty) _partialReply = visible;
               });
-              _scrollToEnd();
+              scrollToEnd(_scrollController);
             } else if (event.type == 'error') {
               setState(
                 () => _error =
@@ -249,7 +239,7 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
                   _pendingDraft = event.draft;
                 }
               });
-              _scrollToEnd();
+              scrollToEnd(_scrollController);
             }
           },
           onError: (error) {
