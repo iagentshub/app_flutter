@@ -212,43 +212,42 @@ extension _LoginForm on _LoginPageState {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  Wrap(
-                    alignment: WrapAlignment.spaceBetween,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    runSpacing: 4,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      InkWell(
-                        onTap: () => _refresh(
-                          () => _rememberAccount = !_rememberAccount,
-                        ),
-                        borderRadius: BorderRadius.circular(6),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: Checkbox(
-                                  value: _rememberAccount,
-                                  onChanged: (value) => _refresh(
-                                    () => _rememberAccount = value ?? false,
+                      Flexible(
+                        child: InkWell(
+                          onTap: () => _refresh(
+                            () => _rememberAccount = !_rememberAccount,
+                          ),
+                          borderRadius: BorderRadius.circular(6),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: Checkbox(
+                                    value: _rememberAccount,
+                                    onChanged: (value) => _refresh(
+                                      () => _rememberAccount = value ?? false,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 6),
-                              ConstrainedBox(
-                                constraints: const BoxConstraints(
-                                  maxWidth: 160,
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    rememberAccount,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
-                                child: Text(
-                                  rememberAccount,
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -325,7 +324,10 @@ extension _LoginForm on _LoginPageState {
                           if (_oauthGithubEnabled)
                             _OauthButton(
                               label: 'GitHub',
-                              icon: const FaIcon(FontAwesomeIcons.github, size: 18),
+                              icon: const FaIcon(
+                                FontAwesomeIcons.github,
+                                size: 18,
+                              ),
                               onPressed: _loading ? null : _loginWithGithub,
                             ),
                         ],

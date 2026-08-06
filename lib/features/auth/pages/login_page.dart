@@ -304,10 +304,8 @@ class _LoginPageState extends State<LoginPage> {
     if (!mounted) return;
     final result = await showDialog<GithubLoginPollResult>(
       context: context,
-      builder: (context) => _GithubLoginDialog(
-        authRepository: widget.authRepository,
-        tx: tx,
-      ),
+      builder: (context) =>
+          _GithubLoginDialog(authRepository: widget.authRepository, tx: tx),
     );
     if (result == null || !result.isReady) return;
 
@@ -319,7 +317,11 @@ class _LoginPageState extends State<LoginPage> {
       final token = result.gaToken!;
       final me = await widget.authRepository.me(token);
       widget.authRepository.clearCache();
-      await widget.sessionController.login(token: token, user: me, remember: true);
+      await widget.sessionController.login(
+        token: token,
+        user: me,
+        remember: true,
+      );
       unawaited(_syncUserSettings(token, themeController));
       if (!mounted) return;
       final destination = safeRedirect(widget.redirectTo);
@@ -408,11 +410,16 @@ class _LoginPageState extends State<LoginPage> {
             );
 
             final body = wide
-                ? Row(
-                    children: [
-                      Expanded(child: _buildHeroPanel(context)),
-                      Expanded(child: formArea),
-                    ],
+                ? Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1440),
+                      child: Row(
+                        children: [
+                          Expanded(child: _buildHeroPanel(context)),
+                          Expanded(child: formArea),
+                        ],
+                      ),
+                    ),
                   )
                 : formArea;
 
