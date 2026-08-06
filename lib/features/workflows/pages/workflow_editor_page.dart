@@ -348,15 +348,15 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Expanded(child: canvas),
-              const SizedBox(width: 14),
-              SizedBox(width: 370, child: inspector),
+              const SizedBox(width: 18),
+              SizedBox(width: 400, child: inspector),
             ],
           );
         }
         return Column(
           children: [
             Expanded(flex: 3, child: canvas),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Expanded(flex: 2, child: inspector),
           ],
         );
@@ -415,7 +415,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
             : Form(
                 key: _formKey,
                 child: Padding(
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
                       if (_error != null) ...[
@@ -447,7 +447,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
                         }),
                         tx: _tx,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
                       WorkflowEditorToolbar(
                         title: _tx(
                           'workflow_editor.canvas_title',
@@ -480,7 +480,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
                         ),
                         onAdd: _addStep,
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 14),
                       WorkflowIssuesPanel(
                         issues: _issues,
                         title: _tx(

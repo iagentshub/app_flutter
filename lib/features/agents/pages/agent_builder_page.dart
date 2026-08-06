@@ -489,7 +489,9 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
           return Center(
             child: ConstrainedBox(
               // Ancho de lectura, no de pantalla: el texto es el contenido.
-              constraints: const BoxConstraints(maxWidth: 760),
+              // 1040 en vez de 760 para no desperdiciar tanto margen en
+              // pantallas anchas mientras las líneas siguen siendo legibles.
+              constraints: const BoxConstraints(maxWidth: 1040),
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: wide ? 24 : 16),
                 child: Column(

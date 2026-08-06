@@ -63,7 +63,7 @@ class WorkflowNodeCard extends StatelessWidget {
     return AnimatedContainer(
       key: ValueKey('workflow-node-${step.id}'),
       duration: const Duration(milliseconds: 220),
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 11),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 13),
       decoration: BoxDecoration(
         color: status == WorkflowNodeVisualStatus.waiting
             ? colors.surfaceContainerLow
@@ -93,7 +93,7 @@ class WorkflowNodeCard extends StatelessWidget {
                 evaluator: step.isEvaluator,
                 hasIssue: hasIssue,
               ),
-              const SizedBox(width: 9),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   label,
@@ -123,7 +123,7 @@ class WorkflowNodeCard extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(
             agentName,
             maxLines: 1,
@@ -173,18 +173,18 @@ class _NodeGlyph extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 30,
-      height: 30,
+      width: 32,
+      height: 32,
       decoration: BoxDecoration(
         color: accent.withValues(alpha: .15),
         borderRadius: BorderRadius.circular(9),
       ),
       child: status == WorkflowNodeVisualStatus.running
           ? Padding(
-              padding: const EdgeInsets.all(7),
+              padding: const EdgeInsets.all(8),
               child: CircularProgressIndicator(strokeWidth: 2.4, color: accent),
             )
-          : Icon(_icon, size: 17, color: accent),
+          : Icon(_icon, size: 18, color: accent),
     );
   }
 }

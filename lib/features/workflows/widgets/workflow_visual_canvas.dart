@@ -88,7 +88,7 @@ class WorkflowVisualCanvas extends StatefulWidget {
 }
 
 class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
-  static const _nodeSize = Size(232, 116);
+  static const _nodeSize = Size(260, 140);
   static const _inputPort = 'input';
   static const _outputPort = 'output';
 
