@@ -3,6 +3,7 @@ part of '../pages/login_page.dart';
 extension _LoginForm on _LoginPageState {
   Widget _buildFormCard(BuildContext context) {
     return Card(
+      key: const Key('login-form-card'),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
         child: FutureBuilder<Map<String, dynamic>>(
@@ -212,53 +213,76 @@ extension _LoginForm on _LoginPageState {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Flexible(
-                        child: InkWell(
-                          onTap: () => _refresh(
-                            () => _rememberAccount = !_rememberAccount,
-                          ),
-                          borderRadius: BorderRadius.circular(6),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: Checkbox(
-                                    value: _rememberAccount,
-                                    onChanged: (value) => _refresh(
-                                      () => _rememberAccount = value ?? false,
-                                    ),
+                  LayoutBuilder(
+                    builder: (context, actionConstraints) {
+                      final stacked = actionConstraints.maxWidth < 360;
+                      final rememberControl = InkWell(
+                        onTap: () => _refresh(
+                          () => _rememberAccount = !_rememberAccount,
+                        ),
+                        borderRadius: BorderRadius.circular(6),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: Checkbox(
+                                  value: _rememberAccount,
+                                  onChanged: (value) => _refresh(
+                                    () => _rememberAccount = value ?? false,
                                   ),
                                 ),
-                                const SizedBox(width: 6),
-                                Flexible(
-                                  child: Text(
-                                    rememberAccount,
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodySmall,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                              ),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  rememberAccount,
+                                  style: Theme.of(context).textTheme.bodySmall,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                      TertiaryButton(
+                      );
+                      final forgotControl = TertiaryButton(
+                        style: stacked
+                            ? TextButton.styleFrom(
+                                minimumSize: Size.zero,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              )
+                            : null,
                         onPressed: () => context.go(RouteNames.forgotPassword),
                         child: Text(
                           forgotPassword,
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
-                      ),
-                    ],
+                      );
+
+                      if (stacked) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            rememberControl,
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: forgotControl,
+                            ),
+                          ],
+                        );
+                      }
+
+                      return Row(
+                        children: [
+                          Flexible(child: rememberControl),
+                          forgotControl,
+                        ],
+                      );
+                    },
                   ),
                   const SizedBox(height: 8),
 
@@ -360,6 +384,7 @@ extension _LoginForm on _LoginPageState {
                   const Divider(height: 1),
                   const SizedBox(height: 10),
                   InkWell(
+                    key: const Key('login-backend-selector'),
                     onTap: _openBackendConfig,
                     borderRadius: BorderRadius.circular(8),
                     child: Padding(

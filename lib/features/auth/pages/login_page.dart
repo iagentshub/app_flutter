@@ -398,36 +398,61 @@ class _LoginPageState extends State<LoginPage> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final wide = constraints.maxWidth >= 900;
+            final wide = constraints.maxWidth >= 1000;
             final formArea = Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 64, 24, 24),
+                padding: const EdgeInsets.fromLTRB(24, 56, 24, 32),
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 420),
+                  constraints: const BoxConstraints(maxWidth: 480),
                   child: _buildFormCard(context),
                 ),
               ),
             );
 
-            final body = wide
-                ? Center(
+            if (!wide) {
+              return SingleChildScrollView(
+                key: const Key('login-mobile-layout'),
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 520),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TertiaryButton(
+                            onPressed: _toggleLanguage,
+                            child: Text(_isEnglish ? 'ES' : 'EN'),
+                          ),
+                        ),
+                        _buildHeroPanel(context, compact: true),
+                        _buildFormCard(context),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            return Stack(
+              key: const Key('login-desktop-layout'),
+              children: [
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1440),
+                      constraints: const BoxConstraints(maxWidth: 1360),
                       child: Row(
                         children: [
-                          Expanded(child: _buildHeroPanel(context)),
-                          Expanded(child: formArea),
+                          Expanded(flex: 5, child: _buildHeroPanel(context)),
+                          const SizedBox(width: 48),
+                          Expanded(flex: 6, child: formArea),
                         ],
                       ),
                     ),
-                  )
-                : formArea;
-
-            return Stack(
-              children: [
-                body,
-                if (!wide)
-                  const Positioned(top: 12, left: 16, child: _BrandMark()),
+                  ),
+                ),
                 Positioned(
                   top: 8,
                   right: 16,

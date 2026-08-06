@@ -9,14 +9,19 @@ extension _LoginHero on _LoginPageState {
     return 1.0 + t * 0.6;
   }
 
-  Widget _buildHeroPanel(BuildContext context) {
+  Widget _buildHeroPanel(BuildContext context, {bool compact = false}) {
     return Container(
+      key: Key(compact ? 'login-mobile-hero' : 'login-desktop-hero'),
       color: const Color(0xFF0B0B0B),
-      padding: const EdgeInsets.all(48),
+      padding: compact
+          ? const EdgeInsets.fromLTRB(4, 12, 4, 32)
+          : const EdgeInsets.all(48),
       child: LayoutBuilder(
         builder: (context, panelConstraints) {
-          final scale = _heroTextScale(panelConstraints.maxWidth);
-          final brandScale = 1.6 * (1 + (scale - 1) * 0.5);
+          final scale = compact
+              ? 0.88
+              : _heroTextScale(panelConstraints.maxWidth);
+          final brandScale = compact ? 1.0 : 1.6 * (1 + (scale - 1) * 0.5);
 
           return FutureBuilder<Map<String, dynamic>>(
             future: _authTextsFuture,
@@ -46,11 +51,14 @@ extension _LoginHero on _LoginPageState {
               );
 
               return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: compact ? MainAxisSize.min : MainAxisSize.max,
+                mainAxisAlignment: compact
+                    ? MainAxisAlignment.start
+                    : MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _BrandMark(scale: brandScale),
-                  SizedBox(height: 24 * scale),
+                  SizedBox(height: (compact ? 18 : 24) * scale),
                   Text(
                     '$headline1 $headlinePre\n$headlineAccent',
                     style: TextStyle(
@@ -60,7 +68,7 @@ extension _LoginHero on _LoginPageState {
                       color: Colors.white,
                     ),
                   ),
-                  SizedBox(height: 16 * scale),
+                  SizedBox(height: (compact ? 12 : 16) * scale),
                   Text(
                     heroSub,
                     style: TextStyle(
