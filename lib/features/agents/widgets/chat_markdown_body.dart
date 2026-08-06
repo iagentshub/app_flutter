@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 
 /// Renderiza el contenido de un mensaje de chat reconociendo bloques de
@@ -165,7 +166,7 @@ class _InlineText extends StatelessWidget {
         TextSpan(
           text: match.group(1),
           style: TextStyle(
-            fontFamily: 'monospace',
+            fontFamily: FncFonts.monospace,
             fontSize: (baseStyle.fontSize ?? 14) - 1,
             backgroundColor: Theme.of(
               context,
@@ -202,7 +203,7 @@ class _QuoteBlock extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
           color: color.withValues(alpha: 0.85),
-          fontSize: 12.5,
+          fontSize: FncFonts.size12_5,
           fontStyle: FontStyle.italic,
         ),
       ),
@@ -275,7 +276,10 @@ class _CodeBlockState extends State<_CodeBlock> {
               scrollDirection: Axis.horizontal,
               child: SelectableText(
                 widget.code,
-                style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+                style: const TextStyle(
+                  fontFamily: FncFonts.monospace,
+                  fontSize: FncFonts.size13,
+                ),
               ),
             ),
           ),

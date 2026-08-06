@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../app/theme/fnc_colors.dart';
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 
@@ -334,7 +336,7 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(text),
-        backgroundColor: isError ? Colors.red.shade700 : null,
+        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
       ),
     );
   }
@@ -352,14 +354,14 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
   Color _statusColor(String status) {
     switch (status) {
       case 'passed':
-        return const Color(0xFF059669);
+        return FncColors.success;
       case 'failed':
       case 'error':
-        return const Color(0xFFDC2626);
+        return FncColors.danger;
       case 'skipped':
-        return const Color(0xFFD97706);
+        return FncColors.labelDevelopment;
       default:
-        return Colors.grey;
+        return FncColors.materialGrey;
     }
   }
 
@@ -466,7 +468,7 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
               context,
             ).colorScheme.surfaceContainerHighest,
             valueColor: AlwaysStoppedAnimation(
-              hasFailures ? const Color(0xFFDC2626) : const Color(0xFF059669),
+              hasFailures ? FncColors.danger : FncColors.success,
             ),
           ),
         ),

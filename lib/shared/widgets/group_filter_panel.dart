@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../app/theme/fnc_colors.dart';
+import '../../app/theme/fnc_fonts.dart';
 import '../../core/network/api_client.dart';
 import '../../features/manager/repositories/manager_repository.dart';
 import '../../models/manager/group_models.dart';
@@ -173,7 +175,7 @@ class _GroupFilterDialogState extends State<_GroupFilterDialog> {
                       child: Text(
                         _tx('groups.empty', 'No perteneces a ningún grupo.'),
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: FncFonts.size12,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
@@ -199,7 +201,7 @@ class _GroupFilterDialogState extends State<_GroupFilterDialog> {
       child: Material(
         color: selected
             ? scheme.primary.withValues(alpha: 0.12)
-            : Colors.transparent,
+            : FncColors.transparent,
         borderRadius: BorderRadius.circular(8),
         child: InkWell(
           borderRadius: BorderRadius.circular(8),
@@ -218,7 +220,7 @@ class _GroupFilterDialogState extends State<_GroupFilterDialog> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: FncFonts.size13,
                       fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                       color: selected ? scheme.primary : null,
                     ),

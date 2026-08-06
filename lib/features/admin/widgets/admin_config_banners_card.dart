@@ -161,7 +161,7 @@ class _AdminBannersCardState extends State<_AdminBannersCard> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(text),
-        backgroundColor: isError ? Colors.red.shade700 : null,
+        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
       ),
     );
   }
@@ -194,7 +194,7 @@ class _AdminBannersCardState extends State<_AdminBannersCard> {
             ),
           )
         else if (_error != null)
-          Text(_error!, style: const TextStyle(color: Colors.red))
+          Text(_error!, style: const TextStyle(color: FncColors.materialRed))
         else if (_banners.isEmpty)
           Text(
             _tx('admin.config_banners_empty', 'No hay banners creados.'),
@@ -232,7 +232,10 @@ class _AdminBannersCardState extends State<_AdminBannersCard> {
           children: [
             Text(
               '${_fmt(banner['start_at'] as String?)} → ${_fmt(banner['end_at'] as String?)}',
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: FncFonts.size12,
+              ),
             ),
             const SizedBox(height: 4),
             Text(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app/theme/fnc_colors.dart';
 import '../labels/label_catalog.dart';
 
 /// Selector de labels organizado por grupo excluyente (visibilidad, entorno)
@@ -60,7 +61,7 @@ class GroupedLabelPicker extends StatelessWidget {
                 onSelected: (value) => _toggle(group, key, value),
                 selectedColor: color.withValues(alpha: 0.9),
                 labelStyle: TextStyle(
-                  color: isSelected ? Colors.white : null,
+                  color: isSelected ? FncColors.white : null,
                   fontWeight: isSelected ? FontWeight.w700 : null,
                 ),
               );

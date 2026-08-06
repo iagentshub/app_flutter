@@ -5,6 +5,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/app_theme.dart';
+import '../../../app/theme/fnc_colors.dart';
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 
 import '../../../core/network/api_client.dart';
@@ -214,7 +216,7 @@ class _LogsPageViewState extends State<LogsPageView> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(text),
-        backgroundColor: isError ? Colors.red.shade700 : null,
+        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
       ),
     );
   }
@@ -328,10 +330,10 @@ class _LogsPageViewState extends State<LogsPageView> {
 
   Color _levelColor(String level) {
     final base = switch (level) {
-      'ERROR' => Colors.red.shade700,
-      'WARNING' => Colors.orange.shade800,
-      'OK' => Colors.green.shade700,
-      _ => Colors.grey.shade600,
+      'ERROR' => FncColors.materialRed.shade700,
+      'WARNING' => FncColors.materialOrange.shade800,
+      'OK' => FncColors.materialGreen.shade700,
+      _ => FncColors.materialGrey.shade600,
     };
     return AppTheme.statusColor(base, Theme.of(context).colorScheme.surface);
   }

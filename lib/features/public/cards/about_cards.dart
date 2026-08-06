@@ -10,9 +10,9 @@ class _InfoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFF333333)),
+        border: Border.all(color: FncColors.gray333333),
         borderRadius: BorderRadius.circular(14),
-        color: const Color(0xFF0E0E0E),
+        color: FncColors.gray0E0E0E,
       ),
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -23,7 +23,7 @@ class _InfoCard extends StatelessWidget {
               title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w800,
-                color: Colors.white,
+                color: FncColors.white,
               ),
             ),
             const SizedBox(height: 8),
@@ -31,7 +31,7 @@ class _InfoCard extends StatelessWidget {
               body,
               style: Theme.of(
                 context,
-              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFFD6D6D6)),
+              ).textTheme.bodyMedium?.copyWith(color: FncColors.grayD6D6D6),
             ),
           ],
         ),

@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/router/route_names.dart';
+import '../../../app/theme/fnc_colors.dart';
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/navigation/public_site_uri.dart';
 import '../../../core/network/api_error.dart';
 import '../../../shared/i18n/locale_loader.dart';
@@ -169,7 +171,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             Text(
                               _txt(t, 'register.title', 'Crear cuenta'),
                               style: const TextStyle(
-                                fontSize: 24,
+                                fontSize: FncFonts.size24,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -179,10 +181,10 @@ class _RegisterPageState extends State<RegisterPage> {
                                 width: double.infinity,
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: const Color(0x33D90429),
+                                  color: FncColors.overlayRedAccent20,
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                    color: const Color(0x66D90429),
+                                    color: FncColors.overlayRedAccent40,
                                   ),
                                 ),
                                 child: Text(

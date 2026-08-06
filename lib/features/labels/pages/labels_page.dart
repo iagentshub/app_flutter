@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/fnc_colors.dart';
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 
@@ -315,7 +317,7 @@ class _LabelsPageState extends State<LabelsPage>
                               Text(
                                 _tx('labels.group_ownership', 'Propiedad'),
                                 style: const TextStyle(
-                                  fontSize: 18,
+                                  fontSize: FncFonts.size18,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -335,7 +337,9 @@ class _LabelsPageState extends State<LabelsPage>
                                       key,
                                     ).withValues(alpha: 0.9),
                                     labelStyle: TextStyle(
-                                      color: selected ? Colors.white : null,
+                                      color: selected
+                                          ? FncColors.white
+                                          : null,
                                       fontWeight: selected
                                           ? FontWeight.w700
                                           : null,
@@ -348,7 +352,7 @@ class _LabelsPageState extends State<LabelsPage>
                               Text(
                                 _tx('labels.detected', 'Etiquetas detectadas'),
                                 style: const TextStyle(
-                                  fontSize: 18,
+                                  fontSize: FncFonts.size18,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),

@@ -104,7 +104,7 @@ extension _LoginForm on _LoginPageState {
                     child: Text(
                       cardTitle,
                       style: const TextStyle(
-                        fontSize: 22,
+                        fontSize: FncFonts.size22,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -126,10 +126,14 @@ extension _LoginForm on _LoginPageState {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.redAccent.withValues(alpha: 0.08),
+                        color: FncColors.materialRedAccent.withValues(
+                          alpha: 0.08,
+                        ),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: Colors.redAccent.withValues(alpha: 0.3),
+                          color: FncColors.materialRedAccent.withValues(
+                            alpha: 0.3,
+                          ),
                         ),
                       ),
                       child: Row(
@@ -141,8 +145,8 @@ extension _LoginForm on _LoginPageState {
                             child: Text(
                               backendDownMsg,
                               style: const TextStyle(
-                                color: Colors.redAccent,
-                                fontSize: 13,
+                                color: FncColors.materialRedAccent,
+                                fontSize: FncFonts.size13,
                               ),
                             ),
                           ),
@@ -304,15 +308,21 @@ extension _LoginForm on _LoginPageState {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.redAccent.withValues(alpha: 0.08),
+                        color: FncColors.materialRedAccent.withValues(
+                          alpha: 0.08,
+                        ),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: Colors.redAccent.withValues(alpha: 0.3),
+                          color: FncColors.materialRedAccent.withValues(
+                            alpha: 0.3,
+                          ),
                         ),
                       ),
                       child: Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.redAccent),
+                        style: const TextStyle(
+                          color: FncColors.materialRedAccent,
+                        ),
                       ),
                     ),
                   ],

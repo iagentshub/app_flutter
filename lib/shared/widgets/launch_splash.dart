@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../app/theme/fnc_colors.dart';
 import '../../core/network/api_client.dart';
 import '../../features/auth/repositories/auth_repository.dart';
 import '../branding/brand_mark_geometry.dart';
@@ -129,7 +130,11 @@ class _LaunchSplashState extends State<LaunchSplash>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF050505), Color(0xFF101010), Color(0xFF161616)],
+            colors: [
+              FncColors.gray050505,
+              FncColors.gray101010,
+              FncColors.gray161616,
+            ],
           ),
         ),
         child: Center(
@@ -167,7 +172,7 @@ class CoordinatorToIaMark extends StatelessWidget {
             borderRadius: BorderRadius.circular(size * 0.22),
             boxShadow: const [
               BoxShadow(
-                color: Color(0x667A0C1C),
+                color: FncColors.overlayMaroon40,
                 blurRadius: 24,
                 spreadRadius: 1,
               ),
@@ -176,7 +181,7 @@ class CoordinatorToIaMark extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(size * 0.22),
             child: ColoredBox(
-              color: const Color(0xFFD90429),
+              color: FncColors.red,
               child: AnimatedBuilder(
                 animation: animation,
                 builder: (context, _) => CustomPaint(
@@ -268,7 +273,7 @@ class CoordinatorToIaPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final shortestSide = size.shortestSide;
     final fillPaint = Paint()
-      ..color = Colors.white
+      ..color = FncColors.white
       ..style = PaintingStyle.fill;
 
     _drawPolygon(

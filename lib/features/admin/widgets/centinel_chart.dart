@@ -1,6 +1,9 @@
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/fnc_colors.dart';
+import '../../../app/theme/fnc_fonts.dart';
+
 enum ChartSeriesStyle { line, dashedLine, bars, dots }
 
 /// Una serie de la gráfica en vivo de Centinel (stress/probe). `ownScale`
@@ -108,7 +111,7 @@ class _ChartPainter extends CustomPainter {
     final gridPaint = Paint()
       ..color = gridColor
       ..strokeWidth = 1;
-    final textStyle = TextStyle(color: textColor, fontSize: 10);
+    final textStyle = TextStyle(color: textColor, fontSize: FncFonts.size10);
     const gridLines = 4;
     for (var i = 0; i <= gridLines; i++) {
       final y = _padTop + (chartH / gridLines) * i;
@@ -166,7 +169,7 @@ class _ChartPainter extends CustomPainter {
     if (marker != null && marker >= 0 && marker < n) {
       final x = xAt(marker);
       final markerPaint = Paint()
-        ..color = Colors.red.withValues(alpha: 0.7)
+        ..color = FncColors.materialRed.withValues(alpha: 0.7)
         ..strokeWidth = 1.5;
       _drawDashedLine(
         canvas,
@@ -179,8 +182,8 @@ class _ChartPainter extends CustomPainter {
           text: TextSpan(
             text: markerLabel,
             style: const TextStyle(
-              color: Colors.red,
-              fontSize: 9,
+              color: FncColors.materialRed,
+              fontSize: FncFonts.size9,
               fontWeight: FontWeight.w700,
             ),
           ),

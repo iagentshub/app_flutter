@@ -6,6 +6,8 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router/route_names.dart';
+import '../../../app/theme/fnc_colors.dart';
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/explore/explore_models.dart';
@@ -264,7 +266,7 @@ class _ExplorePageState extends State<ExplorePage>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(text),
-        backgroundColor: isError ? Colors.red.shade700 : null,
+        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
       ),
     );
   }

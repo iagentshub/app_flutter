@@ -4,6 +4,8 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router/route_names.dart';
+import '../../../app/theme/fnc_colors.dart';
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/i18n/locale_loader.dart';
 import '../../../shared/widgets/public_top_bar.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
@@ -84,7 +86,7 @@ class HomePage extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF050505), Color(0xFF111111)],
+            colors: [FncColors.gray050505, FncColors.gray111111],
           ),
         ),
         child: SafeArea(
@@ -118,14 +120,14 @@ class HomePage extends StatelessWidget {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF2A1014),
+                          color: FncColors.maroonTint,
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: const Text(
                           badge,
                           style: TextStyle(
-                            color: Color(0xFFFF667A),
-                            fontSize: 12,
+                            color: FncColors.pinkAccentSoft,
+                            fontSize: FncFonts.size12,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -136,9 +138,9 @@ class HomePage extends StatelessWidget {
                         textAlign: TextAlign.center,
                         style: textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.w800,
-                          fontSize: 40,
+                          fontSize: FncFonts.size40,
                           height: 1.1,
-                          color: const Color(0xFFFFFFFF),
+                          color: FncColors.white,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -148,7 +150,7 @@ class HomePage extends StatelessWidget {
                           subtitle,
                           textAlign: TextAlign.center,
                           style: textTheme.titleMedium?.copyWith(
-                            color: const Color(0xFFE8E8E8),
+                            color: FncColors.grayE8E8E8,
                             height: 1.5,
                             fontWeight: FontWeight.w400,
                           ),
@@ -175,8 +177,8 @@ class HomePage extends StatelessWidget {
                               isEnglish ? RouteNames.docsEn : RouteNames.docs,
                             ),
                             style: FilledButton.styleFrom(
-                              backgroundColor: const Color(0xFFD90429),
-                              foregroundColor: Colors.white,
+                              backgroundColor: FncColors.red,
+                              foregroundColor: FncColors.white,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 18,
                                 vertical: 14,
@@ -191,8 +193,8 @@ class HomePage extends StatelessWidget {
                                   : RouteNames.pricing,
                             ),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFFFFFFFF),
-                              side: const BorderSide(color: Color(0xFFFFFFFF)),
+                              foregroundColor: FncColors.white,
+                              side: const BorderSide(color: FncColors.white),
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 18,
                                 vertical: 14,

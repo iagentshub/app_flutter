@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/fnc_colors.dart';
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import 'package:file_picker/file_picker.dart';
@@ -333,7 +335,7 @@ class _KnowledgePageState extends State<KnowledgePage>
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
           child: Material(
-            color: Colors.transparent,
+            color: FncColors.transparent,
             child: TabBar(
               controller: _tabController,
               isScrollable: true,

@@ -16,7 +16,7 @@ class _PreviewDialog extends StatelessWidget {
         child: SingleChildScrollView(
           child: SelectableText(
             pretty,
-            style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+            style: FncFonts.code,
           ),
         ),
       ),

@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/fnc_colors.dart';
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 
@@ -335,15 +337,17 @@ class _BackendRow extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.blue.withValues(alpha: 0.15),
+                              color: FncColors.materialBlue.withValues(
+                                alpha: 0.15,
+                              ),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
                               officialLabel,
                               style: const TextStyle(
-                                fontSize: 10,
+                                fontSize: FncFonts.size10,
                                 fontWeight: FontWeight.w700,
-                                color: Colors.blue,
+                                color: FncColors.materialBlue,
                               ),
                             ),
                           ),
@@ -360,8 +364,8 @@ class _BackendRow extends StatelessWidget {
                       Text(
                         errorMessage!,
                         style: const TextStyle(
-                          color: Color(0xFFC62828),
-                          fontSize: 11,
+                          color: FncColors.materialRed800,
+                          fontSize: FncFonts.size11,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,

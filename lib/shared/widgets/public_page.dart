@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../app/theme/fnc_colors.dart';
+
 class PublicPage extends StatelessWidget {
   const PublicPage({
     required this.title,
@@ -22,7 +24,7 @@ class PublicPage extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFF070707), Color(0xFF111111)],
+            colors: [FncColors.gray070707, FncColors.gray111111],
           ),
         ),
         child: SafeArea(
@@ -32,10 +34,10 @@ class PublicPage extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Card(
-                  color: const Color(0xFF151515),
+                  color: FncColors.gray151515,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
-                    side: const BorderSide(color: Color(0xFF2B2B2B)),
+                    side: const BorderSide(color: FncColors.gray2B2B2B),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(28),
@@ -46,7 +48,7 @@ class PublicPage extends StatelessWidget {
                         Text(
                           title,
                           style: textTheme.headlineMedium?.copyWith(
-                            color: const Color(0xFFFFFFFF),
+                            color: FncColors.white,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -54,7 +56,7 @@ class PublicPage extends StatelessWidget {
                         Text(
                           description,
                           style: textTheme.bodyLarge?.copyWith(
-                            color: const Color(0xFFE8E8E8),
+                            color: FncColors.grayE8E8E8,
                             height: 1.55,
                           ),
                         ),
@@ -63,7 +65,7 @@ class PublicPage extends StatelessWidget {
                           width: 78,
                           height: 4,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFD90429),
+                            color: FncColors.red,
                             borderRadius: BorderRadius.circular(999),
                           ),
                         ),

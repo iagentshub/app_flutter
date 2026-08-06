@@ -58,7 +58,7 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(text),
-        backgroundColor: isError ? Colors.red.shade700 : null,
+        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
       ),
     );
   }
@@ -242,7 +242,7 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
         Text(
           text,
           style: TextStyle(
-            fontSize: 12,
+            fontSize: FncFonts.size12,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.3,
             color: resolvedColor,
@@ -321,12 +321,16 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
                         widget
                             .tx('groups.danger_zone', 'Zona de peligro')
                             .toUpperCase(),
-                        color: Colors.red,
+                        color: FncColors.materialRed,
                       ),
                       const SizedBox(height: 8),
                       _panel(
-                        borderColor: Colors.red.withValues(alpha: 0.35),
-                        background: Colors.red.withValues(alpha: 0.06),
+                        borderColor: FncColors.materialRed.withValues(
+                          alpha: 0.35,
+                        ),
+                        background: FncColors.materialRed.withValues(
+                          alpha: 0.06,
+                        ),
                         child: Row(
                           children: [
                             Expanded(
@@ -335,7 +339,9 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
                                   'groups.delete_confirm_body',
                                   '¿Seguro que quieres eliminar este grupo? Esta acción no se puede deshacer.',
                                 ),
-                                style: const TextStyle(fontSize: 12),
+                                style: const TextStyle(
+                                  fontSize: FncFonts.size12,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -343,7 +349,7 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
                               onPressed: _deleteGroup,
                               icon: const Icon(
                                 Icons.delete_outline,
-                                color: Colors.red,
+                                color: FncColors.materialRed,
                                 size: 18,
                               ),
                               label: Text(
@@ -351,10 +357,14 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
                                   'groups.delete_group',
                                   'Eliminar grupo',
                                 ),
-                                style: const TextStyle(color: Colors.red),
+                                style: const TextStyle(
+                                  color: FncColors.materialRed,
+                                ),
                               ),
                               style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: Colors.red),
+                                side: const BorderSide(
+                                  color: FncColors.materialRed,
+                                ),
                               ),
                             ),
                           ],
@@ -382,7 +392,9 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
                                 'groups.leave_panel_body',
                                 'Dejarás de tener acceso a los recursos compartidos con este grupo.',
                               ),
-                              style: const TextStyle(fontSize: 12),
+                              style: const TextStyle(
+                                fontSize: FncFonts.size12,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 10),

@@ -6,7 +6,7 @@ extension _AdminPageSections on _AdminPageState {
     '{pct}% del total',
   ).replaceAll('{pct}', '${(progress * 100).round()}');
 
-  static const _healthOkColor = Color(0xFF059669);
+  static const _healthOkColor = FncColors.success;
 
   /// Verde si la métrica está sana, el color de error del tema si no —
   /// las KPI de recursos usan tinte decorativo por afinidad, pero estas son

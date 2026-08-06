@@ -12,7 +12,7 @@ extension _AdminViewHelpers on _AdminPageState {
       child: Text(
         text,
         style: TextStyle(
-          fontSize: 11,
+          fontSize: FncFonts.size11,
           fontWeight: FontWeight.w700,
           color: color,
         ),

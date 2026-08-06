@@ -4,6 +4,7 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router/route_names.dart';
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_error.dart';
 import '../../../shared/i18n/locale_loader.dart';
 import '../../../shared/state/locale_controller.dart';
@@ -138,7 +139,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                                       'Nueva contraseña',
                                     ),
                                     style: const TextStyle(
-                                      fontSize: 24,
+                                      fontSize: FncFonts.size24,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
@@ -228,7 +229,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                                     'Enlace inválido',
                                   ),
                                   style: const TextStyle(
-                                    fontSize: 24,
+                                    fontSize: FncFonts.size24,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),

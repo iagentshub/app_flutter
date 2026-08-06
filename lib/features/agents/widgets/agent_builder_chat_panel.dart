@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/fnc_colors.dart';
 import '../../../models/chat/chat_models.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import 'agent_builder_message_list.dart';
@@ -198,7 +199,7 @@ class _ChatHeader extends StatelessWidget {
               color: busy
                   ? colors.primary
                   : active
-                  ? const Color(0xFF27845A)
+                  ? FncColors.forestGreenDeep
                   : colors.outline,
               shape: BoxShape.circle,
             ),

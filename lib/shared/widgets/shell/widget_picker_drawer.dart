@@ -23,7 +23,10 @@ class _WidgetPickerDrawerContent extends StatelessWidget {
               'customize_dashboard',
               fallback: 'Personalizar dashboard',
             ),
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            style: const TextStyle(
+              fontSize: FncFonts.size16,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
         Padding(
@@ -34,7 +37,10 @@ class _WidgetPickerDrawerContent extends StatelessWidget {
               'customize_hint',
               fallback: 'Toca un widget para añadirlo al dashboard.',
             ),
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
+            style: const TextStyle(
+              fontSize: FncFonts.size12,
+              color: FncColors.materialGrey,
+            ),
           ),
         ),
         const SizedBox(height: 12),

@@ -17,7 +17,10 @@ extension _AdminContentCards on _AdminPageState {
           children: [
             Text(
               title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              style: const TextStyle(
+                fontSize: FncFonts.size16,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
@@ -34,13 +37,11 @@ extension _AdminContentCards on _AdminPageState {
                   type == 'url'
                       ? 'URL'
                       : _tx('admin.type_document', 'Documento'),
-                  type == 'url'
-                      ? const Color(0xFF059669)
-                      : const Color(0xFF64748B),
+                  type == 'url' ? FncColors.success : FncColors.slate,
                 ),
                 _badge(
                   '${_tx('admin.table_chars', 'Caracteres')}: $chars',
-                  const Color(0xFF0891B2),
+                  FncColors.info,
                 ),
               ],
             ),
@@ -86,7 +87,10 @@ extension _AdminContentCards on _AdminPageState {
           children: [
             Text(
               name,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              style: const TextStyle(
+                fontSize: FncFonts.size16,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
@@ -101,7 +105,7 @@ extension _AdminContentCards on _AdminPageState {
                 _resourceTypeBadge(AdminResourceType.workflow),
                 _badge(
                   '${_tx('admin.table_steps', 'Pasos')}: $steps',
-                  const Color(0xFF64748B),
+                  FncColors.slate,
                 ),
               ],
             ),
@@ -147,7 +151,10 @@ extension _AdminContentCards on _AdminPageState {
           children: [
             Text(
               name,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              style: const TextStyle(
+                fontSize: FncFonts.size16,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
@@ -161,7 +168,7 @@ extension _AdminContentCards on _AdminPageState {
               children: [
                 _resourceTypeBadge(AdminResourceType.skill),
                 if (category.isNotEmpty)
-                  _badge(category, const Color(0xFF64748B)),
+                  _badge(category, FncColors.slate),
               ],
             ),
             const SizedBox(height: 4),
@@ -206,7 +213,10 @@ extension _AdminContentCards on _AdminPageState {
           children: [
             Text(
               name,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              style: const TextStyle(
+                fontSize: FncFonts.size16,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
@@ -220,7 +230,7 @@ extension _AdminContentCards on _AdminPageState {
               children: [
                 _resourceTypeBadge(AdminResourceType.prompt),
                 if (alias.isNotEmpty)
-                  _badge('@$alias', const Color(0xFF64748B)),
+                  _badge('@$alias', FncColors.slate),
               ],
             ),
             const SizedBox(height: 4),
@@ -270,9 +280,9 @@ extension _AdminContentCards on _AdminPageState {
             Text(
               filename,
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: FncFonts.size16,
                 fontWeight: FontWeight.w700,
-                fontFamily: 'monospace',
+                fontFamily: FncFonts.monospace,
               ),
             ),
             const SizedBox(height: 4),
@@ -288,7 +298,7 @@ extension _AdminContentCards on _AdminPageState {
                 _resourceTypeBadge(AdminResourceType.memory),
                 _badge(
                   '${_tx('admin.table_chars', 'Caracteres')}: $size',
-                  const Color(0xFF0891B2),
+                  FncColors.info,
                 ),
               ],
             ),

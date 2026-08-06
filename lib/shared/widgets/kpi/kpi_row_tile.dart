@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/fnc_fonts.dart';
 import 'kpi_common.dart';
 
 /// Tarjeta KPI horizontal: insignia a la izquierda, valor + etiqueta a la
@@ -37,7 +38,7 @@ class KpiRowTile extends StatelessWidget {
                 Text(
                   '$value',
                   style: const TextStyle(
-                    fontSize: 22,
+                    fontSize: FncFonts.size22,
                     fontWeight: FontWeight.w800,
                     height: 1.1,
                   ),

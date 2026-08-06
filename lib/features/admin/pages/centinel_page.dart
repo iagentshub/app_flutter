@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/fnc_colors.dart';
 import '../../../core/network/api_client.dart';
 import '../repositories/centinel_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
@@ -86,7 +87,7 @@ class _CentinelPageState extends State<CentinelPage>
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
           child: Material(
-            color: Colors.transparent,
+            color: FncColors.transparent,
             child: TabBar(
               controller: _tabController,
               isScrollable: true,

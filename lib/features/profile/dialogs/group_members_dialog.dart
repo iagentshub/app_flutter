@@ -61,7 +61,7 @@ class _MembersDialogState extends State<_MembersDialog> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(text),
-        backgroundColor: isError ? Colors.red.shade700 : null,
+        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
       ),
     );
   }
@@ -126,7 +126,9 @@ class _MembersDialogState extends State<_MembersDialog> {
                                   username.isNotEmpty
                                       ? username[0].toUpperCase()
                                       : '?',
-                                  style: const TextStyle(fontSize: 12),
+                                  style: const TextStyle(
+                                    fontSize: FncFonts.size12,
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 10),
@@ -179,7 +181,7 @@ class _MembersDialogState extends State<_MembersDialog> {
                             )
                             .toUpperCase(),
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: FncFonts.size12,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.3,
                           color: scheme.onSurfaceVariant,

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
+import '../../app/theme/fnc_colors.dart';
 import '../../core/network/api_client.dart';
 import '../../core/network/api_error.dart';
 import '../state/session_controller.dart';
@@ -97,7 +98,10 @@ class _EndpointPageState extends State<EndpointPage> {
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Text(_error!, style: const TextStyle(color: Colors.red)),
+                child: Text(
+                  _error!,
+                  style: const TextStyle(color: FncColors.materialRed),
+                ),
               ),
             )
           else

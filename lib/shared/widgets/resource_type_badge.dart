@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../app/theme/fnc_colors.dart';
+import '../../app/theme/fnc_fonts.dart';
 import '../labels/label_catalog.dart';
 
 /// Chip de tipo de recurso coloreado según `labelColor` del catálogo de
@@ -23,8 +25,8 @@ class ResourceTypeBadge extends StatelessWidget {
       child: Text(
         label,
         style: const TextStyle(
-          color: Colors.white,
-          fontSize: 10,
+          color: FncColors.white,
+          fontSize: FncFonts.size10,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.2,
         ),

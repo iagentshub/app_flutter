@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/fnc_fonts.dart';
 import 'arc_gauge.dart';
 
 /// Un anillo secundario dentro de [KpiHeroCard] (p. ej. "Activos: 62%").
@@ -53,7 +54,7 @@ class KpiHeroCard extends StatelessWidget {
         Text(
           '$value',
           style: const TextStyle(
-            fontSize: 38,
+            fontSize: FncFonts.size38,
             fontWeight: FontWeight.w800,
             height: 1.0,
           ),
@@ -107,7 +108,7 @@ class KpiHeroCard extends StatelessWidget {
           child: Text(
             '${(ring.progress * 100).round()}%',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: FncFonts.size12,
               fontWeight: FontWeight.w800,
               color: ring.color,
             ),

@@ -29,7 +29,10 @@ extension _ExploreResourceCard on _ExplorePageState {
           children: [
             Text(
               item.name,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              style: const TextStyle(
+                fontSize: FncFonts.size16,
+                fontWeight: FontWeight.w700,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -50,7 +53,11 @@ extension _ExploreResourceCard on _ExplorePageState {
                   ),
                 ),
                 const SizedBox(width: 10),
-                Icon(Icons.star, size: 14, color: Colors.amber.shade600),
+                Icon(
+                  Icons.star,
+                  size: 14,
+                  color: FncColors.materialAmber.shade600,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   '${item.stars}',
@@ -124,10 +131,10 @@ extension _ExploreResourceCard on _ExplorePageState {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.08),
+        color: FncColors.materialBlack.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Text(text, style: const TextStyle(fontSize: 12)),
+      child: Text(text, style: const TextStyle(fontSize: FncFonts.size12)),
     );
   }
 
@@ -135,10 +142,10 @@ extension _ExploreResourceCard on _ExplorePageState {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.1),
+        color: FncColors.materialBlack.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Text(text, style: const TextStyle(fontSize: 11)),
+      child: Text(text, style: const TextStyle(fontSize: FncFonts.size11)),
     );
   }
 }

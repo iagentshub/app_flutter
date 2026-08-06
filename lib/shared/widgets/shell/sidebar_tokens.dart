@@ -18,21 +18,14 @@ class _SidebarTokens {
   });
 
   factory _SidebarTokens.of(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final isDark = scheme.brightness == Brightness.dark;
     return _SidebarTokens(
       // En oscuro `surface` y `scaffoldBackgroundColor` son el mismo negro: sin
       // este velo el sidebar y el contenido se funden en un único bloque.
-      surface: Color.alphaBlend(
-        (isDark ? Colors.white : Colors.black).withValues(
-          alpha: isDark ? 0.03 : 0.02,
-        ),
-        scheme.surface,
-      ),
-      border: scheme.onSurface.withValues(alpha: 0.08),
-      muted: scheme.onSurface.withValues(alpha: 0.60),
-      hover: scheme.onSurface.withValues(alpha: 0.05),
-      selectedBg: scheme.primary.withValues(alpha: 0.13),
+      surface: FncColors.surfaceMuted(context),
+      border: FncColors.borderSubtle(context),
+      muted: FncColors.textMuted(context),
+      hover: FncColors.hoverOverlay(context),
+      selectedBg: FncColors.selectedOverlay(context),
     );
   }
 

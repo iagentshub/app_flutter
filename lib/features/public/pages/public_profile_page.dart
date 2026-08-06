@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 
+import '../../../app/theme/fnc_colors.dart';
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/explore/explore_models.dart';
@@ -202,7 +204,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
             child: SingleChildScrollView(
               child: SelectableText(
                 const JsonEncoder.withIndent('  ').convert(preview),
-                style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                style: FncFonts.code,
               ),
             ),
           ),
@@ -229,7 +231,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(text),
-        backgroundColor: isError ? Colors.red.shade700 : null,
+        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
       ),
     );
   }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/fnc_colors.dart';
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/labels/label_catalog.dart';
 
 typedef LabelText = String Function(String path, String fallback);
@@ -23,7 +25,10 @@ class LabelCatalogIntro extends StatelessWidget {
           children: [
             Text(
               text('labels.catalog_title', 'Catálogo de etiquetas'),
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: FncFonts.size16,
+              ),
             ),
             const SizedBox(height: 6),
             Text(
@@ -59,7 +64,10 @@ class LabelGroupCard extends StatelessWidget {
           children: [
             Text(
               text(group.titleKey, group.fallbackTitle),
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+              style: const TextStyle(
+                fontSize: FncFonts.size15,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 2),
             Text(
@@ -151,10 +159,10 @@ class _LabelBehaviorChip extends StatelessWidget {
     late final Color color;
     if (_blockingLabels.contains(labelKey)) {
       label = text('labels.behavior_blocks', 'Bloquea el recurso');
-      color = Colors.red.shade700;
+      color = FncColors.materialRed.shade700;
     } else {
       label = text('labels.behavior_warns', 'Aviso visual');
-      color = Colors.amber.shade800;
+      color = FncColors.materialAmber.shade800;
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -165,7 +173,7 @@ class _LabelBehaviorChip extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 11,
+          fontSize: FncFonts.size11,
           color: color,
           fontWeight: FontWeight.w600,
         ),

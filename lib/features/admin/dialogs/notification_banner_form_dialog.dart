@@ -191,7 +191,7 @@ class _NotificationBannerFormDialogState
                   padding: const EdgeInsets.only(top: 4, bottom: 4),
                   child: Text(
                     _rangeError!,
-                    style: const TextStyle(color: Colors.red),
+                    style: const TextStyle(color: FncColors.materialRed),
                   ),
                 ),
               const SizedBox(height: 10),

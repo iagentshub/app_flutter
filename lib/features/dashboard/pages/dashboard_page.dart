@@ -4,6 +4,8 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router/route_names.dart';
+import '../../../app/theme/fnc_colors.dart';
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_client.dart';
 import '../../../models/dashboard/dashboard_data.dart';
 import '../../../models/dashboard/dashboard_widget_config.dart';
@@ -265,7 +267,10 @@ class _DashboardPageState extends State<DashboardPage> {
                       'dashboard.edit_hint',
                       'Abre el menú (☰) para añadir widgets',
                     ),
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    style: const TextStyle(
+                      fontSize: FncFonts.size12,
+                      color: FncColors.materialGrey,
+                    ),
                   ),
                 )
               else

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router/route_names.dart';
+import '../../../app/theme/fnc_colors.dart';
 import '../../../shared/i18n/locale_loader.dart';
 import '../../../shared/widgets/public_top_bar.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
@@ -98,7 +99,7 @@ class DocsPage extends StatelessWidget {
                   child: Text(
                     heroTitle,
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: Colors.white,
+                      color: FncColors.white,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -110,7 +111,7 @@ class DocsPage extends StatelessWidget {
                   child: Text(
                     heroSubtitle,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: const Color(0xFFE0E0E0),
+                      color: FncColors.grayE0E0E0,
                     ),
                   ),
                 ),
@@ -138,7 +139,7 @@ class DocsPage extends StatelessWidget {
                   child: Text(
                     sectionsTitle,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Colors.white,
+                      color: FncColors.white,
                       fontWeight: FontWeight.w800,
                     ),
                   ),

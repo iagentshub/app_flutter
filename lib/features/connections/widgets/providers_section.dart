@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../app/theme/fnc_colors.dart';
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/accounts/account_models.dart';
@@ -85,7 +87,7 @@ class _ProvidersSectionState extends State<ProvidersSection> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(text),
-        backgroundColor: isError ? Colors.red.shade700 : null,
+        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
       ),
     );
   }
@@ -351,7 +353,7 @@ class _ProvidersSectionState extends State<ProvidersSection> {
                   child: Text(
                     title,
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: FncFonts.size14,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -375,7 +377,7 @@ class _ProvidersSectionState extends State<ProvidersSection> {
                 if (account.lastSyncedAt.isNotEmpty)
                   '${_tx('providers.last_synced', 'Última sincronización')}: ${account.lastSyncedAt}',
               ].join(' · '),
-              style: const TextStyle(fontSize: 12),
+              style: const TextStyle(fontSize: FncFonts.size12),
             ),
             if (account.hubSyncSummary != null) ...[
               const SizedBox(height: 6),
@@ -456,7 +458,7 @@ class _ProvidersSectionState extends State<ProvidersSection> {
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Text(label, style: const TextStyle(fontSize: 11)),
+      child: Text(label, style: const TextStyle(fontSize: FncFonts.size11)),
     );
   }
 }

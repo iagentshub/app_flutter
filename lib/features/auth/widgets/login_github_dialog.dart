@@ -151,7 +151,10 @@ class _GithubLoginDialogState extends State<_GithubLoginDialog> {
       return const SizedBox(height: 80, child: Center(child: CircularProgressIndicator()));
     }
     if (_error != null) {
-      return Text(_error!, style: TextStyle(color: Colors.red.shade700));
+      return Text(
+        _error!,
+        style: TextStyle(color: FncColors.materialRed.shade700),
+      );
     }
     final code = _code;
     if (code == null) return const SizedBox.shrink();
@@ -179,7 +182,7 @@ class _GithubLoginDialogState extends State<_GithubLoginDialog> {
               child: Text(
                 code.userCode,
                 style: const TextStyle(
-                  fontSize: 22,
+                  fontSize: FncFonts.size22,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 3,
                 ),

@@ -95,7 +95,7 @@ extension _PromptSections on _KnowledgePageState {
                   child: Text(
                     item.name,
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: FncFonts.size16,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -192,8 +192,8 @@ extension _PromptSections on _KnowledgePageState {
       child: Text(
         text,
         style: const TextStyle(
-          color: Colors.white,
-          fontSize: 10,
+          color: FncColors.white,
+          fontSize: FncFonts.size10,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.2,
         ),

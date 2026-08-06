@@ -202,8 +202,8 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
                   _statusMessage!,
                   style: TextStyle(
                     color: _verified == true
-                        ? const Color(0xFF2E7D32)
-                        : const Color(0xFFC62828),
+                        ? FncColors.materialGreen800
+                        : FncColors.materialRed800,
                   ),
                 ),
               ],

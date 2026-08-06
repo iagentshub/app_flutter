@@ -28,19 +28,19 @@ extension _CentinelProbeResults on _CentinelProbeTabState {
               spacing: 12,
               children: [
                 _legendItem(
-                  const Color(0xFF22C55E),
+                  FncColors.chartGreen,
                   _tx('centinel.chart_legend_rps', 'req/s'),
                 ),
                 _legendItem(
-                  const Color(0xFF6366F1),
+                  FncColors.chartIndigo,
                   _tx('centinel.probe_legend_avg', 'Avg s'),
                 ),
                 _legendItem(
-                  const Color(0xFFF97316),
+                  FncColors.chartOrange,
                   _tx('centinel.chart_legend_users', 'Usuarios'),
                 ),
                 _legendItem(
-                  const Color(0xFFEF4444),
+                  FncColors.chartRed,
                   _tx('centinel.errors_table_col_error', 'Error'),
                 ),
               ],
@@ -54,16 +54,16 @@ extension _CentinelProbeResults on _CentinelProbeTabState {
                   'Inicia la búsqueda para ver la gráfica',
                 ),
                 series: [
-                  ChartSeries(values: rps, color: const Color(0xFF22C55E)),
+                  ChartSeries(values: rps, color: FncColors.chartGreen),
                   ChartSeries(
                     values: avg,
-                    color: const Color(0xFF6366F1),
+                    color: FncColors.chartIndigo,
                     ownScale: false,
                   ),
-                  ChartSeries(values: users, color: const Color(0xFFF97316)),
+                  ChartSeries(values: users, color: FncColors.chartOrange),
                   ChartSeries(
                     values: errors,
-                    color: const Color(0xFFEF4444),
+                    color: FncColors.chartRed,
                     style: ChartSeriesStyle.dots,
                   ),
                 ],
@@ -85,7 +85,7 @@ extension _CentinelProbeResults on _CentinelProbeTabState {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 4),
-        Text(label, style: const TextStyle(fontSize: 11)),
+        Text(label, style: const TextStyle(fontSize: FncFonts.size11)),
       ],
     );
   }
@@ -95,7 +95,7 @@ extension _CentinelProbeResults on _CentinelProbeTabState {
     if (_finalStatus == 'aborted') {
       final stable = v?['stable_users'];
       return _verdictBanner(
-        Colors.orange,
+        FncColors.materialOrange,
         '⚠️ ${_tx('centinel.probe_stopped_manually', 'Detenido manualmente.')}${stable != null ? ' ${_tx('centinel.probe_last_stable', 'Último nivel estable: {n} usuarios.').replaceAll('{n}', '$stable')}' : ''}',
       );
     }
@@ -111,20 +111,20 @@ extension _CentinelProbeResults on _CentinelProbeTabState {
 
     if (breakUsers == null) {
       return _verdictBanner(
-        Colors.green,
+        FncColors.materialGreen,
         '✅ ${_tx('centinel.probe_no_errors_until', 'Sin errores hasta {n} usuarios.').replaceAll('{n}', '${stableUsers ?? '?'}')} ${_tx('centinel.probe_increase_step_hint', 'Aumenta el paso para seguir buscando el límite.')}',
       );
     }
     if (stableUsers == null) {
       return _verdictBanner(
-        Colors.red,
+        FncColors.materialRed,
         '❌ ${_tx('centinel.probe_first_failure_at', 'Primer fallo en {n} usuarios').replaceAll('{n}', '$breakUsers')}'
         '${breakTotal != null ? ' · ${_tx('centinel.probe_concurrent_requests', '{n} peticiones concurrentes').replaceAll('{n}', '$breakTotal')}' : ''}'
         ' · ${_tx('centinel.probe_error_percent', '{pct}% de error').replaceAll('{pct}', errPct)}',
       );
     }
     return _verdictBanner(
-      Colors.orange,
+      FncColors.materialOrange,
       '✅ ${_tx('centinel.probe_stable_until', 'Estable hasta {n} usuarios').replaceAll('{n}', '$stableUsers')} → '
       '❌ ${_tx('centinel.probe_first_failure_at', 'Primer fallo en {n} usuarios').replaceAll('{n}', '$breakUsers')}'
       '${breakTotal != null ? ' · ${_tx('centinel.probe_concurrent_requests', '{n} peticiones concurrentes').replaceAll('{n}', '$breakTotal')}' : ''}'
@@ -186,15 +186,15 @@ extension _CentinelProbeResults on _CentinelProbeTabState {
                   String statusText;
                   switch (status) {
                     case 'ok':
-                      statusColor = const Color(0xFF059669);
+                      statusColor = FncColors.success;
                       statusText =
                           '✓ ${_tx('centinel.probe_status_ok', 'Estable')}';
                     case 'fail':
-                      statusColor = const Color(0xFFDC2626);
+                      statusColor = FncColors.danger;
                       statusText =
                           '✗ ${_tx('centinel.probe_status_fail', 'Errores')}';
                     default:
-                      statusColor = Colors.grey;
+                      statusColor = FncColors.materialGrey;
                       statusText = _tx(
                         'centinel.probe_status_running',
                         'Probando…',

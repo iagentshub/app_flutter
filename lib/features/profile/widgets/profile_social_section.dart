@@ -128,7 +128,10 @@ extension _ProfileSocialSection on _ProfilePageState {
                   controller: _cvController,
                   minLines: 6,
                   maxLines: 12,
-                  style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+                  style: const TextStyle(
+                    fontFamily: FncFonts.monospace,
+                    fontSize: FncFonts.size13,
+                  ),
                   decoration: const InputDecoration(isDense: true),
                 ),
                 const SizedBox(height: 12),

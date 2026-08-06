@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 
 import '../../../models/connections/connection_models.dart';
@@ -88,7 +89,7 @@ class ConnectionCard extends StatelessWidget {
                   child: Text(
                     title,
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: FncFonts.size16,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -103,7 +104,7 @@ class ConnectionCard extends StatelessWidget {
             Text(
               providerLabel,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: FncFonts.size13,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
@@ -112,7 +113,7 @@ class ConnectionCard extends StatelessWidget {
               Text(
                 hostOrUrl,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: FncFonts.size11,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),

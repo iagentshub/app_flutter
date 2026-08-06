@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../app/theme/fnc_colors.dart';
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_error.dart';
 import '../../../shared/i18n/locale_loader.dart';
 import '../../../shared/state/locale_controller.dart';
@@ -169,7 +171,10 @@ class _VsCodeAuthPageState extends State<VsCodeAuthPage> {
               ),
               if (_error != null) ...[
                 const SizedBox(height: 8),
-                Text(_error!, style: TextStyle(color: Colors.red.shade700)),
+                Text(
+                  _error!,
+                  style: TextStyle(color: FncColors.materialRed.shade700),
+                ),
               ],
               const SizedBox(height: 16),
               Row(
@@ -215,7 +220,7 @@ class _VsCodeAuthPageState extends State<VsCodeAuthPage> {
                       Text(
                         _txt(t, 'vscode_auth.title', 'Autorizar VS Code'),
                         style: const TextStyle(
-                          fontSize: 20,
+                          fontSize: FncFonts.size20,
                           fontWeight: FontWeight.w800,
                         ),
                       ),

@@ -21,15 +21,15 @@ extension _AdminExploreTab on _AdminPageState {
 
   Color _resourceTypeColor(AdminResourceType type) {
     return switch (type) {
-      AdminResourceType.user => const Color(0xFF2563EB),
-      AdminResourceType.group => const Color(0xFF7C3AED),
-      AdminResourceType.agent => const Color(0xFFDC2626),
-      AdminResourceType.connection => const Color(0xFF0891B2),
-      AdminResourceType.knowledge => const Color(0xFF059669),
-      AdminResourceType.workflow => const Color(0xFFD97706),
-      AdminResourceType.skill => const Color(0xFF9333EA),
-      AdminResourceType.memory => const Color(0xFFB45309),
-      AdminResourceType.prompt => const Color(0xFF65A30D),
+      AdminResourceType.user => FncColors.blue,
+      AdminResourceType.group => FncColors.purple,
+      AdminResourceType.agent => FncColors.danger,
+      AdminResourceType.connection => FncColors.info,
+      AdminResourceType.knowledge => FncColors.success,
+      AdminResourceType.workflow => FncColors.labelDevelopment,
+      AdminResourceType.skill => FncColors.labelSkill,
+      AdminResourceType.memory => FncColors.labelMemory,
+      AdminResourceType.prompt => FncColors.lime600,
     };
   }
 

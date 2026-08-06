@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../app/theme/fnc_colors.dart';
+import '../../app/theme/fnc_fonts.dart';
+
 /// Chip de origen del recurso: si es tuyo directamente ("Propietario") o
 /// llegó vía group share ("Enlazado"), igual al originChip de
 /// Usa el mismo estilo visual que un label-chip.
@@ -17,7 +20,7 @@ class OriginBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = shared ? const Color(0xFF0891B2) : const Color(0xFF059669);
+    final color = shared ? FncColors.labelLinked : FncColors.labelOwner;
     final text = shared ? linkedLabel : ownerLabel;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -28,8 +31,8 @@ class OriginBadge extends StatelessWidget {
       child: Text(
         text,
         style: const TextStyle(
-          color: Colors.white,
-          fontSize: 10,
+          color: FncColors.white,
+          fontSize: FncFonts.size10,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.2,
         ),

@@ -213,7 +213,7 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(error.message),
-          backgroundColor: Colors.red.shade700,
+          backgroundColor: FncColors.materialRed.shade700,
         ),
       );
     } catch (_) {
@@ -227,7 +227,7 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
               'No se pudo guardar la cuenta',
             ),
           ),
-          backgroundColor: Colors.red.shade700,
+          backgroundColor: FncColors.materialRed.shade700,
         ),
       );
     }
@@ -383,7 +383,7 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
                       'Para Ollama Cloud, pega tu API Key de ollama.com/settings/keys',
                     ),
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: FncFonts.size11,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
@@ -406,7 +406,9 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
                 Text(
                   _testMessage!,
                   style: TextStyle(
-                    color: _testOk == true ? Colors.green : Colors.red.shade700,
+                    color: _testOk == true
+                        ? FncColors.materialGreen
+                        : FncColors.materialRed.shade700,
                   ),
                 ),
               ],

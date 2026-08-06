@@ -29,7 +29,7 @@ extension _AdminPageView on _AdminPageState {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
           child: Material(
-            color: Colors.transparent,
+            color: FncColors.transparent,
             child: TabBar(
               controller: _tabController,
               isScrollable: true,

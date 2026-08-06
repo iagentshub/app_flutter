@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../app/theme/fnc_colors.dart';
+import '../../app/theme/fnc_fonts.dart';
+
 class PublicTopBar extends StatelessWidget {
   const PublicTopBar({
     required this.isEnglish,
@@ -26,7 +29,7 @@ class PublicTopBar extends StatelessWidget {
               ListTile(
                 leading: Icon(
                   isEnglish ? Icons.radio_button_unchecked : Icons.check_circle,
-                  color: const Color(0xFFD90429),
+                  color: FncColors.red,
                 ),
                 title: const Text('Español'),
                 onTap: () => Navigator.of(dialogContext).pop('es'),
@@ -34,7 +37,7 @@ class PublicTopBar extends StatelessWidget {
               ListTile(
                 leading: Icon(
                   isEnglish ? Icons.check_circle : Icons.radio_button_unchecked,
-                  color: const Color(0xFFD90429),
+                  color: FncColors.red,
                 ),
                 title: const Text('English'),
                 onTap: () => Navigator.of(dialogContext).pop('en'),
@@ -62,9 +65,9 @@ class PublicTopBar extends StatelessWidget {
         RichText(
           text: const TextSpan(
             style: TextStyle(
-              color: Color(0xFFFFFFFF),
+              color: FncColors.white,
               fontWeight: FontWeight.w800,
-              fontSize: 20,
+              fontSize: FncFonts.size20,
               letterSpacing: -0.2,
             ),
             children: [
@@ -77,7 +80,7 @@ class PublicTopBar extends StatelessWidget {
                 alignment: PlaceholderAlignment.middle,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: Color(0xFFD90429),
+                    color: FncColors.red,
                     borderRadius: BorderRadius.all(Radius.circular(6)),
                   ),
                   child: Padding(
@@ -85,8 +88,8 @@ class PublicTopBar extends StatelessWidget {
                     child: Text(
                       'HUB',
                       style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
+                        color: FncColors.white,
+                        fontSize: FncFonts.size12,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -100,8 +103,8 @@ class PublicTopBar extends StatelessWidget {
         OutlinedButton(
           onPressed: onLogin,
           style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFFFFFFFF),
-            side: const BorderSide(color: Color(0xFFFFFFFF)),
+            foregroundColor: FncColors.white,
+            side: const BorderSide(color: FncColors.white),
           ),
           child: Text(loginLabel),
         ),
@@ -109,8 +112,8 @@ class PublicTopBar extends StatelessWidget {
         OutlinedButton(
           onPressed: () => _showLanguageDialog(context),
           style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFFFFFFFF),
-            side: const BorderSide(color: Color(0x66FFFFFF)),
+            foregroundColor: FncColors.white,
+            side: const BorderSide(color: FncColors.overlayWhite40),
             minimumSize: const Size(56, 40),
           ),
           child: Text(isEnglish ? 'ES' : 'EN'),

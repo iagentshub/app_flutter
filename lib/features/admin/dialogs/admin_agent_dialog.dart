@@ -115,7 +115,7 @@ class _AgentEditDialogState extends State<_AgentEditDialog> {
               controller: _promptController,
               minLines: 6,
               maxLines: 10,
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+              style: FncFonts.code,
               decoration: InputDecoration(
                 labelText: widget.tx(
                   'admin.field_system_prompt',

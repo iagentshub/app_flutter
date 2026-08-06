@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 
 import '../../../models/agents/agent_models.dart';
@@ -283,7 +284,10 @@ class WorkflowCard extends StatelessWidget {
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   icon: const Icon(Icons.play_arrow_rounded, size: 16),
-                  label: Text(runLabel, style: const TextStyle(fontSize: 12)),
+                  label: Text(
+                    runLabel,
+                    style: const TextStyle(fontSize: FncFonts.size12),
+                  ),
                 ),
                 const Spacer(),
                 const SizedBox(width: 8),

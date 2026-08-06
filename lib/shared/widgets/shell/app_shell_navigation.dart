@@ -241,7 +241,7 @@ class _ShellTopBar extends StatelessWidget {
           Text(
             title,
             style: theme.textTheme.titleLarge?.copyWith(
-              fontSize: 19,
+              fontSize: FncFonts.size19,
               fontWeight: FontWeight.w700,
               letterSpacing: -0.2,
             ),
@@ -266,14 +266,14 @@ class _ConnectionIssueBanner extends StatelessWidget {
     if (error == null) return const SizedBox.shrink();
 
     return Material(
-      color: Colors.red.shade700,
+      color: FncColors.materialRed.shade700,
       child: InkWell(
         onTap: () => context.push(RouteNames.backendConfig),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
             children: [
-              const Icon(Icons.wifi_off, color: Colors.white, size: 16),
+              const Icon(Icons.wifi_off, color: FncColors.white, size: 16),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -286,7 +286,10 @@ class _ConnectionIssueBanner extends StatelessWidget {
                         backendController.selectedOption.label,
                       )
                       .replaceAll('{error}', error),
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                  style: const TextStyle(
+                    color: FncColors.white,
+                    fontSize: FncFonts.size12,
+                  ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -295,12 +298,16 @@ class _ConnectionIssueBanner extends StatelessWidget {
               Text(
                 tx('backend_connection_action', 'Cambiar backend'),
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: FncColors.white,
                   fontWeight: FontWeight.w700,
-                  fontSize: 12,
+                  fontSize: FncFonts.size12,
                 ),
               ),
-              const Icon(Icons.chevron_right, color: Colors.white, size: 16),
+              const Icon(
+                Icons.chevron_right,
+                color: FncColors.white,
+                size: 16,
+              ),
             ],
           ),
         ),
@@ -331,7 +338,7 @@ class _NavItemTile extends StatelessWidget {
       selected: selected,
       button: true,
       child: Material(
-        color: Colors.transparent,
+        color: FncColors.transparent,
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(10),
@@ -343,7 +350,7 @@ class _NavItemTile extends StatelessWidget {
             constraints: const BoxConstraints(minHeight: 44),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: selected ? tokens.selectedBg : Colors.transparent,
+              color: selected ? tokens.selectedBg : FncColors.transparent,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(

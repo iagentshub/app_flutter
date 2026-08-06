@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../app/theme/fnc_colors.dart';
 import '../../../models/chat/chat_models.dart';
 import 'chat_markdown_body.dart';
 
@@ -126,7 +127,7 @@ class ChatMessageBubble extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: 640),
         child: _actionsEnabled
             ? Material(
-                color: Colors.transparent,
+                color: FncColors.transparent,
                 borderRadius: BorderRadius.circular(14),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(14),

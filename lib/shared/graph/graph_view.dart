@@ -5,6 +5,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../app/theme/fnc_colors.dart';
+import '../../app/theme/fnc_fonts.dart';
 import '../labels/label_catalog.dart';
 import 'graph_models.dart';
 
@@ -719,14 +721,15 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
                                       _entrance.value,
                                     ),
                                     lineColor: _sortMode == GraphSortMode.galaxy
-                                        ? Colors.white.withValues(alpha: 0.22)
-                                        : Colors.grey,
+                                        ? FncColors.white.withValues(
+                                            alpha: 0.22,
+                                          )
+                                        : FncColors.materialGrey,
                                     dashedColor:
                                         _sortMode == GraphSortMode.galaxy
-                                        ? Colors.orangeAccent.withValues(
-                                            alpha: 0.35,
-                                          )
-                                        : Colors.orange,
+                                        ? FncColors.materialOrangeAccent
+                                              .withValues(alpha: 0.35)
+                                        : FncColors.materialOrange,
                                   ),
                                 ),
                               ),
@@ -770,8 +773,8 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     final blinkOpacity = isMatch ? (0.35 + 0.65 * _blink.value) : 1.0;
     final focusColor =
         ThemeData.estimateBrightnessForColor(color) == Brightness.dark
-        ? Colors.white
-        : Colors.black;
+        ? FncColors.white
+        : FncColors.materialBlack;
 
     void openQuickView() => _showQuickView(context, node);
 
@@ -893,11 +896,11 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: FncFonts.size11,
                             fontWeight: isRoot
                                 ? FontWeight.w700
                                 : FontWeight.w500,
-                            color: isGalaxy ? Colors.white : null,
+                            color: isGalaxy ? FncColors.white : null,
                           ),
                         ),
                       ],
@@ -944,7 +947,7 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
           ),
           if (isMatch)
             BoxShadow(
-              color: Colors.amber.withValues(alpha: 0.7),
+              color: FncColors.materialAmber.withValues(alpha: 0.7),
               blurRadius: 20,
               spreadRadius: 3,
             ),
@@ -953,7 +956,7 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
       alignment: Alignment.center,
       child: Icon(
         iconForType(node.type),
-        color: Colors.white,
+        color: FncColors.white,
         size: isRoot ? 30 : 22,
       ),
     );
@@ -976,7 +979,7 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: RadialGradient(
-          colors: [Colors.white, color],
+          colors: [FncColors.white, color],
           stops: const [0.15, 1.0],
         ),
         boxShadow: [
@@ -987,7 +990,7 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
           ),
           if (isMatch)
             BoxShadow(
-              color: Colors.amber.withValues(alpha: 0.7),
+              color: FncColors.materialAmber.withValues(alpha: 0.7),
               blurRadius: 20,
               spreadRadius: 3,
             ),
@@ -1024,7 +1027,7 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
               alignment: Alignment.center,
               child: Icon(
                 iconForType(node.type),
-                color: Colors.white,
+                color: FncColors.white,
                 size: 20,
               ),
             ),
@@ -1100,8 +1103,8 @@ class _GraphEdgePainter extends CustomPainter {
     required this.edges,
     required this.positions,
     required this.progress,
-    this.lineColor = Colors.grey,
-    this.dashedColor = Colors.orange,
+    this.lineColor = FncColors.materialGrey,
+    this.dashedColor = FncColors.materialOrange,
   });
 
   final List<GraphNode> nodes;

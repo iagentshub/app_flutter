@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../app/theme/fnc_colors.dart';
+import '../../app/theme/fnc_fonts.dart';
 import '../labels/label_catalog.dart';
 
 /// Fila de chips de labels de un recurso, igual a `.label-chip` en
@@ -43,7 +45,7 @@ class LabelChipsRow extends StatelessWidget {
                   width: 5,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: FncColors.white.withValues(alpha: 0.7),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -51,8 +53,8 @@ class LabelChipsRow extends StatelessWidget {
                 Text(
                   label,
                   style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
+                    color: FncColors.white,
+                    fontSize: FncFonts.size10,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.2,
                   ),

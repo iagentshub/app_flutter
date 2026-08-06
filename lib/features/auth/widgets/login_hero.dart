@@ -12,7 +12,7 @@ extension _LoginHero on _LoginPageState {
   Widget _buildHeroPanel(BuildContext context, {bool compact = false}) {
     return Container(
       key: Key(compact ? 'login-mobile-hero' : 'login-desktop-hero'),
-      color: const Color(0xFF0B0B0B),
+      color: FncColors.black,
       padding: compact
           ? const EdgeInsets.fromLTRB(4, 12, 4, 32)
           : const EdgeInsets.all(48),
@@ -62,18 +62,18 @@ extension _LoginHero on _LoginPageState {
                   Text(
                     '$headline1 $headlinePre\n$headlineAccent',
                     style: TextStyle(
-                      fontSize: 32 * scale,
+                      fontSize: FncFonts.size32 * scale,
                       fontWeight: FontWeight.w800,
                       height: 1.2,
-                      color: Colors.white,
+                      color: FncColors.white,
                     ),
                   ),
                   SizedBox(height: (compact ? 12 : 16) * scale),
                   Text(
                     heroSub,
                     style: TextStyle(
-                      fontSize: 15 * scale,
-                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: FncFonts.size15 * scale,
+                      color: FncColors.white.withValues(alpha: 0.7),
                       height: 1.5,
                     ),
                   ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../app/theme/fnc_colors.dart';
+import '../../app/theme/fnc_fonts.dart';
 import 'graph_models.dart';
 import 'graph_view.dart';
 
@@ -162,7 +164,11 @@ class _ResourceGraphDialogContentState
           const SizedBox(width: 10),
           Expanded(child: Text(label)),
           if (selected)
-            const Icon(Icons.check_circle, size: 18, color: Colors.green),
+            const Icon(
+              Icons.check_circle,
+              size: 18,
+              color: FncColors.materialGreen,
+            ),
         ],
       ),
     );
@@ -190,7 +196,7 @@ class _ResourceGraphDialogContentState
                   child: Text(
                     widget.title,
                     style: const TextStyle(
-                      fontSize: 20,
+                      fontSize: FncFonts.size20,
                       fontWeight: FontWeight.w700,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -208,7 +214,7 @@ class _ResourceGraphDialogContentState
               children: [
                 Expanded(
                   child: TextField(
-                    style: const TextStyle(fontSize: 13),
+                    style: const TextStyle(fontSize: FncFonts.size13),
                     decoration: InputDecoration(
                       isDense: true,
                       contentPadding: const EdgeInsets.symmetric(

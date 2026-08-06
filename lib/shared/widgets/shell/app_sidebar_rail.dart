@@ -80,7 +80,10 @@ class AppSidebarRail extends StatelessWidget {
           foregroundColor: scheme.onPrimary,
           child: Text(
             initial,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+            style: const TextStyle(
+              fontSize: FncFonts.size12,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
         Tooltip(
@@ -128,7 +131,7 @@ class _RailButton extends StatelessWidget {
         selected: selected,
         button: true,
         child: Material(
-          color: Colors.transparent,
+          color: FncColors.transparent,
           child: InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(10),
@@ -139,7 +142,7 @@ class _RailButton extends StatelessWidget {
               curve: Curves.easeOut,
               height: 44,
               decoration: BoxDecoration(
-                color: selected ? tokens.selectedBg : Colors.transparent,
+                color: selected ? tokens.selectedBg : FncColors.transparent,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(

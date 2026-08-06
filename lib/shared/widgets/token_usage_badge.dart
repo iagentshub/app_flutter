@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../app/theme/fnc_colors.dart';
+import '../../app/theme/fnc_fonts.dart';
+
 /// "16.4K", "820", "1.2M" — mismo formato compacto usado en el panel de
 /// administración (`admin_page.dart::_fmtTokens`) para que el número se lea
 /// igual en toda la app.
@@ -25,7 +28,7 @@ class TokenUsageBadge extends StatelessWidget {
   final int tokensOut;
   final String? tooltip;
 
-  static const _color = Color(0xFF0891B2);
+  static const _color = FncColors.teal;
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +50,7 @@ class TokenUsageBadge extends StatelessWidget {
           Text(
             formatTokenCount(total),
             style: const TextStyle(
-              fontSize: 11,
+              fontSize: FncFonts.size11,
               fontWeight: FontWeight.w700,
               color: _color,
             ),

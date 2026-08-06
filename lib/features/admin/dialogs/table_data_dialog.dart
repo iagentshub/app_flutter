@@ -89,9 +89,9 @@ class _TableDataDialogState extends State<_TableDataDialog> {
                     child: Text(
                       widget.table.name,
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: FncFonts.size16,
                         fontWeight: FontWeight.w700,
-                        fontFamily: 'monospace',
+                        fontFamily: FncFonts.monospace,
                       ),
                     ),
                   ),
@@ -137,7 +137,10 @@ class _TableDataDialogState extends State<_TableDataDialog> {
                   child: Center(child: CircularProgressIndicator()),
                 )
               else if (_error != null)
-                Text(_error!, style: TextStyle(color: Colors.red.shade700))
+                Text(
+                  _error!,
+                  style: TextStyle(color: FncColors.materialRed.shade700),
+                )
               else if (data != null) ...[
                 Flexible(
                   child: SingleChildScrollView(

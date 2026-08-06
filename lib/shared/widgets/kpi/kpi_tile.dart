@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/fnc_fonts.dart';
 import 'kpi_common.dart';
 
 /// Tarjeta KPI vertical: insignia/anillo arriba, valor grande, etiqueta y
@@ -48,7 +49,7 @@ class KpiTile extends StatelessWidget {
               Text(
                 '$value',
                 style: const TextStyle(
-                  fontSize: 24,
+                  fontSize: FncFonts.size24,
                   fontWeight: FontWeight.w800,
                   height: 1.1,
                 ),
@@ -76,7 +77,7 @@ class KpiTile extends StatelessWidget {
             Text(
               progressLabel!,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontSize: 11,
+                fontSize: FncFonts.size11,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),

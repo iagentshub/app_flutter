@@ -12,7 +12,10 @@ extension _ManagerGroupCard on _ManagerPageState {
           children: [
             Text(
               item.name,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              style: const TextStyle(
+                fontSize: FncFonts.size16,
+                fontWeight: FontWeight.w700,
+              ),
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 6),
@@ -66,10 +69,10 @@ extension _ManagerGroupCard on _ManagerPageState {
       margin: const EdgeInsets.only(left: 6),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.14),
+        color: FncColors.materialRed.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Text(text, style: const TextStyle(fontSize: 12)),
+      child: Text(text, style: const TextStyle(fontSize: FncFonts.size12)),
     );
   }
 }

@@ -184,7 +184,10 @@ class _GithubDeviceFlowDialogState extends State<_GithubDeviceFlowDialog> {
       );
     }
     if (_error != null) {
-      return Text(_error!, style: TextStyle(color: Colors.red.shade700));
+      return Text(
+        _error!,
+        style: TextStyle(color: FncColors.materialRed.shade700),
+      );
     }
     final code = _code;
     if (code == null) return const SizedBox.shrink();
@@ -212,7 +215,7 @@ class _GithubDeviceFlowDialogState extends State<_GithubDeviceFlowDialog> {
               child: Text(
                 code.userCode,
                 style: const TextStyle(
-                  fontSize: 22,
+                  fontSize: FncFonts.size22,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 3,
                 ),

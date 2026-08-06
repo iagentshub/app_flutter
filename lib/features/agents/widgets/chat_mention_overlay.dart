@@ -111,7 +111,10 @@ extension _ChatMentionOverlay on _ChatPageState {
                     padding: EdgeInsets.fromLTRB(16, 6, 16, 2),
                     child: Text(
                       'Prompts',
-                      style: TextStyle(fontSize: 11, color: Colors.grey),
+                      style: TextStyle(
+                        fontSize: FncFonts.size11,
+                        color: FncColors.materialGrey,
+                      ),
                     ),
                   ),
                   for (final prompt in _promptMentionMatches)
@@ -132,7 +135,10 @@ extension _ChatMentionOverlay on _ChatPageState {
                     padding: EdgeInsets.fromLTRB(16, 6, 16, 2),
                     child: Text(
                       'Conocimiento',
-                      style: TextStyle(fontSize: 11, color: Colors.grey),
+                      style: TextStyle(
+                        fontSize: FncFonts.size11,
+                        color: FncColors.materialGrey,
+                      ),
                     ),
                   ),
                   for (final item in _knowledgeMentionMatches)

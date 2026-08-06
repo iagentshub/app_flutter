@@ -13,19 +13,20 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
       children: [
         _summaryChip(
           '${_tx('centinel.results_filter_passed', 'Pasados')}: $passed',
-          const Color(0xFF059669),
+          FncColors.success,
         ),
         _summaryChip(
           '${_tx('centinel.results_filter_failed', 'Fallidos')}: $failed',
-          const Color(0xFFDC2626),
+          FncColors.danger,
         ),
         _summaryChip(
           '${_tx('centinel.results_filter_skipped', 'Omitidos')}: $skipped',
-          const Color(0xFFD97706),
+          FncColors.labelDevelopment,
         ),
         if (error is num && error > 0)
-          _summaryChip('Error: $error', const Color(0xFFDC2626)),
-        if (duration != null) _summaryChip('${duration}s', Colors.grey),
+          _summaryChip('Error: $error', FncColors.danger),
+        if (duration != null)
+          _summaryChip('${duration}s', FncColors.materialGrey),
       ],
     );
   }
@@ -42,7 +43,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
         style: TextStyle(
           color: color,
           fontWeight: FontWeight.w700,
-          fontSize: 12,
+          fontSize: FncFonts.size12,
         ),
       ),
     );
@@ -125,7 +126,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
           padding: const EdgeInsets.all(12),
           child: Text(
             _treeError!,
-            style: TextStyle(color: Colors.red.shade700),
+            style: TextStyle(color: FncColors.materialRed.shade700),
           ),
         ),
       );
@@ -151,7 +152,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
         return ExpansionTile(
           title: Text(
             dir['dir'].toString(),
-            style: const TextStyle(fontSize: 13),
+            style: const TextStyle(fontSize: FncFonts.size13),
           ),
           trailing: Text(
             '${dir['count']}',
@@ -168,7 +169,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
               value: checked,
               title: Text(
                 file.split('/').last,
-                style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+                style: FncFonts.code,
                 overflow: TextOverflow.ellipsis,
               ),
               secondary: Text(
@@ -265,7 +266,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
     return Padding(
       padding: const EdgeInsets.only(right: 6),
       child: ChoiceChip(
-        label: Text(label, style: const TextStyle(fontSize: 12)),
+        label: Text(label, style: const TextStyle(fontSize: FncFonts.size12)),
         selected: selected,
         onSelected: (_) => _refresh(() => _resultFilter = value),
       ),
@@ -288,7 +289,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
       itemCount: _logLines.length,
       itemBuilder: (context, index) => Text(
         _logLines[index],
-        style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
+        style: FncFonts.codeSmall,
       ),
     );
   }
@@ -329,8 +330,8 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
             child: Text(
               row,
               style: const TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 11,
+                fontFamily: FncFonts.monospace,
+                fontSize: FncFonts.size11,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -347,13 +348,13 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
           ),
           title: Text(
             e.name,
-            style: const TextStyle(fontSize: 12),
+            style: const TextStyle(fontSize: FncFonts.size12),
             overflow: TextOverflow.ellipsis,
           ),
           subtitle: e.traceback != null && e.traceback!.isNotEmpty
               ? Text(
                   e.traceback!,
-                  style: const TextStyle(fontFamily: 'monospace', fontSize: 10),
+                  style: FncFonts.codeMicro,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                 )
@@ -408,13 +409,10 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
                 ? Icons.stop_circle_outlined
                 : Icons.check_circle_outline,
             color: failed is num && failed > 0
-                ? const Color(0xFFDC2626)
-                : const Color(0xFF059669),
+                ? FncColors.danger
+                : FncColors.success,
           ),
-          title: Text(
-            target,
-            style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-          ),
+          title: Text(target, style: FncFonts.code),
           subtitle: Text(
             '$status · $passed passed · $failed failed · $skipped skipped',
           ),

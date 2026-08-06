@@ -4,6 +4,7 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router/route_names.dart';
+import '../../../app/theme/fnc_colors.dart';
 import '../../../shared/i18n/locale_loader.dart';
 import '../../../shared/widgets/public_top_bar.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
@@ -80,7 +81,7 @@ class AboutPage extends StatelessWidget {
                     heroTitle,
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w900,
-                      color: Colors.white,
+                      color: FncColors.white,
                     ),
                   ),
                 ),
@@ -91,7 +92,7 @@ class AboutPage extends StatelessWidget {
                   child: Text(
                     heroSubtitle,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: const Color(0xFFE0E0E0),
+                      color: FncColors.grayE0E0E0,
                     ),
                   ),
                 ),
@@ -109,9 +110,9 @@ class AboutPage extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(24, 28, 24, 40),
                   child: Container(
                     decoration: BoxDecoration(
-                      border: Border.all(color: const Color(0xFF3A3A3A)),
+                      border: Border.all(color: FncColors.gray3A3A3A),
                       borderRadius: BorderRadius.circular(16),
-                      color: const Color(0xFF121212),
+                      color: FncColors.gray121212,
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(20),
@@ -122,7 +123,7 @@ class AboutPage extends StatelessWidget {
                             ctaTitle,
                             style: Theme.of(context).textTheme.titleLarge
                                 ?.copyWith(
-                                  color: Colors.white,
+                                  color: FncColors.white,
                                   fontWeight: FontWeight.w800,
                                 ),
                           ),
@@ -130,14 +131,14 @@ class AboutPage extends StatelessWidget {
                           Text(
                             ctaDescription,
                             style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: const Color(0xFFD3D3D3)),
+                                ?.copyWith(color: FncColors.grayD3D3D3),
                           ),
                           const SizedBox(height: 14),
                           PrimaryButton.elevated(
                             onPressed: () => context.go(RouteNames.register),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFD90429),
-                              foregroundColor: Colors.white,
+                              backgroundColor: FncColors.red,
+                              foregroundColor: FncColors.white,
                             ),
                             child: Text(ctaButton),
                           ),

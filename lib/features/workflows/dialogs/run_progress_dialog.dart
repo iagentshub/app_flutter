@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:vyuh_node_flow/vyuh_node_flow.dart';
 
+import '../../../app/theme/fnc_colors.dart';
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/agents/agent_models.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
@@ -128,7 +130,7 @@ class _RunProgressDialogState extends State<RunProgressDialog> {
     final colors = Theme.of(context).colorScheme;
     if (_state.error != null) return colors.error;
     if (_state.cancelled) return colors.onSurfaceVariant;
-    return _state.running ? colors.primary : Colors.green.shade600;
+    return _state.running ? colors.primary : FncColors.materialGreen.shade600;
   }
 
   String _statusLabel() {
@@ -272,7 +274,7 @@ class _RunProgressDialogState extends State<RunProgressDialog> {
               '${_statusLabel()} · ${formatRunDuration(_state.elapsed)}',
               style: TextStyle(
                 color: statusColor,
-                fontSize: 12,
+                fontSize: FncFonts.size12,
                 fontWeight: FontWeight.w700,
               ),
             ),

@@ -20,11 +20,11 @@ class _PlanCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         border: Border.all(
-          color: isPrimary ? const Color(0xFFD90429) : const Color(0xFF333333),
+          color: isPrimary ? FncColors.red : FncColors.gray333333,
           width: 1.2,
         ),
         borderRadius: BorderRadius.circular(14),
-        color: const Color(0xFF101010),
+        color: FncColors.gray101010,
       ),
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -34,7 +34,7 @@ class _PlanCard extends StatelessWidget {
             Text(
               name,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Colors.white,
+                color: FncColors.white,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -42,7 +42,7 @@ class _PlanCard extends StatelessWidget {
             Text(
               price,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: isPrimary ? const Color(0xFFD90429) : Colors.white,
+                color: isPrimary ? FncColors.red : FncColors.white,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -51,14 +51,14 @@ class _PlanCard extends StatelessWidget {
               description,
               style: Theme.of(
                 context,
-              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFFD9D9D9)),
+              ).textTheme.bodyMedium?.copyWith(color: FncColors.grayD9D9D9),
             ),
             const SizedBox(height: 14),
             PrimaryButton(
               onPressed: () => context.go(RouteNames.register),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFD90429),
-                foregroundColor: Colors.white,
+                backgroundColor: FncColors.red,
+                foregroundColor: FncColors.white,
               ),
               child: Text(buttonLabel),
             ),

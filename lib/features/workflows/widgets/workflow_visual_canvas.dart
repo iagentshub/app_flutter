@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:vyuh_node_flow/vyuh_node_flow.dart';
 
+import '../../../app/theme/fnc_colors.dart';
 import '../../../models/agents/agent_models.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../cards/workflow_node_card.dart';
@@ -187,7 +188,7 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
             targetNodeId: loopTargetId,
             targetPortId: _inputPort,
             data: 'loop',
-            color: Colors.orangeAccent,
+            color: FncColors.materialOrangeAccent,
             label: ConnectionLabel(text: widget.loopLabel),
           ),
         );

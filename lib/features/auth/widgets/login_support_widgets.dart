@@ -66,9 +66,9 @@ class _BrandMark extends StatelessWidget {
     return RichText(
       text: TextSpan(
         style: TextStyle(
-          color: Colors.white,
+          color: FncColors.white,
           fontWeight: FontWeight.w800,
-          fontSize: 22 * scale,
+          fontSize: FncFonts.size22 * scale,
           letterSpacing: -0.2,
         ),
         children: [
@@ -78,7 +78,7 @@ class _BrandMark extends StatelessWidget {
             alignment: PlaceholderAlignment.middle,
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: const Color(0xFFD90429),
+                color: FncColors.red,
                 borderRadius: BorderRadius.circular(6 * scale),
               ),
               child: Padding(
@@ -89,8 +89,8 @@ class _BrandMark extends StatelessWidget {
                 child: Text(
                   'HUB',
                   style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12 * scale,
+                    color: FncColors.white,
+                    fontSize: FncFonts.size12 * scale,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -141,9 +141,9 @@ class _StatusLedState extends State<_StatusLed>
   @override
   Widget build(BuildContext context) {
     final color = switch (widget.status) {
-      _BackendStatus.checking => Colors.grey,
-      _BackendStatus.ok => Colors.greenAccent.shade400,
-      _BackendStatus.down => Colors.redAccent,
+      _BackendStatus.checking => FncColors.materialGrey,
+      _BackendStatus.ok => FncColors.materialGreenAccent.shade400,
+      _BackendStatus.down => FncColors.materialRedAccent,
     };
 
     if (widget.status == _BackendStatus.checking) {

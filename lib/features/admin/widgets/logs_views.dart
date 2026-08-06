@@ -52,7 +52,7 @@ extension _LogsViews on _LogsPageViewState {
                       day.date,
                       style: const TextStyle(
                         fontWeight: FontWeight.w800,
-                        fontSize: 15,
+                        fontSize: FncFonts.size15,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -80,14 +80,14 @@ extension _LogsViews on _LogsPageViewState {
                           Icon(
                             Icons.error_outline,
                             size: 16,
-                            color: Colors.red.shade700,
+                            color: FncColors.materialRed.shade700,
                           ),
                         if (day.warnings > 0) ...[
                           const SizedBox(width: 6),
                           Icon(
                             Icons.warning_amber_outlined,
                             size: 16,
-                            color: Colors.orange.shade800,
+                            color: FncColors.materialOrange.shade800,
                           ),
                         ],
                       ],
@@ -151,7 +151,10 @@ extension _LogsViews on _LogsPageViewState {
         ),
         const SizedBox(height: 12),
         if (_viewerError != null) ...[
-          Text(_viewerError!, style: TextStyle(color: Colors.red.shade700)),
+          Text(
+            _viewerError!,
+            style: TextStyle(color: FncColors.materialRed.shade700),
+          ),
           const SizedBox(height: 10),
         ],
         if (_viewerLoading)

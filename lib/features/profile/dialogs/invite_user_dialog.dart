@@ -31,7 +31,7 @@ class _InviteUserDialogState extends State<_InviteUserDialog> {
               'groups.invite_dialog_body',
               'Se enviará una invitación al usuario indicado para unirse a este grupo.',
             ),
-            style: const TextStyle(fontSize: 12),
+            style: const TextStyle(fontSize: FncFonts.size12),
           ),
           const SizedBox(height: 12),
           TextField(

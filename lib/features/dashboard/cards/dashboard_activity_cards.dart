@@ -119,8 +119,10 @@ class _ConnectionStatusBodyState extends State<_ConnectionStatusBody> {
               defaultConnectionName;
           final result = resultsById[id];
           final color = result == null
-              ? Colors.grey
-              : (result.ok ? Colors.green.shade600 : Colors.red.shade600);
+              ? FncColors.materialGrey
+              : (result.ok
+                    ? FncColors.materialGreen.shade600
+                    : FncColors.materialRed.shade600);
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 3),
             child: Row(
@@ -233,12 +235,12 @@ class _CompositionBody extends StatelessWidget {
   final DashboardTx tx;
 
   static const _colors = [
-    Color(0xFF4F46E5),
-    Color(0xFF0891B2),
-    Color(0xFF059669),
-    Color(0xFFD97706),
-    Color(0xFF7C3AED),
-    Color(0xFFDB2777),
+    FncColors.indigo600,
+    FncColors.teal,
+    FncColors.green,
+    FncColors.labelPrompt,
+    FncColors.purple,
+    FncColors.labelConnection,
   ];
 
   @override

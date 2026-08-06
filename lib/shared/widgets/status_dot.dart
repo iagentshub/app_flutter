@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../app/theme/fnc_colors.dart';
+
 enum StatusDotState { ok, error, pending, unknown }
 
 /// Punto de estado (verde/rojo/gris, o naranja parpadeante mientras hay una
@@ -50,10 +52,10 @@ class _StatusDotState extends State<StatusDot>
   }
 
   Color get _color => switch (widget.state) {
-    StatusDotState.ok => const Color(0xFF2E7D32),
-    StatusDotState.error => const Color(0xFFC62828),
-    StatusDotState.pending => const Color(0xFFEF6C00),
-    StatusDotState.unknown => Colors.grey,
+    StatusDotState.ok => FncColors.materialGreen800,
+    StatusDotState.error => FncColors.materialRed800,
+    StatusDotState.pending => FncColors.materialOrange800,
+    StatusDotState.unknown => FncColors.materialGrey,
   };
 
   @override

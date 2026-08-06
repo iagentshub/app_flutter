@@ -1,36 +1,38 @@
 import 'package:flutter/material.dart';
 
+import '../../app/theme/fnc_colors.dart';
+
 /// Tabla canónica de colores para labels.
 /// (assets/js/labels.js): 3 grupos exclusivos (visibilidad, entorno, estado).
 /// Incluye también "owner"/"linked", usados por el badge de origen
 /// (OriginBadge) y por el grupo informativo de propiedad del catálogo.
 const Map<String, Color> _labelColors = {
-  'owner': Color(0xFF059669),
-  'linked': Color(0xFF0891B2),
-  'agent': Color(0xFF2563EB),
-  'skill': Color(0xFF9333EA),
-  'prompt': Color(0xFFD97706),
-  'knowledge': Color(0xFF0D9488),
-  'connection': Color(0xFFDB2777),
-  'memory': Color(0xFFB45309),
-  'workflow': Color(0xFF16A34A),
-  'evaluator': Color(0xFFE11D48),
-  'private': Color(0xFF64748B),
-  'public': Color(0xFF059669),
-  'production': Color(0xFF0891B2),
-  'staging': Color(0xFF475569),
-  'development': Color(0xFFD97706),
-  'test': Color(0xFF7C3AED),
-  'favorite': Color(0xFFF59E0B),
-  'draft': Color(0xFF8B5CF6),
-  'review': Color(0xFFF97316),
-  'deprecated': Color(0xFFCA8A04),
-  'quarantine': Color(0xFFEF4444),
-  'archived': Color(0xFF94A3B8),
-  'delete': Color(0xFFDC2626),
+  'owner': FncColors.labelOwner,
+  'linked': FncColors.labelLinked,
+  'agent': FncColors.labelAgent,
+  'skill': FncColors.labelSkill,
+  'prompt': FncColors.labelPrompt,
+  'knowledge': FncColors.labelKnowledge,
+  'connection': FncColors.labelConnection,
+  'memory': FncColors.labelMemory,
+  'workflow': FncColors.labelWorkflow,
+  'evaluator': FncColors.labelEvaluator,
+  'private': FncColors.labelPrivate,
+  'public': FncColors.labelPublic,
+  'production': FncColors.labelProduction,
+  'staging': FncColors.labelStaging,
+  'development': FncColors.labelDevelopment,
+  'test': FncColors.labelTest,
+  'favorite': FncColors.labelFavorite,
+  'draft': FncColors.labelDraft,
+  'review': FncColors.labelReview,
+  'deprecated': FncColors.labelDeprecated,
+  'quarantine': FncColors.labelQuarantine,
+  'archived': FncColors.labelArchived,
+  'delete': FncColors.labelDelete,
 };
 
-Color labelColor(String key) => _labelColors[key] ?? const Color(0xFF64748B);
+Color labelColor(String key) => _labelColors[key] ?? FncColors.labelFallback;
 
 /// Claves de label conocidas por el catálogo, en el mismo orden que
 /// Los grupos representan visibilidad, entorno y estado.

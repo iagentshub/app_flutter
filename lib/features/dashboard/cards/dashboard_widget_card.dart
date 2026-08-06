@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 
 /// Presentación común de una card del dashboard.
@@ -58,7 +59,7 @@ class DashboardWidgetCard extends StatelessWidget {
                   child: Text(
                     title,
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: FncFonts.size16,
                       fontWeight: FontWeight.w700,
                     ),
                   ),

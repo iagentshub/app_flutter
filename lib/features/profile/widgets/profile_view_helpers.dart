@@ -11,7 +11,7 @@ extension _ProfileViewHelpers on _ProfilePageState {
         Text(
           text.toUpperCase(),
           style: TextStyle(
-            fontSize: 12,
+            fontSize: FncFonts.size12,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.4,
             color: resolvedColor,
@@ -31,8 +31,8 @@ extension _ProfileViewHelpers on _ProfilePageState {
       child: Text(
         text,
         style: const TextStyle(
-          color: Colors.white,
-          fontSize: 11,
+          color: FncColors.white,
+          fontSize: FncFonts.size11,
           fontWeight: FontWeight.w700,
         ),
       ),
@@ -110,10 +110,14 @@ extension _ProfileViewHelpers on _ProfilePageState {
                       padding: EdgeInsets.all(5),
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: FncColors.white,
                       ),
                     )
-                  : const Icon(Icons.camera_alt, size: 13, color: Colors.white),
+                  : const Icon(
+                      Icons.camera_alt,
+                      size: 13,
+                      color: FncColors.white,
+                    ),
             ),
           ),
         ),
@@ -126,7 +130,10 @@ extension _ProfileViewHelpers on _ProfilePageState {
       radius: 32,
       child: Text(
         initial,
-        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+        style: const TextStyle(
+          fontSize: FncFonts.size24,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

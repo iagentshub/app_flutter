@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/fnc_colors.dart';
+import '../../../app/theme/fnc_fonts.dart';
 import '../models/workflow_step_draft.dart';
 
 /// Estado visual de un nodo dentro del lienzo.
@@ -41,7 +43,7 @@ class WorkflowNodeCard extends StatelessWidget {
     return switch (status) {
       WorkflowNodeVisualStatus.waiting => colors.outline,
       WorkflowNodeVisualStatus.running => colors.primary,
-      WorkflowNodeVisualStatus.done => Colors.green.shade600,
+      WorkflowNodeVisualStatus.done => FncColors.materialGreen.shade600,
       WorkflowNodeVisualStatus.error => colors.error,
       WorkflowNodeVisualStatus.none =>
         step.isEvaluator ? colors.tertiary : colors.primary,
@@ -116,7 +118,7 @@ class WorkflowNodeCard extends StatelessWidget {
                     '×$iteration',
                     style: TextStyle(
                       color: accent,
-                      fontSize: 11,
+                      fontSize: FncFonts.size11,
                       fontWeight: FontWeight.w800,
                     ),
                   ),

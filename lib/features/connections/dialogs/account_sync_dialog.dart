@@ -116,7 +116,7 @@ class _AccountSyncDialogState extends State<_AccountSyncDialog> {
                 Text(
                   '${_selected.length}/${widget.models.length}',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: FncFonts.size12,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
@@ -150,7 +150,9 @@ class _AccountSyncDialogState extends State<_AccountSyncDialog> {
                                       'providers.sync_dialog_already_synced_hint',
                                       'Ya sincronizado',
                                     ),
-                                    style: const TextStyle(fontSize: 11),
+                                    style: const TextStyle(
+                                      fontSize: FncFonts.size11,
+                                    ),
                                   )
                                 : null,
                             onChanged: (value) {

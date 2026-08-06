@@ -6,6 +6,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/app_theme.dart';
+import '../../../app/theme/fnc_colors.dart';
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 
 import '../../../core/network/api_error.dart';
@@ -189,7 +191,7 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(text),
-        backgroundColor: isError ? Colors.red.shade700 : null,
+        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
       ),
     );
   }
@@ -550,9 +552,9 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
 
   Widget _capNotice() {
     final surface = Theme.of(context).colorScheme.surface;
-    final iconColor = AppTheme.statusColor(Colors.orange, surface);
+    final iconColor = AppTheme.statusColor(FncColors.materialOrange, surface);
     return Card(
-      color: Colors.orange.withValues(alpha: 0.12),
+      color: FncColors.materialOrange.withValues(alpha: 0.12),
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Row(

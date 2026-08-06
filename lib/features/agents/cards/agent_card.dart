@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 
 import '../../../models/agents/agent_models.dart';
@@ -147,7 +148,7 @@ class AgentCard extends StatelessWidget {
                   child: Text(
                     item.name,
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: FncFonts.size16,
                       fontWeight: FontWeight.w700,
                     ),
                   ),

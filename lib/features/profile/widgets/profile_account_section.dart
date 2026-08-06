@@ -27,7 +27,7 @@ extension _ProfileAccountSection on _ProfilePageState {
                       Text(
                         username,
                         style: const TextStyle(
-                          fontSize: 20,
+                          fontSize: FncFonts.size20,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -40,7 +40,7 @@ extension _ProfileAccountSection on _ProfilePageState {
                             bundle.session.role,
                             color: Theme.of(context).colorScheme.primary,
                           ),
-                          _badge(planLabel, color: const Color(0xFF0891B2)),
+                          _badge(planLabel, color: FncColors.teal),
                         ],
                       ),
                     ],
@@ -195,7 +195,7 @@ extension _ProfileAccountSection on _ProfilePageState {
         _sectionHeader(
           Icons.warning_amber_outlined,
           _tx('profile.account_zone_title', 'Zona de cuenta'),
-          color: Colors.red,
+          color: FncColors.materialRed,
         ),
         const SizedBox(height: 8),
         Card(

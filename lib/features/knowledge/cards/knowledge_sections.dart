@@ -266,7 +266,7 @@ extension _KnowledgeSections on _KnowledgePageState {
                   child: Text(
                     item.name,
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: FncFonts.size16,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -372,7 +372,7 @@ extension _KnowledgeSections on _KnowledgePageState {
                   child: Text(
                     item.title,
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: FncFonts.size16,
                       fontWeight: FontWeight.w700,
                     ),
                   ),

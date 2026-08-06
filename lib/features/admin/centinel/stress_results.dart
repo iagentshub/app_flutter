@@ -25,7 +25,7 @@ extension _CentinelStressResults on _CentinelStressTabState {
       cumWeightedSum += avg[i] * count;
       cumCount += count;
       avgColors.add(
-        avg[i] > baseline ? const Color(0xFFDC2626) : const Color(0xFF059669),
+        avg[i] > baseline ? FncColors.danger : FncColors.success,
       );
       if (breakIndex < 0 && count > 0) {
         final errRate = (t['errors'] as num? ?? 0) / count;
@@ -65,19 +65,19 @@ extension _CentinelStressResults on _CentinelStressTabState {
               spacing: 12,
               children: [
                 _legendItem(
-                  const Color(0xFF059669),
+                  FncColors.chartEmerald,
                   _tx('centinel.chart_legend_avg', 'Promedio'),
                 ),
                 _legendItem(
-                  const Color(0xFF3987E5),
+                  FncColors.chartBlue,
                   _tx('centinel.chart_legend_p95', 'p95'),
                 ),
                 _legendItem(
-                  const Color(0xFF9085E9),
+                  FncColors.chartPurple,
                   _tx('centinel.chart_legend_rps', 'req/s'),
                 ),
                 _legendItem(
-                  const Color(0xFFD55181),
+                  FncColors.chartPink,
                   _tx('centinel.chart_legend_users', 'Usuarios'),
                 ),
               ],
@@ -97,22 +97,22 @@ extension _CentinelStressResults on _CentinelStressTabState {
                 series: [
                   ChartSeries(
                     values: rps,
-                    color: const Color(0xFF9085E9),
+                    color: FncColors.chartPurple,
                     style: ChartSeriesStyle.bars,
                   ),
                   ChartSeries(
                     values: p95,
-                    color: const Color(0xFF3987E5),
+                    color: FncColors.chartBlue,
                     ownScale: false,
                   ),
                   ChartSeries(
                     values: users,
-                    color: const Color(0xFFD55181),
+                    color: FncColors.chartPink,
                     style: ChartSeriesStyle.dashedLine,
                   ),
                   ChartSeries(
                     values: avg,
-                    color: const Color(0xFF059669),
+                    color: FncColors.chartEmerald,
                     perPointColors: avgColors,
                     ownScale: false,
                   ),
@@ -135,7 +135,7 @@ extension _CentinelStressResults on _CentinelStressTabState {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 4),
-        Text(label, style: const TextStyle(fontSize: 11)),
+        Text(label, style: const TextStyle(fontSize: FncFonts.size11)),
       ],
     );
   }
@@ -177,7 +177,9 @@ extension _CentinelStressResults on _CentinelStressTabState {
                 _statBlock(
                   _tx('centinel.summary_stat_errors', 'Errores'),
                   '$errors ($errorPct%)',
-                  color: (errors is num && errors > 0) ? Colors.red : null,
+                  color: (errors is num && errors > 0)
+                      ? FncColors.materialRed
+                      : null,
                 ),
                 _statBlock(
                   _tx('centinel.summary_stat_avg', 'Media de resolución'),
@@ -186,7 +188,7 @@ extension _CentinelStressResults on _CentinelStressTabState {
                 _statBlock(
                   _tx('centinel.summary_stat_avg_user', 'Media por usuario'),
                   '${avgPerUserS}s',
-                  color: muchWorse ? Colors.red : null,
+                  color: muchWorse ? FncColors.materialRed : null,
                 ),
               ],
             ),
@@ -209,7 +211,7 @@ extension _CentinelStressResults on _CentinelStressTabState {
           Text(
             value,
             style: TextStyle(
-              fontSize: 20,
+              fontSize: FncFonts.size20,
               fontWeight: FontWeight.w800,
               color: color,
             ),
@@ -273,7 +275,10 @@ extension _CentinelStressResults on _CentinelStressTabState {
       children: [
         Text(
           title,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+          style: const TextStyle(
+            fontSize: FncFonts.size12,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         const SizedBox(height: 6),
         ...entries.toList().asMap().entries.map((e) {
@@ -292,7 +297,7 @@ extension _CentinelStressResults on _CentinelStressTabState {
                 Expanded(
                   child: Text(
                     e.value.key,
-                    style: const TextStyle(fontSize: 12),
+                    style: const TextStyle(fontSize: FncFonts.size12),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -387,15 +392,15 @@ extension _CentinelStressResults on _CentinelStressTabState {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.15),
+        color: FncColors.materialRed.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         text,
         style: const TextStyle(
-          color: Colors.red,
+          color: FncColors.materialRed,
           fontWeight: FontWeight.w700,
-          fontSize: 11,
+          fontSize: FncFonts.size11,
         ),
       ),
     );

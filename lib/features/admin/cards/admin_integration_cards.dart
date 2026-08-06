@@ -19,7 +19,10 @@ extension _AdminIntegrationCards on _AdminPageState {
           children: [
             Text(
               name,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              style: const TextStyle(
+                fontSize: FncFonts.size16,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
@@ -32,10 +35,9 @@ extension _AdminIntegrationCards on _AdminPageState {
               runSpacing: 6,
               children: [
                 _resourceTypeBadge(AdminResourceType.agent),
-                _badge(type, const Color(0xFF64748B)),
+                _badge(type, FncColors.slate),
                 _badge(scope, labelColor(scope)),
-                if (tokens > 0)
-                  _badge(_fmtTokens(tokens), const Color(0xFF0891B2)),
+                if (tokens > 0) _badge(_fmtTokens(tokens), FncColors.info),
               ],
             ),
             const SizedBox(height: 4),
@@ -86,7 +88,10 @@ extension _AdminIntegrationCards on _AdminPageState {
           children: [
             Text(
               name,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              style: const TextStyle(
+                fontSize: FncFonts.size16,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
@@ -99,9 +104,8 @@ extension _AdminIntegrationCards on _AdminPageState {
               runSpacing: 6,
               children: [
                 _resourceTypeBadge(AdminResourceType.connection),
-                _badge(type, const Color(0xFF64748B)),
-                if (tokens > 0)
-                  _badge(_fmtTokens(tokens), const Color(0xFF0891B2)),
+                _badge(type, FncColors.slate),
+                if (tokens > 0) _badge(_fmtTokens(tokens), FncColors.info),
               ],
             ),
             const SizedBox(height: 4),

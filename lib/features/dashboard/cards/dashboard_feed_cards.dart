@@ -123,7 +123,7 @@ class _FeedBodyState extends State<_FeedBody> {
           trailing: AppIconButton(
             icon: Icon(
               starred ? Icons.star : Icons.star_border,
-              color: starred ? Colors.amber : null,
+              color: starred ? FncColors.materialAmber : null,
               size: 20,
             ),
             tooltip: widget.tx(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../models/memory/memory_models.dart';
 
@@ -32,7 +33,10 @@ class MemoryFileCard extends StatelessWidget {
           children: [
             Text(
               file.filename,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              style: const TextStyle(
+                fontSize: FncFonts.size16,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 6),
             Text(

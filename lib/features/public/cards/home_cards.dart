@@ -15,7 +15,7 @@ class _StatChip extends StatelessWidget {
         border: Border(
           right: label == 'PRIVADO'
               ? BorderSide.none
-              : const BorderSide(color: Color(0xFF5A5A5A)),
+              : const BorderSide(color: FncColors.gray5A5A5A),
         ),
       ),
       child: Column(
@@ -24,18 +24,18 @@ class _StatChip extends StatelessWidget {
           Text(
             number,
             style: const TextStyle(
-              fontSize: 28,
+              fontSize: FncFonts.size28,
               fontWeight: FontWeight.w800,
-              color: Color(0xFFFFFFFF),
+              color: FncColors.white,
             ),
           ),
           Text(
             label,
             style: const TextStyle(
-              fontSize: 10,
+              fontSize: FncFonts.size10,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.0,
-              color: Color(0xFFD0D0D0),
+              color: FncColors.grayD0D0D0,
             ),
           ),
         ],
@@ -54,9 +54,9 @@ class _FeatureCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFF171717),
+        color: FncColors.gray171717,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2B2B2B)),
+        border: Border.all(color: FncColors.gray2B2B2B),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -66,18 +66,18 @@ class _FeatureCard extends StatelessWidget {
             Text(
               title,
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: FncFonts.size16,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFFFFFFFF),
+                color: FncColors.white,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               body,
               style: const TextStyle(
-                fontSize: 13,
+                fontSize: FncFonts.size13,
                 height: 1.5,
-                color: Color(0xFFE2E2E2),
+                color: FncColors.grayE2E2E2,
               ),
             ),
           ],

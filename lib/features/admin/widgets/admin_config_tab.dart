@@ -93,7 +93,7 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(text),
-        backgroundColor: isError ? Colors.red.shade700 : null,
+        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
       ),
     );
   }
@@ -411,8 +411,8 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
 
 // Colores de estado compartidos por _AdminConfigTab y _AdminUpdatesCard
 // (guardado correcto, commit al día / desactualizado).
-const _statusOkColor = Color(0xFF059669);
-const _statusWarnColor = Color(0xFFD97706);
+const _statusOkColor = FncColors.success;
+const _statusWarnColor = FncColors.labelDevelopment;
 
 /// Tarjeta genérica de una sección de la pestaña Configuración — usada tanto
 /// por los campos de este archivo como por _AdminUpdatesCard.
@@ -426,7 +426,10 @@ Widget _sectionCard(String title, List<Widget> children) {
         children: [
           Text(
             title,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+            style: const TextStyle(
+              fontSize: FncFonts.size15,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 10),
           ...children,

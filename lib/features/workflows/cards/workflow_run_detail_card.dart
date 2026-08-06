@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../app/theme/fnc_colors.dart';
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../models/workflow_run_state.dart';
 import '../models/workflow_step_draft.dart';
@@ -19,7 +21,7 @@ Color runStatusColor(BuildContext context, RunNodeStatus status) {
   return switch (status) {
     RunNodeStatus.waiting => colors.outline,
     RunNodeStatus.running => colors.primary,
-    RunNodeStatus.done => Colors.green.shade600,
+    RunNodeStatus.done => FncColors.materialGreen.shade600,
     RunNodeStatus.error => colors.error,
   };
 }
@@ -213,7 +215,9 @@ class WorkflowRunDetailCard extends StatelessWidget {
     final approved = state.evaluatorApproved[step.id];
     if (approved == null) return const SizedBox.shrink();
     final colors = Theme.of(context).colorScheme;
-    final accent = approved ? Colors.green.shade600 : colors.tertiary;
+    final accent = approved
+        ? FncColors.materialGreen.shade600
+        : colors.tertiary;
     final reason = state.evaluatorReasons[step.id];
     return Padding(
       padding: const EdgeInsets.only(top: 10),
@@ -307,7 +311,9 @@ class WorkflowRunDetailCard extends StatelessWidget {
       // ExpansionTile no encuentra dónde pintar su ink.
       type: MaterialType.transparency,
       child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        data: Theme.of(
+          context,
+        ).copyWith(dividerColor: FncColors.transparent),
         child: ExpansionTile(
           tilePadding: EdgeInsets.zero,
           childrenPadding: const EdgeInsets.only(bottom: 4),
@@ -381,7 +387,7 @@ class _Chip extends StatelessWidget {
             label,
             style: TextStyle(
               color: color,
-              fontSize: 12,
+              fontSize: FncFonts.size12,
               fontWeight: FontWeight.w700,
             ),
           ),

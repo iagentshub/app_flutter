@@ -12,7 +12,10 @@ extension _ManagerMembersCard on _ManagerPageState {
           children: [
             Text(
               _tx('manager.members_title', 'Miembros'),
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: FncFonts.size18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 8),
             Text(

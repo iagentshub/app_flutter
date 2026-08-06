@@ -11,9 +11,9 @@ class _Card extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFF333333)),
+        border: Border.all(color: FncColors.gray333333),
         borderRadius: BorderRadius.circular(14),
-        color: const Color(0xFF0F0F0F),
+        color: FncColors.gray0F0F0F,
       ),
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -23,7 +23,7 @@ class _Card extends StatelessWidget {
             Text(
               title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Colors.white,
+                color: FncColors.white,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -32,7 +32,7 @@ class _Card extends StatelessWidget {
               subtitle,
               style: Theme.of(
                 context,
-              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFFD8D8D8)),
+              ).textTheme.bodyMedium?.copyWith(color: FncColors.grayD8D8D8),
             ),
             if (child != null) ...[const SizedBox(height: 12), child!],
           ],
@@ -60,13 +60,13 @@ class _StepLine extends StatelessWidget {
             height: 24,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: const Color(0xFFD90429),
+              color: FncColors.red,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
               step,
               style: const TextStyle(
-                color: Colors.white,
+                color: FncColors.white,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -77,7 +77,7 @@ class _StepLine extends StatelessWidget {
               text,
               style: Theme.of(
                 context,
-              ).textTheme.bodyMedium?.copyWith(color: const Color(0xFFD8D8D8)),
+              ).textTheme.bodyMedium?.copyWith(color: FncColors.grayD8D8D8),
             ),
           ),
         ],

@@ -42,22 +42,21 @@ extension _AdminPeopleCards on _AdminPageState {
                   isAdmin
                       ? _tx('admin.role_admin', 'Admin')
                       : _tx('admin.role_standard', 'Estándar'),
-                  isAdmin ? const Color(0xFF7C3AED) : const Color(0xFF64748B),
+                  isAdmin ? FncColors.purple : FncColors.slate,
                 ),
                 _badge(
                   active
                       ? _tx('admin.status_active', 'Activo')
                       : _tx('admin.status_blocked', 'Bloqueado'),
-                  active ? const Color(0xFF059669) : const Color(0xFFDC2626),
+                  active ? FncColors.success : FncColors.danger,
                 ),
                 _badge(
                   verified
                       ? _tx('admin.verified_yes', 'Verificado')
                       : _tx('admin.verified_no', 'Sin verificar'),
-                  verified ? const Color(0xFF059669) : const Color(0xFFD97706),
+                  verified ? FncColors.success : FncColors.labelDevelopment,
                 ),
-                if (tokens > 0)
-                  _badge(_fmtTokens(tokens), const Color(0xFF0891B2)),
+                if (tokens > 0) _badge(_fmtTokens(tokens), FncColors.info),
               ],
             ),
             const SizedBox(height: 6),
@@ -125,7 +124,7 @@ extension _AdminPeopleCards on _AdminPageState {
                   child: Text(
                     name,
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: FncFonts.size16,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -134,7 +133,7 @@ extension _AdminPeopleCards on _AdminPageState {
                   disabled
                       ? _tx('admin.status_disabled', 'Desactivado')
                       : _tx('admin.status_active', 'Activo'),
-                  disabled ? const Color(0xFFDC2626) : const Color(0xFF059669),
+                  disabled ? FncColors.danger : FncColors.success,
                 ),
               ],
             ),
@@ -151,22 +150,21 @@ extension _AdminPeopleCards on _AdminPageState {
                 _resourceTypeBadge(AdminResourceType.group),
                 _badge(
                   '${_tx('admin.table_members', 'Miembros')}: $members',
-                  const Color(0xFF64748B),
+                  FncColors.slate,
                 ),
                 _badge(
                   '${_tx('admin.tab_connections', 'Conexiones')}: $connections',
-                  const Color(0xFF64748B),
+                  FncColors.slate,
                 ),
                 _badge(
                   '${_tx('admin.tab_agents', 'Agentes')}: $agents',
-                  const Color(0xFF64748B),
+                  FncColors.slate,
                 ),
                 _badge(
                   '${_tx('admin.tab_knowledge', 'Conocimiento')}: $knowledge',
-                  const Color(0xFF64748B),
+                  FncColors.slate,
                 ),
-                if (tokens > 0)
-                  _badge(_fmtTokens(tokens), const Color(0xFF0891B2)),
+                if (tokens > 0) _badge(_fmtTokens(tokens), FncColors.info),
               ],
             ),
             const SizedBox(height: 4),

@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/router/route_names.dart';
+import '../../app/theme/fnc_colors.dart';
+import '../../app/theme/fnc_fonts.dart';
 import '../../core/navigation/public_site_uri.dart';
 import '../../core/network/api_client.dart';
 import '../../features/auth/repositories/auth_repository.dart';
@@ -322,7 +324,7 @@ class _AppShellState extends State<AppShell> {
                     title: Text(
                       _titleForLocation(location, _texts),
                       style: const TextStyle(
-                        fontSize: 18,
+                        fontSize: FncFonts.size18,
                         fontWeight: FontWeight.w700,
                       ),
                     ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/fnc_colors.dart';
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 
 import '../../../core/network/api_client.dart';
@@ -178,7 +180,7 @@ class _MetadataPageState extends State<MetadataPage>
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
           child: Material(
-            color: Colors.transparent,
+            color: FncColors.transparent,
             child: TabBar(
               controller: _tabController,
               isScrollable: true,
@@ -301,10 +303,7 @@ class _MetadataPageState extends State<MetadataPage>
                           DataCell(
                             Text(
                               table.name,
-                              style: const TextStyle(
-                                fontFamily: 'monospace',
-                                fontSize: 12,
-                              ),
+                              style: FncFonts.code,
                             ),
                           ),
                           DataCell(Text('${table.rows}')),

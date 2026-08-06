@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/origin_badge.dart';
 import '../../../shared/widgets/resource_type_badge.dart';
@@ -35,7 +36,7 @@ class LabeledItemCard extends StatelessWidget {
               Text(
                 item.name,
                 style: const TextStyle(
-                  fontSize: 15,
+                  fontSize: FncFonts.size15,
                   fontWeight: FontWeight.w700,
                 ),
               ),

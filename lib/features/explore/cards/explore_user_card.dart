@@ -48,7 +48,7 @@ extension _ExploreUserCard on _ExplorePageState {
                   child: Text(
                     '@$username',
                     style: const TextStyle(
-                      fontSize: 15,
+                      fontSize: FncFonts.size15,
                       fontWeight: FontWeight.w700,
                     ),
                     maxLines: 1,
@@ -101,7 +101,10 @@ extension _ExploreUserCard on _ExplorePageState {
       radius: 20,
       child: Text(
         initial,
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+        style: const TextStyle(
+          fontSize: FncFonts.size14,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

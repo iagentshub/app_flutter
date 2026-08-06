@@ -78,7 +78,7 @@ class _SidebarFooter extends StatelessWidget {
                           child: Text(
                             initial,
                             style: const TextStyle(
-                              fontSize: 12,
+                              fontSize: FncFonts.size12,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
