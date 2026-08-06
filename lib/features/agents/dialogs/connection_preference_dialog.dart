@@ -1,5 +1,8 @@
 part of '../pages/chat_page.dart';
 
+/// Permite a este usuario elegir su propia conexión/modelo para un agente,
+/// sin afectar a la conexión predeterminada que ven el resto de usuarios
+/// (relevante sobre todo en agentes compartidos o enlazados).
 class _ConnectionPreferenceDialog extends StatefulWidget {
   const _ConnectionPreferenceDialog({
     required this.connections,

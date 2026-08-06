@@ -226,7 +226,22 @@
     "preferences_title": "Connection preference",
     "preferences_use_default": "Use the agent's connection",
     "preferences_saved": "Preference saved",
-    "preferences_load_error": "Couldn't load preferences"
+    "preferences_load_error": "Couldn't load preferences",
+    "chat": {
+      "send": "Send message",
+      "stop": "Stop response",
+      "history_tooltip": "Conversation history",
+      "new_conversation": "New conversation",
+      "untitled_conversation": "Conversation",
+      "delete_conversation": "Delete conversation",
+      "reply_action": "Reply",
+      "copy_action": "Copy",
+      "message_copied": "Message copied",
+      "copy_code_tooltip": "Copy code",
+      "code_copied_tooltip": "Copied",
+      "reply_you": "You",
+      "cancel_reply_tooltip": "Cancel reply"
+    }
   },
   "skill_builder": {
     "create_choice_title": "How do you want to create the skill?",

@@ -20,8 +20,8 @@ import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
-import '../../../shared/widgets/token_usage_badge.dart';
 import '../widgets/chat_composer.dart';
+import '../widgets/chat_history_panel.dart';
 import '../widgets/chat_message_bubble.dart';
 
 part '../dialogs/connection_preference_dialog.dart';
@@ -82,6 +82,11 @@ class _ChatPageState extends State<ChatPage> {
   bool _thinking = false;
   String? _error;
   StreamSubscription<ChatStreamEvent>? _subscription;
+
+  /// Mensaje al que se está respondiendo (estilo Telegram/WhatsApp): se
+  /// muestra como vista previa sobre el composer y se antepone como cita al
+  /// enviar, para que quede en el historial persistido por el backend.
+  ChatMessage? _replyTo;
 
   @override
   void initState() {
@@ -262,16 +267,25 @@ class _ChatPageState extends State<ChatPage> {
     _hideMentionOverlay();
     _textController.clear();
     final attachedKnowledgeIds = _attachedKnowledge.map((k) => k.id).toList();
+    final quoted = _replyTo;
+    final composedText = quoted == null
+        ? text
+        : '> ${_replyLabelFor(quoted)}: ${_quoteSnippet(quoted.content)}\n\n$text';
     setState(() {
       _error = null;
       _messages = [
         ..._messages,
-        ChatMessage(role: 'user', content: text, createdAt: DateTime.now()),
+        ChatMessage(
+          role: 'user',
+          content: composedText,
+          createdAt: DateTime.now(),
+        ),
       ];
       _streaming = true;
       _thinking = true;
       _streamingReply = '';
       _attachedKnowledge = [];
+      _replyTo = null;
     });
     _scrollToEnd();
 
@@ -342,6 +356,21 @@ class _ChatPageState extends State<ChatPage> {
       _streaming = false;
       _thinking = false;
     });
+  }
+
+  void _setReply(ChatMessage message) => setState(() => _replyTo = message);
+
+  void _cancelReply() => setState(() => _replyTo = null);
+
+  String _replyLabelFor(ChatMessage message) =>
+      message.isUser ? _tx('agents.chat.reply_you', 'Tú') : widget.agent.name;
+
+  /// Aplana y recorta el mensaje citado a una sola línea, como hacen
+  /// Telegram/WhatsApp al previsualizar una respuesta.
+  String _quoteSnippet(String content) {
+    const maxLength = 160;
+    final flat = content.replaceAll('\n', ' ').replaceAll('`', '').trim();
+    return flat.length > maxLength ? '${flat.substring(0, maxLength)}…' : flat;
   }
 
   void _showMessage(String text, {bool isError = false}) {
@@ -455,67 +484,26 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildHistoryPanel() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: PrimaryButton.icon(
-            onPressed: _newConversation,
-            icon: const Icon(Icons.add),
-            label: const Text('Nueva conversación'),
-          ),
-        ),
-        if (_loadingConversations)
-          const Padding(
-            padding: EdgeInsets.all(24),
-            child: Center(child: CircularProgressIndicator()),
-          )
-        else
-          Expanded(
-            child: ListView.builder(
-              itemCount: _conversations.length,
-              itemBuilder: (context, index) {
-                final item = _conversations[index];
-                final active = item.id == _conversationId;
-                return ListTile(
-                  selected: active,
-                  dense: true,
-                  title: Text(
-                    item.title.isEmpty ? 'Conversación' : item.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  subtitle: item.tokensIn + item.tokensOut > 0
-                      ? Align(
-                          alignment: Alignment.centerLeft,
-                          child: TokenUsageBadge(
-                            tokensIn: item.tokensIn,
-                            tokensOut: item.tokensOut,
-                            tooltip: _tx(
-                              'agents.tokens_tooltip',
-                              'Tokens consumidos',
-                            ),
-                          ),
-                        )
-                      : null,
-                  onTap: () {
-                    Navigator.of(context).maybePop();
-                    _selectConversation(item.id);
-                  },
-                  trailing: AppIconButton(
-                    icon: const Icon(Icons.close, size: 16),
-                    tooltip: _tx(
-                      'agents.chat.delete_conversation',
-                      'Borrar conversación',
-                    ),
-                    onPressed: () => _deleteConversation(item.id),
-                  ),
-                );
-              },
-            ),
-          ),
-      ],
+    return ChatHistoryPanel(
+      conversations: _conversations,
+      activeConversationId: _conversationId,
+      loading: _loadingConversations,
+      onNewConversation: _newConversation,
+      onSelectConversation: _selectConversation,
+      onDeleteConversation: _deleteConversation,
+      newConversationLabel: _tx(
+        'agents.chat.new_conversation',
+        'Nueva conversación',
+      ),
+      untitledConversationLabel: _tx(
+        'agents.chat.untitled_conversation',
+        'Conversación',
+      ),
+      tokensTooltip: _tx('agents.tokens_tooltip', 'Tokens consumidos'),
+      deleteTooltip: _tx(
+        'agents.chat.delete_conversation',
+        'Borrar conversación',
+      ),
     );
   }
 
@@ -537,6 +525,17 @@ class _ChatPageState extends State<ChatPage> {
       );
     }
 
+    final copyCodeTooltip = _tx(
+      'agents.chat.copy_code_tooltip',
+      'Copiar código',
+    );
+    final replyActionLabel = _tx('agents.chat.reply_action', 'Responder');
+    final copyActionLabel = _tx('agents.chat.copy_action', 'Copiar');
+    final messageCopiedLabel = _tx(
+      'agents.chat.message_copied',
+      'Mensaje copiado',
+    );
+
     return Column(
       children: [
         Expanded(
@@ -547,16 +546,24 @@ class _ChatPageState extends State<ChatPage> {
                   padding: const EdgeInsets.all(16),
                   itemCount: _messages.length + (_streaming ? 1 : 0),
                   itemBuilder: (context, index) {
-                    if (index >= _messages.length) {
-                      return ChatMessageBubble(
-                        message: ChatMessage(
-                          role: 'assistant',
-                          content: _streamingReply,
-                        ),
-                        thinking: _thinking && _streamingReply.isEmpty,
-                      );
-                    }
-                    return ChatMessageBubble(message: _messages[index]);
+                    final message = index >= _messages.length
+                        ? ChatMessage(
+                            role: 'assistant',
+                            content: _streamingReply,
+                          )
+                        : _messages[index];
+                    return ChatMessageBubble(
+                      message: message,
+                      thinking:
+                          index >= _messages.length &&
+                          _thinking &&
+                          _streamingReply.isEmpty,
+                      onReply: _setReply,
+                      copyCodeTooltip: copyCodeTooltip,
+                      replyActionLabel: replyActionLabel,
+                      copyActionLabel: copyActionLabel,
+                      messageCopiedLabel: messageCopiedLabel,
+                    );
                   },
                 ),
         ),
@@ -579,12 +586,15 @@ class _ChatPageState extends State<ChatPage> {
           onStop: _stop,
           sendTooltip: _tx('agents.chat.send', 'Enviar mensaje'),
           stopTooltip: _tx('agents.chat.stop', 'Detener respuesta'),
+          replyTo: _replyTo,
+          replyToLabel: _replyTo == null ? null : _replyLabelFor(_replyTo!),
+          onCancelReply: _cancelReply,
+          cancelReplyTooltip: _tx(
+            'agents.chat.cancel_reply_tooltip',
+            'Cancelar respuesta',
+          ),
         ),
       ],
     );
   }
 }
-
-/// Permite a este usuario elegir su propia conexión/modelo para un agente,
-/// sin afectar a la conexión predeterminada que ven el resto de usuarios
-/// (relevante sobre todo en agentes compartidos o enlazados).

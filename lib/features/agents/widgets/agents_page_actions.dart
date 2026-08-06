@@ -331,8 +331,8 @@ extension _AgentsPageActions on _AgentsPageState {
     }
   }
 
-  void _openChat(AgentItem item) {
-    Navigator.of(context).push(
+  Future<void> _openChat(AgentItem item) async {
+    await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => ChatPage(
           agent: item,
@@ -342,6 +342,10 @@ extension _AgentsPageActions on _AgentsPageState {
         ),
       ),
     );
+    // Al volver del chat, refresca la tarjeta: los tokens consumidos se
+    // actualizan en el agente durante la conversación y solo llegan al listado
+    // con un nuevo fetch.
+    await _load();
   }
 
   Future<void> _openAgentBuilder() async {
