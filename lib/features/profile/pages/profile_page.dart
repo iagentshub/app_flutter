@@ -6,9 +6,8 @@ import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../app/router/route_names.dart';
+import '../../../app/router/router.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../features/connections/widgets/providers_section.dart';

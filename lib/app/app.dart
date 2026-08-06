@@ -10,7 +10,7 @@ import '../shared/state/dashboard_edit_state.dart';
 import '../shared/state/locale_controller.dart';
 import '../shared/state/session_controller.dart';
 import '../shared/state/theme_controller.dart';
-import 'router/app_router.dart';
+import 'router/router.dart';
 import 'theme/app_theme.dart';
 
 class App extends StatefulWidget {
@@ -51,7 +51,7 @@ class _AppState extends State<App> {
     _authRepository = AuthRepository(_apiClient);
     _dashboardRepository = DashboardRepository(_apiClient);
     _dashboardEditState = DashboardEditState();
-    _router = createRouter(
+    _router = AppRouter.create(
       backendController: widget.backendController,
       sessionController: widget.sessionController,
       localeController: widget.localeController,

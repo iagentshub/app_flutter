@@ -169,7 +169,7 @@ class _RecentAgentsBody extends StatelessWidget {
           subtitle: agent['model'] != null
               ? Text(agent['model'].toString())
               : null,
-          onTap: () => context.go(RouteNames.agents),
+          onTap: () => AppRouter.toAgents(context),
         );
       }).toList(),
     );
@@ -221,7 +221,7 @@ class _RecentConversationsBody extends StatelessWidget {
               agentNames[conversation['agent_id']?.toString()] ??
                   tx('default_agent_name', 'Agente'),
             ),
-            onTap: () => context.go(RouteNames.agents),
+            onTap: () => AppRouter.toAgents(context),
           ),
       ],
     );

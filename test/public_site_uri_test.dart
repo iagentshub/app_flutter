@@ -1,4 +1,4 @@
-import 'package:app_flutter/core/navigation/public_site_uri.dart';
+import 'package:app_flutter/app/router/external_router.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

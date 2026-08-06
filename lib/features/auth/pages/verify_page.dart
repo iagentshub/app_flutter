@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/buttons/app_buttons.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../app/router/route_names.dart';
+import '../../../app/router/router.dart';
 import '../../../core/network/api_error.dart';
 import '../../../shared/i18n/locale_loader.dart';
 import '../../../shared/state/locale_controller.dart';
@@ -99,7 +98,7 @@ class _VerifyPageState extends State<VerifyPage> {
       }
 
       if (!mounted) return;
-      context.go(RouteNames.dashboard);
+      AppRouter.toDashboard(context);
     } on ApiError catch (error) {
       if (!mounted) return;
       setState(() {
@@ -145,7 +144,7 @@ class _VerifyPageState extends State<VerifyPage> {
                         const SizedBox(height: 10),
                         if (!_loading)
                           TertiaryButton(
-                            onPressed: () => context.go(RouteNames.login),
+                            onPressed: () => AppRouter.toLogin(context),
                             child: Text(
                               _txt(t, 'verify.go_login', 'Volver al login'),
                             ),

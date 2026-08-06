@@ -268,7 +268,7 @@ class _ConnectionIssueBanner extends StatelessWidget {
     return Material(
       color: FncColors.materialRed.shade700,
       child: InkWell(
-        onTap: () => context.push(RouteNames.backendConfig),
+        onTap: () => AppRouter.toBackendConfig(context),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
@@ -393,32 +393,32 @@ class _NavItem {
 /// rama `is_guest`): se oculta aquí para no llevarlo a un 403.
 List<_NavItem> _visibleMainItems(String role) => role == 'guest'
     ? _mainItems
-          .where((item) => item.route != RouteNames.orchestrations)
+          .where((item) => item.route != InternalRoutes.orchestrations)
           .toList()
     : _mainItems;
 
 const _mainItems = [
-  _NavItem(RouteNames.dashboard, 'dashboard', Icons.dashboard_outlined),
-  _NavItem(RouteNames.explore, 'explore', Icons.travel_explore_outlined),
-  _NavItem(RouteNames.agents, 'agents', Icons.smart_toy_outlined),
-  _NavItem(RouteNames.orchestrations, 'workflows', Icons.hub_outlined),
-  _NavItem(RouteNames.knowledge, 'knowledge', Icons.school_outlined),
-  _NavItem(RouteNames.connections, 'connections', Icons.cable_outlined),
+  _NavItem(InternalRoutes.dashboard, 'dashboard', Icons.dashboard_outlined),
+  _NavItem(InternalRoutes.explore, 'explore', Icons.travel_explore_outlined),
+  _NavItem(InternalRoutes.agents, 'agents', Icons.smart_toy_outlined),
+  _NavItem(InternalRoutes.orchestrations, 'workflows', Icons.hub_outlined),
+  _NavItem(InternalRoutes.knowledge, 'knowledge', Icons.school_outlined),
+  _NavItem(InternalRoutes.connections, 'connections', Icons.cable_outlined),
 ];
 
 const _secondaryItems = [
-  _NavItem(RouteNames.labels, 'labels', Icons.label_outline),
-  _NavItem(RouteNames.profile, 'profile', Icons.person_outline),
+  _NavItem(InternalRoutes.labels, 'labels', Icons.label_outline),
+  _NavItem(InternalRoutes.profile, 'profile', Icons.person_outline),
 ];
 
 const _adminItems = [
-  _NavItem(RouteNames.admin, 'admin', Icons.admin_panel_settings_outlined),
+  _NavItem(InternalRoutes.admin, 'admin', Icons.admin_panel_settings_outlined),
   _NavItem(
-    RouteNames.adminMetadata,
+    InternalRoutes.adminMetadata,
     'admin_metadata',
     Icons.table_rows_outlined,
   ),
-  _NavItem(RouteNames.adminCentinel, 'admin_centinel', Icons.security_outlined),
+  _NavItem(InternalRoutes.adminCentinel, 'admin_centinel', Icons.security_outlined),
 ];
 
 String _titleForLocation(String location, Map<String, dynamic> t) {
@@ -427,7 +427,7 @@ String _titleForLocation(String location, Map<String, dynamic> t) {
       return LocaleLoader.text(t, item.labelKey, fallback: item.labelKey);
     }
   }
-  if (location.startsWith(RouteNames.publicProfilePrefix)) {
+  if (location.startsWith(InternalRoutes.publicProfilePrefix)) {
     return LocaleLoader.text(t, 'public_profile', fallback: 'Public Profile');
   }
   return LocaleLoader.text(t, 'app_title', fallback: 'iAgents');

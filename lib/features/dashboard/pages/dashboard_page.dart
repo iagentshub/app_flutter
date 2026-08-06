@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/buttons/app_buttons.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../app/router/route_names.dart';
+import '../../../app/router/internal_router.dart';
+import '../../../app/router/router.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_client.dart';

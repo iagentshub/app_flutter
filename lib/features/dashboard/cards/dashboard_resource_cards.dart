@@ -34,22 +34,22 @@ class _RecentResourcesBody extends StatelessWidget {
       'agent': (
         icon: Icons.smart_toy_outlined,
         label: tx('feed_agent', 'Agente'),
-        route: RouteNames.agents,
+        route: InternalRoutes.agents,
       ),
       'skill': (
         icon: Icons.auto_awesome_outlined,
         label: tx('feed_skill', 'Skill'),
-        route: RouteNames.knowledge,
+        route: InternalRoutes.knowledge,
       ),
       'knowledge': (
         icon: Icons.menu_book_outlined,
         label: tx('feed_knowledge', 'Knowledge'),
-        route: RouteNames.knowledge,
+        route: InternalRoutes.knowledge,
       ),
       'workflow': (
         icon: Icons.account_tree_outlined,
         label: tx('summary_workflows', 'Workflow'),
-        route: RouteNames.orchestrations,
+        route: InternalRoutes.orchestrations,
       ),
     };
 
@@ -71,8 +71,9 @@ class _RecentResourcesBody extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
             subtitle: Text(metadata[resource.type]?.label ?? resource.type),
-            onTap: () => context.go(
-              metadata[resource.type]?.route ?? RouteNames.dashboard,
+            onTap: () => AppRouter.go(
+              context,
+              metadata[resource.type]?.route ?? InternalRoutes.dashboard,
             ),
           ),
       ],
@@ -162,7 +163,7 @@ class _AgentHealthBody extends StatelessWidget {
                     tx('default_agent_name', 'Agente'),
               ),
               subtitle: Text(issue.reasons.join(' · ')),
-              onTap: () => context.go(RouteNames.agents),
+              onTap: () => AppRouter.toAgents(context),
             ),
         ],
       ],
@@ -223,7 +224,7 @@ class _GroupBody extends StatelessWidget {
         Align(
           alignment: Alignment.centerRight,
           child: TertiaryButton.icon(
-            onPressed: () => context.go(RouteNames.manager),
+            onPressed: () => AppRouter.toManager(context),
             icon: const Icon(Icons.settings_outlined),
             label: Text(tx('group_manage', 'Gestionar')),
           ),

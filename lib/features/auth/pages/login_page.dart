@@ -4,11 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../shared/widgets/buttons/app_buttons.dart';
-import 'package:go_router/go_router.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../app/router/route_names.dart';
+import '../../../app/router/router.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_error.dart';
@@ -211,7 +210,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _openBackendConfig() async {
-    await context.push(RouteNames.backendConfig);
+    await AppRouter.toBackendConfig(context);
     if (!mounted) return;
     await _loadPlatformSettings();
     setState(() {});
@@ -274,7 +273,7 @@ class _LoginPageState extends State<LoginPage> {
 
       if (!mounted) return;
       final destination = safeRedirect(widget.redirectTo);
-      context.go(destination);
+      AppRouter.go(context, destination);
     } on ApiError catch (error) {
       if (!mounted) return;
       setState(() => _errorMessage = error.message);
@@ -327,7 +326,7 @@ class _LoginPageState extends State<LoginPage> {
       unawaited(_syncUserSettings(token, themeController));
       if (!mounted) return;
       final destination = safeRedirect(widget.redirectTo);
-      context.go(destination);
+      AppRouter.go(context, destination);
     } on ApiError catch (error) {
       if (!mounted) return;
       setState(() => _errorMessage = error.message);
@@ -372,7 +371,7 @@ class _LoginPageState extends State<LoginPage> {
       await _syncUserSettings(token, themeController);
       if (!mounted) return;
       final destination = safeRedirect(widget.redirectTo);
-      context.go(destination);
+      AppRouter.go(context, destination);
     } on ApiError catch (error) {
       if (!mounted) return;
       setState(() => _errorMessage = error.message);

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:app_flutter/app/router/route_names.dart';
+import 'package:app_flutter/app/router/internal_router.dart';
 import 'package:app_flutter/shared/services/native_app_icon_service.dart';
 import 'package:app_flutter/shared/state/brand_icon_controller.dart';
 import 'package:app_flutter/shared/widgets/app_shell.dart';
@@ -75,7 +75,7 @@ void main() {
             width: width,
             child: AppSidebarNavigation(
               isAdmin: isAdmin,
-              location: RouteNames.dashboard,
+              location: InternalRoutes.dashboard,
               username: 'jariv',
               displayName: 'Javier',
               email: 'javier@example.com',
@@ -117,7 +117,7 @@ void main() {
     expect(find.text('javier@example.com'), findsOneWidget);
 
     await tester.tap(find.text('Agentes'));
-    expect(selectedRoute, RouteNames.agents);
+    expect(selectedRoute, InternalRoutes.agents);
   });
 
   testWidgets('Tab recorre la navegación principal y Enter la activa', (
@@ -134,19 +134,19 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
     await tester.pump();
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-    expect(selectedRoute, RouteNames.dashboard);
+    expect(selectedRoute, InternalRoutes.dashboard);
 
     selectedRoute = null;
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
     await tester.pump();
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-    expect(selectedRoute, RouteNames.explore);
+    expect(selectedRoute, InternalRoutes.explore);
 
     selectedRoute = null;
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
     await tester.pump();
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-    expect(selectedRoute, RouteNames.agents);
+    expect(selectedRoute, InternalRoutes.agents);
   });
 
   testWidgets('abre las páginas públicas de React en español', (tester) async {
@@ -320,7 +320,7 @@ void main() {
             child: AppSidebarRail(
               isAdmin: isAdmin,
               role: role,
-              location: RouteNames.dashboard,
+              location: InternalRoutes.dashboard,
               initial: 'J',
               tx: tx,
               onNavigate: onNavigate,
@@ -364,7 +364,7 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.smart_toy_outlined));
 
-    expect(selectedRoute, RouteNames.agents);
+    expect(selectedRoute, InternalRoutes.agents);
   });
 
   testWidgets('el rail ofrece expandir el menú', (tester) async {

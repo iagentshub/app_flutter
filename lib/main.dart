@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 
 import 'app/app.dart';
-import 'app/router/url_strategy.dart';
 import 'core/config/runtime_config.dart';
+import 'core/platform/url_strategy.dart';
 import 'shared/state/backend_controller.dart';
 import 'shared/state/brand_icon_controller.dart';
 import 'shared/state/locale_controller.dart';

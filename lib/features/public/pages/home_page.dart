@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/router/route_names.dart';
+import '../../../app/router/external_router.dart';
+import '../../../app/router/router.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/i18n/locale_loader.dart';
@@ -98,12 +99,12 @@ class HomePage extends StatelessWidget {
                   child: PublicTopBar(
                     isEnglish: isEnglish,
                     loginLabel: loginLabel,
-                    onLogin: () => context.go(RouteNames.login),
+                    onLogin: () => AppRouter.toLogin(context),
                     onLanguageSelected: (selected) {
                       if (selected == 'es' && isEnglish) {
-                        context.go(RouteNames.home);
+                        AppRouter.toHome(context);
                       } else if (selected == 'en' && !isEnglish) {
-                        context.go(RouteNames.homeEn);
+                        AppRouter.toHome(context, english: true);
                       }
                     },
                   ),
@@ -173,8 +174,9 @@ class HomePage extends StatelessWidget {
                         runSpacing: 10,
                         children: [
                           PrimaryButton(
-                            onPressed: () => context.go(
-                              isEnglish ? RouteNames.docsEn : RouteNames.docs,
+                            onPressed: () => AppRouter.go(
+                              context,
+                              isEnglish ? ExternalRoutes.docsEn : ExternalRoutes.docs,
                             ),
                             style: FilledButton.styleFrom(
                               backgroundColor: FncColors.red,
@@ -187,10 +189,11 @@ class HomePage extends StatelessWidget {
                             child: Text(docsLabel),
                           ),
                           SecondaryButton(
-                            onPressed: () => context.go(
+                            onPressed: () => AppRouter.go(
+                              context,
                               isEnglish
-                                  ? RouteNames.pricingEn
-                                  : RouteNames.pricing,
+                                  ? ExternalRoutes.pricingEn
+                                  : ExternalRoutes.pricing,
                             ),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: FncColors.white,

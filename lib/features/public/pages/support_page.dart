@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/router/route_names.dart';
+import '../../../app/router/external_router.dart';
+import '../../../app/router/router.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../shared/i18n/locale_loader.dart';
 import '../../../shared/widgets/public_top_bar.dart';
@@ -94,8 +95,9 @@ class SupportPage extends StatelessWidget {
               subtitle: docsDescription,
               children: [
                 TertiaryButton(
-                  onPressed: () => context.go(
-                    isEnglish ? RouteNames.docsEn : RouteNames.docs,
+                  onPressed: () => AppRouter.go(
+                    context,
+                    isEnglish ? ExternalRoutes.docsEn : ExternalRoutes.docs,
                   ),
                   child: Text(isEnglish ? 'Open docs' : 'Abrir documentacion'),
                 ),
@@ -121,14 +123,14 @@ class SupportPage extends StatelessWidget {
                   child: PublicTopBar(
                     isEnglish: isEnglish,
                     loginLabel: loginLabel,
-                    onLogin: () => context.go(RouteNames.login),
+                    onLogin: () => AppRouter.toLogin(context),
                     onLanguageSelected: (selected) {
                       final target = selected == 'en'
-                          ? RouteNames.supportEn
-                          : RouteNames.support;
+                          ? ExternalRoutes.supportEn
+                          : ExternalRoutes.support;
                       if ((selected == 'en' && !isEnglish) ||
                           (selected == 'es' && isEnglish)) {
-                        context.go(target);
+                        AppRouter.go(context, target);
                       }
                     },
                   ),

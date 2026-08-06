@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/buttons/app_buttons.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../app/router/route_names.dart';
+import '../../../app/router/router.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_error.dart';
 import '../../../shared/i18n/locale_loader.dart';
@@ -203,7 +202,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                                   const SizedBox(height: 8),
                                   TertiaryButton(
                                     onPressed: () =>
-                                        context.go(RouteNames.login),
+                                        AppRouter.toLogin(context),
                                     child: Text(
                                       _txt(
                                         t,
@@ -244,7 +243,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                                 const SizedBox(height: 8),
                                 TertiaryButton(
                                   onPressed: () =>
-                                      context.go(RouteNames.forgotPassword),
+                                      AppRouter.toForgotPassword(context),
                                   child: Text(
                                     _txt(
                                       t,

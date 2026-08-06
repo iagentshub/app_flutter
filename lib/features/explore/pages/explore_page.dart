@@ -3,9 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/buttons/app_buttons.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../app/router/route_names.dart';
+import '../../../app/router/router.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_client.dart';
@@ -350,7 +349,7 @@ class _ExplorePageState extends State<ExplorePage>
   }
 
   void _openProfile(String username) {
-    context.push('${RouteNames.publicProfilePrefix}$username');
+    AppRouter.toPublicProfile(context, username);
   }
 
   Future<void> _inviteUser(String username) async {

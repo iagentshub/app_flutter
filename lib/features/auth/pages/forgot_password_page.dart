@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/buttons/app_buttons.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../app/router/route_names.dart';
+import '../../../app/router/router.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_error.dart';
 import '../../../shared/i18n/locale_loader.dart';
@@ -155,7 +154,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                             ),
                             const SizedBox(height: 8),
                             TertiaryButton(
-                              onPressed: () => context.go(RouteNames.login),
+                              onPressed: () => AppRouter.toLogin(context),
                               child: Text(
                                 _txt(
                                   t,

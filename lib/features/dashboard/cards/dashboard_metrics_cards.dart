@@ -22,12 +22,12 @@ class _SummaryBody extends StatelessWidget {
       'workflows': data.workflows.length,
     };
     final routes = <String, String>{
-      'agents': RouteNames.agents,
-      'connections': RouteNames.connections,
-      'skills': RouteNames.knowledge,
-      'memory': RouteNames.knowledge,
-      'knowledge': RouteNames.knowledge,
-      'workflows': RouteNames.orchestrations,
+      'agents': InternalRoutes.agents,
+      'connections': InternalRoutes.connections,
+      'skills': InternalRoutes.knowledge,
+      'memory': InternalRoutes.knowledge,
+      'knowledge': InternalRoutes.knowledge,
+      'workflows': InternalRoutes.orchestrations,
     };
     final icons = <String, IconData>{
       'agents': Icons.smart_toy_outlined,
@@ -68,7 +68,7 @@ class _SummaryBody extends StatelessWidget {
           value: counts[item] ?? 0,
           icon: icons[item] ?? Icons.circle_outlined,
           tint: tints[item] ?? scheme.primary,
-          onTap: () => context.go(routes[item] ?? RouteNames.dashboard),
+          onTap: () => AppRouter.go(context, routes[item] ?? InternalRoutes.dashboard),
         );
       },
     );

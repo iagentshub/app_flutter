@@ -260,7 +260,7 @@ extension _LoginForm on _LoginPageState {
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               )
                             : null,
-                        onPressed: () => context.go(RouteNames.forgotPassword),
+                        onPressed: () => AppRouter.toForgotPassword(context),
                         child: Text(
                           forgotPassword,
                           style: Theme.of(context).textTheme.bodySmall,
@@ -383,7 +383,7 @@ extension _LoginForm on _LoginPageState {
                     const SizedBox(height: 14),
                     Center(
                       child: TertiaryButton(
-                        onPressed: () => context.go(RouteNames.register),
+                        onPressed: () => AppRouter.toRegister(context),
                         child: Text(registerAction),
                       ),
                     ),

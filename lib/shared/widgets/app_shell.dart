@@ -2,13 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../app/router/route_names.dart';
+import '../../app/router/external_router.dart';
+import '../../app/router/internal_router.dart';
+import '../../app/router/router.dart';
 import '../../app/theme/fnc_colors.dart';
 import '../../app/theme/fnc_fonts.dart';
-import '../../core/navigation/public_site_uri.dart';
 import '../../core/network/api_client.dart';
 import '../../features/auth/repositories/auth_repository.dart';
 import '../../models/dashboard/dashboard_widget_config.dart';
@@ -135,7 +135,7 @@ class _AppShellState extends State<AppShell> {
     // encima del nuevo destino.
     final contentNavigator = widget.contentNavigatorKey.currentState;
     if (contentNavigator != null) closeShellOverlays(contentNavigator);
-    context.go(route);
+    AppRouter.go(context, route);
   }
 
   Future<void> _logout(BuildContext context) async {
@@ -176,7 +176,7 @@ class _AppShellState extends State<AppShell> {
       // Sin red se conserva el último tema efectivo hasta reconectar.
     }
     if (!context.mounted) return;
-    context.go(RouteNames.login);
+    AppRouter.toLogin(context);
   }
 
   @override

@@ -2,13 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/buttons/app_buttons.dart';
-import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../app/router/route_names.dart';
+import '../../../app/router/external_router.dart';
+import '../../../app/router/router.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
-import '../../../core/navigation/public_site_uri.dart';
 import '../../../core/network/api_error.dart';
 import '../../../shared/i18n/locale_loader.dart';
 import '../../../shared/state/locale_controller.dart';
@@ -336,7 +335,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                             const SizedBox(height: 8),
                             TertiaryButton(
-                              onPressed: () => context.go(RouteNames.login),
+                              onPressed: () => AppRouter.toLogin(context),
                               child: Text(
                                 _txt(
                                   t,

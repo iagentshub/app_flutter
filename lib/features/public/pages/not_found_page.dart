@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../shared/widgets/buttons/app_buttons.dart';
-import 'route_names.dart';
+import '../../../app/router/router.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
 
 class NotFoundPage extends StatelessWidget {
   const NotFoundPage({super.key});
@@ -19,7 +18,7 @@ class NotFoundPage extends StatelessWidget {
               const Text('Página no encontrada'),
               const SizedBox(height: 8),
               PrimaryButton(
-                onPressed: () => context.go(RouteNames.login),
+                onPressed: () => AppRouter.toLogin(context),
                 child: const Text('Ir al inicio'),
               ),
             ],

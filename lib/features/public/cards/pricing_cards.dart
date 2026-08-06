@@ -55,7 +55,7 @@ class _PlanCard extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             PrimaryButton(
-              onPressed: () => context.go(RouteNames.register),
+              onPressed: () => AppRouter.toRegister(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: FncColors.red,
                 foregroundColor: FncColors.white,

@@ -1,8 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-
-import '../../../app/router/route_names.dart';
+import '../../../app/router/router.dart';
 import '../../../core/config/runtime_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
@@ -77,7 +75,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         _loading = false;
       });
       await Future<void>.delayed(const Duration(milliseconds: 1200));
-      if (mounted) context.go('${RouteNames.profile}?section=billing');
+      if (mounted) AppRouter.toProfileBilling(context);
     } on ApiError catch (error) {
       if (!mounted) return;
       setState(() {
@@ -154,7 +152,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         _confirming = false;
       });
       await Future<void>.delayed(const Duration(milliseconds: 1200));
-      if (mounted) context.go('${RouteNames.profile}?section=billing');
+      if (mounted) AppRouter.toProfileBilling(context);
     } on ApiError catch (error) {
       if (!mounted) return;
       setState(() {
@@ -178,7 +176,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Suscripción'),
-        leading: BackButton(onPressed: () => context.go(RouteNames.profile)),
+        leading: BackButton(onPressed: () => AppRouter.toProfile(context)),
       ),
       body: Center(
         child: ConstrainedBox(

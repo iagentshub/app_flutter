@@ -1,11 +1,12 @@
-import '../app/router/route_names.dart';
+import '../app/router/external_router.dart';
+import '../app/router/internal_router.dart';
 
 String safeRedirect(String? raw) {
   if (raw == null || raw.isEmpty || raw != raw.trim()) {
-    return RouteNames.dashboard;
+    return InternalRoutes.dashboard;
   }
   if (raw.contains(r'\') || raw.codeUnits.any((code) => code < 0x20)) {
-    return RouteNames.dashboard;
+    return InternalRoutes.dashboard;
   }
 
   final uri = Uri.tryParse(raw);
@@ -13,23 +14,23 @@ String safeRedirect(String? raw) {
       uri.isAbsolute ||
       uri.hasAuthority ||
       !uri.path.startsWith('/')) {
-    return RouteNames.dashboard;
+    return InternalRoutes.dashboard;
   }
 
   String decodedPath;
   try {
     decodedPath = Uri.decodeComponent(uri.path);
   } on FormatException {
-    return RouteNames.dashboard;
+    return InternalRoutes.dashboard;
   }
   if (decodedPath.startsWith('//') ||
       decodedPath.contains(r'\') ||
       decodedPath.codeUnits.any((code) => code < 0x20)) {
-    return RouteNames.dashboard;
+    return InternalRoutes.dashboard;
   }
-  if (decodedPath == RouteNames.login ||
-      decodedPath.startsWith('${RouteNames.login}/')) {
-    return RouteNames.dashboard;
+  if (decodedPath == ExternalRoutes.login ||
+      decodedPath.startsWith('${ExternalRoutes.login}/')) {
+    return InternalRoutes.dashboard;
   }
   return uri.toString();
 }

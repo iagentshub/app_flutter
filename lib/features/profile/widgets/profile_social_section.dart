@@ -14,9 +14,8 @@ extension _ProfileSocialSection on _ProfilePageState {
               ),
             ),
             TertiaryButton.icon(
-              onPressed: () => context.push(
-                '${RouteNames.publicProfilePrefix}${bundle.session.username}',
-              ),
+              onPressed: () =>
+                  AppRouter.toPublicProfile(context, bundle.session.username),
               icon: const Icon(Icons.open_in_new, size: 16),
               label: Text(_tx('profile.view_public_profile', 'Ver mi perfil')),
             ),

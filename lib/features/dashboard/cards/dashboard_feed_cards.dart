@@ -150,22 +150,22 @@ class _QuickActionsBody extends StatelessWidget {
       'agent': (
         icon: Icons.smart_toy_outlined,
         label: tx('action_agent', 'Nuevo agente'),
-        route: RouteNames.agents,
+        route: InternalRoutes.agents,
       ),
       'connection': (
         icon: Icons.cable_outlined,
         label: tx('action_connection', 'Nueva conexión'),
-        route: RouteNames.connections,
+        route: InternalRoutes.connections,
       ),
       'workflow': (
         icon: Icons.account_tree_outlined,
         label: tx('action_workflow', 'Nuevo workflow'),
-        route: RouteNames.orchestrations,
+        route: InternalRoutes.orchestrations,
       ),
       'knowledge': (
         icon: Icons.note_add_outlined,
         label: tx('action_knowledge', 'Añadir conocimiento'),
-        route: RouteNames.knowledge,
+        route: InternalRoutes.knowledge,
       ),
     };
     final items = config.items ?? kQuickActionItems;
@@ -179,7 +179,7 @@ class _QuickActionsBody extends StatelessWidget {
             ActionChip(
               avatar: Icon(action.icon, size: 18),
               label: Text(action.label),
-              onPressed: () => context.go(action.route),
+              onPressed: () => AppRouter.go(context, action.route),
             ),
       ],
     );
