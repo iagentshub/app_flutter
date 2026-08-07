@@ -24,6 +24,8 @@ class _RecentResourcesBody extends StatelessWidget {
         for (final raw in data.knowledge) (type: 'knowledge', raw: raw),
       if (selected.contains('workflow'))
         for (final raw in data.workflows) (type: 'workflow', raw: raw),
+      if (selected.contains('tool'))
+        for (final raw in data.tools) (type: 'tool', raw: raw),
     ]..sort((a, b) => _resourceDate(b.raw).compareTo(_resourceDate(a.raw)));
 
     if (resources.isEmpty) {
@@ -50,6 +52,11 @@ class _RecentResourcesBody extends StatelessWidget {
         icon: Icons.account_tree_outlined,
         label: tx('summary_workflows', 'Workflow'),
         route: InternalRoutes.orchestrations,
+      ),
+      'tool': (
+        icon: Icons.build_outlined,
+        label: tx('feed_tool', 'Herramienta'),
+        route: InternalRoutes.knowledge,
       ),
     };
 

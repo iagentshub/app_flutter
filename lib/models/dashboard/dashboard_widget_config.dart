@@ -31,9 +31,9 @@ const kSummaryItems = [
   'knowledge',
   'workflows',
 ];
-const kFeedTypes = ['agent', 'skill', 'knowledge'];
+const kFeedTypes = ['agent', 'skill', 'knowledge', 'tool'];
 const kQuickActionItems = ['agent', 'connection', 'workflow', 'knowledge'];
-const kRecentResourceTypes = ['agent', 'skill', 'knowledge', 'workflow'];
+const kRecentResourceTypes = ['agent', 'skill', 'knowledge', 'workflow', 'tool'];
 
 typedef DashboardTx = String Function(String key, String fallback);
 
@@ -119,6 +119,8 @@ String feedTypeLabel(String type, DashboardTx tx) {
       return tx('feed_skill', 'Skills');
     case 'knowledge':
       return tx('feed_knowledge', 'Knowledge');
+    case 'tool':
+      return tx('feed_tool', 'Herramientas');
     default:
       return type;
   }

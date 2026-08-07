@@ -750,6 +750,7 @@
     "feed_agent": "Agentes",
     "feed_skill": "Skills",
     "feed_knowledge": "Knowledge",
+    "feed_tool": "Herramientas",
     "no_activity": "Sin actividad todavía",
     "total_tokens_days": "Total: {{total}} tokens ({{days}} días)",
     "no_token_usage": "Todavía no hay consumo de tokens",

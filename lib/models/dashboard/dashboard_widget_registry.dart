@@ -40,6 +40,7 @@ const dashboardWidgetDefinitions = [
       DashboardDataSource.memory,
       DashboardDataSource.knowledge,
       DashboardDataSource.workflows,
+      DashboardDataSource.tools,
     },
   ),
   DashboardWidgetDefinition(
@@ -113,6 +114,7 @@ const dashboardWidgetDefinitions = [
       DashboardDataSource.skills,
       DashboardDataSource.knowledge,
       DashboardDataSource.workflows,
+      DashboardDataSource.tools,
     },
   ),
   DashboardWidgetDefinition(

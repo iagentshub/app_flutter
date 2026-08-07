@@ -99,6 +99,7 @@ class DashboardRepository {
         '/api/chats/recent?limit=8',
         gaToken,
       ),
+      _loadSource(sources, DashboardDataSource.tools, '/api/tools', gaToken),
     ]);
 
     return DashboardData(
@@ -112,6 +113,7 @@ class DashboardRepository {
       groups: results[7],
       invitations: results[8],
       conversations: results[9],
+      tools: results[10],
     );
   }
 

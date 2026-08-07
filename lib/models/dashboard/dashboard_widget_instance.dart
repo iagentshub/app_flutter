@@ -25,6 +25,7 @@ enum DashboardDataSource {
   groups,
   invitations,
   conversations,
+  tools,
 }
 
 String normalizeDashboardWidgetType(Object? value) {

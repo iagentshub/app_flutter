@@ -51,6 +51,7 @@ class DashboardData {
     this.groups = const [],
     this.invitations = const [],
     this.conversations = const [],
+    this.tools = const [],
   });
 
   final List<Map<String, dynamic>> agents;
@@ -59,6 +60,7 @@ class DashboardData {
   final List<Map<String, dynamic>> workflows;
   final List<Map<String, dynamic>> skills;
   final List<Map<String, dynamic>> memory;
+  final List<Map<String, dynamic>> tools;
   final List<TokenDailyPoint> tokenDaily;
   final List<Map<String, dynamic>> groups;
   final List<Map<String, dynamic>> invitations;
