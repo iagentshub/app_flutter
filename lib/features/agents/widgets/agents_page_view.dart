@@ -120,6 +120,7 @@ extension _AgentsPageView on _AgentsPageState {
       skillNames: _skillNames,
       knowledgeNames: _knowledgeNames,
       promptNames: _promptNames,
+      toolNames: _toolNames,
       connectionNames: _connectionNames,
       tx: _tx,
       onChat: () => _openChat(item),

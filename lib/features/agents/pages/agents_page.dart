@@ -11,12 +11,14 @@ import '../../../models/explore/explore_models.dart';
 import '../../../models/knowledge/knowledge_models.dart';
 import '../../../models/prompts/prompt_models.dart';
 import '../../../models/skills/skill_models.dart';
+import '../../../models/tools/tool_models.dart';
 import '../../../models/connections/connection_models.dart';
 import '../../connections/repositories/connections_repository.dart';
 import '../../explore/repositories/explore_repository.dart';
 import '../../knowledge/repositories/knowledge_repository.dart';
 import '../../knowledge/repositories/prompts_repository.dart';
 import '../../knowledge/repositories/skills_repository.dart';
+import '../../knowledge/repositories/tools_repository.dart';
 import '../cards/agent_card.dart';
 import '../repositories/agents_repository.dart';
 import '../dialogs/agent_form_dialog.dart';
@@ -61,6 +63,7 @@ class _AgentsPageState extends State<AgentsPage> with StateMessaging {
   late final SkillsRepository _skillsRepository;
   late final KnowledgeRepository _knowledgeRepository;
   late final PromptsRepository _promptsRepository;
+  late final ToolsRepository _toolsRepository;
   late final ConnectionsRepository _connectionsRepository;
   late final TranslatedTexts _t;
   final TextEditingController _queryController = TextEditingController();
@@ -72,6 +75,7 @@ class _AgentsPageState extends State<AgentsPage> with StateMessaging {
   Map<String, String> _skillNames = const {};
   Map<String, String> _knowledgeNames = const {};
   Map<String, String> _promptNames = const {};
+  Map<String, String> _toolNames = const {};
 
   /// id de conexión → nombre del modelo — la card muestra el modelo en vez
   /// del id crudo de la conexión.
@@ -176,6 +180,7 @@ class _AgentsPageState extends State<AgentsPage> with StateMessaging {
     _skillsRepository = SkillsRepository(apiClient: widget.apiClient);
     _knowledgeRepository = KnowledgeRepository(apiClient: widget.apiClient);
     _promptsRepository = PromptsRepository(apiClient: widget.apiClient);
+    _toolsRepository = ToolsRepository(apiClient: widget.apiClient);
     _connectionsRepository = ConnectionsRepository(apiClient: widget.apiClient);
     _t = TranslatedTexts(
       localeController: widget.localeController,
@@ -224,18 +229,21 @@ class _AgentsPageState extends State<AgentsPage> with StateMessaging {
         _skillsRepository.listSkills(token, includeInactive: true),
         _knowledgeRepository.listItems(token, includeInactive: true),
         _promptsRepository.listPrompts(token, includeInactive: true),
+        _toolsRepository.listTools(token, includeInactive: true),
         _connectionsRepository.listConnections(token, includeInactive: true),
       ]);
       if (!mounted) return;
       final skills = results[1] as List<SkillItem>;
       final knowledge = results[2] as List<KnowledgeItem>;
       final prompts = results[3] as List<PromptItem>;
-      final connections = results[4] as List<ConnectionItem>;
+      final tools = results[4] as List<ToolItem>;
+      final connections = results[5] as List<ConnectionItem>;
       setState(() {
         _agents = results[0] as List<AgentItem>;
         _skillNames = {for (final s in skills) s.id: s.name};
         _knowledgeNames = {for (final k in knowledge) k.id: k.name};
         _promptNames = {for (final p in prompts) p.id: p.name};
+        _toolNames = {for (final t in tools) t.id: t.name};
         _connectionNames = {
           for (final c in connections)
             c.id: c.model.isNotEmpty ? c.model : c.name,

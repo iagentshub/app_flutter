@@ -74,6 +74,15 @@ class AdminResourcesRepository extends ApiRepository {
     );
   }
 
+  // ── Tools ─────────────────────────────────────────────────────────────
+
+  Future<void> deleteAdminTool(String token, String toolId) async {
+    await apiClient.delete(
+      '/api/admin/tools/${Uri.encodeComponent(toolId)}',
+      gaToken: token,
+    );
+  }
+
   // ── Memoria ───────────────────────────────────────────────────────────
 
   Future<void> deleteAdminMemory(String token, String memoryId) async {

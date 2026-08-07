@@ -313,6 +313,54 @@ extension _AgentFormSections on _AgentFormDialogState {
                     }).toList(),
                   ),
                 ),
+          const SizedBox(height: 20),
+          Text(
+            widget.tx('agents.field_tools', 'Herramientas'),
+            style: Theme.of(context).textTheme.labelMedium,
+          ),
+          const SizedBox(height: 6),
+          _loadingTools
+              ? const LinearProgressIndicator(minHeight: 2)
+              : _tools.isEmpty
+              ? Text(
+                  widget.tx(
+                    'agents.no_tools',
+                    'No hay herramientas disponibles.',
+                  ),
+                  style: Theme.of(context).textTheme.bodySmall,
+                )
+              : Container(
+                  constraints: const BoxConstraints(maxHeight: 150),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Theme.of(context).dividerColor),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: _tools.map((tool) {
+                      return CheckboxListTile(
+                        dense: true,
+                        value: _selectedToolIds.contains(tool.id),
+                        title: Text(tool.name),
+                        subtitle: Text(
+                          toolLanguageLabel(widget.tx, tool.language),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        onChanged: (value) {
+                          refresh(() {
+                            if (value == true) {
+                              _selectedToolIds = {..._selectedToolIds, tool.id};
+                            } else {
+                              _selectedToolIds = {..._selectedToolIds}
+                                ..remove(tool.id);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
         ],
       ),
     );

@@ -22,6 +22,8 @@ IconData iconForType(String type) {
       return Icons.extension_outlined;
     case 'prompt':
       return Icons.bolt_outlined;
+    case 'tool':
+      return Icons.build_outlined;
     case 'knowledge':
       return Icons.menu_book_outlined;
     case 'connection':

@@ -80,6 +80,7 @@ abstract final class FncColors {
   static const labelMemory = Color(0xFFB45309);
   static const labelWorkflow = Color(0xFF16A34A);
   static const labelEvaluator = Color(0xFFE11D48);
+  static const labelTool = Color(0xFF0EA5E9);
   static const labelPrivate = Color(0xFF64748B);
   static const labelPublic = Color(0xFF059669);
   static const labelProduction = Color(0xFF0891B2);
