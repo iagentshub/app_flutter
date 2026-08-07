@@ -206,6 +206,21 @@ extension _AdminFilterDialogs on _AdminPageState {
     }).toList();
   }
 
+  List<Map<String, dynamic>> get _filteredTools {
+    final q = _exploreSearchController.text.trim().toLowerCase();
+    return _tools.where((t) {
+      if (q.isNotEmpty) {
+        final name = (t['name'] ?? '').toString().toLowerCase();
+        final owner = _ownerOf(t).toLowerCase();
+        if (!name.contains(q) && !owner.contains(q)) return false;
+      }
+      if (_toolOwner.isNotEmpty && _ownerOf(t) != _toolOwner) {
+        return false;
+      }
+      return true;
+    }).toList();
+  }
+
   List<Map<String, dynamic>> get _filteredMemories {
     final q = _exploreSearchController.text.trim().toLowerCase();
     return _memories.where((m) {

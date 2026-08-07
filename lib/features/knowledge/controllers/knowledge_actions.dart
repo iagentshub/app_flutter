@@ -429,6 +429,7 @@ extension _KnowledgeActions on _KnowledgePageState {
     _load();
     _loadSkills();
     _loadPrompts();
+    _loadTools();
   }
 
   Future<void> _shareItem(KnowledgeItem item) async {

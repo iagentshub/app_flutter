@@ -133,6 +133,12 @@ class ExploreRepository extends ApiRepository {
           '/api/prompts/public/${Uri.encodeComponent(resourceId)}/link',
           '/api/prompts/private/${Uri.encodeComponent(resourceId)}/link',
         );
+      case 'tool':
+        return _linkWithScopeFallback(
+          token,
+          '/api/tools/public/${Uri.encodeComponent(resourceId)}/link',
+          '/api/tools/private/${Uri.encodeComponent(resourceId)}/link',
+        );
       default:
         throw ApiError(
           statusCode: 422,

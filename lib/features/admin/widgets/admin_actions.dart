@@ -271,6 +271,24 @@ extension _AdminActions on _AdminPageState {
     );
   }
 
+  Future<void> _deleteTool(Map<String, dynamic> item) async {
+    final token = _token;
+    if (token == null) return;
+    final id = (item['id'] ?? '').toString();
+    final ok = await _confirm(
+      _tx('common.delete', 'Eliminar'),
+      _tx(
+        'admin.confirm_delete_tool',
+        '¿Seguro que quieres eliminar esta herramienta?',
+      ),
+    );
+    if (!ok) return;
+    await _run(
+      () => _repository.deleteAdminTool(token, id),
+      _tx('admin.toast_tool_deleted', 'Herramienta eliminada'),
+    );
+  }
+
   Future<void> _deleteMemory(Map<String, dynamic> item) async {
     final token = _token;
     if (token == null) return;

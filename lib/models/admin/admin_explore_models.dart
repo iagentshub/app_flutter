@@ -9,7 +9,8 @@ enum AdminResourceType {
   workflow('workflow'),
   skill('skill'),
   memory('memory'),
-  prompt('prompt');
+  prompt('prompt'),
+  tool('tool');
 
   const AdminResourceType(this.wireName);
 

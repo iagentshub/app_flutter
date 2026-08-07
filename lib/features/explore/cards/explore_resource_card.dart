@@ -5,6 +5,7 @@ extension _ExploreResourceCard on _ExplorePageState {
     'agent',
     'skill',
     'prompt',
+    'tool',
     'knowledge',
     'workflow',
   };

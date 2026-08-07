@@ -167,8 +167,7 @@ extension _AdminContentCards on _AdminPageState {
               runSpacing: 6,
               children: [
                 _resourceTypeBadge(AdminResourceType.skill),
-                if (category.isNotEmpty)
-                  _badge(category, FncColors.slate),
+                if (category.isNotEmpty) _badge(category, FncColors.slate),
               ],
             ),
             const SizedBox(height: 4),
@@ -229,8 +228,7 @@ extension _AdminContentCards on _AdminPageState {
               runSpacing: 6,
               children: [
                 _resourceTypeBadge(AdminResourceType.prompt),
-                if (alias.isNotEmpty)
-                  _badge('@$alias', FncColors.slate),
+                if (alias.isNotEmpty) _badge('@$alias', FncColors.slate),
               ],
             ),
             const SizedBox(height: 4),
@@ -251,6 +249,75 @@ extension _AdminContentCards on _AdminPageState {
                   tooltip: _tx('common.delete', 'Eliminar'),
                   danger: true,
                   onPressed: () => _deletePrompt(item),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAdminToolCard(Map<String, dynamic> item) {
+    final name = (item['name'] ?? item['id'] ?? '').toString();
+    final language = (item['language'] ?? '').toString();
+    final binaryFilename = (item['binary_filename'] ?? '').toString();
+    final owner = _ownerOf(item);
+    final date = _fmtDate(item['created_at']);
+
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              name,
+              style: const TextStyle(
+                fontSize: FncFonts.size16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${owner.isEmpty ? '—' : owner} · $date',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                _resourceTypeBadge(AdminResourceType.tool),
+                if (language.isNotEmpty) _badge(language, FncColors.slate),
+                if (language == 'cpp')
+                  _badge(
+                    binaryFilename.isEmpty
+                        ? _tx('admin.tool_no_binary', 'Sin binario')
+                        : binaryFilename,
+                    binaryFilename.isEmpty ? FncColors.danger : FncColors.info,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const Spacer(),
+                _resourceGraphAction(AdminResourceType.tool, item),
+                ActionIconButton(
+                  icon: Icons.swap_horiz,
+                  tooltip: _tx(
+                    'admin.action_change_owner',
+                    'Cambiar propietario',
+                  ),
+                  onPressed: () => _changeOwner(item, 'tool'),
+                ),
+                ActionIconButton(
+                  icon: Icons.delete_outline,
+                  tooltip: _tx('common.delete', 'Eliminar'),
+                  danger: true,
+                  onPressed: () => _deleteTool(item),
                 ),
               ],
             ),

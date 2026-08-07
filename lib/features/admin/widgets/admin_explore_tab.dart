@@ -15,6 +15,7 @@ extension _AdminExploreTab on _AdminPageState {
       AdminResourceType.skill => _tx('admin.type_skill', 'Skill'),
       AdminResourceType.memory => _tx('admin.type_memory', 'Memoria'),
       AdminResourceType.prompt => _tx('admin.type_prompt', 'Prompt'),
+      AdminResourceType.tool => _tx('admin.type_tool', 'Herramienta'),
       null => _tx('admin.type_all', 'Todos'),
     };
   }
@@ -30,6 +31,7 @@ extension _AdminExploreTab on _AdminPageState {
       AdminResourceType.skill => FncColors.labelSkill,
       AdminResourceType.memory => FncColors.labelMemory,
       AdminResourceType.prompt => FncColors.lime600,
+      AdminResourceType.tool => FncColors.labelTool,
     };
   }
 
@@ -66,6 +68,9 @@ extension _AdminExploreTab on _AdminPageState {
       AdminResourceType.prompt: _filteredPrompts
           .map((item) => (item['id'] ?? '').toString())
           .toSet(),
+      AdminResourceType.tool: _filteredTools
+          .map((item) => (item['id'] ?? '').toString())
+          .toSet(),
     };
     return _exploreItems
         .where((item) {
@@ -92,6 +97,7 @@ extension _AdminExploreTab on _AdminPageState {
       AdminResourceType.skill => _skillOwner.isNotEmpty ? 1 : 0,
       AdminResourceType.memory => _memoryOwner.isNotEmpty ? 1 : 0,
       AdminResourceType.prompt => _promptOwner.isNotEmpty ? 1 : 0,
+      AdminResourceType.tool => _toolOwner.isNotEmpty ? 1 : 0,
       AdminResourceType.group => 0,
     };
   }
@@ -138,6 +144,12 @@ extension _AdminExploreTab on _AdminPageState {
           owners: _ownersOf(_prompts),
           currentOwner: _promptOwner,
           onChanged: (value) => _refresh(() => _promptOwner = value),
+        );
+      case AdminResourceType.tool:
+        _openOwnerFilterDialog(
+          owners: _ownersOf(_tools),
+          currentOwner: _toolOwner,
+          onChanged: (value) => _refresh(() => _toolOwner = value),
         );
       case AdminResourceType.group:
         return;
@@ -313,6 +325,7 @@ extension _AdminExploreTab on _AdminPageState {
       AdminResourceType.skill => Icons.bolt_outlined,
       AdminResourceType.memory => Icons.description_outlined,
       AdminResourceType.prompt => Icons.chat_bubble_outline,
+      AdminResourceType.tool => Icons.build_outlined,
     };
   }
 
@@ -327,6 +340,7 @@ extension _AdminExploreTab on _AdminPageState {
       AdminResourceType.skill => _buildAdminSkillCard(item.data),
       AdminResourceType.memory => _buildAdminMemoryCard(item.data),
       AdminResourceType.prompt => _buildAdminPromptCard(item.data),
+      AdminResourceType.tool => _buildAdminToolCard(item.data),
     };
   }
 

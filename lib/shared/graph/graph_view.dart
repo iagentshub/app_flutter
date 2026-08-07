@@ -20,6 +20,8 @@ IconData iconForType(String type) {
       return Icons.extension_outlined;
     case 'prompt':
       return Icons.bolt_outlined;
+    case 'tool':
+      return Icons.build_outlined;
     case 'knowledge':
       return Icons.menu_book_outlined;
     case 'connection':
@@ -546,10 +548,7 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     final minDy = math.min(0.0, viewport.height - scaledHeight) - extraMargin;
     final maxDx = math.max(0.0, viewport.width - scaledWidth) + extraMargin;
     final maxDy = math.max(0.0, viewport.height - scaledHeight) + extraMargin;
-    return Offset(
-      offset.dx.clamp(minDx, maxDx),
-      offset.dy.clamp(minDy, maxDy),
-    );
+    return Offset(offset.dx.clamp(minDx, maxDx), offset.dy.clamp(minDy, maxDy));
   }
 
   /// Zoom mínimo permitido: normalmente [_minScaleDefault], pero un lienzo
@@ -609,144 +608,148 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     return Container(
       color: _sortMode == GraphSortMode.galaxy ? galaxyBackground : null,
       child: LayoutBuilder(
-      builder: (context, constraints) {
-        final viewport = Size(constraints.maxWidth, constraints.maxHeight);
-        final levels = _computeLevels();
-        final canvasSize = _canvasSizeFor(viewport, levels);
-        _ensurePositions(canvasSize, levels);
-        if (!_panInitialized) {
-          _panInitialized = true;
-          // Encuadre inicial: si el lienzo es más grande que el visor
-          // (grafos grandes, muy habitual en modo galaxia), arranca algo
-          // alejado para no mostrar recortada una esquina al 100% de
-          // zoom, pero sin forzar ver el lienzo entero de golpe (eso deja
-          // los nodos diminutos y todo apretado): [_initialFitFloor] pone
-          // un piso a ese alejamiento inicial. El resto del lienzo queda
-          // para explorar moviéndose y haciendo zoom manualmente, hasta
-          // [_minScaleFor] si se quiere ver el conjunto completo. Nunca
-          // acerca (scale > 1) grafos pequeños que ya caben de sobra.
-          final fitScale = math
-              .min(
-                1.0,
-                math.min(
-                  viewport.width / canvasSize.width,
-                  viewport.height / canvasSize.height,
-                ),
-              )
-              .clamp(_initialFitFloor, _maxScale);
-          _scale = fitScale;
-          // Centra la cámara en el centro del lienzo (donde está la raíz).
-          _panOffset = Offset(
-            (viewport.width - canvasSize.width * fitScale) / 2,
-            (viewport.height - canvasSize.height * fitScale) / 2,
-          );
-        }
-        _panOffset = _clampPan(_panOffset, viewport, canvasSize, _scale);
-        final positions = [
-          for (final node in widget.nodes) _positions[node.id]!,
-        ];
-        final scaledWidth = canvasSize.width * _scale;
-        final scaledHeight = canvasSize.height * _scale;
-        return Listener(
-          onPointerSignal: (event) {
-            if (event is! PointerScrollEvent) return;
-            final canvasPointUnderCursor =
-                (event.localPosition - _panOffset) / _scale;
-            final newScale = (_scale * math.exp(-event.scrollDelta.dy * 0.0015))
-                .clamp(_minScaleFor(viewport, canvasSize), _maxScale);
-            final newPan =
-                event.localPosition - canvasPointUnderCursor * newScale;
-            setState(() {
-              _scale = newScale;
-              _panOffset = _clampPan(newPan, viewport, canvasSize, newScale);
-            });
-          },
-          child: ClipRect(
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                // Fondo: arrastrar aquí (fuera de los nodos) desplaza el
-                // lienzo (pan) y pellizcar con dos dedos hace zoom, siempre
-                // centrado en el punto del gesto. Cubre todo el visor, no
-                // solo el rectángulo del lienzo escalado: tras un "fit to
-                // view" que no llena el visor entero (letterboxing), el
-                // pan debe poder iniciarse igual desde el margen vacío.
-                Positioned.fill(
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onScaleStart: (details) {
-                      _gestureStartPan = _panOffset;
-                      _gestureStartScale = _scale;
-                      _gestureStartFocalGlobal = details.focalPoint;
-                      _gestureStartLocalFocal = details.localFocalPoint;
-                    },
-                    onScaleUpdate: (details) {
-                      _applyZoom(
-                        rawNewScale: _gestureStartScale * details.scale,
-                        focalGlobal: details.focalPoint,
-                        startPan: _gestureStartPan,
-                        startScale: _gestureStartScale,
-                        startLocalFocal: _gestureStartLocalFocal,
-                        viewport: viewport,
-                        canvasSize: canvasSize,
+        builder: (context, constraints) {
+          final viewport = Size(constraints.maxWidth, constraints.maxHeight);
+          final levels = _computeLevels();
+          final canvasSize = _canvasSizeFor(viewport, levels);
+          _ensurePositions(canvasSize, levels);
+          if (!_panInitialized) {
+            _panInitialized = true;
+            // Encuadre inicial: si el lienzo es más grande que el visor
+            // (grafos grandes, muy habitual en modo galaxia), arranca algo
+            // alejado para no mostrar recortada una esquina al 100% de
+            // zoom, pero sin forzar ver el lienzo entero de golpe (eso deja
+            // los nodos diminutos y todo apretado): [_initialFitFloor] pone
+            // un piso a ese alejamiento inicial. El resto del lienzo queda
+            // para explorar moviéndose y haciendo zoom manualmente, hasta
+            // [_minScaleFor] si se quiere ver el conjunto completo. Nunca
+            // acerca (scale > 1) grafos pequeños que ya caben de sobra.
+            final fitScale = math
+                .min(
+                  1.0,
+                  math.min(
+                    viewport.width / canvasSize.width,
+                    viewport.height / canvasSize.height,
+                  ),
+                )
+                .clamp(_initialFitFloor, _maxScale);
+            _scale = fitScale;
+            // Centra la cámara en el centro del lienzo (donde está la raíz).
+            _panOffset = Offset(
+              (viewport.width - canvasSize.width * fitScale) / 2,
+              (viewport.height - canvasSize.height * fitScale) / 2,
+            );
+          }
+          _panOffset = _clampPan(_panOffset, viewport, canvasSize, _scale);
+          final positions = [
+            for (final node in widget.nodes) _positions[node.id]!,
+          ];
+          final scaledWidth = canvasSize.width * _scale;
+          final scaledHeight = canvasSize.height * _scale;
+          return Listener(
+            onPointerSignal: (event) {
+              if (event is! PointerScrollEvent) return;
+              final canvasPointUnderCursor =
+                  (event.localPosition - _panOffset) / _scale;
+              final newScale =
+                  (_scale * math.exp(-event.scrollDelta.dy * 0.0015)).clamp(
+                    _minScaleFor(viewport, canvasSize),
+                    _maxScale,
+                  );
+              final newPan =
+                  event.localPosition - canvasPointUnderCursor * newScale;
+              setState(() {
+                _scale = newScale;
+                _panOffset = _clampPan(newPan, viewport, canvasSize, newScale);
+              });
+            },
+            child: ClipRect(
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // Fondo: arrastrar aquí (fuera de los nodos) desplaza el
+                  // lienzo (pan) y pellizcar con dos dedos hace zoom, siempre
+                  // centrado en el punto del gesto. Cubre todo el visor, no
+                  // solo el rectángulo del lienzo escalado: tras un "fit to
+                  // view" que no llena el visor entero (letterboxing), el
+                  // pan debe poder iniciarse igual desde el margen vacío.
+                  Positioned.fill(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onScaleStart: (details) {
+                        _gestureStartPan = _panOffset;
+                        _gestureStartScale = _scale;
+                        _gestureStartFocalGlobal = details.focalPoint;
+                        _gestureStartLocalFocal = details.localFocalPoint;
+                      },
+                      onScaleUpdate: (details) {
+                        _applyZoom(
+                          rawNewScale: _gestureStartScale * details.scale,
+                          focalGlobal: details.focalPoint,
+                          startPan: _gestureStartPan,
+                          startScale: _gestureStartScale,
+                          startLocalFocal: _gestureStartLocalFocal,
+                          viewport: viewport,
+                          canvasSize: canvasSize,
+                        );
+                      },
+                    ),
+                  ),
+                  AnimatedBuilder(
+                    animation: Listenable.merge([_entrance, _pulse, _blink]),
+                    builder: (context, _) {
+                      return Positioned(
+                        left: _panOffset.dx,
+                        top: _panOffset.dy,
+                        width: scaledWidth,
+                        height: scaledHeight,
+                        child: Transform.scale(
+                          scale: _scale,
+                          alignment: Alignment.topLeft,
+                          child: SizedBox(
+                            width: canvasSize.width,
+                            height: canvasSize.height,
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                IgnorePointer(
+                                  child: CustomPaint(
+                                    size: canvasSize,
+                                    painter: _GraphEdgePainter(
+                                      nodes: widget.nodes,
+                                      edges: widget.edges,
+                                      positions: positions,
+                                      progress: Curves.easeOutCubic.transform(
+                                        _entrance.value,
+                                      ),
+                                      lineColor:
+                                          _sortMode == GraphSortMode.galaxy
+                                          ? FncColors.white.withValues(
+                                              alpha: 0.22,
+                                            )
+                                          : FncColors.materialGrey,
+                                      dashedColor:
+                                          _sortMode == GraphSortMode.galaxy
+                                          ? FncColors.materialOrangeAccent
+                                                .withValues(alpha: 0.35)
+                                          : FncColors.materialOrange,
+                                    ),
+                                  ),
+                                ),
+                                for (var i = 0; i < widget.nodes.length; i++)
+                                  _buildNode(context, i, positions, canvasSize),
+                              ],
+                            ),
+                          ),
+                        ),
                       );
                     },
                   ),
-                ),
-                AnimatedBuilder(
-                  animation: Listenable.merge([_entrance, _pulse, _blink]),
-                  builder: (context, _) {
-                    return Positioned(
-                      left: _panOffset.dx,
-                      top: _panOffset.dy,
-                      width: scaledWidth,
-                      height: scaledHeight,
-                      child: Transform.scale(
-                        scale: _scale,
-                        alignment: Alignment.topLeft,
-                        child: SizedBox(
-                          width: canvasSize.width,
-                          height: canvasSize.height,
-                          child: Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              IgnorePointer(
-                                child: CustomPaint(
-                                  size: canvasSize,
-                                  painter: _GraphEdgePainter(
-                                    nodes: widget.nodes,
-                                    edges: widget.edges,
-                                    positions: positions,
-                                    progress: Curves.easeOutCubic.transform(
-                                      _entrance.value,
-                                    ),
-                                    lineColor: _sortMode == GraphSortMode.galaxy
-                                        ? FncColors.white.withValues(
-                                            alpha: 0.22,
-                                          )
-                                        : FncColors.materialGrey,
-                                    dashedColor:
-                                        _sortMode == GraphSortMode.galaxy
-                                        ? FncColors.materialOrangeAccent
-                                              .withValues(alpha: 0.35)
-                                        : FncColors.materialOrange,
-                                  ),
-                                ),
-                              ),
-                              for (var i = 0; i < widget.nodes.length; i++)
-                                _buildNode(context, i, positions, canvasSize),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
       ),
     );
   }
@@ -918,7 +921,11 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
   /// Diámetro real del nodo, según el modo y si es la raíz: única fuente
   /// de verdad tanto para dibujar el círculo/punto como para calcular su
   /// posición (ver `_buildNode`), así ambos quedan siempre coordinados.
-  double _nodeDiameter(GraphNode node, {required bool isRoot, required bool isGalaxy}) {
+  double _nodeDiameter(
+    GraphNode node, {
+    required bool isRoot,
+    required bool isGalaxy,
+  }) {
     if (isGalaxy) {
       return isRoot ? 26.0 : 8.0 + (node.id.hashCode.abs() % 5);
     }

@@ -39,7 +39,8 @@ class AdminStats {
   double? get memoryUsedGb => (raw['memory_used_gb'] as num?)?.toDouble();
   double? get memoryTotalGb => (raw['memory_total_gb'] as num?)?.toDouble();
   double? get cpuLoadPct => (raw['cpu_load_pct'] as num?)?.toDouble();
-  int? get cpuCores => raw['cpu_cores'] == null ? null : _asInt(raw['cpu_cores']);
+  int? get cpuCores =>
+      raw['cpu_cores'] == null ? null : _asInt(raw['cpu_cores']);
 }
 
 class AdminRepository extends ApiRepository {
@@ -324,6 +325,15 @@ class AdminRepository extends ApiRepository {
   Future<void> deleteAdminPrompt(String token, String promptId) async {
     await apiClient.delete(
       '/api/admin/prompts/${Uri.encodeComponent(promptId)}',
+      gaToken: token,
+    );
+  }
+
+  // ── Tools ─────────────────────────────────────────────────────────────
+
+  Future<void> deleteAdminTool(String token, String toolId) async {
+    await apiClient.delete(
+      '/api/admin/tools/${Uri.encodeComponent(toolId)}',
       gaToken: token,
     );
   }

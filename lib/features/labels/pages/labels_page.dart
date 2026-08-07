@@ -9,10 +9,12 @@ import '../../../core/network/api_client.dart';
 import '../../../models/agents/agent_models.dart';
 import '../../../models/prompts/prompt_models.dart';
 import '../../../models/skills/skill_models.dart';
+import '../../../models/tools/tool_models.dart';
 import '../../../models/workflows/workflow_models.dart';
 import '../../agents/repositories/agents_repository.dart';
 import '../../knowledge/repositories/prompts_repository.dart';
 import '../../knowledge/repositories/skills_repository.dart';
+import '../../knowledge/repositories/tools_repository.dart';
 import '../../workflows/repositories/workflows_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
@@ -46,6 +48,7 @@ class _LabelsPageState extends State<LabelsPage>
   late final AgentsRepository _agentsRepository;
   late final SkillsRepository _skillsRepository;
   late final PromptsRepository _promptsRepository;
+  late final ToolsRepository _toolsRepository;
   late final WorkflowsRepository _workflowsRepository;
   late final TranslatedTexts _t;
   late final TabController _tabController;
@@ -64,6 +67,7 @@ class _LabelsPageState extends State<LabelsPage>
     _agentsRepository = AgentsRepository(apiClient: widget.apiClient);
     _skillsRepository = SkillsRepository(apiClient: widget.apiClient);
     _promptsRepository = PromptsRepository(apiClient: widget.apiClient);
+    _toolsRepository = ToolsRepository(apiClient: widget.apiClient);
     _workflowsRepository = WorkflowsRepository(apiClient: widget.apiClient);
     _tabController = TabController(length: 2, vsync: this);
     _t = TranslatedTexts(
@@ -108,17 +112,20 @@ class _LabelsPageState extends State<LabelsPage>
         _skillsRepository.listSkills(token),
         _workflowsRepository.listWorkflows(token),
         _promptsRepository.listPrompts(token),
+        _toolsRepository.listTools(token),
       ]);
       final agents = results[0] as List<AgentItem>;
       final skills = results[1] as List<SkillItem>;
       final workflows = results[2] as List<WorkflowItem>;
       final prompts = results[3] as List<PromptItem>;
+      final tools = results[4] as List<ToolItem>;
 
       final items = <LabeledItem>[
         for (final a in agents) LabeledItem.fromResource(a, 'agent'),
         for (final s in skills) LabeledItem.fromResource(s, 'skill'),
         for (final w in workflows) LabeledItem.fromResource(w, 'workflow'),
         for (final p in prompts) LabeledItem.fromResource(p, 'prompt'),
+        for (final tl in tools) LabeledItem.fromResource(tl, 'tool'),
       ];
 
       if (!mounted) return;
@@ -195,6 +202,8 @@ class _LabelsPageState extends State<LabelsPage>
         return _tx('labels.item_type_skill', 'Skill');
       case 'prompt':
         return _tx('labels.item_type_prompt', 'Prompt');
+      case 'tool':
+        return _tx('labels.item_type_tool', 'Herramienta');
       case 'workflow':
         return _tx('labels.item_type_workflow', 'Workflow');
       default:
@@ -218,6 +227,10 @@ class _LabelsPageState extends State<LabelsPage>
     DropdownMenuItem(
       value: 'prompt',
       child: Text(_tx('explore.type_prompts', 'Prompts')),
+    ),
+    DropdownMenuItem(
+      value: 'tool',
+      child: Text(_tx('explore.type_tools', 'Herramientas')),
     ),
     DropdownMenuItem(
       value: 'workflow',
@@ -337,9 +350,7 @@ class _LabelsPageState extends State<LabelsPage>
                                       key,
                                     ).withValues(alpha: 0.9),
                                     labelStyle: TextStyle(
-                                      color: selected
-                                          ? FncColors.white
-                                          : null,
+                                      color: selected ? FncColors.white : null,
                                       fontWeight: selected
                                           ? FontWeight.w700
                                           : null,

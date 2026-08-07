@@ -31,6 +31,7 @@ class AgentCard extends StatelessWidget {
     this.skillNames = const {},
     this.knowledgeNames = const {},
     this.promptNames = const {},
+    this.toolNames = const {},
     this.connectionNames = const {},
     this.onToggleActive,
     super.key,
@@ -44,6 +45,7 @@ class AgentCard extends StatelessWidget {
   final Map<String, String> skillNames;
   final Map<String, String> knowledgeNames;
   final Map<String, String> promptNames;
+  final Map<String, String> toolNames;
 
   /// id de conexión → nombre del modelo (ej. "gpt-4o") — igual que
   /// [skillNames], sin esto la card mostraría el id crudo de la conexión.
@@ -103,6 +105,15 @@ class AgentCard extends StatelessWidget {
           id: 'prompt-$prompt',
           label: promptNames[prompt] ?? prompt,
           type: 'prompt',
+        ),
+      );
+    }
+    for (final tool in item.tools) {
+      nodes.add(
+        GraphNode(
+          id: 'tool-$tool',
+          label: toolNames[tool] ?? tool,
+          type: 'tool',
         ),
       );
     }
