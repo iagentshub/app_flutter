@@ -64,11 +64,15 @@ class AccountsRepository extends ApiRepository {
     return AccountItem(raw: response.json);
   }
 
-  Future<void> unlinkAccount(String token, String accountId) async {
-    await apiClient.delete(
+  /// Desvincula la cuenta y borra también las conexiones que había
+  /// sincronizado. Devuelve cuántas se borraron.
+  Future<int> unlinkAccount(String token, String accountId) async {
+    final response = await apiClient.delete(
       '/api/accounts/${Uri.encodeComponent(accountId)}',
       gaToken: token,
     );
+    final deleted = response.json['connections_deleted'];
+    return deleted is int ? deleted : 0;
   }
 
   /// Prueba credenciales nuevas, antes de crear la cuenta.
