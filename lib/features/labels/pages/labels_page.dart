@@ -20,6 +20,7 @@ import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
+import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../cards/label_catalog_card.dart';
 import '../cards/labeled_item_card.dart';
 import '../dialogs/labels_filter_dialog.dart';
@@ -42,7 +43,7 @@ class LabelsPage extends StatefulWidget {
 }
 
 class _LabelsPageState extends State<LabelsPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, StateMessaging {
   late final AgentsRepository _agentsRepository;
   late final SkillsRepository _skillsRepository;
   late final PromptsRepository _promptsRepository;
@@ -182,10 +183,6 @@ class _LabelsPageState extends State<LabelsPage>
     );
   }
 
-  void _showMessage(String text) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
-  }
 
   String _itemTypeLabel(String type) {
     switch (type) {
@@ -420,7 +417,7 @@ class _LabelsPageState extends State<LabelsPage>
                                 typeLabel: _itemTypeLabel(item.type),
                                 ownerLabel: _tx('common.owner', 'Propietario'),
                                 linkedLabel: _tx('common.linked', 'Enlazado'),
-                                onTap: () => _showMessage(
+                                onTap: () => showMessage(
                                   item.description.isEmpty
                                       ? _tx(
                                           'labels.no_description',

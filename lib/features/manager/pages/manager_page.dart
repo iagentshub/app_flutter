@@ -15,6 +15,7 @@ import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
+import '../../../shared/widgets/state_messaging_mixin.dart';
 
 part '../cards/group_card.dart';
 part '../cards/group_invitations_card.dart';
@@ -36,7 +37,7 @@ class ManagerPage extends StatefulWidget {
   State<ManagerPage> createState() => _ManagerPageState();
 }
 
-class _ManagerPageState extends State<ManagerPage> {
+class _ManagerPageState extends State<ManagerPage> with StateMessaging {
   late final ManagerRepository _repository;
   late final TranslatedTexts _t;
   List<GroupItem> _groups = const [];
@@ -146,12 +147,12 @@ class _ManagerPageState extends State<ManagerPage> {
 
     try {
       await _repository.createGroup(token, name);
-      _showMessage(_tx('manager.create_success', 'Grupo creado'));
+      showMessage(_tx('manager.create_success', 'Grupo creado'));
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('manager.create_error', 'No se pudo crear el grupo'),
         isError: true,
       );
@@ -160,7 +161,7 @@ class _ManagerPageState extends State<ManagerPage> {
 
   Future<void> _renameGroup(GroupItem item) async {
     if (item.isPersonal) {
-      _showMessage(
+      showMessage(
         _tx(
           'manager.personal_no_rename',
           'El grupo Personal no se puede renombrar',
@@ -180,12 +181,12 @@ class _ManagerPageState extends State<ManagerPage> {
 
     try {
       await _repository.renameGroup(token, item.id, name);
-      _showMessage(_tx('manager.rename_success', 'Grupo actualizado'));
+      showMessage(_tx('manager.rename_success', 'Grupo actualizado'));
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('manager.rename_error', 'No se pudo renombrar el grupo'),
         isError: true,
       );
@@ -194,7 +195,7 @@ class _ManagerPageState extends State<ManagerPage> {
 
   Future<void> _deleteGroup(GroupItem item) async {
     if (item.isPersonal) {
-      _showMessage(
+      showMessage(
         _tx(
           'manager.personal_no_delete',
           'El grupo Personal no se puede eliminar',
@@ -220,12 +221,12 @@ class _ManagerPageState extends State<ManagerPage> {
 
     try {
       await _repository.deleteGroup(token, item.id);
-      _showMessage(_tx('manager.delete_success', 'Grupo eliminado'));
+      showMessage(_tx('manager.delete_success', 'Grupo eliminado'));
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('manager.delete_error', 'No se pudo eliminar el grupo'),
         isError: true,
       );
@@ -244,7 +245,7 @@ class _ManagerPageState extends State<ManagerPage> {
       if (nextToken != null && user != null) {
         await widget.sessionController.login(token: nextToken, user: user);
       }
-      _showMessage(
+      showMessage(
         _tx(
           'manager.switch_success',
           'Grupo activo cambiado a {{name}}',
@@ -252,9 +253,9 @@ class _ManagerPageState extends State<ManagerPage> {
       );
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('manager.switch_error', 'No se pudo cambiar el grupo activo'),
         isError: true,
       );
@@ -266,7 +267,7 @@ class _ManagerPageState extends State<ManagerPage> {
   Future<void> _inviteMember() async {
     final active = _activeGroup;
     if (active == null || active.isPersonal) {
-      _showMessage(
+      showMessage(
         _tx(
           'manager.invite_need_team',
           'Activa un grupo compartido para invitar miembros',
@@ -289,12 +290,12 @@ class _ManagerPageState extends State<ManagerPage> {
         active.id,
         username.trim().toLowerCase(),
       );
-      _showMessage(_tx('manager.invite_success', 'Invitación enviada'));
+      showMessage(_tx('manager.invite_success', 'Invitación enviada'));
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('manager.invite_error', 'No se pudo enviar la invitación'),
         isError: true,
       );
@@ -304,7 +305,7 @@ class _ManagerPageState extends State<ManagerPage> {
   Future<void> _addMemberDirect() async {
     final active = _activeGroup;
     if (active == null || active.isPersonal) {
-      _showMessage(
+      showMessage(
         _tx(
           'manager.add_member_need_team',
           'Activa un grupo compartido para añadir miembros',
@@ -328,12 +329,12 @@ class _ManagerPageState extends State<ManagerPage> {
         username: username.trim().toLowerCase(),
         role: 'member',
       );
-      _showMessage(_tx('manager.add_member_success', 'Miembro añadido'));
+      showMessage(_tx('manager.add_member_success', 'Miembro añadido'));
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('manager.add_member_error', 'No se pudo añadir el miembro'),
         isError: true,
       );
@@ -347,12 +348,12 @@ class _ManagerPageState extends State<ManagerPage> {
     if (token == null || token.isEmpty) return;
     try {
       await _repository.removeMember(token, active.id, username);
-      _showMessage(_tx('manager.remove_member_success', 'Miembro eliminado'));
+      showMessage(_tx('manager.remove_member_success', 'Miembro eliminado'));
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('manager.remove_member_error', 'No se pudo eliminar miembro'),
         isError: true,
       );
@@ -366,14 +367,14 @@ class _ManagerPageState extends State<ManagerPage> {
     if (token == null || token.isEmpty) return;
     try {
       await _repository.cancelInvitation(token, active.id, invitationId);
-      _showMessage(
+      showMessage(
         _tx('manager.cancel_invitation_success', 'Invitación cancelada'),
       );
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx(
           'manager.cancel_invitation_error',
           'No se pudo cancelar invitación',
@@ -433,15 +434,6 @@ class _ManagerPageState extends State<ManagerPage> {
     return value;
   }
 
-  void _showMessage(String text, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {

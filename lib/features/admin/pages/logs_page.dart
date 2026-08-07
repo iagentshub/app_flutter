@@ -17,6 +17,7 @@ import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
+import '../../../shared/widgets/state_messaging_mixin.dart';
 
 part '../widgets/logs_views.dart';
 
@@ -39,7 +40,7 @@ class LogsPageView extends StatefulWidget {
 const _levels = ['', 'DEBUG', 'INFO', 'OK', 'WARNING', 'ERROR'];
 const _sources = ['', 'BE', 'FE'];
 
-class _LogsPageViewState extends State<LogsPageView> {
+class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
   late final LogsRepository _repository;
   late final TranslatedTexts _t;
 
@@ -200,25 +201,15 @@ class _LogsPageViewState extends State<LogsPageView> {
         allowedExtensions: const ['csv'],
       );
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('logs.error_export', 'No se pudo exportar el CSV'),
         isError: true,
       );
     } finally {
       if (mounted) setState(() => _exporting = false);
     }
-  }
-
-  void _showMessage(String text, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
-      ),
-    );
   }
 
   int get _logsActiveFilterCount =>

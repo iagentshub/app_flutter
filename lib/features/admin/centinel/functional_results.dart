@@ -74,7 +74,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
                     ),
                     prefixIcon: const Icon(Icons.search, size: 18),
                   ),
-                  onChanged: (_) => _refresh(() {}),
+                  onChanged: (_) => refresh(() {}),
                 ),
               ],
             ),
@@ -114,9 +114,9 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
     return selected == total ? '$total' : '$selected/$total';
   }
 
-  void _selectAll() => _refresh(() => _selectedFiles = null);
+  void _selectAll() => refresh(() => _selectedFiles = null);
 
-  void _deselectAll() => _refresh(() => _selectedFiles = {});
+  void _deselectAll() => refresh(() => _selectedFiles = {});
 
   Widget _buildTreeBody() {
     if (_treeLoading) return const Center(child: CircularProgressIndicator());
@@ -185,7 +185,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
   }
 
   void _onFileCheck(String file, bool checked) {
-    _refresh(() {
+    refresh(() {
       if (checked) {
         if (_selectedFiles != null) _selectedFiles!.add(file);
       } else {
@@ -239,7 +239,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
                     'centinel.results_log_toggle_title',
                     'Ver log en tiempo real',
                   ),
-                  onPressed: () => _refresh(() => _logView = !_logView),
+                  onPressed: () => refresh(() => _logView = !_logView),
                   icon: Icon(
                     _logView ? Icons.list_alt : Icons.terminal_outlined,
                     size: 18,
@@ -268,7 +268,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
       child: ChoiceChip(
         label: Text(label, style: const TextStyle(fontSize: FncFonts.size12)),
         selected: selected,
-        onSelected: (_) => _refresh(() => _resultFilter = value),
+        onSelected: (_) => refresh(() => _resultFilter = value),
       ),
     );
   }
@@ -445,7 +445,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
           .toList();
       setDialogState(() {});
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('centinel.history_delete_failed', 'No se pudo borrar la ejecución'),
         isError: true,
       );

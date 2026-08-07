@@ -19,7 +19,8 @@ class _ManageGroupDialog extends StatefulWidget {
   State<_ManageGroupDialog> createState() => _ManageGroupDialogState();
 }
 
-class _ManageGroupDialogState extends State<_ManageGroupDialog> {
+class _ManageGroupDialogState extends State<_ManageGroupDialog>
+    with StateMessaging {
   late final ManagerRepository _repository;
   List<Map<String, dynamic>> _members = const [];
   bool _loading = true;
@@ -53,16 +54,6 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
     }
   }
 
-  void _showMessage(String text, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
-      ),
-    );
-  }
-
   Future<void> _openMembersDialog() async {
     await showDialog<void>(
       context: context,
@@ -86,12 +77,12 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
     if (username == null || username.isEmpty) return;
     try {
       await _repository.inviteMember(widget.token, widget.group.id, username);
-      _showMessage(widget.tx('groups.invite_sent', 'Invitación enviada'));
+      showMessage(widget.tx('groups.invite_sent', 'Invitación enviada'));
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         widget.tx('groups.create_error', 'No se pudo crear el grupo'),
         isError: true,
       );
@@ -113,11 +104,11 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
     try {
       await _repository.deleteGroup(widget.token, widget.group.id);
       widget.apiClient.invalidateCache('/api/groups');
-      _showMessage(widget.tx('groups.group_deleted', 'Grupo eliminado'));
+      showMessage(widget.tx('groups.group_deleted', 'Grupo eliminado'));
       if (!mounted) return;
       Navigator.of(context).pop();
     } catch (_) {
-      _showMessage(
+      showMessage(
         widget.tx('groups.create_error', 'No se pudo crear el grupo'),
         isError: true,
       );
@@ -148,11 +139,11 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
           widget.currentUsername,
         );
         widget.apiClient.invalidateCache('/api/groups');
-        _showMessage(widget.tx('groups.left_group', 'Has salido del grupo'));
+        showMessage(widget.tx('groups.left_group', 'Has salido del grupo'));
         if (!mounted) return;
         Navigator.of(context).pop();
       } catch (_) {
-        _showMessage(
+        showMessage(
           widget.tx('groups.create_error', 'No se pudo crear el grupo'),
           isError: true,
         );
@@ -214,13 +205,13 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog> {
         widget.currentUsername,
       );
       widget.apiClient.invalidateCache('/api/groups');
-      _showMessage(
+      showMessage(
         widget.tx('groups.ownership_transferred', 'Propiedad transferida'),
       );
       if (!mounted) return;
       Navigator.of(context).pop();
     } catch (_) {
-      _showMessage(
+      showMessage(
         widget.tx('groups.create_error', 'No se pudo crear el grupo'),
         isError: true,
       );

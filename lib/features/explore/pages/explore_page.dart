@@ -24,6 +24,7 @@ import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/resource_type_badge.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
+import '../../../shared/widgets/state_messaging_mixin.dart';
 
 part '../dialogs/preview_dialog.dart';
 part '../cards/explore_resource_card.dart';
@@ -47,7 +48,7 @@ class ExplorePage extends StatefulWidget {
 }
 
 class _ExplorePageState extends State<ExplorePage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, StateMessaging {
   late final ExploreRepository _repository;
   late final ManagerRepository _managerRepository;
   late final TranslatedTexts _t;
@@ -184,9 +185,9 @@ class _ExplorePageState extends State<ExplorePage>
             _PreviewDialog(title: item.name, jsonPayload: preview),
       );
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo cargar preview', isError: true);
+      showMessage('No se pudo cargar preview', isError: true);
     } finally {
       if (mounted) setState(() => _busyKeys.remove(key));
     }
@@ -205,11 +206,11 @@ class _ExplorePageState extends State<ExplorePage>
         resourceId: item.resourceId,
       );
       if (mounted) setState(() => _linkedKeys.add(key));
-      _showMessage('Recurso enlazado: ${result['name'] ?? item.name}');
+      showMessage('Recurso enlazado: ${result['name'] ?? item.name}');
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo enlazar el recurso', isError: true);
+      showMessage('No se pudo enlazar el recurso', isError: true);
     } finally {
       if (mounted) setState(() => _busyKeys.remove(key));
     }
@@ -250,25 +251,16 @@ class _ExplorePageState extends State<ExplorePage>
           _starredKeys.add(key);
         }
       });
-      _showMessage(remove ? 'Star removido' : 'Star añadido');
+      showMessage(remove ? 'Star removido' : 'Star añadido');
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo actualizar star', isError: true);
+      showMessage('No se pudo actualizar star', isError: true);
     } finally {
       if (mounted) setState(() => _busyKeys.remove(key));
     }
   }
 
-  void _showMessage(String text, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
-      ),
-    );
-  }
 
   // ── Pestaña Usuarios ────────────────────────────────────────────────
 
@@ -341,7 +333,7 @@ class _ExplorePageState extends State<ExplorePage>
         _usersLoadingMore = false;
       });
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
       if (mounted) setState(() => _usersLoadingMore = false);
     } catch (_) {
       if (mounted) setState(() => _usersLoadingMore = false);
@@ -367,7 +359,7 @@ class _ExplorePageState extends State<ExplorePage>
         }
       }
       if (active == null || active.isPersonal) {
-        _showMessage(
+        showMessage(
           _tx(
             'explore.users_invite_no_group',
             'Activa un grupo de equipo para invitar usuarios',
@@ -377,13 +369,13 @@ class _ExplorePageState extends State<ExplorePage>
         return;
       }
       await _managerRepository.inviteMember(token, active.id, username);
-      _showMessage(
+      showMessage(
         '${_tx('explore.users_invite_sent', 'Invitación enviada a')} $username',
       );
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('explore.users_invite_error', 'No se pudo enviar la invitación'),
         isError: true,
       );

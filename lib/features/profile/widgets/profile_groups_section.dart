@@ -13,6 +13,7 @@ import '../../../shared/state/locale_controller.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
+import '../../../shared/widgets/state_messaging_mixin.dart';
 
 part '../dialogs/group_members_dialog.dart';
 part '../dialogs/invite_user_dialog.dart';
@@ -39,7 +40,8 @@ class ProfileGroupsSection extends StatefulWidget {
   State<ProfileGroupsSection> createState() => _ProfileGroupsSectionState();
 }
 
-class _ProfileGroupsSectionState extends State<ProfileGroupsSection> {
+class _ProfileGroupsSectionState extends State<ProfileGroupsSection>
+    with StateMessaging {
   late final ManagerRepository _repository;
   late final TranslatedTexts _t;
 
@@ -93,15 +95,6 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection> {
     }
   }
 
-  void _showMessage(String text, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
-      ),
-    );
-  }
 
   Future<void> _createGroup() async {
     final controller = TextEditingController();
@@ -135,7 +128,7 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection> {
       widget.apiClient.invalidateCache('/api/groups');
       await _load();
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('groups.create_error', 'No se pudo crear el grupo'),
         isError: true,
       );
@@ -149,10 +142,10 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection> {
         (inv['id'] ?? '').toString(),
       );
       widget.apiClient.invalidateCache('/api/groups');
-      _showMessage(_tx('groups.invitation_accepted', 'Invitación aceptada'));
+      showMessage(_tx('groups.invitation_accepted', 'Invitación aceptada'));
       await _load();
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('groups.create_error', 'No se pudo crear el grupo'),
         isError: true,
       );
@@ -165,10 +158,10 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection> {
         widget.token,
         (inv['id'] ?? '').toString(),
       );
-      _showMessage(_tx('groups.invitation_rejected', 'Invitación rechazada'));
+      showMessage(_tx('groups.invitation_rejected', 'Invitación rechazada'));
       await _load();
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('groups.create_error', 'No se pudo crear el grupo'),
         isError: true,
       );

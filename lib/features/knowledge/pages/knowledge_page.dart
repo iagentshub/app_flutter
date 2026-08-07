@@ -30,6 +30,7 @@ import '../../../shared/widgets/resource_history_dialog.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
+import '../../../shared/widgets/state_messaging_mixin.dart';
 
 part '../cards/knowledge_sections.dart';
 part '../cards/prompt_sections.dart';
@@ -106,7 +107,7 @@ class KnowledgePage extends StatefulWidget {
 }
 
 class _KnowledgePageState extends State<KnowledgePage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, StateMessaging {
   late final KnowledgeRepository _repository;
   late final SkillsRepository _skillsRepository;
   late final PromptsRepository _promptsRepository;
@@ -182,7 +183,6 @@ class _KnowledgePageState extends State<KnowledgePage>
   }).toList();
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
-  void _refresh(VoidCallback update) => setState(update);
 
   void _openKnowledgeFiltersDialog() {
     final optionAll = _tx('explore.option_all', 'Todas');
@@ -197,14 +197,14 @@ class _KnowledgePageState extends State<KnowledgePage>
       title: _tx('common.filters', 'Filtros'),
       clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
       closeLabel: _tx('common.close', 'Cerrar'),
-      onClear: () => _refresh(() => _knowledgeOrigin = 'all'),
+      onClear: () => refresh(() => _knowledgeOrigin = 'all'),
       buildFields: (setDialogState) => [
         FilterDropdown(
           label: _tx('knowledge.origin_label', 'Origen'),
           value: _knowledgeOrigin,
           options: originOptions,
           onChanged: (v) {
-            _refresh(() => _knowledgeOrigin = v);
+            refresh(() => _knowledgeOrigin = v);
             setDialogState(() {});
           },
         ),
@@ -229,7 +229,7 @@ class _KnowledgePageState extends State<KnowledgePage>
       title: _tx('common.filters', 'Filtros'),
       clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
       closeLabel: _tx('common.close', 'Cerrar'),
-      onClear: () => _refresh(() {
+      onClear: () => refresh(() {
         _skillScope = 'all';
         _skillCategory = 'all';
       }),
@@ -239,7 +239,7 @@ class _KnowledgePageState extends State<KnowledgePage>
           value: _skillScope,
           options: scopeOptions,
           onChanged: (v) {
-            _refresh(() => _skillScope = v);
+            refresh(() => _skillScope = v);
             setDialogState(() {});
           },
         ),
@@ -249,7 +249,7 @@ class _KnowledgePageState extends State<KnowledgePage>
           value: _skillCategory,
           options: categoryOptions,
           onChanged: (v) {
-            _refresh(() => _skillCategory = v);
+            refresh(() => _skillCategory = v);
             setDialogState(() {});
           },
         ),
@@ -270,14 +270,14 @@ class _KnowledgePageState extends State<KnowledgePage>
       title: _tx('common.filters', 'Filtros'),
       clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
       closeLabel: _tx('common.close', 'Cerrar'),
-      onClear: () => _refresh(() => _promptScope = 'all'),
+      onClear: () => refresh(() => _promptScope = 'all'),
       buildFields: (setDialogState) => [
         FilterDropdown(
           label: _tx('agents.scope_label', 'Visibilidad'),
           value: _promptScope,
           options: scopeOptions,
           onChanged: (v) {
-            _refresh(() => _promptScope = v);
+            refresh(() => _promptScope = v);
             setDialogState(() {});
           },
         ),
@@ -303,11 +303,11 @@ class _KnowledgePageState extends State<KnowledgePage>
   }
 
   void _onTextsChanged() {
-    if (mounted) _refresh(() {});
+    if (mounted) refresh(() {});
   }
 
   void _onTabChanged() {
-    if (mounted) _refresh(() {});
+    if (mounted) refresh(() {});
   }
 
   @override

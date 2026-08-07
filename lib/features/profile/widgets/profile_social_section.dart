@@ -86,7 +86,7 @@ extension _ProfileSocialSection on _ProfilePageState {
                 SwitchListTile.adaptive(
                   contentPadding: EdgeInsets.zero,
                   value: _isEmailPublic,
-                  onChanged: (value) => _refresh(() => _isEmailPublic = value),
+                  onChanged: (value) => refresh(() => _isEmailPublic = value),
                   secondary: const Icon(Icons.alternate_email, size: 20),
                   title: Text(
                     _tx('profile.email_public_label', 'Mostrar mi email'),

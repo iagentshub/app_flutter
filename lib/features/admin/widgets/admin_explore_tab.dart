@@ -105,13 +105,13 @@ extension _AdminExploreTab on _AdminPageState {
         _openOwnerFilterDialog(
           owners: _ownersOf(_agents),
           currentOwner: _agentOwner,
-          onChanged: (value) => _refresh(() => _agentOwner = value),
+          onChanged: (value) => refresh(() => _agentOwner = value),
         );
       case AdminResourceType.connection:
         _openOwnerFilterDialog(
           owners: _ownersOf(_connections),
           currentOwner: _connOwner,
-          onChanged: (value) => _refresh(() => _connOwner = value),
+          onChanged: (value) => refresh(() => _connOwner = value),
         );
       case AdminResourceType.knowledge:
         _openKnowledgeFiltersDialog();
@@ -119,25 +119,25 @@ extension _AdminExploreTab on _AdminPageState {
         _openOwnerFilterDialog(
           owners: _ownersOf(_workflows),
           currentOwner: _workflowOwner,
-          onChanged: (value) => _refresh(() => _workflowOwner = value),
+          onChanged: (value) => refresh(() => _workflowOwner = value),
         );
       case AdminResourceType.skill:
         _openOwnerFilterDialog(
           owners: _ownersOf(_skills),
           currentOwner: _skillOwner,
-          onChanged: (value) => _refresh(() => _skillOwner = value),
+          onChanged: (value) => refresh(() => _skillOwner = value),
         );
       case AdminResourceType.memory:
         _openOwnerFilterDialog(
           owners: _ownersOf(_memories),
           currentOwner: _memoryOwner,
-          onChanged: (value) => _refresh(() => _memoryOwner = value),
+          onChanged: (value) => refresh(() => _memoryOwner = value),
         );
       case AdminResourceType.prompt:
         _openOwnerFilterDialog(
           owners: _ownersOf(_prompts),
           currentOwner: _promptOwner,
-          onChanged: (value) => _refresh(() => _promptOwner = value),
+          onChanged: (value) => refresh(() => _promptOwner = value),
         );
       case AdminResourceType.group:
         return;
@@ -187,7 +187,7 @@ extension _AdminExploreTab on _AdminPageState {
                     ),
                     onChanged: (_) {
                       setMenuState(() => _exploreTypes.clear());
-                      _refresh(() {});
+                      refresh(() {});
                     },
                   ),
                   const Divider(height: 1),
@@ -212,7 +212,7 @@ extension _AdminExploreTab on _AdminPageState {
                             _exploreTypes.remove(type);
                           }
                         });
-                        _refresh(() {});
+                        refresh(() {});
                       },
                     ),
                 ],
@@ -349,7 +349,7 @@ extension _AdminExploreTab on _AdminPageState {
     final resourceId = (item['id'] ?? '').toString();
     if (token == null || resourceId.isEmpty) return;
     try {
-      final graph = await _repository.getResourceGraph(token, type, resourceId);
+      final graph = await _resourcesRepository.getResourceGraph(token, type, resourceId);
       if (!mounted) return;
       await showResourceGraphDialog(
         context: context,
@@ -391,9 +391,9 @@ extension _AdminExploreTab on _AdminPageState {
         emptyLabel: _tx('admin.graph_empty', 'Este objeto no tiene relaciones'),
       );
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('admin.graph_error', 'No se pudieron cargar las relaciones'),
         isError: true,
       );

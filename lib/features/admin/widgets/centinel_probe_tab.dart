@@ -8,6 +8,7 @@ import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 
 import '../../../core/network/api_error.dart';
+import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../repositories/centinel_repository.dart';
 import 'centinel_chart.dart';
 
@@ -32,7 +33,8 @@ class CentinelProbeTab extends StatefulWidget {
   State<CentinelProbeTab> createState() => _CentinelProbeTabState();
 }
 
-class _CentinelProbeTabState extends State<CentinelProbeTab> {
+class _CentinelProbeTabState extends State<CentinelProbeTab>
+    with StateMessaging {
   final _startController = TextEditingController(text: '10');
   final _stepController = TextEditingController(text: '50');
   final _concurrencyController = TextEditingController(text: '0');
@@ -88,10 +90,10 @@ class _CentinelProbeTabState extends State<CentinelProbeTab> {
       );
       _poll();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
       if (mounted) setState(() => _starting = false);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('centinel.probe_start_error', 'No se pudo iniciar la búsqueda'),
         isError: true,
       );
@@ -135,16 +137,6 @@ class _CentinelProbeTabState extends State<CentinelProbeTab> {
     } catch (_) {
       // Silencioso: el siguiente tick reintenta.
     }
-  }
-
-  void _showMessage(String text, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
-      ),
-    );
   }
 
   @override

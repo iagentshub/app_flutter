@@ -64,7 +64,7 @@ extension _ConnectionsPageView on _ConnectionsPageState {
                             onChanged: (value) {
                               _query = value;
                               _searchDebouncer.run(() {
-                                if (mounted) _refresh(() {});
+                                if (mounted) refresh(() {});
                               });
                             },
                           ),

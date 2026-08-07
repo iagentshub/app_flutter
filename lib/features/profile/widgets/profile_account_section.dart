@@ -103,7 +103,7 @@ extension _ProfileAccountSection on _ProfilePageState {
                         .toList(),
                     onChanged: (value) {
                       if (value == null) return;
-                      _refresh(() => _theme = value);
+                      refresh(() => _theme = value);
                     },
                   )
                 else
@@ -129,7 +129,7 @@ extension _ProfileAccountSection on _ProfilePageState {
                   ],
                   onChanged: (value) {
                     if (value == null) return;
-                    _refresh(() => _language = value);
+                    refresh(() => _language = value);
                   },
                 ),
                 const SizedBox(height: 20),

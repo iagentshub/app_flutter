@@ -11,6 +11,7 @@ import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 
 import '../../../core/network/api_error.dart';
+import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../repositories/centinel_repository.dart';
 import 'centinel_chart.dart';
 
@@ -44,7 +45,8 @@ class CentinelStressTab extends StatefulWidget {
   State<CentinelStressTab> createState() => _CentinelStressTabState();
 }
 
-class _CentinelStressTabState extends State<CentinelStressTab> {
+class _CentinelStressTabState extends State<CentinelStressTab>
+    with StateMessaging {
   String _endpoint = 'RANDOM';
   final _customPathController = TextEditingController(text: '/api/');
   String _method = 'GET';
@@ -124,10 +126,10 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
       });
       _startPolling();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
       if (mounted) setState(() => _starting = false);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('centinel.stress_start_error', 'No se pudo iniciar la prueba'),
         isError: true,
       );
@@ -184,16 +186,6 @@ class _CentinelStressTabState extends State<CentinelStressTab> {
     _pollTimer?.cancel();
     _pollTimer = null;
     if (mounted) setState(() => _status = 'idle');
-  }
-
-  void _showMessage(String text, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
-      ),
-    );
   }
 
   Future<void> _exportCsv() async {

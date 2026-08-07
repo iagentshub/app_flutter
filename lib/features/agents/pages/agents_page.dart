@@ -1,7 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
-import '../../../app/theme/fnc_colors.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 
@@ -28,6 +27,7 @@ import '../../../shared/utils/debouncer.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
+import '../../../shared/widgets/state_messaging_mixin.dart';
 import 'agent_builder_page.dart';
 import '../../../shared/widgets/resource_history_dialog.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
@@ -56,7 +56,7 @@ class AgentsPage extends StatefulWidget {
   State<AgentsPage> createState() => _AgentsPageState();
 }
 
-class _AgentsPageState extends State<AgentsPage> {
+class _AgentsPageState extends State<AgentsPage> with StateMessaging {
   late final AgentsRepository _repository;
   late final SkillsRepository _skillsRepository;
   late final KnowledgeRepository _knowledgeRepository;
@@ -264,18 +264,6 @@ class _AgentsPageState extends State<AgentsPage> {
     setState(() => _activeGroupId = groupId);
     _load();
   }
-
-  void _showMessage(String text, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
-      ),
-    );
-  }
-
-  void _refresh(VoidCallback update) => setState(update);
 
   @override
   Widget build(BuildContext context) => _buildPage(context);

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/theme/fnc_colors.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
@@ -15,6 +14,7 @@ import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/resource_toolbar.dart';
+import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../cards/memory_file_card.dart';
 
 part '../dialogs/memory_editor_dialog.dart';
@@ -35,7 +35,7 @@ class MemoryPage extends StatefulWidget {
   State<MemoryPage> createState() => _MemoryPageState();
 }
 
-class _MemoryPageState extends State<MemoryPage> {
+class _MemoryPageState extends State<MemoryPage> with StateMessaging {
   late final MemoryRepository _repository;
   late final TranslatedTexts _t;
   List<MemoryFileItem> _files = const [];
@@ -133,9 +133,9 @@ class _MemoryPageState extends State<MemoryPage> {
       if (payload == null) return;
       await _saveFile(file.filename, payload['content'] ?? '');
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('memory.load_file_error', 'No se pudo cargar el archivo'),
         isError: true,
       );
@@ -146,7 +146,7 @@ class _MemoryPageState extends State<MemoryPage> {
     final token = _token;
     if (token == null || token.isEmpty) return;
     if (filename.trim().isEmpty) {
-      _showMessage(
+      showMessage(
         _tx('memory.filename_required', 'Nombre de archivo obligatorio'),
         isError: true,
       );
@@ -158,12 +158,12 @@ class _MemoryPageState extends State<MemoryPage> {
 
     try {
       await _repository.saveFile(token, normalized, content);
-      _showMessage(_tx('memory.save_success', 'Archivo guardado'));
+      showMessage(_tx('memory.save_success', 'Archivo guardado'));
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('memory.save_error', 'No se pudo guardar el archivo'),
         isError: true,
       );
@@ -188,27 +188,18 @@ class _MemoryPageState extends State<MemoryPage> {
 
     try {
       await _repository.deleteFile(token, file.filename);
-      _showMessage(_tx('memory.delete_success', 'Archivo eliminado'));
+      showMessage(_tx('memory.delete_success', 'Archivo eliminado'));
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('memory.delete_error', 'No se pudo eliminar el archivo'),
         isError: true,
       );
     }
   }
 
-  void _showMessage(String text, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {

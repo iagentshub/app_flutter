@@ -7,7 +7,7 @@ extension _AdminActions on _AdminPageState {
     final username = (user['username'] ?? '').toString();
     final active = user['is_active'] != 0 && user['is_active'] != false;
     await _run(
-      () => _repository.setUserActive(token, username, !active),
+      () => _usersRepository.setUserActive(token, username, !active),
       active
           ? _tx('admin.toast_user_blocked', 'Usuario bloqueado')
           : _tx('admin.toast_user_unblocked', 'Usuario desbloqueado'),
@@ -28,7 +28,7 @@ extension _AdminActions on _AdminPageState {
     );
     if (!ok) return;
     await _run(
-      () => _repository.patchUser(token, username, role: 'admin'),
+      () => _usersRepository.patchUser(token, username, role: 'admin'),
       _tx('admin.toast_user_promoted', 'Usuario ascendido a admin'),
     );
   }
@@ -46,7 +46,7 @@ extension _AdminActions on _AdminPageState {
     );
     if (!ok) return;
     await _run(
-      () => _repository.deleteUser(token, username),
+      () => _usersRepository.deleteUser(token, username),
       _tx('admin.toast_user_deleted', 'Usuario eliminado'),
     );
   }
@@ -61,7 +61,7 @@ extension _AdminActions on _AdminPageState {
     );
     if (result == null) return;
     await _run(
-      () => _repository.patchUser(
+      () => _usersRepository.patchUser(
         token,
         username,
         role: result['role'] as String?,
@@ -83,7 +83,7 @@ extension _AdminActions on _AdminPageState {
     );
     if (result == null) return;
     await _run(
-      () => _repository.createUser(
+      () => _usersRepository.createUser(
         token,
         username: result['username'] as String,
         email: result['email'] as String,
@@ -116,7 +116,7 @@ extension _AdminActions on _AdminPageState {
       if (!ok) return;
     }
     await _run(
-      () => _repository.setGroupStatus(token, id, newStatus),
+      () => _groupsRepository.setGroupStatus(token, id, newStatus),
       isDisabled
           ? _tx('admin.toast_group_reactivated', 'Grupo reactivado')
           : _tx('admin.toast_group_deactivated', 'Grupo desactivado'),
@@ -137,7 +137,7 @@ extension _AdminActions on _AdminPageState {
     );
     if (!ok) return;
     await _run(
-      () => _repository.deleteGroup(token, id),
+      () => _groupsRepository.deleteGroup(token, id),
       _tx('admin.toast_group_deleted', 'Grupo eliminado'),
     );
   }
@@ -154,7 +154,7 @@ extension _AdminActions on _AdminPageState {
     );
     if (result == null) return;
     await _run(
-      () => _repository.updateAgent(token, id, result),
+      () => _agentsRepository.updateAgent(token, id, result),
       _tx('admin.toast_agent_updated', 'Agente actualizado'),
     );
   }
@@ -174,7 +174,7 @@ extension _AdminActions on _AdminPageState {
     );
     if (!ok) return;
     await _run(
-      () => _repository.deleteAgent(token, id, scope: scope),
+      () => _agentsRepository.deleteAgent(token, id, scope: scope),
       _tx('admin.toast_agent_deleted', 'Agente eliminado'),
     );
   }
@@ -194,7 +194,7 @@ extension _AdminActions on _AdminPageState {
     );
     if (!ok) return;
     await _run(
-      () => _repository.deleteAdminConnection(token, id),
+      () => _connectionsRepository.deleteAdminConnection(token, id),
       _tx('admin.toast_connection_deleted', 'Conexión eliminada'),
     );
   }
@@ -212,7 +212,7 @@ extension _AdminActions on _AdminPageState {
     );
     if (!ok) return;
     await _run(
-      () => _repository.deleteAdminKnowledge(token, id),
+      () => _knowledgeRepository.deleteAdminKnowledge(token, id),
       _tx('admin.toast_knowledge_deleted', 'Elemento eliminado'),
     );
   }
@@ -230,7 +230,7 @@ extension _AdminActions on _AdminPageState {
     );
     if (!ok) return;
     await _run(
-      () => _repository.deleteAdminWorkflow(token, id),
+      () => _resourcesRepository.deleteAdminWorkflow(token, id),
       _tx('admin.toast_workflow_deleted', 'Orquestación eliminada'),
     );
   }
@@ -248,7 +248,7 @@ extension _AdminActions on _AdminPageState {
     );
     if (!ok) return;
     await _run(
-      () => _repository.deleteAdminSkill(token, id),
+      () => _resourcesRepository.deleteAdminSkill(token, id),
       _tx('admin.toast_skill_deleted', 'Skill eliminada'),
     );
   }
@@ -266,7 +266,7 @@ extension _AdminActions on _AdminPageState {
     );
     if (!ok) return;
     await _run(
-      () => _repository.deleteAdminPrompt(token, id),
+      () => _resourcesRepository.deleteAdminPrompt(token, id),
       _tx('admin.toast_prompt_deleted', 'Prompt eliminado'),
     );
   }
@@ -284,7 +284,7 @@ extension _AdminActions on _AdminPageState {
     );
     if (!ok) return;
     await _run(
-      () => _repository.deleteAdminMemory(token, id),
+      () => _resourcesRepository.deleteAdminMemory(token, id),
       _tx('admin.toast_memory_deleted', 'Fichero de memoria eliminado'),
     );
   }
@@ -315,7 +315,7 @@ extension _AdminActions on _AdminPageState {
     );
     if (newOwner == null || newOwner.isEmpty) return;
     await _run(
-      () => _repository.setResourceOwner(token, resourceType, id, newOwner),
+      () => _resourcesRepository.setResourceOwner(token, resourceType, id, newOwner),
       _tx('admin.toast_owner_changed', 'Propietario actualizado'),
     );
   }

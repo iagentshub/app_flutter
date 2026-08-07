@@ -23,6 +23,7 @@ import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/scroll_to_end.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
+import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../widgets/chat_composer.dart';
 import '../widgets/chat_history_panel.dart';
 import '../widgets/chat_message_list.dart';
@@ -50,7 +51,7 @@ class ChatPage extends StatefulWidget {
   State<ChatPage> createState() => _ChatPageState();
 }
 
-class _ChatPageState extends State<ChatPage> {
+class _ChatPageState extends State<ChatPage> with StateMessaging {
   late final ChatRepository _repository;
   late final AgentsRepository _agentsRepository;
   late final ConnectionsRepository _connectionsRepository;
@@ -114,10 +115,6 @@ class _ChatPageState extends State<ChatPage> {
     if (mounted) setState(() {});
   }
 
-  /// Expuesto a los `extension` en otros ficheros (`part of`): `setState` es
-  /// `@protected` y el analizador lo marca si se llama fuera de la clase.
-  void _refresh(VoidCallback update) => setState(update);
-
   @override
   void dispose() {
     _subscription?.cancel();
@@ -131,16 +128,6 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   String? get _token => widget.sessionController.gaToken;
-
-  void _showMessage(String text, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
-      ),
-    );
-  }
 
   Future<void> _openPreferences() async {
     final token = _token;
@@ -166,16 +153,16 @@ class _ChatPageState extends State<ChatPage> {
               connectionId,
             );
             if (!mounted) return;
-            _showMessage(
+            showMessage(
               _tx('agents.preferences_saved', 'Preferencia guardada'),
             );
           },
         ),
       );
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx(
           'agents.preferences_load_error',
           'No se pudieron cargar las preferencias',

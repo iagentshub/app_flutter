@@ -10,7 +10,7 @@ class _AdminConfigTab extends StatefulWidget {
     super.key,
   });
 
-  final AdminRepository repository;
+  final AdminPlatformRepository repository;
   final String token;
   final Map<String, dynamic> initialSettings;
   final String Function(String path, String fallback) tx;
@@ -20,7 +20,8 @@ class _AdminConfigTab extends StatefulWidget {
   State<_AdminConfigTab> createState() => _AdminConfigTabState();
 }
 
-class _AdminConfigTabState extends State<_AdminConfigTab> {
+class _AdminConfigTabState extends State<_AdminConfigTab>
+    with StateMessaging {
   late bool _registrationOpen;
   late final TextEditingController _maxUsersController;
   late final TextEditingController _maxSessionsController;
@@ -88,16 +89,6 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
     super.dispose();
   }
 
-  void _showMessage(String text, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
-      ),
-    );
-  }
-
   Future<void> _save() async {
     final themeController = ThemeControllerScope.of(context, listen: false);
     setState(() {
@@ -145,11 +136,11 @@ class _AdminConfigTabState extends State<_AdminConfigTab> {
       setState(
         () => _saveMsg = _tx('admin.config_saved', 'Configuración guardada'),
       );
-      _showMessage(_tx('admin.config_saved', 'Configuración guardada'));
+      showMessage(_tx('admin.config_saved', 'Configuración guardada'));
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('admin.error_generic', 'No se pudo completar la acción'),
         isError: true,
       );

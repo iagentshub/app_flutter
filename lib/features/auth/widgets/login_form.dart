@@ -206,7 +206,7 @@ extension _LoginForm on _LoginPageState {
                                     : 'Mostrar contraseña',
                               ),
                         onPressed: () =>
-                            _refresh(() => _showPassword = !_showPassword),
+                            refresh(() => _showPassword = !_showPassword),
                         icon: Icon(
                           _showPassword
                               ? Icons.visibility_off
@@ -221,7 +221,7 @@ extension _LoginForm on _LoginPageState {
                     builder: (context, actionConstraints) {
                       final stacked = actionConstraints.maxWidth < 360;
                       final rememberControl = InkWell(
-                        onTap: () => _refresh(
+                        onTap: () => refresh(
                           () => _rememberAccount = !_rememberAccount,
                         ),
                         borderRadius: BorderRadius.circular(6),
@@ -234,7 +234,7 @@ extension _LoginForm on _LoginPageState {
                                 height: 24,
                                 child: Checkbox(
                                   value: _rememberAccount,
-                                  onChanged: (value) => _refresh(
+                                  onChanged: (value) => refresh(
                                     () => _rememberAccount = value ?? false,
                                   ),
                                 ),

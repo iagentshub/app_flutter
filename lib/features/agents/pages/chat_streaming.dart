@@ -18,7 +18,7 @@ extension _ChatStreaming on _ChatPageState {
     final composedText = quoted == null
         ? text
         : '> ${_replyLabelFor(quoted)}: ${_quoteSnippet(quoted.content)}\n\n$text';
-    _refresh(() {
+    refresh(() {
       _error = null;
       _messages = [
         ..._messages,
@@ -49,14 +49,14 @@ extension _ChatStreaming on _ChatPageState {
         .listen(
           (event) {
             if (event.type == 'token') {
-              _refresh(() {
+              refresh(() {
                 _streamingReply += event.token ?? '';
                 if (_streamingReply.isNotEmpty) _thinking = false;
               });
               scrollToEnd(_scrollController, animate: false);
             } else if (event.type == 'done') {
               final reply = event.reply ?? _streamingReply;
-              _refresh(() {
+              refresh(() {
                 _thinking = false;
                 if (reply.isNotEmpty) {
                   _messages = [
@@ -74,7 +74,7 @@ extension _ChatStreaming on _ChatPageState {
               });
               scrollToEnd(_scrollController, animate: false);
             } else if (event.type == 'error') {
-              _refresh(
+              refresh(
                 () =>
                     _error = event.message ?? 'Error de respuesta del agente',
               );
@@ -82,11 +82,11 @@ extension _ChatStreaming on _ChatPageState {
           },
           onError: (error) {
             if (!mounted) return;
-            _refresh(() => _error = 'Error de conexión con el agente');
+            refresh(() => _error = 'Error de conexión con el agente');
           },
           onDone: () {
             if (!mounted) return;
-            _refresh(() {
+            refresh(() {
               _streaming = false;
               _thinking = false;
             });
@@ -100,15 +100,15 @@ extension _ChatStreaming on _ChatPageState {
   void _stop() {
     _subscription?.cancel();
     _subscription = null;
-    _refresh(() {
+    refresh(() {
       _streaming = false;
       _thinking = false;
     });
   }
 
-  void _setReply(ChatMessage message) => _refresh(() => _replyTo = message);
+  void _setReply(ChatMessage message) => refresh(() => _replyTo = message);
 
-  void _cancelReply() => _refresh(() => _replyTo = null);
+  void _cancelReply() => refresh(() => _replyTo = null);
 
   String _replyLabelFor(ChatMessage message) =>
       message.isUser ? _tx('agents.chat.reply_you', 'Tú') : widget.agent.name;

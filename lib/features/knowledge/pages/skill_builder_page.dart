@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../../app/theme/fnc_colors.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../features/agents/widgets/agent_builder_chat_panel.dart';
@@ -16,6 +15,7 @@ import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/scroll_to_end.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../repositories/skill_builder_repository.dart';
 
 class SkillBuilderPage extends StatefulWidget {
@@ -36,7 +36,8 @@ class SkillBuilderPage extends StatefulWidget {
   State<SkillBuilderPage> createState() => _SkillBuilderPageState();
 }
 
-class _SkillBuilderPageState extends State<SkillBuilderPage> {
+class _SkillBuilderPageState extends State<SkillBuilderPage>
+    with StateMessaging {
   late final SkillBuilderRepository _builderRepository;
   late final ConnectionsRepository _connectionsRepository;
   late final TranslatedTexts _t;
@@ -115,7 +116,7 @@ class _SkillBuilderPageState extends State<SkillBuilderPage> {
     final text = _textController.text.trim();
     if (token == null || connectionId == null || text.isEmpty || _streaming) {
       if (connectionId == null) {
-        _showMessage(
+        showMessage(
           _tx('skill_builder.no_connection', 'Elige una conexión primero'),
           isError: true,
         );
@@ -260,16 +261,6 @@ class _SkillBuilderPageState extends State<SkillBuilderPage> {
       default:
         return _tx('skill_builder.stage_analyzing', 'Analizando tu solicitud…');
     }
-  }
-
-  void _showMessage(String text, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
-      ),
-    );
   }
 
   @override

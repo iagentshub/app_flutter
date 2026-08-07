@@ -11,7 +11,7 @@ class _AdminBannersCard extends StatefulWidget {
     required this.tx,
   });
 
-  final AdminRepository repository;
+  final AdminPlatformRepository repository;
   final String token;
   final String Function(String path, String fallback) tx;
 
@@ -19,7 +19,8 @@ class _AdminBannersCard extends StatefulWidget {
   State<_AdminBannersCard> createState() => _AdminBannersCardState();
 }
 
-class _AdminBannersCardState extends State<_AdminBannersCard> {
+class _AdminBannersCardState extends State<_AdminBannersCard>
+    with StateMessaging {
   List<Map<String, dynamic>> _banners = [];
   bool _loading = true;
   String? _error;
@@ -101,9 +102,9 @@ class _AdminBannersCardState extends State<_AdminBannersCard> {
       }
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('admin.error_generic', 'No se pudo completar la acción'),
         isError: true,
       );
@@ -131,9 +132,9 @@ class _AdminBannersCardState extends State<_AdminBannersCard> {
       await widget.repository.deleteNotificationBanner(widget.token, bannerId);
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('admin.error_generic', 'No se pudo completar la acción'),
         isError: true,
       );
@@ -147,22 +148,12 @@ class _AdminBannersCardState extends State<_AdminBannersCard> {
   }
 
   void _showInvalidBannerId() {
-    _showMessage(
+    showMessage(
       _tx(
         'admin.config_banners_invalid_id',
         'El banner no tiene un identificador válido.',
       ),
       isError: true,
-    );
-  }
-
-  void _showMessage(String text, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
-      ),
     );
   }
 

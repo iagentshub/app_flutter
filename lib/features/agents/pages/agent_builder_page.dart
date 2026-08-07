@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../../app/theme/fnc_colors.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 
 import '../../../core/network/api_client.dart';
@@ -24,6 +23,7 @@ import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/scroll_to_end.dart';
+import '../../../shared/widgets/state_messaging_mixin.dart';
 
 /// Constructor de agentes por IA: conversación en streaming con el asistente
 /// hasta que propone un borrador completo, que se revisa/edita en el mismo
@@ -44,7 +44,8 @@ class AgentBuilderPage extends StatefulWidget {
   State<AgentBuilderPage> createState() => _AgentBuilderPageState();
 }
 
-class _AgentBuilderPageState extends State<AgentBuilderPage> {
+class _AgentBuilderPageState extends State<AgentBuilderPage>
+    with StateMessaging {
   late final AgentBuilderRepository _builderRepository;
   late final AgentsRepository _agentsRepository;
   late final ConnectionsRepository _connectionsRepository;
@@ -174,7 +175,7 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
     final text = _textController.text.trim();
     if (token == null || connectionId == null || text.isEmpty || _streaming) {
       if (connectionId == null) {
-        _showMessage(
+        showMessage(
           _tx('agents.builder_no_connection', 'Elige una conexión primero'),
           isError: true,
         );
@@ -353,11 +354,11 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
         _agentSaved = true;
         _pendingDraft = null;
       });
-      _showMessage(_tx('agents.builder_agent_created', 'Agente creado'));
+      showMessage(_tx('agents.builder_agent_created', 'Agente creado'));
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('agents.error_generic_save', 'No se pudo guardar el agente'),
         isError: true,
       );
@@ -395,15 +396,6 @@ class _AgentBuilderPageState extends State<AgentBuilderPage> {
     }
   }
 
-  void _showMessage(String text, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
-      ),
-    );
-  }
 
   Widget _buildModernPage(BuildContext context) {
     final colors = Theme.of(context).colorScheme;

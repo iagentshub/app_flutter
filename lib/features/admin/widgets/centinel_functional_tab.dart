@@ -9,6 +9,7 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 
 import '../../../core/network/api_error.dart';
+import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../repositories/centinel_repository.dart';
 
 part '../centinel/functional_results.dart';
@@ -48,7 +49,8 @@ class CentinelFunctionalTab extends StatefulWidget {
   State<CentinelFunctionalTab> createState() => _CentinelFunctionalTabState();
 }
 
-class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
+class _CentinelFunctionalTabState extends State<CentinelFunctionalTab>
+    with StateMessaging {
   final _treeSearchController = TextEditingController();
   StreamSubscription<Map<String, dynamic>>? _sub;
 
@@ -79,7 +81,6 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
   bool _showingResults = false;
 
   String _tx(String path, String fallback) => widget.tx(path, fallback);
-  void _refresh(VoidCallback update) => setState(update);
 
   @override
   void initState() {
@@ -105,26 +106,26 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
   }
 
   Future<void> _loadTree() async {
-    _refresh(() {
+    refresh(() {
       _treeLoading = true;
       _treeError = null;
     });
     try {
       final tree = await widget.repository.tree(widget.token);
       if (!mounted) return;
-      _refresh(() {
+      refresh(() {
         _tree = tree;
         _treeLoading = false;
       });
     } on ApiError catch (error) {
       if (!mounted) return;
-      _refresh(() {
+      refresh(() {
         _treeError = error.message;
         _treeLoading = false;
       });
     } catch (_) {
       if (!mounted) return;
-      _refresh(() {
+      refresh(() {
         _treeError = _tx(
           'centinel.errors_discover',
           'No se pudo descubrir la suite de tests',
@@ -138,7 +139,7 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
     try {
       final history = await widget.repository.history(widget.token);
       if (!mounted) return;
-      _refresh(() => _history = history);
+      refresh(() => _history = history);
     } catch (_) {
       // Historial es informativo; un fallo aquí no bloquea el resto.
     }
@@ -150,7 +151,7 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
       if (!mounted) return;
       final runStatus = (status['status'] ?? 'idle').toString();
       final failed = status['failed_ids'];
-      _refresh(() {
+      refresh(() {
         _status = runStatus;
         _runId = status['run_id'] as String?;
         _failedIds = failed is List
@@ -178,7 +179,7 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
       return;
     }
 
-    _refresh(() {
+    refresh(() {
       _starting = true;
       _events.clear();
       _logLines.clear();
@@ -193,7 +194,7 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
         rerunFailed: rerunFailed,
       );
       if (!mounted) return;
-      _refresh(() {
+      refresh(() {
         _status = 'running';
         _runId = result['run_id'] as String?;
         _starting = false;
@@ -201,25 +202,25 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
       });
       if (_runId != null) _connectStream(_runId!);
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
-      if (mounted) _refresh(() => _starting = false);
+      showMessage(error.message, isError: true);
+      if (mounted) refresh(() => _starting = false);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('centinel.errors_run_start', 'No se pudo iniciar el run'),
         isError: true,
       );
-      if (mounted) _refresh(() => _starting = false);
+      if (mounted) refresh(() => _starting = false);
     }
   }
 
   Future<void> _abort() async {
     try {
       await widget.repository.abort(widget.token);
-      _showMessage(_tx('centinel.toast_run_aborted', 'Run abortado'));
+      showMessage(_tx('centinel.toast_run_aborted', 'Run abortado'));
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('centinel.toast_abort_failed', 'No se pudo abortar el run'),
         isError: true,
       );
@@ -230,7 +231,7 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
   /// descarta lo relativo al run ya visto (eventos, log, resumen).
   void _resetToSelecting() {
     _sub?.cancel();
-    _refresh(() {
+    refresh(() {
       _showingResults = false;
       _status = 'idle';
       _runId = null;
@@ -260,8 +261,8 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
   /// siempre, pero sin fingir que el run en sí falló.
   void _handleStreamDropped() {
     if (!mounted || _status != 'running') return;
-    _refresh(() => _status = 'error');
-    _showMessage(
+    refresh(() => _status = 'error');
+    showMessage(
       _tx(
         'centinel.toast_stream_dropped',
         'Se perdió la conexión en vivo con el run. Actualiza para ver su estado.',
@@ -275,9 +276,9 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
     if (!mounted) return;
     switch (type) {
       case 'started':
-        _refresh(() => _logLines.add('Run iniciado: ${event['target']}'));
+        refresh(() => _logLines.add('Run iniciado: ${event['target']}'));
       case 'collecting':
-        _refresh(() => _logLines.add('collected ${event['count']} items'));
+        refresh(() => _logLines.add('collected ${event['count']} items'));
       case 'test':
         final status = (event['status'] ?? '').toString();
         final file = (event['file'] ?? '').toString();
@@ -286,7 +287,7 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
             ? (event['progress'] as num).toInt()
             : 0;
         final traceback = event['traceback'] as String?;
-        _refresh(() {
+        refresh(() {
           _events.add(
             _TestEvent(
               file: file,
@@ -304,10 +305,10 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
           }
         });
       case 'summary':
-        _refresh(() => _summary = event);
+        refresh(() => _summary = event);
       case 'done':
         final failed = event['failed_ids'];
-        _refresh(() {
+        refresh(() {
           _status = 'idle';
           _failedIds = failed is List
               ? failed.map((e) => e.toString()).toList()
@@ -315,11 +316,11 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
         });
         _loadHistory();
       case 'aborted':
-        _refresh(() => _status = 'idle');
+        refresh(() => _status = 'idle');
         _loadHistory();
       case 'error':
-        _refresh(() => _status = 'error');
-        _showMessage(
+        refresh(() => _status = 'error');
+        showMessage(
           (event['message'] ?? 'Error en el run').toString(),
           isError: true,
         );
@@ -328,17 +329,7 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab> {
 
   Future<void> _copyLog() async {
     await Clipboard.setData(ClipboardData(text: _logLines.join('\n')));
-    _showMessage(_tx('centinel.toast_log_copied', 'Log copiado'));
-  }
-
-  void _showMessage(String text, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
-      ),
-    );
+    showMessage(_tx('centinel.toast_log_copied', 'Log copiado'));
   }
 
   List<_TestEvent> get _filteredEvents {

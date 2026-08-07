@@ -86,7 +86,7 @@ extension _AdminViewHelpers on _AdminPageState {
       title: _tx('common.filters', 'Filtros'),
       clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
       closeLabel: _tx('common.close', 'Cerrar'),
-      onClear: () => _refresh(() {
+      onClear: () => refresh(() {
         _knowledgeType = '';
         _knowledgeOwner = '';
       }),
@@ -101,7 +101,7 @@ extension _AdminViewHelpers on _AdminPageState {
             ('document', _tx('admin.type_document', 'Documento')),
           ],
           onChanged: (v) {
-            _refresh(() => _knowledgeType = v);
+            refresh(() => _knowledgeType = v);
             setDialogState(() {});
           },
         ),
@@ -115,7 +115,7 @@ extension _AdminViewHelpers on _AdminPageState {
             ..._ownersOf(_knowledge).map((o) => (o, o)),
           ],
           onChanged: (v) {
-            _refresh(() => _knowledgeOwner = v);
+            refresh(() => _knowledgeOwner = v);
             setDialogState(() {});
           },
         ),

@@ -9,13 +9,13 @@ extension _ChatConversations on _ChatPageState {
   Future<void> _bootstrap() async {
     final token = _token;
     if (token == null || token.isEmpty) {
-      _refresh(() {
+      refresh(() {
         _error = 'No hay sesión activa';
         _loadingConversations = false;
       });
       return;
     }
-    _refresh(() => _loadingConversations = true);
+    refresh(() => _loadingConversations = true);
     try {
       final conversations = await _repository.listConversations(
         token,
@@ -28,13 +28,13 @@ extension _ChatConversations on _ChatPageState {
           widget.agent.id,
         );
         if (!mounted) return;
-        _refresh(() {
+        refresh(() {
           _conversations = [created];
           _conversationId = created.id;
           _loadingConversations = false;
         });
       } else {
-        _refresh(() {
+        refresh(() {
           _conversations = conversations;
           _conversationId = conversations.first.id;
           _loadingConversations = false;
@@ -43,13 +43,13 @@ extension _ChatConversations on _ChatPageState {
       await _loadMessages();
     } on ApiError catch (error) {
       if (!mounted) return;
-      _refresh(() {
+      refresh(() {
         _error = error.message;
         _loadingConversations = false;
       });
     } catch (_) {
       if (!mounted) return;
-      _refresh(() {
+      refresh(() {
         _error = 'No se pudo cargar el historial de chat';
         _loadingConversations = false;
       });
@@ -60,7 +60,7 @@ extension _ChatConversations on _ChatPageState {
     final token = _token;
     final conversationId = _conversationId;
     if (token == null || conversationId == null) return;
-    _refresh(() => _loadingMessages = true);
+    refresh(() => _loadingMessages = true);
     try {
       final messages = await _repository.getMessages(
         token,
@@ -68,14 +68,14 @@ extension _ChatConversations on _ChatPageState {
         conversationId,
       );
       if (!mounted) return;
-      _refresh(() {
+      refresh(() {
         _messages = messages;
         _loadingMessages = false;
       });
       scrollToEnd(_scrollController, animate: false);
     } catch (_) {
       if (!mounted) return;
-      _refresh(() => _loadingMessages = false);
+      refresh(() => _loadingMessages = false);
     }
   }
 
@@ -88,21 +88,21 @@ extension _ChatConversations on _ChatPageState {
         widget.agent.id,
       );
       if (!mounted) return;
-      _refresh(() {
+      refresh(() {
         _conversations = [created, ..._conversations];
         _conversationId = created.id;
         _messages = [];
       });
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo crear la conversación', isError: true);
+      showMessage('No se pudo crear la conversación', isError: true);
     }
   }
 
   Future<void> _selectConversation(String id) async {
     if (id == _conversationId) return;
-    _refresh(() {
+    refresh(() {
       _conversationId = id;
       _messages = [];
     });
@@ -116,7 +116,7 @@ extension _ChatConversations on _ChatPageState {
       await _repository.deleteConversation(token, widget.agent.id, id);
       if (!mounted) return;
       final remaining = _conversations.where((c) => c.id != id).toList();
-      _refresh(() => _conversations = remaining);
+      refresh(() => _conversations = remaining);
       if (_conversationId == id) {
         if (remaining.isEmpty) {
           await _newConversation();
@@ -125,9 +125,9 @@ extension _ChatConversations on _ChatPageState {
         }
       }
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo borrar la conversación', isError: true);
+      showMessage('No se pudo borrar la conversación', isError: true);
     }
   }
 }

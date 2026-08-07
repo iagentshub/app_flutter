@@ -20,6 +20,7 @@ import '../../../shared/state/session_controller.dart';
 import '../../../shared/state/theme_controller.dart';
 import '../../../shared/widgets/brand_icon.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
+import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../widgets/profile_groups_section.dart';
 
 part '../widgets/brand_icon_selector.dart';
@@ -71,7 +72,7 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, StateMessaging {
   late final ProfileRepository _repository;
   late final TranslatedTexts _t;
   late final TabController _tabController;
@@ -213,11 +214,11 @@ class _ProfilePageState extends State<ProfilePage>
         context,
         listen: false,
       ).syncFromBackend(updated.theme);
-      _showMessage('Preferencias guardadas');
+      showMessage('Preferencias guardadas');
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudieron guardar las preferencias', isError: true);
+      showMessage('No se pudieron guardar las preferencias', isError: true);
     } finally {
       if (mounted) setState(() => _savingSettings = false);
     }
@@ -237,12 +238,12 @@ class _ProfilePageState extends State<ProfilePage>
         cv: _cvController.text.trim(),
         languages: _selectedLanguages.toList(),
       );
-      _showMessage('Perfil público actualizado');
+      showMessage('Perfil público actualizado');
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo actualizar el perfil público', isError: true);
+      showMessage('No se pudo actualizar el perfil público', isError: true);
     } finally {
       if (mounted) setState(() => _savingProfile = false);
     }
@@ -269,14 +270,14 @@ class _ProfilePageState extends State<ProfilePage>
     final file = result.files.first;
     final bytes = file.bytes;
     if (bytes == null || bytes.isEmpty) {
-      _showMessage(
+      showMessage(
         _tx('profile.avatar_error', 'No se pudo actualizar la foto'),
         isError: true,
       );
       return;
     }
     if (bytes.length > 2 * 1024 * 1024) {
-      _showMessage(
+      showMessage(
         _tx('profile.avatar_too_large', 'La imagen no puede superar 2 MB'),
         isError: true,
       );
@@ -294,11 +295,11 @@ class _ProfilePageState extends State<ProfilePage>
       );
       if (!mounted) return;
       setState(() => _avatarVersion++);
-      _showMessage(_tx('profile.avatar_updated', 'Foto de perfil actualizada'));
+      showMessage(_tx('profile.avatar_updated', 'Foto de perfil actualizada'));
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('profile.avatar_error', 'No se pudo actualizar la foto'),
         isError: true,
       );
@@ -427,11 +428,11 @@ class _ProfilePageState extends State<ProfilePage>
     final current = _currentPasswordController.text;
     final next = _newPasswordController.text;
     if (current.isEmpty || next.isEmpty) {
-      _showMessage('Completa contraseña actual y nueva', isError: true);
+      showMessage('Completa contraseña actual y nueva', isError: true);
       return false;
     }
     if (next.trim().length < 8) {
-      _showMessage(
+      showMessage(
         'La nueva contraseña debe tener al menos 8 caracteres',
         isError: true,
       );
@@ -446,13 +447,13 @@ class _ProfilePageState extends State<ProfilePage>
       );
       _currentPasswordController.clear();
       _newPasswordController.clear();
-      _showMessage('Contraseña actualizada');
+      showMessage('Contraseña actualizada');
       return true;
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
       return false;
     } catch (_) {
-      _showMessage('No se pudo actualizar la contraseña', isError: true);
+      showMessage('No se pudo actualizar la contraseña', isError: true);
       return false;
     }
   }
@@ -463,7 +464,7 @@ class _ProfilePageState extends State<ProfilePage>
     final bundle = _bundle;
     if (bundle == null) return;
     if (bundle.deletion.scheduled) {
-      _showMessage('La cuenta ya está programada para eliminación');
+      showMessage('La cuenta ya está programada para eliminación');
       return;
     }
 
@@ -480,12 +481,12 @@ class _ProfilePageState extends State<ProfilePage>
     setState(() => _requestingDeletion = true);
     try {
       final message = await _repository.requestDeletion(token);
-      _showMessage(message);
+      showMessage(message);
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         'No se pudo programar la eliminación de cuenta',
         isError: true,
       );
@@ -493,18 +494,6 @@ class _ProfilePageState extends State<ProfilePage>
       if (mounted) setState(() => _requestingDeletion = false);
     }
   }
-
-  void _showMessage(String text, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
-      ),
-    );
-  }
-
-  void _refresh(VoidCallback update) => setState(update);
 
   @override
   Widget build(BuildContext context) {

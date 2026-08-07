@@ -8,7 +8,14 @@ import '../../../shared/widgets/async_state_panel.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/admin/admin_explore_models.dart';
-import '../repositories/admin_repository.dart';
+import '../repositories/admin_agents_repository.dart';
+import '../repositories/admin_connections_repository.dart';
+import '../repositories/admin_groups_repository.dart';
+import '../repositories/admin_knowledge_repository.dart';
+import '../repositories/admin_platform_repository.dart';
+import '../repositories/admin_resources_repository.dart';
+import '../repositories/admin_stats_repository.dart';
+import '../repositories/admin_users_repository.dart';
 import '../../../shared/graph/graph_dialog.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/labels/label_catalog.dart';
@@ -23,6 +30,7 @@ import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/kpi/kpi_hero_card.dart';
 import '../../../shared/widgets/kpi/kpi_tile.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
+import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../../utils/validators.dart';
 
 part '../dialogs/admin_agent_dialog.dart';
@@ -83,8 +91,15 @@ class AdminPage extends StatefulWidget {
 }
 
 class _AdminPageState extends State<AdminPage>
-    with SingleTickerProviderStateMixin {
-  late final AdminRepository _repository;
+    with SingleTickerProviderStateMixin, StateMessaging {
+  late final AdminStatsRepository _statsRepository;
+  late final AdminUsersRepository _usersRepository;
+  late final AdminGroupsRepository _groupsRepository;
+  late final AdminAgentsRepository _agentsRepository;
+  late final AdminConnectionsRepository _connectionsRepository;
+  late final AdminKnowledgeRepository _knowledgeRepository;
+  late final AdminResourcesRepository _resourcesRepository;
+  late final AdminPlatformRepository _platformRepository;
   late final TranslatedTexts _t;
   late final TabController _tabController;
 
@@ -134,7 +149,20 @@ class _AdminPageState extends State<AdminPage>
   @override
   void initState() {
     super.initState();
-    _repository = AdminRepository(apiClient: widget.apiClient);
+    _statsRepository = AdminStatsRepository(apiClient: widget.apiClient);
+    _usersRepository = AdminUsersRepository(apiClient: widget.apiClient);
+    _groupsRepository = AdminGroupsRepository(apiClient: widget.apiClient);
+    _agentsRepository = AdminAgentsRepository(apiClient: widget.apiClient);
+    _connectionsRepository = AdminConnectionsRepository(
+      apiClient: widget.apiClient,
+    );
+    _knowledgeRepository = AdminKnowledgeRepository(
+      apiClient: widget.apiClient,
+    );
+    _resourcesRepository = AdminResourcesRepository(
+      apiClient: widget.apiClient,
+    );
+    _platformRepository = AdminPlatformRepository(apiClient: widget.apiClient);
     _tabController = TabController(length: _tabIds.length, vsync: this)
       ..addListener(_onTabChanged);
     _t = TranslatedTexts(
@@ -189,9 +217,9 @@ class _AdminPageState extends State<AdminPage>
 
     try {
       final results = await Future.wait([
-        _repository.getStats(token),
-        _repository.explore(token),
-        _repository.getPlatformSettings(token),
+        _statsRepository.getStats(token),
+        _statsRepository.explore(token),
+        _platformRepository.getPlatformSettings(token),
       ]);
 
       if (!mounted) return;
@@ -231,18 +259,6 @@ class _AdminPageState extends State<AdminPage>
     }
   }
 
-  void _showMessage(String text, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
-      ),
-    );
-  }
-
-  void _refresh(VoidCallback update) => setState(update);
-
   Future<void> _run(
     Future<void> Function() action,
     String successMessage,
@@ -250,12 +266,12 @@ class _AdminPageState extends State<AdminPage>
     try {
       await action();
       widget.apiClient.invalidateCache();
-      _showMessage(successMessage);
+      showMessage(successMessage);
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('admin.error_generic', 'No se pudo completar la acción'),
         isError: true,
       );

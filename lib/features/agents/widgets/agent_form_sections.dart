@@ -39,7 +39,7 @@ extension _AgentFormSections on _AgentFormDialogState {
           const SizedBox(height: 8),
           GroupedLabelPicker(
             selected: _selectedLabels,
-            onChanged: (next) => _refresh(() => _selectedLabels = next),
+            onChanged: (next) => refresh(() => _selectedLabels = next),
             tx: widget.tx,
           ),
           TextFormField(
@@ -102,7 +102,7 @@ extension _AgentFormSections on _AgentFormDialogState {
                       ),
                     ),
                   ],
-                  onChanged: (value) => _refresh(() => _connectionId = value),
+                  onChanged: (value) => refresh(() => _connectionId = value),
                 ),
           const SizedBox(height: 20),
           Text(
@@ -115,7 +115,7 @@ extension _AgentFormSections on _AgentFormDialogState {
             max: 1,
             divisions: 20,
             label: _temperature.toStringAsFixed(2),
-            onChanged: (value) => _refresh(() => _temperature = value),
+            onChanged: (value) => refresh(() => _temperature = value),
           ),
         ],
       ),
@@ -132,7 +132,7 @@ extension _AgentFormSections on _AgentFormDialogState {
             contentPadding: EdgeInsets.zero,
             value: _useMemory,
             title: Text(widget.tx('agents.field_use_memory', 'Usar memoria')),
-            onChanged: (value) => _refresh(() => _useMemory = value),
+            onChanged: (value) => refresh(() => _useMemory = value),
           ),
           if (_useMemory) ...[
             _loadingMemory
@@ -157,7 +157,7 @@ extension _AgentFormSections on _AgentFormDialogState {
                             'agents.pick_existing',
                             'Elegir existente',
                           ),
-                          onSelected: (value) => _refresh(
+                          onSelected: (value) => refresh(
                             () => _memoryFileController.text = value,
                           ),
                           itemBuilder: (context) => _memoryFiles
@@ -199,7 +199,7 @@ extension _AgentFormSections on _AgentFormDialogState {
                         value: _selectedSkillIds.contains(skill.id),
                         title: Text(skill.name),
                         onChanged: (value) {
-                          _refresh(() {
+                          refresh(() {
                             if (value == true) {
                               _selectedSkillIds = {
                                 ..._selectedSkillIds,
@@ -249,7 +249,7 @@ extension _AgentFormSections on _AgentFormDialogState {
                           overflow: TextOverflow.ellipsis,
                         ),
                         onChanged: (value) {
-                          _refresh(() {
+                          refresh(() {
                             if (value == true) {
                               _selectedKnowledgeIds = {
                                 ..._selectedKnowledgeIds,
@@ -297,7 +297,7 @@ extension _AgentFormSections on _AgentFormDialogState {
                           overflow: TextOverflow.ellipsis,
                         ),
                         onChanged: (value) {
-                          _refresh(() {
+                          refresh(() {
                             if (value == true) {
                               _selectedPromptIds = {
                                 ..._selectedPromptIds,
@@ -337,7 +337,7 @@ extension _AgentFormSections on _AgentFormDialogState {
             ],
             onChanged: (value) {
               if (value == null) return;
-              _refresh(() => _agentType = value);
+              refresh(() => _agentType = value);
             },
           ),
           const SizedBox(height: 12),

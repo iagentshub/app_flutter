@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../../app/theme/fnc_colors.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 
@@ -19,6 +18,7 @@ import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/resource_toolbar.dart';
+import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../cards/workflow_card.dart';
 import '../dialogs/run_progress_dialog.dart';
 import '../dialogs/run_workflow_dialog.dart';
@@ -40,7 +40,7 @@ class WorkflowsPage extends StatefulWidget {
   State<WorkflowsPage> createState() => _WorkflowsPageState();
 }
 
-class _WorkflowsPageState extends State<WorkflowsPage> {
+class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
   late final WorkflowsRepository _repository;
   late final AgentsRepository _agentsRepository;
   late final TranslatedTexts _t;
@@ -171,7 +171,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
 
   Future<void> _openEditDialog(WorkflowItem item) async {
     if (item.shared) {
-      _showMessage(
+      showMessage(
         _tx(
           'workflows.readonly_shared',
           'Este workflow es compartido y es de solo lectura',
@@ -210,12 +210,12 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
 
     try {
       await _repository.saveWorkflow(token, payload);
-      _showMessage(_tx('workflows.save_success', 'Workflow guardado'));
+      showMessage(_tx('workflows.save_success', 'Workflow guardado'));
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('workflows.save_error', 'No se pudo guardar el workflow'),
         isError: true,
       );
@@ -228,16 +228,16 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
     final activate = !item.isActive;
     try {
       await _repository.setWorkflowActive(token, item.id, activate);
-      _showMessage(
+      showMessage(
         activate
             ? _tx('workflows.activated', 'Orquestación activada')
             : _tx('workflows.deactivated', 'Orquestación desactivada'),
       );
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('workflows.toggle_error', 'No se pudo cambiar el estado'),
         isError: true,
       );
@@ -246,7 +246,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
 
   Future<void> _deleteWorkflow(WorkflowItem item) async {
     if (item.shared) {
-      _showMessage(
+      showMessage(
         _tx(
           'workflows.readonly_shared_delete',
           'Este workflow es compartido y no se puede eliminar',
@@ -272,12 +272,12 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
 
     try {
       await _repository.deleteWorkflow(token, item.id);
-      _showMessage(_tx('workflows.delete_success', 'Workflow eliminado'));
+      showMessage(_tx('workflows.delete_success', 'Workflow eliminado'));
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('workflows.delete_error', 'No se pudo eliminar el workflow'),
         isError: true,
       );
@@ -287,7 +287,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
   Future<void> _runWorkflow(WorkflowItem item) async {
     final runIssue = _workflowRunIssue(item);
     if (runIssue != null) {
-      _showMessage(runIssue, isError: true);
+      showMessage(runIssue, isError: true);
       return;
     }
 
@@ -355,15 +355,6 @@ class _WorkflowsPageState extends State<WorkflowsPage> {
     return null;
   }
 
-  void _showMessage(String text, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {

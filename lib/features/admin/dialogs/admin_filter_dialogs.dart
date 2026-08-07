@@ -48,7 +48,7 @@ extension _AdminFilterDialogs on _AdminPageState {
       title: _tx('common.filters', 'Filtros'),
       clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
       closeLabel: _tx('common.close', 'Cerrar'),
-      onClear: () => _refresh(() {
+      onClear: () => refresh(() {
         _userRole = '';
         _userActive = '';
         _userVerified = '';
@@ -63,7 +63,7 @@ extension _AdminFilterDialogs on _AdminPageState {
             ('standard', _tx('admin.role_standard', 'Estándar')),
           ],
           onChanged: (v) {
-            _refresh(() => _userRole = v);
+            refresh(() => _userRole = v);
             setDialogState(() {});
           },
         ),
@@ -77,7 +77,7 @@ extension _AdminFilterDialogs on _AdminPageState {
             ('false', _tx('admin.status_blocked', 'Bloqueados')),
           ],
           onChanged: (v) {
-            _refresh(() => _userActive = v);
+            refresh(() => _userActive = v);
             setDialogState(() {});
           },
         ),
@@ -91,7 +91,7 @@ extension _AdminFilterDialogs on _AdminPageState {
             ('false', _tx('admin.verified_no', 'Sin verificar')),
           ],
           onChanged: (v) {
-            _refresh(() => _userVerified = v);
+            refresh(() => _userVerified = v);
             setDialogState(() {});
           },
         ),

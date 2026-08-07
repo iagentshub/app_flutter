@@ -21,7 +21,7 @@ extension _ChatMentionOverlay on _ChatPageState {
         _knowledgeRepository.listItems(token),
       ]);
       if (!mounted) return;
-      _refresh(() {
+      refresh(() {
         _allPrompts = results[0] as List<PromptItem>;
         _allKnowledge = results[1] as List<KnowledgeItem>;
       });
@@ -214,7 +214,7 @@ extension _ChatMentionOverlay on _ChatPageState {
     }
     _hideMentionOverlay();
     if (_attachedKnowledge.any((k) => k.id == item.id)) return;
-    _refresh(() {
+    refresh(() {
       _attachedKnowledge = [..._attachedKnowledge, item];
     });
   }

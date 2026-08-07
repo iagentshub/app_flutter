@@ -35,7 +35,7 @@ extension _AgentsPageView on _AgentsPageState {
                   onChanged: (value) {
                     _query = value;
                     _searchDebouncer.run(() {
-                      if (mounted) _refresh(() {});
+                      if (mounted) refresh(() {});
                     });
                   },
                 ),

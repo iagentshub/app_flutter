@@ -145,10 +145,10 @@ extension _AgentsPageActions on _AgentsPageState {
         type: 'agent',
       );
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
       return;
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx(
           'agents.create_public_load_error',
           'No se pudieron cargar los agentes públicos',
@@ -159,7 +159,7 @@ extension _AgentsPageActions on _AgentsPageState {
     }
     if (!mounted) return;
     if (publicAgents.isEmpty) {
-      _showMessage(
+      showMessage(
         _tx(
           'agents.create_public_empty',
           'No hay agentes públicos disponibles todavía',
@@ -183,10 +183,10 @@ extension _AgentsPageActions on _AgentsPageState {
         resourceId: selected.resourceId,
       );
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
       return;
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx(
           'agents.create_public_load_error',
           'No se pudieron cargar los agentes públicos',
@@ -225,7 +225,7 @@ extension _AgentsPageActions on _AgentsPageState {
 
   Future<void> _openEditDialog(AgentItem item) async {
     if (item.readOnly) {
-      _showMessage('Este agente no es editable (público o compartido)');
+      showMessage('Este agente no es editable (público o compartido)');
       return;
     }
 
@@ -257,18 +257,18 @@ extension _AgentsPageActions on _AgentsPageState {
     if (token == null || token.isEmpty) return;
     try {
       await _repository.saveAgent(token, payload);
-      _showMessage('Agente guardado');
+      showMessage('Agente guardado');
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo guardar el agente', isError: true);
+      showMessage('No se pudo guardar el agente', isError: true);
     }
   }
 
   Future<void> _deleteAgent(AgentItem item) async {
     if (item.readOnly) {
-      _showMessage('Este agente no se puede eliminar (público o compartido)');
+      showMessage('Este agente no se puede eliminar (público o compartido)');
       return;
     }
 
@@ -285,12 +285,12 @@ extension _AgentsPageActions on _AgentsPageState {
     if (token == null || token.isEmpty) return;
     try {
       await _repository.deleteAgent(token, item.id);
-      _showMessage('Agente eliminado');
+      showMessage('Agente eliminado');
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo eliminar el agente', isError: true);
+      showMessage('No se pudo eliminar el agente', isError: true);
     }
   }
 
@@ -300,12 +300,12 @@ extension _AgentsPageActions on _AgentsPageState {
     final activate = !item.isActive;
     try {
       await _repository.setAgentActive(token, item.id, activate);
-      _showMessage(activate ? 'Agente activado' : 'Agente desactivado');
+      showMessage(activate ? 'Agente activado' : 'Agente desactivado');
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo cambiar el estado del agente', isError: true);
+      showMessage('No se pudo cambiar el estado del agente', isError: true);
     }
   }
 
@@ -322,9 +322,9 @@ extension _AgentsPageActions on _AgentsPageState {
         allowedExtensions: const ['zip'],
       );
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('agents.export_error', 'No se pudo exportar el agente'),
         isError: true,
       );

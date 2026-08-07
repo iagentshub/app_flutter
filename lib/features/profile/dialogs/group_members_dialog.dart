@@ -21,7 +21,7 @@ class _MembersDialog extends StatefulWidget {
   State<_MembersDialog> createState() => _MembersDialogState();
 }
 
-class _MembersDialogState extends State<_MembersDialog> {
+class _MembersDialogState extends State<_MembersDialog> with StateMessaging {
   late final ManagerRepository _repository;
   List<Map<String, dynamic>> _members = const [];
   List<Map<String, dynamic>> _invitations = const [];
@@ -56,23 +56,13 @@ class _MembersDialogState extends State<_MembersDialog> {
     }
   }
 
-  void _showMessage(String text, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
-      ),
-    );
-  }
-
   Future<void> _removeMember(String username) async {
     try {
       await _repository.removeMember(widget.token, widget.group.id, username);
-      _showMessage(widget.tx('groups.member_removed', 'Miembro eliminado'));
+      showMessage(widget.tx('groups.member_removed', 'Miembro eliminado'));
       await _load();
     } catch (_) {
-      _showMessage(
+      showMessage(
         widget.tx('groups.create_error', 'No se pudo crear el grupo'),
         isError: true,
       );

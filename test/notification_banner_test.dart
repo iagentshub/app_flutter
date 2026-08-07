@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:app_flutter/core/network/api_client.dart';
-import 'package:app_flutter/features/admin/repositories/admin_repository.dart';
+import 'package:app_flutter/features/admin/repositories/admin_platform_repository.dart';
 import 'package:app_flutter/features/dashboard/repositories/dashboard_repository.dart';
 import 'package:app_flutter/models/dashboard/notification_banner.dart';
 import 'package:app_flutter/shared/state/backend_controller.dart';
@@ -64,7 +64,7 @@ void main() {
     });
   });
 
-  group('AdminRepository: rutas de banners', () {
+  group('AdminPlatformRepository: rutas de banners', () {
     test('las cuatro operaciones usan método y ruta esperados', () async {
       final calls = <String>[];
       final bodies = <String>[];
@@ -81,7 +81,7 @@ void main() {
       });
       final client = ApiClient(backendController, client: mock);
       addTearDown(client.close);
-      final repository = AdminRepository(apiClient: client);
+      final repository = AdminPlatformRepository(apiClient: client);
 
       await repository.listNotificationBanners('token');
       await repository.createNotificationBanner('token', {'message': 'hola'});
@@ -111,7 +111,7 @@ void main() {
       final client = ApiClient(backendController, client: mock);
       addTearDown(client.close);
 
-      await AdminRepository(
+      await AdminPlatformRepository(
         apiClient: client,
       ).deleteNotificationBanner('token', 'a/b c');
 
@@ -123,7 +123,7 @@ void main() {
       final client = ApiClient(backendController, client: mock);
       addTearDown(client.close);
 
-      final banners = await AdminRepository(
+      final banners = await AdminPlatformRepository(
         apiClient: client,
       ).listNotificationBanners('token');
 
@@ -141,7 +141,7 @@ void main() {
       final client = ApiClient(backendController, client: mock);
       addTearDown(client.close);
 
-      final banners = await AdminRepository(
+      final banners = await AdminPlatformRepository(
         apiClient: client,
       ).listNotificationBanners('token');
 

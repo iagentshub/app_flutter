@@ -21,6 +21,7 @@ import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/state/theme_controller.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
+import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../../utils/safe_redirect.dart';
 import '../../../utils/validators.dart';
 
@@ -49,7 +50,7 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends State<LoginPage> with StateMessaging {
   final _formKey = GlobalKey<FormState>();
   final _identifierController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -390,8 +391,6 @@ class _LoginPageState extends State<LoginPage> {
       }
     }
   }
-
-  void _refresh(VoidCallback update) => setState(update);
 
   @override
   Widget build(BuildContext context) {

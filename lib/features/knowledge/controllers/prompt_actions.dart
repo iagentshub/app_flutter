@@ -7,13 +7,13 @@ extension _PromptActions on _KnowledgePageState {
   Future<void> _loadPrompts() async {
     final token = _token;
     if (token == null || token.isEmpty) {
-      _refresh(() {
+      refresh(() {
         _promptsError = _tx('common.no_session', 'No hay sesión activa');
         _promptsLoading = false;
       });
       return;
     }
-    _refresh(() {
+    refresh(() {
       _promptsLoading = true;
       _promptsError = null;
     });
@@ -24,19 +24,19 @@ extension _PromptActions on _KnowledgePageState {
         includeInactive: true,
       );
       if (!mounted) return;
-      _refresh(() {
+      refresh(() {
         _prompts = prompts;
         _promptsLoading = false;
       });
     } on ApiError catch (error) {
       if (!mounted) return;
-      _refresh(() {
+      refresh(() {
         _promptsError = error.message;
         _promptsLoading = false;
       });
     } catch (_) {
       if (!mounted) return;
-      _refresh(() {
+      refresh(() {
         _promptsError = _tx(
           'knowledge.load_error_prompts',
           'No se pudieron cargar los prompts',
@@ -59,7 +59,7 @@ extension _PromptActions on _KnowledgePageState {
 
   Future<void> _openEditPromptDialog(PromptItem item) async {
     if (item.readOnly) {
-      _showMessage(
+      showMessage(
         _tx(
           'knowledge.readonly_prompt',
           'Este prompt no es editable (del sistema o compartido)',
@@ -96,13 +96,13 @@ extension _PromptActions on _KnowledgePageState {
     final scope = (payload.remove('scope') as String?) ?? 'private';
     try {
       await _promptsRepository.savePrompt(token, scope, payload);
-      _showMessage(_tx('knowledge.prompt_saved', 'Prompt guardado'));
+      showMessage(_tx('knowledge.prompt_saved', 'Prompt guardado'));
       await _loadPrompts();
       return true;
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('knowledge.prompt_save_error', 'No se pudo guardar el prompt'),
         isError: true,
       );
@@ -116,16 +116,16 @@ extension _PromptActions on _KnowledgePageState {
     final activate = !item.isActive;
     try {
       await _promptsRepository.setPromptActive(token, item.id, activate);
-      _showMessage(
+      showMessage(
         activate
             ? _tx('knowledge.prompt_activated', 'Prompt activado')
             : _tx('knowledge.prompt_deactivated', 'Prompt desactivado'),
       );
       await _loadPrompts();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx(
           'knowledge.prompt_toggle_error',
           'No se pudo cambiar el estado del prompt',
@@ -137,7 +137,7 @@ extension _PromptActions on _KnowledgePageState {
 
   Future<void> _deletePrompt(PromptItem item) async {
     if (item.readOnly) {
-      _showMessage(
+      showMessage(
         _tx(
           'knowledge.readonly_prompt_delete',
           'Este prompt no se puede eliminar (del sistema o compartido)',
@@ -161,12 +161,12 @@ extension _PromptActions on _KnowledgePageState {
     if (token == null || token.isEmpty) return;
     try {
       await _promptsRepository.deletePrompt(token, item.scope, item.id);
-      _showMessage(_tx('knowledge.prompt_deleted', 'Prompt eliminado'));
+      showMessage(_tx('knowledge.prompt_deleted', 'Prompt eliminado'));
       await _loadPrompts();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('knowledge.prompt_delete_error', 'No se pudo eliminar el prompt'),
         isError: true,
       );

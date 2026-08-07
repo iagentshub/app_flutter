@@ -6,13 +6,13 @@ extension _KnowledgeActions on _KnowledgePageState {
   Future<void> _loadSkills() async {
     final token = _token;
     if (token == null || token.isEmpty) {
-      _refresh(() {
+      refresh(() {
         _skillsError = 'No hay sesión activa';
         _skillsLoading = false;
       });
       return;
     }
-    _refresh(() {
+    refresh(() {
       _skillsLoading = true;
       _skillsError = null;
     });
@@ -23,19 +23,19 @@ extension _KnowledgeActions on _KnowledgePageState {
         includeInactive: true,
       );
       if (!mounted) return;
-      _refresh(() {
+      refresh(() {
         _skills = skills;
         _skillsLoading = false;
       });
     } on ApiError catch (error) {
       if (!mounted) return;
-      _refresh(() {
+      refresh(() {
         _skillsError = error.message;
         _skillsLoading = false;
       });
     } catch (_) {
       if (!mounted) return;
-      _refresh(() {
+      refresh(() {
         _skillsError = 'No se pudieron cargar las skills';
         _skillsLoading = false;
       });
@@ -161,7 +161,7 @@ extension _KnowledgeActions on _KnowledgePageState {
 
   Future<void> _openEditSkillDialog(SkillItem item) async {
     if (item.readOnly) {
-      _showMessage('Esta skill no es editable (del sistema o compartida)');
+      showMessage('Esta skill no es editable (del sistema o compartida)');
       return;
     }
     final token = _token;
@@ -190,13 +190,13 @@ extension _KnowledgeActions on _KnowledgePageState {
     final scope = (payload.remove('scope') as String?) ?? 'private';
     try {
       await _skillsRepository.saveSkill(token, scope, payload);
-      _showMessage('Skill guardada');
+      showMessage('Skill guardada');
       await _loadSkills();
       return true;
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo guardar la skill', isError: true);
+      showMessage('No se pudo guardar la skill', isError: true);
     }
     return false;
   }
@@ -207,18 +207,18 @@ extension _KnowledgeActions on _KnowledgePageState {
     final activate = !item.isActive;
     try {
       await _skillsRepository.setSkillActive(token, item.id, activate);
-      _showMessage(activate ? 'Skill activada' : 'Skill desactivada');
+      showMessage(activate ? 'Skill activada' : 'Skill desactivada');
       await _loadSkills();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo cambiar el estado de la skill', isError: true);
+      showMessage('No se pudo cambiar el estado de la skill', isError: true);
     }
   }
 
   Future<void> _deleteSkill(SkillItem item) async {
     if (item.readOnly) {
-      _showMessage(
+      showMessage(
         'Esta skill no se puede eliminar (del sistema o compartida)',
       );
       return;
@@ -236,26 +236,26 @@ extension _KnowledgeActions on _KnowledgePageState {
     if (token == null || token.isEmpty) return;
     try {
       await _skillsRepository.deleteSkill(token, item.scope, item.id);
-      _showMessage('Skill eliminada');
+      showMessage('Skill eliminada');
       await _loadSkills();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo eliminar la skill', isError: true);
+      showMessage('No se pudo eliminar la skill', isError: true);
     }
   }
 
   Future<void> _load() async {
     final token = _token;
     if (token == null || token.isEmpty) {
-      _refresh(() {
+      refresh(() {
         _error = 'No hay sesión activa';
         _loading = false;
       });
       return;
     }
 
-    _refresh(() {
+    refresh(() {
       _loading = true;
       _error = null;
     });
@@ -267,19 +267,19 @@ extension _KnowledgeActions on _KnowledgePageState {
         includeInactive: true,
       );
       if (!mounted) return;
-      _refresh(() {
+      refresh(() {
         _items = items;
         _loading = false;
       });
     } on ApiError catch (error) {
       if (!mounted) return;
-      _refresh(() {
+      refresh(() {
         _error = error.message;
         _loading = false;
       });
     } catch (_) {
       if (!mounted) return;
-      _refresh(() {
+      refresh(() {
         _error = 'No se pudo cargar Knowledge';
         _loading = false;
       });
@@ -303,12 +303,12 @@ extension _KnowledgeActions on _KnowledgePageState {
         source: payload['source'],
         content: payload['content'] ?? '',
       );
-      _showMessage('Texto añadido a Knowledge');
+      showMessage('Texto añadido a Knowledge');
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo guardar el texto', isError: true);
+      showMessage('No se pudo guardar el texto', isError: true);
     }
   }
 
@@ -328,12 +328,12 @@ extension _KnowledgeActions on _KnowledgePageState {
         url: payload['url'] ?? '',
         title: payload['title'],
       );
-      _showMessage('URL importada a Knowledge');
+      showMessage('URL importada a Knowledge');
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo importar la URL', isError: true);
+      showMessage('No se pudo importar la URL', isError: true);
     }
   }
 
@@ -351,25 +351,25 @@ extension _KnowledgeActions on _KnowledgePageState {
     final file = result.files.first;
     final bytes = file.bytes;
     if (bytes == null || bytes.isEmpty) {
-      _showMessage('No se pudieron leer los bytes del fichero', isError: true);
+      showMessage('No se pudieron leer los bytes del fichero', isError: true);
       return;
     }
 
-    _refresh(() => _uploading = true);
+    refresh(() => _uploading = true);
     try {
       await _repository.uploadDocument(
         token,
         fileName: file.name,
         fileBytes: bytes,
       );
-      _showMessage('Documento subido: ${file.name}');
+      showMessage('Documento subido: ${file.name}');
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo subir el documento', isError: true);
+      showMessage('No se pudo subir el documento', isError: true);
     } finally {
-      if (mounted) _refresh(() => _uploading = false);
+      if (mounted) refresh(() => _uploading = false);
     }
   }
 
@@ -379,14 +379,14 @@ extension _KnowledgeActions on _KnowledgePageState {
     final activate = !item.isActive;
     try {
       await _repository.setItemActive(token, item.id, activate);
-      _showMessage(
+      showMessage(
         activate ? 'Conocimiento activado' : 'Conocimiento desactivado',
       );
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo cambiar el estado del item', isError: true);
+      showMessage('No se pudo cambiar el estado del item', isError: true);
     }
   }
 
@@ -405,27 +405,17 @@ extension _KnowledgeActions on _KnowledgePageState {
 
     try {
       await _repository.deleteItem(token, item.id);
-      _showMessage('Item eliminado');
+      showMessage('Item eliminado');
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo eliminar el item', isError: true);
+      showMessage('No se pudo eliminar el item', isError: true);
     }
   }
 
-  void _showMessage(String text, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
-      ),
-    );
-  }
-
   void _onGroupSelect(String? groupId) {
-    _refresh(() => _activeGroupId = groupId);
+    refresh(() => _activeGroupId = groupId);
     _load();
     _loadSkills();
     _loadPrompts();

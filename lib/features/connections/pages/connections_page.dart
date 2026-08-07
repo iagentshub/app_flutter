@@ -20,6 +20,7 @@ import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/resource_toolbar.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
+import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../../shared/widgets/status_dot.dart';
 
 part '../dialogs/connection_form_dialog.dart';
@@ -42,7 +43,7 @@ class ConnectionsPage extends StatefulWidget {
 }
 
 class _ConnectionsPageState extends State<ConnectionsPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, StateMessaging {
   late final ConnectionsRepository _repository;
   late final TranslatedTexts _t;
   late final TabController _tabController;
@@ -283,7 +284,7 @@ class _ConnectionsPageState extends State<ConnectionsPage>
 
   Future<void> _openEditDialog(ConnectionItem item) async {
     if (item.isVirtual) {
-      _showMessage(
+      showMessage(
         'Esta conexión es derivada de Ollama y no se edita directamente',
       );
       return;
@@ -320,12 +321,12 @@ class _ConnectionsPageState extends State<ConnectionsPage>
     if (token == null || token.isEmpty) return;
     try {
       await _repository.saveConnection(token, payload);
-      _showMessage('Conexión guardada');
+      showMessage('Conexión guardada');
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo guardar la conexión', isError: true);
+      showMessage('No se pudo guardar la conexión', isError: true);
     }
   }
 
@@ -335,12 +336,12 @@ class _ConnectionsPageState extends State<ConnectionsPage>
     final activate = !item.isActive;
     try {
       await _repository.setConnectionActive(token, item.id, activate);
-      _showMessage(activate ? 'Conexión activada' : 'Conexión desactivada');
+      showMessage(activate ? 'Conexión activada' : 'Conexión desactivada');
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         'No se pudo cambiar el estado de la conexión',
         isError: true,
       );
@@ -358,18 +359,18 @@ class _ConnectionsPageState extends State<ConnectionsPage>
         '${result['knowledge'] ?? 0} conocimiento',
         '${result['connections'] ?? 0} conexiones',
       ];
-      _showMessage('Sincronizado: ${parts.join(' · ')}');
+      showMessage('Sincronizado: ${parts.join(' · ')}');
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo sincronizar con el hub', isError: true);
+      showMessage('No se pudo sincronizar con el hub', isError: true);
     }
   }
 
   Future<void> _deleteConnection(ConnectionItem item) async {
     if (item.isVirtual) {
-      _showMessage(
+      showMessage(
         'Esta conexión es derivada de Ollama y no se elimina directamente',
       );
       return;
@@ -389,18 +390,18 @@ class _ConnectionsPageState extends State<ConnectionsPage>
 
     try {
       await _repository.deleteConnection(token, item.id);
-      _showMessage('Conexión eliminada');
+      showMessage('Conexión eliminada');
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage('No se pudo eliminar la conexión', isError: true);
+      showMessage('No se pudo eliminar la conexión', isError: true);
     }
   }
 
   Future<void> _testConnection(ConnectionItem item) async {
     if (item.isVirtual) {
-      _showMessage(
+      showMessage(
         'Esta conexión es derivada de Ollama y no se testea directamente',
       );
       return;
@@ -529,28 +530,16 @@ class _ConnectionsPageState extends State<ConnectionsPage>
       );
     } on ApiError catch (error) {
       _resetPendingStatus(ids);
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
       _resetPendingStatus(ids);
-      _showMessage('No se pudo ejecutar test masivo', isError: true);
+      showMessage('No se pudo ejecutar test masivo', isError: true);
     } finally {
       if (mounted) {
         setState(() => _testingAll = false);
       }
     }
   }
-
-  void _showMessage(String text, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
-      ),
-    );
-  }
-
-  void _refresh(VoidCallback update) => setState(update);
 
   @override
   Widget build(BuildContext context) => _buildPage(context);

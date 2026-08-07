@@ -14,7 +14,7 @@ class _AdminUpdatesCard extends StatefulWidget {
     required this.tx,
   });
 
-  final AdminRepository repository;
+  final AdminPlatformRepository repository;
   final String token;
   final bool initialAutoUpdate;
   final String Function(String path, String fallback) tx;

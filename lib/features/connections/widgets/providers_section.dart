@@ -18,6 +18,7 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/resource_toolbar.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
+import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../repositories/accounts_repository.dart';
 
 part '../dialogs/account_form_dialog.dart';
@@ -49,7 +50,8 @@ class ProvidersSection extends StatefulWidget {
   State<ProvidersSection> createState() => _ProvidersSectionState();
 }
 
-class _ProvidersSectionState extends State<ProvidersSection> {
+class _ProvidersSectionState extends State<ProvidersSection>
+    with StateMessaging {
   late final AccountsRepository _accountsRepository;
   late final TranslatedTexts _t;
   List<AccountItem> _accounts = const [];
@@ -80,18 +82,6 @@ class _ProvidersSectionState extends State<ProvidersSection> {
     super.dispose();
   }
 
-  void _refresh(VoidCallback update) => setState(update);
-
-  void _showMessage(String text, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
-      ),
-    );
-  }
-
   AccountProviderMeta _metaForProvider(String provider) {
     return AccountProviderMeta.all.firstWhere(
       (m) => m.provider == provider,
@@ -107,17 +97,17 @@ class _ProvidersSectionState extends State<ProvidersSection> {
   Future<void> _loadAccounts() async {
     final token = widget.token;
     if (token.isEmpty) return;
-    _refresh(() => _accountsLoading = true);
+    refresh(() => _accountsLoading = true);
     try {
       final items = await _accountsRepository.listAccounts(token);
       if (!mounted) return;
-      _refresh(() {
+      refresh(() {
         _accounts = items;
         _accountsLoading = false;
       });
     } catch (_) {
       if (!mounted) return;
-      _refresh(() => _accountsLoading = false);
+      refresh(() => _accountsLoading = false);
     }
   }
 
@@ -168,12 +158,12 @@ class _ProvidersSectionState extends State<ProvidersSection> {
     if (token.isEmpty) return;
     try {
       await _accountsRepository.unlinkAccount(token, account.id);
-      _showMessage(_tx('providers.unlinked', 'Cuenta desvinculada'));
+      showMessage(_tx('providers.unlinked', 'Cuenta desvinculada'));
       await _loadAccounts();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('providers.error_generic', 'No se pudo desvincular la cuenta'),
         isError: true,
       );
@@ -187,12 +177,12 @@ class _ProvidersSectionState extends State<ProvidersSection> {
     }
     final token = widget.token;
     if (token.isEmpty) return;
-    _refresh(() => _syncingAccounts.add(account.id));
+    refresh(() => _syncingAccounts.add(account.id));
     try {
       final preview = await _accountsRepository.testAccount(token, account.id);
       if (!mounted) return;
       if (preview.models.isEmpty) {
-        _showMessage(
+        showMessage(
           _tx(
             'providers.no_models_found',
             'No se encontraron modelos disponibles',
@@ -216,7 +206,7 @@ class _ProvidersSectionState extends State<ProvidersSection> {
         models: selected,
       );
       if (!mounted) return;
-      _refresh(() {
+      refresh(() {
         final idx = _accounts.indexWhere((a) => a.id == account.id);
         if (idx != -1) _accounts[idx] = updated;
       });
@@ -227,18 +217,18 @@ class _ProvidersSectionState extends State<ProvidersSection> {
         if ((summary?.connectionsDeleted ?? 0) > 0)
           '${summary!.connectionsDeleted} ${_tx('providers.summary_deleted', 'eliminadas')}',
       ];
-      _showMessage(
+      showMessage(
         '${_tx('providers.sync_done', 'Sincronización completada')}: ${parts.join(' · ')}',
       );
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('providers.error_generic', 'No se pudo sincronizar'),
         isError: true,
       );
     } finally {
-      if (mounted) _refresh(() => _syncingAccounts.remove(account.id));
+      if (mounted) refresh(() => _syncingAccounts.remove(account.id));
     }
   }
 
@@ -249,17 +239,17 @@ class _ProvidersSectionState extends State<ProvidersSection> {
   Future<void> _syncHubAccount(AccountItem account) async {
     final token = widget.token;
     if (token.isEmpty) return;
-    _refresh(() => _syncingAccounts.add(account.id));
+    refresh(() => _syncingAccounts.add(account.id));
     try {
       final updated = await _accountsRepository.syncAccount(token, account.id);
       if (!mounted) return;
-      _refresh(() {
+      refresh(() {
         final idx = _accounts.indexWhere((a) => a.id == account.id);
         if (idx != -1) _accounts[idx] = updated;
       });
       final summary = updated.hubSyncSummary;
       if (summary == null) {
-        _showMessage(_tx('providers.sync_done', 'Sincronización completada'));
+        showMessage(_tx('providers.sync_done', 'Sincronización completada'));
         return;
       }
       final parts = <String>[
@@ -268,21 +258,21 @@ class _ProvidersSectionState extends State<ProvidersSection> {
         '${summary.knowledge} ${_tx('providers.summary_knowledge', 'conocimiento')}',
         '${summary.connections} ${_tx('providers.summary_connections', 'conexiones')}',
       ];
-      _showMessage(
+      showMessage(
         summary.ok
             ? '${_tx('providers.sync_done', 'Sincronización completada')}: ${parts.join(' · ')}'
             : '${_tx('providers.sync_partial', 'Sincronización con errores')}: ${summary.errors.join(', ')}',
         isError: !summary.ok,
       );
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('providers.error_generic', 'No se pudo sincronizar'),
         isError: true,
       );
     } finally {
-      if (mounted) _refresh(() => _syncingAccounts.remove(account.id));
+      if (mounted) refresh(() => _syncingAccounts.remove(account.id));
     }
   }
 

@@ -15,6 +15,7 @@ import '../../../models/prompts/prompt_models.dart';
 import '../../../models/skills/skill_models.dart';
 import '../../../shared/widgets/grouped_label_picker.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
+import '../../../shared/widgets/state_messaging_mixin.dart';
 
 part '../widgets/agent_form_sections.dart';
 
@@ -42,7 +43,8 @@ class AgentFormDialog extends StatefulWidget {
   State<AgentFormDialog> createState() => _AgentFormDialogState();
 }
 
-class _AgentFormDialogState extends State<AgentFormDialog> {
+class _AgentFormDialogState extends State<AgentFormDialog>
+    with StateMessaging {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _descriptionController;
@@ -86,8 +88,6 @@ class _AgentFormDialogState extends State<AgentFormDialog> {
   String get _title => widget.initial == null
       ? widget.tx('agents.new_title', 'Nuevo agente')
       : widget.tx('agents.edit_title', 'Editar agente');
-
-  void _refresh(VoidCallback update) => setState(update);
 
   @override
   void initState() {
@@ -157,13 +157,13 @@ class _AgentFormDialogState extends State<AgentFormDialog> {
     try {
       final list = await _connectionsRepository.listConnections(widget.token);
       if (!mounted) return;
-      _refresh(() {
+      refresh(() {
         _connections = list;
         _loadingConnections = false;
       });
     } catch (_) {
       if (!mounted) return;
-      _refresh(() => _loadingConnections = false);
+      refresh(() => _loadingConnections = false);
     }
   }
 
@@ -171,13 +171,13 @@ class _AgentFormDialogState extends State<AgentFormDialog> {
     try {
       final list = await _memoryRepository.listFiles(widget.token);
       if (!mounted) return;
-      _refresh(() {
+      refresh(() {
         _memoryFiles = list;
         _loadingMemory = false;
       });
     } catch (_) {
       if (!mounted) return;
-      _refresh(() => _loadingMemory = false);
+      refresh(() => _loadingMemory = false);
     }
   }
 
@@ -188,13 +188,13 @@ class _AgentFormDialogState extends State<AgentFormDialog> {
         scope: 'all',
       );
       if (!mounted) return;
-      _refresh(() {
+      refresh(() {
         _skills = list;
         _loadingSkills = false;
       });
     } catch (_) {
       if (!mounted) return;
-      _refresh(() => _loadingSkills = false);
+      refresh(() => _loadingSkills = false);
     }
   }
 
@@ -202,13 +202,13 @@ class _AgentFormDialogState extends State<AgentFormDialog> {
     try {
       final list = await _knowledgeRepository.listItems(widget.token);
       if (!mounted) return;
-      _refresh(() {
+      refresh(() {
         _knowledgeItems = list;
         _loadingKnowledge = false;
       });
     } catch (_) {
       if (!mounted) return;
-      _refresh(() => _loadingKnowledge = false);
+      refresh(() => _loadingKnowledge = false);
     }
   }
 
@@ -219,13 +219,13 @@ class _AgentFormDialogState extends State<AgentFormDialog> {
         scope: 'all',
       );
       if (!mounted) return;
-      _refresh(() {
+      refresh(() {
         _prompts = list;
         _loadingPrompts = false;
       });
     } catch (_) {
       if (!mounted) return;
-      _refresh(() => _loadingPrompts = false);
+      refresh(() => _loadingPrompts = false);
     }
   }
 

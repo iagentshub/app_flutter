@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 
-import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
@@ -18,6 +17,7 @@ import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
+import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../cards/public_resource_card.dart';
 
 class PublicProfilePage extends StatefulWidget {
@@ -38,7 +38,8 @@ class PublicProfilePage extends StatefulWidget {
   State<PublicProfilePage> createState() => _PublicProfilePageState();
 }
 
-class _PublicProfilePageState extends State<PublicProfilePage> {
+class _PublicProfilePageState extends State<PublicProfilePage>
+    with StateMessaging {
   late final PublicProfileRepository _repository;
   late final ExploreRepository _exploreRepository;
   late final TranslatedTexts _t;
@@ -171,9 +172,9 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
       }
       await _load();
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx(
           'public_profile.follow_update_error',
           'No se pudo actualizar follow',
@@ -217,24 +218,15 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
         ),
       );
     } on ApiError catch (error) {
-      _showMessage(error.message, isError: true);
+      showMessage(error.message, isError: true);
     } catch (_) {
-      _showMessage(
+      showMessage(
         _tx('public_profile.preview_error', 'No se pudo abrir preview'),
         isError: true,
       );
     }
   }
 
-  void _showMessage(String text, {bool isError = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-        backgroundColor: isError ? FncColors.materialRed.shade700 : null,
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {

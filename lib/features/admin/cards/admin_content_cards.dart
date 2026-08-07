@@ -328,11 +328,11 @@ extension _AdminContentCards on _AdminPageState {
     if (token == null) return const SizedBox.shrink();
     return _AdminConfigTab(
       key: ValueKey(_platformSettings.hashCode),
-      repository: _repository,
+      repository: _platformRepository,
       token: token,
       initialSettings: _platformSettings ?? const {},
       tx: _tx,
-      onSaved: (settings) => _refresh(() => _platformSettings = settings),
+      onSaved: (settings) => refresh(() => _platformSettings = settings),
     );
   }
 }
