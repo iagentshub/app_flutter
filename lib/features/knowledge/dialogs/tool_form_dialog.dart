@@ -26,8 +26,10 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
   String? _existingBinaryFilename;
   int? _existingBinarySize;
   String? _pickedFileName;
+  int? _pickedFileSize;
   List<int>? _pickedBytes;
-  String? _binaryError;
+  String? _fileError;
+  bool _dragHighlight = false;
 
   bool get _isNew => widget.initial == null;
 
@@ -85,18 +87,41 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
       if (language == 'cpp' && !wasCpp && _isNew) {
         _selectedLabels = {..._selectedLabels, 'review'};
       }
-      _binaryError = null;
+      _fileError = null;
     });
   }
 
-  Future<void> _pickBinary() async {
-    final result = await FilePicker.pickFiles(withData: true);
+  String get _scriptExtension => _language == 'shell' ? 'sh' : 'py';
+
+  Future<void> _pickFile() async {
+    final result = _language == 'cpp'
+        ? await FilePicker.pickFiles(withData: true)
+        : await FilePicker.pickFiles(
+            withData: true,
+            type: FileType.custom,
+            allowedExtensions: [_scriptExtension],
+          );
     if (result == null || result.files.isEmpty) return;
     final file = result.files.first;
     final bytes = file.bytes;
-    if (bytes == null || bytes.isEmpty) {
+    if (bytes == null) {
       setState(() {
-        _binaryError = _tx(
+        _fileError = _tx(
+          'knowledge.binary_read_error',
+          'No se pudieron leer los bytes del fichero',
+        );
+      });
+      return;
+    }
+    _handlePickedBytes(file.name, bytes);
+  }
+
+  /// Procesa bytes venidos tanto del selector de ficheros como de arrastrar
+  /// y soltar (`DropTarget`) — mismo camino para ambos orígenes.
+  void _handlePickedBytes(String fileName, List<int> bytes) {
+    if (bytes.isEmpty) {
+      setState(() {
+        _fileError = _tx(
           'knowledge.binary_read_error',
           'No se pudieron leer los bytes del fichero',
         );
@@ -105,18 +130,41 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
     }
     if (bytes.length > _maxToolBinaryBytes) {
       setState(() {
-        _binaryError = _tx(
+        _fileError = _tx(
           'knowledge.binary_too_large',
-          'El binario no puede superar 50 MB',
+          'El fichero no puede superar 50 MB',
         );
       });
       return;
     }
-    setState(() {
-      _pickedFileName = file.name;
-      _pickedBytes = bytes;
-      _binaryError = null;
-    });
+    if (_language == 'cpp') {
+      setState(() {
+        _pickedFileName = fileName;
+        _pickedFileSize = bytes.length;
+        _pickedBytes = bytes;
+        _fileError = null;
+      });
+      return;
+    }
+    // python/shell: el contenido es texto — se decodifica y se vuelca en el
+    // mismo controller que ya usa el textarea manual, nunca se sube como
+    // binario (_pickedBytes se queda a propósito sin tocar).
+    try {
+      final text = utf8.decode(bytes);
+      setState(() {
+        _contentController.text = text;
+        _pickedFileName = fileName;
+        _pickedFileSize = bytes.length;
+        _fileError = null;
+      });
+    } on FormatException {
+      setState(() {
+        _fileError = _tx(
+          'knowledge.script_decode_error',
+          'El fichero no parece texto legible. ¿Seguro que es un .py/.sh válido?',
+        );
+      });
+    }
   }
 
   bool get _hasAnyBinary =>
@@ -126,7 +174,7 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_language == 'cpp' && !_hasAnyBinary) {
       setState(() {
-        _binaryError = _tx(
+        _fileError = _tx(
           'knowledge.binary_required',
           'Selecciona un binario para esta herramienta antes de guardar',
         );
@@ -145,7 +193,7 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
       payload['content'] = _contentController.text.trim();
     }
     if (widget.initial?['id'] != null) payload['id'] = widget.initial!['id'];
-    if (_pickedFileName != null && _pickedBytes != null) {
+    if (_language == 'cpp' && _pickedFileName != null && _pickedBytes != null) {
       // Claves reservadas, nunca enviadas tal cual al backend: el
       // controlador (`_saveTool`) las extrae para el segundo paso
       // (`uploadToolBinary`) antes de mandar el JSON de metadatos.
@@ -165,40 +213,91 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
     );
   }
 
-  Widget _buildBinarySection(BuildContext context) {
+  Widget _buildFileDropZone(BuildContext context) {
+    final theme = Theme.of(context);
     final displayName = _pickedFileName ?? _existingBinaryFilename;
     final displaySize = _pickedFileName != null
-        ? _pickedBytes?.length
+        ? _pickedFileSize
         : _existingBinarySize;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          _tx('knowledge.field_binary', 'Binario'),
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-        const SizedBox(height: 6),
-        Text(
-          (displayName != null && displayName.isNotEmpty)
-              ? '$displayName · ${formatToolBinarySize(displaySize ?? 0)}'
-              : _tx('knowledge.no_binary', 'Sin binario todavía'),
-        ),
-        const SizedBox(height: 8),
-        SecondaryButton.icon(
-          onPressed: _pickBinary,
-          icon: const Icon(Icons.upload_file_outlined, size: 18),
-          label: Text(
-            _hasAnyBinary
-                ? _tx('knowledge.replace_binary', 'Reemplazar binario')
-                : _tx('knowledge.upload_binary', 'Subir binario'),
+        DropTarget(
+          onDragEntered: (_) => setState(() => _dragHighlight = true),
+          onDragExited: (_) => setState(() => _dragHighlight = false),
+          onDragDone: (details) async {
+            setState(() => _dragHighlight = false);
+            if (details.files.isEmpty) return;
+            final dropped = details.files.first;
+            final bytes = await dropped.readAsBytes();
+            _handlePickedBytes(dropped.name, bytes);
+          },
+          child: InkWell(
+            onTap: _pickFile,
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(
+                vertical: 20,
+                horizontal: 12,
+              ),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: _dragHighlight
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.outlineVariant,
+                  width: _dragHighlight ? 2 : 1,
+                ),
+                color: _dragHighlight
+                    ? theme.colorScheme.primary.withValues(alpha: 0.06)
+                    : null,
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.upload_file_outlined,
+                    size: 28,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _tx(
+                      'knowledge.drop_hint_file',
+                      'Arrastra un fichero aquí o haz clic para seleccionarlo',
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  if (_language != 'cpp') ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      _tx(
+                        'knowledge.drop_hint_extension',
+                        'Formato esperado: .{{ext}}',
+                      ).replaceAll('{{ext}}', _scriptExtension),
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ],
+                  if (displayName != null && displayName.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      '$displayName · ${formatToolBinarySize(displaySize ?? 0)}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ),
         ),
-        if (_binaryError != null) ...[
+        if (_fileError != null) ...[
           const SizedBox(height: 6),
           Text(
-            _binaryError!,
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
+            _fileError!,
+            style: TextStyle(color: theme.colorScheme.error),
           ),
         ],
       ],
@@ -264,9 +363,9 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
                 ],
               ),
               const SizedBox(height: 10),
-              if (_language == 'cpp')
-                _buildBinarySection(context)
-              else
+              _buildFileDropZone(context),
+              if (_language != 'cpp') ...[
+                const SizedBox(height: 10),
                 TextFormField(
                   controller: _contentController,
                   minLines: 8,
@@ -284,6 +383,7 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
                         )
                       : null,
                 ),
+              ],
             ],
           ),
         ),
