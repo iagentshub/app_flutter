@@ -2,8 +2,8 @@ part of '../pages/manager_page.dart';
 
 extension _ManagerMembersCard on _ManagerPageState {
   Widget _buildMembersCard() {
-    final active = _activeGroup;
-    final canManage = active != null && !active.isPersonal;
+    final active = _controller.activeGroup;
+    final canManage = _controller.canManageMembers;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -49,10 +49,10 @@ extension _ManagerMembersCard on _ManagerPageState {
               ],
             ),
             const SizedBox(height: 8),
-            if (_members.isEmpty)
+            if (_controller.members.isEmpty)
               Text(_tx('manager.empty_members', 'Sin miembros listados'))
             else
-              ..._members.map((member) {
+              ..._controller.members.map((member) {
                 final username = (member['username'] ?? '').toString();
                 final role = (member['role'] ?? 'member').toString();
                 return ListTile(
@@ -63,7 +63,9 @@ extension _ManagerMembersCard on _ManagerPageState {
                     icon: Icons.person_remove_outlined,
                     tooltip: _tx('manager.remove_tooltip', 'Quitar'),
                     danger: true,
-                    onPressed: canManage ? () => _removeMember(username) : null,
+                    onPressed: canManage
+                        ? () => _runAction(_controller.removeMember(username))
+                        : null,
                   ),
                 );
               }),

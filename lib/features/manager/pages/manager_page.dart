@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
-import '../../../core/network/api_error.dart';
 import '../../../models/manager/group_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
+import '../../../shared/state/action_result.dart';
 import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
@@ -12,6 +12,7 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../controllers/manager_controller.dart';
 import '../repositories/manager_repository.dart';
 
 part '../cards/group_card.dart';
@@ -30,353 +31,53 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
   /// AppServicesScope montado en App, no el router.
   late final _services = AppServicesScope.of(context);
 
-  late final ManagerRepository _repository;
+  late final ManagerController _controller;
   late final TranslatedTexts _t;
-  List<GroupItem> _groups = const [];
-  List<Map<String, dynamic>> _members = const [];
-  List<Map<String, dynamic>> _invitations = const [];
-  GroupItem? _activeGroup;
-  bool _loading = true;
-  String? _error;
-  String? _switchingGroupId;
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
   @override
   void initState() {
     super.initState();
-    _repository = ManagerRepository(apiClient: _services.apiClient);
+    // `_t` primero: el controller recibe `_tx` y lo usa para sus mensajes.
     _t = TranslatedTexts(
       localeController: _services.localeController,
       namespace: 'resources',
     )..addListener(_onTextsChanged);
-    _load();
+    _controller = ManagerController(
+      repository: ManagerRepository(apiClient: _services.apiClient),
+      sessionController: _services.sessionController,
+      tx: _tx,
+    )..addListener(_onControllerChanged);
+    _controller.load();
   }
 
   void _onTextsChanged() {
     if (mounted) setState(() {});
   }
 
+  void _onControllerChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
+    _controller.removeListener(_onControllerChanged);
+    _controller.dispose();
     _t.removeListener(_onTextsChanged);
     _t.dispose();
     super.dispose();
   }
 
-  String? get _token => _services.sessionController.gaToken;
-
-  Future<void> _load() async {
-    final token = _token;
-    if (token == null || token.isEmpty) {
-      setState(() {
-        _error = _tx('common.no_session', 'No hay sesión activa');
-        _loading = false;
-      });
-      return;
-    }
-
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-
-    try {
-      final groups = await _repository.listGroups(token);
-      GroupItem? active;
-      for (final item in groups) {
-        if (item.active) {
-          active = item;
-          break;
-        }
-      }
-      List<Map<String, dynamic>> members = const [];
-      List<Map<String, dynamic>> invitations = const [];
-      if (active != null) {
-        try {
-          final results = await Future.wait([
-            _repository.listMembers(token, active.id),
-            _repository.listInvitations(token, active.id),
-          ]);
-          members = results[0];
-          invitations = results[1];
-        } catch (_) {
-          // Si no hay permiso o falla detalle, mantenemos panel principal operativo.
-        }
-      }
-      if (!mounted) return;
-      setState(() {
-        _groups = groups;
-        _activeGroup = active;
-        _members = members;
-        _invitations = invitations;
-        _loading = false;
-      });
-    } on ApiError catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _error = error.message;
-        _loading = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _error = _tx('manager.error_generic', 'No se pudo cargar Manager');
-        _loading = false;
-      });
-    }
+  /// Ejecuta una acción del controller y muestra su mensaje, si lo hay.
+  Future<void> _runAction(Future<ActionResult?> action) async {
+    final result = await action;
+    if (result == null) return;
+    showMessage(result.message, isError: result.isError);
   }
 
-  Future<void> _createGroup() async {
-    final name = await _askName(
-      title: _tx('manager.create_group_title', 'Crear grupo'),
-      initial: '',
-    );
-    if (name == null) return;
-
-    final token = _token;
-    if (token == null || token.isEmpty) return;
-
-    try {
-      await _repository.createGroup(token, name);
-      showMessage(_tx('manager.create_success', 'Grupo creado'));
-      await _load();
-    } on ApiError catch (error) {
-      showMessage(error.message, isError: true);
-    } catch (_) {
-      showMessage(
-        _tx('manager.create_error', 'No se pudo crear el grupo'),
-        isError: true,
-      );
-    }
-  }
-
-  Future<void> _renameGroup(GroupItem item) async {
-    if (item.isPersonal) {
-      showMessage(
-        _tx(
-          'manager.personal_no_rename',
-          'El grupo Personal no se puede renombrar',
-        ),
-      );
-      return;
-    }
-
-    final name = await _askName(
-      title: _tx('manager.rename_title', 'Renombrar grupo'),
-      initial: item.name,
-    );
-    if (name == null) return;
-
-    final token = _token;
-    if (token == null || token.isEmpty) return;
-
-    try {
-      await _repository.renameGroup(token, item.id, name);
-      showMessage(_tx('manager.rename_success', 'Grupo actualizado'));
-      await _load();
-    } on ApiError catch (error) {
-      showMessage(error.message, isError: true);
-    } catch (_) {
-      showMessage(
-        _tx('manager.rename_error', 'No se pudo renombrar el grupo'),
-        isError: true,
-      );
-    }
-  }
-
-  Future<void> _deleteGroup(GroupItem item) async {
-    if (item.isPersonal) {
-      showMessage(
-        _tx(
-          'manager.personal_no_delete',
-          'El grupo Personal no se puede eliminar',
-        ),
-      );
-      return;
-    }
-
-    final confirm = await showConfirmActionDialog(
-      context,
-      title: _tx('manager.delete_dialog_title', 'Eliminar grupo'),
-      message: _tx(
-        'manager.delete_dialog_body',
-        '¿Seguro que quieres eliminar "{{name}}"?',
-      ).replaceAll('{{name}}', item.name),
-      cancelLabel: _tx('common.cancel', 'Cancelar'),
-      confirmLabel: _tx('common.delete', 'Eliminar'),
-      destructive: true,
-    );
-    if (!confirm) return;
-
-    final token = _token;
-    if (token == null || token.isEmpty) return;
-
-    try {
-      await _repository.deleteGroup(token, item.id);
-      showMessage(_tx('manager.delete_success', 'Grupo eliminado'));
-      await _load();
-    } on ApiError catch (error) {
-      showMessage(error.message, isError: true);
-    } catch (_) {
-      showMessage(
-        _tx('manager.delete_error', 'No se pudo eliminar el grupo'),
-        isError: true,
-      );
-    }
-  }
-
-  Future<void> _switchGroup(GroupItem item) async {
-    final token = _token;
-    if (token == null || token.isEmpty) return;
-    if (item.active) return;
-
-    setState(() => _switchingGroupId = item.id);
-    try {
-      final nextToken = await _repository.switchGroup(token, item.id);
-      final user = _services.sessionController.user;
-      if (nextToken != null && user != null) {
-        await _services.sessionController.login(token: nextToken, user: user);
-      }
-      showMessage(
-        _tx(
-          'manager.switch_success',
-          'Grupo activo cambiado a {{name}}',
-        ).replaceAll('{{name}}', item.name),
-      );
-      await _load();
-    } on ApiError catch (error) {
-      showMessage(error.message, isError: true);
-    } catch (_) {
-      showMessage(
-        _tx('manager.switch_error', 'No se pudo cambiar el grupo activo'),
-        isError: true,
-      );
-    } finally {
-      if (mounted) setState(() => _switchingGroupId = null);
-    }
-  }
-
-  Future<void> _inviteMember() async {
-    final active = _activeGroup;
-    if (active == null || active.isPersonal) {
-      showMessage(
-        _tx(
-          'manager.invite_need_team',
-          'Activa un grupo compartido para invitar miembros',
-        ),
-        isError: true,
-      );
-      return;
-    }
-    final username = await _askName(
-      title: _tx('manager.invite_title', 'Invitar miembro'),
-      initial: '',
-    );
-    if (username == null) return;
-
-    final token = _token;
-    if (token == null || token.isEmpty) return;
-    try {
-      await _repository.inviteMember(
-        token,
-        active.id,
-        username.trim().toLowerCase(),
-      );
-      showMessage(_tx('manager.invite_success', 'Invitación enviada'));
-      await _load();
-    } on ApiError catch (error) {
-      showMessage(error.message, isError: true);
-    } catch (_) {
-      showMessage(
-        _tx('manager.invite_error', 'No se pudo enviar la invitación'),
-        isError: true,
-      );
-    }
-  }
-
-  Future<void> _addMemberDirect() async {
-    final active = _activeGroup;
-    if (active == null || active.isPersonal) {
-      showMessage(
-        _tx(
-          'manager.add_member_need_team',
-          'Activa un grupo compartido para añadir miembros',
-        ),
-        isError: true,
-      );
-      return;
-    }
-    final username = await _askName(
-      title: _tx('manager.add_member_title', 'Añadir miembro directo'),
-      initial: '',
-    );
-    if (username == null) return;
-
-    final token = _token;
-    if (token == null || token.isEmpty) return;
-    try {
-      await _repository.addMember(
-        token,
-        active.id,
-        username: username.trim().toLowerCase(),
-        role: 'member',
-      );
-      showMessage(_tx('manager.add_member_success', 'Miembro añadido'));
-      await _load();
-    } on ApiError catch (error) {
-      showMessage(error.message, isError: true);
-    } catch (_) {
-      showMessage(
-        _tx('manager.add_member_error', 'No se pudo añadir el miembro'),
-        isError: true,
-      );
-    }
-  }
-
-  Future<void> _removeMember(String username) async {
-    final active = _activeGroup;
-    if (active == null || active.isPersonal) return;
-    final token = _token;
-    if (token == null || token.isEmpty) return;
-    try {
-      await _repository.removeMember(token, active.id, username);
-      showMessage(_tx('manager.remove_member_success', 'Miembro eliminado'));
-      await _load();
-    } on ApiError catch (error) {
-      showMessage(error.message, isError: true);
-    } catch (_) {
-      showMessage(
-        _tx('manager.remove_member_error', 'No se pudo eliminar miembro'),
-        isError: true,
-      );
-    }
-  }
-
-  Future<void> _cancelInvitation(String invitationId) async {
-    final active = _activeGroup;
-    if (active == null || active.isPersonal) return;
-    final token = _token;
-    if (token == null || token.isEmpty) return;
-    try {
-      await _repository.cancelInvitation(token, active.id, invitationId);
-      showMessage(
-        _tx('manager.cancel_invitation_success', 'Invitación cancelada'),
-      );
-      await _load();
-    } on ApiError catch (error) {
-      showMessage(error.message, isError: true);
-    } catch (_) {
-      showMessage(
-        _tx(
-          'manager.cancel_invitation_error',
-          'No se pudo cancelar invitación',
-        ),
-        isError: true,
-      );
-    }
-  }
-
+  /// Diálogo de un solo campo con validación, reutilizado por crear grupo,
+  /// renombrar, invitar y añadir miembro directo.
   Future<String?> _askName({
     required String title,
     required String initial,
@@ -427,24 +128,80 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
     return value;
   }
 
+  Future<void> _createGroup() => _runAction(
+    _controller.createGroup(
+      askName: () => _askName(
+        title: _tx('manager.create_group_title', 'Crear grupo'),
+        initial: '',
+      ),
+    ),
+  );
+
+  Future<void> _renameGroup(GroupItem item) => _runAction(
+    _controller.renameGroup(
+      item,
+      askName: (initial) => _askName(
+        title: _tx('manager.rename_title', 'Renombrar grupo'),
+        initial: initial,
+      ),
+    ),
+  );
+
+  Future<void> _deleteGroup(GroupItem item) => _runAction(
+    _controller.deleteGroup(
+      item,
+      confirm: () => showConfirmActionDialog(
+        context,
+        title: _tx('manager.delete_dialog_title', 'Eliminar grupo'),
+        message: _tx(
+          'manager.delete_dialog_body',
+          '¿Seguro que quieres eliminar "{{name}}"?',
+        ).replaceAll('{{name}}', item.name),
+        cancelLabel: _tx('common.cancel', 'Cancelar'),
+        confirmLabel: _tx('common.delete', 'Eliminar'),
+      ),
+    ),
+  );
+
+  Future<void> _inviteMember() => _runAction(
+    _controller.inviteMember(
+      askName: () => _askName(
+        title: _tx('manager.invite_title', 'Invitar miembro'),
+        initial: '',
+      ),
+    ),
+  );
+
+  Future<void> _addMemberDirect() => _runAction(
+    _controller.addMemberDirect(
+      askName: () => _askName(
+        title: _tx('manager.add_member_title', 'Añadir miembro directo'),
+        initial: '',
+      ),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const AsyncStatePanel.loading();
-    if (_error != null) {
+    if (_controller.loading) return const AsyncStatePanel.loading();
+    final error = _controller.error;
+    if (error != null) {
       return ListView(
         children: [
           AsyncStatePanel.error(
             title: _tx('manager.error_loading_title', 'Error cargando Manager'),
-            message: _error!,
+            message: error,
             retryLabel: _tx('common.retry', 'Reintentar'),
-            onRetry: _load,
+            onRetry: _controller.load,
           ),
         ],
       );
     }
 
+    final groups = _controller.groups;
+
     return RefreshIndicator(
-      onRefresh: _load,
+      onRefresh: _controller.load,
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
@@ -467,7 +224,7 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
                         ),
                       ),
                       AppIconButton.outlined(
-                        onPressed: _load,
+                        onPressed: _controller.load,
                         icon: const Icon(Icons.refresh),
                         tooltip: _tx('manager.refresh_tooltip', 'Actualizar'),
                       ),
@@ -475,14 +232,14 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    '${_tx('manager.groups_count', 'Grupos')}: ${_groups.length}',
+                    '${_tx('manager.groups_count', 'Grupos')}: ${groups.length}',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],
               ),
             ),
           ),
-          if (_groups.isEmpty)
+          if (groups.isEmpty)
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               sliver: SliverToBoxAdapter(
@@ -500,9 +257,8 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               sliver: ResponsiveSliverMasonryGrid(
-                itemCount: _groups.length,
-                itemBuilder: (context, index) =>
-                    _buildGroupCard(_groups[index]),
+                itemCount: groups.length,
+                itemBuilder: (context, index) => _buildGroupCard(groups[index]),
               ),
             ),
           SliverPadding(
