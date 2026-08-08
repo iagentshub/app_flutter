@@ -45,9 +45,10 @@ void main() {
 
       expect(find.text('Agentes'), findsOneWidget);
       expect(find.text('APIs LLM'), findsOneWidget);
+      expect(find.byIcon(Icons.account_tree_outlined), findsNothing);
+      expect(find.byIcon(Icons.hub_outlined), findsNothing);
       await tester.tap(find.text('APIs LLM'));
       await tester.pump(const Duration(milliseconds: 500));
-      expect(find.byIcon(Icons.hub_outlined), findsWidgets);
       expect(tester.takeException(), isNull);
     });
   }

@@ -503,14 +503,8 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
             color: Theme.of(context).colorScheme.surface,
             child: TabBar(
               tabs: [
-                Tab(
-                  icon: const Icon(Icons.account_tree_outlined),
-                  text: _tx('workflows.tab_agents', 'Agentes'),
-                ),
-                Tab(
-                  icon: const Icon(Icons.hub_outlined),
-                  text: _tx('workflows.tab_llm_apis', 'APIs LLM'),
-                ),
+                Tab(text: _tx('workflows.tab_agents', 'Agentes')),
+                Tab(text: _tx('workflows.tab_llm_apis', 'APIs LLM')),
               ],
             ),
           ),
