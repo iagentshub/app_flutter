@@ -131,7 +131,8 @@
     "identity_title": "Identity",
     "avatar_updated": "Profile photo updated",
     "avatar_error": "Couldn't update the photo",
-    "avatar_too_large": "The image can't be larger than 2 MB"
+    "avatar_too_large": "The image can't be larger than 10 MB",
+    "avatar_input_too_large": "The original image is too large"
   },
   "agents": {
     "tokens_tooltip": "Tokens consumed",

@@ -1,4 +1,5 @@
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
@@ -21,6 +22,7 @@ import '../../../shared/state/theme_controller.dart';
 import '../../../shared/widgets/brand_icon.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../utils/avatar_compressor.dart';
 import '../widgets/profile_groups_section.dart';
 
 part '../widgets/brand_icon_selector.dart';
@@ -268,17 +270,19 @@ class _ProfilePageState extends State<ProfilePage>
     if (result == null || result.files.isEmpty) return;
 
     final file = result.files.first;
-    final bytes = file.bytes;
-    if (bytes == null || bytes.isEmpty) {
+    final rawBytes = file.bytes;
+    if (rawBytes == null || rawBytes.isEmpty) {
       showMessage(
         _tx('profile.avatar_error', 'No se pudo actualizar la foto'),
         isError: true,
       );
       return;
     }
-    if (bytes.length > 2 * 1024 * 1024) {
+    // Rechazar antes de intentar decodificar: evita que el dispositivo
+    // procese un fichero de entrada absurdamente grande.
+    if (rawBytes.length > 40 * 1024 * 1024) {
       showMessage(
-        _tx('profile.avatar_too_large', 'La imagen no puede superar 2 MB'),
+        _tx('profile.avatar_input_too_large', 'La imagen original es demasiado grande'),
         isError: true,
       );
       return;
@@ -286,16 +290,34 @@ class _ProfilePageState extends State<ProfilePage>
 
     setState(() => _uploadingAvatar = true);
     try {
+      final compressed = await compute(
+        compressAvatarBytes,
+        AvatarCompressionInput(rawBytes),
+      );
+
+      if (compressed.bytes.length > 10 * 1024 * 1024) {
+        showMessage(
+          _tx('profile.avatar_too_large', 'La imagen no puede superar 10 MB'),
+          isError: true,
+        );
+        return;
+      }
+
       await widget.apiClient.postMultipart(
         '/api/auth/me/avatar',
         fieldName: 'avatar',
-        fileName: file.name,
-        fileBytes: bytes,
+        fileName: compressed.fileName,
+        fileBytes: compressed.bytes,
         gaToken: token,
       );
       if (!mounted) return;
       setState(() => _avatarVersion++);
       showMessage(_tx('profile.avatar_updated', 'Foto de perfil actualizada'));
+    } on AvatarCompressionException catch (_) {
+      showMessage(
+        _tx('profile.avatar_error', 'No se pudo actualizar la foto'),
+        isError: true,
+      );
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
