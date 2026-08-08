@@ -148,7 +148,7 @@ class _ProvidersSectionState extends State<ProvidersSection>
       title: _tx('providers.unlink_confirm_title', 'Desvincular cuenta'),
       message: _tx(
         'providers.unlink_confirm_body',
-        '¿Seguro que quieres desvincular esta cuenta? Las conexiones ya creadas no se eliminarán.',
+        '¿Seguro que quieres desvincular esta cuenta? Las conexiones que había sincronizado también se eliminarán.',
       ),
       cancelLabel: _tx('common.cancel', 'Cancelar'),
       confirmLabel: _tx('providers.unlink_action', 'Desvincular'),
@@ -157,8 +157,15 @@ class _ProvidersSectionState extends State<ProvidersSection>
     final token = widget.token;
     if (token.isEmpty) return;
     try {
-      await _accountsRepository.unlinkAccount(token, account.id);
-      showMessage(_tx('providers.unlinked', 'Cuenta desvinculada'));
+      final deleted = await _accountsRepository.unlinkAccount(token, account.id);
+      showMessage(
+        deleted > 0
+            ? _tx(
+                'providers.unlinked_with_connections',
+                'Cuenta desvinculada · {count} conexiones eliminadas',
+              ).replaceFirst('{count}', '$deleted')
+            : _tx('providers.unlinked', 'Cuenta desvinculada'),
+      );
       await _loadAccounts();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
