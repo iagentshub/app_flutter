@@ -1,0 +1,415 @@
+import 'dart:async';
+
+import 'package:flutter/widgets.dart';
+
+import '../../../core/network/api_error.dart';
+import '../../../models/agents/agent_builder_models.dart';
+import '../../../models/chat/chat_models.dart';
+import '../../../models/connections/connection_models.dart';
+import '../../../models/knowledge/knowledge_models.dart';
+import '../../../models/skills/skill_models.dart';
+import '../../../shared/state/action_result.dart';
+import '../../../shared/state/session_controller.dart';
+import '../../connections/repositories/connections_repository.dart';
+import '../../knowledge/repositories/knowledge_repository.dart';
+import '../../knowledge/repositories/skills_repository.dart';
+import '../repositories/agent_builder_repository.dart';
+import '../repositories/agents_repository.dart';
+
+typedef AgentDraftPresenter =
+    Future<Map<String, dynamic>?> Function(
+      Map<String, dynamic> initial,
+      String token,
+    );
+
+/// Orquesta el constructor de agentes: recursos, conversación SSE, borrador y
+/// guardado final.
+///
+/// El diálogo de revisión se inyecta mediante [AgentDraftPresenter] porque
+/// necesita `BuildContext`. Los mensajes para SnackBar se devuelven como
+/// [ActionResult]; el error de la conversación se conserva en [error] para que
+/// el panel lo muestre dentro del chat.
+class AgentBuilderController extends ChangeNotifier {
+  AgentBuilderController({
+    required AgentBuilderRepository builderRepository,
+    required AgentsRepository agentsRepository,
+    required ConnectionsRepository connectionsRepository,
+    required SkillsRepository skillsRepository,
+    required KnowledgeRepository knowledgeRepository,
+    required SessionController sessionController,
+    required String Function(String path, String fallback) tx,
+  }) : _builderRepository = builderRepository,
+       _agentsRepository = agentsRepository,
+       _connectionsRepository = connectionsRepository,
+       _skillsRepository = skillsRepository,
+       _knowledgeRepository = knowledgeRepository,
+       _sessionController = sessionController,
+       _tx = tx;
+
+  final AgentBuilderRepository _builderRepository;
+  final AgentsRepository _agentsRepository;
+  final ConnectionsRepository _connectionsRepository;
+  final SkillsRepository _skillsRepository;
+  final KnowledgeRepository _knowledgeRepository;
+  final SessionController _sessionController;
+  final String Function(String path, String fallback) _tx;
+
+  final TextEditingController textController = TextEditingController();
+
+  bool _disposed = false;
+  List<ConnectionItem> _connections = const [];
+  bool _loadingConnections = true;
+  String? _connectionId;
+  List<Map<String, String>> _skillsCatalog = const [];
+  List<Map<String, String>> _knowledgeCatalog = const [];
+  final List<ChatMessage> _messages = [];
+  bool _streaming = false;
+  bool _thinking = false;
+  String _partialReply = '';
+  String? _stage;
+  Map<String, dynamic>? _pendingDraft;
+  String? _error;
+  bool _agentSaved = false;
+  StreamSubscription<AgentBuilderEvent>? _subscription;
+  Completer<void>? _sendCompleter;
+
+  // Colecciones vivas, no copias: el chat y el selector las recorren durante
+  // cada build y sólo este controller las muta.
+  List<ConnectionItem> get connections => _connections;
+  List<ChatMessage> get messages => _messages;
+  bool get loadingConnections => _loadingConnections;
+  String? get connectionId => _connectionId;
+  bool get streaming => _streaming;
+  bool get thinking => _thinking;
+  String get partialReply => _partialReply;
+  Map<String, dynamic>? get pendingDraft => _pendingDraft;
+  String? get error => _error;
+  bool get agentSaved => _agentSaved;
+  bool get canSend => !_loadingConnections && _connectionId != null;
+
+  String? get _token => _sessionController.gaToken;
+
+  void setConnectionId(String? value) {
+    if (_streaming || value == _connectionId) return;
+    _connectionId = value;
+    _notify();
+  }
+
+  Future<void> load() async {
+    final token = _token;
+    if (token == null || token.isEmpty) {
+      _loadingConnections = false;
+      _error = _tx('common.no_session', 'No hay sesión activa');
+      _notify();
+      return;
+    }
+
+    _loadingConnections = true;
+    _error = null;
+    _notify();
+    final failures = <String>[];
+
+    Future<T> loadResource<T>(
+      String label,
+      Future<T> request,
+      T fallback,
+    ) async {
+      try {
+        return await request;
+      } catch (_) {
+        failures.add(label);
+        return fallback;
+      }
+    }
+
+    final results = await Future.wait([
+      loadResource(
+        _tx('agents.builder_resource_connections', 'conexiones'),
+        _connectionsRepository.listConnections(token),
+        const <ConnectionItem>[],
+      ),
+      loadResource(
+        _tx('agents.builder_resource_skills', 'skills'),
+        _skillsRepository.listSkills(token, scope: 'all'),
+        const <SkillItem>[],
+      ),
+      loadResource(
+        _tx('agents.builder_resource_knowledge', 'conocimiento'),
+        _knowledgeRepository.listItems(token),
+        const <KnowledgeItem>[],
+      ),
+    ]);
+    if (_disposed) return;
+
+    final connections = results[0] as List<ConnectionItem>;
+    _connections = connections;
+    _connectionId = connections.isNotEmpty ? connections.first.id : null;
+    _skillsCatalog = (results[1] as List<SkillItem>)
+        .map((skill) => {'id': skill.id, 'name': skill.name})
+        .toList();
+    _knowledgeCatalog = (results[2] as List<KnowledgeItem>)
+        .map((item) => {'id': item.id, 'name': item.title})
+        .toList();
+    _loadingConnections = false;
+    if (failures.isNotEmpty) {
+      _error =
+          '${_tx('agents.builder_load_failed', 'No se pudieron cargar')}: '
+          '${failures.join(', ')}';
+    }
+    _notify();
+  }
+
+  Future<ActionResult?> sendSuggestion(String suggestion) {
+    textController.text = suggestion;
+    textController.selection = TextSelection.collapsed(
+      offset: suggestion.length,
+    );
+    return send();
+  }
+
+  Future<ActionResult?> send() async {
+    final token = _token;
+    final selectedConnectionId = _connectionId;
+    final text = textController.text.trim();
+    if (selectedConnectionId == null) {
+      return ActionResult.error(
+        _tx('agents.builder_no_connection', 'Elige una conexión primero'),
+      );
+    }
+    if (token == null || token.isEmpty || text.isEmpty || _streaming) {
+      return null;
+    }
+
+    textController.clear();
+    _error = null;
+    _messages.add(ChatMessage(role: 'user', content: text));
+    _streaming = true;
+    _thinking = true;
+    _partialReply = '';
+    _stage = null;
+    _pendingDraft = null;
+    _notify();
+
+    final completer = Completer<void>();
+    _sendCompleter = completer;
+
+    void completeSend() {
+      if (!completer.isCompleted) completer.complete();
+      if (identical(_sendCompleter, completer)) _sendCompleter = null;
+    }
+
+    _subscription = _builderRepository
+        .streamChat(
+          token,
+          connectionId: selectedConnectionId,
+          messages: _messages,
+          skills: _skillsCatalog,
+          knowledge: _knowledgeCatalog,
+        )
+        .listen(
+          _handleEvent,
+          onError: (Object error, StackTrace stackTrace) {
+            if (_disposed) {
+              completeSend();
+              return;
+            }
+            unawaited(
+              _handleStreamError(
+                error,
+                selectedConnectionId,
+                text,
+              ).whenComplete(completeSend),
+            );
+          },
+          onDone: () {
+            if (!_disposed) {
+              _streaming = false;
+              _thinking = false;
+              _notify();
+            }
+            completeSend();
+          },
+          cancelOnError: true,
+        );
+
+    await completer.future;
+    return null;
+  }
+
+  void _handleEvent(AgentBuilderEvent event) {
+    if (_disposed) return;
+    if (event.type == 'progress') {
+      final visible = event.assistantMessage ?? '';
+      _stage = event.stage;
+      if (visible.isNotEmpty) _partialReply = visible;
+    } else if (event.type == 'error') {
+      _error =
+          event.message ??
+          _tx(
+            'agents.builder_generic_error',
+            'Error del constructor de agentes',
+          );
+    } else if (event.type == 'builder_done') {
+      final assistantMessage = event.assistantMessage ?? '';
+      // Cerrar el turno aquí y no en onDone evita una burbuja de espera vacía
+      // junto al mensaje que ya se recibió.
+      _streaming = false;
+      _thinking = false;
+      _partialReply = '';
+      _stage = null;
+      if (assistantMessage.isNotEmpty) {
+        _messages.add(
+          ChatMessage(role: 'assistant', content: assistantMessage),
+        );
+      }
+      if (event.isReady && event.draft != null) {
+        _pendingDraft = event.draft;
+      }
+    } else {
+      return;
+    }
+    _notify();
+  }
+
+  Future<void> _handleStreamError(
+    Object error,
+    String failedConnectionId,
+    String failedText,
+  ) async {
+    if (_disposed) return;
+    final apiError = error is ApiError ? error : null;
+    _streaming = false;
+    _thinking = false;
+    _partialReply = '';
+    _stage = null;
+    _error =
+        apiError?.message ??
+        _tx(
+          'agents.builder_connection_error',
+          'Error de conexión con el constructor de agentes',
+        );
+    if (_messages.isNotEmpty &&
+        _messages.last.role == 'user' &&
+        _messages.last.content == failedText) {
+      _messages.removeLast();
+    }
+    if (textController.text.isEmpty) {
+      textController.text = failedText;
+      textController.selection = TextSelection.collapsed(
+        offset: failedText.length,
+      );
+    }
+    _notify();
+
+    if (apiError?.statusCode != 404) return;
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+    try {
+      final refreshed = await _connectionsRepository.listConnections(
+        token,
+        cache: false,
+      );
+      if (_disposed) return;
+      final available = refreshed
+          .where((connection) => connection.id != failedConnectionId)
+          .toList();
+      _connections = available;
+      if (!available.any((connection) => connection.id == _connectionId)) {
+        _connectionId = available.isNotEmpty ? available.first.id : null;
+      }
+      _notify();
+    } catch (_) {
+      // Se conserva el error original, más útil que un segundo fallo al
+      // refrescar el selector.
+    }
+  }
+
+  Future<ActionResult?> reviewDraft({
+    required AgentDraftPresenter present,
+  }) async {
+    final token = _token;
+    final draft = _pendingDraft;
+    if (token == null || token.isEmpty || draft == null) return null;
+
+    final name = (draft['name'] as String? ?? '').trim();
+    final slug = name
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+        .replaceAll(RegExp(r'^-+|-+$'), '');
+    final useMemory = draft['use_memory'] == true;
+    final initial = <String, dynamic>{
+      ...draft,
+      'connection_id': _connectionId ?? '',
+      'memory_file': useMemory && slug.isNotEmpty ? '$slug.md' : '',
+    };
+
+    final payload = await present(initial, token);
+    if (payload == null || _disposed) return null;
+    try {
+      await _agentsRepository.saveAgent(token, payload);
+      if (_disposed) return null;
+      _agentSaved = true;
+      _pendingDraft = null;
+      _notify();
+      return ActionResult(_tx('agents.builder_agent_created', 'Agente creado'));
+    } on ApiError catch (error) {
+      return ActionResult.error(error.message);
+    } catch (_) {
+      return ActionResult.error(
+        _tx('agents.error_generic_save', 'No se pudo guardar el agente'),
+      );
+    }
+  }
+
+  void stop() {
+    final subscription = _subscription;
+    _subscription = null;
+    if (subscription != null) unawaited(subscription.cancel());
+    final completer = _sendCompleter;
+    _sendCompleter = null;
+    if (completer != null && !completer.isCompleted) completer.complete();
+    _streaming = false;
+    _thinking = false;
+    _partialReply = '';
+    _stage = null;
+    _notify();
+  }
+
+  /// Etiqueta de espera correspondiente a la fase informada por el backend.
+  String get thinkingLabel {
+    switch (_stage) {
+      case 'replying':
+        return _tx('agents.builder_stage_replying', 'Redactando respuesta…');
+      case 'drafting':
+        return _tx('agents.builder_stage_drafting', 'Preparando el borrador…');
+      case 'writing_instructions':
+        return _tx(
+          'agents.builder_stage_writing',
+          'Escribiendo las instrucciones del agente…',
+        );
+      default:
+        return _tx(
+          'agents.builder_stage_analyzing',
+          'Analizando tu solicitud…',
+        );
+    }
+  }
+
+  void _notify() {
+    if (_disposed) return;
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    final subscription = _subscription;
+    _subscription = null;
+    if (subscription != null) unawaited(subscription.cancel());
+    final completer = _sendCompleter;
+    _sendCompleter = null;
+    if (completer != null && !completer.isCompleted) completer.complete();
+    textController.dispose();
+    super.dispose();
+  }
+}
