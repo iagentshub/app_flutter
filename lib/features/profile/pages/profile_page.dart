@@ -272,6 +272,7 @@ class _ProfilePageState extends State<ProfilePage>
       ),
       cancelLabel: _tx('common.cancel', 'Cancelar'),
       confirmLabel: _tx('common.confirm', 'Confirmar'),
+      destructive: true,
     );
     if (!confirm) return;
 

@@ -180,6 +180,7 @@ class _MemoryPageState extends State<MemoryPage> with StateMessaging {
       ).replaceAll('{{filename}}', file.filename),
       cancelLabel: _tx('common.cancel', 'Cancelar'),
       confirmLabel: _tx('common.delete', 'Eliminar'),
+      destructive: true,
     );
     if (!confirm) return;
 

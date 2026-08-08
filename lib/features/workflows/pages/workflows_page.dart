@@ -265,6 +265,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
       ).replaceAll('{{name}}', item.name),
       cancelLabel: _tx('common.cancel', 'Cancelar'),
       confirmLabel: _tx('common.delete', 'Eliminar'),
+      destructive: true,
     );
     if (!confirm) return;
 

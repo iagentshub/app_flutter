@@ -154,6 +154,7 @@ extension _PromptActions on _KnowledgePageState {
       ).replaceAll('{name}', item.name),
       cancelLabel: _tx('common.cancel', 'Cancelar'),
       confirmLabel: _tx('common.delete', 'Eliminar'),
+      destructive: true,
     );
     if (!confirm) return;
 

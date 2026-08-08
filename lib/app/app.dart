@@ -50,6 +50,7 @@ class _AppState extends State<App> {
     _apiClient = ApiClient(
       widget.backendController,
       onUnauthorized: _handleUnauthorized,
+      sessionIdentity: () => widget.sessionController.cacheIdentity,
     );
     _authRepository = AuthRepository(_apiClient);
     _dashboardRepository = DashboardRepository(_apiClient);

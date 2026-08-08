@@ -436,6 +436,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
       ),
       cancelLabel: _tx('common.cancel', 'Cancelar'),
       confirmLabel: _tx('common.delete', 'Eliminar'),
+      destructive: true,
     );
     if (!confirmed) return;
     try {

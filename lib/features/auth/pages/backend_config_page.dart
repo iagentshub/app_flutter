@@ -136,6 +136,7 @@ class _BackendConfigPageState extends State<BackendConfigPage> {
       ).replaceAll('{name}', backend.name),
       cancelLabel: _txt(t, 'backend_config.cancel', 'Cancelar'),
       confirmLabel: _txt(t, 'backend_config.delete_confirm', 'Eliminar'),
+      destructive: true,
     );
     if (confirm) {
       await widget.backendController.removeBackend(backend.id);

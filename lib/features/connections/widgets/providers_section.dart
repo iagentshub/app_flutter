@@ -152,6 +152,7 @@ class _ProvidersSectionState extends State<ProvidersSection>
       ),
       cancelLabel: _tx('common.cancel', 'Cancelar'),
       confirmLabel: _tx('providers.unlink_action', 'Desvincular'),
+      destructive: true,
     );
     if (!confirm) return;
     final token = widget.token;

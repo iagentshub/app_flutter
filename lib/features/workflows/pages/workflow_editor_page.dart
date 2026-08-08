@@ -226,6 +226,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
       ),
       cancelLabel: _tx('workflow_editor.keep_editing', 'Seguir editando'),
       confirmLabel: _tx('workflow_editor.discard_btn', 'Descartar'),
+      destructive: true,
     );
     if (discard && mounted) Navigator.of(context).pop();
   }

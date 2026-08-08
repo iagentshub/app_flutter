@@ -213,6 +213,7 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
       ).replaceAll('{{name}}', item.name),
       cancelLabel: _tx('common.cancel', 'Cancelar'),
       confirmLabel: _tx('common.delete', 'Eliminar'),
+      destructive: true,
     );
     if (!confirm) return;
 

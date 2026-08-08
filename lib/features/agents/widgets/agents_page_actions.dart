@@ -278,6 +278,7 @@ extension _AgentsPageActions on _AgentsPageState {
       message: '¿Seguro que quieres eliminar "${item.name}"?',
       cancelLabel: 'Cancelar',
       confirmLabel: 'Eliminar',
+      destructive: true,
     );
     if (!confirm) return;
 

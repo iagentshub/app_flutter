@@ -1,6 +1,9 @@
 import 'api_response.dart';
 
-typedef ApiCacheKey = ({String baseUrl, String? gaToken, String path});
+/// [session] identifica al usuario dueño de la respuesta cacheada. Antes se
+/// usaba el token, pero en web es la misma constante para todas las cuentas
+/// (la cookie es HttpOnly), así que la clave no separaba nada.
+typedef ApiCacheKey = ({String baseUrl, String session, String path});
 
 class ApiResponseCache {
   final Map<ApiCacheKey, ({DateTime expiresAt, ApiResponse response})>

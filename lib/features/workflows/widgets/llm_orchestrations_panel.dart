@@ -133,6 +133,7 @@ class _LlmOrchestrationsPanelState extends State<LlmOrchestrationsPanel> {
           .replaceAll('{{name}}', item.name),
       cancelLabel: widget.tx('common.cancel', 'Cancelar'),
       confirmLabel: widget.tx('common.delete', 'Eliminar'),
+      destructive: true,
     );
     if (!confirmed) return;
     try {

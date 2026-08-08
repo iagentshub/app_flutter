@@ -379,6 +379,7 @@ class _ConnectionsPageState extends State<ConnectionsPage>
       message: '¿Seguro que quieres eliminar "${item.name}"?',
       cancelLabel: 'Cancelar',
       confirmLabel: 'Eliminar',
+      destructive: true,
     );
     if (!confirm) return;
 

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/painting.dart' show ImageProvider, NetworkImage;
 import 'package:http/http.dart' as http;
 
 import '../config/backend_defaults.dart';
@@ -24,6 +25,7 @@ class ApiClient {
     int maxDownloadBytes = 200 * 1024 * 1024,
     int maxStreamLineChars = 1024 * 1024,
     this.onUnauthorized,
+    this.sessionIdentity = _anonymousSession,
   }) : _client = client ?? createHttpClient(),
        _requestTimeout = requestTimeout,
        _maxResponseBytes = maxResponseBytes,
@@ -48,6 +50,13 @@ class ApiClient {
   /// para que la app pueda cerrar la sesión y volver a login de forma
   /// centralizada en vez de depender de que cada pantalla lo compruebe.
   final VoidCallback? onUnauthorized;
+
+  /// Identidad de la sesión activa, usada para separar la caché por usuario.
+  /// La aporta el [SessionController]; sin sesión (splash, login) basta el
+  /// valor anónimo por defecto.
+  final String Function() sessionIdentity;
+
+  static String _anonymousSession() => 'anon';
 
   final ApiResponseCache _cache = ApiResponseCache();
 
@@ -94,12 +103,13 @@ class ApiClient {
     bool cache = false,
     Duration? ttl,
   }) async {
-    // La clave incluye el token para que la caché nunca sirva la respuesta
-    // de un usuario a otro (p. ej. tras cerrar sesión y entrar con otra
-    // cuenta sin pasar por invalidateCache()).
+    // La clave incluye la identidad de la sesión para que la caché nunca
+    // sirva la respuesta de un usuario a otro (p. ej. tras cerrar sesión y
+    // entrar con otra cuenta sin pasar por invalidateCache()). No vale el
+    // token: en web es la misma constante para todas las cuentas.
     final cacheKey = (
       baseUrl: backendController.effectiveBaseUrl,
-      gaToken: gaToken,
+      session: sessionIdentity(),
       path: path,
     );
     final now = DateTime.now();
@@ -427,6 +437,29 @@ class ApiClient {
     return ApiError(
       statusCode: response.statusCode,
       message: 'Error ${response.statusCode}',
+    );
+  }
+
+  /// Proveedor de imagen para recursos que requieren sesión (avatares).
+  ///
+  /// Las vistas montaban `Image.network(url, headers: {'Cookie': ...})`, pero
+  /// `Cookie` es un *forbidden header name*: en web el navegador la descarta
+  /// y el avatar privado caía al fallback de iniciales sin ningún error
+  /// visible. Ahí la cookie HttpOnly ya viaja sola en las peticiones
+  /// same-origin, así que la cabecera sobra; fuera de web sí hace falta.
+  ///
+  /// De paso, el token deja de circular por widgets de presentación y la URL
+  /// pasa por [_uri], heredando la resolución same-origin del resto de
+  /// peticiones.
+  ImageProvider authenticatedImage(String path, {String? gaToken}) {
+    final sendCookie =
+        !kIsWeb &&
+        gaToken != null &&
+        gaToken.isNotEmpty &&
+        gaToken != browserCookieSessionToken;
+    return NetworkImage(
+      _uri(path).toString(),
+      headers: sendCookie ? {'Cookie': 'ga_token=$gaToken'} : null,
     );
   }
 

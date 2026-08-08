@@ -228,6 +228,7 @@ extension _KnowledgeActions on _KnowledgePageState {
       message: '¿Seguro que quieres eliminar "${item.name}"?',
       cancelLabel: 'Cancelar',
       confirmLabel: 'Eliminar',
+      destructive: true,
     );
     if (!confirm) return;
 
@@ -396,6 +397,7 @@ extension _KnowledgeActions on _KnowledgePageState {
       message: '¿Seguro que quieres eliminar "${item.title}"?',
       cancelLabel: 'Cancelar',
       confirmLabel: 'Eliminar',
+      destructive: true,
     );
     if (!confirm) return;
 

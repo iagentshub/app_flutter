@@ -285,10 +285,15 @@ class _AdminPageState extends State<AdminPage>
     }
   }
 
+  /// Casi todo lo que se confirma desde el panel de administración es un
+  /// borrado —de ahí que [destructive] venga marcado por defecto—; las
+  /// acciones que no lo son (ascender a admin, desactivar un grupo) lo pasan
+  /// a false explícitamente.
   Future<bool> _confirm(
     String title,
     String body, {
     String? confirmLabel,
+    bool destructive = true,
   }) async {
     return showConfirmActionDialog(
       context,
@@ -296,6 +301,7 @@ class _AdminPageState extends State<AdminPage>
       message: body,
       cancelLabel: _tx('common.cancel', 'Cancelar'),
       confirmLabel: confirmLabel ?? _tx('common.delete', 'Eliminar'),
+      destructive: destructive,
     );
   }
 

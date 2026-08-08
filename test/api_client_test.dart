@@ -74,6 +74,7 @@ void main() {
 
   test('separa la caché por sesión e invalida tras una mutación', () async {
     var getCalls = 0;
+    var sesion = 'ana#1';
     final mock = MockClient((request) async {
       if (request.method == 'GET') {
         getCalls += 1;
@@ -81,17 +82,65 @@ void main() {
       }
       return http.Response('{}', 200);
     });
-    final client = ApiClient(backendController, client: mock);
+    final client = ApiClient(
+      backendController,
+      client: mock,
+      sessionIdentity: () => sesion,
+    );
     addTearDown(client.close);
 
     await client.get('/api/items', gaToken: 'session-a', cache: true);
+    sesion = 'bruno#2';
     await client.get('/api/items', gaToken: 'session-b', cache: true);
+    sesion = 'ana#1';
     await client.get('/api/items', gaToken: 'session-a', cache: true);
     expect(getCalls, 2);
 
     await client.post('/api/items', gaToken: 'session-a', body: {});
     await client.get('/api/items', gaToken: 'session-a', cache: true);
     expect(getCalls, 3);
+  });
+
+  /// La clave de caché se construía con el token, y el comentario del código
+  /// prometía que así «la caché nunca sirve la respuesta de un usuario a
+  /// otro». En web esa promesa no se cumplía: `extractGaToken` devuelve
+  /// siempre `__browser_cookie_session__` porque la cookie real es HttpOnly,
+  /// de modo que la clave era idéntica para todas las cuentas.
+  test('en web dos cuentas no comparten caché aunque el token sea el mismo', () async {
+    var getCalls = 0;
+    var sesion = 'ana#1';
+    final mock = MockClient((request) async {
+      getCalls += 1;
+      return http.Response('{"call":$getCalls}', 200);
+    });
+    final client = ApiClient(
+      backendController,
+      client: mock,
+      sessionIdentity: () => sesion,
+    );
+    addTearDown(client.close);
+
+    // El mismo token literal que la app usa en web para todas las cuentas.
+    const tokenWeb = ApiClient.browserCookieSessionToken;
+
+    final primera = await client.get(
+      '/api/agents',
+      gaToken: tokenWeb,
+      cache: true,
+    );
+    expect(primera.json['call'], 1);
+
+    // Cambio de cuenta sin pasar por logout(): la caché no se vacía y antes
+    // esto devolvía los agentes del usuario anterior.
+    sesion = 'bruno#2';
+    final segunda = await client.get(
+      '/api/agents',
+      gaToken: tokenWeb,
+      cache: true,
+    );
+
+    expect(getCalls, 2);
+    expect(segunda.json['call'], 2);
   });
 
   test('una mutación impide cachear un GET que ya estaba en vuelo', () async {

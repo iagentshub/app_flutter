@@ -99,6 +99,7 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog>
       ),
       cancelLabel: widget.tx('common.cancel', 'Cancelar'),
       confirmLabel: widget.tx('common.delete', 'Eliminar'),
+      destructive: true,
     );
     if (!confirm) return;
     try {
@@ -130,6 +131,7 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog>
         ),
         cancelLabel: widget.tx('common.cancel', 'Cancelar'),
         confirmLabel: widget.tx('groups.leave', 'Abandonar'),
+        destructive: true,
       );
       if (!confirm) return;
       try {
@@ -161,6 +163,7 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog>
         ),
         cancelLabel: widget.tx('common.cancel', 'Cancelar'),
         confirmLabel: widget.tx('common.delete', 'Eliminar'),
+        destructive: true,
       );
       if (!confirm) return;
       await _deleteGroup();
