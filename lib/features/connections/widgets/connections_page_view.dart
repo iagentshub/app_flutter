@@ -2,18 +2,18 @@ part of '../pages/connections_page.dart';
 
 extension _ConnectionsPageView on _ConnectionsPageState {
   Widget _buildPage(BuildContext context) {
-    if (_loading) {
+    if (_controller.loading) {
       return const AsyncStatePanel.loading();
     }
 
-    if (_error != null) {
+    if (_controller.error != null) {
       return ListView(
         children: [
           AsyncStatePanel.error(
             title: _tx('connections.error_title', 'Error cargando conexiones'),
-            message: _error!,
+            message: _controller.error!,
             retryLabel: _tx('common.retry', 'Reintentar'),
-            onRetry: _load,
+            onRetry: _controller.load,
           ),
         ],
       );
@@ -42,9 +42,9 @@ extension _ConnectionsPageView on _ConnectionsPageState {
         Expanded(
           child: Builder(
             builder: (context) {
-              final filteredConnections = _filteredConnections;
+              final filteredConnections = _controller.filteredConnections;
               return RefreshIndicator(
-                onRefresh: _load,
+                onRefresh: _controller.load,
                 child: CustomScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   slivers: [
@@ -53,7 +53,7 @@ extension _ConnectionsPageView on _ConnectionsPageState {
                       sliver: SliverToBoxAdapter(
                         child: ResourceToolbar(
                           search: TextField(
-                            controller: _queryController,
+                            controller: _controller.queryController,
                             decoration: InputDecoration(
                               labelText: _tx(
                                 'connections.search_hint',
@@ -61,32 +61,29 @@ extension _ConnectionsPageView on _ConnectionsPageState {
                               ),
                               prefixIcon: const Icon(Icons.search, size: 20),
                             ),
-                            onChanged: (value) {
-                              _query = value;
-                              _searchDebouncer.run(() {
-                                if (mounted) refresh(() {});
-                              });
-                            },
+                            onChanged: _controller.setQuery,
                           ),
                           actions: [
                             AppIconButton.filled(
-                              onPressed: _providers.isEmpty
+                              onPressed: _controller.providers.isEmpty
                                   ? null
                                   : _openCreateDialog,
                               icon: const Icon(Icons.add),
                               tooltip: _tx('connections.new', 'Nueva conexión'),
                             ),
                             AppIconButton.outlined(
-                              onPressed: _load,
+                              onPressed: _controller.load,
                               icon: const Icon(Icons.refresh),
                               tooltip: _tx('common.update', 'Actualizar'),
                             ),
                             AppIconButton.outlined(
-                              onPressed: _testingAll ? null : _testAll,
-                              tooltip: _testingAll
+                              onPressed: _controller.testingAll
+                                  ? null
+                                  : _testAll,
+                              tooltip: _controller.testingAll
                                   ? _tx('connections.testing', 'Probando...')
                                   : _tx('connections.mass_test', 'Test masivo'),
-                              icon: _testingAll
+                              icon: _controller.testingAll
                                   ? const SizedBox(
                                       width: 16,
                                       height: 16,
@@ -97,7 +94,7 @@ extension _ConnectionsPageView on _ConnectionsPageState {
                                   : const Icon(Icons.play_circle_outline),
                             ),
                             FilterButton(
-                              activeCount: _activeFilterCount,
+                              activeCount: _controller.activeFilterCount,
                               tooltip: _tx('common.filters', 'Filtros'),
                               onPressed: _openFiltersDialog,
                             ),
@@ -105,25 +102,27 @@ extension _ConnectionsPageView on _ConnectionsPageState {
                               onPressed: () => showGroupFilterDialog(
                                 context,
                                 apiClient: widget.apiClient,
-                                token: _token ?? '',
-                                activeGroupId: _activeGroupId,
-                                onSelect: _onGroupSelect,
+                                token: _controller.token ?? '',
+                                activeGroupId: _controller.activeGroupId,
+                                onSelect: (groupId) =>
+                                    unawaited(_controller.selectGroup(groupId)),
                                 localeController: widget.localeController,
                               ),
                               icon: const Icon(Icons.groups_outlined),
                               tooltip: _tx('groups.toggle_tooltip', 'Grupos'),
-                              isSelected: _activeGroupId != null,
+                              isSelected: _controller.activeGroupId != null,
                             ),
-                            if (_activeGroupId != null)
+                            if (_controller.activeGroupId != null)
                               ActionChip(
                                 label: Text(
                                   _tx('groups.active_clear', 'Grupo activo ✕'),
                                 ),
-                                onPressed: () => _onGroupSelect(null),
+                                onPressed: () =>
+                                    unawaited(_controller.selectGroup(null)),
                               ),
                           ],
                           summary: Text(
-                            '${_tx('connections.count_label', 'Conexiones')}: ${filteredConnections.length} | ${_tx('connections.providers_label', 'Proveedores')}: ${_providers.length}',
+                            '${_tx('connections.count_label', 'Conexiones')}: ${filteredConnections.length} | ${_tx('connections.providers_label', 'Proveedores')}: ${_controller.providers.length}',
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                         ),
@@ -137,7 +136,7 @@ extension _ConnectionsPageView on _ConnectionsPageState {
                             child: Padding(
                               padding: const EdgeInsets.all(16),
                               child: Text(
-                                _connections.isEmpty
+                                _controller.connections.isEmpty
                                     ? _tx(
                                         'connections.empty',
                                         'No hay conexiones todavía. Crea la primera.',
@@ -152,7 +151,7 @@ extension _ConnectionsPageView on _ConnectionsPageState {
                         ),
                       )
                     else
-                      for (final group in _connectionsByProvider)
+                      for (final group in _controller.connectionsByProvider)
                         ..._buildProviderGroupSlivers(group.key, group.value),
                   ],
                 ),
@@ -174,9 +173,9 @@ extension _ConnectionsPageView on _ConnectionsPageState {
         sliver: SliverToBoxAdapter(
           child: Text(
             '$providerLabel (${items.length})',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
         ),
       ),
@@ -194,13 +193,13 @@ extension _ConnectionsPageView on _ConnectionsPageState {
     return ConnectionCard(
       item: item,
       tx: _tx,
-      providerLabel: _providerLabel(item.type),
+      providerLabel: _controller.providerLabel(item.type),
       onTest: () => _testConnection(item),
       onShare: () => _shareConnection(item),
       onEdit: () => _openEditDialog(item),
       onDelete: () => _deleteConnection(item),
-      testState: _testStatus[item.id],
-      testMessage: _testMessages[item.id],
+      testState: _statusDotFor(item.id),
+      testMessage: _controller.testMessage(item.id),
       onToggleActive: (item.readOnly || item.isVirtual)
           ? null
           : () => _toggleConnectionActive(item),
