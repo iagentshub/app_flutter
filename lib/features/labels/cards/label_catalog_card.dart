@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/labels/label_catalog.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
 
 typedef LabelText = String Function(String path, String fallback);
 
@@ -48,28 +49,54 @@ class LabelCatalogIntro extends StatelessWidget {
 
 /// Card de un grupo (Propiedad, Visibilidad, Entorno, Estado) con sus
 /// entradas individuales, pensada para fluir en una rejilla responsive.
-class LabelGroupCard extends StatelessWidget {
+class LabelGroupCard extends StatefulWidget {
   const LabelGroupCard({required this.group, required this.text, super.key});
 
   final LabelGroupDef group;
   final LabelText text;
 
   @override
+  State<LabelGroupCard> createState() => _LabelGroupCardState();
+}
+
+class _LabelGroupCardState extends State<LabelGroupCard> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
+    final group = widget.group;
+    final text = widget.text;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              text(group.titleKey, group.fallbackTitle),
-              style: const TextStyle(
-                fontSize: FncFonts.size15,
-                fontWeight: FontWeight.w700,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    text(group.titleKey, group.fallbackTitle),
+                    style: const TextStyle(
+                      fontSize: FncFonts.size15,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                AppIconButton(
+                  key: ValueKey('label-group-toggle-${group.titleKey}'),
+                  onPressed: () => setState(() => _expanded = !_expanded),
+                  tooltip: _expanded
+                      ? text('labels.collapse_group', 'Ocultar descripciones')
+                      : text('labels.expand_group', 'Mostrar descripciones'),
+                  icon: AnimatedRotation(
+                    turns: _expanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 180),
+                    child: const Icon(Icons.keyboard_arrow_down),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 2),
             Text(
               group.exclusive
                   ? text(
@@ -79,12 +106,21 @@ class LabelGroupCard extends StatelessWidget {
                   : text('labels.multi_hint', 'Multi-selección'),
               style: Theme.of(context).textTheme.labelSmall,
             ),
-            const SizedBox(height: 10),
-            for (final key in group.keys)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: _LabelEntryCard(labelKey: key, text: text),
-              ),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 180),
+              child: _expanded
+                  ? Column(
+                      children: [
+                        const SizedBox(height: 10),
+                        for (final key in group.keys)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: _LabelEntryCard(labelKey: key, text: text),
+                          ),
+                      ],
+                    )
+                  : const SizedBox(width: double.infinity),
+            ),
           ],
         ),
       ),

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:app_flutter/core/network/api_client.dart';
 import 'package:app_flutter/features/knowledge/repositories/prompts_repository.dart';
 import 'package:app_flutter/features/knowledge/repositories/skills_repository.dart';
@@ -129,5 +131,42 @@ void main() {
       '/api/prompts/p1/deactivate',
       '/api/tools/h1/activate',
     ]);
+  });
+
+  test('skills y prompts envían las labels de idioma sin alterar', () async {
+    final requests = <http.Request>[];
+    final mock = MockClient((request) async {
+      requests.add(request);
+      return http.Response(
+        '{}',
+        200,
+        headers: {'content-type': 'application/json'},
+      );
+    });
+    final client = ApiClient(backendController, client: mock);
+    addTearDown(client.close);
+    final payload = {
+      'name': 'Contenido bilingüe',
+      'labels': ['private', 'lang_es', 'lang_en'],
+    };
+
+    await SkillsRepository(
+      apiClient: client,
+    ).saveSkill('token', 'private', payload);
+    await PromptsRepository(
+      apiClient: client,
+    ).savePrompt('token', 'private', payload);
+
+    expect(requests.map((request) => request.url.path), [
+      '/api/skills/private',
+      '/api/prompts/private',
+    ]);
+    for (final request in requests) {
+      expect(jsonDecode(request.body)['labels'], [
+        'private',
+        'lang_es',
+        'lang_en',
+      ]);
+    }
   });
 }

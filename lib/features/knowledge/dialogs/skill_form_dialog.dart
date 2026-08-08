@@ -69,7 +69,7 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
       'category': _category,
       'content': _contentController.text.trim(),
       'scope': _scope,
-      'labels': [_scope, ..._selectedLanguageLabels],
+      'labels': contentLabelsForScope(_scope, _selectedLanguageLabels),
     };
     if (widget.initial?['id'] != null) payload['id'] = widget.initial!['id'];
     Navigator.of(context).pop(payload);
@@ -117,11 +117,6 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
                   child: Text('private · temporal durante esta sesión'),
                 ),
               const SizedBox(height: 10),
-              Text(
-                widget.tx('labels.group_language', 'Idioma del contenido'),
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 6),
               GroupedLabelPicker(
                 selected: _selectedLanguageLabels,
                 onChanged: (next) =>
@@ -136,29 +131,37 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
                 decoration: const InputDecoration(labelText: 'Descripción'),
               ),
               const SizedBox(height: 10),
-              Text(
-                'Categoría (define el icono)',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  ChoiceChip(
-                    avatar: Icon(skillCategoryIcon(''), size: 16),
-                    label: Text(skillCategoryLabel(widget.tx, '')),
-                    selected: _category.isEmpty,
-                    onSelected: (_) => setState(() => _category = ''),
+              DropdownButtonFormField<String>(
+                initialValue: _category,
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: widget.tx(
+                    'knowledge.skill_category_label',
+                    'Categoría',
                   ),
-                  for (final category in kSkillCategories)
-                    ChoiceChip(
-                      avatar: Icon(skillCategoryIcon(category), size: 16),
-                      label: Text(skillCategoryLabel(widget.tx, category)),
-                      selected: _category == category,
-                      onSelected: (_) => setState(() => _category = category),
+                ),
+                items: [
+                  for (final category in ['', ...kSkillCategories])
+                    DropdownMenuItem(
+                      value: category,
+                      child: Row(
+                        children: [
+                          Icon(skillCategoryIcon(category), size: 16),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              skillCategoryLabel(widget.tx, category),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                 ],
+                onChanged: (value) {
+                  if (value == null) return;
+                  setState(() => _category = value);
+                },
               ),
               const SizedBox(height: 10),
               TextFormField(

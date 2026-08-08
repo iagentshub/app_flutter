@@ -82,8 +82,8 @@ void main() {
 
     controller.queryController.text = 'agente';
     await controller.setType('agent');
-    await controller.toggleLabel('draft', selected: true);
-    await controller.toggleLanguage('es', selected: true);
+    await controller.setLabels({'draft'});
+    await controller.setLanguages({'es'});
 
     expect(controller.loading, isFalse);
     expect(controller.error, isNull);

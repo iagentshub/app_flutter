@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'multi_select_dropdown.dart';
+
 /// Opción visual del selector de tipos usado por los exploradores público y
 /// administrativo. [count] es opcional porque no todos los endpoints devuelven
 /// agregados globales.
@@ -59,17 +61,6 @@ class ExploreSearchToolbar extends StatelessWidget {
     return typeOptions.fold<int>(0, (sum, option) => sum + option.count!);
   }
 
-  String get _selectionLabel {
-    if (selectedTypes.isEmpty) return _withCount(allTypesLabel, _totalCount);
-    if (selectedTypes.length > 1) {
-      return multipleTypesLabel(selectedTypes.length);
-    }
-    final selected = typeOptions
-        .where((option) => selectedTypes.contains(option.value))
-        .firstOrNull;
-    return selected?.label ?? allTypesLabel;
-  }
-
   String _withCount(String label, int? count) =>
       count == null ? label : '$label ($count)';
 
@@ -90,16 +81,34 @@ class ExploreSearchToolbar extends StatelessWidget {
               onChanged: onSearchChanged,
               onSubmitted: onSearchSubmitted,
             );
-            final selector = _TypeSelector(
+            final selector = MultiSelectDropdown<String>(
               key: selectorKey,
-              options: typeOptions,
-              selectedTypes: selectedTypes,
-              label: _selectionLabel,
-              allTypesLabel: _withCount(allTypesLabel, _totalCount),
+              options: [
+                for (final option in typeOptions)
+                  MultiSelectDropdownOption(
+                    value: option.value,
+                    label: option.label,
+                    icon: option.icon,
+                    color: option.color,
+                    count: option.count,
+                  ),
+              ],
+              selectedValues: selectedTypes,
+              emptyLabel: _withCount(allTypesLabel, _totalCount),
               tooltip: typeFilterTooltip,
-              allowMultiple: allowMultipleTypes,
+              multipleSelectedLabel: multipleTypesLabel,
+              selectionReducer: (current, value, selected) {
+                final next = Set<String>.of(current);
+                if (!allowMultipleTypes) next.clear();
+                if (selected) {
+                  next.add(value);
+                } else {
+                  next.remove(value);
+                }
+                return next;
+              },
               onChanged: onTypesChanged,
-              expand: compact,
+              width: compact ? double.infinity : 220,
             );
             if (compact) {
               return Column(
@@ -129,115 +138,4 @@ class ExploreSearchToolbar extends StatelessWidget {
       ],
     );
   }
-}
-
-class _TypeSelector extends StatelessWidget {
-  const _TypeSelector({
-    required this.options,
-    required this.selectedTypes,
-    required this.label,
-    required this.allTypesLabel,
-    required this.tooltip,
-    required this.allowMultiple,
-    required this.onChanged,
-    required this.expand,
-    super.key,
-  });
-
-  final List<ExploreTypeOption> options;
-  final Set<String> selectedTypes;
-  final String label;
-  final String allTypesLabel;
-  final String tooltip;
-  final bool allowMultiple;
-  final ValueChanged<Set<String>> onChanged;
-  final bool expand;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return SizedBox(
-      width: expand ? double.infinity : 220,
-      child: PopupMenuButton<void>(
-        tooltip: tooltip,
-        position: PopupMenuPosition.under,
-        itemBuilder: (context) {
-          final menuSelection = Set<String>.of(selectedTypes);
-          return [
-            PopupMenuItem<void>(
-              enabled: false,
-              padding: EdgeInsets.zero,
-              child: StatefulBuilder(
-                builder: (context, setMenuState) => SizedBox(
-                  width: 260,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CheckboxListTile(
-                        dense: true,
-                        controlAffinity: ListTileControlAffinity.leading,
-                        value: menuSelection.isEmpty,
-                        title: Text(allTypesLabel),
-                        onChanged: (_) {
-                          setMenuState(menuSelection.clear);
-                          onChanged(Set<String>.of(menuSelection));
-                        },
-                      ),
-                      const Divider(height: 1),
-                      for (final option in options)
-                        CheckboxListTile(
-                          dense: true,
-                          controlAffinity: ListTileControlAffinity.leading,
-                          value: menuSelection.contains(option.value),
-                          secondary: Icon(
-                            option.icon,
-                            size: 18,
-                            color: option.color,
-                          ),
-                          title: Text(_optionLabel(option)),
-                          onChanged: (checked) {
-                            setMenuState(() {
-                              if (!allowMultiple) menuSelection.clear();
-                              if (checked == true) {
-                                menuSelection.add(option.value);
-                              } else {
-                                menuSelection.remove(option.value);
-                              }
-                            });
-                            onChanged(Set<String>.of(menuSelection));
-                          },
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ];
-        },
-        child: InputDecorator(
-          decoration: const InputDecoration(
-            isDense: true,
-            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-            border: OutlineInputBorder(),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  label,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Icon(Icons.arrow_drop_down, color: scheme.onSurfaceVariant),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  String _optionLabel(ExploreTypeOption option) =>
-      option.count == null ? option.label : '${option.label} (${option.count})';
 }

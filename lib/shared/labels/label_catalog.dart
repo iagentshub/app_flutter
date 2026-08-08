@@ -117,6 +117,22 @@ String contentLanguageLabel(
   return tx('labels.$key', fallback);
 }
 
+/// Construye el contrato canónico que comparten los recursos textuales.
+/// Descarta valores ajenos al catálogo y mantiene el orden estable para que
+/// crear y editar produzcan exactamente el mismo payload.
+List<String> contentLabelsForScope(
+  String scope,
+  Iterable<String> selectedLanguages,
+) {
+  final normalizedScope = scope == 'public' ? 'public' : 'private';
+  final selected = selectedLanguages.where(isLanguageLabel).toSet();
+  return [
+    normalizedScope,
+    for (final label in kLanguageLabelKeys)
+      if (selected.contains(label)) label,
+  ];
+}
+
 /// Los tres grupos son excluyentes entre sí
 /// (algo no puede ser "private" y "public" a la vez). `required` marca si
 /// el grupo siempre debe tener exactamente una selección (visibilidad) o

@@ -54,7 +54,7 @@ Cada una tiene su gemela en inglés con el prefijo `/en`.
 | Memoria | `/memory` | Lo que los agentes recuerdan |
 | Conocimiento | `/knowledge` | Documentos y habilidades que los agentes consultan |
 | Explorar | `/explore` | Recursos compartidos por la comunidad, con filtros de tipo, categoría, idioma y labels |
-| Etiquetas | `/labels` | Catálogo y búsqueda de labels de los recursos propios, incluido el idioma del contenido |
+| Etiquetas | `/labels` | Catálogo plegable y búsqueda de labels de los recursos propios mediante la barra y el diálogo de filtros comunes, incluido el idioma del contenido |
 | Gestión | `/manager` | Espacios de trabajo, grupos e invitaciones |
 | Perfil | `/profile` | Cuenta, preferencias e idioma |
 
@@ -62,11 +62,13 @@ El panel permite reordenar sus bloques: al activar el modo edición, la disposic
 
 Los agentes tienen su propia vista de conversación, disponible cuando el agente tiene una conexión asignada.
 
-Los recursos textuales admiten uno o varios idiomas opcionales. El selector de
-idioma está disponible al editar agentes, skills, prompts, textos o URLs de
-Knowledge y workflows. No seleccionar ninguno significa que el idioma no aplica
-o no se ha declarado. Las herramientas mantienen separado su lenguaje de
-programación (Python, Shell o C++) del idioma del contenido.
+Los recursos textuales admiten uno o varios idiomas opcionales. El selector
+compacto multiselección está disponible al editar agentes, skills, prompts,
+textos, URLs o documentos de Knowledge y workflows. No seleccionar ninguno
+significa que el idioma no aplica o no se ha declarado. Las herramientas
+mantienen separado su lenguaje de programación (Python, Shell o C++) del idioma
+del contenido. Explorar y Etiquetas reutilizan el desplegable de tipos de Admin
+y muestran los filtros múltiples en desplegables en vez de filas de botones.
 
 ---
 

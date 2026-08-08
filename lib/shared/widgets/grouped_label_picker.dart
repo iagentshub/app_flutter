@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../app/theme/fnc_colors.dart';
 import '../labels/label_catalog.dart';
+import 'multi_select_dropdown.dart';
 
 /// Selector de labels organizado por grupo excluyente (visibilidad, entorno)
 /// y no excluyente (estado); evita
@@ -21,8 +21,11 @@ class GroupedLabelPicker extends StatelessWidget {
   final String Function(String path, String fallback) tx;
   final List<LabelGroupDef> groups;
 
-  void _toggle(LabelGroupDef group, String key, bool value) {
-    final next = {...selected};
+  Set<String> _reduce(Set<String> current, String key, bool value) {
+    final next = {...current};
+    final group = groups.firstWhere(
+      (candidate) => candidate.keys.contains(key),
+    );
     if (group.exclusive) {
       next.removeWhere(group.keys.contains);
       if (value) {
@@ -37,41 +40,44 @@ class GroupedLabelPicker extends StatelessWidget {
         next.remove(key);
       }
     }
-    onChanged(next);
+    return next;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (final group in groups) ...[
-          Text(
-            tx(group.titleKey, group.fallbackTitle),
-            style: Theme.of(context).textTheme.labelMedium,
-          ),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: group.keys.map((key) {
-              final isSelected = selected.contains(key);
-              final color = labelColor(key);
-              return ChoiceChip(
-                label: Text(tx('labels.$key', key)),
-                selected: isSelected,
-                onSelected: (value) => _toggle(group, key, value),
-                selectedColor: color.withValues(alpha: 0.9),
-                labelStyle: TextStyle(
-                  color: isSelected ? FncColors.white : null,
-                  fontWeight: isSelected ? FontWeight.w700 : null,
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 14),
+    final allowedKeys = groups.expand((group) => group.keys).toSet();
+    final selectedHere = selected.intersection(allowedKeys);
+    final outsideSelection = selected.difference(allowedKeys);
+    final label = groups.length == 1
+        ? tx(groups.first.titleKey, groups.first.fallbackTitle)
+        : tx('labels.selector_label', 'Etiquetas');
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: MultiSelectDropdown<String>(
+        labelText: label,
+        tooltip: tx('labels.selector_tooltip', 'Seleccionar etiquetas'),
+        emptyLabel: tx('labels.none', 'Ninguna'),
+        multipleSelectedLabel: (count) => tx(
+          'labels.selected_count',
+          '{count} etiquetas seleccionadas',
+        ).replaceAll('{count}', '$count'),
+        options: [
+          for (final group in groups)
+            for (final key in group.keys)
+              MultiSelectDropdownOption(
+                value: key,
+                label: tx('labels.$key', key),
+                color: labelColor(key),
+                groupLabel: groups.length > 1
+                    ? tx(group.titleKey, group.fallbackTitle)
+                    : null,
+              ),
         ],
-      ],
+        selectedValues: selectedHere,
+        selectionReducer: _reduce,
+        allowEmpty: groups.every((group) => !group.required),
+        onChanged: (next) => onChanged({...outsideSelection, ...next}),
+      ),
     );
   }
 }

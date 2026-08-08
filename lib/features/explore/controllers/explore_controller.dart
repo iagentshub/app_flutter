@@ -63,6 +63,8 @@ class ExploreController extends ChangeNotifier {
   String? get error => _error;
   String get type => _type;
   String get category => _category;
+  Set<String> get selectedLabels => Set.unmodifiable(_labels);
+  Set<String> get selectedLanguages => Set.unmodifiable(_languages);
   int typeCount(String type) => _typeCounts[type] ?? 0;
 
   bool hasLabel(String label) => _labels.contains(label);
@@ -133,6 +135,22 @@ class ExploreController extends ChangeNotifier {
     } else {
       _languages.remove(language);
     }
+    _notify();
+    return load();
+  }
+
+  Future<void> setLabels(Set<String> labels) {
+    _labels
+      ..clear()
+      ..addAll(labels);
+    _notify();
+    return load();
+  }
+
+  Future<void> setLanguages(Set<String> languages) {
+    _languages
+      ..clear()
+      ..addAll(languages);
     _notify();
     return load();
   }

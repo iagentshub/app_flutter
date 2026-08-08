@@ -30,7 +30,7 @@ class _AddTextDialogState extends State<_AddTextDialog> {
       'title': _titleController.text.trim(),
       'source': _sourceController.text.trim(),
       'content': _contentController.text.trim(),
-      'labels': ['private', ..._selectedLanguageLabels],
+      'labels': contentLabelsForScope('private', _selectedLanguageLabels),
     });
   }
 
@@ -56,11 +56,6 @@ class _AddTextDialogState extends State<_AddTextDialog> {
                 },
               ),
               const SizedBox(height: 10),
-              Text(
-                widget.tx('labels.group_language', 'Idioma del contenido'),
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 6),
               GroupedLabelPicker(
                 selected: _selectedLanguageLabels,
                 onChanged: (next) =>

@@ -32,11 +32,6 @@ extension _AgentFormSections on _AgentFormDialogState {
             ),
           ),
           const SizedBox(height: 12),
-          Text(
-            widget.tx('agents.field_labels', 'Etiquetas'),
-            style: Theme.of(context).textTheme.labelMedium,
-          ),
-          const SizedBox(height: 8),
           GroupedLabelPicker(
             selected: _selectedLabels,
             onChanged: (next) => refresh(() => _selectedLabels = next),

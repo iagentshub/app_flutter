@@ -15,6 +15,7 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/explore_search_toolbar.dart';
 import '../../../shared/widgets/label_chips_row.dart';
+import '../../../shared/widgets/multi_select_dropdown.dart';
 import '../../../shared/widgets/resource_type_badge.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
@@ -224,44 +225,52 @@ class _ExplorePageState extends State<ExplorePage>
           },
         ),
         const SizedBox(height: 12),
-        Text(
-          _tx('explore.language_label', 'Idioma'),
-          style: Theme.of(context).textTheme.labelLarge,
-        ),
-        const SizedBox(height: 6),
-        Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: kContentLanguageCodes.map((language) {
-            return FilterChip(
-              label: Text(contentLanguageLabel(_tx, language)),
-              selected: _controller.hasLanguage(language),
-              onSelected: (value) {
-                _controller.toggleLanguage(language, selected: value);
-                setDialogState(() {});
-              },
-            );
-          }).toList(),
+        MultiSelectDropdown<String>(
+          key: const Key('exploreLanguageDropdown'),
+          labelText: _tx('explore.language_label', 'Idioma'),
+          tooltip: _tx('explore.language_filter_tooltip', 'Filtrar por idioma'),
+          emptyLabel: optionAll,
+          multipleSelectedLabel: (count) => _tx(
+            'explore.languages_selected',
+            '{count} idiomas',
+          ).replaceAll('{count}', '$count'),
+          options: [
+            for (final language in kContentLanguageCodes)
+              MultiSelectDropdownOption(
+                value: language,
+                label: contentLanguageLabel(_tx, language),
+                color: labelColor(languageLabelKey(language)),
+              ),
+          ],
+          selectedValues: _controller.selectedLanguages,
+          onChanged: (values) {
+            _controller.setLanguages(values);
+            setDialogState(() {});
+          },
         ),
         const SizedBox(height: 12),
-        Text(
-          _tx('explore.label_label', 'Label'),
-          style: Theme.of(context).textTheme.labelLarge,
-        ),
-        const SizedBox(height: 6),
-        Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: _explorableLabelKeys.map((l) {
-            return FilterChip(
-              label: Text(_labelChipLabel(l)),
-              selected: _controller.hasLabel(l),
-              onSelected: (value) {
-                _controller.toggleLabel(l, selected: value);
-                setDialogState(() {});
-              },
-            );
-          }).toList(),
+        MultiSelectDropdown<String>(
+          key: const Key('exploreLabelsDropdown'),
+          labelText: _tx('explore.label_label', 'Etiqueta'),
+          tooltip: _tx('explore.label_filter_tooltip', 'Filtrar por etiquetas'),
+          emptyLabel: optionAll,
+          multipleSelectedLabel: (count) => _tx(
+            'explore.labels_selected',
+            '{count} etiquetas',
+          ).replaceAll('{count}', '$count'),
+          options: [
+            for (final label in _explorableLabelKeys)
+              MultiSelectDropdownOption(
+                value: label,
+                label: _labelChipLabel(label),
+                color: labelColor(label),
+              ),
+          ],
+          selectedValues: _controller.selectedLabels,
+          onChanged: (values) {
+            _controller.setLabels(values);
+            setDialogState(() {});
+          },
         ),
       ],
     );

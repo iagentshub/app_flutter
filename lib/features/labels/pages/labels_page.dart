@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/theme/fnc_colors.dart';
-import '../../../app/theme/fnc_fonts.dart';
 import '../../../models/agents/agent_models.dart';
 import '../../../models/knowledge/knowledge_models.dart';
 import '../../../models/prompts/prompt_models.dart';
@@ -14,6 +12,8 @@ import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
+import '../../../shared/widgets/explore_search_toolbar.dart';
+import '../../../shared/widgets/multi_select_dropdown.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../agents/repositories/agents_repository.dart';
@@ -24,7 +24,6 @@ import '../../knowledge/repositories/tools_repository.dart';
 import '../../workflows/repositories/workflows_repository.dart';
 import '../cards/label_catalog_card.dart';
 import '../cards/labeled_item_card.dart';
-import '../dialogs/labels_filter_dialog.dart';
 import '../models/labeled_item.dart';
 
 class LabelsPage extends StatefulWidget {
@@ -48,12 +47,14 @@ class _LabelsPageState extends State<LabelsPage>
   late final WorkflowsRepository _workflowsRepository;
   late final TranslatedTexts _t;
   late final TabController _tabController;
+  late final TextEditingController _queryController;
   List<LabeledItem> _all = const [];
   bool _loading = true;
   String? _error;
-  String _selectedType = 'all';
-  String _selectedLabel = '';
+  Set<String> _selectedTypes = {};
+  Set<String> _selectedLabels = {};
   String _selectedOwnership = '';
+  String _query = '';
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
@@ -67,6 +68,7 @@ class _LabelsPageState extends State<LabelsPage>
     _knowledgeRepository = KnowledgeRepository(apiClient: _services.apiClient);
     _workflowsRepository = WorkflowsRepository(apiClient: _services.apiClient);
     _tabController = TabController(length: 2, vsync: this);
+    _queryController = TextEditingController();
     _t = TranslatedTexts(
       localeController: _services.localeController,
       namespace: 'resources',
@@ -81,6 +83,7 @@ class _LabelsPageState extends State<LabelsPage>
   @override
   void dispose() {
     _tabController.dispose();
+    _queryController.dispose();
     _t.removeListener(_onTextsChanged);
     _t.dispose();
     super.dispose();
@@ -143,51 +146,43 @@ class _LabelsPageState extends State<LabelsPage>
     }
   }
 
-  void _onTypeChange(String value) {
-    setState(() => _selectedType = value);
-  }
-
-  void _applyFilter(String label) {
-    setState(() => _selectedLabel = label);
-  }
-
   List<LabeledItem> get _filtered {
+    final query = _query.trim().toLowerCase();
     return _all.where((item) {
-      if (_selectedType != 'all' && item.type != _selectedType) return false;
+      if (_selectedTypes.isNotEmpty && !_selectedTypes.contains(item.type)) {
+        return false;
+      }
       if (_selectedOwnership == 'owner' && item.shared) return false;
       if (_selectedOwnership == 'linked' && !item.shared) return false;
-      if (_selectedLabel.isNotEmpty && !item.labels.contains(_selectedLabel)) {
+      if (!_selectedLabels.every(item.labels.contains)) {
         return false;
+      }
+      if (query.isNotEmpty) {
+        final searchable = <String>[
+          item.name,
+          item.description,
+          _itemTypeLabel(item.type),
+          for (final label in item.labels) _tx('labels.$label', label),
+        ].join(' ').toLowerCase();
+        if (!searchable.contains(query)) return false;
       }
       return true;
     }).toList();
   }
 
-  Map<String, int> _labelCounts() {
-    final counts = <String, int>{};
-    for (final item in _all) {
-      if (_selectedType != 'all' && item.type != _selectedType) continue;
-      for (final label in item.labels) {
-        counts[label] = (counts[label] ?? 0) + 1;
-      }
-    }
-    return counts;
-  }
+  int get _activeFilterCount =>
+      (_selectedOwnership.isNotEmpty ? 1 : 0) + _selectedLabels.length;
 
   Map<String, int> _ownershipCounts() {
     final counts = {'owner': 0, 'linked': 0};
     for (final item in _all) {
-      if (_selectedType != 'all' && item.type != _selectedType) continue;
+      if (_selectedTypes.isNotEmpty && !_selectedTypes.contains(item.type)) {
+        continue;
+      }
       final key = item.shared ? 'linked' : 'owner';
       counts[key] = (counts[key] ?? 0) + 1;
     }
     return counts;
-  }
-
-  void _applyOwnership(String value) {
-    setState(
-      () => _selectedOwnership = _selectedOwnership == value ? '' : value,
-    );
   }
 
   String _itemTypeLabel(String type) {
@@ -209,48 +204,147 @@ class _LabelsPageState extends State<LabelsPage>
     }
   }
 
-  List<DropdownMenuItem<String>> get _typeOptions => [
-    DropdownMenuItem(
-      value: 'all',
-      child: Text(_tx('explore.type_all', 'Todos')),
-    ),
-    DropdownMenuItem(
-      value: 'agent',
-      child: Text(_tx('explore.type_agents', 'Agentes')),
-    ),
-    DropdownMenuItem(
-      value: 'skill',
-      child: Text(_tx('explore.type_skills', 'Skills')),
-    ),
-    DropdownMenuItem(
-      value: 'prompt',
-      child: Text(_tx('explore.type_prompts', 'Prompts')),
-    ),
-    DropdownMenuItem(
-      value: 'tool',
-      child: Text(_tx('explore.type_tools', 'Herramientas')),
-    ),
-    DropdownMenuItem(
-      value: 'knowledge',
-      child: Text(_tx('explore.type_knowledge', 'Knowledge')),
-    ),
-    DropdownMenuItem(
-      value: 'workflow',
-      child: Text(_tx('explore.type_workflows', 'Workflows')),
-    ),
-  ];
+  List<ExploreTypeOption> get _typeOptions {
+    final counts = <String, int>{};
+    for (final item in _all) {
+      counts[item.type] = (counts[item.type] ?? 0) + 1;
+    }
+    return [
+      _typeOption(
+        'agent',
+        _tx('explore.type_agents', 'Agentes'),
+        Icons.smart_toy_outlined,
+        counts,
+      ),
+      _typeOption(
+        'skill',
+        _tx('explore.type_skills', 'Skills'),
+        Icons.bolt_outlined,
+        counts,
+      ),
+      _typeOption(
+        'prompt',
+        _tx('explore.type_prompts', 'Prompts'),
+        Icons.chat_bubble_outline,
+        counts,
+      ),
+      _typeOption(
+        'tool',
+        _tx('explore.type_tools', 'Herramientas'),
+        Icons.build_outlined,
+        counts,
+      ),
+      _typeOption(
+        'knowledge',
+        _tx('explore.type_knowledge', 'Knowledge'),
+        Icons.menu_book_outlined,
+        counts,
+      ),
+      _typeOption(
+        'workflow',
+        _tx('explore.type_workflows', 'Workflows'),
+        Icons.account_tree_outlined,
+        counts,
+      ),
+    ];
+  }
+
+  ExploreTypeOption _typeOption(
+    String value,
+    String label,
+    IconData icon,
+    Map<String, int> counts,
+  ) => ExploreTypeOption(
+    value: value,
+    label: label,
+    icon: icon,
+    color: labelColor(value),
+    count: counts[value] ?? 0,
+  );
+
+  List<(String, String)> get _ownershipOptions {
+    final counts = _ownershipCounts();
+    return [
+      ('', _tx('labels.all_ownership', 'Cualquier propiedad')),
+      (
+        'owner',
+        '${_tx('labels.owner', 'Propietario')} (${counts['owner'] ?? 0})',
+      ),
+      (
+        'linked',
+        '${_tx('labels.linked', 'Enlazado')} (${counts['linked'] ?? 0})',
+      ),
+    ];
+  }
+
+  List<MultiSelectDropdownOption<String>> get _labelOptions {
+    final counts = <String, int>{};
+    for (final item in _all) {
+      for (final label in item.labels) {
+        counts[label] = (counts[label] ?? 0) + 1;
+      }
+    }
+    final entries = counts.entries.toList()
+      ..sort(
+        (a, b) => _tx(
+          'labels.${a.key}',
+          a.key,
+        ).compareTo(_tx('labels.${b.key}', b.key)),
+      );
+    return [
+      for (final entry in entries)
+        MultiSelectDropdownOption(
+          value: entry.key,
+          label: _tx('labels.${entry.key}', entry.key),
+          color: labelColor(entry.key),
+          count: entry.value,
+        ),
+    ];
+  }
+
+  void _clearFilters() {
+    setState(() {
+      _selectedOwnership = '';
+      _selectedLabels = {};
+    });
+  }
 
   void _openFiltersDialog() {
-    showLabelsFilterDialog(
+    showFilterDialog(
       context,
       title: _tx('common.filters', 'Filtros'),
       clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
       closeLabel: _tx('common.close', 'Cerrar'),
-      typeLabel: _tx('labels.type_label', 'Tipo de recurso'),
-      selectedType: _selectedType,
-      typeOptions: _typeOptions,
-      onTypeChanged: _onTypeChange,
-      onClear: () => _onTypeChange('all'),
+      onClear: _clearFilters,
+      buildFields: (setDialogState) => [
+        FilterDropdown(
+          key: ValueKey('labels-ownership-$_selectedOwnership'),
+          label: _tx('labels.ownership_filter', 'Propiedad'),
+          value: _selectedOwnership,
+          options: _ownershipOptions,
+          onChanged: (value) {
+            setState(() => _selectedOwnership = value);
+            setDialogState(() {});
+          },
+        ),
+        const SizedBox(height: 16),
+        MultiSelectDropdown<String>(
+          key: const Key('labelsLabelDropdown'),
+          labelText: _tx('labels.label_filter', 'Etiqueta'),
+          tooltip: _tx('labels.selector_tooltip', 'Seleccionar etiquetas'),
+          emptyLabel: _tx('labels.all_labels', 'Todas las etiquetas'),
+          multipleSelectedLabel: (count) => _tx(
+            'labels.selected_count',
+            '{count} etiquetas seleccionadas',
+          ).replaceAll('{count}', '$count'),
+          options: _labelOptions,
+          selectedValues: _selectedLabels,
+          onChanged: (values) {
+            setState(() => _selectedLabels = values);
+            setDialogState(() {});
+          },
+        ),
+      ],
     );
   }
 
@@ -276,182 +370,105 @@ class _LabelsPageState extends State<LabelsPage>
   }
 
   Widget _buildSearchTab(BuildContext context) {
-    final labelCounts = _labelCounts();
-    final labels = labelCounts.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    final ownershipCounts = _ownershipCounts();
     final filtered = _filtered;
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          child: Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Wrap(
-                spacing: 12,
-                runSpacing: 10,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
+    return RefreshIndicator(
+      onRefresh: _loadBase,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            sliver: SliverToBoxAdapter(
+              child: ExploreSearchToolbar(
+                searchController: _queryController,
+                searchHint: _tx(
+                  'labels.search_hint',
+                  'Buscar por nombre, descripción o etiqueta',
+                ),
+                onSearchChanged: (value) => setState(() => _query = value),
+                typeOptions: _typeOptions,
+                selectedTypes: _selectedTypes,
+                allTypesLabel: _tx('explore.type_all', 'Todos'),
+                typeFilterTooltip: _tx(
+                  'labels.type_filter_tooltip',
+                  'Filtrar por tipo de recurso',
+                ),
+                multipleTypesLabel: (count) => _tx(
+                  'labels.types_selected',
+                  '{count} tipos',
+                ).replaceAll('{count}', '$count'),
+                onTypesChanged: (values) =>
+                    setState(() => _selectedTypes = values),
+                selectorKey: const Key('labelsTypeDropdown'),
+                actions: [
+                  AppIconButton.outlined(
+                    onPressed: _loadBase,
+                    icon: const Icon(Icons.refresh),
+                    tooltip: _tx('common.update', 'Actualizar'),
+                  ),
                   FilterButton(
-                    activeCount: _selectedType != 'all' ? 1 : 0,
+                    activeCount: _activeFilterCount,
                     tooltip: _tx('common.filters', 'Filtros'),
                     onPressed: _openFiltersDialog,
-                  ),
-                  Text(
-                    '${_tx('labels.active_label', 'Label activo')}: ${_selectedLabel.isEmpty ? _tx('labels.none', '- ninguno -') : _tx('labels.$_selectedLabel', _selectedLabel)}',
-                  ),
-                  TertiaryButton.icon(
-                    onPressed: () => setState(() {
-                      _selectedLabel = '';
-                      _selectedOwnership = '';
-                    }),
-                    icon: const Icon(Icons.clear_all, size: 18),
-                    label: Text(_tx('labels.clear', 'Limpiar')),
                   ),
                 ],
               ),
             ),
           ),
-        ),
-        Expanded(
-          child: _loading
-              ? const Center(child: CircularProgressIndicator())
-              : RefreshIndicator(
-                  onRefresh: _loadBase,
-                  child: CustomScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    slivers: [
-                      SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
-                        sliver: SliverToBoxAdapter(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _tx('labels.group_ownership', 'Propiedad'),
-                                style: const TextStyle(
-                                  fontSize: FncFonts.size18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: kOwnershipGroup.keys.map((key) {
-                                  final selected = _selectedOwnership == key;
-                                  final count = ownershipCounts[key] ?? 0;
-                                  return ChoiceChip(
-                                    label: Text(
-                                      '${_tx('labels.$key', key)} ($count)',
-                                    ),
-                                    selected: selected,
-                                    selectedColor: labelColor(
-                                      key,
-                                    ).withValues(alpha: 0.9),
-                                    labelStyle: TextStyle(
-                                      color: selected ? FncColors.white : null,
-                                      fontWeight: selected
-                                          ? FontWeight.w700
-                                          : null,
-                                    ),
-                                    onSelected: (_) => _applyOwnership(key),
-                                  );
-                                }).toList(),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                _tx('labels.detected', 'Etiquetas detectadas'),
-                                style: const TextStyle(
-                                  fontSize: FncFonts.size18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              if (labels.isEmpty)
-                                Text(
-                                  _tx(
-                                    'labels.empty_detected',
-                                    'No hay etiquetas disponibles',
-                                  ),
-                                )
-                              else
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: labels.map((entry) {
-                                    final selected =
-                                        _selectedLabel == entry.key;
-                                    return ChoiceChip(
-                                      label: Text(
-                                        '${_tx('labels.${entry.key}', entry.key)} (${entry.value})',
-                                      ),
-                                      selected: selected,
-                                      onSelected: (_) => _applyFilter(
-                                        selected ? '' : entry.key,
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                              const SizedBox(height: 16),
-                              Text(
-                                '${_tx('labels.resources', 'Recursos')}: ${filtered.length}',
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      if (filtered.isEmpty)
-                        SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                          sliver: SliverToBoxAdapter(
-                            child: Card(
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Text(
-                                  _tx(
-                                    'labels.empty_resources',
-                                    'No hay recursos para este label/filtro.',
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        )
-                      else
-                        SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                          sliver: ResponsiveSliverMasonryGrid(
-                            itemCount: filtered.length,
-                            itemBuilder: (context, index) {
-                              final item = filtered[index];
-                              return LabeledItemCard(
-                                item: item,
-                                typeLabel: _itemTypeLabel(item.type),
-                                ownerLabel: _tx('common.owner', 'Propietario'),
-                                linkedLabel: _tx('common.linked', 'Enlazado'),
-                                labelText: (label) =>
-                                    _tx('labels.$label', label),
-                                onTap: () => showMessage(
-                                  item.description.isEmpty
-                                      ? _tx(
-                                          'labels.no_description',
-                                          'Sin descripción',
-                                        )
-                                      : item.description,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                    ],
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            sliver: SliverToBoxAdapter(
+              child: Text(
+                '${_tx('labels.resources', 'Recursos')}: ${filtered.length}',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+          ),
+          if (_loading)
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (filtered.isEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              sliver: SliverToBoxAdapter(
+                child: AsyncStatePanel.empty(
+                  padding: EdgeInsets.zero,
+                  icon: Icons.search_off,
+                  title: _tx('labels.empty_title', 'Sin resultados'),
+                  message: _tx(
+                    'labels.empty_resources',
+                    'No hay recursos para esta búsqueda o estos filtros.',
                   ),
                 ),
-        ),
-      ],
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              sliver: ResponsiveSliverMasonryGrid(
+                itemCount: filtered.length,
+                itemBuilder: (context, index) {
+                  final item = filtered[index];
+                  return LabeledItemCard(
+                    item: item,
+                    typeLabel: _itemTypeLabel(item.type),
+                    ownerLabel: _tx('common.owner', 'Propietario'),
+                    linkedLabel: _tx('common.linked', 'Enlazado'),
+                    labelText: (label) => _tx('labels.$label', label),
+                    onTap: () => showMessage(
+                      item.description.isEmpty
+                          ? _tx('labels.no_description', 'Sin descripción')
+                          : item.description,
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
     );
   }
 

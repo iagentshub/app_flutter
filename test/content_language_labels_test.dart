@@ -1,5 +1,6 @@
 import 'package:app_flutter/shared/labels/label_catalog.dart';
 import 'package:app_flutter/shared/widgets/grouped_label_picker.dart';
+import 'package:app_flutter/shared/widgets/multi_select_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -18,6 +19,11 @@ void main() {
     expect(kLabelKeys, containsAll(['lang_es', 'lang_en']));
     expect(languageCodeFromLabel('lang_es'), 'es');
     expect(contentLanguageLabel(_tx, 'en'), 'Inglés');
+    expect(contentLabelsForScope('private', ['lang_en', 'basura', 'lang_es']), [
+      'private',
+      'lang_es',
+      'lang_en',
+    ]);
   });
 
   testWidgets('el selector permite marcar más de un idioma', (tester) async {
@@ -37,11 +43,43 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Español'));
+    expect(find.byType(MultiSelectDropdown<String>), findsOneWidget);
+    await tester.tap(find.byType(MultiSelectDropdown<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(CheckboxListTile, 'Español'));
     await tester.pump();
-    await tester.tap(find.text('Inglés'));
+    await tester.tap(find.widgetWithText(CheckboxListTile, 'Inglés'));
     await tester.pump();
 
     expect(selected, {'lang_es', 'lang_en'});
+  });
+
+  testWidgets('el selector agrupa labels y respeta exclusividad', (
+    tester,
+  ) async {
+    var selected = <String>{'private'};
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: StatefulBuilder(
+            builder: (context, setState) => GroupedLabelPicker(
+              selected: selected,
+              onChanged: (next) => setState(() => selected = next),
+              tx: _tx,
+              groups: kOperationalLabelGroups,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.byType(MultiSelectDropdown<String>), findsOneWidget);
+    await tester.tap(find.byType(MultiSelectDropdown<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(CheckboxListTile, 'public'));
+    await tester.pump();
+
+    expect(selected, contains('public'));
+    expect(selected, isNot(contains('private')));
   });
 }

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../../../core/network/api_repository.dart';
 import '../../../models/knowledge/knowledge_models.dart';
 
@@ -78,12 +80,14 @@ class KnowledgeRepository extends ApiRepository {
     String token, {
     required String fileName,
     required List<int> fileBytes,
+    List<String> labels = const ['private'],
   }) async {
     final response = await apiClient.postMultipart(
       '/api/knowledge/document',
       fieldName: 'file',
       fileName: fileName,
       fileBytes: fileBytes,
+      fields: {'labels': jsonEncode(labels)},
       gaToken: token,
     );
     return response.json;

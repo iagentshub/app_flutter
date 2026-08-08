@@ -45,6 +45,7 @@ part '../controllers/prompt_actions.dart';
 part '../controllers/tool_actions.dart';
 part '../dialogs/add_text_dialog.dart';
 part '../dialogs/add_url_dialog.dart';
+part '../dialogs/content_language_dialog.dart';
 part '../dialogs/prompt_form_dialog.dart';
 part '../dialogs/skill_form_dialog.dart';
 part '../dialogs/tool_form_dialog.dart';

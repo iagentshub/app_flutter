@@ -93,9 +93,11 @@ void main() {
     filterButton.onPressed?.call();
     await tester.pumpAndSettle();
     expect(find.text('Idioma'), findsOneWidget);
-    expect(find.text('Español'), findsOneWidget);
+    expect(find.text('Español'), findsNothing);
 
-    await tester.tap(find.text('Español'));
+    await tester.tap(find.byKey(const Key('exploreLanguageDropdown')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(CheckboxListTile, 'Español'));
     await tester.pumpAndSettle();
     expect(requestedLanguages, ['es']);
   });

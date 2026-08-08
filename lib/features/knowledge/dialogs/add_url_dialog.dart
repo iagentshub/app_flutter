@@ -27,7 +27,7 @@ class _AddUrlDialogState extends State<_AddUrlDialog> {
     Navigator.of(context).pop({
       'url': _urlController.text.trim(),
       'title': _titleController.text.trim(),
-      'labels': ['private', ..._selectedLanguageLabels],
+      'labels': contentLabelsForScope('private', _selectedLanguageLabels),
     });
   }
 
@@ -56,11 +56,6 @@ class _AddUrlDialogState extends State<_AddUrlDialog> {
                 },
               ),
               const SizedBox(height: 10),
-              Text(
-                widget.tx('labels.group_language', 'Idioma del contenido'),
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 6),
               GroupedLabelPicker(
                 selected: _selectedLanguageLabels,
                 onChanged: (next) =>

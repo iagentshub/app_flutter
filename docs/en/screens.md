@@ -54,7 +54,7 @@ Each has its English twin under the `/en` prefix.
 | Memory | `/memory` | What the agents remember |
 | Knowledge | `/knowledge` | Documents and skills the agents consult |
 | Explore | `/explore` | Community resources with type, category, language, and label filters |
-| Labels | `/labels` | Catalog and search for labels on your own resources, including content language |
+| Labels | `/labels` | Collapsible catalog and search for labels on your own resources through the shared toolbar and filter dialog, including content language |
 | Manager | `/manager` | Workspaces, groups and invitations |
 | Profile | `/profile` | Account, preferences and language |
 
@@ -62,11 +62,13 @@ The dashboard lets you reorder its blocks: once edit mode is on, the layout is s
 
 Agents have their own conversation view, available once the agent has a connection assigned.
 
-Textual resources accept zero or more optional content languages. The language
-selector is available when editing agents, skills, prompts, Knowledge text or
-URLs, and workflows. Selecting none means that language does not apply or was
-not declared. Tools keep their programming language (Python, Shell, or C++)
-separate from content language.
+Textual resources accept zero or more optional content languages. The compact
+multi-select is available when editing agents, skills, prompts, Knowledge text,
+URLs or documents, and workflows. Selecting none means that language does not
+apply or was not declared. Tools keep their programming language (Python,
+Shell, or C++) separate from content language. Explore and Labels reuse the
+Admin type dropdown and render multiple filters as dropdowns instead of rows of
+buttons.
 
 ---
 

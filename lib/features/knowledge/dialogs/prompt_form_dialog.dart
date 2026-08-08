@@ -78,7 +78,7 @@ class _PromptFormDialogState extends State<_PromptFormDialog> {
       'description': _descriptionController.text.trim(),
       'content': _contentController.text.trim(),
       'scope': _scope,
-      'labels': [_scope, ..._selectedLanguageLabels],
+      'labels': contentLabelsForScope(_scope, _selectedLanguageLabels),
     };
     if (widget.initial?['id'] != null) payload['id'] = widget.initial!['id'];
     Navigator.of(context).pop(payload);
@@ -109,11 +109,6 @@ class _PromptFormDialogState extends State<_PromptFormDialog> {
                     : null,
               ),
               const SizedBox(height: 10),
-              Text(
-                _tx('labels.group_language', 'Idioma del contenido'),
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 6),
               GroupedLabelPicker(
                 selected: _selectedLanguageLabels,
                 onChanged: (next) =>

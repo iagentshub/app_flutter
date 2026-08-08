@@ -203,16 +203,6 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
     Navigator.of(context).pop(payload);
   }
 
-  Widget _buildLanguageChip(String language) {
-    final selected = _language == language;
-    return ChoiceChip(
-      avatar: Icon(toolLanguageIcon(language), size: 16),
-      label: Text(toolLanguageLabel(_tx, language)),
-      selected: selected,
-      onSelected: (_) => _selectLanguage(language),
-    );
-  }
-
   Widget _buildFileDropZone(BuildContext context) {
     final theme = Theme.of(context);
     final displayName = _pickedFileName ?? _existingBinaryFilename;
@@ -332,30 +322,34 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
                 ),
               ),
               const SizedBox(height: 10),
-              Text(
-                _tx('agents.field_labels', 'Etiquetas'),
-                style: Theme.of(context).textTheme.labelMedium,
-              ),
-              const SizedBox(height: 6),
               GroupedLabelPicker(
                 selected: _selectedLabels,
                 onChanged: (next) => setState(() => _selectedLabels = next),
                 tx: widget.tx,
                 groups: kOperationalLabelGroups,
               ),
-              Text(
-                _tx('knowledge.field_language', 'Lenguaje'),
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  _buildLanguageChip('python'),
-                  _buildLanguageChip('shell'),
-                  _buildLanguageChip('cpp'),
+              DropdownButtonFormField<String>(
+                initialValue: _language,
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: _tx('knowledge.field_language', 'Lenguaje'),
+                ),
+                items: [
+                  for (final language in ['python', 'shell', 'cpp'])
+                    DropdownMenuItem(
+                      value: language,
+                      child: Row(
+                        children: [
+                          Icon(toolLanguageIcon(language), size: 16),
+                          const SizedBox(width: 8),
+                          Text(toolLanguageLabel(_tx, language)),
+                        ],
+                      ),
+                    ),
                 ],
+                onChanged: (value) {
+                  if (value != null) _selectLanguage(value);
+                },
               ),
               const SizedBox(height: 10),
               _buildFileDropZone(context),

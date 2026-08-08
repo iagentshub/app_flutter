@@ -407,12 +407,17 @@ extension _KnowledgeActions on _KnowledgePageState {
       return;
     }
 
+    if (!mounted) return;
+    final languageLabels = await _showContentLanguageDialog(context, tx: _tx);
+    if (languageLabels == null || !mounted) return;
+
     refresh(() => _uploading = true);
     try {
       await _repository.uploadDocument(
         token,
         fileName: file.name,
         fileBytes: bytes,
+        labels: contentLabelsForScope('private', languageLabels),
       );
       showMessage(
         _tx(
