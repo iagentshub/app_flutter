@@ -2,7 +2,7 @@ part of '../pages/manager_page.dart';
 
 extension _ManagerGroupCard on _ManagerPageState {
   Widget _buildGroupCard(GroupItem item) {
-    final switching = _switchingGroupId == item.id;
+    final switching = _controller.isSwitching(item);
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
@@ -36,7 +36,7 @@ extension _ManagerGroupCard on _ManagerPageState {
                 SecondaryButton.icon(
                   onPressed: item.active || switching
                       ? null
-                      : () => _switchGroup(item),
+                      : () => _runAction(_controller.switchGroup(item)),
                   icon: const Icon(Icons.swap_horiz_outlined),
                   label: Text(
                     switching

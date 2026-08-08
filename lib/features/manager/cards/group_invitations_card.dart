@@ -2,8 +2,7 @@ part of '../pages/manager_page.dart';
 
 extension _ManagerInvitationsCard on _ManagerPageState {
   Widget _buildInvitationsCard() {
-    final active = _activeGroup;
-    final canManage = active != null && !active.isPersonal;
+    final canManage = _controller.canManageMembers;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -25,7 +24,7 @@ extension _ManagerInvitationsCard on _ManagerPageState {
                   'Activa un grupo compartido para gestionar invitaciones.',
                 ),
               )
-            else if (_invitations.isEmpty)
+            else if (_controller.invitations.isEmpty)
               Text(
                 _tx(
                   'manager.empty_invitations',
@@ -33,7 +32,7 @@ extension _ManagerInvitationsCard on _ManagerPageState {
                 ),
               )
             else
-              ..._invitations.map((inv) {
+              ..._controller.invitations.map((inv) {
                 final id = (inv['id'] ?? '').toString();
                 final username = (inv['username'] ?? inv['to_username'] ?? '')
                     .toString();
@@ -48,7 +47,8 @@ extension _ManagerInvitationsCard on _ManagerPageState {
                     icon: Icons.close,
                     tooltip: _tx('common.cancel', 'Cancelar'),
                     danger: true,
-                    onPressed: () => _cancelInvitation(id),
+                    onPressed: () =>
+                        _runAction(_controller.cancelInvitation(id)),
                   ),
                 );
               }),
