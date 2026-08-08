@@ -1,5 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:app_flutter/core/config/backend_url.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 // ── Tabla compartida con la extensión de VS Code ──────────────────────────────
 // Los MISMOS casos están en vs_code/src/test/url.test.ts. Si los dos clientes

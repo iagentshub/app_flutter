@@ -1,5 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:app_flutter/utils/validators.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('validators email', () {

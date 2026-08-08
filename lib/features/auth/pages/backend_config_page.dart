@@ -4,12 +4,11 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
-import '../../../shared/widgets/buttons/app_buttons.dart';
-import '../../../shared/widgets/confirm_action_dialog.dart';
-
 import '../../../shared/i18n/locale_loader.dart';
 import '../../../shared/state/backend_controller.dart';
 import '../../../shared/state/locale_controller.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/status_dot.dart';
 

@@ -1,18 +1,31 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
-import '../../../shared/widgets/buttons/app_buttons.dart';
-import '../../../shared/widgets/async_state_panel.dart';
-
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/agents/agent_models.dart';
+import '../../../models/connections/connection_models.dart';
 import '../../../models/explore/explore_models.dart';
 import '../../../models/knowledge/knowledge_models.dart';
 import '../../../models/prompts/prompt_models.dart';
 import '../../../models/skills/skill_models.dart';
 import '../../../models/tools/tool_models.dart';
-import '../../../models/connections/connection_models.dart';
+import '../../../shared/i18n/translated_texts.dart';
+import '../../../shared/state/locale_controller.dart';
+import '../../../shared/state/session_controller.dart';
+import '../../../shared/utils/debouncer.dart';
+import '../../../shared/utils/memoized.dart';
+import '../../../shared/widgets/async_state_panel.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/buttons/filter_button.dart';
+import '../../../shared/widgets/confirm_action_dialog.dart';
+import '../../../shared/widgets/group_filter_panel.dart';
+import '../../../shared/widgets/resource_history_dialog.dart';
+import '../../../shared/widgets/resource_toolbar.dart';
+import '../../../shared/widgets/responsive_dialog.dart';
+import '../../../shared/widgets/responsive_masonry_grid.dart';
+import '../../../shared/widgets/share_to_group_dialog.dart';
+import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../connections/repositories/connections_repository.dart';
 import '../../explore/repositories/explore_repository.dart';
 import '../../knowledge/repositories/knowledge_repository.dart';
@@ -20,22 +33,9 @@ import '../../knowledge/repositories/prompts_repository.dart';
 import '../../knowledge/repositories/skills_repository.dart';
 import '../../knowledge/repositories/tools_repository.dart';
 import '../cards/agent_card.dart';
-import '../repositories/agents_repository.dart';
 import '../dialogs/agent_form_dialog.dart';
-import '../../../shared/i18n/translated_texts.dart';
-import '../../../shared/state/locale_controller.dart';
-import '../../../shared/state/session_controller.dart';
-import '../../../shared/utils/debouncer.dart';
-import '../../../shared/widgets/buttons/filter_button.dart';
-import '../../../shared/widgets/confirm_action_dialog.dart';
-import '../../../shared/widgets/group_filter_panel.dart';
-import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../repositories/agents_repository.dart';
 import 'agent_builder_page.dart';
-import '../../../shared/widgets/resource_history_dialog.dart';
-import '../../../shared/widgets/responsive_dialog.dart';
-import '../../../shared/widgets/responsive_masonry_grid.dart';
-import '../../../shared/widgets/resource_toolbar.dart';
-import '../../../shared/widgets/share_to_group_dialog.dart';
 import 'chat_page.dart';
 
 part '../dialogs/public_agent_picker_dialog.dart';
@@ -98,19 +98,24 @@ class _AgentsPageState extends State<AgentsPage> with StateMessaging {
       (_agentType != 'all' ? 1 : 0) +
       (_memory != 'all' ? 1 : 0);
 
-  List<AgentItem> get _filteredAgents {
-    final query = _query.trim().toLowerCase();
-    return _agents.where((item) {
-      if (_scope != 'all' && item.scope != _scope) return false;
-      if (_agentType != 'all' && item.agentType != _agentType) return false;
-      if (_memory == 'with' && !item.useMemory) return false;
-      if (_memory == 'without' && item.useMemory) return false;
-      if (query.isEmpty) return true;
-      return item.name.toLowerCase().contains(query) ||
-          item.agentType.toLowerCase().contains(query) ||
-          item.model.toLowerCase().contains(query);
-    }).toList();
-  }
+  final _filteredAgentsMemo = Memoized<List<AgentItem>>();
+
+  List<AgentItem> get _filteredAgents => _filteredAgentsMemo.of(
+    [_agents, _scope, _agentType, _memory, _query],
+    () {
+      final query = _query.trim().toLowerCase();
+      return _agents.where((item) {
+        if (_scope != 'all' && item.scope != _scope) return false;
+        if (_agentType != 'all' && item.agentType != _agentType) return false;
+        if (_memory == 'with' && !item.useMemory) return false;
+        if (_memory == 'without' && item.useMemory) return false;
+        if (query.isEmpty) return true;
+        return item.name.toLowerCase().contains(query) ||
+            item.agentType.toLowerCase().contains(query) ||
+            item.model.toLowerCase().contains(query);
+      }).toList();
+    },
+  );
 
   void _openFiltersDialog() {
     final optionAll = _tx('explore.option_all', 'Todas');

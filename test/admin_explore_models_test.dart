@@ -1,5 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:app_flutter/models/admin/admin_explore_models.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('decodes the discriminated admin inventory and its counters', () {

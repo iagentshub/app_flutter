@@ -1,6 +1,6 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:app_flutter/models/agents/agent_models.dart';
 import 'package:app_flutter/models/skills/skill_models.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('ResourceItem.isActive', () {

@@ -2,8 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-import '../../../shared/widgets/buttons/app_buttons.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -14,16 +12,17 @@ import '../../../core/network/api_error.dart';
 import '../../../core/storage/local_store.dart';
 import '../../../models/github/github_device_flow.dart';
 import '../../../shared/i18n/locale_loader.dart';
-import '../repositories/auth_repository.dart';
 import '../../../shared/state/backend_controller.dart';
 import '../../../shared/state/boot_platform_cache.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/state/theme_controller.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../../utils/safe_redirect.dart';
 import '../../../utils/validators.dart';
+import '../repositories/auth_repository.dart';
 
 part '../widgets/login_form.dart';
 part '../widgets/login_github_dialog.dart';

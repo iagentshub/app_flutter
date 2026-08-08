@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
-import '../../../shared/widgets/buttons/app_buttons.dart';
-
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../features/connections/repositories/connections_repository.dart';
@@ -16,22 +14,23 @@ import '../../../models/chat/chat_models.dart';
 import '../../../models/connections/connection_models.dart';
 import '../../../models/knowledge/knowledge_models.dart';
 import '../../../models/prompts/prompt_models.dart';
-import '../repositories/agents_repository.dart';
-import '../repositories/chat_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/scroll_to_end.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../repositories/agents_repository.dart';
+import '../repositories/chat_repository.dart';
 import '../widgets/chat_composer.dart';
 import '../widgets/chat_history_panel.dart';
 import '../widgets/chat_message_list.dart';
 
-part 'chat_conversations.dart';
-part 'chat_streaming.dart';
 part '../dialogs/connection_preference_dialog.dart';
 part '../widgets/chat_mention_overlay.dart';
+part 'chat_conversations.dart';
+part 'chat_streaming.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({

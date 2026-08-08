@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
-import '../../../shared/widgets/buttons/app_buttons.dart';
-
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
-import '../repositories/metadata_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../repositories/metadata_repository.dart';
 import 'logs_page.dart';
 
 part '../dialogs/table_data_dialog.dart';

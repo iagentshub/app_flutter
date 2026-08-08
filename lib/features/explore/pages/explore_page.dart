@@ -2,22 +2,18 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
-import '../../../shared/widgets/buttons/app_buttons.dart';
-
 import '../../../app/router/router.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_client.dart';
 import '../../../models/explore/explore_models.dart';
-import '../../manager/repositories/manager_repository.dart';
-import '../controllers/explore_controller.dart';
-import '../repositories/explore_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/action_result.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/explore_search_toolbar.dart';
 import '../../../shared/widgets/label_chips_row.dart';
@@ -25,10 +21,13 @@ import '../../../shared/widgets/resource_type_badge.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../../manager/repositories/manager_repository.dart';
+import '../controllers/explore_controller.dart';
+import '../repositories/explore_repository.dart';
 
-part '../dialogs/preview_dialog.dart';
 part '../cards/explore_resource_card.dart';
 part '../cards/explore_user_card.dart';
+part '../dialogs/preview_dialog.dart';
 part '../widgets/explore_collection_views.dart';
 
 class ExplorePage extends StatefulWidget {

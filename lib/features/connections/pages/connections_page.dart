@@ -1,27 +1,26 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
-import '../../../shared/widgets/buttons/app_buttons.dart';
-import '../../../shared/widgets/async_state_panel.dart';
-
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/connections/connection_models.dart';
-import '../cards/connection_card.dart';
-import '../repositories/connections_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/debouncer.dart';
+import '../../../shared/widgets/async_state_panel.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
+import '../../../shared/widgets/resource_toolbar.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
-import '../../../shared/widgets/resource_toolbar.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../../shared/widgets/status_dot.dart';
+import '../cards/connection_card.dart';
+import '../repositories/connections_repository.dart';
 
 part '../dialogs/connection_form_dialog.dart';
 part '../widgets/connections_page_view.dart';

@@ -5,14 +5,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart' show ImageProvider, NetworkImage;
 import 'package:http/http.dart' as http;
 
+import '../../shared/state/backend_controller.dart';
 import '../config/backend_defaults.dart';
 import 'api_error.dart';
 import 'api_response.dart';
 import 'api_response_cache.dart';
-import 'bounded_line_transformer.dart';
 import 'api_uri.dart';
+import 'bounded_line_transformer.dart';
 import 'http_client_factory.dart';
-import '../../shared/state/backend_controller.dart';
 
 export 'api_response.dart';
 

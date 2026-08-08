@@ -1,12 +1,12 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app_flutter/app/router/internal_router.dart';
 import 'package:app_flutter/shared/services/native_app_icon_service.dart';
 import 'package:app_flutter/shared/state/brand_icon_controller.dart';
 import 'package:app_flutter/shared/widgets/app_shell.dart';
 import 'package:app_flutter/shared/widgets/brand_icon.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

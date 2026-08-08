@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
 import '../../../core/network/api_client.dart';
-import '../repositories/centinel_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
+import '../repositories/centinel_repository.dart';
 import '../widgets/centinel_functional_tab.dart';
 import '../widgets/centinel_probe_tab.dart';
 import '../widgets/centinel_stress_tab.dart';

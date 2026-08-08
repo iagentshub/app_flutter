@@ -194,7 +194,7 @@ class LlmOrchestrationCard extends StatelessWidget {
       ),
     );
 
-    return item.isActive ? card : Opacity(opacity: 0.6, child: card);
+    return item.isActive ? card : dimmedWhenInactive(context, card);
   }
 
   /// Con el blanco táctil a 48 px, las cuatro acciones más el badge de origen

@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:app_flutter/features/agents/widgets/agent_builder_chat_panel.dart';
 import 'package:app_flutter/models/chat/chat_models.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   late TextEditingController textController;

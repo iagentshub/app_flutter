@@ -2,12 +2,29 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
-import '../../../shared/widgets/buttons/app_buttons.dart';
-import '../../../shared/widgets/async_state_panel.dart';
-
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/admin/admin_explore_models.dart';
+import '../../../shared/graph/graph_dialog.dart';
+import '../../../shared/i18n/translated_texts.dart';
+import '../../../shared/labels/label_catalog.dart';
+import '../../../shared/state/locale_controller.dart';
+import '../../../shared/state/session_controller.dart';
+import '../../../shared/state/theme_controller.dart';
+import '../../../shared/utils/debouncer.dart';
+import '../../../shared/utils/memoized.dart';
+import '../../../shared/widgets/async_state_panel.dart';
+import '../../../shared/widgets/buttons/action_icon_button.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/buttons/filter_button.dart';
+import '../../../shared/widgets/confirm_action_dialog.dart';
+import '../../../shared/widgets/explore_search_toolbar.dart';
+import '../../../shared/widgets/kpi/kpi_hero_card.dart';
+import '../../../shared/widgets/kpi/kpi_tile.dart';
+import '../../../shared/widgets/responsive_dialog.dart';
+import '../../../shared/widgets/responsive_masonry_grid.dart';
+import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../../../utils/validators.dart';
 import '../repositories/admin_agents_repository.dart';
 import '../repositories/admin_connections_repository.dart';
 import '../repositories/admin_groups_repository.dart';
@@ -16,36 +33,19 @@ import '../repositories/admin_platform_repository.dart';
 import '../repositories/admin_resources_repository.dart';
 import '../repositories/admin_stats_repository.dart';
 import '../repositories/admin_users_repository.dart';
-import '../../../shared/graph/graph_dialog.dart';
-import '../../../shared/i18n/translated_texts.dart';
-import '../../../shared/labels/label_catalog.dart';
-import '../../../shared/state/locale_controller.dart';
-import '../../../shared/state/session_controller.dart';
-import '../../../shared/state/theme_controller.dart';
-import '../../../shared/utils/debouncer.dart';
-import '../../../shared/widgets/buttons/action_icon_button.dart';
-import '../../../shared/widgets/buttons/filter_button.dart';
-import '../../../shared/widgets/confirm_action_dialog.dart';
-import '../../../shared/widgets/explore_search_toolbar.dart';
-import '../../../shared/widgets/responsive_dialog.dart';
-import '../../../shared/widgets/kpi/kpi_hero_card.dart';
-import '../../../shared/widgets/kpi/kpi_tile.dart';
-import '../../../shared/widgets/responsive_masonry_grid.dart';
-import '../../../shared/widgets/state_messaging_mixin.dart';
-import '../../../utils/validators.dart';
 
+part '../cards/admin_content_cards.dart';
+part '../cards/admin_integration_cards.dart';
+part '../cards/admin_people_cards.dart';
 part '../dialogs/admin_agent_dialog.dart';
 part '../dialogs/admin_filter_dialogs.dart';
 part '../dialogs/admin_user_dialogs.dart';
 part '../dialogs/notification_banner_form_dialog.dart';
-part '../cards/admin_content_cards.dart';
-part '../cards/admin_integration_cards.dart';
-part '../cards/admin_people_cards.dart';
+part '../widgets/admin_actions.dart';
 part '../widgets/admin_config_banners_card.dart';
 part '../widgets/admin_config_tab.dart';
 part '../widgets/admin_config_updates_card.dart';
 part '../widgets/admin_explore_tab.dart';
-part '../widgets/admin_actions.dart';
 part '../widgets/admin_overview_section.dart';
 part '../widgets/admin_page_view.dart';
 part '../widgets/admin_view_helpers.dart';
@@ -143,6 +143,20 @@ class _AdminPageState extends State<AdminPage>
   List<AdminExploreItem> _exploreItems = const [];
   Map<AdminResourceType, int> _exploreCounts = const {};
   Map<String, dynamic>? _platformSettings;
+
+  /// Cachés de las listas filtradas del panel (ver `_adminFilterDeps` en
+  /// admin_filter_dialogs.dart). Viven aquí porque una extension no puede
+  /// declarar campos.
+  final _filteredUsersMemo = Memoized<List<Map<String, dynamic>>>();
+  final _filteredGroupsMemo = Memoized<List<Map<String, dynamic>>>();
+  final _filteredAgentsMemo = Memoized<List<Map<String, dynamic>>>();
+  final _filteredConnectionsMemo = Memoized<List<Map<String, dynamic>>>();
+  final _filteredKnowledgeMemo = Memoized<List<Map<String, dynamic>>>();
+  final _filteredWorkflowsMemo = Memoized<List<Map<String, dynamic>>>();
+  final _filteredSkillsMemo = Memoized<List<Map<String, dynamic>>>();
+  final _filteredPromptsMemo = Memoized<List<Map<String, dynamic>>>();
+  final _filteredToolsMemo = Memoized<List<Map<String, dynamic>>>();
+  final _filteredMemoriesMemo = Memoized<List<Map<String, dynamic>>>();
 
   bool _loading = true;
   String? _error;

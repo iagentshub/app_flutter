@@ -166,7 +166,7 @@ List<WorkflowIssue> validateWorkflowGraph(List<WorkflowStepDraft> steps) {
   }
   if (steps.length > maxWorkflowNodes) {
     issues.add(
-      WorkflowIssue(
+      const WorkflowIssue(
         'workflow_editor.validate_max_steps',
         'Una orquestación admite como máximo {{max}} pasos',
         params: {'max': '$maxWorkflowNodes'},

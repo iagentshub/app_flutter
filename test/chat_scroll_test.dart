@@ -93,7 +93,7 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: ChatMessageList(
-            messages: [ChatMessage(role: 'user', content: 'Hola')],
+            messages: const [ChatMessage(role: 'user', content: 'Hola')],
             streaming: true,
             thinking: true,
             streamingReply: reply,

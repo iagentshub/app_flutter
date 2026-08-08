@@ -5,10 +5,9 @@ import 'package:flutter/services.dart';
 
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
+import '../../../core/network/api_error.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
-
-import '../../../core/network/api_error.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../repositories/centinel_repository.dart';
 

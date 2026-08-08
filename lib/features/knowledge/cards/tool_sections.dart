@@ -237,6 +237,6 @@ extension _ToolSections on _KnowledgePageState {
     );
 
     if (item.isActive) return card;
-    return Opacity(opacity: 0.6, child: card);
+    return dimmedWhenInactive(context, card);
   }
 }

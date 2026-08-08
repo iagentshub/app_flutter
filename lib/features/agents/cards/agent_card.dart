@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_fonts.dart';
-import '../../../shared/widgets/buttons/app_buttons.dart';
-
 import '../../../models/agents/agent_models.dart';
 import '../../../shared/graph/graph_models.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/overflow_menu_button.dart';
 import '../../../shared/widgets/inactive_badge.dart';
 import '../../../shared/widgets/label_chips_row.dart';
@@ -338,6 +337,6 @@ class AgentCard extends StatelessWidget {
     );
 
     if (item.isActive) return card;
-    return Opacity(opacity: 0.6, child: card);
+    return dimmedWhenInactive(context, card);
   }
 }

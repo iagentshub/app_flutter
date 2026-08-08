@@ -5,9 +5,8 @@ import 'package:flutter/material.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
-import '../../../shared/widgets/buttons/app_buttons.dart';
-
 import '../../../core/network/api_error.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../repositories/centinel_repository.dart';
 import 'centinel_chart.dart';
@@ -88,7 +87,7 @@ class _CentinelProbeTabState extends State<CentinelProbeTab>
         const Duration(milliseconds: 1200),
         (_) => _poll(),
       );
-      _poll();
+      unawaited(_poll());
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
       if (mounted) setState(() => _starting = false);

@@ -1,27 +1,26 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
+import '../../../app/router/router.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
-import '../../../shared/widgets/buttons/app_buttons.dart';
-import '../../../shared/widgets/async_state_panel.dart';
-import '../../../shared/widgets/confirm_action_dialog.dart';
-
-import '../../../app/router/router.dart';
 import '../../../core/network/api_client.dart';
 import '../../../features/connections/widgets/providers_section.dart';
 import '../../../models/profile/profile_models.dart';
-import '../controllers/profile_controller.dart';
-import '../repositories/profile_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/action_result.dart';
 import '../../../shared/state/brand_icon_controller.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/state/theme_controller.dart';
+import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/brand_icon.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../controllers/profile_controller.dart';
+import '../repositories/profile_repository.dart';
 import '../widgets/profile_groups_section.dart';
 
 part '../widgets/brand_icon_selector.dart';

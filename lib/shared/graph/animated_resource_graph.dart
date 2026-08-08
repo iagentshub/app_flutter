@@ -144,6 +144,10 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
   late final AnimationController _pulse;
   late final AnimationController _blink;
 
+  /// Ventana en primer plano. Con la app oculta no hay nada que animar.
+  bool _appVisible = true;
+  late final AppLifecycleListener _lifecycle;
+
   // Posiciones arrastrables por el usuario, indexadas por id de nodo. Solo se
   // calcula el layout por niveles por defecto para los nodos que aún no
   // tienen una posición manual asignada.
@@ -186,13 +190,46 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     _pulse = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
+    );
     _blink = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 450),
-    )..repeat(reverse: true);
+    );
+    _lifecycle = AppLifecycleListener(
+      onStateChange: (state) {
+        _appVisible = state == AppLifecycleState.resumed;
+        _syncRepeatingAnimations();
+      },
+    );
+    _syncRepeatingAnimations();
     _sortController.addListener(_handleSortModeChanged);
   }
+
+  /// El grafo se abre desde cada tarjeta en un diálogo a pantalla completa y
+  /// sus dos animaciones cíclicas no paraban nunca mientras estuviera montado:
+  /// la app no llegaba a un frame en reposo, lo que en web mantiene vivo el
+  /// requestAnimationFrame y en portátil o móvil se nota en la batería.
+  ///
+  /// El pulso solo hace falta con la ventana en primer plano, y el parpadeo
+  /// además solo cuando hay una búsqueda que resaltar.
+  void _syncRepeatingAnimations() {
+    _sync(_pulse, activa: _appVisible);
+    _sync(_blink, activa: _appVisible && widget.highlightQuery.isNotEmpty);
+  }
+
+  void _sync(AnimationController controller, {required bool activa}) {
+    if (activa) {
+      if (!controller.isAnimating) controller.repeat(reverse: true);
+    } else if (controller.isAnimating) {
+      controller.stop();
+    }
+  }
+
+  @visibleForTesting
+  bool get debugPulseAnimating => _pulse.isAnimating;
+
+  @visibleForTesting
+  bool get debugBlinkAnimating => _blink.isAnimating;
 
   /// Cambiar de modo reordena desde cero: se descartan las posiciones
   /// (incluidas las arrastradas a mano) y se recentra el lienzo, ya que
@@ -209,6 +246,7 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
   void dispose() {
     _sortController.removeListener(_handleSortModeChanged);
     if (_ownsSortController) _sortController.dispose();
+    _lifecycle.dispose();
     _entrance.dispose();
     _pulse.dispose();
     _blink.dispose();
@@ -221,6 +259,9 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
   @override
   void didUpdateWidget(covariant AnimatedResourceGraph oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.highlightQuery != widget.highlightQuery) {
+      _syncRepeatingAnimations();
+    }
     final currentIds = widget.nodes.map((node) => node.id).toSet();
     final removedIds = _nodeFocusNodes.keys
         .where((id) => !currentIds.contains(id))

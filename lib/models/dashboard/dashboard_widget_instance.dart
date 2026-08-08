@@ -30,7 +30,7 @@ enum DashboardDataSource {
 
 String normalizeDashboardWidgetType(Object? value) {
   final type = value?.toString() ?? '';
-  final legacyGroupType =
+  const legacyGroupType =
       'work'
       'space';
   return type == legacyGroupType ? 'group' : type;

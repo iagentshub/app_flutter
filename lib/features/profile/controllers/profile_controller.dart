@@ -410,7 +410,9 @@ class ProfileController extends ChangeNotifier {
   }
 
   Future<void> _syncPreferences(String language, String theme) async {
-    _localeController.syncFromBackend(language);
+    // El idioma se esperaba igual que el tema: sin el await, quien llame a
+    // esto podía continuar con la preferencia de idioma aún sin persistir.
+    await _localeController.syncFromBackend(language);
     await _syncTheme(theme);
   }
 

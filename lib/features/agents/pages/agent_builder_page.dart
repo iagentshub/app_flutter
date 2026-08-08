@@ -2,8 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../../shared/widgets/buttons/app_buttons.dart';
-
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../features/connections/repositories/connections_repository.dart';
@@ -14,16 +12,17 @@ import '../../../models/chat/chat_models.dart';
 import '../../../models/connections/connection_models.dart';
 import '../../../models/knowledge/knowledge_models.dart';
 import '../../../models/skills/skill_models.dart';
-import '../repositories/agent_builder_repository.dart';
-import '../repositories/agents_repository.dart';
-import '../dialogs/agent_form_dialog.dart';
-import '../widgets/agent_builder_chat_panel.dart';
-import '../widgets/builder_connection_bar.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/scroll_to_end.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../dialogs/agent_form_dialog.dart';
+import '../repositories/agent_builder_repository.dart';
+import '../repositories/agents_repository.dart';
+import '../widgets/agent_builder_chat_panel.dart';
+import '../widgets/builder_connection_bar.dart';
 
 /// Constructor de agentes por IA: conversación en streaming con el asistente
 /// hasta que propone un borrador completo, que se revisa/edita en el mismo

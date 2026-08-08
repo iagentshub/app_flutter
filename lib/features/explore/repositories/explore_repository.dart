@@ -1,5 +1,5 @@
-import '../../../core/network/api_repository.dart';
 import '../../../core/network/api_error.dart';
+import '../../../core/network/api_repository.dart';
 import '../../../models/explore/explore_models.dart';
 
 class ExploreRepository extends ApiRepository {

@@ -27,7 +27,7 @@ void main() {
           raw: {'id': 'second', 'name': 'Smart', 'model': 'smart-model'},
         ),
       };
-      final item = LlmOrchestrationItem(
+      const item = LlmOrchestrationItem(
         raw: {
           'id': 'route',
           'name': 'Enrutado profesional',

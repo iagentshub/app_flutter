@@ -177,7 +177,7 @@ extension _PromptSections on _KnowledgePageState {
     );
 
     if (item.isActive) return card;
-    return Opacity(opacity: 0.6, child: card);
+    return dimmedWhenInactive(context, card);
   }
 
   /// Chip secundario con el alias `@invocable` del prompt, mismo estilo

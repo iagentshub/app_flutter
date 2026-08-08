@@ -1,9 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-
 import 'package:app_flutter/shared/graph/animated_resource_graph.dart';
 import 'package:app_flutter/shared/graph/graph_models.dart';
 import 'package:app_flutter/shared/graph/graph_sort_controller.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 /// Test básico y aislado del widget desde que se separó de `graph_view.dart`
 /// (antes controlador + widget + painter en un solo archivo de ~1170
@@ -108,6 +107,79 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 1200));
 
+    expect(tester.takeException(), isNull);
+  });
+
+  /// Las dos animaciones cíclicas del grafo no paraban nunca mientras el
+  /// widget estuviera montado: con el diálogo abierto la app no llegaba a un
+  /// frame en reposo, lo que en web mantiene vivo el requestAnimationFrame y
+  /// en portátil o móvil se nota en la batería.
+  testWidgets('las animaciones cíclicas se paran cuando no hacen falta', (
+    tester,
+  ) async {
+    const nodes = [
+      GraphNode(id: 'root', label: 'Agente raíz', type: 'agent'),
+      GraphNode(id: 'skill:a', label: 'Skill A', type: 'skill'),
+    ];
+    const edges = [GraphEdge(sourceId: 'root', targetId: 'skill:a')];
+
+    Widget grafo(String query) => wrap(
+      AnimatedResourceGraph(
+        nodes: nodes,
+        edges: edges,
+        rootId: 'root',
+        highlightQuery: query,
+        quickViewDescriptionLabel: 'Descripción',
+        quickViewNoDescriptionLabel: 'Sin descripción',
+        quickViewConnectionsLabel: 'Conexiones',
+        quickViewNoConnectionsLabel: 'Sin conexiones',
+        quickViewCloseTooltip: 'Cerrar',
+      ),
+    );
+
+    // El State es privado, así que los diagnósticos se leen sin tipar.
+    dynamic estado() => tester.state(find.byType(AnimatedResourceGraph));
+
+    await tester.pumpWidget(grafo(''));
+    await tester.pump(const Duration(milliseconds: 1200));
+
+    // Sin búsqueda no hay nada que parpadear; el pulso de la raíz sí corre.
+    expect(estado().debugBlinkAnimating, isFalse);
+    expect(estado().debugPulseAnimating, isTrue);
+
+    // Al buscar, el parpadeo arranca.
+    await tester.pumpWidget(grafo('Skill'));
+    await tester.pump();
+    expect(estado().debugBlinkAnimating, isTrue);
+
+    // Y al borrar la búsqueda se detiene otra vez.
+    await tester.pumpWidget(grafo(''));
+    await tester.pump();
+    expect(estado().debugBlinkAnimating, isFalse);
+
+    // Con la app en segundo plano no queda ninguna animación viva. El
+    // framework valida la secuencia, así que se recorre entera.
+    for (final estadoApp in [
+      AppLifecycleState.inactive,
+      AppLifecycleState.hidden,
+      AppLifecycleState.paused,
+    ]) {
+      tester.binding.handleAppLifecycleStateChanged(estadoApp);
+    }
+    await tester.pump();
+    expect(estado().debugPulseAnimating, isFalse);
+    expect(estado().debugBlinkAnimating, isFalse);
+
+    // Y al volver al primer plano el pulso se reanuda.
+    for (final estadoApp in [
+      AppLifecycleState.hidden,
+      AppLifecycleState.inactive,
+      AppLifecycleState.resumed,
+    ]) {
+      tester.binding.handleAppLifecycleStateChanged(estadoApp);
+    }
+    await tester.pump();
+    expect(estado().debugPulseAnimating, isTrue);
     expect(tester.takeException(), isNull);
   });
 }

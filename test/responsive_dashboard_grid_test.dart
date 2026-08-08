@@ -63,7 +63,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await pumpGrid(tester, width: 800);
 
-    final column = (800 - 24) / 3;
+    const column = (800 - 24) / 3;
     expect(
       tester
           .getSize(find.byKey(const ValueKey('dashboard-slot-compact')))
@@ -86,7 +86,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await pumpGrid(tester, width: 1600, items: const [compact, full]);
 
-    final column = (1600 - 36) / 4;
+    const column = (1600 - 36) / 4;
     expect(
       tester
           .getSize(find.byKey(const ValueKey('dashboard-slot-compact')))

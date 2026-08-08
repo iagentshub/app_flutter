@@ -31,11 +31,11 @@ class AccountsRepository extends ApiRepository {
       gaToken: token,
       body: {
         'provider': provider,
-        if (apiKey != null) 'api_key': apiKey,
-        if (host != null) 'host': host,
-        if (url != null) 'url': url,
-        if (username != null) 'username': username,
-        if (name != null) 'name': name,
+        'api_key': ?apiKey,
+        'host': ?host,
+        'url': ?url,
+        'username': ?username,
+        'name': ?name,
       },
     );
     return AccountItem(raw: response.json);
@@ -54,11 +54,11 @@ class AccountsRepository extends ApiRepository {
       '/api/accounts/${Uri.encodeComponent(accountId)}',
       gaToken: token,
       body: {
-        if (apiKey != null) 'api_key': apiKey,
-        if (host != null) 'host': host,
-        if (url != null) 'url': url,
-        if (username != null) 'username': username,
-        if (name != null) 'name': name,
+        'api_key': ?apiKey,
+        'host': ?host,
+        'url': ?url,
+        'username': ?username,
+        'name': ?name,
       },
     );
     return AccountItem(raw: response.json);
@@ -89,10 +89,10 @@ class AccountsRepository extends ApiRepository {
       gaToken: token,
       body: {
         'provider': provider,
-        if (apiKey != null) 'api_key': apiKey,
-        if (host != null) 'host': host,
-        if (url != null) 'url': url,
-        if (username != null) 'username': username,
+        'api_key': ?apiKey,
+        'host': ?host,
+        'url': ?url,
+        'username': ?username,
       },
     );
     return AccountModelsPreview.fromJson(response.json);
@@ -110,10 +110,10 @@ class AccountsRepository extends ApiRepository {
     String? username,
   }) async {
     final body = <String, dynamic>{
-      if (apiKey != null) 'api_key': apiKey,
-      if (host != null) 'host': host,
-      if (url != null) 'url': url,
-      if (username != null) 'username': username,
+      'api_key': ?apiKey,
+      'host': ?host,
+      'url': ?url,
+      'username': ?username,
     };
     final response = await apiClient.post(
       '/api/accounts/${Uri.encodeComponent(accountId)}/test',
