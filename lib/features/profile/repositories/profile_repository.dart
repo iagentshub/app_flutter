@@ -103,6 +103,26 @@ class ProfileRepository extends ApiRepository {
     );
   }
 
+  /// URL del avatar del usuario. [version] es un contador que sube tras cada
+  /// subida: sin él la imagen queda cacheada y la foto nueva no se ve.
+  String avatarUrl(String username, int version) =>
+      '${apiClient.backendController.effectiveBaseUrl}'
+      '/api/users/${Uri.encodeComponent(username)}/avatar?v=$version';
+
+  Future<void> uploadAvatar(
+    String token, {
+    required String fileName,
+    required List<int> fileBytes,
+  }) async {
+    await apiClient.postMultipart(
+      '/api/auth/me/avatar',
+      fieldName: 'avatar',
+      fileName: fileName,
+      fileBytes: fileBytes,
+      gaToken: token,
+    );
+  }
+
   Future<String> requestDeletion(String token) async {
     final response = await apiClient.post(
       '/api/auth/me/request-deletion',
