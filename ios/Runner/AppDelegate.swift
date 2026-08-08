@@ -45,6 +45,10 @@ import UIKit
         "coordinatorRedOnBlack": "AppIconCoordinatorRedOnBlack",
         "coordinatorBlackOnRed": "AppIconCoordinatorBlackOnRed",
         "coordinatorRedOnWhite": "AppIconCoordinatorRedOnWhite",
+        "iaInterWhiteOnRed": "AppIconIaInterWhiteOnRed",
+        "iaInterRedOnBlack": "AppIconIaInterRedOnBlack",
+        "iaInterBlackOnRed": "AppIconIaInterBlackOnRed",
+        "iaInterRedOnWhite": "AppIconIaInterRedOnWhite",
       ]
       let iconName = requestedName.flatMap { alternateIconNames[$0] }
       if requestedName != nil && iconName == nil {

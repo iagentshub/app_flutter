@@ -75,6 +75,7 @@ flutter:
 
   assets:
     - assets/icons/coordinator/
+    - assets/icons/ia/
     - assets/locales/en/
     - assets/locales/es/
 

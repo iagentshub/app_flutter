@@ -12,6 +12,7 @@ const _variants = [
     asset: 'assets/icons/coordinator/agent_coordinator_icon.png',
     foreground: _white,
     background: _black,
+    nativeName: 'agentCoordinator',
     androidName: 'agent_coordinator',
     iosSet: 'AppIconAgentCoordinator',
   ),
@@ -19,6 +20,7 @@ const _variants = [
     asset: 'assets/icons/coordinator/coordinator_white_on_red.png',
     foreground: _white,
     background: _red,
+    nativeName: 'coordinatorWhiteOnRed',
     androidName: 'coordinator_white_on_red',
     iosSet: 'AppIconCoordinatorWhiteOnRed',
   ),
@@ -26,6 +28,7 @@ const _variants = [
     asset: 'assets/icons/coordinator/coordinator_red_on_black.png',
     foreground: _red,
     background: _black,
+    nativeName: 'coordinatorRedOnBlack',
     androidName: 'coordinator_red_on_black',
     iosSet: 'AppIconCoordinatorRedOnBlack',
   ),
@@ -33,6 +36,7 @@ const _variants = [
     asset: 'assets/icons/coordinator/coordinator_black_on_red.png',
     foreground: _black,
     background: _red,
+    nativeName: 'coordinatorBlackOnRed',
     androidName: 'coordinator_black_on_red',
     iosSet: 'AppIconCoordinatorBlackOnRed',
   ),
@@ -40,8 +44,45 @@ const _variants = [
     asset: 'assets/icons/coordinator/coordinator_red_on_white.png',
     foreground: _red,
     background: _white,
+    nativeName: 'coordinatorRedOnWhite',
     androidName: 'coordinator_red_on_white',
     iosSet: 'AppIconCoordinatorRedOnWhite',
+  ),
+  _Variant(
+    asset: 'assets/icons/ia/ia_inter_white_on_red.png',
+    foreground: _white,
+    background: _red,
+    mark: _Mark.ia,
+    nativeName: 'iaInterWhiteOnRed',
+    androidName: 'ia_inter_white_on_red',
+    iosSet: 'AppIconIaInterWhiteOnRed',
+  ),
+  _Variant(
+    asset: 'assets/icons/ia/ia_inter_red_on_black.png',
+    foreground: _red,
+    background: _black,
+    mark: _Mark.ia,
+    nativeName: 'iaInterRedOnBlack',
+    androidName: 'ia_inter_red_on_black',
+    iosSet: 'AppIconIaInterRedOnBlack',
+  ),
+  _Variant(
+    asset: 'assets/icons/ia/ia_inter_black_on_red.png',
+    foreground: _black,
+    background: _red,
+    mark: _Mark.ia,
+    nativeName: 'iaInterBlackOnRed',
+    androidName: 'ia_inter_black_on_red',
+    iosSet: 'AppIconIaInterBlackOnRed',
+  ),
+  _Variant(
+    asset: 'assets/icons/ia/ia_inter_red_on_white.png',
+    foreground: _red,
+    background: _white,
+    mark: _Mark.ia,
+    nativeName: 'iaInterRedOnWhite',
+    androidName: 'ia_inter_red_on_white',
+    iosSet: 'AppIconIaInterRedOnWhite',
   ),
 ];
 
@@ -115,7 +156,42 @@ void main() {
     return;
   }
 
+  _restoreAlternateIconConfiguration();
+
   stdout.writeln('Todos los iconos se generaron correctamente.');
+}
+
+void _restoreAlternateIconConfiguration() {
+  final androidManifest = File('android/app/src/main/AndroidManifest.xml');
+  var androidContents = androidManifest.readAsStringSync();
+  for (final variant in _variants) {
+    final aliasPattern = RegExp(
+      '(<activity-alias\\s+android:name="com\\.iagentshub\\.app\\.'
+      'MainActivity\\.${variant.nativeName}"[\\s\\S]*?android:icon=")'
+      '[^"]+("[\\s\\S]*?</activity-alias>)',
+    );
+    androidContents = androidContents.replaceFirstMapped(
+      aliasPattern,
+      (match) =>
+          '${match.group(1)}@mipmap/ic_launcher_${variant.androidName}'
+          '${match.group(2)}',
+    );
+  }
+  androidManifest.writeAsStringSync(androidContents);
+
+  final iosProject = File('ios/Runner.xcodeproj/project.pbxproj');
+  final alternateSets = _variants.map((variant) => variant.iosSet).join(' ');
+  final iosContents = iosProject.readAsStringSync().replaceAll(
+    RegExp(r'ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = [^;]+;'),
+    'ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "$alternateSets";',
+  );
+  iosProject.writeAsStringSync(iosContents);
+
+  final webManifest = File('web/manifest.json');
+  final webContents = webManifest.readAsStringSync();
+  if (!webContents.endsWith('\n')) {
+    webManifest.writeAsStringSync('$webContents\n');
+  }
 }
 
 image.Image _render(_Variant variant, int size) {
@@ -124,31 +200,39 @@ image.Image _render(_Variant variant, int size) {
   final foreground = variant.foreground.color;
   image.fill(output, color: background);
 
-  _drawCubic(
-    output,
-    BrandMarkGeometry.coordinatorLeft,
-    BrandMarkGeometry.strokeWidth,
-    foreground,
-  );
-  _drawCubic(
-    output,
-    BrandMarkGeometry.coordinatorRight,
-    BrandMarkGeometry.strokeWidth,
-    foreground,
-  );
-  _drawLine(
-    output,
-    BrandMarkGeometry.coordinatorStem,
-    BrandMarkGeometry.strokeWidth,
-    foreground,
-  );
+  final left = variant.mark == _Mark.coordinator
+      ? BrandMarkGeometry.coordinatorLeft
+      : BrandMarkGeometry.iaLeft;
+  final right = variant.mark == _Mark.coordinator
+      ? BrandMarkGeometry.coordinatorRight
+      : BrandMarkGeometry.iaRight;
+  final stem = variant.mark == _Mark.coordinator
+      ? BrandMarkGeometry.coordinatorStem
+      : BrandMarkGeometry.iaStem;
+  final dot = variant.mark == _Mark.coordinator
+      ? BrandMarkGeometry.coordinatorDot
+      : BrandMarkGeometry.iaDot;
+  final dotRadius = variant.mark == _Mark.coordinator
+      ? BrandMarkGeometry.coordinatorDotRadius
+      : BrandMarkGeometry.letterDotRadius;
 
-  final dot = BrandMarkGeometry.coordinatorDot;
+  _drawCubic(output, left, BrandMarkGeometry.strokeWidth, foreground);
+  _drawCubic(output, right, BrandMarkGeometry.strokeWidth, foreground);
+  _drawLine(output, stem, BrandMarkGeometry.strokeWidth, foreground);
+  if (variant.mark == _Mark.ia) {
+    _drawLine(
+      output,
+      BrandMarkGeometry.iaConnector,
+      BrandMarkGeometry.strokeWidth,
+      foreground,
+    );
+  }
+
   image.fillCircle(
     output,
     x: (dot.x * size).round(),
     y: (dot.y * size).round(),
-    radius: (BrandMarkGeometry.coordinatorDotRadius * size).round(),
+    radius: (dotRadius * size).round(),
     color: foreground,
     antialias: true,
   );
@@ -294,6 +378,8 @@ class _Variant {
     required this.asset,
     required this.foreground,
     required this.background,
+    required this.nativeName,
+    this.mark = _Mark.coordinator,
     this.androidName,
     this.iosSet,
   });
@@ -301,9 +387,13 @@ class _Variant {
   final String asset;
   final _Rgb foreground;
   final _Rgb background;
+  final String nativeName;
+  final _Mark mark;
   final String? androidName;
   final String? iosSet;
 }
+
+enum _Mark { coordinator, ia }
 
 class _Rgb {
   const _Rgb(this.red, this.green, this.blue);

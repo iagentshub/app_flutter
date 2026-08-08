@@ -8,7 +8,11 @@ enum BrandIconVariant {
   coordinatorWhiteOnRed,
   coordinatorRedOnBlack,
   coordinatorBlackOnRed,
-  coordinatorRedOnWhite;
+  coordinatorRedOnWhite,
+  iaInterWhiteOnRed,
+  iaInterRedOnBlack,
+  iaInterBlackOnRed,
+  iaInterRedOnWhite;
 
   String get assetPath => switch (this) {
     BrandIconVariant.agentCoordinator =>
@@ -21,6 +25,14 @@ enum BrandIconVariant {
       'assets/icons/coordinator/coordinator_black_on_red.png',
     BrandIconVariant.coordinatorRedOnWhite =>
       'assets/icons/coordinator/coordinator_red_on_white.png',
+    BrandIconVariant.iaInterWhiteOnRed =>
+      'assets/icons/ia/ia_inter_white_on_red.png',
+    BrandIconVariant.iaInterRedOnBlack =>
+      'assets/icons/ia/ia_inter_red_on_black.png',
+    BrandIconVariant.iaInterBlackOnRed =>
+      'assets/icons/ia/ia_inter_black_on_red.png',
+    BrandIconVariant.iaInterRedOnWhite =>
+      'assets/icons/ia/ia_inter_red_on_white.png',
   };
 
   String? get nativeIconName =>
@@ -35,13 +47,6 @@ class BrandIconController extends ChangeNotifier {
   static const storageKey = 'brand_icon';
   static const defaultVariant = BrandIconVariant.coordinatorWhiteOnRed;
 
-  static const _legacyVariants = <String, BrandIconVariant>{
-    'iaInterWhiteOnRed': BrandIconVariant.coordinatorWhiteOnRed,
-    'iaInterRedOnBlack': BrandIconVariant.coordinatorRedOnBlack,
-    'iaInterBlackOnRed': BrandIconVariant.coordinatorBlackOnRed,
-    'iaInterRedOnWhite': BrandIconVariant.coordinatorRedOnWhite,
-  };
-
   BrandIconVariant _selected;
 
   BrandIconVariant get selected => _selected;
@@ -50,15 +55,10 @@ class BrandIconController extends ChangeNotifier {
   static Future<BrandIconController> bootstrap() async {
     final prefs = await LocalStore.instance();
     final stored = prefs.getString(storageKey);
-    final selected =
-        _legacyVariants[stored] ??
-        BrandIconVariant.values.firstWhere(
-          (variant) => variant.name == stored,
-          orElse: () => defaultVariant,
-        );
-    if (stored != null && stored != selected.name) {
-      await prefs.setString(storageKey, selected.name);
-    }
+    final selected = BrandIconVariant.values.firstWhere(
+      (variant) => variant.name == stored,
+      orElse: () => defaultVariant,
+    );
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.macOS) {
       await NativeAppIconService.setIcon(
         selected.nativeIconName,

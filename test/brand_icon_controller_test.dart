@@ -62,19 +62,34 @@ void main() {
     final controller = await BrandIconController.bootstrap();
 
     await controller.select(BrandIconVariant.agentCoordinator);
+    await controller.select(BrandIconVariant.iaInterWhiteOnRed);
     await controller.select(BrandIconController.defaultVariant);
 
-    expect(calls, hasLength(2));
+    expect(calls, hasLength(3));
     expect(calls.first.method, 'setIcon');
     expect(calls.first.arguments, containsPair('name', 'agentCoordinator'));
+    expect(calls[1].arguments, containsPair('name', 'iaInterWhiteOnRed'));
     expect(calls.last.arguments, containsPair('name', null));
   });
 
-  test('todas las variantes apuntan a un recurso PNG único', () {
+  test('expone cinco coordinator y cuatro iA sin recursos duplicados', () {
     final paths = BrandIconVariant.values
         .map((variant) => variant.assetPath)
         .toSet();
 
+    expect(BrandIconVariant.values, hasLength(9));
+    expect(
+      BrandIconVariant.values.where(
+        (variant) => variant.assetPath.contains('/coordinator/'),
+      ),
+      hasLength(5),
+    );
+    expect(
+      BrandIconVariant.values.where(
+        (variant) => variant.assetPath.contains('/ia/'),
+      ),
+      hasLength(4),
+    );
     expect(paths, hasLength(BrandIconVariant.values.length));
     expect(paths.every((path) => path.endsWith('.png')), isTrue);
   });
@@ -89,15 +104,15 @@ void main() {
     expect(controller.selected, BrandIconVariant.coordinatorWhiteOnRed);
   });
 
-  test('migra y normaliza todas las preferencias iA antiguas', () async {
-    const migrations = {
-      'iaInterWhiteOnRed': BrandIconVariant.coordinatorWhiteOnRed,
-      'iaInterRedOnBlack': BrandIconVariant.coordinatorRedOnBlack,
-      'iaInterBlackOnRed': BrandIconVariant.coordinatorBlackOnRed,
-      'iaInterRedOnWhite': BrandIconVariant.coordinatorRedOnWhite,
+  test('recupera todas las preferencias iA guardadas', () async {
+    const variants = {
+      'iaInterWhiteOnRed': BrandIconVariant.iaInterWhiteOnRed,
+      'iaInterRedOnBlack': BrandIconVariant.iaInterRedOnBlack,
+      'iaInterBlackOnRed': BrandIconVariant.iaInterBlackOnRed,
+      'iaInterRedOnWhite': BrandIconVariant.iaInterRedOnWhite,
     };
 
-    for (final entry in migrations.entries) {
+    for (final entry in variants.entries) {
       SharedPreferences.setMockInitialValues({
         BrandIconController.storageKey: entry.key,
       });
