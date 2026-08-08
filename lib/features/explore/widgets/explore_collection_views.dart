@@ -51,21 +51,34 @@ extension _ExploreCollectionViews on _ExplorePageState {
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
           sliver: SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: _controller.queryController,
-                  decoration: InputDecoration(
-                    labelText: _tx('explore.search_hint', 'Buscar'),
-                    prefixIcon: const Icon(Icons.search, size: 20),
-                  ),
-                  onSubmitted: (_) => _controller.load(),
-                ),
-                const SizedBox(height: 10),
+            child: ExploreSearchToolbar(
+              searchController: _controller.queryController,
+              searchHint: _tx(
+                'explore.search_hint',
+                'Buscar recursos por nombre, autor o descripción',
+              ),
+              onSearchSubmitted: (_) => _controller.load(),
+              typeOptions: _publicExploreTypeOptions,
+              selectedTypes: _controller.type == 'all'
+                  ? const <String>{}
+                  : {_controller.type},
+              allTypesLabel: _tx('explore.type_all', 'Todos'),
+              typeFilterTooltip: _tx(
+                'explore.type_filter_tooltip',
+                'Filtrar recursos por tipo',
+              ),
+              multipleTypesLabel: (count) => '$count',
+              allowMultipleTypes: false,
+              selectorKey: const Key('publicExploreTypeDropdown'),
+              onTypesChanged: (values) =>
+                  _controller.setType(values.firstOrNull ?? 'all'),
+              actions: [
                 FilterButton(
-                  activeCount: _controller.activeFilterCount,
-                  tooltip: _tx('common.filters', 'Filtros'),
+                  activeCount: _controller.secondaryActiveFilterCount,
+                  tooltip: _tx(
+                    'explore.more_filters_tooltip',
+                    'Filtrar por categoría y labels',
+                  ),
                   onPressed: _openFiltersDialog,
                 ),
               ],

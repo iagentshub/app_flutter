@@ -244,23 +244,6 @@ extension _AdminPageSections on _AdminPageState {
   /// `...items.map(cardBuilder)`, que construye TODAS las tarjetas de golpe
   /// en cada rebuild (cada tecla en el buscador) en vez de solo las
   /// visibles — con cientos de usuarios/recursos eso escala mal.
-  /// Buscador ocupando toda la fila, con los botones de acción juntos en la
-  /// fila de abajo — mismo patrón en todas las pestañas con listado.
-  Widget _toolbar({Widget? search, required List<Widget> buttons}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (search != null) ...[search, const SizedBox(height: 10)],
-        Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: buttons,
-        ),
-      ],
-    );
-  }
-
   Widget _buildFilterableList<T>({
     required Widget toolbar,
     required List<T> items,

@@ -371,7 +371,9 @@
     "ollama_cloud_hint": "Para Ollama Cloud, pega tu API Key de ollama.com/settings/keys"
   },
   "explore": {
-    "search_hint": "Buscar",
+    "search_hint": "Buscar recursos por nombre, autor o descripción",
+    "type_filter_tooltip": "Filtrar recursos por tipo",
+    "more_filters_tooltip": "Filtrar por categoría y labels",
     "type_label": "Tipo",
     "category_label": "Categoría",
     "label_label": "Label",

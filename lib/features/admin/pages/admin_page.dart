@@ -26,6 +26,7 @@ import '../../../shared/utils/debouncer.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
+import '../../../shared/widgets/explore_search_toolbar.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/kpi/kpi_hero_card.dart';
 import '../../../shared/widgets/kpi/kpi_tile.dart';

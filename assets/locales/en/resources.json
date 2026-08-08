@@ -371,7 +371,9 @@
     "ollama_cloud_hint": "For Ollama Cloud, paste your API Key from ollama.com/settings/keys"
   },
   "explore": {
-    "search_hint": "Search",
+    "search_hint": "Search resources by name, author, or description",
+    "type_filter_tooltip": "Filter resources by type",
+    "more_filters_tooltip": "Filter by category and labels",
     "type_label": "Type",
     "category_label": "Category",
     "label_label": "Label",
