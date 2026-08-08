@@ -2,7 +2,8 @@ part of '../pages/explore_page.dart';
 
 extension _ExploreCollectionViews on _ExplorePageState {
   Widget _buildResourcesTab() {
-    if (_error != null) {
+    final error = _controller.error;
+    if (error != null) {
       return ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -17,10 +18,10 @@ extension _ExploreCollectionViews on _ExplorePageState {
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  Text(_error!),
+                  Text(error),
                   const SizedBox(height: 12),
                   PrimaryButton.icon(
-                    onPressed: _load,
+                    onPressed: _controller.load,
                     icon: const Icon(Icons.refresh),
                     label: Text(_tx('common.retry', 'Reintentar')),
                   ),
@@ -32,12 +33,18 @@ extension _ExploreCollectionViews on _ExplorePageState {
       );
     }
 
-    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (_controller.loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-    return RefreshIndicator(onRefresh: _load, child: _buildScrollView());
+    return RefreshIndicator(
+      onRefresh: _controller.load,
+      child: _buildScrollView(),
+    );
   }
 
   Widget _buildScrollView() {
+    final items = _controller.items;
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
@@ -48,16 +55,16 @@ extension _ExploreCollectionViews on _ExplorePageState {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 TextField(
-                  controller: _queryController,
+                  controller: _controller.queryController,
                   decoration: InputDecoration(
                     labelText: _tx('explore.search_hint', 'Buscar'),
                     prefixIcon: const Icon(Icons.search, size: 20),
                   ),
-                  onSubmitted: (_) => _load(),
+                  onSubmitted: (_) => _controller.load(),
                 ),
                 const SizedBox(height: 10),
                 FilterButton(
-                  activeCount: _activeFilterCount,
+                  activeCount: _controller.activeFilterCount,
                   tooltip: _tx('common.filters', 'Filtros'),
                   onPressed: _openFiltersDialog,
                 ),
@@ -69,12 +76,12 @@ extension _ExploreCollectionViews on _ExplorePageState {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
           sliver: SliverToBoxAdapter(
             child: Text(
-              '${_tx('explore.results', 'Resultados')}: ${_items.length}',
+              '${_tx('explore.results', 'Resultados')}: ${items.length}',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ),
         ),
-        if (_items.isEmpty)
+        if (items.isEmpty)
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
             sliver: SliverToBoxAdapter(
@@ -92,8 +99,8 @@ extension _ExploreCollectionViews on _ExplorePageState {
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
             sliver: ResponsiveSliverMasonryGrid(
-              itemCount: _items.length,
-              itemBuilder: (context, index) => _buildItemCard(_items[index]),
+              itemCount: items.length,
+              itemBuilder: (context, index) => _buildItemCard(items[index]),
             ),
           ),
       ],
@@ -101,7 +108,8 @@ extension _ExploreCollectionViews on _ExplorePageState {
   }
 
   Widget _buildUsersTab() {
-    if (_usersError != null) {
+    final error = _controller.usersError;
+    if (error != null) {
       return ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -116,10 +124,10 @@ extension _ExploreCollectionViews on _ExplorePageState {
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  Text(_usersError!),
+                  Text(error),
                   const SizedBox(height: 12),
                   PrimaryButton.icon(
-                    onPressed: _loadUsers,
+                    onPressed: _controller.loadUsers,
                     icon: const Icon(Icons.refresh),
                     label: Text(_tx('common.retry', 'Reintentar')),
                   ),
@@ -131,15 +139,18 @@ extension _ExploreCollectionViews on _ExplorePageState {
       );
     }
 
-    if (_usersLoading) return const Center(child: CircularProgressIndicator());
+    if (_controller.usersLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
     return RefreshIndicator(
-      onRefresh: _loadUsers,
+      onRefresh: _controller.loadUsers,
       child: _buildUsersScrollView(),
     );
   }
 
   Widget _buildUsersScrollView() {
+    final users = _controller.users;
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
@@ -147,16 +158,16 @@ extension _ExploreCollectionViews on _ExplorePageState {
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
           sliver: SliverToBoxAdapter(
             child: TextField(
-              controller: _userQueryController,
+              controller: _controller.userQueryController,
               decoration: InputDecoration(
                 labelText: _tx('explore.users_search_hint', 'Buscar usuarios'),
                 prefixIcon: const Icon(Icons.search, size: 20),
               ),
-              onChanged: (_) => _onUserSearchChanged(),
+              onChanged: (_) => _controller.onUserSearchChanged(),
             ),
           ),
         ),
-        if (_users.isEmpty)
+        if (users.isEmpty)
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
             sliver: SliverToBoxAdapter(
@@ -175,22 +186,23 @@ extension _ExploreCollectionViews on _ExplorePageState {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
             sliver: ResponsiveSliverMasonryGrid(
               density: ResponsiveCardDensity.compact,
-              itemCount: _users.length,
-              itemBuilder: (context, index) => _buildUserCard(_users[index]),
+              itemCount: users.length,
+              itemBuilder: (context, index) => _buildUserCard(users[index]),
             ),
           ),
-          if (_usersHasMore)
+          if (_controller.usersHasMore)
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               sliver: SliverToBoxAdapter(
                 child: Center(
-                  child: _usersLoadingMore
+                  child: _controller.usersLoadingMore
                       ? const Padding(
                           padding: EdgeInsets.all(12),
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : SecondaryButton(
-                          onPressed: _loadMoreUsers,
+                          onPressed: () =>
+                              _runAction(_controller.loadMoreUsers()),
                           child: Text(
                             _tx('explore.users_load_more', 'Cargar más'),
                           ),

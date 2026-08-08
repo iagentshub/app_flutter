@@ -9,7 +9,7 @@ extension _ExploreUserCard on _ExplorePageState {
     final avatarUrl = avatarPath != null
         ? '${widget.apiClient.backendController.effectiveBaseUrl}$avatarPath'
         : null;
-    final inviting = _invitingUsernames.contains(username);
+    final inviting = _controller.isInviting(username);
 
     return Card(
       margin: EdgeInsets.zero,
@@ -86,7 +86,9 @@ extension _ExploreUserCard on _ExplorePageState {
                 ActionIconButton(
                   icon: Icons.group_add_outlined,
                   tooltip: _tx('explore.users_invite', 'Invitar'),
-                  onPressed: inviting ? null : () => _inviteUser(username),
+                  onPressed: inviting
+                      ? null
+                      : () => _runAction(_controller.inviteUser(username)),
                 ),
               ],
             ),
