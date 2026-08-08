@@ -9,11 +9,11 @@ import '../../../shared/state/locale_controller.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
-import '../../../shared/widgets/inactive_badge.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/resource_toolbar.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 import '../../connections/repositories/connections_repository.dart';
+import '../cards/llm_orchestration_card.dart';
 import '../dialogs/llm_orchestration_dialog.dart';
 import '../repositories/llm_orchestrations_repository.dart';
 
@@ -67,7 +67,9 @@ class _LlmOrchestrationsPanelState extends State<LlmOrchestrationsPanel> {
       if (!mounted) return;
       setState(() {
         _items = values[0] as List<LlmOrchestrationItem>;
-        _connections = values[1] as List<ConnectionItem>;
+        _connections = (values[1] as List<ConnectionItem>)
+            .where((connection) => !connection.isVirtual)
+            .toList();
         _loading = false;
       });
     } catch (error) {
@@ -224,128 +226,14 @@ class _LlmOrchestrationsPanelState extends State<LlmOrchestrationsPanel> {
                 itemCount: _items.length,
                 itemBuilder: (context, index) {
                   final item = _items[index];
-                  return Card(
-                    margin: EdgeInsets.zero,
-                    child: Padding(
-                      padding: const EdgeInsets.all(14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  item.name,
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.titleMedium,
-                                ),
-                              ),
-                              if (!item.isActive)
-                                InactiveBadge(
-                                  label: widget.tx(
-                                    'common.inactive',
-                                    'Inactivo',
-                                  ),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Chip(
-                            avatar: Icon(
-                              item.mode == 'balanced'
-                                  ? Icons.balance
-                                  : Icons.low_priority,
-                              size: 16,
-                            ),
-                            label: Text(
-                              item.mode == 'balanced'
-                                  ? widget.tx(
-                                      'llm_orchestrations.balanced',
-                                      'Balanceo',
-                                    )
-                                  : widget.tx(
-                                      'llm_orchestrations.stack',
-                                      'Pila',
-                                    ),
-                            ),
-                          ),
-                          if (item.description.isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            Text(item.description),
-                          ],
-                          const SizedBox(height: 10),
-                          ...item.candidates.asMap().entries.map((entry) {
-                            final connection =
-                                connectionsById[entry.value.connectionId];
-                            return ListTile(
-                              dense: true,
-                              contentPadding: EdgeInsets.zero,
-                              leading: CircleAvatar(
-                                radius: 13,
-                                child: Text('${entry.key + 1}'),
-                              ),
-                              title: Text(
-                                connection?.name ?? entry.value.connectionId,
-                              ),
-                              subtitle: entry.value.routingHint.isEmpty
-                                  ? null
-                                  : Text(
-                                      entry.value.routingHint,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                            );
-                          }),
-                          const Divider(),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              AppIconButton.outlined(
-                                onPressed: item.readOnly
-                                    ? null
-                                    : () => _toggle(item),
-                                icon: Icon(
-                                  item.isActive
-                                      ? Icons.pause_circle_outline
-                                      : Icons.play_circle_outline,
-                                ),
-                                tooltip: item.isActive
-                                    ? widget.tx(
-                                        'common.deactivate',
-                                        'Desactivar',
-                                      )
-                                    : widget.tx('common.activate', 'Activar'),
-                              ),
-                              AppIconButton.outlined(
-                                onPressed: item.readOnly
-                                    ? null
-                                    : () => _edit(item),
-                                icon: const Icon(Icons.edit_outlined),
-                                tooltip: widget.tx('common.edit', 'Editar'),
-                              ),
-                              AppIconButton.outlined(
-                                onPressed: item.readOnly
-                                    ? null
-                                    : () => _share(item),
-                                icon: const Icon(Icons.group_add_outlined),
-                                tooltip: widget.tx(
-                                  'common.share_group',
-                                  'Compartir con grupo',
-                                ),
-                              ),
-                              AppIconButton.outlined(
-                                onPressed: item.readOnly
-                                    ? null
-                                    : () => _delete(item),
-                                icon: const Icon(Icons.delete_outline),
-                                tooltip: widget.tx('common.delete', 'Eliminar'),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
+                  return LlmOrchestrationCard(
+                    item: item,
+                    connectionsById: connectionsById,
+                    tx: widget.tx,
+                    onToggleActive: () => _toggle(item),
+                    onEdit: () => _edit(item),
+                    onShare: () => _share(item),
+                    onDelete: () => _delete(item),
                   );
                 },
               ),

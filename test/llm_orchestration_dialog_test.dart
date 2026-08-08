@@ -35,12 +35,21 @@ void main() {
     expect(find.text('Pila'), findsOneWidget);
     expect(find.text('Balanceo'), findsOneWidget);
     expect(find.text('Instrucción de enrutado'), findsNWidgets(2));
-    expect(find.text('LLM balanceador'), findsNothing);
+    expect(find.text('Conexión orquestadora'), findsNothing);
 
     await tester.tap(find.text('Balanceo'));
     await tester.pumpAndSettle();
 
-    expect(find.text('LLM balanceador'), findsOneWidget);
+    expect(find.text('Conexión orquestadora'), findsOneWidget);
+    expect(
+      find.text(
+        'Analiza la tarea y ordena las candidatas. Si falla, la orquestación se detiene.',
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Guardar'));
+    await tester.pump();
+    expect(find.text('Selecciona la conexión orquestadora'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

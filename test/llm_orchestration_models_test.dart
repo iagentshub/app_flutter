@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:app_flutter/models/admin/admin_explore_models.dart';
 import 'package:app_flutter/models/agents/agent_models.dart';
 import 'package:app_flutter/models/chat/chat_models.dart';
+import 'package:app_flutter/models/connections/connection_models.dart';
 import 'package:app_flutter/models/workflows/llm_orchestration_models.dart';
 
 void main() {
@@ -27,12 +28,32 @@ void main() {
     ]);
   });
 
-  test('agent exposes an LLM orchestration target', () {
+  test('agent exposes an LLM orchestration as its connection', () {
     final agent = AgentItem(
-      raw: {'id': 'agent', 'name': 'Agent', 'llm_orchestration_id': 'route-1'},
+      raw: {
+        'id': 'agent',
+        'name': 'Agent',
+        'connection_id': 'llm-orchestration:route-1',
+      },
     );
-    expect(agent.connectionId, isEmpty);
-    expect(agent.llmOrchestrationId, 'route-1');
+    expect(agent.connectionId, 'llm-orchestration:route-1');
+  });
+
+  test('LLM orchestration connection facade is read-only and virtual', () {
+    final connection = ConnectionItem(
+      raw: {
+        'id': 'llm-orchestration:route-1',
+        'name': 'Code router',
+        'type': 'llm_orchestration',
+        'model': 'balanced',
+        'is_virtual': true,
+        'read_only': true,
+      },
+    );
+
+    expect(connection.isVirtual, isTrue);
+    expect(connection.type, 'llm_orchestration');
+    expect(connection.model, 'balanced');
   });
 
   test('routing SSE notices preserve their message', () {

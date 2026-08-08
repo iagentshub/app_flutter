@@ -1,0 +1,239 @@
+import 'package:flutter/material.dart';
+
+import '../../../models/connections/connection_models.dart';
+import '../../../models/workflows/llm_orchestration_models.dart';
+import '../../../shared/widgets/buttons/action_icon_button.dart';
+import '../../../shared/widgets/inactive_badge.dart';
+import '../../../shared/widgets/origin_badge.dart';
+
+class LlmOrchestrationCard extends StatelessWidget {
+  const LlmOrchestrationCard({
+    required this.item,
+    required this.connectionsById,
+    required this.tx,
+    required this.onToggleActive,
+    required this.onEdit,
+    required this.onShare,
+    required this.onDelete,
+    super.key,
+  });
+
+  final LlmOrchestrationItem item;
+  final Map<String, ConnectionItem> connectionsById;
+  final String Function(String path, String fallback) tx;
+  final VoidCallback onToggleActive;
+  final VoidCallback onEdit;
+  final VoidCallback onShare;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final balanced = item.mode == 'balanced';
+    final router = connectionsById[item.routerConnectionId];
+
+    final card = Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 14, 10, 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    item.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                if (!item.isActive) ...[
+                  const SizedBox(width: 8),
+                  InactiveBadge(label: tx('common.inactive', 'Inactivo')),
+                ],
+              ],
+            ),
+            if (item.description.isNotEmpty) ...[
+              const SizedBox(height: 5),
+              Text(
+                item.description,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                _MetadataLabel(
+                  text: balanced
+                      ? tx('llm_orchestrations.balanced', 'Balanceo')
+                      : tx('llm_orchestrations.stack', 'Pila'),
+                ),
+                _MetadataLabel(
+                  text: tx(
+                    'llm_orchestrations.candidate_count',
+                    '{{count}} conexiones',
+                  ).replaceAll('{{count}}', '${item.candidates.length}'),
+                ),
+              ],
+            ),
+            if (balanced) ...[
+              const SizedBox(height: 12),
+              Text(
+                tx('llm_orchestrations.router', 'Conexión orquestadora'),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                _connectionLabel(router, item.routerConnectionId),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+            const SizedBox(height: 14),
+            Text(
+              balanced
+                  ? tx('llm_orchestrations.candidates', 'Conexiones candidatas')
+                  : tx(
+                      'llm_orchestrations.execution_order',
+                      'Orden de ejecución',
+                    ),
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: colors.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 6),
+            ...item.candidates.asMap().entries.map((entry) {
+              final candidate = entry.value;
+              final connection = connectionsById[candidate.connectionId];
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 5),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 28,
+                      child: Text(
+                        '${entry.key + 1}'.padLeft(2, '0'),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _connectionLabel(
+                              connection,
+                              candidate.connectionId,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (candidate.routingHint.isNotEmpty)
+                            Text(
+                              candidate.routingHint,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colors.onSurfaceVariant,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+            const SizedBox(height: 8),
+            Divider(height: 1, color: colors.outlineVariant),
+            const SizedBox(height: 5),
+            Row(
+              children: [
+                OriginBadge(
+                  shared: item.shared,
+                  ownerLabel: tx('common.owner', 'Propietario'),
+                  linkedLabel: tx('common.linked', 'Enlazado'),
+                ),
+                const Spacer(),
+                ActionIconButton(
+                  icon: item.isActive
+                      ? Icons.toggle_on_outlined
+                      : Icons.toggle_off_outlined,
+                  tooltip: item.isActive
+                      ? tx('common.deactivate', 'Desactivar')
+                      : tx('common.activate', 'Activar'),
+                  onPressed: item.readOnly ? null : onToggleActive,
+                ),
+                ActionIconButton(
+                  icon: Icons.edit_outlined,
+                  tooltip: tx('common.edit', 'Editar'),
+                  onPressed: item.readOnly ? null : onEdit,
+                ),
+                ActionIconButton(
+                  icon: Icons.group_add_outlined,
+                  tooltip: tx('common.share_group', 'Compartir con grupo'),
+                  onPressed: item.readOnly ? null : onShare,
+                ),
+                ActionIconButton(
+                  icon: Icons.delete_outline,
+                  tooltip: tx('common.delete', 'Eliminar'),
+                  danger: true,
+                  onPressed: item.readOnly ? null : onDelete,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+
+    return item.isActive ? card : Opacity(opacity: 0.6, child: card);
+  }
+
+  String _connectionLabel(ConnectionItem? connection, String fallback) {
+    if (connection == null) return fallback;
+    if (connection.model.isEmpty) return connection.name;
+    return '${connection.name} · ${connection.model}';
+  }
+}
+
+class _MetadataLabel extends StatelessWidget {
+  const _MetadataLabel({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(text, style: Theme.of(context).textTheme.labelSmall),
+    );
+  }
+}

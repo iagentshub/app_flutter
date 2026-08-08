@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../models/connections/connection_models.dart';
 import '../../../models/workflows/llm_orchestration_models.dart';
+import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 
@@ -155,25 +156,49 @@ class _LlmOrchestrationDialogState extends State<LlmOrchestrationDialog> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    ChoiceChip(
-                      avatar: const Icon(Icons.low_priority, size: 18),
-                      label: Text(tx('llm_orchestrations.stack', 'Pila')),
-                      selected: _mode == 'stack',
-                      onSelected: (_) => setState(() => _mode = 'stack'),
-                    ),
-                    ChoiceChip(
-                      avatar: const Icon(Icons.balance, size: 18),
-                      label: Text(
-                        tx('llm_orchestrations.balanced', 'Balanceo'),
+                Text(
+                  tx('llm_orchestrations.mode', 'Modo'),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<String>(
+                    showSelectedIcon: false,
+                    expandedInsets: EdgeInsets.zero,
+                    segments: [
+                      ButtonSegment(
+                        value: 'stack',
+                        label: Text(tx('llm_orchestrations.stack', 'Pila')),
                       ),
-                      selected: _mode == 'balanced',
-                      onSelected: (_) => setState(() => _mode = 'balanced'),
-                    ),
-                  ],
+                      ButtonSegment(
+                        value: 'balanced',
+                        label: Text(
+                          tx('llm_orchestrations.balanced', 'Balanceo'),
+                        ),
+                      ),
+                    ],
+                    selected: {_mode},
+                    onSelectionChanged: (selection) =>
+                        setState(() => _mode = selection.first),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  _mode == 'balanced'
+                      ? tx(
+                          'llm_orchestrations.balanced_help',
+                          'La conexión orquestadora estudia cada tarea y ordena las candidatas.',
+                        )
+                      : tx(
+                          'llm_orchestrations.stack_help',
+                          'Prueba las conexiones en orden hasta obtener una respuesta.',
+                        ),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 if (_mode == 'balanced') ...[
                   const SizedBox(height: 12),
@@ -183,7 +208,11 @@ class _LlmOrchestrationDialogState extends State<LlmOrchestrationDialog> {
                     decoration: InputDecoration(
                       labelText: tx(
                         'llm_orchestrations.router',
-                        'LLM balanceador',
+                        'Conexión orquestadora',
+                      ),
+                      helperText: tx(
+                        'llm_orchestrations.router_help',
+                        'Analiza la tarea y ordena las candidatas. Si falla, la orquestación se detiene.',
                       ),
                     ),
                     items: widget.connections
@@ -199,7 +228,7 @@ class _LlmOrchestrationDialogState extends State<LlmOrchestrationDialog> {
                     validator: (value) => _mode == 'balanced' && value == null
                         ? tx(
                             'llm_orchestrations.router_required',
-                            'Selecciona el LLM balanceador',
+                            'Selecciona la conexión orquestadora',
                           )
                         : null,
                   ),
@@ -241,9 +270,18 @@ class _LlmOrchestrationDialogState extends State<LlmOrchestrationDialog> {
                   },
                   itemBuilder: (context, index) {
                     final draft = _candidates[index];
-                    return Card(
+                    return Container(
                       key: ValueKey('${draft.connectionId}-$index'),
                       margin: const EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.outlineVariant,
+                        ),
+                      ),
                       child: Padding(
                         padding: const EdgeInsets.all(10),
                         child: Row(
@@ -299,13 +337,14 @@ class _LlmOrchestrationDialogState extends State<LlmOrchestrationDialog> {
                                 ],
                               ),
                             ),
-                            AppIconButton.outlined(
+                            ActionIconButton(
                               onPressed: _candidates.length > 2
                                   ? () => setState(
                                       () => _candidates.removeAt(index),
                                     )
                                   : null,
-                              icon: const Icon(Icons.delete_outline),
+                              icon: Icons.delete_outline,
+                              danger: true,
                               tooltip: tx('common.delete', 'Eliminar'),
                             ),
                           ],

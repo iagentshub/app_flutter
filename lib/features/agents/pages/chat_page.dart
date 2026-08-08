@@ -11,13 +11,11 @@ import '../../../core/network/api_error.dart';
 import '../../../features/connections/repositories/connections_repository.dart';
 import '../../../features/knowledge/repositories/knowledge_repository.dart';
 import '../../../features/knowledge/repositories/prompts_repository.dart';
-import '../../../features/workflows/repositories/llm_orchestrations_repository.dart';
 import '../../../models/agents/agent_models.dart';
 import '../../../models/chat/chat_models.dart';
 import '../../../models/connections/connection_models.dart';
 import '../../../models/knowledge/knowledge_models.dart';
 import '../../../models/prompts/prompt_models.dart';
-import '../../../models/workflows/llm_orchestration_models.dart';
 import '../repositories/agents_repository.dart';
 import '../repositories/chat_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
@@ -57,7 +55,6 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
   late final ChatRepository _repository;
   late final AgentsRepository _agentsRepository;
   late final ConnectionsRepository _connectionsRepository;
-  late final LlmOrchestrationsRepository _llmOrchestrationsRepository;
   late final PromptsRepository _promptsRepository;
   late final KnowledgeRepository _knowledgeRepository;
   late final TranslatedTexts _t;
@@ -104,9 +101,6 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
     _repository = ChatRepository(apiClient: widget.apiClient);
     _agentsRepository = AgentsRepository(apiClient: widget.apiClient);
     _connectionsRepository = ConnectionsRepository(apiClient: widget.apiClient);
-    _llmOrchestrationsRepository = LlmOrchestrationsRepository(
-      apiClient: widget.apiClient,
-    );
     _promptsRepository = PromptsRepository(apiClient: widget.apiClient);
     _knowledgeRepository = KnowledgeRepository(apiClient: widget.apiClient);
     _t = TranslatedTexts(
@@ -141,29 +135,23 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
     if (token == null || token.isEmpty) return;
     try {
       final results = await Future.wait([
-        _agentsRepository.getPreferredTarget(token, widget.agent.id),
+        _agentsRepository.getPreferredConnection(token, widget.agent.id),
         _connectionsRepository.listConnections(token),
-        _llmOrchestrationsRepository.list(token),
       ]);
       if (!mounted) return;
-      final currentPreference =
-          results[0] as ({String? connectionId, String? llmOrchestrationId});
+      final currentPreference = results[0] as String?;
       final connections = results[1] as List<ConnectionItem>;
-      final orchestrations = results[2] as List<LlmOrchestrationItem>;
       await showDialog<void>(
         context: context,
         builder: (context) => _ConnectionPreferenceDialog(
           connections: connections,
-          orchestrations: orchestrations,
-          initialConnectionId: currentPreference.connectionId,
-          initialLlmOrchestrationId: currentPreference.llmOrchestrationId,
+          initialConnectionId: currentPreference,
           tx: _tx,
-          onSave: (connectionId, llmOrchestrationId) async {
-            await _agentsRepository.setPreferredTarget(
+          onSave: (connectionId) async {
+            await _agentsRepository.setPreferredConnection(
               token,
               widget.agent.id,
               connectionId,
-              llmOrchestrationId,
             );
             if (!mounted) return;
             showMessage(

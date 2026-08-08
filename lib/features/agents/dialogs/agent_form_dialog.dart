@@ -9,14 +9,12 @@ import '../../../features/knowledge/repositories/prompts_repository.dart';
 import '../../../features/knowledge/repositories/skills_repository.dart';
 import '../../../features/knowledge/repositories/tools_repository.dart';
 import '../../../features/memory/repositories/memory_repository.dart';
-import '../../../features/workflows/repositories/llm_orchestrations_repository.dart';
 import '../../../models/connections/connection_models.dart';
 import '../../../models/knowledge/knowledge_models.dart';
 import '../../../models/memory/memory_models.dart';
 import '../../../models/prompts/prompt_models.dart';
 import '../../../models/skills/skill_models.dart';
 import '../../../models/tools/tool_models.dart';
-import '../../../models/workflows/llm_orchestration_models.dart';
 import '../../../shared/tools/tool_language.dart';
 import '../../../shared/widgets/grouped_label_picker.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
@@ -56,7 +54,6 @@ class _AgentFormDialogState extends State<AgentFormDialog> with StateMessaging {
   late final TextEditingController _promptController;
   late final TextEditingController _memoryFileController;
   late final ConnectionsRepository _connectionsRepository;
-  late final LlmOrchestrationsRepository _llmOrchestrationsRepository;
   late final MemoryRepository _memoryRepository;
   late final SkillsRepository _skillsRepository;
   late final KnowledgeRepository _knowledgeRepository;
@@ -64,10 +61,8 @@ class _AgentFormDialogState extends State<AgentFormDialog> with StateMessaging {
   late final ToolsRepository _toolsRepository;
 
   List<ConnectionItem> _connections = const [];
-  List<LlmOrchestrationItem> _llmOrchestrations = const [];
   bool _loadingConnections = true;
   String? _connectionId;
-  String? _llmOrchestrationId;
   double _temperature = 0.7;
   Set<String> _selectedLabels = {};
   String _agentType = 'generic';
@@ -105,9 +100,6 @@ class _AgentFormDialogState extends State<AgentFormDialog> with StateMessaging {
   void initState() {
     super.initState();
     _connectionsRepository = ConnectionsRepository(apiClient: widget.apiClient);
-    _llmOrchestrationsRepository = LlmOrchestrationsRepository(
-      apiClient: widget.apiClient,
-    );
     _memoryRepository = MemoryRepository(apiClient: widget.apiClient);
     _skillsRepository = SkillsRepository(apiClient: widget.apiClient);
     _knowledgeRepository = KnowledgeRepository(apiClient: widget.apiClient);
@@ -129,8 +121,6 @@ class _AgentFormDialogState extends State<AgentFormDialog> with StateMessaging {
 
     final connId = initial?['connection_id']?.toString() ?? '';
     _connectionId = connId.isEmpty ? null : connId;
-    final orchestrationId = initial?['llm_orchestration_id']?.toString() ?? '';
-    _llmOrchestrationId = orchestrationId.isEmpty ? null : orchestrationId;
     _temperature =
         (num.tryParse(initial?['temperature']?.toString() ?? '0.7') ?? 0.7)
             .toDouble()
@@ -178,14 +168,12 @@ class _AgentFormDialogState extends State<AgentFormDialog> with StateMessaging {
 
   Future<void> _loadConnections() async {
     try {
-      final values = await Future.wait([
-        _connectionsRepository.listConnections(widget.token),
-        _llmOrchestrationsRepository.list(widget.token),
-      ]);
+      final connections = await _connectionsRepository.listConnections(
+        widget.token,
+      );
       if (!mounted) return;
       refresh(() {
-        _connections = values[0] as List<ConnectionItem>;
-        _llmOrchestrations = values[1] as List<LlmOrchestrationItem>;
+        _connections = connections;
         _loadingConnections = false;
       });
     } catch (_) {
@@ -290,7 +278,6 @@ class _AgentFormDialogState extends State<AgentFormDialog> with StateMessaging {
       'agent_type': _agentType,
       'model': _modelController.text.trim(),
       'connection_id': _connectionId ?? '',
-      'llm_orchestration_id': _llmOrchestrationId ?? '',
       'system_prompt': _promptController.text.trim(),
       'temperature': _temperature,
       'labels': _selectedLabels.toList(),

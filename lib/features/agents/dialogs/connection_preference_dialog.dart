@@ -6,20 +6,15 @@ part of '../pages/chat_page.dart';
 class _ConnectionPreferenceDialog extends StatefulWidget {
   const _ConnectionPreferenceDialog({
     required this.connections,
-    required this.orchestrations,
     required this.initialConnectionId,
-    required this.initialLlmOrchestrationId,
     required this.tx,
     required this.onSave,
   });
 
   final List<ConnectionItem> connections;
-  final List<LlmOrchestrationItem> orchestrations;
   final String? initialConnectionId;
-  final String? initialLlmOrchestrationId;
   final String Function(String path, String fallback) tx;
-  final Future<void> Function(String? connectionId, String? llmOrchestrationId)
-  onSave;
+  final Future<void> Function(String? connectionId) onSave;
 
   @override
   State<_ConnectionPreferenceDialog> createState() =>
@@ -34,23 +29,12 @@ class _ConnectionPreferenceDialogState
   @override
   void initState() {
     super.initState();
-    _target = widget.initialConnectionId != null
-        ? 'connection:${widget.initialConnectionId}'
-        : widget.initialLlmOrchestrationId != null
-        ? 'orchestration:${widget.initialLlmOrchestrationId}'
-        : null;
+    _target = widget.initialConnectionId;
   }
 
   Future<void> _save() async {
     setState(() => _saving = true);
-    await widget.onSave(
-      _target?.startsWith('connection:') == true
-          ? _target!.substring('connection:'.length)
-          : null,
-      _target?.startsWith('orchestration:') == true
-          ? _target!.substring('orchestration:'.length)
-          : null,
-    );
+    await widget.onSave(_target);
     if (mounted) Navigator.of(context).pop();
   }
 
@@ -79,18 +63,9 @@ class _ConnectionPreferenceDialogState
             ),
             ...widget.connections.map(
               (conn) => DropdownMenuItem<String?>(
-                value: 'connection:${conn.id}',
+                value: conn.id,
                 child: Text(
-                  '${conn.name} (${conn.type})',
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ),
-            ...widget.orchestrations.map(
-              (item) => DropdownMenuItem<String?>(
-                value: 'orchestration:${item.id}',
-                child: Text(
-                  '${item.name} (${item.mode == 'balanced' ? tx('llm_orchestrations.balanced', 'Balanceo') : tx('llm_orchestrations.stack', 'Pila')})',
+                  '${conn.name} (${conn.type == 'llm_orchestration' ? (conn.model == 'balanced' ? tx('llm_orchestrations.balanced', 'Balanceo') : tx('llm_orchestrations.stack', 'Pila')) : conn.type})',
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
