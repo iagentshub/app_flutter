@@ -46,8 +46,7 @@ class AgentFormDialog extends StatefulWidget {
   State<AgentFormDialog> createState() => _AgentFormDialogState();
 }
 
-class _AgentFormDialogState extends State<AgentFormDialog>
-    with StateMessaging {
+class _AgentFormDialogState extends State<AgentFormDialog> with StateMessaging {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _descriptionController;
@@ -169,10 +168,12 @@ class _AgentFormDialogState extends State<AgentFormDialog>
 
   Future<void> _loadConnections() async {
     try {
-      final list = await _connectionsRepository.listConnections(widget.token);
+      final connections = await _connectionsRepository.listConnections(
+        widget.token,
+      );
       if (!mounted) return;
       refresh(() {
-        _connections = list;
+        _connections = connections;
         _loadingConnections = false;
       });
     } catch (_) {

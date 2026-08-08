@@ -1,17 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
     <application>
-        <!-- Flutter busca una activity real al ejecutar `flutter run`; los
-             builds release usan exclusivamente los aliases del manifest main. -->
-        <activity
-            android:name=".MainActivity"
-            android:enabled="true"
-            tools:replace="android:enabled">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-        </activity>
+        <!-- MainActivity ya trae el intent-filter LAUNCHER desde src/main; aquí solo
+             se deshabilita el alias por defecto para no mostrar dos iconos en debug. -->
         <activity-alias
             android:name="com.iagentshub.app.MainActivity.default"
             android:enabled="false"

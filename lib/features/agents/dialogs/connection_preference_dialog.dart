@@ -23,18 +23,18 @@ class _ConnectionPreferenceDialog extends StatefulWidget {
 
 class _ConnectionPreferenceDialogState
     extends State<_ConnectionPreferenceDialog> {
-  String? _connectionId;
+  String? _target;
   bool _saving = false;
 
   @override
   void initState() {
     super.initState();
-    _connectionId = widget.initialConnectionId;
+    _target = widget.initialConnectionId;
   }
 
   Future<void> _save() async {
     setState(() => _saving = true);
-    await widget.onSave(_connectionId);
+    await widget.onSave(_target);
     if (mounted) Navigator.of(context).pop();
   }
 
@@ -46,7 +46,7 @@ class _ConnectionPreferenceDialogState
       content: SizedBox(
         width: dialogContentWidth(context, 360),
         child: DropdownButtonFormField<String?>(
-          initialValue: _connectionId,
+          initialValue: _target,
           isExpanded: true,
           decoration: InputDecoration(
             labelText: tx('agents.field_connection', 'Conexión LLM'),
@@ -65,13 +65,13 @@ class _ConnectionPreferenceDialogState
               (conn) => DropdownMenuItem<String?>(
                 value: conn.id,
                 child: Text(
-                  '${conn.name} (${conn.type})',
+                  '${conn.name} (${conn.type == 'llm_orchestration' ? (conn.model == 'balanced' ? tx('llm_orchestrations.balanced', 'Balanceo') : tx('llm_orchestrations.stack', 'Pila')) : conn.type})',
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),
           ],
-          onChanged: (value) => setState(() => _connectionId = value),
+          onChanged: (value) => setState(() => _target = value),
         ),
       ),
       actions: [

@@ -42,7 +42,7 @@
   "code_and_state_required": "code and state are required",
   "avatar_field_required": "'avatar' field is required",
   "avatar_format_not_allowed": "Format not allowed. Use jpg, png, or webp.",
-  "avatar_too_large": "Avatar can't exceed 2 MB.",
+  "avatar_too_large": "Avatar can't exceed 10 MB.",
   "tool_binary_too_large": "The binary can't exceed 50 MB.",
   "tool_binary_empty": "The binary can't be empty",
   "tool_language_not_binary": "Only 'cpp' language tools accept a binary",

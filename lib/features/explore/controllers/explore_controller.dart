@@ -49,6 +49,7 @@ class ExploreController extends ChangeNotifier {
   String _type = 'all';
   String _category = '';
   final Set<String> _labels = <String>{};
+  final Map<String, int> _typeCounts = <String, int>{};
   final Set<String> _busyKeys = <String>{};
   final Set<String> _linkedKeys = <String>{};
   final Set<String> _starredKeys = <String>{};
@@ -61,6 +62,7 @@ class ExploreController extends ChangeNotifier {
   String? get error => _error;
   String get type => _type;
   String get category => _category;
+  int typeCount(String type) => _typeCounts[type] ?? 0;
 
   bool hasLabel(String label) => _labels.contains(label);
   bool isBusy(ExploreItem item) => _busyKeys.contains(itemKey(item));
@@ -78,8 +80,8 @@ class ExploreController extends ChangeNotifier {
     return set.toList()..sort();
   }
 
-  int get activeFilterCount =>
-      (_type != 'all' ? 1 : 0) + (_category.isNotEmpty ? 1 : 0) + _labels.length;
+  int get secondaryActiveFilterCount =>
+      (_category.isNotEmpty ? 1 : 0) + _labels.length;
 
   // ── Pestaña Usuarios ──────────────────────────────────────────────────
 
@@ -131,6 +133,13 @@ class ExploreController extends ChangeNotifier {
     return load();
   }
 
+  Future<void> clearSecondaryFilters() {
+    _category = '';
+    _labels.clear();
+    _notify();
+    return load();
+  }
+
   // ── Carga y acciones ──────────────────────────────────────────────────
 
   String? get _token => _sessionController.gaToken;
@@ -157,6 +166,16 @@ class ExploreController extends ChangeNotifier {
         labels: _labels.toList(),
       );
       _items = items;
+      if (_type == 'all') {
+        _typeCounts.clear();
+        for (final item in items) {
+          _typeCounts.update(
+            item.resourceType,
+            (count) => count + 1,
+            ifAbsent: () => 1,
+          );
+        }
+      }
       _loading = false;
       if (_category.isNotEmpty && !categoryOptions.contains(_category)) {
         _category = '';

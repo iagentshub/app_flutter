@@ -21,6 +21,13 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
+            <!-- flutter_tools lee solo este manifest (nunca el fusionado) para hallar
+                 el launcher antes de invocar Gradle, así que necesita el intent-filter
+                 aquí; src/release lo elimina para dejar el launcher solo en el alias. -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
         </activity>
         <activity-alias
             android:name="com.iagentshub.app.MainActivity.default"

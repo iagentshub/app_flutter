@@ -1,7 +1,9 @@
 import 'package:app_flutter/shared/branding/brand_mark_geometry.dart';
+import 'package:app_flutter/shared/state/backend_controller.dart';
 import 'package:app_flutter/shared/widgets/launch_splash.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   test('la secuencia de splash es siempre logo, iA, Ai y logo', () {
@@ -24,6 +26,78 @@ void main() {
     expect(BrandMarkGeometry.aiRight.end.x, lessThan(0.5));
     expect(BrandMarkGeometry.aiConnector.start.x, lessThan(0.5));
   });
+
+  testWidgets(
+    'muestra el coordinator estático cuando el sistema desactiva animaciones',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      tester.platformDispatcher.accessibilityFeaturesTestValue =
+          const FakeAccessibilityFeatures(disableAnimations: true);
+      addTearDown(
+        tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+      );
+      final backendController = await BackendController.bootstrap();
+      var finished = false;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: LaunchSplash(
+            backendController: backendController,
+            onFinished: () => finished = true,
+          ),
+        ),
+      );
+
+      final customPaint = tester.widget<CustomPaint>(
+        find.byKey(const Key('splash-icon-morph')),
+      );
+      final painter = customPaint.painter! as CoordinatorToIaPainter;
+      expect(painter.fromMark, SplashMark.logo);
+      expect(painter.toMark, SplashMark.logo);
+      expect(painter.progress, 0);
+
+      await tester.pump(
+        reducedMotionSplashDuration - const Duration(milliseconds: 1),
+      );
+      expect(finished, isFalse);
+      await tester.pump(const Duration(milliseconds: 1));
+      expect(finished, isTrue);
+    },
+  );
+
+  testWidgets(
+    'mantiene la entrada animada cuando las animaciones están activas',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      tester.platformDispatcher.accessibilityFeaturesTestValue =
+          const FakeAccessibilityFeatures();
+      addTearDown(
+        tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+      );
+      final backendController = await BackendController.bootstrap();
+      var finished = false;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: LaunchSplash(
+            backendController: backendController,
+            onFinished: () => finished = true,
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 475));
+
+      final customPaint = tester.widget<CustomPaint>(
+        find.byKey(const Key('splash-icon-entrance')),
+      );
+      final painter = customPaint.painter! as MarkEntrancePainter;
+      expect(painter.progress, greaterThan(0));
+      expect(painter.progress, lessThan(1));
+      expect(finished, isFalse);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
 
   Future<void> pumpMark(
     WidgetTester tester,

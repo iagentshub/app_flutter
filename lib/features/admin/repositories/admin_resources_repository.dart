@@ -56,6 +56,13 @@ class AdminResourcesRepository extends ApiRepository {
     );
   }
 
+  Future<void> deleteAdminLlmOrchestration(String token, String id) async {
+    await apiClient.delete(
+      '/api/admin/llm-orchestrations/${Uri.encodeComponent(id)}',
+      gaToken: token,
+    );
+  }
+
   // ── Skills ────────────────────────────────────────────────────────────
 
   Future<void> deleteAdminSkill(String token, String skillId) async {

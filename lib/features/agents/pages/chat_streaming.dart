@@ -20,6 +20,7 @@ extension _ChatStreaming on _ChatPageState {
         : '> ${_replyLabelFor(quoted)}: ${_quoteSnippet(quoted.content)}\n\n$text';
     refresh(() {
       _error = null;
+      _routingNotice = null;
       _messages = [
         ..._messages,
         ChatMessage(
@@ -75,9 +76,12 @@ extension _ChatStreaming on _ChatPageState {
               scrollToEnd(_scrollController, animate: false);
             } else if (event.type == 'error') {
               refresh(
-                () =>
-                    _error = event.message ?? 'Error de respuesta del agente',
+                () => _error = event.message ?? 'Error de respuesta del agente',
               );
+            } else if (event.type == 'routing_selected' ||
+                event.type == 'routing_warning' ||
+                event.type == 'routing_failover') {
+              refresh(() => _routingNotice = event.message);
             }
           },
           onError: (error) {

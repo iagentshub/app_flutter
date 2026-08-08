@@ -22,6 +22,7 @@ import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../cards/workflow_card.dart';
 import '../dialogs/run_progress_dialog.dart';
 import '../dialogs/run_workflow_dialog.dart';
+import '../widgets/llm_orchestrations_panel.dart';
 import 'workflow_editor_page.dart';
 
 class WorkflowsPage extends StatefulWidget {
@@ -355,9 +356,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
     return null;
   }
 
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildAgentWorkflows(BuildContext context) {
     if (_loading) return const AsyncStatePanel.loading();
     if (_error != null) {
       return ListView(
@@ -489,6 +488,39 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
                 },
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Column(
+        children: [
+          Material(
+            color: Theme.of(context).colorScheme.surface,
+            child: TabBar(
+              tabs: [
+                Tab(text: _tx('workflows.tab_agents', 'Agentes')),
+                Tab(text: _tx('workflows.tab_llm_apis', 'APIs LLM')),
+              ],
+            ),
+          ),
+          Expanded(
+            child: TabBarView(
+              children: [
+                _buildAgentWorkflows(context),
+                LlmOrchestrationsPanel(
+                  apiClient: widget.apiClient,
+                  sessionController: widget.sessionController,
+                  localeController: widget.localeController,
+                  tx: _tx,
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

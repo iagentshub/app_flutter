@@ -19,6 +19,7 @@ import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
+import '../../../shared/widgets/explore_search_toolbar.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/resource_type_badge.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
@@ -186,6 +187,27 @@ class _ExplorePageState extends State<ExplorePage>
     return _tx('explore.$key', label);
   }
 
+  List<ExploreTypeOption> get _publicExploreTypeOptions => [
+    for (final option in _typeOptions.skip(1))
+      ExploreTypeOption(
+        value: option.$1,
+        label: option.$2,
+        icon: _publicTypeIcon(option.$1),
+        color: labelColor(option.$1),
+        count: _controller.typeCount(option.$1),
+      ),
+  ];
+
+  IconData _publicTypeIcon(String type) => switch (type) {
+    'agent' => Icons.smart_toy_outlined,
+    'skill' => Icons.bolt_outlined,
+    'prompt' => Icons.chat_bubble_outline,
+    'tool' => Icons.build_outlined,
+    'knowledge' => Icons.menu_book_outlined,
+    'workflow' => Icons.account_tree_outlined,
+    _ => Icons.category_outlined,
+  };
+
   void _openFiltersDialog() {
     final optionAll = _tx('explore.option_all', 'Todas');
     final categoryOptions = [
@@ -198,18 +220,8 @@ class _ExplorePageState extends State<ExplorePage>
       title: _tx('common.filters', 'Filtros'),
       clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
       closeLabel: _tx('common.close', 'Cerrar'),
-      onClear: _controller.clearFilters,
+      onClear: _controller.clearSecondaryFilters,
       buildFields: (setDialogState) => [
-        _dropdown(
-          label: _tx('explore.type_label', 'Tipo'),
-          value: _controller.type,
-          options: _typeOptions,
-          onChanged: (v) {
-            _controller.setType(v);
-            setDialogState(() {});
-          },
-        ),
-        const SizedBox(height: 12),
         _dropdown(
           label: _tx('explore.category_label', 'Categoría'),
           value: _controller.category,

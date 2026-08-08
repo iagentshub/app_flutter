@@ -8,7 +8,10 @@ class ConnectionItem extends ResourceItem {
   String get host => raw['host'] as String? ?? '';
   String get url => raw['url'] as String? ?? '';
   bool get personalKey => raw['_personal_key'] == true;
-  bool get isVirtual => id.contains('::');
+  bool get isVirtual =>
+      raw['is_virtual'] == true ||
+      type == 'llm_orchestration' ||
+      id.contains('::');
   int get tokensIn => (raw['tokens_in'] as num?)?.toInt() ?? 0;
   int get tokensOut => (raw['tokens_out'] as num?)?.toInt() ?? 0;
 }

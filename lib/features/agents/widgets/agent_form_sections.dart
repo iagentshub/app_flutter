@@ -96,7 +96,7 @@ extension _AgentFormSections on _AgentFormDialogState {
                       (conn) => DropdownMenuItem<String>(
                         value: conn.id,
                         child: Text(
-                          '${conn.name} (${conn.type})',
+                          '${conn.name} (${conn.type == 'llm_orchestration' ? (conn.model == 'balanced' ? widget.tx('llm_orchestrations.balanced', 'Balanceo') : widget.tx('llm_orchestrations.stack', 'Pila')) : conn.type})',
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -157,9 +157,8 @@ extension _AgentFormSections on _AgentFormDialogState {
                             'agents.pick_existing',
                             'Elegir existente',
                           ),
-                          onSelected: (value) => refresh(
-                            () => _memoryFileController.text = value,
-                          ),
+                          onSelected: (value) =>
+                              refresh(() => _memoryFileController.text = value),
                           itemBuilder: (context) => _memoryFiles
                               .map(
                                 (file) => PopupMenuItem<String>(

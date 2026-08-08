@@ -90,8 +90,8 @@ void main() {
     expect(seen?.queryParameters['type'], 'agent');
     expect(seen?.queryParameters['q'], 'agente');
     expect(seen?.queryParametersAll['label'], ['draft']);
-    // tipo + label; la categoría sigue vacía.
-    expect(controller.activeFilterCount, 2);
+    // El botón secundario cuenta labels/categoría; el tipo vive en la barra.
+    expect(controller.secondaryActiveFilterCount, 1);
   });
 
   test('load sin sesión avisa en vez de llamar a la API', () async {
@@ -132,7 +132,22 @@ void main() {
     expect(controller.type, 'all');
     expect(controller.category, '');
     expect(controller.hasLabel('draft'), isFalse);
-    expect(controller.activeFilterCount, 0);
+    expect(controller.secondaryActiveFilterCount, 0);
+  });
+
+  test('clearSecondaryFilters conserva el tipo visible', () async {
+    final controller = await build(
+      (request) async => http.Response(jsonEncode([_resource()]), 200),
+    );
+
+    await controller.setType('skill');
+    await controller.toggleLabel('draft', selected: true);
+    await controller.clearSecondaryFilters();
+
+    expect(controller.type, 'skill');
+    expect(controller.category, '');
+    expect(controller.hasLabel('draft'), isFalse);
+    expect(controller.secondaryActiveFilterCount, 0);
   });
 
   test('toggleStar alterna el estado y refleja el contador nuevo', () async {

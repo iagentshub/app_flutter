@@ -12,6 +12,10 @@ extension _AdminExploreTab on _AdminPageState {
         'Conocimiento',
       ),
       AdminResourceType.workflow => _tx('admin.type_workflow', 'Orquestación'),
+      AdminResourceType.llmOrchestration => _tx(
+        'admin.type_llm_orchestration',
+        'Orquestación LLM',
+      ),
       AdminResourceType.skill => _tx('admin.type_skill', 'Skill'),
       AdminResourceType.memory => _tx('admin.type_memory', 'Memoria'),
       AdminResourceType.prompt => _tx('admin.type_prompt', 'Prompt'),
@@ -28,6 +32,7 @@ extension _AdminExploreTab on _AdminPageState {
       AdminResourceType.connection => FncColors.info,
       AdminResourceType.knowledge => FncColors.success,
       AdminResourceType.workflow => FncColors.labelDevelopment,
+      AdminResourceType.llmOrchestration => FncColors.purple,
       AdminResourceType.skill => FncColors.labelSkill,
       AdminResourceType.memory => FncColors.labelMemory,
       AdminResourceType.prompt => FncColors.lime600,
@@ -57,6 +62,14 @@ extension _AdminExploreTab on _AdminPageState {
           .map((item) => (item['id'] ?? '').toString())
           .toSet(),
       AdminResourceType.workflow: _filteredWorkflows
+          .map((item) => (item['id'] ?? '').toString())
+          .toSet(),
+      AdminResourceType.llmOrchestration: _llmOrchestrations
+          .where(
+            (item) =>
+                _llmOrchestrationOwner.isEmpty ||
+                _ownerOf(item) == _llmOrchestrationOwner,
+          )
           .map((item) => (item['id'] ?? '').toString())
           .toSet(),
       AdminResourceType.skill: _filteredSkills
@@ -94,6 +107,8 @@ extension _AdminExploreTab on _AdminPageState {
         (_knowledgeType.isNotEmpty ? 1 : 0) +
             (_knowledgeOwner.isNotEmpty ? 1 : 0),
       AdminResourceType.workflow => _workflowOwner.isNotEmpty ? 1 : 0,
+      AdminResourceType.llmOrchestration =>
+        _llmOrchestrationOwner.isNotEmpty ? 1 : 0,
       AdminResourceType.skill => _skillOwner.isNotEmpty ? 1 : 0,
       AdminResourceType.memory => _memoryOwner.isNotEmpty ? 1 : 0,
       AdminResourceType.prompt => _promptOwner.isNotEmpty ? 1 : 0,
@@ -127,6 +142,12 @@ extension _AdminExploreTab on _AdminPageState {
           currentOwner: _workflowOwner,
           onChanged: (value) => refresh(() => _workflowOwner = value),
         );
+      case AdminResourceType.llmOrchestration:
+        _openOwnerFilterDialog(
+          owners: _ownersOf(_llmOrchestrations),
+          currentOwner: _llmOrchestrationOwner,
+          onChanged: (value) => refresh(() => _llmOrchestrationOwner = value),
+        );
       case AdminResourceType.skill:
         _openOwnerFilterDialog(
           owners: _ownersOf(_skills),
@@ -156,106 +177,16 @@ extension _AdminExploreTab on _AdminPageState {
     }
   }
 
-  /// Botón tipo "desplegable" que abre un menú con una casilla por tipo
-  /// (más "Todos" para volver de un tirón al conjunto vacío = sin filtro).
-  /// Un `PopupMenuItem` único y `enabled: false` para que el menú no se
-  /// cierre al marcar cada casilla — solo el `StatefulBuilder` interno se
-  /// repinta, y `_refresh` mantiene la lista filtrada en vivo por debajo.
-  Widget _exploreTypeDropdown() {
-    final scheme = Theme.of(context).colorScheme;
-    final totalCount = _exploreCounts.values.fold<int>(
-      0,
-      (sum, value) => sum + value,
-    );
-    final label = _exploreTypes.isEmpty
-        ? '${_tx('admin.type_all', 'Todos')} ($totalCount)'
-        : _exploreTypes.length == 1
-        ? _resourceTypeLabel(_exploreTypes.single)
-        : _tx(
-            'admin.explore_types_selected',
-            '{count} tipos',
-          ).replaceAll('{count}', '${_exploreTypes.length}');
-
-    return PopupMenuButton<void>(
-      key: const Key('exploreTypeDropdown'),
-      tooltip: _tx('admin.explore_filter_type', 'Filtrar por tipo'),
-      position: PopupMenuPosition.under,
-      itemBuilder: (context) => [
-        PopupMenuItem<void>(
-          enabled: false,
-          padding: EdgeInsets.zero,
-          child: StatefulBuilder(
-            builder: (context, setMenuState) => SizedBox(
-              width: 240,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CheckboxListTile(
-                    dense: true,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    value: _exploreTypes.isEmpty,
-                    title: Text(
-                      '${_tx('admin.type_all', 'Todos')} ($totalCount)',
-                    ),
-                    onChanged: (_) {
-                      setMenuState(() => _exploreTypes.clear());
-                      refresh(() {});
-                    },
-                  ),
-                  const Divider(height: 1),
-                  for (final type in AdminResourceType.values)
-                    CheckboxListTile(
-                      dense: true,
-                      controlAffinity: ListTileControlAffinity.leading,
-                      value: _exploreTypes.contains(type),
-                      secondary: Icon(
-                        _resourceTypeIcon(type),
-                        size: 18,
-                        color: _resourceTypeColor(type),
-                      ),
-                      title: Text(
-                        '${_resourceTypeLabel(type)} (${_exploreCounts[type] ?? 0})',
-                      ),
-                      onChanged: (checked) {
-                        setMenuState(() {
-                          if (checked == true) {
-                            _exploreTypes.add(type);
-                          } else {
-                            _exploreTypes.remove(type);
-                          }
-                        });
-                        refresh(() {});
-                      },
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-      child: IntrinsicWidth(
-        child: InputDecorator(
-          decoration: const InputDecoration(
-            isDense: true,
-            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-            border: OutlineInputBorder(),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                label,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(width: 4),
-              Icon(Icons.arrow_drop_down, color: scheme.onSurfaceVariant),
-            ],
-          ),
-        ),
+  List<ExploreTypeOption> get _adminExploreTypeOptions => [
+    for (final type in AdminResourceType.values)
+      ExploreTypeOption(
+        value: type.wireName,
+        label: _resourceTypeLabel(type),
+        icon: _resourceTypeIcon(type),
+        color: _resourceTypeColor(type),
+        count: _exploreCounts[type] ?? 0,
       ),
-    );
-  }
+  ];
 
   Widget _buildExploreTab() {
     final items = _filteredExploreItems;
@@ -266,28 +197,28 @@ extension _AdminExploreTab on _AdminPageState {
         'admin.explore_empty',
         'No hay objetos que coincidan con los filtros',
       ),
-      toolbar: _toolbar(
-        search: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _exploreSearchController,
-                decoration: InputDecoration(
-                  labelText: _tx(
-                    'admin.explore_search_hint',
-                    'Buscar objetos por nombre, usuario o propietario',
-                  ),
-                  prefixIcon: const Icon(Icons.search, size: 20),
-                ),
-                onChanged: (_) => _onSearchChanged(),
-              ),
-            ),
-            const SizedBox(width: 8),
-            _exploreTypeDropdown(),
-          ],
+      toolbar: ExploreSearchToolbar(
+        searchController: _exploreSearchController,
+        searchHint: _tx(
+          'admin.explore_search_hint',
+          'Buscar objetos por nombre, usuario o propietario',
         ),
-        buttons: [
+        onSearchChanged: (_) => _onSearchChanged(),
+        typeOptions: _adminExploreTypeOptions,
+        selectedTypes: _exploreTypes.map((type) => type.wireName).toSet(),
+        allTypesLabel: _tx('admin.type_all', 'Todos'),
+        typeFilterTooltip: _tx('admin.explore_filter_type', 'Filtrar por tipo'),
+        multipleTypesLabel: (count) => _tx(
+          'admin.explore_types_selected',
+          '{count} tipos',
+        ).replaceAll('{count}', '$count'),
+        onTypesChanged: (values) => refresh(() {
+          _exploreTypes
+            ..clear()
+            ..addAll(values.map(AdminResourceType.fromWireName).whereType());
+        }),
+        selectorKey: const Key('exploreTypeDropdown'),
+        actions: [
           AppIconButton.outlined(
             onPressed: _load,
             icon: const Icon(Icons.refresh),
@@ -322,6 +253,7 @@ extension _AdminExploreTab on _AdminPageState {
       AdminResourceType.connection => Icons.cable_outlined,
       AdminResourceType.knowledge => Icons.menu_book_outlined,
       AdminResourceType.workflow => Icons.account_tree_outlined,
+      AdminResourceType.llmOrchestration => Icons.hub_outlined,
       AdminResourceType.skill => Icons.bolt_outlined,
       AdminResourceType.memory => Icons.description_outlined,
       AdminResourceType.prompt => Icons.chat_bubble_outline,
@@ -337,6 +269,9 @@ extension _AdminExploreTab on _AdminPageState {
       AdminResourceType.connection => _buildAdminConnectionCard(item.data),
       AdminResourceType.knowledge => _buildAdminKnowledgeCard(item.data),
       AdminResourceType.workflow => _buildAdminWorkflowCard(item.data),
+      AdminResourceType.llmOrchestration => _buildAdminLlmOrchestrationCard(
+        item.data,
+      ),
       AdminResourceType.skill => _buildAdminSkillCard(item.data),
       AdminResourceType.memory => _buildAdminMemoryCard(item.data),
       AdminResourceType.prompt => _buildAdminPromptCard(item.data),
@@ -363,7 +298,11 @@ extension _AdminExploreTab on _AdminPageState {
     final resourceId = (item['id'] ?? '').toString();
     if (token == null || resourceId.isEmpty) return;
     try {
-      final graph = await _resourcesRepository.getResourceGraph(token, type, resourceId);
+      final graph = await _resourcesRepository.getResourceGraph(
+        token,
+        type,
+        resourceId,
+      );
       if (!mounted) return;
       await showResourceGraphDialog(
         context: context,

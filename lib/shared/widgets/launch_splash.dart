@@ -33,6 +33,10 @@ const splashSequence = [
   SplashMark.logo,
 ];
 
+/// Tiempo mínimo durante el que se muestra el coordinator estático cuando el
+/// sistema solicita reducir o desactivar las animaciones.
+const reducedMotionSplashDuration = Duration(milliseconds: 850);
+
 class _LaunchSplashState extends State<LaunchSplash>
     with TickerProviderStateMixin {
   static const _entranceDuration = Duration(milliseconds: 950);
@@ -43,6 +47,7 @@ class _LaunchSplashState extends State<LaunchSplash>
 
   late final AnimationController _entranceController;
   late final AnimationController _controller;
+  bool _sequenceStarted = false;
 
   SplashMark _fromMark = SplashMark.logo;
   SplashMark _toMark = SplashMark.ia;
@@ -58,7 +63,21 @@ class _LaunchSplashState extends State<LaunchSplash>
       vsync: this,
       duration: _animationDuration,
     );
-    unawaited(_runSequence());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_sequenceStarted) return;
+    _sequenceStarted = true;
+
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _entranceController.value = 1;
+      _toMark = SplashMark.logo;
+      unawaited(_runStaticSequence());
+    } else {
+      unawaited(_runAnimatedSequence());
+    }
   }
 
   @override
@@ -79,7 +98,13 @@ class _LaunchSplashState extends State<LaunchSplash>
     }
   }
 
-  Future<void> _runSequence() async {
+  Future<void> _runStaticSequence() async {
+    unawaited(_warmPlatformCache());
+    await Future<void>.delayed(reducedMotionSplashDuration);
+    if (mounted) widget.onFinished();
+  }
+
+  Future<void> _runAnimatedSequence() async {
     await _entranceController.forward();
     if (!mounted) return;
     await Future<void>.delayed(_initialPause);

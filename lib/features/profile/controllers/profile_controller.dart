@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/widgets.dart';
 
 import '../../../core/network/api_error.dart';
@@ -6,6 +9,7 @@ import '../../../shared/state/action_result.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../repositories/profile_repository.dart';
+import '../utils/avatar_compressor.dart';
 
 /// El backend exige que `github` sea una URL https:// completa, pero pedirle
 /// eso al usuario es peor UX que un campo "usuario de GitHub" con prefijo
@@ -51,8 +55,12 @@ class ProfileController extends ChangeNotifier {
        _syncTheme = syncTheme,
        _tx = tx;
 
-  /// Tope que aplica el backend a la foto de perfil.
-  static const maxAvatarBytes = 2 * 1024 * 1024;
+  /// Tope de la imagen ya comprimida (JPEG) que acepta el backend.
+  static const maxAvatarBytes = 10 * 1024 * 1024;
+
+  /// Tope del archivo original antes de comprimir: evita que el dispositivo
+  /// procese un fichero de entrada absurdamente grande.
+  static const maxAvatarInputBytes = 40 * 1024 * 1024;
 
   /// Mínimo que exige `POST /api/auth/change-password`.
   static const minPasswordLength = 8;
@@ -252,7 +260,8 @@ class ProfileController extends ChangeNotifier {
   }
 
   /// Sube la foto ya elegida. La página se encarga del selector de archivos
-  /// (es UI de plataforma); aquí sólo se validan los bytes y se envían.
+  /// (es UI de plataforma); aquí se comprime en un isolate aparte, se valida
+  /// y se envía.
   Future<ActionResult?> uploadAvatar({
     required String fileName,
     required List<int>? fileBytes,
@@ -265,23 +274,40 @@ class ProfileController extends ChangeNotifier {
         _tx('profile.avatar_error', 'No se pudo actualizar la foto'),
       );
     }
-    if (fileBytes.length > maxAvatarBytes) {
+    if (fileBytes.length > maxAvatarInputBytes) {
       return ActionResult.error(
-        _tx('profile.avatar_too_large', 'La imagen no puede superar 2 MB'),
+        _tx(
+          'profile.avatar_input_too_large',
+          'La imagen original es demasiado grande',
+        ),
       );
     }
 
     _uploadingAvatar = true;
     _notify();
     try {
+      final compressed = await compute(
+        compressAvatarBytes,
+        AvatarCompressionInput(Uint8List.fromList(fileBytes)),
+      );
+      if (compressed.bytes.length > maxAvatarBytes) {
+        return ActionResult.error(
+          _tx('profile.avatar_too_large', 'La imagen no puede superar 10 MB'),
+        );
+      }
+
       await _repository.uploadAvatar(
         token,
-        fileName: fileName,
-        fileBytes: fileBytes,
+        fileName: compressed.fileName,
+        fileBytes: compressed.bytes,
       );
       _avatarVersion++;
       return ActionResult(
         _tx('profile.avatar_updated', 'Foto de perfil actualizada'),
+      );
+    } on AvatarCompressionException {
+      return ActionResult.error(
+        _tx('profile.avatar_error', 'No se pudo actualizar la foto'),
       );
     } on ApiError catch (error) {
       return ActionResult.error(error.message);

@@ -7,6 +7,7 @@ enum AdminResourceType {
   connection('connection'),
   knowledge('knowledge'),
   workflow('workflow'),
+  llmOrchestration('llm_orchestration'),
   skill('skill'),
   memory('memory'),
   prompt('prompt'),

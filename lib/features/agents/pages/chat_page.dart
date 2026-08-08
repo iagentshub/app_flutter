@@ -87,6 +87,7 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
   bool _streaming = false;
   bool _thinking = false;
   String? _error;
+  String? _routingNotice;
   StreamSubscription<ChatStreamEvent>? _subscription;
 
   /// Mensaje al que se está respondiendo (estilo Telegram/WhatsApp): se
@@ -306,6 +307,23 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
             child: Text(
               _error!,
               style: TextStyle(color: FncColors.materialRed.shade700),
+            ),
+          ),
+        if (_routingNotice != null)
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.secondaryContainer,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.route_outlined, size: 18),
+                const SizedBox(width: 8),
+                Expanded(child: Text(_routingNotice!)),
+              ],
             ),
           ),
         ChatComposer(

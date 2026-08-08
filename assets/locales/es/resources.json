@@ -147,7 +147,8 @@
     "identity_title": "Identidad",
     "avatar_updated": "Foto de perfil actualizada",
     "avatar_error": "No se pudo actualizar la foto",
-    "avatar_too_large": "La imagen no puede superar 2 MB"
+    "avatar_too_large": "La imagen no puede superar 10 MB",
+    "avatar_input_too_large": "La imagen original es demasiado grande"
   },
   "agents": {
     "tokens_tooltip": "Tokens consumidos",
@@ -370,7 +371,9 @@
     "ollama_cloud_hint": "Para Ollama Cloud, pega tu API Key de ollama.com/settings/keys"
   },
   "explore": {
-    "search_hint": "Buscar",
+    "search_hint": "Buscar recursos por nombre, autor o descripción",
+    "type_filter_tooltip": "Filtrar recursos por tipo",
+    "more_filters_tooltip": "Filtrar por categoría y labels",
     "type_label": "Tipo",
     "category_label": "Categoría",
     "label_label": "Label",
@@ -675,6 +678,8 @@
     "zoom_out": "Alejar"
   },
   "workflows": {
+    "tab_agents": "Agentes",
+    "tab_llm_apis": "APIs LLM",
     "connections_suffix": "conexiones",
     "copied": "Copiado",
     "copy_output": "Copiar resultado",
@@ -931,6 +936,7 @@
     "type_connection": "Conexión",
     "type_knowledge": "Conocimiento",
     "type_workflow": "Orquestación",
+    "type_llm_orchestration": "Orquestación LLM",
     "type_skill": "Skill",
     "type_memory": "Memoria",
     "type_prompt": "Prompt",
@@ -1036,6 +1042,8 @@
     "workflows_empty": "Sin orquestaciones",
     "confirm_delete_workflow": "¿Seguro que quieres eliminar esta orquestación?",
     "toast_workflow_deleted": "Orquestación eliminada",
+    "confirm_delete_llm_orchestration": "¿Seguro que quieres eliminar esta orquestación LLM?",
+    "toast_llm_orchestration_deleted": "Orquestación LLM eliminada",
     "confirm_delete_skill": "¿Seguro que quieres eliminar esta skill?",
     "toast_skill_deleted": "Skill eliminada",
     "confirm_delete_tool": "¿Seguro que quieres eliminar esta herramienta?",
@@ -1169,6 +1177,35 @@
     "page_total": "Página {page}/{pages} · Total: {total}",
     "prev": "Anterior",
     "next": "Siguiente"
+  },
+  "llm_orchestrations": {
+    "create": "Nueva orquestación LLM",
+    "edit": "Editar orquestación LLM",
+    "name": "Nombre",
+    "name_required": "El nombre es obligatorio",
+    "description": "Descripción",
+    "mode": "Modo",
+    "stack": "Pila",
+    "stack_help": "Prueba las conexiones en orden hasta obtener una respuesta.",
+    "balanced": "Balanceo",
+    "balanced_help": "La conexión orquestadora estudia cada tarea y ordena las candidatas.",
+    "router": "Conexión orquestadora",
+    "router_required": "Selecciona la conexión orquestadora",
+    "router_help": "Analiza la tarea y ordena las candidatas. Si falla, la orquestación se detiene.",
+    "candidates": "Conexiones candidatas",
+    "candidate_count": "{{count}} conexiones",
+    "execution_order": "Orden de ejecución",
+    "add_candidate": "Añadir conexión",
+    "routing_hint": "Instrucción de enrutado",
+    "routing_hint_example": "Ej.: mejor para código y tareas complejas",
+    "minimum_candidates": "Añade al menos dos conexiones candidatas.",
+    "connections_required": "Necesitas al menos dos conexiones LLM activas.",
+    "saved": "Orquestación LLM guardada",
+    "delete_title": "Eliminar orquestación LLM",
+    "delete_body": "¿Eliminar “{{name}}”?",
+    "load_error": "No se pudieron cargar las orquestaciones LLM",
+    "count": "Orquestaciones LLM",
+    "empty": "Crea una pila o un balanceador de conexiones LLM."
   },
   "centinel": {
     "actions_abort": "Abortar",

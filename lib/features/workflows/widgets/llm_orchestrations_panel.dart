@@ -1,0 +1,245 @@
+import 'package:flutter/material.dart';
+
+import '../../../core/network/api_client.dart';
+import '../../../core/network/api_error.dart';
+import '../../../models/connections/connection_models.dart';
+import '../../../models/workflows/llm_orchestration_models.dart';
+import '../../../shared/state/session_controller.dart';
+import '../../../shared/state/locale_controller.dart';
+import '../../../shared/widgets/async_state_panel.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/confirm_action_dialog.dart';
+import '../../../shared/widgets/responsive_masonry_grid.dart';
+import '../../../shared/widgets/resource_toolbar.dart';
+import '../../../shared/widgets/share_to_group_dialog.dart';
+import '../../connections/repositories/connections_repository.dart';
+import '../cards/llm_orchestration_card.dart';
+import '../dialogs/llm_orchestration_dialog.dart';
+import '../repositories/llm_orchestrations_repository.dart';
+
+class LlmOrchestrationsPanel extends StatefulWidget {
+  const LlmOrchestrationsPanel({
+    required this.apiClient,
+    required this.sessionController,
+    required this.localeController,
+    required this.tx,
+    super.key,
+  });
+
+  final ApiClient apiClient;
+  final SessionController sessionController;
+  final LocaleController localeController;
+  final String Function(String path, String fallback) tx;
+
+  @override
+  State<LlmOrchestrationsPanel> createState() => _LlmOrchestrationsPanelState();
+}
+
+class _LlmOrchestrationsPanelState extends State<LlmOrchestrationsPanel> {
+  late final LlmOrchestrationsRepository _repository;
+  late final ConnectionsRepository _connectionsRepository;
+  List<LlmOrchestrationItem> _items = const [];
+  List<ConnectionItem> _connections = const [];
+  bool _loading = true;
+  String? _error;
+
+  String get _token => widget.sessionController.gaToken ?? '';
+
+  @override
+  void initState() {
+    super.initState();
+    _repository = LlmOrchestrationsRepository(apiClient: widget.apiClient);
+    _connectionsRepository = ConnectionsRepository(apiClient: widget.apiClient);
+    _load();
+  }
+
+  Future<void> _load() async {
+    if (_token.isEmpty) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final values = await Future.wait([
+        _repository.list(_token, includeInactive: true),
+        _connectionsRepository.listConnections(_token, includeInactive: false),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _items = values[0] as List<LlmOrchestrationItem>;
+        _connections = (values[1] as List<ConnectionItem>)
+            .where((connection) => !connection.isVirtual)
+            .toList();
+        _loading = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _error = error is ApiError ? error.message : error.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  void _message(String value, {bool error = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(value),
+        backgroundColor: error ? Colors.red : null,
+      ),
+    );
+  }
+
+  Future<void> _edit([LlmOrchestrationItem? initial]) async {
+    if (_connections.length < 2) {
+      _message(
+        widget.tx(
+          'llm_orchestrations.connections_required',
+          'Necesitas al menos dos conexiones LLM activas.',
+        ),
+        error: true,
+      );
+      return;
+    }
+    final payload = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => LlmOrchestrationDialog(
+        connections: _connections,
+        initial: initial,
+        tx: widget.tx,
+      ),
+    );
+    if (payload == null) return;
+    try {
+      await _repository.save(_token, payload);
+      _message(
+        widget.tx('llm_orchestrations.saved', 'Orquestación LLM guardada'),
+      );
+      await _load();
+    } on ApiError catch (error) {
+      _message(error.message, error: true);
+    }
+  }
+
+  Future<void> _delete(LlmOrchestrationItem item) async {
+    final confirmed = await showConfirmActionDialog(
+      context,
+      title: widget.tx(
+        'llm_orchestrations.delete_title',
+        'Eliminar orquestación LLM',
+      ),
+      message: widget
+          .tx('llm_orchestrations.delete_body', '¿Eliminar “{{name}}”?')
+          .replaceAll('{{name}}', item.name),
+      cancelLabel: widget.tx('common.cancel', 'Cancelar'),
+      confirmLabel: widget.tx('common.delete', 'Eliminar'),
+    );
+    if (!confirmed) return;
+    try {
+      await _repository.delete(_token, item.id);
+      await _load();
+    } on ApiError catch (error) {
+      _message(error.message, error: true);
+    }
+  }
+
+  Future<void> _toggle(LlmOrchestrationItem item) async {
+    try {
+      await _repository.setOrchestrationActive(_token, item.id, !item.isActive);
+      await _load();
+    } on ApiError catch (error) {
+      _message(error.message, error: true);
+    }
+  }
+
+  Future<void> _share(LlmOrchestrationItem item) => showShareToGroupDialog(
+    context: context,
+    apiClient: widget.apiClient,
+    token: _token,
+    resourceType: 'llm_orchestration',
+    resourceId: item.id,
+    localeController: widget.localeController,
+    onShared: _load,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) return const AsyncStatePanel.loading();
+    if (_error != null) {
+      return AsyncStatePanel.error(
+        title: widget.tx(
+          'llm_orchestrations.load_error',
+          'No se pudieron cargar',
+        ),
+        message: _error!,
+        retryLabel: widget.tx('common.retry', 'Reintentar'),
+        onRetry: _load,
+      );
+    }
+    final connectionsById = {for (final item in _connections) item.id: item};
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            sliver: SliverToBoxAdapter(
+              child: ResourceToolbar(
+                actions: [
+                  AppIconButton.filled(
+                    onPressed: () => _edit(),
+                    icon: const Icon(Icons.add),
+                    tooltip: widget.tx(
+                      'llm_orchestrations.create',
+                      'Nueva orquestación LLM',
+                    ),
+                  ),
+                  AppIconButton.outlined(
+                    onPressed: _load,
+                    icon: const Icon(Icons.refresh),
+                    tooltip: widget.tx('common.refresh', 'Actualizar'),
+                  ),
+                ],
+                summary: Text(
+                  '${widget.tx('llm_orchestrations.count', 'Orquestaciones LLM')}: ${_items.length}',
+                ),
+              ),
+            ),
+          ),
+          if (_items.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Text(
+                  widget.tx(
+                    'llm_orchestrations.empty',
+                    'Crea una pila o un balanceador de conexiones LLM.',
+                  ),
+                ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              sliver: ResponsiveSliverMasonryGrid(
+                itemCount: _items.length,
+                itemBuilder: (context, index) {
+                  final item = _items[index];
+                  return LlmOrchestrationCard(
+                    item: item,
+                    connectionsById: connectionsById,
+                    tx: widget.tx,
+                    onToggleActive: () => _toggle(item),
+                    onEdit: () => _edit(item),
+                    onShare: () => _share(item),
+                    onDelete: () => _delete(item),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}

@@ -235,6 +235,27 @@ extension _AdminActions on _AdminPageState {
     );
   }
 
+  Future<void> _deleteLlmOrchestration(Map<String, dynamic> item) async {
+    final token = _token;
+    if (token == null) return;
+    final id = (item['id'] ?? '').toString();
+    final ok = await _confirm(
+      _tx('common.delete', 'Eliminar'),
+      _tx(
+        'admin.confirm_delete_llm_orchestration',
+        '¿Seguro que quieres eliminar esta orquestación LLM?',
+      ),
+    );
+    if (!ok) return;
+    await _run(
+      () => _resourcesRepository.deleteAdminLlmOrchestration(token, id),
+      _tx(
+        'admin.toast_llm_orchestration_deleted',
+        'Orquestación LLM eliminada',
+      ),
+    );
+  }
+
   Future<void> _deleteSkill(Map<String, dynamic> item) async {
     final token = _token;
     if (token == null) return;
@@ -333,7 +354,12 @@ extension _AdminActions on _AdminPageState {
     );
     if (newOwner == null || newOwner.isEmpty) return;
     await _run(
-      () => _resourcesRepository.setResourceOwner(token, resourceType, id, newOwner),
+      () => _resourcesRepository.setResourceOwner(
+        token,
+        resourceType,
+        id,
+        newOwner,
+      ),
       _tx('admin.toast_owner_changed', 'Propietario actualizado'),
     );
   }

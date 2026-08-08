@@ -147,7 +147,8 @@
     "identity_title": "Identity",
     "avatar_updated": "Profile photo updated",
     "avatar_error": "Couldn't update the photo",
-    "avatar_too_large": "The image can't be larger than 2 MB"
+    "avatar_too_large": "The image can't be larger than 10 MB",
+    "avatar_input_too_large": "The original image is too large"
   },
   "agents": {
     "tokens_tooltip": "Tokens consumed",
@@ -370,7 +371,9 @@
     "ollama_cloud_hint": "For Ollama Cloud, paste your API Key from ollama.com/settings/keys"
   },
   "explore": {
-    "search_hint": "Search",
+    "search_hint": "Search resources by name, author, or description",
+    "type_filter_tooltip": "Filter resources by type",
+    "more_filters_tooltip": "Filter by category and labels",
     "type_label": "Type",
     "category_label": "Category",
     "label_label": "Label",
@@ -675,6 +678,8 @@
     "zoom_out": "Zoom out"
   },
   "workflows": {
+    "tab_agents": "Agents",
+    "tab_llm_apis": "LLM APIs",
     "connections_suffix": "connections",
     "copied": "Copied",
     "copy_output": "Copy result",
@@ -931,6 +936,7 @@
     "type_connection": "Connection",
     "type_knowledge": "Knowledge",
     "type_workflow": "Orchestration",
+    "type_llm_orchestration": "LLM orchestration",
     "type_skill": "Skill",
     "type_memory": "Memory",
     "type_prompt": "Prompt",
@@ -1036,6 +1042,8 @@
     "workflows_empty": "No orchestrations",
     "confirm_delete_workflow": "Are you sure you want to delete this orchestration?",
     "toast_workflow_deleted": "Orchestration deleted",
+    "confirm_delete_llm_orchestration": "Are you sure you want to delete this LLM orchestration?",
+    "toast_llm_orchestration_deleted": "LLM orchestration deleted",
     "confirm_delete_skill": "Are you sure you want to delete this skill?",
     "toast_skill_deleted": "Skill deleted",
     "confirm_delete_tool": "Are you sure you want to delete this tool?",
@@ -1169,6 +1177,35 @@
     "page_total": "Page {page}/{pages} · Total: {total}",
     "prev": "Previous",
     "next": "Next"
+  },
+  "llm_orchestrations": {
+    "create": "New LLM orchestration",
+    "edit": "Edit LLM orchestration",
+    "name": "Name",
+    "name_required": "Name is required",
+    "description": "Description",
+    "mode": "Mode",
+    "stack": "Stack",
+    "stack_help": "It tries each connection in order until one responds.",
+    "balanced": "Balancing",
+    "balanced_help": "The orchestrator connection analyzes each task and ranks the candidates.",
+    "router": "Orchestrator connection",
+    "router_required": "Select the orchestrator connection",
+    "router_help": "It analyzes the task and ranks the candidates. If it fails, the orchestration stops.",
+    "candidates": "Candidate connections",
+    "candidate_count": "{{count}} connections",
+    "execution_order": "Execution order",
+    "add_candidate": "Add connection",
+    "routing_hint": "Routing instruction",
+    "routing_hint_example": "E.g. best for code and complex tasks",
+    "minimum_candidates": "Add at least two candidate connections.",
+    "connections_required": "You need at least two active LLM connections.",
+    "saved": "LLM orchestration saved",
+    "delete_title": "Delete LLM orchestration",
+    "delete_body": "Delete “{{name}}”?",
+    "load_error": "LLM orchestrations could not be loaded",
+    "count": "LLM orchestrations",
+    "empty": "Create a stack or a balanced set of LLM connections."
   },
   "centinel": {
     "actions_abort": "Abort",
