@@ -12,7 +12,6 @@ const _variants = [
     asset: 'assets/icons/coordinator/agent_coordinator_icon.png',
     foreground: _white,
     background: _black,
-    progress: 0,
     androidName: 'agent_coordinator',
     iosSet: 'AppIconAgentCoordinator',
   ),
@@ -20,7 +19,6 @@ const _variants = [
     asset: 'assets/icons/coordinator/coordinator_white_on_red.png',
     foreground: _white,
     background: _red,
-    progress: 0,
     androidName: 'coordinator_white_on_red',
     iosSet: 'AppIconCoordinatorWhiteOnRed',
   ),
@@ -28,7 +26,6 @@ const _variants = [
     asset: 'assets/icons/coordinator/coordinator_red_on_black.png',
     foreground: _red,
     background: _black,
-    progress: 0,
     androidName: 'coordinator_red_on_black',
     iosSet: 'AppIconCoordinatorRedOnBlack',
   ),
@@ -36,7 +33,6 @@ const _variants = [
     asset: 'assets/icons/coordinator/coordinator_black_on_red.png',
     foreground: _black,
     background: _red,
-    progress: 0,
     androidName: 'coordinator_black_on_red',
     iosSet: 'AppIconCoordinatorBlackOnRed',
   ),
@@ -44,39 +40,8 @@ const _variants = [
     asset: 'assets/icons/coordinator/coordinator_red_on_white.png',
     foreground: _red,
     background: _white,
-    progress: 0,
     androidName: 'coordinator_red_on_white',
     iosSet: 'AppIconCoordinatorRedOnWhite',
-  ),
-  _Variant(
-    asset: 'assets/icons/ia/ia_inter_white_on_red.png',
-    foreground: _white,
-    background: _red,
-    progress: 1,
-  ),
-  _Variant(
-    asset: 'assets/icons/ia/ia_inter_red_on_black.png',
-    foreground: _red,
-    background: _black,
-    progress: 1,
-    androidName: 'ia_inter_red_on_black',
-    iosSet: 'AppIconIaInterRedOnBlack',
-  ),
-  _Variant(
-    asset: 'assets/icons/ia/ia_inter_black_on_red.png',
-    foreground: _black,
-    background: _red,
-    progress: 1,
-    androidName: 'ia_inter_black_on_red',
-    iosSet: 'AppIconIaInterBlackOnRed',
-  ),
-  _Variant(
-    asset: 'assets/icons/ia/ia_inter_red_on_white.png',
-    foreground: _red,
-    background: _white,
-    progress: 1,
-    androidName: 'ia_inter_red_on_white',
-    iosSet: 'AppIconIaInterRedOnWhite',
   ),
 ];
 
@@ -126,6 +91,17 @@ void main() {
     }
   }
 
+  for (final entry in const {
+    'LaunchImage.png': 124,
+    'LaunchImage@2x.png': 248,
+    'LaunchImage@3x.png': 372,
+  }.entries) {
+    _writePng(
+      'ios/Runner/Assets.xcassets/LaunchImage.imageset/${entry.key}',
+      _renderLaunchTile(entry.value),
+    );
+  }
+
   final launcherResult = Process.runSync(Platform.resolvedExecutable, const [
     'run',
     'flutter_launcher_icons',
@@ -148,117 +124,154 @@ image.Image _render(_Variant variant, int size) {
   final foreground = variant.foreground.color;
   image.fill(output, color: background);
 
-  _fillMorphPolygon(
+  _drawCubic(
     output,
     BrandMarkGeometry.coordinatorLeft,
-    BrandMarkGeometry.iaLeft,
-    variant.progress,
+    BrandMarkGeometry.strokeWidth,
     foreground,
   );
-  _fillMorphPolygon(
+  _drawCubic(
     output,
     BrandMarkGeometry.coordinatorRight,
-    BrandMarkGeometry.iaRight,
-    variant.progress,
+    BrandMarkGeometry.strokeWidth,
     foreground,
   );
-  _fillMorphRect(
-    output,
-    BrandMarkGeometry.coordinatorConnector,
-    BrandMarkGeometry.iaConnector,
-    variant.progress,
-    foreground,
-    rounded: true,
-  );
-  _fillMorphRect(
+  _drawLine(
     output,
     BrandMarkGeometry.coordinatorStem,
-    BrandMarkGeometry.iaStem,
-    variant.progress,
+    BrandMarkGeometry.strokeWidth,
     foreground,
-    rounded: true,
   );
 
-  final dot = _point(
-    BrandMarkGeometry.coordinatorDot,
-    BrandMarkGeometry.iaDot,
-    variant.progress,
-  );
-  final radius =
-      BrandMarkGeometry.coordinatorDotRadius +
-      ((BrandMarkGeometry.iaDotRadius -
-              BrandMarkGeometry.coordinatorDotRadius) *
-          variant.progress);
+  final dot = BrandMarkGeometry.coordinatorDot;
   image.fillCircle(
     output,
     x: (dot.x * size).round(),
     y: (dot.y * size).round(),
-    radius: (radius * size).round(),
+    radius: (BrandMarkGeometry.coordinatorDotRadius * size).round(),
     color: foreground,
+    antialias: true,
   );
   return output;
 }
 
-void _fillMorphPolygon(
+image.Image _renderLaunchTile(int size) {
+  final canvasSize = size * 4;
+  final output = image.Image(
+    width: canvasSize,
+    height: canvasSize,
+    numChannels: 4,
+  );
+  image.fill(output, color: image.ColorRgba8(0, 0, 0, 0));
+  image.fillRect(
+    output,
+    x1: 0,
+    y1: 0,
+    x2: canvasSize - 1,
+    y2: canvasSize - 1,
+    radius: (BrandMarkGeometry.tileCornerRadius * canvasSize).round(),
+    color: _red.color,
+  );
+  _drawCubic(
+    output,
+    BrandMarkGeometry.coordinatorLeft,
+    BrandMarkGeometry.strokeWidth,
+    _white.color,
+  );
+  _drawCubic(
+    output,
+    BrandMarkGeometry.coordinatorRight,
+    BrandMarkGeometry.strokeWidth,
+    _white.color,
+  );
+  _drawLine(
+    output,
+    BrandMarkGeometry.coordinatorStem,
+    BrandMarkGeometry.strokeWidth,
+    _white.color,
+  );
+  image.fillCircle(
+    output,
+    x: (BrandMarkGeometry.coordinatorDot.x * canvasSize).round(),
+    y: (BrandMarkGeometry.coordinatorDot.y * canvasSize).round(),
+    radius: (BrandMarkGeometry.coordinatorDotRadius * canvasSize).round(),
+    color: _white.color,
+  );
+  return _resize(output, size);
+}
+
+void _drawCubic(
   image.Image target,
-  List<BrandPoint> start,
-  List<BrandPoint> end,
-  double progress,
+  BrandCubic curve,
+  double strokeWidth,
   image.Color color,
 ) {
-  image.fillPolygon(
-    target,
-    vertices: [
-      for (var index = 0; index < start.length; index++)
-        image.Point(
-          (_point(start[index], end[index], progress).x * target.width).round(),
-          (_point(start[index], end[index], progress).y * target.height)
-              .round(),
-        ),
-    ],
-    color: color,
-  );
+  const segments = 400;
+  for (var index = 0; index <= segments; index++) {
+    final t = index / segments;
+    final point = _cubicPoint(curve, t);
+    _roundCap(target, point, strokeWidth, color);
+  }
 }
 
-void _fillMorphRect(
+void _drawLine(
   image.Image target,
-  BrandRect start,
-  BrandRect end,
-  double progress,
-  image.Color color, {
-  required bool rounded,
-}) {
-  final rect = BrandRect(
-    _lerp(start.left, end.left, progress),
-    _lerp(start.top, end.top, progress),
-    _lerp(start.right, end.right, progress),
-    _lerp(start.bottom, end.bottom, progress),
-  );
-  image.fillRect(
+  BrandLine line,
+  double strokeWidth,
+  image.Color color,
+) {
+  _drawSegment(target, line.start, line.end, strokeWidth, color);
+  _roundCap(target, line.start, strokeWidth, color);
+  _roundCap(target, line.end, strokeWidth, color);
+}
+
+void _drawSegment(
+  image.Image target,
+  BrandPoint start,
+  BrandPoint end,
+  double strokeWidth,
+  image.Color color,
+) {
+  image.drawLine(
     target,
-    x1: (rect.left * target.width).round(),
-    y1: (rect.top * target.height).round(),
-    x2: (rect.right * target.width).round(),
-    y2: (rect.bottom * target.height).round(),
-    radius: rounded
-        ? (BrandMarkGeometry.coordinatorCornerRadius *
-                  (1 - progress) *
-                  target.width)
-              .round()
-        : 0,
+    x1: (start.x * target.width).round(),
+    y1: (start.y * target.height).round(),
+    x2: (end.x * target.width).round(),
+    y2: (end.y * target.height).round(),
     color: color,
+    thickness: strokeWidth * target.width,
+    antialias: false,
   );
 }
 
-BrandPoint _point(BrandPoint start, BrandPoint end, double progress) {
+void _roundCap(
+  image.Image target,
+  BrandPoint point,
+  double strokeWidth,
+  image.Color color,
+) {
+  image.fillCircle(
+    target,
+    x: (point.x * target.width).round(),
+    y: (point.y * target.height).round(),
+    radius: (strokeWidth * target.width / 2).round(),
+    color: color,
+    antialias: false,
+  );
+}
+
+BrandPoint _cubicPoint(BrandCubic curve, double t) {
+  final inverse = 1 - t;
   return BrandPoint(
-    _lerp(start.x, end.x, progress),
-    _lerp(start.y, end.y, progress),
+    (inverse * inverse * inverse * curve.start.x) +
+        (3 * inverse * inverse * t * curve.control1.x) +
+        (3 * inverse * t * t * curve.control2.x) +
+        (t * t * t * curve.end.x),
+    (inverse * inverse * inverse * curve.start.y) +
+        (3 * inverse * inverse * t * curve.control1.y) +
+        (3 * inverse * t * t * curve.control2.y) +
+        (t * t * t * curve.end.y),
   );
-}
-
-double _lerp(double start, double end, double progress) {
-  return start + ((end - start) * progress);
 }
 
 image.Image _resize(image.Image source, int size) {
@@ -281,7 +294,6 @@ class _Variant {
     required this.asset,
     required this.foreground,
     required this.background,
-    required this.progress,
     this.androidName,
     this.iosSet,
   });
@@ -289,7 +301,6 @@ class _Variant {
   final String asset;
   final _Rgb foreground;
   final _Rgb background;
-  final double progress;
   final String? androidName;
   final String? iosSet;
 }

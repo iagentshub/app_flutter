@@ -26,21 +26,27 @@ void main() {
         );
   });
 
-  test('usa iA blanco sobre rojo de forma predeterminada', () async {
+  test('usa coordinator blanco sobre rojo de forma predeterminada', () async {
     final controller = await BrandIconController.bootstrap();
 
-    expect(controller.selected, BrandIconVariant.iaInterWhiteOnRed);
-    expect(controller.assetPath, 'assets/icons/ia/ia_inter_white_on_red.png');
+    expect(controller.selected, BrandIconVariant.coordinatorWhiteOnRed);
+    expect(
+      controller.assetPath,
+      'assets/icons/coordinator/coordinator_white_on_red.png',
+    );
   });
 
   test('persiste y recupera el icono seleccionado', () async {
     final controller = await BrandIconController.bootstrap();
-    await controller.select(BrandIconVariant.iaInterRedOnBlack);
+    await controller.select(BrandIconVariant.coordinatorRedOnBlack);
 
     final restored = await BrandIconController.bootstrap();
 
-    expect(restored.selected, BrandIconVariant.iaInterRedOnBlack);
-    expect(restored.assetPath, 'assets/icons/ia/ia_inter_red_on_black.png');
+    expect(restored.selected, BrandIconVariant.coordinatorRedOnBlack);
+    expect(
+      restored.assetPath,
+      'assets/icons/coordinator/coordinator_red_on_black.png',
+    );
   });
 
   test('envía la variante seleccionada al canal del icono nativo', () async {
@@ -80,7 +86,31 @@ void main() {
 
     final controller = await BrandIconController.bootstrap();
 
-    expect(controller.selected, BrandIconVariant.iaInterWhiteOnRed);
+    expect(controller.selected, BrandIconVariant.coordinatorWhiteOnRed);
+  });
+
+  test('migra y normaliza todas las preferencias iA antiguas', () async {
+    const migrations = {
+      'iaInterWhiteOnRed': BrandIconVariant.coordinatorWhiteOnRed,
+      'iaInterRedOnBlack': BrandIconVariant.coordinatorRedOnBlack,
+      'iaInterBlackOnRed': BrandIconVariant.coordinatorBlackOnRed,
+      'iaInterRedOnWhite': BrandIconVariant.coordinatorRedOnWhite,
+    };
+
+    for (final entry in migrations.entries) {
+      SharedPreferences.setMockInitialValues({
+        BrandIconController.storageKey: entry.key,
+      });
+
+      final controller = await BrandIconController.bootstrap();
+      final preferences = await SharedPreferences.getInstance();
+
+      expect(controller.selected, entry.value);
+      expect(
+        preferences.getString(BrandIconController.storageKey),
+        entry.value.name,
+      );
+    }
   });
 
   testWidgets('BrandIcon se actualiza al cambiar la preferencia', (

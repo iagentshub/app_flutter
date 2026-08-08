@@ -15,9 +15,6 @@ class MainActivity : FlutterFragmentActivity() {
         "coordinatorRedOnBlack",
         "coordinatorBlackOnRed",
         "coordinatorRedOnWhite",
-        "iaInterRedOnBlack",
-        "iaInterBlackOnRed",
-        "iaInterRedOnWhite",
     )
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {

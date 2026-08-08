@@ -128,7 +128,7 @@ class _SidebarBrand extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 16, 12, 12),
       child: Row(
         children: [
-          const BrandIcon(size: 34, borderRadius: 10),
+          const BrandIcon(size: 34),
           const SizedBox(width: 12),
           Expanded(
             child: Text(

@@ -101,6 +101,30 @@ void main() {
   );
 
   test(
+    'logout() es idempotente: una segunda llamada no reemite notificaciones',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final secrets = MemorySecureStore();
+      final controller = await SessionController.bootstrap(
+        secureStore: secrets,
+      );
+      await controller.login(
+        token: 'token',
+        user: const SessionUser(username: 'alice', role: 'admin'),
+      );
+
+      var notifications = 0;
+      controller.addListener(() => notifications += 1);
+
+      // Simula varias peticiones en vuelo recibiendo 401 casi a la vez.
+      await Future.wait([controller.logout(), controller.logout()]);
+
+      expect(controller.isLoggedIn, isFalse);
+      expect(notifications, 1);
+    },
+  );
+
+  test(
     'un fallo de lectura segura no destruye una sesión persistida',
     () async {
       SharedPreferences.setMockInitialValues({

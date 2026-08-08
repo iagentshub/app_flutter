@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../branding/brand_mark_geometry.dart';
 import '../state/brand_icon_controller.dart';
 
 class BrandIconScope extends InheritedNotifier<BrandIconController> {
@@ -17,10 +18,9 @@ class BrandIconScope extends InheritedNotifier<BrandIconController> {
 }
 
 class BrandIcon extends StatelessWidget {
-  const BrandIcon({this.size = 32, this.borderRadius = 7, super.key});
+  const BrandIcon({this.size = 32, super.key});
 
   final double size;
-  final double borderRadius;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +29,9 @@ class BrandIcon extends StatelessWidget {
       label: 'iAgents',
       image: true,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(borderRadius),
+        borderRadius: BorderRadius.circular(
+          size * BrandMarkGeometry.tileCornerRadius,
+        ),
         child: Image.asset(
           controller.assetPath,
           width: size,

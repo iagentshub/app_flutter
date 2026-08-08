@@ -62,7 +62,7 @@ class _BrandIconChoice extends StatelessWidget {
               children: [
                 Positioned.fill(
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12.32),
                     child: Image.asset(variant.assetPath, fit: BoxFit.cover),
                   ),
                 ),

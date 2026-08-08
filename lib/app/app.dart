@@ -47,7 +47,10 @@ class _AppState extends State<App> {
   @override
   void initState() {
     super.initState();
-    _apiClient = ApiClient(widget.backendController);
+    _apiClient = ApiClient(
+      widget.backendController,
+      onUnauthorized: _handleUnauthorized,
+    );
     _authRepository = AuthRepository(_apiClient);
     _dashboardRepository = DashboardRepository(_apiClient);
     _dashboardEditState = DashboardEditState();
@@ -93,7 +96,11 @@ class _AppState extends State<App> {
         // Las preferencias visuales no deben invalidar una sesión válida.
       }
     } on ApiError catch (error) {
-      if (error.statusCode == 401 || error.statusCode == 403) {
+      // El 401 ya lo cierra _handleUnauthorized (callback global del
+      // ApiClient); aquí solo falta cubrir el 403 (p. ej. cuenta
+      // desactivada), que no es un token inválido pero igualmente exige
+      // volver a login.
+      if (error.statusCode == 403) {
         await widget.sessionController.logout();
         _apiClient.invalidateCache();
       }
@@ -101,6 +108,16 @@ class _AppState extends State<App> {
       // Sin red se conserva la sesión con rol mínimo. Nunca se confía en el
       // rol persistido hasta recibir una respuesta válida del backend.
     }
+  }
+
+  /// Callback global del [ApiClient]: cualquier petición autenticada que
+  /// reciba un 401 (token caducado, revocado o inválido) cierra la sesión
+  /// desde aquí, sin importar qué vista la haya disparado. El router
+  /// (`refreshListenable: sessionController`) reacciona al cambio y
+  /// redirige a login automáticamente.
+  void _handleUnauthorized() {
+    widget.sessionController.logout();
+    _apiClient.invalidateCache();
   }
 
   Future<void> _syncPublicTheme() async {
