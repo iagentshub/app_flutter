@@ -83,20 +83,27 @@ IconData skillCategoryIcon(String category) {
   };
 }
 
-/// Etiqueta legible por categoría — mismos textos que
-/// `skills.categories.*` en frontend_react (sin emoji).
-String skillCategoryLabel(String category) {
+/// Etiqueta legible por categoría, siempre vía `tx` — mismo patrón que
+/// [toolLanguageLabel], que está justo al lado y ya lo hacía bien.
+///
+/// Estaba fija en español para todos los idiomas: es la etiqueta que se ve en
+/// el filtro de categorías y en cada tarjeta de skill, así que un usuario con
+/// la app en inglés leía «IA y Agentes» y «Mensajería».
+String skillCategoryLabel(
+  String Function(String path, String fallback) tx,
+  String category,
+) {
   return switch (category) {
-    'ai' => 'IA y Agentes',
-    'messaging' => 'Mensajería',
-    'notes' => 'Notas',
-    'productivity' => 'Productividad',
-    'dev' => 'Desarrollo',
-    'security' => 'Seguridad',
-    'media' => 'Media',
-    'data' => 'Datos',
-    'company' => 'Empresa',
-    _ => 'Sin categoría',
+    'ai' => tx('knowledge.category_ai', 'IA y Agentes'),
+    'messaging' => tx('knowledge.category_messaging', 'Mensajería'),
+    'notes' => tx('knowledge.category_notes', 'Notas'),
+    'productivity' => tx('knowledge.category_productivity', 'Productividad'),
+    'dev' => tx('knowledge.category_dev', 'Desarrollo'),
+    'security' => tx('knowledge.category_security', 'Seguridad'),
+    'media' => tx('knowledge.category_media', 'Media'),
+    'data' => tx('knowledge.category_data', 'Datos'),
+    'company' => tx('knowledge.category_company', 'Empresa'),
+    _ => tx('knowledge.category_none', 'Sin categoría'),
   };
 }
 
@@ -254,7 +261,7 @@ class _KnowledgePageState extends State<KnowledgePage>
     ];
     final categoryOptions = [
       ('all', optionAll),
-      ..._skillCategoryOptions.map((c) => (c, skillCategoryLabel(c))),
+      ..._skillCategoryOptions.map((c) => (c, skillCategoryLabel(_tx, c))),
     ];
 
     showFilterDialog(

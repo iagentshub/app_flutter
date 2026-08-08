@@ -20,7 +20,8 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final location = GoRouterState.of(context).matchedLocation;
-    final isEnglish = LocaleLoader.isEnglishRoute(location);
+    final languageCode = LocaleLoader.routeLanguageCode(location);
+    final isEnglish = languageCode == 'en';
     final loginLabel = isEnglish ? 'Sign in' : 'Iniciar sesión';
     final docsLabel = isEnglish
         ? 'Explore the documentation'
@@ -97,7 +98,7 @@ class HomePage extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 14, 24, 8),
                   child: PublicTopBar(
-                    isEnglish: isEnglish,
+                    languageCode: languageCode,
                     loginLabel: loginLabel,
                     onLogin: () => AppRouter.toLogin(context),
                     onLanguageSelected: (selected) {

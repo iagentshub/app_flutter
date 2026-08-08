@@ -16,11 +16,12 @@ class DocsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
-    final isEnglish = LocaleLoader.isEnglishRoute(location);
+    final languageCode = LocaleLoader.routeLanguageCode(location);
+    final isEnglish = languageCode == 'en';
 
     return Scaffold(
       body: FutureBuilder<Map<String, dynamic>>(
-        future: LocaleLoader.load(isEnglish: isEnglish, namespace: 'docs'),
+        future: LocaleLoader.load(languageCode: languageCode, namespace: 'docs'),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
@@ -79,7 +80,7 @@ class DocsPage extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 14, 24, 8),
                   child: PublicTopBar(
-                    isEnglish: isEnglish,
+                    languageCode: languageCode,
                     loginLabel: loginLabel,
                     onLogin: () => AppRouter.toLogin(context),
                     onLanguageSelected: (selected) {

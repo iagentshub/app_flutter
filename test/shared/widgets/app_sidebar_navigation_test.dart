@@ -61,7 +61,7 @@ void main() {
     required ValueChanged<String> onNavigate,
     ValueChanged<String>? onOpenPublicRoute,
     String? role,
-    bool isEnglish = false,
+    String languageCode = 'es',
     bool billingEnabled = true,
     double width = 304,
     VoidCallback? onCollapse,
@@ -80,7 +80,7 @@ void main() {
               displayName: 'Javier',
               email: 'javier@example.com',
               role: role ?? (isAdmin ? 'admin' : 'user'),
-              isEnglish: isEnglish,
+              languageCode: languageCode,
               billingEnabled: billingEnabled,
               tx: tx,
               showCloseButton: false,
@@ -193,7 +193,7 @@ void main() {
     await tester.pumpWidget(
       buildNavigation(
         isAdmin: false,
-        isEnglish: true,
+        languageCode: 'en',
         onNavigate: (_) {},
         onOpenPublicRoute: openedRoutes.add,
       ),

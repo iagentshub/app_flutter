@@ -40,7 +40,7 @@ class _BackendConfigPageState extends State<BackendConfigPage> {
   void initState() {
     super.initState();
     _textsFuture = LocaleLoader.load(
-      isEnglish: widget.localeController.isEnglish,
+      languageCode: widget.localeController.languageCode,
       namespace: 'auth',
     );
     widget.backendController.addListener(_onChanged);

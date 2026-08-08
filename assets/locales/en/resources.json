@@ -28,7 +28,8 @@
     "linked": "Linked",
     "filters": "Filters",
     "clear_filters": "Clear filters",
-    "close": "Close"
+    "close": "Close",
+    "delete_confirm_body": "Are you sure you want to delete \"{{nombre}}\"?"
   },
   "groups": {
     "title": "GROUPS",
@@ -260,8 +261,18 @@
       "copy_code_tooltip": "Copy code",
       "code_copied_tooltip": "Copied",
       "reply_you": "You",
-      "cancel_reply_tooltip": "Cancel reply"
-    }
+      "cancel_reply_tooltip": "Cancel reply",
+      "msg_create_failed": "Could not create the conversation",
+      "msg_delete_failed": "Could not delete the conversation"
+    },
+    "msg_not_editable": "This agent is not editable (public or shared)",
+    "msg_saved": "Agent saved",
+    "msg_save_failed": "Could not save the agent",
+    "msg_not_deletable": "This agent cannot be deleted (public or shared)",
+    "msg_deleted": "Agent deleted",
+    "msg_delete_failed": "Could not delete the agent",
+    "msg_toggle_failed": "Could not change the agent state",
+    "delete_dialog_title": "Delete agent"
   },
   "skill_builder": {
     "create_choice_title": "How do you want to create the skill?",
@@ -314,7 +325,16 @@
     "edit_title": "Edit connection",
     "no_providers": "No providers available",
     "mass_test_title": "Mass test ({{n}})",
-    "mass_test_summary": "Passed: {{ok}} | Failed: {{fail}}"
+    "mass_test_summary": "Passed: {{ok}} | Failed: {{fail}}",
+    "msg_saved": "Connection saved",
+    "msg_save_failed": "Could not save the connection",
+    "msg_toggle_failed": "Could not change the connection state",
+    "msg_sync_failed": "Could not sync with the hub",
+    "msg_deleted": "Connection deleted",
+    "msg_delete_failed": "Could not delete the connection",
+    "msg_bulk_test_failed": "Could not run the bulk test",
+    "delete_dialog_title": "Delete connection",
+    "msg_synced": "Synced: {{detalle}}"
   },
   "providers": {
     "add_account": "Add account",
@@ -913,7 +933,36 @@
     "delete_tool_confirm": "Are you sure you want to delete \"{name}\"?",
     "readonly_tool": "This tool isn't editable (system or shared)",
     "readonly_tool_delete": "This tool can't be deleted (system or shared)",
-    "execution_coming_soon": "Execution coming soon"
+    "execution_coming_soon": "Execution coming soon",
+    "category_ai": "AI & Agents",
+    "category_messaging": "Messaging",
+    "category_notes": "Notes",
+    "category_productivity": "Productivity",
+    "category_dev": "Development",
+    "category_security": "Security",
+    "category_media": "Media",
+    "category_data": "Data",
+    "category_company": "Company",
+    "category_none": "Uncategorized",
+    "msg_skill_not_editable": "This skill is not editable (system or shared)",
+    "msg_skill_saved": "Skill saved",
+    "msg_skill_save_failed": "Could not save the skill",
+    "msg_skill_toggle_failed": "Could not change the skill state",
+    "msg_skill_not_deletable": "This skill cannot be deleted (system or shared)",
+    "msg_skill_deleted": "Skill deleted",
+    "msg_skill_delete_failed": "Could not delete the skill",
+    "msg_text_added": "Text added to Knowledge",
+    "msg_text_failed": "Could not save the text",
+    "msg_url_imported": "URL imported to Knowledge",
+    "msg_url_failed": "Could not import the URL",
+    "msg_file_unreadable": "Could not read the file contents",
+    "msg_upload_failed": "Could not upload the document",
+    "msg_item_toggle_failed": "Could not change the item state",
+    "msg_item_deleted": "Item deleted",
+    "msg_item_delete_failed": "Could not delete the item",
+    "delete_skill_dialog_title": "Delete skill",
+    "delete_item_dialog_title": "Delete item",
+    "msg_document_uploaded": "Document uploaded: {{nombre}}"
   },
   "admin": {
     "tab_general": "General",

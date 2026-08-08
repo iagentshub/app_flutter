@@ -13,7 +13,7 @@ import '../../core/network/api_client.dart';
 import '../../features/auth/repositories/auth_repository.dart';
 import '../../models/dashboard/dashboard_widget_config.dart';
 import '../../models/dashboard/dashboard_widget_registry.dart';
-import '../i18n/locale_loader.dart';
+import '../i18n/translated_texts.dart';
 import '../navigation/shell_navigation.dart';
 import '../state/dashboard_edit_state.dart';
 import '../state/locale_controller.dart';
@@ -65,7 +65,13 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
-  Map<String, dynamic> _texts = const {};
+  /// `TranslatedTexts` se escribió precisamente para no repetir aquí el
+  /// «_loadTexts en initState + listener de cambio de idioma», pero el
+  /// AppShell —el fichero que dio nombre al problema— se había quedado con el
+  /// patrón antiguo. Además es el widget más persistente de la app: cada
+  /// cambio de idioma hacía un setState sobre todo el layout en lugar de
+  /// repintar el ListenableBuilder acotado que da el helper.
+  late final TranslatedTexts _t;
   bool _sidebarCollapsed = false;
 
   bool _billingEnabled = false;
@@ -74,7 +80,10 @@ class _AppShellState extends State<AppShell> {
   @override
   void initState() {
     super.initState();
-    _loadTexts();
+    _t = TranslatedTexts(
+      localeController: widget.localeController,
+      namespace: 'nav',
+    );
     _loadPlatformFlags();
     // billing_enabled lo puede cambiar un admin en cualquier momento durante
     // una sesión ya abierta — sin este refresco periódico, un usuario con la
@@ -83,13 +92,12 @@ class _AppShellState extends State<AppShell> {
       const Duration(minutes: 5),
       (_) => _loadPlatformFlags(),
     );
-    widget.localeController.addListener(_onLocaleChanged);
   }
 
   @override
   void dispose() {
     _platformFlagsTimer?.cancel();
-    widget.localeController.removeListener(_onLocaleChanged);
+    _t.dispose();
     super.dispose();
   }
 
@@ -105,19 +113,7 @@ class _AppShellState extends State<AppShell> {
     }
   }
 
-  void _onLocaleChanged() => _loadTexts();
-
-  Future<void> _loadTexts() async {
-    final texts = await LocaleLoader.load(
-      isEnglish: widget.localeController.isEnglish,
-      namespace: 'nav',
-    );
-    if (!mounted) return;
-    setState(() => _texts = texts);
-  }
-
-  String _tx(String key, String fallback) =>
-      LocaleLoader.text(_texts, key, fallback: fallback);
+  String _tx(String key, String fallback) => _t.text(key, fallback: fallback);
 
   Future<void> _openPublicRoute(String path) async {
     await launchUrl(
@@ -189,7 +185,9 @@ class _AppShellState extends State<AppShell> {
     // cambia el RouteMatchList, no cuando sessionController.notifyListeners()
     // se dispara estando en la misma pantalla.
     return ListenableBuilder(
-      listenable: widget.sessionController,
+      // Los textos van en la misma escucha que la sesión: al cambiar de
+      // idioma solo se repinta este subárbol.
+      listenable: Listenable.merge([widget.sessionController, _t]),
       builder: (context, _) {
         final isAdmin = widget.sessionController.user?.role == 'admin';
         final location = widget.location;
@@ -203,7 +201,7 @@ class _AppShellState extends State<AppShell> {
                 final navContent = widget.dashboardEditState.editing
                     ? _WidgetPickerDrawerContent(
                         state: widget.dashboardEditState,
-                        t: _texts,
+                        tx: _tx,
                       )
                     : AppSidebarNavigation(
                         isAdmin: isAdmin,
@@ -214,7 +212,7 @@ class _AppShellState extends State<AppShell> {
                         displayName: widget.sessionController.user?.displayName,
                         email: widget.sessionController.user?.email,
                         role: widget.sessionController.user?.role ?? 'user',
-                        isEnglish: widget.localeController.isEnglish,
+                        languageCode: widget.localeController.languageCode,
                         billingEnabled: _billingEnabled,
                         tx: _tx,
                         showCloseButton: !wide,
@@ -306,7 +304,7 @@ class _AppShellState extends State<AppShell> {
                           child: Column(
                             children: [
                               _ShellTopBar(
-                                title: _titleForLocation(location, _texts),
+                                title: _titleForLocation(location, _tx),
                               ),
                               Expanded(child: body),
                             ],
@@ -322,7 +320,7 @@ class _AppShellState extends State<AppShell> {
                     toolbarHeight: 68,
                     titleSpacing: 4,
                     title: Text(
-                      _titleForLocation(location, _texts),
+                      _titleForLocation(location, _tx),
                       style: const TextStyle(
                         fontSize: FncFonts.size18,
                         fontWeight: FontWeight.w700,

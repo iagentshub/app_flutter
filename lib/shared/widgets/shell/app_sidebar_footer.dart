@@ -5,7 +5,7 @@ class _SidebarFooter extends StatelessWidget {
     required this.visibleName,
     required this.accountDetail,
     required this.initial,
-    required this.isEnglish,
+    required this.languageCode,
     required this.billingEnabled,
     required this.tx,
     required this.onOpenPublicRoute,
@@ -15,7 +15,7 @@ class _SidebarFooter extends StatelessWidget {
   final String visibleName;
   final String accountDetail;
   final String initial;
-  final bool isEnglish;
+  final String languageCode;
   final bool billingEnabled;
   final String Function(String key, String fallback) tx;
   final ValueChanged<String> onOpenPublicRoute;
@@ -48,7 +48,7 @@ class _SidebarFooter extends StatelessWidget {
                     message: tx(item.labelKey, item.fallback),
                     child: IconButton(
                       onPressed: () =>
-                          onOpenPublicRoute(item.route(isEnglish: isEnglish)),
+                          onOpenPublicRoute(item.route(languageCode: languageCode)),
                       constraints: const BoxConstraints.tightFor(
                         width: 38,
                         height: 38,
@@ -136,7 +136,8 @@ class _PublicNavItem {
   final String fallback;
   final IconData icon;
 
-  String route({required bool isEnglish}) => isEnglish ? enRoute : esRoute;
+  String route({required String languageCode}) =>
+      languageCode == 'en' ? enRoute : esRoute;
 }
 
 const _publicItems = [

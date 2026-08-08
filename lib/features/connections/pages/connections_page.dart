@@ -321,12 +321,15 @@ class _ConnectionsPageState extends State<ConnectionsPage>
     if (token == null || token.isEmpty) return;
     try {
       await _repository.saveConnection(token, payload);
-      showMessage('Conexión guardada');
+      showMessage(_tx('connections.msg_saved', 'Conexión guardada'));
       await _load();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage('No se pudo guardar la conexión', isError: true);
+      showMessage(
+        _tx('connections.msg_save_failed', 'No se pudo guardar la conexión'),
+        isError: true,
+      );
     }
   }
 
@@ -341,7 +344,13 @@ class _ConnectionsPageState extends State<ConnectionsPage>
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage('No se pudo cambiar el estado de la conexión', isError: true);
+      showMessage(
+        _tx(
+          'connections.msg_toggle_failed',
+          'No se pudo cambiar el estado de la conexión',
+        ),
+        isError: true,
+      );
     }
   }
 
@@ -356,12 +365,20 @@ class _ConnectionsPageState extends State<ConnectionsPage>
         '${result['knowledge'] ?? 0} conocimiento',
         '${result['connections'] ?? 0} conexiones',
       ];
-      showMessage('Sincronizado: ${parts.join(' · ')}');
+      showMessage(
+        _tx(
+          'connections.msg_synced',
+          'Sincronizado: {{detalle}}',
+        ).replaceAll('{{detalle}}', parts.join(' · ')),
+      );
       await _load();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage('No se pudo sincronizar con el hub', isError: true);
+      showMessage(
+        _tx('connections.msg_sync_failed', 'No se pudo sincronizar con el hub'),
+        isError: true,
+      );
     }
   }
 
@@ -375,10 +392,13 @@ class _ConnectionsPageState extends State<ConnectionsPage>
 
     final confirm = await showConfirmActionDialog(
       context,
-      title: 'Eliminar conexión',
-      message: '¿Seguro que quieres eliminar "${item.name}"?',
+      title: _tx('connections.delete_dialog_title', 'Eliminar conexión'),
+      message: _tx(
+        'common.delete_confirm_body',
+        '¿Seguro que quieres eliminar "{{nombre}}"?',
+      ).replaceAll('{{nombre}}', item.name),
       cancelLabel: 'Cancelar',
-      confirmLabel: 'Eliminar',
+      confirmLabel: _tx('common.delete', 'Eliminar'),
       destructive: true,
     );
     if (!confirm) return;
@@ -388,12 +408,15 @@ class _ConnectionsPageState extends State<ConnectionsPage>
 
     try {
       await _repository.deleteConnection(token, item.id);
-      showMessage('Conexión eliminada');
+      showMessage(_tx('connections.msg_deleted', 'Conexión eliminada'));
       await _load();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage('No se pudo eliminar la conexión', isError: true);
+      showMessage(
+        _tx('connections.msg_delete_failed', 'No se pudo eliminar la conexión'),
+        isError: true,
+      );
     }
   }
 
@@ -541,7 +564,13 @@ class _ConnectionsPageState extends State<ConnectionsPage>
       showMessage(error.message, isError: true);
     } catch (_) {
       _resetPendingStatus(ids);
-      showMessage('No se pudo ejecutar test masivo', isError: true);
+      showMessage(
+        _tx(
+          'connections.msg_bulk_test_failed',
+          'No se pudo ejecutar test masivo',
+        ),
+        isError: true,
+      );
     } finally {
       if (mounted) {
         setState(() => _testingAll = false);

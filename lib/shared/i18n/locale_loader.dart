@@ -6,10 +6,10 @@ abstract final class LocaleLoader {
   static final Map<String, Map<String, dynamic>> _cache = {};
 
   static Future<Map<String, dynamic>> load({
-    required bool isEnglish,
+    required String languageCode,
     required String namespace,
   }) async {
-    final locale = isEnglish ? 'en' : 'es';
+    final locale = languageCode;
     final key = '$locale/$namespace';
     final cached = _cache[key];
     if (cached != null) return cached;
@@ -42,4 +42,8 @@ abstract final class LocaleLoader {
   }
 
   static bool isEnglishRoute(String location) => location.startsWith('/en');
+
+  /// Idioma de una ruta pública: las inglesas cuelgan de `/en`.
+  static String routeLanguageCode(String location) =>
+      isEnglishRoute(location) ? 'en' : 'es';
 }

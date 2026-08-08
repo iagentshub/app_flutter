@@ -70,13 +70,14 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
 
   static const _rememberedAccountKey = 'remembered_account';
 
-  bool get _isEnglish => widget.localeController.isEnglish;
+  String get _languageCode => widget.localeController.languageCode;
+  bool get _isEnglish => _languageCode == 'en';
 
   @override
   void initState() {
     super.initState();
     _authTextsFuture = LocaleLoader.load(
-      isEnglish: _isEnglish,
+      languageCode: _languageCode,
       namespace: 'auth',
     );
     widget.localeController.addListener(_onLocaleChanged);
@@ -87,12 +88,12 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
 
   void _onLocaleChanged() {
     if (!mounted) return;
-    setState(
-      () => _authTextsFuture = LocaleLoader.load(
-        isEnglish: _isEnglish,
+    setState(() {
+      _authTextsFuture = LocaleLoader.load(
+        languageCode: _languageCode,
         namespace: 'auth',
-      ),
-    );
+      );
+    });
   }
 
   // El chequeo inicial (_loadPlatformSettings) solo toma una foto puntual del
@@ -203,7 +204,7 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
   }
 
   void _toggleLanguage() {
-    widget.localeController.setEnglish(!_isEnglish);
+    widget.localeController.setLanguage(_isEnglish ? 'es' : 'en');
   }
 
   String _txt(Map<String, dynamic> bundle, String path, String fallback) {

@@ -162,7 +162,12 @@ extension _KnowledgeActions on _KnowledgePageState {
 
   Future<void> _openEditSkillDialog(SkillItem item) async {
     if (item.readOnly) {
-      showMessage('Esta skill no es editable (del sistema o compartida)');
+      showMessage(
+        _tx(
+          'knowledge.msg_skill_not_editable',
+          'Esta skill no es editable (del sistema o compartida)',
+        ),
+      );
       return;
     }
     final token = _token;
@@ -191,13 +196,16 @@ extension _KnowledgeActions on _KnowledgePageState {
     final scope = (payload.remove('scope') as String?) ?? 'private';
     try {
       await _skillsRepository.saveSkill(token, scope, payload);
-      showMessage('Skill guardada');
+      showMessage(_tx('knowledge.msg_skill_saved', 'Skill guardada'));
       await _loadSkills();
       return true;
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage('No se pudo guardar la skill', isError: true);
+      showMessage(
+        _tx('knowledge.msg_skill_save_failed', 'No se pudo guardar la skill'),
+        isError: true,
+      );
     }
     return false;
   }
@@ -213,21 +221,35 @@ extension _KnowledgeActions on _KnowledgePageState {
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage('No se pudo cambiar el estado de la skill', isError: true);
+      showMessage(
+        _tx(
+          'knowledge.msg_skill_toggle_failed',
+          'No se pudo cambiar el estado de la skill',
+        ),
+        isError: true,
+      );
     }
   }
 
   Future<void> _deleteSkill(SkillItem item) async {
     if (item.readOnly) {
-      showMessage('Esta skill no se puede eliminar (del sistema o compartida)');
+      showMessage(
+        _tx(
+          'knowledge.msg_skill_not_deletable',
+          'Esta skill no se puede eliminar (del sistema o compartida)',
+        ),
+      );
       return;
     }
     final confirm = await showConfirmActionDialog(
       context,
-      title: 'Eliminar skill',
-      message: '¿Seguro que quieres eliminar "${item.name}"?',
+      title: _tx('knowledge.delete_skill_dialog_title', 'Eliminar skill'),
+      message: _tx(
+        'common.delete_confirm_body',
+        '¿Seguro que quieres eliminar "{{nombre}}"?',
+      ).replaceAll('{{nombre}}', item.name),
       cancelLabel: 'Cancelar',
-      confirmLabel: 'Eliminar',
+      confirmLabel: _tx('common.delete', 'Eliminar'),
       destructive: true,
     );
     if (!confirm) return;
@@ -236,12 +258,18 @@ extension _KnowledgeActions on _KnowledgePageState {
     if (token == null || token.isEmpty) return;
     try {
       await _skillsRepository.deleteSkill(token, item.scope, item.id);
-      showMessage('Skill eliminada');
+      showMessage(_tx('knowledge.msg_skill_deleted', 'Skill eliminada'));
       await _loadSkills();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage('No se pudo eliminar la skill', isError: true);
+      showMessage(
+        _tx(
+          'knowledge.msg_skill_delete_failed',
+          'No se pudo eliminar la skill',
+        ),
+        isError: true,
+      );
     }
   }
 
@@ -303,12 +331,15 @@ extension _KnowledgeActions on _KnowledgePageState {
         source: payload['source'],
         content: payload['content'] ?? '',
       );
-      showMessage('Texto añadido a Knowledge');
+      showMessage(_tx('knowledge.msg_text_added', 'Texto añadido a Knowledge'));
       await _load();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage('No se pudo guardar el texto', isError: true);
+      showMessage(
+        _tx('knowledge.msg_text_failed', 'No se pudo guardar el texto'),
+        isError: true,
+      );
     }
   }
 
@@ -328,12 +359,17 @@ extension _KnowledgeActions on _KnowledgePageState {
         url: payload['url'] ?? '',
         title: payload['title'],
       );
-      showMessage('URL importada a Knowledge');
+      showMessage(
+        _tx('knowledge.msg_url_imported', 'URL importada a Knowledge'),
+      );
       await _load();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage('No se pudo importar la URL', isError: true);
+      showMessage(
+        _tx('knowledge.msg_url_failed', 'No se pudo importar la URL'),
+        isError: true,
+      );
     }
   }
 
@@ -351,7 +387,13 @@ extension _KnowledgeActions on _KnowledgePageState {
     final file = result.files.first;
     final bytes = file.bytes;
     if (bytes == null || bytes.isEmpty) {
-      showMessage('No se pudieron leer los bytes del fichero', isError: true);
+      showMessage(
+        _tx(
+          'knowledge.msg_file_unreadable',
+          'No se pudieron leer los bytes del fichero',
+        ),
+        isError: true,
+      );
       return;
     }
 
@@ -362,12 +404,20 @@ extension _KnowledgeActions on _KnowledgePageState {
         fileName: file.name,
         fileBytes: bytes,
       );
-      showMessage('Documento subido: ${file.name}');
+      showMessage(
+        _tx(
+          'knowledge.msg_document_uploaded',
+          'Documento subido: {{nombre}}',
+        ).replaceAll('{{nombre}}', file.name),
+      );
       await _load();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage('No se pudo subir el documento', isError: true);
+      showMessage(
+        _tx('knowledge.msg_upload_failed', 'No se pudo subir el documento'),
+        isError: true,
+      );
     } finally {
       if (mounted) refresh(() => _uploading = false);
     }
@@ -386,17 +436,26 @@ extension _KnowledgeActions on _KnowledgePageState {
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage('No se pudo cambiar el estado del item', isError: true);
+      showMessage(
+        _tx(
+          'knowledge.msg_item_toggle_failed',
+          'No se pudo cambiar el estado del item',
+        ),
+        isError: true,
+      );
     }
   }
 
   Future<void> _deleteItem(KnowledgeItem item) async {
     final confirm = await showConfirmActionDialog(
       context,
-      title: 'Eliminar item',
-      message: '¿Seguro que quieres eliminar "${item.title}"?',
+      title: _tx('knowledge.delete_item_dialog_title', 'Eliminar item'),
+      message: _tx(
+        'common.delete_confirm_body',
+        '¿Seguro que quieres eliminar "{{nombre}}"?',
+      ).replaceAll('{{nombre}}', item.title),
       cancelLabel: 'Cancelar',
-      confirmLabel: 'Eliminar',
+      confirmLabel: _tx('common.delete', 'Eliminar'),
       destructive: true,
     );
     if (!confirm) return;
@@ -406,12 +465,15 @@ extension _KnowledgeActions on _KnowledgePageState {
 
     try {
       await _repository.deleteItem(token, item.id);
-      showMessage('Item eliminado');
+      showMessage(_tx('knowledge.msg_item_deleted', 'Item eliminado'));
       await _load();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage('No se pudo eliminar el item', isError: true);
+      showMessage(
+        _tx('knowledge.msg_item_delete_failed', 'No se pudo eliminar el item'),
+        isError: true,
+      );
     }
   }
 

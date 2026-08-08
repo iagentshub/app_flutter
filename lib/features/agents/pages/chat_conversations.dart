@@ -96,7 +96,13 @@ extension _ChatConversations on _ChatPageState {
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage('No se pudo crear la conversación', isError: true);
+      showMessage(
+        _tx(
+          'agents.chat.msg_create_failed',
+          'No se pudo crear la conversación',
+        ),
+        isError: true,
+      );
     }
   }
 
@@ -127,7 +133,13 @@ extension _ChatConversations on _ChatPageState {
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage('No se pudo borrar la conversación', isError: true);
+      showMessage(
+        _tx(
+          'agents.chat.msg_delete_failed',
+          'No se pudo borrar la conversación',
+        ),
+        isError: true,
+      );
     }
   }
 }

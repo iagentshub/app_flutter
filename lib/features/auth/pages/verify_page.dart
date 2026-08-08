@@ -33,12 +33,12 @@ class _VerifyPageState extends State<VerifyPage> {
   String? _message;
   late Future<Map<String, dynamic>> _textsFuture;
 
-  bool get _isEnglish => widget.localeController.isEnglish;
+  String get _languageCode => widget.localeController.languageCode;
 
   @override
   void initState() {
     super.initState();
-    _textsFuture = LocaleLoader.load(isEnglish: _isEnglish, namespace: 'auth');
+    _textsFuture = LocaleLoader.load(languageCode: _languageCode, namespace: 'auth');
     _verify();
   }
 

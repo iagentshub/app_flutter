@@ -87,7 +87,7 @@ class _ResourceHistoryDialogState extends State<_ResourceHistoryDialog> {
     try {
       final results = await Future.wait([
         LocaleLoader.load(
-          isEnglish: widget.localeController.isEnglish,
+          languageCode: widget.localeController.languageCode,
           namespace: 'resources',
         ),
         _repository.listVersions(

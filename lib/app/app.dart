@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/network/api_client.dart';
@@ -142,14 +143,27 @@ class _AppState extends State<App> {
 
   @override
   Widget build(BuildContext context) {
+    // Escucha también al idioma: sin `locale` ni `localizationsDelegates`,
+    // Flutter caía en DefaultMaterialLocalizations —inglés fijo— y todo lo
+    // que la app no dibuja a mano (Cut/Copy/Paste, selectores de fecha,
+    // «Show menu» de los PopupMenuButton, VoiceOver/TalkBack) salía en
+    // inglés aunque la app estuviera en español.
     return ListenableBuilder(
-      listenable: widget.themeController,
+      listenable: Listenable.merge([
+        widget.themeController,
+        widget.localeController,
+      ]),
       builder: (context, _) => MaterialApp.router(
         debugShowCheckedModeBanner: false,
         title: 'iAgents',
         theme: AppTheme.light(widget.themeController.themeId),
         darkTheme: AppTheme.dark(widget.themeController.themeId),
         themeMode: AppTheme.mode(widget.themeController.themeId),
+        locale: widget.localeController.locale,
+        supportedLocales: LocaleController.supportedLanguageCodes.map(
+          Locale.new,
+        ),
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
         routerConfig: _router,
       ),
     );
