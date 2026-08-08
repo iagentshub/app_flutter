@@ -163,8 +163,8 @@
     "memory_label": "Memoria",
     "memory_with": "Con memoria",
     "memory_without": "Sin memoria",
-    "empty": "No hay agentes disponibles.",
-    "empty_search": "Sin resultados para esa búsqueda.",
+    "empty": "Un agente combina un modelo, sus instrucciones y el conocimiento que le des.",
+    "empty_search": "Ningún agente coincide con esa búsqueda o esos filtros.",
     "error_title": "Error cargando agentes",
     "error_generic": "No se pudieron cargar los agentes",
     "tab_basic": "Básico",
@@ -272,7 +272,10 @@
     "msg_deleted": "Agente eliminado",
     "msg_delete_failed": "No se pudo eliminar el agente",
     "msg_toggle_failed": "No se pudo cambiar el estado del agente",
-    "delete_dialog_title": "Eliminar agente"
+    "delete_dialog_title": "Eliminar agente",
+    "empty_title": "Todavía sin agentes",
+    "empty_action": "Crear el primero",
+    "empty_search_title": "Sin resultados"
   },
   "skill_builder": {
     "create_choice_title": "¿Cómo quieres crear la skill?",
@@ -556,7 +559,7 @@
     "new_file_tooltip": "Nuevo archivo",
     "refresh_tooltip": "Actualizar",
     "files_count": "Archivos",
-    "empty_files": "No hay archivos de memoria. Crea el primero.",
+    "empty_files": "La memoria guarda lo que tus agentes deben recordar entre conversaciones.",
     "size_label": "Tamaño",
     "delete_dialog_title": "Eliminar archivo",
     "delete_dialog_body": "¿Seguro que quieres eliminar \"{{filename}}\"?",
@@ -570,7 +573,9 @@
     "edit_dialog_title": "Editar archivo",
     "filename_label": "Nombre de archivo (.md)",
     "filename_validator": "Nombre obligatorio",
-    "content_label": "Contenido"
+    "content_label": "Contenido",
+    "empty_title": "Sin archivos de memoria",
+    "empty_action": "Crear el primero"
   },
   "manager": {
     "error_loading_title": "Error cargando Manager",

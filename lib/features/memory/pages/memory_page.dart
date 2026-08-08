@@ -4,6 +4,8 @@ import '../../../core/network/api_error.dart';
 import '../../../models/memory/memory_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/app_services_scope.dart';
+import '../../../shared/state/async_section.dart';
+import '../../../shared/widgets/async_section_builder.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
@@ -30,9 +32,12 @@ class _MemoryPageState extends State<MemoryPage> with StateMessaging {
 
   late final MemoryRepository _repository;
   late final TranslatedTexts _t;
-  List<MemoryFileItem> _files = const [];
-  bool _loading = true;
-  String? _error;
+
+  /// Cargando / error / datos con la política en un solo sitio (ver
+  /// [AsyncSection]): al fallar una recarga se conserva lo ya cargado.
+  late final AsyncSection<List<MemoryFileItem>> _section;
+
+  List<MemoryFileItem> get _files => _section.data ?? const [];
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
@@ -44,6 +49,11 @@ class _MemoryPageState extends State<MemoryPage> with StateMessaging {
       localeController: _services.localeController,
       namespace: 'resources',
     )..addListener(_onTextsChanged);
+    _section = AsyncSection<List<MemoryFileItem>>(
+      fetch: _fetchFiles,
+      genericError: () =>
+          _tx('memory.error_generic', 'No se pudo cargar Memory'),
+    );
     _load();
   }
 
@@ -53,6 +63,7 @@ class _MemoryPageState extends State<MemoryPage> with StateMessaging {
 
   @override
   void dispose() {
+    _section.dispose();
     _t.removeListener(_onTextsChanged);
     _t.dispose();
     super.dispose();
@@ -60,41 +71,17 @@ class _MemoryPageState extends State<MemoryPage> with StateMessaging {
 
   String? get _token => _services.sessionController.gaToken;
 
-  Future<void> _load() async {
+  Future<void> _load() => _section.load();
+
+  Future<List<MemoryFileItem>> _fetchFiles() async {
     final token = _token;
     if (token == null || token.isEmpty) {
-      setState(() {
-        _error = _tx('common.no_session', 'No hay sesión activa');
-        _loading = false;
-      });
-      return;
+      throw ApiError(
+        statusCode: 401,
+        message: _tx('common.no_session', 'No hay sesión activa'),
+      );
     }
-
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-
-    try {
-      final files = await _repository.listFiles(token);
-      if (!mounted) return;
-      setState(() {
-        _files = files;
-        _loading = false;
-      });
-    } on ApiError catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _error = error.message;
-        _loading = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _error = _tx('memory.error_generic', 'No se pudo cargar Memory');
-        _loading = false;
-      });
-    }
+    return _repository.listFiles(token);
   }
 
   Future<void> _createFile() async {
@@ -195,20 +182,14 @@ class _MemoryPageState extends State<MemoryPage> with StateMessaging {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const AsyncStatePanel.loading();
-    if (_error != null) {
-      return ListView(
-        children: [
-          AsyncStatePanel.error(
-            title: _tx('memory.error_loading_title', 'Error cargando Memory'),
-            message: _error!,
-            retryLabel: _tx('common.retry', 'Reintentar'),
-            onRetry: _load,
-          ),
-        ],
-      );
-    }
+    return AsyncSectionBuilder<List<MemoryFileItem>>(
+      section: _section,
+      retryLabel: _tx('common.retry', 'Reintentar'),
+      builder: (context, _) => _buildContent(context),
+    );
+  }
 
+  Widget _buildContent(BuildContext context) {
     final toolbar = ResourceToolbar(
       actions: [
         AppIconButton.filled(
@@ -241,16 +222,17 @@ class _MemoryPageState extends State<MemoryPage> with StateMessaging {
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               sliver: SliverToBoxAdapter(
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      _tx(
-                        'memory.empty_files',
-                        'No hay archivos de memoria. Crea el primero.',
-                      ),
-                    ),
+                child: AsyncStatePanel.empty(
+                  padding: EdgeInsets.zero,
+                  icon: Icons.description_outlined,
+                  title: _tx('memory.empty_title', 'Sin archivos de memoria'),
+                  message: _tx(
+                    'memory.empty_files',
+                    'La memoria guarda lo que tus agentes deben recordar entre '
+                        'conversaciones.',
                   ),
+                  actionLabel: _tx('memory.empty_action', 'Crear el primero'),
+                  onAction: _createFile,
                 ),
               ),
             )

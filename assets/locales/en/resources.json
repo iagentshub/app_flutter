@@ -163,8 +163,8 @@
     "memory_label": "Memory",
     "memory_with": "With memory",
     "memory_without": "Without memory",
-    "empty": "No agents available.",
-    "empty_search": "No results for that search.",
+    "empty": "An agent combines a model, its instructions and the knowledge you give it.",
+    "empty_search": "No agent matches that search or those filters.",
     "error_title": "Error loading agents",
     "error_generic": "Couldn't load agents",
     "tab_basic": "Basic",
@@ -272,7 +272,10 @@
     "msg_deleted": "Agent deleted",
     "msg_delete_failed": "Could not delete the agent",
     "msg_toggle_failed": "Could not change the agent state",
-    "delete_dialog_title": "Delete agent"
+    "delete_dialog_title": "Delete agent",
+    "empty_title": "No agents yet",
+    "empty_action": "Create the first one",
+    "empty_search_title": "No results"
   },
   "skill_builder": {
     "create_choice_title": "How do you want to create the skill?",
@@ -556,7 +559,7 @@
     "new_file_tooltip": "New file",
     "refresh_tooltip": "Refresh",
     "files_count": "Files",
-    "empty_files": "No memory files yet. Create the first one.",
+    "empty_files": "Memory keeps what your agents should remember between conversations.",
     "size_label": "Size",
     "delete_dialog_title": "Delete file",
     "delete_dialog_body": "Are you sure you want to delete \"{{filename}}\"?",
@@ -570,7 +573,9 @@
     "edit_dialog_title": "Edit file",
     "filename_label": "File name (.md)",
     "filename_validator": "Name is required",
-    "content_label": "Content"
+    "content_label": "Content",
+    "empty_title": "No memory files",
+    "empty_action": "Create the first one"
   },
   "manager": {
     "error_loading_title": "Error loading Manager",
