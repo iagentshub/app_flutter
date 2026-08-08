@@ -1,4 +1,4 @@
-import 'package:app_flutter/features/workflows/dialogs/llm_orchestration_dialog.dart';
+import 'package:app_flutter/features/workflows/pages/llm_orchestration_editor_page.dart';
 import 'package:app_flutter/models/connections/connection_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -26,12 +26,12 @@ void main() {
 
     await tester.pumpWidget(
       const MaterialApp(
-        home: Scaffold(
-          body: LlmOrchestrationDialog(connections: _connections, tx: _tx),
-        ),
+        home: LlmOrchestrationEditorPage(connections: _connections, tx: _tx),
       ),
     );
 
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(Scaffold), findsOneWidget);
     expect(find.text('Pila'), findsOneWidget);
     expect(find.text('Balanceo'), findsOneWidget);
     expect(find.text('Instrucción de enrutado'), findsNWidgets(2));
@@ -47,7 +47,7 @@ void main() {
       ),
       findsOneWidget,
     );
-    await tester.tap(find.text('Guardar'));
+    await tester.tap(find.byKey(const ValueKey('llm-orchestration-save')));
     await tester.pump();
     expect(find.text('Selecciona la conexión orquestadora'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -63,9 +63,7 @@ void main() {
 
     await tester.pumpWidget(
       const MaterialApp(
-        home: Scaffold(
-          body: LlmOrchestrationDialog(connections: _connections, tx: _tx),
-        ),
+        home: LlmOrchestrationEditorPage(connections: _connections, tx: _tx),
       ),
     );
 

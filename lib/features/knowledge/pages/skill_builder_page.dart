@@ -282,6 +282,7 @@ class _SkillBuilderPageState extends State<SkillBuilderPage>
       body: LayoutBuilder(
         builder: (context, constraints) {
           final wide = constraints.maxWidth >= 900;
+          final compact = constraints.maxWidth < 600;
           final chat = AgentBuilderChatPanel(
             messages: _messages,
             streaming: _streaming,
@@ -340,7 +341,13 @@ class _SkillBuilderPageState extends State<SkillBuilderPage>
               // Ancho de lectura, no de pantalla: el texto es el contenido.
               constraints: const BoxConstraints(maxWidth: 760),
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: wide ? 24 : 16),
+                padding: EdgeInsets.symmetric(
+                  horizontal: compact
+                      ? 0
+                      : wide
+                      ? 24
+                      : 16,
+                ),
                 child: Column(
                   children: [
                     BuilderConnectionBar(

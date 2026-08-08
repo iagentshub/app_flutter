@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Helpers de presentación del `language` de una Tool, compartidos entre dos
 /// librerías Dart distintas: Knowledge (`knowledge_page.dart` y sus `part`)
-/// y el formulario de Agente (`agent_form_dialog.dart` y sus `part`), de ahí
+/// y el formulario de Agente (`agent_form_page.dart` y sus `part`), de ahí
 /// que vivan en `shared/` en vez de junto a `skillCategoryIcon`/
 /// `skillCategoryLabel` (privados de `knowledge_page.dart`, sin uso fuera de
 /// esa librería).

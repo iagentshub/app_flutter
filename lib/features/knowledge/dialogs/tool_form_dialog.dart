@@ -37,7 +37,7 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
 
   /// La visibilidad no es un campo aparte: es la label "private"/"public"
   /// del grupo excluyente de Visibilidad (misma fuente única de verdad que
-  /// `agent_form_dialog.dart`).
+  /// `agent_form_page.dart`).
   String get _scope =>
       _selectedLabels.contains('public') ? 'public' : 'private';
 

@@ -14,7 +14,7 @@ import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 import '../../connections/repositories/connections_repository.dart';
 import '../cards/llm_orchestration_card.dart';
-import '../dialogs/llm_orchestration_dialog.dart';
+import '../pages/llm_orchestration_editor_page.dart';
 import '../repositories/llm_orchestrations_repository.dart';
 
 class LlmOrchestrationsPanel extends StatefulWidget {
@@ -101,12 +101,13 @@ class _LlmOrchestrationsPanelState extends State<LlmOrchestrationsPanel> {
       );
       return;
     }
-    final payload = await showDialog<Map<String, dynamic>>(
-      context: context,
-      builder: (context) => LlmOrchestrationDialog(
-        connections: _connections,
-        initial: initial,
-        tx: widget.tx,
+    final payload = await Navigator.of(context).push<Map<String, dynamic>>(
+      MaterialPageRoute(
+        builder: (context) => LlmOrchestrationEditorPage(
+          connections: _connections,
+          initial: initial,
+          tx: widget.tx,
+        ),
       ),
     );
     if (payload == null) return;

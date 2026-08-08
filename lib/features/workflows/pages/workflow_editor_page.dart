@@ -22,6 +22,7 @@ import '../widgets/workflow_issues_panel.dart';
 import '../widgets/workflow_visual_canvas.dart';
 
 part '../cards/workflow_step_editor_card.dart';
+part '../widgets/workflow_editor_mobile.dart';
 part 'workflow_editor_graph_actions.dart';
 
 class WorkflowEditorPage extends StatefulWidget {
@@ -53,6 +54,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
   String? _selectedStepId;
   List<WorkflowIssue> _issues = const [];
   int _stepCounter = 0;
+  int _mobileSection = 0;
 
   List<AgentItem> _agents = const [];
   bool _loadingAgents = true;
@@ -298,39 +300,41 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
     );
   }
 
+  Widget _buildCanvas() => WorkflowVisualCanvas(
+    steps: _steps,
+    agents: _agents,
+    selectedStepId: _selectedStepId,
+    issueNodeIds: {
+      for (final issue in _issues)
+        if (issue.nodeId != null) issue.nodeId!,
+    },
+    onStepSelected: (id) => _refresh(() => _selectedStepId = id),
+    onStepMoved: _moveStep,
+    onStepDeleted: _removeStepById,
+    onConnectionCreated: _createConnection,
+    onConnectionDeleted: _deleteConnection,
+    canCreateConnection: _canCreateConnection,
+    fitTooltip: _tx('workflow_editor.fit_view', 'Encajar diagrama'),
+    zoomInTooltip: _tx('workflow_editor.zoom_in', 'Acercar'),
+    zoomOutTooltip: _tx('workflow_editor.zoom_out', 'Alejar'),
+    connectionHint: _tx(
+      'workflow_editor.visual_hint',
+      'Arrastra desde la salida de un nodo hasta la entrada de otro',
+    ),
+    inputLabel: _tx('workflow_editor.input_port', 'Entrada'),
+    outputLabel: _tx('workflow_editor.output_port', 'Salida'),
+    missingAgentLabel: _tx('workflow_editor.no_agent', 'Sin agente'),
+    agentKindLabel: _tx('workflow_editor.kind_agent', 'Agente'),
+    evaluatorKindLabel: _tx('workflow_editor.kind_evaluator', 'Evaluador'),
+    loopLabel: _tx('workflow_editor.loop_label', 'Bucle'),
+    invalidConnectionMessage: _tx(
+      'workflow_editor.invalid_connection',
+      'La conexión crearía un ciclo o ya existe',
+    ),
+  );
+
   Widget _buildWorkspace() {
-    final canvas = WorkflowVisualCanvas(
-      steps: _steps,
-      agents: _agents,
-      selectedStepId: _selectedStepId,
-      issueNodeIds: {
-        for (final issue in _issues)
-          if (issue.nodeId != null) issue.nodeId!,
-      },
-      onStepSelected: (id) => _refresh(() => _selectedStepId = id),
-      onStepMoved: _moveStep,
-      onStepDeleted: _removeStepById,
-      onConnectionCreated: _createConnection,
-      onConnectionDeleted: _deleteConnection,
-      canCreateConnection: _canCreateConnection,
-      fitTooltip: _tx('workflow_editor.fit_view', 'Encajar diagrama'),
-      zoomInTooltip: _tx('workflow_editor.zoom_in', 'Acercar'),
-      zoomOutTooltip: _tx('workflow_editor.zoom_out', 'Alejar'),
-      connectionHint: _tx(
-        'workflow_editor.visual_hint',
-        'Arrastra desde la salida de un nodo hasta la entrada de otro',
-      ),
-      inputLabel: _tx('workflow_editor.input_port', 'Entrada'),
-      outputLabel: _tx('workflow_editor.output_port', 'Salida'),
-      missingAgentLabel: _tx('workflow_editor.no_agent', 'Sin agente'),
-      agentKindLabel: _tx('workflow_editor.kind_agent', 'Agente'),
-      evaluatorKindLabel: _tx('workflow_editor.kind_evaluator', 'Evaluador'),
-      loopLabel: _tx('workflow_editor.loop_label', 'Bucle'),
-      invalidConnectionMessage: _tx(
-        'workflow_editor.invalid_connection',
-        'La conexión crearía un ciclo o ya existe',
-      ),
-    );
+    final canvas = _buildCanvas();
     final colors = Theme.of(context).colorScheme;
     final inspector = Container(
       padding: const EdgeInsets.all(16),
@@ -365,8 +369,32 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
     );
   }
 
-  List<Widget> _appBarActions() {
+  List<Widget> _appBarActions({required bool compact}) {
     final canRun = _workflowId != null && _issues.isEmpty && !_isDirty;
+    if (compact) {
+      return [
+        if (_workflowId != null)
+          AppIconButton.outlined(
+            onPressed: canRun ? _testRun : null,
+            icon: const Icon(Icons.play_arrow_rounded),
+            tooltip: canRun
+                ? _tx('workflow_editor.test_run_btn', 'Probar')
+                : _tx(
+                    'workflow_editor.test_run_disabled',
+                    'Guarda los cambios para poder probar la orquestación',
+                  ),
+          ),
+        Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: AppIconButton.filled(
+            key: const ValueKey('workflow-save-mobile'),
+            onPressed: _issues.isEmpty ? _save : null,
+            icon: const Icon(Icons.check_rounded),
+            tooltip: _tx('workflow_editor.save_btn', 'Guardar'),
+          ),
+        ),
+      ];
+    }
     return [
       if (_workflowId != null)
         Padding(
@@ -396,6 +424,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final compact = MediaQuery.sizeOf(context).width < 720;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -409,10 +438,12 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
                 ? _tx('workflow_editor.title_new', 'Nuevo workflow')
                 : _tx('workflow_editor.title_edit', 'Editar workflow'),
           ),
-          actions: _appBarActions(),
+          actions: _appBarActions(compact: compact),
         ),
         body: _loadingAgents
             ? const Center(child: CircularProgressIndicator())
+            : compact
+            ? _buildMobileEditor()
             : Form(
                 key: _formKey,
                 child: Padding(
@@ -507,6 +538,27 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
                   ),
                 ),
               ),
+        bottomNavigationBar: compact && !_loadingAgents
+            ? NavigationBar(
+                selectedIndex: _mobileSection,
+                onDestinationSelected: (index) =>
+                    setState(() => _mobileSection = index),
+                destinations: [
+                  NavigationDestination(
+                    icon: const Icon(Icons.tune_outlined),
+                    label: _tx('workflow_editor.mobile_details', 'Detalles'),
+                  ),
+                  NavigationDestination(
+                    icon: const Icon(Icons.account_tree_outlined),
+                    label: _tx('workflow_editor.mobile_canvas', 'Diagrama'),
+                  ),
+                  NavigationDestination(
+                    icon: const Icon(Icons.edit_note_outlined),
+                    label: _tx('workflow_editor.mobile_step', 'Paso'),
+                  ),
+                ],
+              )
+            : null,
       ),
     );
   }

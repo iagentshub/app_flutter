@@ -29,68 +29,102 @@ class BuilderConnectionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final compact = MediaQuery.sizeOf(context).width < 600;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          height: 40,
-          child: loadingConnections
-              ? const Align(
-                  alignment: Alignment.centerLeft,
-                  child: SizedBox(
-                    width: 120,
-                    child: LinearProgressIndicator(minHeight: 2),
-                  ),
-                )
-              : Row(
-                  children: [
-                    Text(
-                      tx('agents.field_connection', 'Conexión LLM'),
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: colors.onSurfaceVariant,
+        if (compact)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+            child: loadingConnections
+                ? const LinearProgressIndicator(minHeight: 2)
+                : DropdownButtonFormField<String>(
+                    key: const ValueKey('builder-connection-mobile'),
+                    initialValue: connectionId,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      labelText: tx('agents.field_connection', 'Conexión LLM'),
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Flexible(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 360),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: connectionId,
-                            isExpanded: true,
-                            isDense: true,
-                            borderRadius: BorderRadius.circular(8),
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: colors.onSurface),
-                            icon: Icon(
-                              Icons.expand_more,
-                              size: 18,
-                              color: colors.onSurfaceVariant,
+                    items: connections
+                        .map(
+                          (connection) => DropdownMenuItem<String>(
+                            value: connection.id,
+                            child: Text(
+                              connection.model.isEmpty
+                                  ? '${connection.name} (${connection.type})'
+                                  : '${connection.name} · ${connection.model}',
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            items: connections
-                                .map(
-                                  (connection) => DropdownMenuItem<String>(
-                                    value: connection.id,
-                                    child: Text(
-                                      connection.model.isEmpty
-                                          ? '${connection.name} (${connection.type})'
-                                          : '${connection.name} · ${connection.model}',
-                                      overflow: TextOverflow.ellipsis,
+                          ),
+                        )
+                        .toList(),
+                    onChanged: streaming ? null : onConnectionChanged,
+                  ),
+          )
+        else
+          SizedBox(
+            height: 40,
+            child: loadingConnections
+                ? const Align(
+                    alignment: Alignment.centerLeft,
+                    child: SizedBox(
+                      width: 120,
+                      child: LinearProgressIndicator(minHeight: 2),
+                    ),
+                  )
+                : Row(
+                    children: [
+                      Text(
+                        tx('agents.field_connection', 'Conexión LLM'),
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(color: colors.onSurfaceVariant),
+                      ),
+                      const SizedBox(width: 12),
+                      Flexible(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 360),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: connectionId,
+                              isExpanded: true,
+                              isDense: true,
+                              borderRadius: BorderRadius.circular(8),
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(color: colors.onSurface),
+                              icon: Icon(
+                                Icons.expand_more,
+                                size: 18,
+                                color: colors.onSurfaceVariant,
+                              ),
+                              items: connections
+                                  .map(
+                                    (connection) => DropdownMenuItem<String>(
+                                      value: connection.id,
+                                      child: Text(
+                                        connection.model.isEmpty
+                                            ? '${connection.name} (${connection.type})'
+                                            : '${connection.name} · ${connection.model}',
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: streaming ? null : onConnectionChanged,
+                                  )
+                                  .toList(),
+                              onChanged: streaming ? null : onConnectionChanged,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-        ),
+                    ],
+                  ),
+          ),
         if (!loadingConnections && connections.isEmpty)
           Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: EdgeInsets.fromLTRB(compact ? 12 : 0, 0, 0, 8),
             child: Text(
               tx(
                 emptyMessagePath,

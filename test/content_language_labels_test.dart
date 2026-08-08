@@ -82,4 +82,43 @@ void main() {
     expect(selected, contains('public'));
     expect(selected, isNot(contains('private')));
   });
+
+  testWidgets('el indicador visual queda entre el checkbox y la etiqueta', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: MultiSelectDropdown<String>(
+            options: const [
+              MultiSelectDropdownOption(
+                value: 'agent',
+                label: 'Agente',
+                icon: Icons.smart_toy_outlined,
+                color: Colors.red,
+              ),
+            ],
+            selectedValues: const {},
+            emptyLabel: 'Todos',
+            tooltip: 'Tipos',
+            onChanged: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byType(MultiSelectDropdown<String>));
+    await tester.pumpAndSettle();
+
+    final tile = find.widgetWithText(CheckboxListTile, 'Agente');
+    final checkbox = find.descendant(of: tile, matching: find.byType(Checkbox));
+    final icon = find.descendant(
+      of: tile,
+      matching: find.byIcon(Icons.smart_toy_outlined),
+    );
+    final label = find.descendant(of: tile, matching: find.text('Agente'));
+
+    expect(tester.getCenter(checkbox).dx, lessThan(tester.getCenter(icon).dx));
+    expect(tester.getCenter(icon).dx, lessThan(tester.getTopLeft(label).dx));
+  });
 }

@@ -80,6 +80,9 @@ class MultiSelectDropdown<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final reservesVisualSlot = options.any(
+      (option) => option.icon != null || option.color != null,
+    );
     return SizedBox(
       width: width,
       child: PopupMenuButton<void>(
@@ -127,23 +130,44 @@ class MultiSelectDropdown<T> extends StatelessWidget {
                           dense: true,
                           controlAffinity: ListTileControlAffinity.leading,
                           value: menuSelection.contains(options[index].value),
-                          secondary: options[index].icon != null
-                              ? Icon(
-                                  options[index].icon,
-                                  size: 18,
-                                  color: options[index].color,
-                                )
-                              : options[index].color != null
-                              ? Container(
-                                  width: 10,
-                                  height: 10,
-                                  decoration: BoxDecoration(
-                                    color: options[index].color,
-                                    shape: BoxShape.circle,
+                          title: Row(
+                            children: [
+                              if (reservesVisualSlot) ...[
+                                SizedBox(
+                                  key: ValueKey(
+                                    'multi-select-option-visual-$index',
                                   ),
-                                )
-                              : null,
-                          title: Text(_optionLabel(options[index])),
+                                  width: 20,
+                                  height: 20,
+                                  child: Center(
+                                    child: options[index].icon != null
+                                        ? Icon(
+                                            options[index].icon,
+                                            size: 18,
+                                            color: options[index].color,
+                                          )
+                                        : options[index].color != null
+                                        ? Container(
+                                            width: 10,
+                                            height: 10,
+                                            decoration: BoxDecoration(
+                                              color: options[index].color,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          )
+                                        : null,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                              ],
+                              Expanded(
+                                child: Text(
+                                  _optionLabel(options[index]),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
                           onChanged: (checked) {
                             final reducer = selectionReducer ?? _defaultReduce;
                             setMenuState(() {

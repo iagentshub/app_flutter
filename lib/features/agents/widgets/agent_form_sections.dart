@@ -1,6 +1,6 @@
-part of '../dialogs/agent_form_dialog.dart';
+part of '../pages/agent_form_page.dart';
 
-extension _AgentFormSections on _AgentFormDialogState {
+extension _AgentFormSections on _AgentFormPageState {
   Widget _buildBasicTab() {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -123,6 +123,87 @@ extension _AgentFormSections on _AgentFormDialogState {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            widget.tx('agents.resources_section_title', 'Recursos del agente'),
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            widget.tx(
+              'agents.resources_section_description',
+              'Añade skills, documentos, prompts y herramientas sin saturar el formulario.',
+            ),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (_loadingCatalogs)
+            const LinearProgressIndicator(minHeight: 2)
+          else
+            Card(
+              margin: EdgeInsets.zero,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    _resourceSummaryRow(
+                      icon: Icons.auto_awesome_outlined,
+                      label: widget.tx('agents.field_skills', 'Skills'),
+                      selectedIds: _selectedSkillIds,
+                      names: {for (final item in _skills) item.id: item.name},
+                    ),
+                    const Divider(height: 24),
+                    _resourceSummaryRow(
+                      icon: Icons.description_outlined,
+                      label: widget.tx(
+                        'agents.field_knowledge',
+                        'Conocimiento',
+                      ),
+                      selectedIds: _selectedKnowledgeIds,
+                      names: {
+                        for (final item in _knowledgeItems) item.id: item.title,
+                      },
+                    ),
+                    const Divider(height: 24),
+                    _resourceSummaryRow(
+                      icon: Icons.short_text_outlined,
+                      label: widget.tx('agents.field_prompts', 'Prompts'),
+                      selectedIds: _selectedPromptIds,
+                      names: {for (final item in _prompts) item.id: item.name},
+                    ),
+                    const Divider(height: 24),
+                    _resourceSummaryRow(
+                      icon: Icons.build_outlined,
+                      label: widget.tx('agents.field_tools', 'Herramientas'),
+                      selectedIds: _selectedToolIds,
+                      names: {for (final item in _tools) item.id: item.name},
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: SecondaryButton.icon(
+                        key: const ValueKey('agent-open-resources-picker'),
+                        onPressed: _openResourcePicker,
+                        icon: const Icon(Icons.add_link),
+                        label: Text(
+                          widget.tx(
+                            'agents.resources_manage',
+                            'Buscar y seleccionar recursos',
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          const SizedBox(height: 24),
+          Text(
+            widget.tx('agents.memory_section_title', 'Memoria persistente'),
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 4),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             value: _useMemory,
@@ -166,197 +247,52 @@ extension _AgentFormSections on _AgentFormDialogState {
                     ],
                   ),
           ],
-          const SizedBox(height: 20),
-          Text(
-            widget.tx('agents.field_skills', 'Skills'),
-            style: Theme.of(context).textTheme.labelMedium,
-          ),
-          const SizedBox(height: 6),
-          _loadingCatalogs
-              ? const LinearProgressIndicator(minHeight: 2)
-              : _skills.isEmpty
-              ? Text(
-                  widget.tx('agents.no_skills', 'No hay skills disponibles.'),
-                  style: Theme.of(context).textTheme.bodySmall,
-                )
-              : Container(
-                  constraints: const BoxConstraints(maxHeight: 150),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Theme.of(context).dividerColor),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: ListView(
-                    shrinkWrap: true,
-                    children: _skills.map((skill) {
-                      return CheckboxListTile(
-                        dense: true,
-                        value: _selectedSkillIds.contains(skill.id),
-                        title: Text(skill.name),
-                        onChanged: (value) {
-                          refresh(() {
-                            if (value == true) {
-                              _selectedSkillIds = {
-                                ..._selectedSkillIds,
-                                skill.id,
-                              };
-                            } else {
-                              _selectedSkillIds = {..._selectedSkillIds}
-                                ..remove(skill.id);
-                            }
-                          });
-                        },
-                      );
-                    }).toList(),
-                  ),
-                ),
-          const SizedBox(height: 20),
-          Text(
-            widget.tx('agents.field_knowledge', 'Conocimiento'),
-            style: Theme.of(context).textTheme.labelMedium,
-          ),
-          const SizedBox(height: 6),
-          _loadingCatalogs
-              ? const LinearProgressIndicator(minHeight: 2)
-              : _knowledgeItems.isEmpty
-              ? Text(
-                  widget.tx(
-                    'agents.no_knowledge',
-                    'No hay contenido de conocimiento disponible.',
-                  ),
-                  style: Theme.of(context).textTheme.bodySmall,
-                )
-              : Container(
-                  constraints: const BoxConstraints(maxHeight: 150),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Theme.of(context).dividerColor),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: ListView(
-                    shrinkWrap: true,
-                    children: _knowledgeItems.map((item) {
-                      return CheckboxListTile(
-                        dense: true,
-                        value: _selectedKnowledgeIds.contains(item.id),
-                        title: Text(
-                          item.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        onChanged: (value) {
-                          refresh(() {
-                            if (value == true) {
-                              _selectedKnowledgeIds = {
-                                ..._selectedKnowledgeIds,
-                                item.id,
-                              };
-                            } else {
-                              _selectedKnowledgeIds = {..._selectedKnowledgeIds}
-                                ..remove(item.id);
-                            }
-                          });
-                        },
-                      );
-                    }).toList(),
-                  ),
-                ),
-          const SizedBox(height: 20),
-          Text(
-            widget.tx('agents.field_prompts', 'Prompts'),
-            style: Theme.of(context).textTheme.labelMedium,
-          ),
-          const SizedBox(height: 6),
-          _loadingCatalogs
-              ? const LinearProgressIndicator(minHeight: 2)
-              : _prompts.isEmpty
-              ? Text(
-                  widget.tx('agents.no_prompts', 'No hay prompts disponibles.'),
-                  style: Theme.of(context).textTheme.bodySmall,
-                )
-              : Container(
-                  constraints: const BoxConstraints(maxHeight: 150),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Theme.of(context).dividerColor),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: ListView(
-                    shrinkWrap: true,
-                    children: _prompts.map((prompt) {
-                      return CheckboxListTile(
-                        dense: true,
-                        value: _selectedPromptIds.contains(prompt.id),
-                        title: Text(prompt.name),
-                        subtitle: Text(
-                          '@${prompt.alias}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        onChanged: (value) {
-                          refresh(() {
-                            if (value == true) {
-                              _selectedPromptIds = {
-                                ..._selectedPromptIds,
-                                prompt.id,
-                              };
-                            } else {
-                              _selectedPromptIds = {..._selectedPromptIds}
-                                ..remove(prompt.id);
-                            }
-                          });
-                        },
-                      );
-                    }).toList(),
-                  ),
-                ),
-          const SizedBox(height: 20),
-          Text(
-            widget.tx('agents.field_tools', 'Herramientas'),
-            style: Theme.of(context).textTheme.labelMedium,
-          ),
-          const SizedBox(height: 6),
-          _loadingCatalogs
-              ? const LinearProgressIndicator(minHeight: 2)
-              : _tools.isEmpty
-              ? Text(
-                  widget.tx(
-                    'agents.no_tools',
-                    'No hay herramientas disponibles.',
-                  ),
-                  style: Theme.of(context).textTheme.bodySmall,
-                )
-              : Container(
-                  constraints: const BoxConstraints(maxHeight: 150),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Theme.of(context).dividerColor),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: ListView(
-                    shrinkWrap: true,
-                    children: _tools.map((tool) {
-                      return CheckboxListTile(
-                        dense: true,
-                        value: _selectedToolIds.contains(tool.id),
-                        title: Text(tool.name),
-                        subtitle: Text(
-                          toolLanguageLabel(widget.tx, tool.language),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        onChanged: (value) {
-                          refresh(() {
-                            if (value == true) {
-                              _selectedToolIds = {..._selectedToolIds, tool.id};
-                            } else {
-                              _selectedToolIds = {..._selectedToolIds}
-                                ..remove(tool.id);
-                            }
-                          });
-                        },
-                      );
-                    }).toList(),
-                  ),
-                ),
         ],
       ),
+    );
+  }
+
+  Widget _resourceSummaryRow({
+    required IconData icon,
+    required String label,
+    required Set<String> selectedIds,
+    required Map<String, String> names,
+  }) {
+    final selectedNames = selectedIds
+        .map((id) => names[id])
+        .whereType<String>()
+        .take(2)
+        .toList();
+    final summary = selectedNames.isEmpty
+        ? widget.tx('agents.resources_none_selected', 'Sin seleccionar')
+        : [
+            ...selectedNames,
+            if (selectedIds.length > selectedNames.length)
+              '+${selectedIds.length - selectedNames.length}',
+          ].join(' · ');
+    return Row(
+      children: [
+        Icon(icon, size: 20),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: Theme.of(context).textTheme.labelLarge),
+              const SizedBox(height: 2),
+              Text(
+                summary,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Badge(label: Text('${selectedIds.length}')),
+      ],
     );
   }
 

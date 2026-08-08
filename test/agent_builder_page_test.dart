@@ -111,6 +111,70 @@ void main() {
     );
     expect(composer.controller?.text, prompt);
   });
+
+  testWidgets('mantiene conexión, conversación y compositor a 360 px', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 700);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    SharedPreferences.setMockInitialValues({});
+
+    final backend = await BackendController.bootstrap();
+    final locale = await LocaleController.bootstrap();
+    final session = await SessionController.bootstrap(
+      secureStore: MemorySecureStore(),
+    );
+    await session.login(
+      token: 'mobile-user-token',
+      user: const SessionUser(username: 'mobile', role: 'user'),
+      remember: false,
+    );
+    final httpClient = MockClient((request) async {
+      if (request.url.path == '/api/connections') {
+        return _json([
+          {
+            'id': 'mobile-connection',
+            'name': 'Conexión móvil',
+            'type': 'openai',
+            'model': 'modelo-móvil',
+          },
+        ]);
+      }
+      if (request.url.path == '/api/skills' ||
+          request.url.path == '/api/knowledge') {
+        return _json([]);
+      }
+      return _json({}, statusCode: 404);
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AgentBuilderPage(
+          apiClient: ApiClient(backend, client: httpClient),
+          sessionController: session,
+          localeController: locale,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('builder-connection-mobile')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('agent-builder-composer')),
+      findsOneWidget,
+    );
+    final panelRect = tester.getRect(
+      find.byKey(const ValueKey('agent-builder-chat-panel')),
+    );
+    expect(panelRect.left, 0);
+    expect(panelRect.right, 360);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 http.Response _json(Object body, {int statusCode = 200}) {

@@ -20,7 +20,6 @@ import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
 import '../../../shared/widgets/resource_history_dialog.dart';
 import '../../../shared/widgets/resource_toolbar.dart';
-import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
@@ -31,12 +30,12 @@ import '../../knowledge/repositories/prompts_repository.dart';
 import '../../knowledge/repositories/skills_repository.dart';
 import '../../knowledge/repositories/tools_repository.dart';
 import '../cards/agent_card.dart';
-import '../dialogs/agent_form_dialog.dart';
 import '../repositories/agents_repository.dart';
 import 'agent_builder_page.dart';
+import 'agent_form_page.dart';
 import 'chat_page.dart';
+import 'public_agent_picker_page.dart';
 
-part '../dialogs/public_agent_picker_dialog.dart';
 part '../widgets/agents_page_actions.dart';
 part '../widgets/agents_page_view.dart';
 

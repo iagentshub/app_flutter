@@ -14,11 +14,11 @@ import '../../connections/repositories/connections_repository.dart';
 import '../../knowledge/repositories/knowledge_repository.dart';
 import '../../knowledge/repositories/skills_repository.dart';
 import '../controllers/agent_builder_controller.dart';
-import '../dialogs/agent_form_dialog.dart';
 import '../repositories/agent_builder_repository.dart';
 import '../repositories/agents_repository.dart';
 import '../widgets/agent_builder_chat_panel.dart';
 import '../widgets/builder_connection_bar.dart';
+import 'agent_form_page.dart';
 
 /// Constructor de agentes por IA: conversación en streaming con el asistente
 /// hasta que propone un borrador completo, que se revisa/edita en el mismo
@@ -101,16 +101,18 @@ class _AgentBuilderPageState extends State<AgentBuilderPage>
     unawaited(
       _runAction(
         _controller.reviewDraft(
-          present: (initial, token) => showDialog<Map<String, dynamic>>(
-            context: context,
-            builder: (context) => AgentFormDialog(
-              apiClient: widget.apiClient,
-              token: token,
-              initial: initial,
-              tx: _tx,
-              requireQualityPrompt: true,
-            ),
-          ),
+          present: (initial, token) =>
+              Navigator.of(context).push<Map<String, dynamic>>(
+                MaterialPageRoute(
+                  builder: (context) => AgentFormPage(
+                    apiClient: widget.apiClient,
+                    token: token,
+                    initial: initial,
+                    tx: _tx,
+                    requireQualityPrompt: true,
+                  ),
+                ),
+              ),
         ),
       ),
     );
@@ -118,17 +120,24 @@ class _AgentBuilderPageState extends State<AgentBuilderPage>
 
   Widget _buildModernPage(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final compact = MediaQuery.sizeOf(context).width < 600;
     return Scaffold(
       backgroundColor: colors.surfaceContainerLowest,
       appBar: AppBar(
         title: Text(_tx('agents.builder_title', 'Constructor de agentes IA')),
         actions: [
           if (_controller.agentSaved)
-            TertiaryButton.icon(
-              onPressed: () => Navigator.of(context).pop(true),
-              icon: const Icon(Icons.check),
-              label: Text(_tx('agents.builder_done_action', 'Terminar')),
-            ),
+            compact
+                ? AppIconButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    icon: const Icon(Icons.check),
+                    tooltip: _tx('agents.builder_done_action', 'Terminar'),
+                  )
+                : TertiaryButton.icon(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    icon: const Icon(Icons.check),
+                    label: Text(_tx('agents.builder_done_action', 'Terminar')),
+                  ),
         ],
       ),
       body: LayoutBuilder(
@@ -195,7 +204,13 @@ class _AgentBuilderPageState extends State<AgentBuilderPage>
               // pantallas anchas mientras las líneas siguen siendo legibles.
               constraints: const BoxConstraints(maxWidth: 1040),
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: wide ? 24 : 16),
+                padding: EdgeInsets.symmetric(
+                  horizontal: compact
+                      ? 0
+                      : wide
+                      ? 24
+                      : 16,
+                ),
                 child: Column(
                   children: [
                     BuilderConnectionBar(

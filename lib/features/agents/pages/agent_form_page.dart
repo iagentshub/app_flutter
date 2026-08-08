@@ -17,17 +17,18 @@ import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/tools/tool_language.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/grouped_label_picker.dart';
-import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../dialogs/agent_resource_picker_dialog.dart';
 
 part '../widgets/agent_form_sections.dart';
 
-/// Diálogo de creación/edición de agentes, en 4 pestañas (Básico, Conexión,
-/// Conocimiento, Avanzado). Se reutiliza tanto desde la lista de Agentes
-/// como desde el Agent Builder por IA (para revisar/editar el borrador
-/// antes de guardarlo), pasando `initial` con los datos a precargar.
-class AgentFormDialog extends StatefulWidget {
-  const AgentFormDialog({
+/// Vista dedicada de creación/edición de agentes.
+///
+/// El formulario devuelve el payload con [Navigator.pop], de modo que puede
+/// reutilizarse desde la lista, una plantilla pública o el constructor por IA
+/// sin encerrar una tarea larga dentro de un diálogo.
+class AgentFormPage extends StatefulWidget {
+  const AgentFormPage({
     required this.apiClient,
     required this.token,
     required this.tx,
@@ -43,10 +44,10 @@ class AgentFormDialog extends StatefulWidget {
   final bool requireQualityPrompt;
 
   @override
-  State<AgentFormDialog> createState() => _AgentFormDialogState();
+  State<AgentFormPage> createState() => _AgentFormPageState();
 }
 
-class _AgentFormDialogState extends State<AgentFormDialog> with StateMessaging {
+class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
   /// Un único indicador para los seis catálogos: llegan juntos.
   bool _loadingCatalogs = true;
 
@@ -235,56 +236,141 @@ class _AgentFormDialogState extends State<AgentFormDialog> with StateMessaging {
     Navigator.of(context).pop(payload);
   }
 
+  Future<void> _openResourcePicker() async {
+    if (_loadingCatalogs) return;
+    final selection = await showDialog<AgentResourceSelection>(
+      context: context,
+      builder: (context) => AgentResourcePickerDialog(
+        options: [
+          for (final skill in _skills)
+            AgentResourceOption(
+              id: skill.id,
+              type: AgentResourceType.skill,
+              title: skill.name,
+              subtitle: skill.category,
+            ),
+          for (final item in _knowledgeItems)
+            AgentResourceOption(
+              id: item.id,
+              type: AgentResourceType.knowledge,
+              title: item.title,
+              subtitle: item.type,
+            ),
+          for (final prompt in _prompts)
+            AgentResourceOption(
+              id: prompt.id,
+              type: AgentResourceType.prompt,
+              title: prompt.name,
+              subtitle: prompt.alias.isEmpty ? '' : '@${prompt.alias}',
+            ),
+          for (final tool in _tools)
+            AgentResourceOption(
+              id: tool.id,
+              type: AgentResourceType.tool,
+              title: tool.name,
+              subtitle: toolLanguageLabel(widget.tx, tool.language),
+            ),
+        ],
+        initial: AgentResourceSelection(
+          skillIds: _selectedSkillIds,
+          knowledgeIds: _selectedKnowledgeIds,
+          promptIds: _selectedPromptIds,
+          toolIds: _selectedToolIds,
+        ),
+        tx: widget.tx,
+      ),
+    );
+    if (!mounted || selection == null) return;
+    refresh(() {
+      _selectedSkillIds = selection.skillIds;
+      _selectedKnowledgeIds = selection.knowledgeIds;
+      _selectedPromptIds = selection.promptIds;
+      _selectedToolIds = selection.toolIds;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return DefaultTabController(
       length: 4,
-      child: AlertDialog(
-        title: Text(_title),
-        contentPadding: const EdgeInsets.fromLTRB(0, 16, 0, 8),
-        content: SizedBox(
-          width: dialogContentWidth(context, 580),
-          height: dialogContentHeight(context, 480),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                TabBar(
-                  isScrollable: true,
-                  tabAlignment: TabAlignment.start,
-                  tabs: [
-                    Tab(text: widget.tx('agents.tab_basic', 'Básico')),
-                    Tab(text: widget.tx('agents.tab_connection', 'Conexión')),
-                    Tab(
-                      text: widget.tx('agents.tab_knowledge', 'Conocimiento'),
+      child: Scaffold(
+        backgroundColor: colors.surfaceContainerLowest,
+        appBar: AppBar(
+          title: Text(_title),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: PrimaryButton.icon(
+                key: const ValueKey('agent-form-save'),
+                onPressed: _submit,
+                icon: const Icon(Icons.check, size: 18),
+                label: Text(widget.tx('common.save', 'Guardar')),
+              ),
+            ),
+          ],
+        ),
+        body: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 960),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: Card(
+                  margin: EdgeInsets.zero,
+                  clipBehavior: Clip.antiAlias,
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        Material(
+                          color: colors.surfaceContainerLow,
+                          child: TabBar(
+                            isScrollable: true,
+                            tabAlignment: TabAlignment.start,
+                            tabs: [
+                              Tab(
+                                text: widget.tx('agents.tab_basic', 'Básico'),
+                              ),
+                              Tab(
+                                text: widget.tx(
+                                  'agents.tab_connection',
+                                  'Conexión',
+                                ),
+                              ),
+                              Tab(
+                                text: widget.tx(
+                                  'agents.tab_knowledge',
+                                  'Conocimiento',
+                                ),
+                              ),
+                              Tab(
+                                text: widget.tx(
+                                  'agents.tab_advanced',
+                                  'Avanzado',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: TabBarView(
+                            children: [
+                              _buildBasicTab(),
+                              _buildConnectionTab(),
+                              _buildKnowledgeTab(),
+                              _buildAdvancedTab(),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    Tab(text: widget.tx('agents.tab_advanced', 'Avanzado')),
-                  ],
-                ),
-                Expanded(
-                  child: TabBarView(
-                    children: [
-                      _buildBasicTab(),
-                      _buildConnectionTab(),
-                      _buildKnowledgeTab(),
-                      _buildAdvancedTab(),
-                    ],
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ),
-        actions: [
-          TertiaryButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(widget.tx('common.cancel', 'Cancelar')),
-          ),
-          PrimaryButton(
-            onPressed: _submit,
-            child: Text(widget.tx('common.save', 'Guardar')),
-          ),
-        ],
       ),
     );
   }

@@ -75,13 +75,18 @@ class AgentBuilderChatPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final size = MediaQuery.sizeOf(context);
+    final compact = size.width < 600 || size.height < 700;
     final pendingDraft = draft;
     return Material(
+      key: const ValueKey('agent-builder-chat-panel'),
       color: colors.surface,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: colors.outlineVariant),
+        borderRadius: BorderRadius.circular(compact ? 0 : 12),
+        side: compact
+            ? BorderSide.none
+            : BorderSide(color: colors.outlineVariant),
       ),
       child: Column(
         children: [
@@ -92,6 +97,7 @@ class AgentBuilderChatPanel extends StatelessWidget {
             busy: streaming,
             readyLabel: readyLabel,
             workingLabel: workingLabel,
+            compact: compact,
           ),
           Divider(height: 1, thickness: 1, color: colors.outlineVariant),
           Expanded(
@@ -138,6 +144,7 @@ class AgentBuilderChatPanel extends StatelessWidget {
             stopTooltip: stopTooltip,
             onSend: onSend,
             onStop: onStop,
+            compact: compact,
           ),
         ],
       ),
@@ -153,6 +160,7 @@ class _ChatHeader extends StatelessWidget {
     required this.busy,
     required this.readyLabel,
     required this.workingLabel,
+    required this.compact,
   });
 
   final String title;
@@ -161,12 +169,16 @@ class _ChatHeader extends StatelessWidget {
   final bool busy;
   final String readyLabel;
   final String workingLabel;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 14 : 18,
+        vertical: compact ? 10 : 14,
+      ),
       child: Row(
         children: [
           Expanded(
@@ -179,15 +191,17 @@ class _ChatHeader extends StatelessWidget {
                     context,
                   ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colors.onSurfaceVariant,
+                if (!compact) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
@@ -337,6 +351,7 @@ class _Composer extends StatelessWidget {
     required this.stopTooltip,
     required this.onSend,
     required this.onStop,
+    required this.compact,
   });
 
   final TextEditingController controller;
@@ -347,6 +362,7 @@ class _Composer extends StatelessWidget {
   final String stopTooltip;
   final VoidCallback onSend;
   final VoidCallback onStop;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -354,7 +370,7 @@ class _Composer extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(compact ? 8 : 12),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
@@ -364,7 +380,7 @@ class _Composer extends StatelessWidget {
                 controller: controller,
                 enabled: enabled,
                 minLines: 1,
-                maxLines: 6,
+                maxLines: compact ? 3 : 6,
                 textInputAction: TextInputAction.send,
                 textCapitalization: TextCapitalization.sentences,
                 style: Theme.of(
@@ -390,9 +406,9 @@ class _Composer extends StatelessWidget {
                     borderSide: BorderSide(color: colors.primary, width: 1.4),
                   ),
                   isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: compact ? 12 : 14,
+                    vertical: compact ? 10 : 12,
                   ),
                 ),
                 onSubmitted: enabled ? (_) => onSend() : null,

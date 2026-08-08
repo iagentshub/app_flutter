@@ -34,46 +34,60 @@ class BuilderDraftCard extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(top: BorderSide(color: colors.outlineVariant)),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 520;
+          final details = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                  letterSpacing: 0.4,
+                ),
+              ),
+              if (name.isNotEmpty) ...[
+                const SizedBox(height: 4),
                 Text(
-                  title,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  name,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                ),
+              ],
+              if (description.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(
+                  description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: colors.onSurfaceVariant,
-                    letterSpacing: 0.4,
                   ),
                 ),
-                if (name.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    name,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-                if (description.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    description,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                    ),
-                  ),
-                ],
               ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          PrimaryButton(onPressed: onReview, child: Text(actionLabel)),
-        ],
+            ],
+          );
+          final action = PrimaryButton(
+            onPressed: onReview,
+            child: Text(actionLabel),
+          );
+          if (compact) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [details, const SizedBox(height: 12), action],
+            );
+          }
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(child: details),
+              const SizedBox(width: 16),
+              action,
+            ],
+          );
+        },
       ),
     );
   }

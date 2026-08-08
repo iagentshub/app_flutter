@@ -22,7 +22,6 @@ class _ConnectionFormDialog extends StatefulWidget {
 class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  String _scope = 'group';
   String _selectedType = '';
   final Map<String, TextEditingController> _textControllers = {};
   final Map<String, bool> _boolValues = {};
@@ -33,7 +32,6 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
     super.initState();
     final initial = widget.initial;
     _nameController.text = (initial?['name'] as String?) ?? '';
-    _scope = initial?['_personal_key'] == true ? 'personal' : 'group';
 
     if (widget.providers.isNotEmpty) {
       final initialType = initial?['type'] as String?;
@@ -106,7 +104,6 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
     final payload = <String, dynamic>{
       'name': _nameController.text.trim(),
       'type': _selectedType,
-      'scope': _scope,
     };
 
     for (final field in provider.fields) {
@@ -186,22 +183,6 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
                         });
                       },
                       decoration: const InputDecoration(labelText: 'Proveedor'),
-                    ),
-                    const SizedBox(height: 10),
-                    DropdownButtonFormField<String>(
-                      initialValue: _scope,
-                      items: const [
-                        DropdownMenuItem(value: 'group', child: Text('Grupo')),
-                        DropdownMenuItem(
-                          value: 'personal',
-                          child: Text('Personal'),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        if (value == null) return;
-                        setState(() => _scope = value);
-                      },
-                      decoration: const InputDecoration(labelText: 'Ámbito'),
                     ),
                     const SizedBox(height: 10),
                     ...provider.fields

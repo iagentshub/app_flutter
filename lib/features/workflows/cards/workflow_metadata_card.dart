@@ -100,33 +100,39 @@ class WorkflowMetadataCard extends StatelessWidget {
   }
 
   Widget _visibility(BuildContext context) {
-    return Row(
-      children: [
-        Text(
-          tx('workflow_editor.labels_label', 'Visibilidad'),
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
+    final label = Text(
+      tx('workflow_editor.labels_label', 'Visibilidad'),
+      style: Theme.of(
+        context,
+      ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
+    );
+    final selector = SegmentedButton<bool>(
+      expandedInsets: EdgeInsets.zero,
+      segments: [
+        ButtonSegment(
+          value: false,
+          icon: const Icon(Icons.lock_outline, size: 16),
+          label: Text(tx('workflow_editor.visibility_private', 'Privada')),
         ),
-        const SizedBox(width: 12),
-        SegmentedButton<bool>(
-          segments: [
-            ButtonSegment(
-              value: false,
-              icon: const Icon(Icons.lock_outline, size: 16),
-              label: Text(tx('workflow_editor.visibility_private', 'Privada')),
-            ),
-            ButtonSegment(
-              value: true,
-              icon: const Icon(Icons.public, size: 16),
-              label: Text(tx('workflow_editor.visibility_public', 'Pública')),
-            ),
-          ],
-          selected: {isPublic},
-          onSelectionChanged: (selection) =>
-              onVisibilityChanged(selection.first),
+        ButtonSegment(
+          value: true,
+          icon: const Icon(Icons.public, size: 16),
+          label: Text(tx('workflow_editor.visibility_public', 'Pública')),
         ),
       ],
+      selected: {isPublic},
+      onSelectionChanged: (selection) => onVisibilityChanged(selection.first),
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 420) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [label, const SizedBox(height: 8), selector],
+          );
+        }
+        return Row(children: [label, const SizedBox(width: 12), selector]);
+      },
     );
   }
 }

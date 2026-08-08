@@ -32,12 +32,7 @@
     "field_model": "Default model",
     "placeholder_name": "Connection name",
     "placeholder_host": "http://localhost:11434",
-    "placeholder_model": "gpt-4o / claude-sonnet-4-5 / llama3.2",
-    "field_scope": "Save as",
-    "scope_group": "Shared key",
-    "scope_personal": "Personal key",
-    "scope_hint_group": "Shareable with group members",
-    "scope_hint_personal": "Only visible to you"
+    "placeholder_model": "gpt-4o / claude-sonnet-4-5 / llama3.2"
   },
   "ollama": {
     "enter_host": "Enter the host first",

@@ -32,12 +32,7 @@
     "field_model": "Modelo por defecto",
     "placeholder_name": "Nombre de la conexión",
     "placeholder_host": "http://localhost:11434",
-    "placeholder_model": "gpt-4o / claude-sonnet-4-5 / llama3.2",
-    "field_scope": "Guardar como",
-    "scope_group": "Clave compartida",
-    "scope_personal": "Clave personal",
-    "scope_hint_group": "Compartible con los miembros de un grupo",
-    "scope_hint_personal": "Solo visible para ti"
+    "placeholder_model": "gpt-4o / claude-sonnet-4-5 / llama3.2"
   },
   "ollama": {
     "enter_host": "Introduce el host primero",
