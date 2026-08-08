@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../shared/labels/label_catalog.dart';
+import '../../../shared/widgets/grouped_label_picker.dart';
 import '../models/workflow_graph_validation.dart';
 
 /// Nombre, descripción y visibilidad de la orquestación.
@@ -13,6 +15,8 @@ class WorkflowMetadataCard extends StatelessWidget {
     required this.isPublic,
     required this.onVisibilityChanged,
     required this.onChanged,
+    required this.selectedLanguageLabels,
+    required this.onLanguageLabelsChanged,
     required this.tx,
     super.key,
   });
@@ -22,6 +26,8 @@ class WorkflowMetadataCard extends StatelessWidget {
   final bool isPublic;
   final ValueChanged<bool> onVisibilityChanged;
   final VoidCallback onChanged;
+  final Set<String> selectedLanguageLabels;
+  final ValueChanged<Set<String>> onLanguageLabelsChanged;
   final String Function(String path, String fallback) tx;
 
   @override
@@ -79,6 +85,13 @@ class WorkflowMetadataCard extends StatelessWidget {
               ],
               const SizedBox(height: 12),
               _visibility(context),
+              const SizedBox(height: 12),
+              GroupedLabelPicker(
+                selected: selectedLanguageLabels,
+                onChanged: onLanguageLabelsChanged,
+                tx: tx,
+                groups: const [kLanguageLabelGroup],
+              ),
             ],
           );
         },

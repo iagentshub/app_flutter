@@ -13,6 +13,7 @@ class _AddUrlDialogState extends State<_AddUrlDialog> {
   final _formKey = GlobalKey<FormState>();
   final _urlController = TextEditingController();
   final _titleController = TextEditingController();
+  Set<String> _selectedLanguageLabels = {};
 
   @override
   void dispose() {
@@ -26,6 +27,7 @@ class _AddUrlDialogState extends State<_AddUrlDialog> {
     Navigator.of(context).pop({
       'url': _urlController.text.trim(),
       'title': _titleController.text.trim(),
+      'labels': ['private', ..._selectedLanguageLabels],
     });
   }
 
@@ -54,6 +56,18 @@ class _AddUrlDialogState extends State<_AddUrlDialog> {
                 },
               ),
               const SizedBox(height: 10),
+              Text(
+                widget.tx('labels.group_language', 'Idioma del contenido'),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 6),
+              GroupedLabelPicker(
+                selected: _selectedLanguageLabels,
+                onChanged: (next) =>
+                    setState(() => _selectedLanguageLabels = next),
+                tx: widget.tx,
+                groups: const [kLanguageLabelGroup],
+              ),
               TextFormField(
                 controller: _titleController,
                 decoration: const InputDecoration(

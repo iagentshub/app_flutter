@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../core/network/api_client.dart';
 import '../../../models/agents/agent_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
+import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
@@ -443,6 +444,16 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
                               if (label != 'private' && label != 'public')
                                 label,
                             isPublic ? 'public' : 'private',
+                          ];
+                        }),
+                        selectedLanguageLabels: _labels
+                            .where(isLanguageLabel)
+                            .toSet(),
+                        onLanguageLabelsChanged: (next) => _refresh(() {
+                          _labels = [
+                            for (final label in _labels)
+                              if (!isLanguageLabel(label)) label,
+                            ...next,
                           ];
                         }),
                         tx: _tx,

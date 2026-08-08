@@ -76,6 +76,7 @@ extension _ExploreResourceCard on _ExplorePageState {
             const SizedBox(height: 8),
             LabelChipsRow(
               labels: item.labels,
+              labelText: (label) => _tx('labels.$label', label),
               leading: [
                 ResourceTypeBadge(
                   type: item.resourceType,

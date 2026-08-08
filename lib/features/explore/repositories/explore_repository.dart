@@ -11,12 +11,14 @@ class ExploreRepository extends ApiRepository {
     String query = '',
     String category = '',
     List<String> labels = const [],
+    List<String> languages = const [],
   }) async {
     final params = <String, dynamic>{
       'type': type,
       if (query.trim().isNotEmpty) 'q': query.trim(),
       if (category.trim().isNotEmpty) 'category': category.trim(),
       if (labels.isNotEmpty) 'label': labels,
+      if (languages.isNotEmpty) 'language': languages,
     };
     final uri = Uri(path: '/api/explore', queryParameters: params);
     final response = await apiClient.get(

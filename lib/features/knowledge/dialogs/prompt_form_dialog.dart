@@ -28,6 +28,7 @@ class _PromptFormDialogState extends State<_PromptFormDialog> {
   late final TextEditingController _descriptionController;
   late final TextEditingController _contentController;
   String _scope = 'private';
+  Set<String> _selectedLanguageLabels = {};
 
   String _tx(String path, String fallback) => widget.tx(path, fallback);
 
@@ -50,6 +51,13 @@ class _PromptFormDialogState extends State<_PromptFormDialog> {
     _scope = widget.allowPublic
         ? ((initial?['scope'] as String?) ?? 'private')
         : 'private';
+    final labels = initial?['labels'];
+    if (labels is List) {
+      _selectedLanguageLabels = labels
+          .map((value) => value.toString())
+          .where(isLanguageLabel)
+          .toSet();
+    }
   }
 
   @override
@@ -70,6 +78,7 @@ class _PromptFormDialogState extends State<_PromptFormDialog> {
       'description': _descriptionController.text.trim(),
       'content': _contentController.text.trim(),
       'scope': _scope,
+      'labels': [_scope, ..._selectedLanguageLabels],
     };
     if (widget.initial?['id'] != null) payload['id'] = widget.initial!['id'];
     Navigator.of(context).pop(payload);
@@ -100,6 +109,18 @@ class _PromptFormDialogState extends State<_PromptFormDialog> {
                     : null,
               ),
               const SizedBox(height: 10),
+              Text(
+                _tx('labels.group_language', 'Idioma del contenido'),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 6),
+              GroupedLabelPicker(
+                selected: _selectedLanguageLabels,
+                onChanged: (next) =>
+                    setState(() => _selectedLanguageLabels = next),
+                tx: widget.tx,
+                groups: const [kLanguageLabelGroup],
+              ),
               TextFormField(
                 controller: _aliasController,
                 decoration: InputDecoration(

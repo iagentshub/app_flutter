@@ -83,6 +83,7 @@ void main() {
     controller.queryController.text = 'agente';
     await controller.setType('agent');
     await controller.toggleLabel('draft', selected: true);
+    await controller.toggleLanguage('es', selected: true);
 
     expect(controller.loading, isFalse);
     expect(controller.error, isNull);
@@ -90,8 +91,9 @@ void main() {
     expect(seen?.queryParameters['type'], 'agent');
     expect(seen?.queryParameters['q'], 'agente');
     expect(seen?.queryParametersAll['label'], ['draft']);
+    expect(seen?.queryParametersAll['language'], ['es']);
     // El botón secundario cuenta labels/categoría; el tipo vive en la barra.
-    expect(controller.secondaryActiveFilterCount, 1);
+    expect(controller.secondaryActiveFilterCount, 2);
   });
 
   test('load sin sesión avisa en vez de llamar a la API', () async {
@@ -127,11 +129,13 @@ void main() {
 
     await controller.setType('skill');
     await controller.toggleLabel('draft', selected: true);
+    await controller.toggleLanguage('es', selected: true);
     await controller.clearFilters();
 
     expect(controller.type, 'all');
     expect(controller.category, '');
     expect(controller.hasLabel('draft'), isFalse);
+    expect(controller.hasLanguage('es'), isFalse);
     expect(controller.secondaryActiveFilterCount, 0);
   });
 
@@ -142,11 +146,13 @@ void main() {
 
     await controller.setType('skill');
     await controller.toggleLabel('draft', selected: true);
+    await controller.toggleLanguage('en', selected: true);
     await controller.clearSecondaryFilters();
 
     expect(controller.type, 'skill');
     expect(controller.category, '');
     expect(controller.hasLabel('draft'), isFalse);
+    expect(controller.hasLanguage('en'), isFalse);
     expect(controller.secondaryActiveFilterCount, 0);
   });
 

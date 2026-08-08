@@ -418,6 +418,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
                     ),
                     ownerLabel: _tx('common.owner', 'Propietario'),
                     linkedLabel: _tx('common.linked', 'Enlazado'),
+                    labelText: (label) => _tx('labels.$label', label),
                     runLabel: _tx('workflows.run_btn', 'Ejecutar'),
                     editTooltip: _tx('common.edit', 'Editar'),
                     deleteTooltip: _tx('common.delete', 'Eliminar'),

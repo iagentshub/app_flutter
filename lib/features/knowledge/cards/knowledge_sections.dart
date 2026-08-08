@@ -290,6 +290,7 @@ extension _KnowledgeSections on _KnowledgePageState {
             const SizedBox(height: 8),
             LabelChipsRow(
               labels: item.labels,
+              labelText: (label) => _tx('labels.$label', label),
               leading: [
                 OriginBadge(
                   shared: item.shared,

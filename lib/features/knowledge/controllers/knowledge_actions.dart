@@ -315,7 +315,7 @@ extension _KnowledgeActions on _KnowledgePageState {
   }
 
   Future<void> _openAddTextDialog() async {
-    final payload = await showDialog<Map<String, String>>(
+    final payload = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => _AddTextDialog(tx: _tx),
     );
@@ -330,6 +330,11 @@ extension _KnowledgeActions on _KnowledgePageState {
         title: payload['title'] ?? '',
         source: payload['source'],
         content: payload['content'] ?? '',
+        labels:
+            (payload['labels'] as List?)
+                ?.map((value) => value.toString())
+                .toList() ??
+            const ['private'],
       );
       showMessage(_tx('knowledge.msg_text_added', 'Texto añadido a Knowledge'));
       await _load();
@@ -344,7 +349,7 @@ extension _KnowledgeActions on _KnowledgePageState {
   }
 
   Future<void> _openAddUrlDialog() async {
-    final payload = await showDialog<Map<String, String>>(
+    final payload = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => _AddUrlDialog(tx: _tx),
     );
@@ -358,6 +363,11 @@ extension _KnowledgeActions on _KnowledgePageState {
         token,
         url: payload['url'] ?? '',
         title: payload['title'],
+        labels:
+            (payload['labels'] as List?)
+                ?.map((value) => value.toString())
+                .toList() ??
+            const ['private'],
       );
       showMessage(
         _tx('knowledge.msg_url_imported', 'URL importada a Knowledge'),

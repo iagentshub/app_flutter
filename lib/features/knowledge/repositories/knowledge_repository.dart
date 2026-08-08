@@ -39,6 +39,7 @@ class KnowledgeRepository extends ApiRepository {
     required String title,
     required String content,
     String? source,
+    List<String> labels = const ['private'],
   }) async {
     final response = await apiClient.post(
       '/api/knowledge/text',
@@ -49,6 +50,7 @@ class KnowledgeRepository extends ApiRepository {
         'source': source == null || source.trim().isEmpty
             ? title
             : source.trim(),
+        'labels': labels,
       },
     );
     return response.json;
@@ -58,6 +60,7 @@ class KnowledgeRepository extends ApiRepository {
     String token, {
     required String url,
     String? title,
+    List<String> labels = const ['private'],
   }) async {
     final response = await apiClient.post(
       '/api/knowledge/url',
@@ -65,6 +68,7 @@ class KnowledgeRepository extends ApiRepository {
       body: {
         'url': url,
         'title': title?.trim().isEmpty == true ? null : title?.trim(),
+        'labels': labels,
       },
     );
     return response.json;

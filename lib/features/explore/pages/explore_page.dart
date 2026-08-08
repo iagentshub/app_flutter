@@ -155,7 +155,7 @@ class _ExplorePageState extends State<ExplorePage>
   // En Explore todo lo listado es público (el backend solo devuelve
   // is_public=true), así que filtrar por "public"/"private" no aporta nada.
   static final _explorableLabelKeys = kLabelKeys
-      .where((l) => l != 'public' && l != 'private')
+      .where((l) => l != 'public' && l != 'private' && !isLanguageLabel(l))
       .toList();
 
   static const _labelKeys = {
@@ -222,6 +222,26 @@ class _ExplorePageState extends State<ExplorePage>
             _controller.setCategory(v);
             setDialogState(() {});
           },
+        ),
+        const SizedBox(height: 12),
+        Text(
+          _tx('explore.language_label', 'Idioma'),
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: kContentLanguageCodes.map((language) {
+            return FilterChip(
+              label: Text(contentLanguageLabel(_tx, language)),
+              selected: _controller.hasLanguage(language),
+              onSelected: (value) {
+                _controller.toggleLanguage(language, selected: value);
+                setDialogState(() {});
+              },
+            );
+          }).toList(),
         ),
         const SizedBox(height: 12),
         Text(

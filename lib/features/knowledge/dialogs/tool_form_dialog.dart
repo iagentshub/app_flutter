@@ -341,6 +341,7 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
                 selected: _selectedLabels,
                 onChanged: (next) => setState(() => _selectedLabels = next),
                 tx: widget.tx,
+                groups: kOperationalLabelGroups,
               ),
               Text(
                 _tx('knowledge.field_language', 'Lenguaje'),

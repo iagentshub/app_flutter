@@ -77,7 +77,7 @@ extension _ExploreCollectionViews on _ExplorePageState {
                   activeCount: _controller.secondaryActiveFilterCount,
                   tooltip: _tx(
                     'explore.more_filters_tooltip',
-                    'Filtrar por categoría y labels',
+                    'Filtrar por categoría, idioma y labels',
                   ),
                   onPressed: _openFiltersDialog,
                 ),

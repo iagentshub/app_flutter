@@ -49,6 +49,7 @@ class ExploreController extends ChangeNotifier {
   String _type = 'all';
   String _category = '';
   final Set<String> _labels = <String>{};
+  final Set<String> _languages = <String>{};
   final Map<String, int> _typeCounts = <String, int>{};
   final Set<String> _busyKeys = <String>{};
   final Set<String> _linkedKeys = <String>{};
@@ -65,6 +66,7 @@ class ExploreController extends ChangeNotifier {
   int typeCount(String type) => _typeCounts[type] ?? 0;
 
   bool hasLabel(String label) => _labels.contains(label);
+  bool hasLanguage(String language) => _languages.contains(language);
   bool isBusy(ExploreItem item) => _busyKeys.contains(itemKey(item));
   bool isLinked(ExploreItem item) => _linkedKeys.contains(itemKey(item));
   bool isStarred(ExploreItem item) => _starredKeys.contains(itemKey(item));
@@ -81,7 +83,7 @@ class ExploreController extends ChangeNotifier {
   }
 
   int get secondaryActiveFilterCount =>
-      (_category.isNotEmpty ? 1 : 0) + _labels.length;
+      (_category.isNotEmpty ? 1 : 0) + _labels.length + _languages.length;
 
   // ── Pestaña Usuarios ──────────────────────────────────────────────────
 
@@ -125,10 +127,21 @@ class ExploreController extends ChangeNotifier {
     return load();
   }
 
+  Future<void> toggleLanguage(String language, {required bool selected}) {
+    if (selected) {
+      _languages.add(language);
+    } else {
+      _languages.remove(language);
+    }
+    _notify();
+    return load();
+  }
+
   Future<void> clearFilters() {
     _type = 'all';
     _category = '';
     _labels.clear();
+    _languages.clear();
     _notify();
     return load();
   }
@@ -136,6 +149,7 @@ class ExploreController extends ChangeNotifier {
   Future<void> clearSecondaryFilters() {
     _category = '';
     _labels.clear();
+    _languages.clear();
     _notify();
     return load();
   }
@@ -164,6 +178,7 @@ class ExploreController extends ChangeNotifier {
         query: queryController.text,
         category: _category,
         labels: _labels.toList(),
+        languages: _languages.toList(),
       );
       _items = items;
       if (_type == 'all') {

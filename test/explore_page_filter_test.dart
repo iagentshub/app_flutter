@@ -38,9 +38,11 @@ void main() {
     );
 
     String? requestedType;
+    List<String> requestedLanguages = const [];
     final client = MockClient((request) async {
       if (request.url.path == '/api/explore') {
         requestedType = request.url.queryParameters['type'];
+        requestedLanguages = request.url.queryParametersAll['language'] ?? [];
         return _json([]);
       }
       if (request.url.path == '/api/users') return _json([]);
@@ -81,6 +83,21 @@ void main() {
     await tester.tap(find.text('Agentes (0)'));
     await tester.pumpAndSettle();
     expect(requestedType, 'agent');
+
+    final filterButton = tester.widget<IconButton>(
+      find.ancestor(
+        of: find.byIcon(Icons.filter_list),
+        matching: find.byType(IconButton),
+      ),
+    );
+    filterButton.onPressed?.call();
+    await tester.pumpAndSettle();
+    expect(find.text('Idioma'), findsOneWidget);
+    expect(find.text('Español'), findsOneWidget);
+
+    await tester.tap(find.text('Español'));
+    await tester.pumpAndSettle();
+    expect(requestedLanguages, ['es']);
   });
 }
 

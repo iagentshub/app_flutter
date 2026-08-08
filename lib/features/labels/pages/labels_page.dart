@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../models/agents/agent_models.dart';
+import '../../../models/knowledge/knowledge_models.dart';
 import '../../../models/prompts/prompt_models.dart';
 import '../../../models/skills/skill_models.dart';
 import '../../../models/tools/tool_models.dart';
@@ -16,6 +17,7 @@ import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../agents/repositories/agents_repository.dart';
+import '../../knowledge/repositories/knowledge_repository.dart';
 import '../../knowledge/repositories/prompts_repository.dart';
 import '../../knowledge/repositories/skills_repository.dart';
 import '../../knowledge/repositories/tools_repository.dart';
@@ -42,6 +44,7 @@ class _LabelsPageState extends State<LabelsPage>
   late final SkillsRepository _skillsRepository;
   late final PromptsRepository _promptsRepository;
   late final ToolsRepository _toolsRepository;
+  late final KnowledgeRepository _knowledgeRepository;
   late final WorkflowsRepository _workflowsRepository;
   late final TranslatedTexts _t;
   late final TabController _tabController;
@@ -61,6 +64,7 @@ class _LabelsPageState extends State<LabelsPage>
     _skillsRepository = SkillsRepository(apiClient: _services.apiClient);
     _promptsRepository = PromptsRepository(apiClient: _services.apiClient);
     _toolsRepository = ToolsRepository(apiClient: _services.apiClient);
+    _knowledgeRepository = KnowledgeRepository(apiClient: _services.apiClient);
     _workflowsRepository = WorkflowsRepository(apiClient: _services.apiClient);
     _tabController = TabController(length: 2, vsync: this);
     _t = TranslatedTexts(
@@ -106,12 +110,14 @@ class _LabelsPageState extends State<LabelsPage>
         _workflowsRepository.listWorkflows(token),
         _promptsRepository.listPrompts(token),
         _toolsRepository.listTools(token),
+        _knowledgeRepository.listItems(token),
       ]);
       final agents = results[0] as List<AgentItem>;
       final skills = results[1] as List<SkillItem>;
       final workflows = results[2] as List<WorkflowItem>;
       final prompts = results[3] as List<PromptItem>;
       final tools = results[4] as List<ToolItem>;
+      final knowledge = results[5] as List<KnowledgeItem>;
 
       final items = <LabeledItem>[
         for (final a in agents) LabeledItem.fromResource(a, 'agent'),
@@ -119,6 +125,8 @@ class _LabelsPageState extends State<LabelsPage>
         for (final w in workflows) LabeledItem.fromResource(w, 'workflow'),
         for (final p in prompts) LabeledItem.fromResource(p, 'prompt'),
         for (final tl in tools) LabeledItem.fromResource(tl, 'tool'),
+        for (final item in knowledge)
+          LabeledItem.fromResource(item, 'knowledge'),
       ];
 
       if (!mounted) return;
@@ -194,6 +202,8 @@ class _LabelsPageState extends State<LabelsPage>
         return _tx('labels.item_type_tool', 'Herramienta');
       case 'workflow':
         return _tx('labels.item_type_workflow', 'Workflow');
+      case 'knowledge':
+        return _tx('labels.item_type_knowledge', 'Knowledge');
       default:
         return type;
     }
@@ -219,6 +229,10 @@ class _LabelsPageState extends State<LabelsPage>
     DropdownMenuItem(
       value: 'tool',
       child: Text(_tx('explore.type_tools', 'Herramientas')),
+    ),
+    DropdownMenuItem(
+      value: 'knowledge',
+      child: Text(_tx('explore.type_knowledge', 'Knowledge')),
     ),
     DropdownMenuItem(
       value: 'workflow',
@@ -419,6 +433,8 @@ class _LabelsPageState extends State<LabelsPage>
                                 typeLabel: _itemTypeLabel(item.type),
                                 ownerLabel: _tx('common.owner', 'Propietario'),
                                 linkedLabel: _tx('common.linked', 'Enlazado'),
+                                labelText: (label) =>
+                                    _tx('labels.$label', label),
                                 onTap: () => showMessage(
                                   item.description.isEmpty
                                       ? _tx(

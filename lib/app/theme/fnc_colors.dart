@@ -94,6 +94,7 @@ abstract final class FncColors {
   static const labelQuarantine = Color(0xFFEF4444);
   static const labelArchived = Color(0xFF94A3B8);
   static const labelDelete = Color(0xFFDC2626);
+  static const labelLanguage = Color(0xFF0369A1);
   static const labelFallback = slate;
 
   // ---------------------------------------------------------------------

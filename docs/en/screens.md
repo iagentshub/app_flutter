@@ -53,14 +53,20 @@ Each has its English twin under the `/en` prefix.
 | Connections | `/connections` | AI, machine and database credentials, plus a Providers tab to link external accounts (Anthropic, OpenAI, GitHub Copilot, Ollama, NVIDIA, Google) and choose which models to bring in; Ollama connections can discover models live, and iAgents Hub connections can sync with the remote hub |
 | Memory | `/memory` | What the agents remember |
 | Knowledge | `/knowledge` | Documents and skills the agents consult |
-| Explore | `/explore` | Resources shared by the community |
-| Labels | `/labels` | Organizing your own resources |
+| Explore | `/explore` | Community resources with type, category, language, and label filters |
+| Labels | `/labels` | Catalog and search for labels on your own resources, including content language |
 | Manager | `/manager` | Workspaces, groups and invitations |
 | Profile | `/profile` | Account, preferences and language |
 
 The dashboard lets you reorder its blocks: once edit mode is on, the layout is saved to the account and travels with the user to any device.
 
 Agents have their own conversation view, available once the agent has a connection assigned.
+
+Textual resources accept zero or more optional content languages. The language
+selector is available when editing agents, skills, prompts, Knowledge text or
+URLs, and workflows. Selecting none means that language does not apply or was
+not declared. Tools keep their programming language (Python, Shell, or C++)
+separate from content language.
 
 ---
 

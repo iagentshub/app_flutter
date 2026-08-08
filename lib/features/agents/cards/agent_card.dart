@@ -243,6 +243,7 @@ class AgentCard extends StatelessWidget {
             const SizedBox(height: 8),
             LabelChipsRow(
               labels: item.labels,
+              labelText: (label) => tx('labels.$label', label),
               leading: [
                 OriginBadge(
                   shared: item.shared,

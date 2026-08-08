@@ -19,6 +19,7 @@ class WorkflowCard extends StatelessWidget {
     required this.connectionsLabel,
     required this.ownerLabel,
     required this.linkedLabel,
+    required this.labelText,
     required this.runLabel,
     required this.editTooltip,
     required this.deleteTooltip,
@@ -56,6 +57,7 @@ class WorkflowCard extends StatelessWidget {
   final String connectionsLabel;
   final String ownerLabel;
   final String linkedLabel;
+  final String Function(String label) labelText;
   final String runLabel;
   final String editTooltip;
   final String deleteTooltip;
@@ -258,6 +260,7 @@ class WorkflowCard extends StatelessWidget {
             const SizedBox(height: 14),
             LabelChipsRow(
               labels: item.labels,
+              labelText: labelText,
               leading: [
                 OriginBadge(
                   shared: item.shared,

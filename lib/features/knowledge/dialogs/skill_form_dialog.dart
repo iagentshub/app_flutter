@@ -24,6 +24,7 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
   late final TextEditingController _contentController;
   String _scope = 'private';
   String _category = '';
+  Set<String> _selectedLanguageLabels = {};
 
   @override
   void initState() {
@@ -42,6 +43,13 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
     _scope = widget.allowPublic
         ? ((initial?['scope'] as String?) ?? 'private')
         : 'private';
+    final labels = initial?['labels'];
+    if (labels is List) {
+      _selectedLanguageLabels = labels
+          .map((value) => value.toString())
+          .where(isLanguageLabel)
+          .toSet();
+    }
   }
 
   @override
@@ -61,6 +69,7 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
       'category': _category,
       'content': _contentController.text.trim(),
       'scope': _scope,
+      'labels': [_scope, ..._selectedLanguageLabels],
     };
     if (widget.initial?['id'] != null) payload['id'] = widget.initial!['id'];
     Navigator.of(context).pop(payload);
@@ -108,6 +117,18 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
                   child: Text('private · temporal durante esta sesión'),
                 ),
               const SizedBox(height: 10),
+              Text(
+                widget.tx('labels.group_language', 'Idioma del contenido'),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 6),
+              GroupedLabelPicker(
+                selected: _selectedLanguageLabels,
+                onChanged: (next) =>
+                    setState(() => _selectedLanguageLabels = next),
+                tx: widget.tx,
+                groups: const [kLanguageLabelGroup],
+              ),
               TextFormField(
                 controller: _descriptionController,
                 minLines: 2,

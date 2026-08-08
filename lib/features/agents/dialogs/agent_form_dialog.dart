@@ -13,6 +13,7 @@ import '../../../models/memory/memory_models.dart';
 import '../../../models/prompts/prompt_models.dart';
 import '../../../models/skills/skill_models.dart';
 import '../../../models/tools/tool_models.dart';
+import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/tools/tool_language.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/grouped_label_picker.dart';
@@ -130,6 +131,12 @@ class _AgentFormDialogState extends State<AgentFormDialog> with StateMessaging {
         !_selectedLabels.contains('public')) {
       _selectedLabels = {..._selectedLabels, 'private'};
     }
+    final legacyLanguage = initial?['language']?.toString().toLowerCase() ?? '';
+    final legacyLanguageLabel = languageLabelKey(legacyLanguage);
+    if (kContentLanguageCodes.contains(legacyLanguage) &&
+        !_selectedLabels.contains(legacyLanguageLabel)) {
+      _selectedLabels = {..._selectedLabels, legacyLanguageLabel};
+    }
 
     _agentType = (initial?['agent_type'] as String?) ?? 'generic';
 
@@ -211,6 +218,11 @@ class _AgentFormDialogState extends State<AgentFormDialog> with StateMessaging {
       'system_prompt': _promptController.text.trim(),
       'temperature': _temperature,
       'labels': _selectedLabels.toList(),
+      'language': _selectedLabels
+          .where(isLanguageLabel)
+          .map(languageCodeFromLabel)
+          .whereType<String>()
+          .firstOrNull,
       'memory_file': _useMemory && _memoryFileController.text.trim().isNotEmpty
           ? _memoryFileController.text.trim()
           : null,

@@ -13,12 +13,14 @@ class LabelChipsRow extends StatelessWidget {
     required this.labels,
     this.hide = const [],
     this.leading = const [],
+    this.labelText,
     super.key,
   });
 
   final List<String> labels;
   final List<String> hide;
   final List<Widget> leading;
+  final String Function(String label)? labelText;
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +53,7 @@ class LabelChipsRow extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  label,
+                  labelText?.call(label) ?? label,
                   style: const TextStyle(
                     color: FncColors.white,
                     fontSize: FncFonts.size10,

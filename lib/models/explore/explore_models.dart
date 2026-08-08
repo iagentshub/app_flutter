@@ -39,6 +39,20 @@ class ExploreItem {
     }
     return const [];
   }
+
+  List<String> get languages {
+    final value = raw['languages'];
+    if (value is List) {
+      return value
+          .map((item) => item.toString())
+          .where((item) => item.isNotEmpty)
+          .toList();
+    }
+    return labels
+        .where((label) => label.startsWith('lang_'))
+        .map((label) => label.substring('lang_'.length))
+        .toList();
+  }
 }
 
 class ExploreUserItem {

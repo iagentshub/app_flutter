@@ -12,12 +12,14 @@ class GroupedLabelPicker extends StatelessWidget {
     required this.selected,
     required this.onChanged,
     required this.tx,
+    this.groups = kLabelGroups,
     super.key,
   });
 
   final Set<String> selected;
   final ValueChanged<Set<String>> onChanged;
   final String Function(String path, String fallback) tx;
+  final List<LabelGroupDef> groups;
 
   void _toggle(LabelGroupDef group, String key, bool value) {
     final next = {...selected};
@@ -43,7 +45,7 @@ class GroupedLabelPicker extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final group in kLabelGroups) ...[
+        for (final group in groups) ...[
           Text(
             tx(group.titleKey, group.fallbackTitle),
             style: Theme.of(context).textTheme.labelMedium,

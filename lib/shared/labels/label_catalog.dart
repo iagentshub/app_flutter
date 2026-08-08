@@ -31,6 +31,15 @@ const Map<String, Color> _labelColors = {
   'quarantine': FncColors.labelQuarantine,
   'archived': FncColors.labelArchived,
   'delete': FncColors.labelDelete,
+  'lang_es': FncColors.labelLanguage,
+  'lang_en': FncColors.labelLanguage,
+  'lang_fr': FncColors.labelLanguage,
+  'lang_de': FncColors.labelLanguage,
+  'lang_pt': FncColors.labelLanguage,
+  'lang_it': FncColors.labelLanguage,
+  'lang_zh': FncColors.labelLanguage,
+  'lang_ja': FncColors.labelLanguage,
+  'lang_ar': FncColors.labelLanguage,
 };
 
 Color labelColor(String key) => _labelColors[key] ?? FncColors.labelFallback;
@@ -51,7 +60,62 @@ const List<String> kLabelKeys = [
   'quarantine',
   'archived',
   'delete',
+  ...kLanguageLabelKeys,
 ];
+
+const List<String> kContentLanguageCodes = [
+  'es',
+  'en',
+  'fr',
+  'de',
+  'pt',
+  'it',
+  'zh',
+  'ja',
+  'ar',
+];
+
+const List<String> kLanguageLabelKeys = [
+  'lang_es',
+  'lang_en',
+  'lang_fr',
+  'lang_de',
+  'lang_pt',
+  'lang_it',
+  'lang_zh',
+  'lang_ja',
+  'lang_ar',
+];
+
+bool isLanguageLabel(String key) => kLanguageLabelKeys.contains(key);
+
+String languageLabelKey(String code) => 'lang_${code.toLowerCase()}';
+
+String? languageCodeFromLabel(String key) =>
+    isLanguageLabel(key) ? key.substring('lang_'.length) : null;
+
+String contentLanguageLabel(
+  String Function(String path, String fallback) tx,
+  String codeOrKey,
+) {
+  final key = codeOrKey.startsWith('lang_')
+      ? codeOrKey
+      : languageLabelKey(codeOrKey);
+  final code = languageCodeFromLabel(key) ?? codeOrKey;
+  final fallback = switch (code) {
+    'es' => 'Español',
+    'en' => 'Inglés',
+    'fr' => 'Francés',
+    'de' => 'Alemán',
+    'pt' => 'Portugués',
+    'it' => 'Italiano',
+    'zh' => 'Chino',
+    'ja' => 'Japonés',
+    'ar' => 'Árabe',
+    _ => code.toUpperCase(),
+  };
+  return tx('labels.$key', fallback);
+}
 
 /// Los tres grupos son excluyentes entre sí
 /// (algo no puede ser "private" y "public" a la vez). `required` marca si
@@ -108,7 +172,7 @@ const kResourceTypeGroup = LabelGroupDef(
   required: true,
 );
 
-const kLabelGroups = [
+const kOperationalLabelGroups = [
   LabelGroupDef(
     titleKey: 'labels.group_visibility',
     fallbackTitle: 'Visibilidad',
@@ -137,3 +201,12 @@ const kLabelGroups = [
     exclusive: false,
   ),
 ];
+
+const kLanguageLabelGroup = LabelGroupDef(
+  titleKey: 'labels.group_language',
+  fallbackTitle: 'Idioma',
+  keys: kLanguageLabelKeys,
+  exclusive: false,
+);
+
+const kLabelGroups = [...kOperationalLabelGroups, kLanguageLabelGroup];

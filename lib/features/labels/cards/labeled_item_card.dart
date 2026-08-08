@@ -13,6 +13,7 @@ class LabeledItemCard extends StatelessWidget {
     required this.ownerLabel,
     required this.linkedLabel,
     required this.onTap,
+    required this.labelText,
     super.key,
   });
 
@@ -21,6 +22,7 @@ class LabeledItemCard extends StatelessWidget {
   final String ownerLabel;
   final String linkedLabel;
   final VoidCallback onTap;
+  final String Function(String label) labelText;
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +47,7 @@ class LabeledItemCard extends StatelessWidget {
               const SizedBox(height: 8),
               LabelChipsRow(
                 labels: item.labels,
+                labelText: labelText,
                 leading: [
                   OriginBadge(
                     shared: item.shared,
