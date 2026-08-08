@@ -60,8 +60,8 @@ extension _ProfileViewHelpers on _ProfilePageState {
   }
 
   Widget _buildAvatar(String initial) {
-    final token = _token;
-    final url = _avatarUrl;
+    final token = _controller.token;
+    final url = _controller.avatarUrl;
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -92,7 +92,7 @@ extension _ProfileViewHelpers on _ProfilePageState {
           right: -2,
           bottom: -2,
           child: InkWell(
-            onTap: _uploadingAvatar ? null : _pickAndUploadAvatar,
+            onTap: _controller.uploadingAvatar ? null : _pickAndUploadAvatar,
             borderRadius: BorderRadius.circular(14),
             child: Container(
               width: 26,
@@ -105,7 +105,7 @@ extension _ProfileViewHelpers on _ProfilePageState {
                   width: 2,
                 ),
               ),
-              child: _uploadingAvatar
+              child: _controller.uploadingAvatar
                   ? const Padding(
                       padding: EdgeInsets.all(5),
                       child: CircularProgressIndicator(

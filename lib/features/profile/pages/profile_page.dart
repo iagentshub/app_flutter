@@ -9,11 +9,12 @@ import '../../../shared/widgets/confirm_action_dialog.dart';
 
 import '../../../app/router/router.dart';
 import '../../../core/network/api_client.dart';
-import '../../../core/network/api_error.dart';
 import '../../../features/connections/widgets/providers_section.dart';
 import '../../../models/profile/profile_models.dart';
+import '../controllers/profile_controller.dart';
 import '../repositories/profile_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
+import '../../../shared/state/action_result.dart';
 import '../../../shared/state/brand_icon_controller.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
@@ -34,27 +35,6 @@ part '../widgets/profile_view_helpers.dart';
 /// la interfaz web, aún no habilitado aquí).
 const _languageOptions = [('es', 'Español', '🇪🇸'), ('en', 'English', '🇬🇧')];
 
-/// El backend exige que `github` sea una URL https:// completa, pero pedirle
-/// eso al usuario es peor UX que un campo "usuario de GitHub" con prefijo
-/// fijo `github.com/` — se convierte en los dos sentidos aquí.
-String _githubUsernameFromUrl(String? url) {
-  if (url == null || url.isEmpty) return '';
-  final match = RegExp(
-    r'github\.com/([^/\s]+)',
-    caseSensitive: false,
-  ).firstMatch(url);
-  return match?.group(1) ?? url;
-}
-
-String? _githubUrlFromUsername(String input) {
-  final trimmed = input.trim().replaceAll(RegExp(r'^@'), '');
-  if (trimmed.isEmpty) return null;
-  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-    return trimmed;
-  }
-  return 'https://github.com/$trimmed';
-}
-
 class ProfilePage extends StatefulWidget {
   const ProfilePage({
     required this.apiClient,
@@ -73,50 +53,40 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage>
     with SingleTickerProviderStateMixin, StateMessaging {
-  late final ProfileRepository _repository;
+  late final ProfileController _controller;
   late final TranslatedTexts _t;
   late final TabController _tabController;
 
   static const _sectionIds = ['account', 'social', 'groups', 'providers'];
-
-  ProfileBundle? _bundle;
-  bool _loading = true;
-  String? _error;
-  bool _savingSettings = false;
-  bool _savingProfile = false;
-  bool _requestingDeletion = false;
-  bool _uploadingAvatar = false;
-  int _avatarVersion = 0;
-
-  final _bioController = TextEditingController();
-  bool _isEmailPublic = false;
-  final _githubController = TextEditingController();
-  final _cvController = TextEditingController();
-  Set<String> _selectedLanguages = {};
-  final _currentPasswordController = TextEditingController();
-  final _newPasswordController = TextEditingController();
-
-  String _theme = 'dark-red';
-  String _defaultTheme = 'dark-red';
-  bool _themeConfigurable = true;
-  String _language = 'es';
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
   @override
   void initState() {
     super.initState();
-    _repository = ProfileRepository(apiClient: widget.apiClient);
-    _tabController = TabController(length: _sectionIds.length, vsync: this)
-      ..addListener(_onTabChanged);
+    // `_t` primero: el controller recibe `_tx` y lo usa para sus mensajes.
     _t = TranslatedTexts(
       localeController: widget.localeController,
       namespace: 'resources',
     )..addListener(_onTextsChanged);
-    _load();
+    _controller =
+        ProfileController(
+          repository: ProfileRepository(apiClient: widget.apiClient),
+          sessionController: widget.sessionController,
+          localeController: widget.localeController,
+          syncTheme: _syncTheme,
+          tx: _tx,
+        )..addListener(_onControllerChanged);
+    _tabController = TabController(length: _sectionIds.length, vsync: this)
+      ..addListener(_onTabChanged);
+    _controller.load();
   }
 
   void _onTextsChanged() {
+    if (mounted) setState(() {});
+  }
+
+  void _onControllerChanged() {
     if (mounted) setState(() {});
   }
 
@@ -126,11 +96,8 @@ class _ProfilePageState extends State<ProfilePage>
 
   @override
   void dispose() {
-    _bioController.dispose();
-    _githubController.dispose();
-    _cvController.dispose();
-    _currentPasswordController.dispose();
-    _newPasswordController.dispose();
+    _controller.removeListener(_onControllerChanged);
+    _controller.dispose();
     _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
     _t.removeListener(_onTextsChanged);
@@ -138,128 +105,24 @@ class _ProfilePageState extends State<ProfilePage>
     super.dispose();
   }
 
-  String? get _token => widget.sessionController.gaToken;
-
-  Future<void> _load() async {
-    final token = _token;
-    if (token == null || token.isEmpty) {
-      setState(() {
-        _error = _tx('common.no_session', 'No hay sesión activa');
-        _loading = false;
-      });
-      return;
-    }
-
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-
-    try {
-      final bundle = await _repository.fetchBundle(token);
-      if (!mounted) return;
-      setState(() {
-        _bundle = bundle;
-        _theme = bundle.settings.theme;
-        _defaultTheme = bundle.settings.defaultTheme;
-        _themeConfigurable = bundle.settings.themeConfigurable;
-        _language = bundle.settings.language;
-        _bioController.text = bundle.social.bio ?? '';
-        _isEmailPublic = bundle.session.isEmailPublic;
-        _githubController.text = _githubUsernameFromUrl(bundle.social.github);
-        _cvController.text = bundle.social.cv ?? '';
-        _selectedLanguages = bundle.social.languages.toSet();
-        _loading = false;
-      });
-      widget.localeController.syncFromBackend(bundle.settings.language);
-      ThemeControllerScope.of(
-        context,
-        listen: false,
-      ).syncFromBackend(bundle.settings.theme);
-    } on ApiError catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _error = error.message;
-        _loading = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _error = 'No se pudo cargar el perfil';
-        _loading = false;
-      });
-    }
+  /// El tema vive en un `InheritedNotifier`, así que sólo se alcanza desde el
+  /// árbol de widgets: el controller lo delega aquí.
+  Future<void> _syncTheme(String theme) async {
+    if (!mounted) return;
+    await ThemeControllerScope.of(
+      context,
+      listen: false,
+    ).syncFromBackend(theme);
   }
 
-  Future<void> _saveSettings() async {
-    final token = _token;
-    if (token == null || token.isEmpty) return;
-
-    setState(() => _savingSettings = true);
-    try {
-      final updated = await _repository.updateSettings(
-        token,
-        theme: _themeConfigurable ? _theme : null,
-        language: _language,
-      );
-      if (!mounted) return;
-      setState(() {
-        _theme = updated.theme;
-        _defaultTheme = updated.defaultTheme;
-        _themeConfigurable = updated.themeConfigurable;
-        _language = updated.language;
-      });
-      widget.localeController.syncFromBackend(updated.language);
-      await ThemeControllerScope.of(
-        context,
-        listen: false,
-      ).syncFromBackend(updated.theme);
-      showMessage('Preferencias guardadas');
-    } on ApiError catch (error) {
-      showMessage(error.message, isError: true);
-    } catch (_) {
-      showMessage('No se pudieron guardar las preferencias', isError: true);
-    } finally {
-      if (mounted) setState(() => _savingSettings = false);
-    }
-  }
-
-  Future<void> _savePublicProfile() async {
-    final token = _token;
-    if (token == null || token.isEmpty) return;
-
-    setState(() => _savingProfile = true);
-    try {
-      await _repository.updateSocialProfile(
-        token,
-        bio: _bioController.text.trim(),
-        isEmailPublic: _isEmailPublic,
-        github: _githubUrlFromUsername(_githubController.text) ?? '',
-        cv: _cvController.text.trim(),
-        languages: _selectedLanguages.toList(),
-      );
-      showMessage('Perfil público actualizado');
-      await _load();
-    } on ApiError catch (error) {
-      showMessage(error.message, isError: true);
-    } catch (_) {
-      showMessage('No se pudo actualizar el perfil público', isError: true);
-    } finally {
-      if (mounted) setState(() => _savingProfile = false);
-    }
-  }
-
-  String? get _avatarUrl {
-    final username = _bundle?.session.username;
-    if (username == null || username.isEmpty) return null;
-    final base = widget.apiClient.backendController.effectiveBaseUrl;
-    return '$base/api/users/${Uri.encodeComponent(username)}/avatar?v=$_avatarVersion';
+  /// Ejecuta una acción del controller y muestra su mensaje, si lo hay.
+  Future<void> _runAction(Future<ActionResult?> action) async {
+    final result = await action;
+    if (result == null) return;
+    showMessage(result.message, isError: result.isError);
   }
 
   Future<void> _pickAndUploadAvatar() async {
-    final token = _token;
-    if (token == null || token.isEmpty) return;
-
     final result = await FilePicker.pickFiles(
       withData: true,
       type: FileType.custom,
@@ -268,48 +131,13 @@ class _ProfilePageState extends State<ProfilePage>
     if (result == null || result.files.isEmpty) return;
 
     final file = result.files.first;
-    final bytes = file.bytes;
-    if (bytes == null || bytes.isEmpty) {
-      showMessage(
-        _tx('profile.avatar_error', 'No se pudo actualizar la foto'),
-        isError: true,
-      );
-      return;
-    }
-    if (bytes.length > 2 * 1024 * 1024) {
-      showMessage(
-        _tx('profile.avatar_too_large', 'La imagen no puede superar 2 MB'),
-        isError: true,
-      );
-      return;
-    }
-
-    setState(() => _uploadingAvatar = true);
-    try {
-      await widget.apiClient.postMultipart(
-        '/api/auth/me/avatar',
-        fieldName: 'avatar',
-        fileName: file.name,
-        fileBytes: bytes,
-        gaToken: token,
-      );
-      if (!mounted) return;
-      setState(() => _avatarVersion++);
-      showMessage(_tx('profile.avatar_updated', 'Foto de perfil actualizada'));
-    } on ApiError catch (error) {
-      showMessage(error.message, isError: true);
-    } catch (_) {
-      showMessage(
-        _tx('profile.avatar_error', 'No se pudo actualizar la foto'),
-        isError: true,
-      );
-    } finally {
-      if (mounted) setState(() => _uploadingAvatar = false);
-    }
+    await _runAction(
+      _controller.uploadAvatar(fileName: file.name, fileBytes: file.bytes),
+    );
   }
 
   Future<void> _openLanguagesDialog() async {
-    var draft = {..._selectedLanguages};
+    var draft = {..._controller.selectedLanguages};
     final result = await showDialog<Set<String>>(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -351,7 +179,7 @@ class _ProfilePageState extends State<ProfilePage>
         ),
       ),
     );
-    if (result != null) setState(() => _selectedLanguages = result);
+    if (result != null) _controller.setLanguages(result);
   }
 
   Future<void> _openChangePasswordDialog() async {
@@ -367,7 +195,7 @@ class _ProfilePageState extends State<ProfilePage>
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextFormField(
-                  controller: _currentPasswordController,
+                  controller: _controller.currentPasswordController,
                   obscureText: true,
                   decoration: InputDecoration(
                     labelText: _tx(
@@ -378,7 +206,7 @@ class _ProfilePageState extends State<ProfilePage>
                 ),
                 const SizedBox(height: 10),
                 TextFormField(
-                  controller: _newPasswordController,
+                  controller: _controller.newPasswordController,
                   obscureText: true,
                   decoration: InputDecoration(
                     labelText: _tx(
@@ -400,12 +228,13 @@ class _ProfilePageState extends State<ProfilePage>
                   ? null
                   : () async {
                       setDialogState(() => submitting = true);
-                      final ok = await _changePassword();
+                      final result = await _controller.changePassword();
+                      showMessage(result.message, isError: result.isError);
                       if (!context.mounted) return;
-                      if (ok) {
-                        Navigator.of(context).pop();
-                      } else {
+                      if (result.isError) {
                         setDialogState(() => submitting = false);
+                      } else {
+                        Navigator.of(context).pop();
                       }
                     },
               icon: const Icon(Icons.lock_reset_outlined),
@@ -421,99 +250,56 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  Future<bool> _changePassword() async {
-    final token = _token;
-    if (token == null || token.isEmpty) return false;
-
-    final current = _currentPasswordController.text;
-    final next = _newPasswordController.text;
-    if (current.isEmpty || next.isEmpty) {
-      showMessage('Completa contraseña actual y nueva', isError: true);
-      return false;
-    }
-    if (next.trim().length < 8) {
-      showMessage(
-        'La nueva contraseña debe tener al menos 8 caracteres',
-        isError: true,
-      );
-      return false;
-    }
-
-    try {
-      await _repository.changePassword(
-        token,
-        currentPassword: current,
-        newPassword: next,
-      );
-      _currentPasswordController.clear();
-      _newPasswordController.clear();
-      showMessage('Contraseña actualizada');
-      return true;
-    } on ApiError catch (error) {
-      showMessage(error.message, isError: true);
-      return false;
-    } catch (_) {
-      showMessage('No se pudo actualizar la contraseña', isError: true);
-      return false;
-    }
-  }
-
   Future<void> _requestDeletion() async {
-    final token = _token;
-    if (token == null || token.isEmpty) return;
-    final bundle = _bundle;
+    final bundle = _controller.bundle;
     if (bundle == null) return;
     if (bundle.deletion.scheduled) {
-      showMessage('La cuenta ya está programada para eliminación');
+      final already = _controller.deletionAlreadyScheduled;
+      showMessage(already.message, isError: already.isError);
       return;
     }
+    if (!_controller.canRequestDeletion) return;
 
     final confirm = await showConfirmActionDialog(
       context,
-      title: 'Solicitar eliminación de cuenta',
-      message:
-          'La cuenta se programará para eliminación en 30 días. ¿Deseas continuar?',
-      cancelLabel: 'Cancelar',
-      confirmLabel: 'Confirmar',
+      title: _tx(
+        'profile.deletion_confirm_title',
+        'Solicitar eliminación de cuenta',
+      ),
+      message: _tx(
+        'profile.deletion_confirm_message',
+        'La cuenta se programará para eliminación en 30 días. ¿Deseas continuar?',
+      ),
+      cancelLabel: _tx('common.cancel', 'Cancelar'),
+      confirmLabel: _tx('common.confirm', 'Confirmar'),
     );
     if (!confirm) return;
 
-    setState(() => _requestingDeletion = true);
-    try {
-      final message = await _repository.requestDeletion(token);
-      showMessage(message);
-      await _load();
-    } on ApiError catch (error) {
-      showMessage(error.message, isError: true);
-    } catch (_) {
-      showMessage(
-        'No se pudo programar la eliminación de cuenta',
-        isError: true,
-      );
-    } finally {
-      if (mounted) setState(() => _requestingDeletion = false);
-    }
+    await _runAction(_controller.requestDeletion());
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const AsyncStatePanel.loading();
-    if (_error != null) {
+    if (_controller.loading) return const AsyncStatePanel.loading();
+    final error = _controller.error;
+    if (error != null) {
       return ListView(
         children: [
           AsyncStatePanel.error(
-            title: 'Error cargando perfil',
-            message: _error!,
+            title: _tx('profile.error_title', 'Error cargando perfil'),
+            message: error,
             retryLabel: _tx('common.retry', 'Reintentar'),
-            onRetry: _load,
+            onRetry: _controller.load,
           ),
         ],
       );
     }
 
-    final bundle = _bundle;
+    final bundle = _controller.bundle;
     if (bundle == null) {
-      return const Center(child: Text('No hay datos de perfil disponibles'));
+      return Center(
+        child: Text(_tx('profile.empty', 'No hay datos de perfil disponibles')),
+      );
     }
 
     final tabLabels = <String>[
@@ -523,7 +309,7 @@ class _ProfilePageState extends State<ProfilePage>
       _tx('connections.tab_providers', 'Proveedores'),
     ];
     final section = _sectionIds[_tabController.index];
-    final token = _token;
+    final token = _controller.token;
 
     return Column(
       children: [
@@ -549,7 +335,7 @@ class _ProfilePageState extends State<ProfilePage>
                         localeController: widget.localeController,
                       ))
               : RefreshIndicator(
-                  onRefresh: _load,
+                  onRefresh: _controller.load,
                   child: Align(
                     alignment: Alignment.topCenter,
                     child: ConstrainedBox(

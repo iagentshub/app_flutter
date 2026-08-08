@@ -87,9 +87,9 @@ extension _ProfileAccountSection on _ProfilePageState {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (_themeConfigurable)
+                if (_controller.themeConfigurable)
                   DropdownButtonFormField<String>(
-                    initialValue: _theme,
+                    initialValue: _controller.theme,
                     decoration: InputDecoration(
                       labelText: _tx('profile.theme_label', 'Tema'),
                     ),
@@ -103,7 +103,7 @@ extension _ProfileAccountSection on _ProfilePageState {
                         .toList(),
                     onChanged: (value) {
                       if (value == null) return;
-                      refresh(() => _theme = value);
+                      _controller.setTheme(value);
                     },
                   )
                 else
@@ -115,11 +115,11 @@ extension _ProfileAccountSection on _ProfilePageState {
                         'El tema está definido por el administrador.',
                       ),
                     ),
-                    child: Text(_defaultTheme),
+                    child: Text(_controller.defaultTheme),
                   ),
                 const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
-                  initialValue: _language,
+                  initialValue: _controller.language,
                   decoration: InputDecoration(
                     labelText: _tx('profile.language_label', 'Idioma'),
                   ),
@@ -129,7 +129,7 @@ extension _ProfileAccountSection on _ProfilePageState {
                   ],
                   onChanged: (value) {
                     if (value == null) return;
-                    refresh(() => _language = value);
+                    _controller.setLanguage(value);
                   },
                 ),
                 const SizedBox(height: 20),
@@ -151,10 +151,12 @@ extension _ProfileAccountSection on _ProfilePageState {
                 const _BrandIconSelector(),
                 const SizedBox(height: 12),
                 PrimaryButton.icon(
-                  onPressed: _savingSettings ? null : _saveSettings,
+                  onPressed: _controller.savingSettings
+                      ? null
+                      : () => _runAction(_controller.saveSettings()),
                   icon: const Icon(Icons.save_outlined),
                   label: Text(
-                    _savingSettings
+                    _controller.savingSettings
                         ? _tx('profile.saving', 'Guardando...')
                         : _tx(
                             'profile.save_preferences',
@@ -214,12 +216,14 @@ extension _ProfileAccountSection on _ProfilePageState {
                 ),
                 const SizedBox(height: 10),
                 SecondaryButton.icon(
-                  onPressed: _requestingDeletion || bundle.deletion.scheduled
+                  onPressed:
+                      _controller.requestingDeletion ||
+                          bundle.deletion.scheduled
                       ? null
                       : _requestDeletion,
                   icon: const Icon(Icons.warning_amber_outlined),
                   label: Text(
-                    _requestingDeletion
+                    _controller.requestingDeletion
                         ? _tx('profile.scheduling', 'Programando...')
                         : _tx(
                             'profile.request_deletion',

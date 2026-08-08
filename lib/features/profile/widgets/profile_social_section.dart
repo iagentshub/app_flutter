@@ -29,7 +29,7 @@ extension _ProfileSocialSection on _ProfilePageState {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 TextFormField(
-                  controller: _bioController,
+                  controller: _controller.bioController,
                   minLines: 2,
                   maxLines: 4,
                   maxLength: 500,
@@ -48,7 +48,7 @@ extension _ProfileSocialSection on _ProfilePageState {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      child: _selectedLanguages.isEmpty
+                      child: !_controller.hasLanguages
                           ? Text(
                               _tx(
                                 'profile.languages_empty',
@@ -62,7 +62,7 @@ extension _ProfileSocialSection on _ProfilePageState {
                               children: _languageOptions
                                   .where(
                                     (option) =>
-                                        _selectedLanguages.contains(option.$1),
+                                        _controller.hasLanguage(option.$1),
                                   )
                                   .map(
                                     (option) => Chip(
@@ -85,15 +85,15 @@ extension _ProfileSocialSection on _ProfilePageState {
                 const SizedBox(height: 16),
                 SwitchListTile.adaptive(
                   contentPadding: EdgeInsets.zero,
-                  value: _isEmailPublic,
-                  onChanged: (value) => refresh(() => _isEmailPublic = value),
+                  value: _controller.isEmailPublic,
+                  onChanged: _controller.setEmailPublic,
                   secondary: const Icon(Icons.alternate_email, size: 20),
                   title: Text(
                     _tx('profile.email_public_label', 'Mostrar mi email'),
                   ),
                   subtitle: Text(
-                    _isEmailPublic
-                        ? (_bundle?.session.email ?? '')
+                    _controller.isEmailPublic
+                        ? (bundle.session.email ?? '')
                         : _tx(
                             'profile.email_private_hint',
                             'Tu email permanece privado.',
@@ -102,7 +102,7 @@ extension _ProfileSocialSection on _ProfilePageState {
                 ),
                 const SizedBox(height: 10),
                 TextFormField(
-                  controller: _githubController,
+                  controller: _controller.githubController,
                   decoration: InputDecoration(
                     labelText: _tx('profile.github_label', 'Usuario de GitHub'),
                     prefixIcon: const Icon(Icons.code, size: 20),
@@ -124,7 +124,7 @@ extension _ProfileSocialSection on _ProfilePageState {
                 ),
                 const SizedBox(height: 8),
                 TextFormField(
-                  controller: _cvController,
+                  controller: _controller.cvController,
                   minLines: 6,
                   maxLines: 12,
                   style: const TextStyle(
@@ -135,10 +135,12 @@ extension _ProfileSocialSection on _ProfilePageState {
                 ),
                 const SizedBox(height: 12),
                 PrimaryButton.icon(
-                  onPressed: _savingProfile ? null : _savePublicProfile,
+                  onPressed: _controller.savingProfile
+                      ? null
+                      : () => _runAction(_controller.savePublicProfile()),
                   icon: const Icon(Icons.save_as_outlined),
                   label: Text(
-                    _savingProfile
+                    _controller.savingProfile
                         ? _tx('profile.saving', 'Guardando...')
                         : _tx('profile.save_social', 'Guardar perfil público'),
                   ),
