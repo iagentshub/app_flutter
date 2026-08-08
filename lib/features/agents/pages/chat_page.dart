@@ -81,7 +81,20 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
   List<ChatConversation> _conversations = const [];
   String? _conversationId;
   List<ChatMessage> _messages = [];
-  String _streamingReply = '';
+
+  /// Texto de la respuesta en curso. Es un [ValueNotifier] —y no un campo de
+  /// estado— para que cada token repinte solo la burbuja que crece, en vez de
+  /// toda la página (historial, cabecera, composer y lista entera).
+  final _streamingReply = ValueNotifier<String>('');
+
+  /// Acumula los tokens en O(n): concatenar cadenas por token copiaba la
+  /// respuesta completa en cada paso.
+  final _replyBuffer = StringBuffer();
+
+  /// Si el usuario se ha separado del final mientras llega la respuesta; lo
+  /// escucha solo el chip de "bajar al último mensaje".
+  final _awayFromEnd = ValueNotifier<bool>(false);
+
   bool _loadingConversations = true;
   bool _loadingMessages = false;
   bool _streaming = false;
@@ -108,6 +121,7 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
       namespace: 'resources',
     )..addListener(_onTextsChanged);
     _textController.addListener(_onComposerTextChanged);
+    _scrollController.addListener(_onScroll);
     _bootstrap();
     _loadMentionSources();
   }
@@ -116,13 +130,18 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
     if (mounted) setState(() {});
   }
 
+  void _onScroll() => _awayFromEnd.value = !isAtEnd(_scrollController);
+
   @override
   void dispose() {
     _subscription?.cancel();
     _textController.removeListener(_onComposerTextChanged);
+    _scrollController.removeListener(_onScroll);
     _hideMentionOverlay();
     _textController.dispose();
     _scrollController.dispose();
+    _streamingReply.dispose();
+    _awayFromEnd.dispose();
     _t.removeListener(_onTextsChanged);
     _t.dispose();
     super.dispose();
@@ -254,6 +273,27 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
     );
   }
 
+  /// Salida de vuelta al final cuando el usuario se ha ido a releer y la
+  /// respuesta sigue llegando: el autoscroll se congela y la única forma de
+  /// volver abajo no puede ser arrastrar a ciegas.
+  Widget _buildJumpToEndChip() {
+    return Positioned(
+      right: 12,
+      bottom: 12,
+      child: ValueListenableBuilder<bool>(
+        valueListenable: _awayFromEnd,
+        builder: (context, away, _) {
+          if (!away) return const SizedBox.shrink();
+          return ActionChip(
+            avatar: const Icon(Icons.arrow_downward, size: 16),
+            label: Text(_tx('agents.chat.jump_to_last', 'Último mensaje')),
+            onPressed: () => scrollToEnd(_scrollController),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildChatColumn() {
     if (_error != null && _messages.isEmpty && !_loadingMessages) {
       return Center(
@@ -288,17 +328,22 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
         Expanded(
           child: _loadingMessages
               ? const Center(child: CircularProgressIndicator())
-              : ChatMessageList(
-                  messages: _messages,
-                  streaming: _streaming,
-                  thinking: _thinking,
-                  streamingReply: _streamingReply,
-                  scrollController: _scrollController,
-                  onReply: _setReply,
-                  copyCodeTooltip: copyCodeTooltip,
-                  replyActionLabel: replyActionLabel,
-                  copyActionLabel: copyActionLabel,
-                  messageCopiedLabel: messageCopiedLabel,
+              : Stack(
+                  children: [
+                    ChatMessageList(
+                      messages: _messages,
+                      streaming: _streaming,
+                      thinking: _thinking,
+                      streamingReply: _streamingReply,
+                      scrollController: _scrollController,
+                      onReply: _setReply,
+                      copyCodeTooltip: copyCodeTooltip,
+                      replyActionLabel: replyActionLabel,
+                      copyActionLabel: copyActionLabel,
+                      messageCopiedLabel: messageCopiedLabel,
+                    ),
+                    _buildJumpToEndChip(),
+                  ],
                 ),
         ),
         if (_error != null)

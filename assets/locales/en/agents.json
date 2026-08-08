@@ -273,7 +273,8 @@
     "history_tooltip": "Conversation history",
     "delete_conversation": "Delete conversation",
     "stop": "Stop response",
-    "send": "Send message"
+    "send": "Send message",
+    "jump_to_last": "Latest message"
   },
   "builder_actions": {
     "saving": "Saving…",

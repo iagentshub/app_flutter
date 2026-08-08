@@ -31,10 +31,13 @@ extension _ChatStreaming on _ChatPageState {
       ];
       _streaming = true;
       _thinking = true;
-      _streamingReply = '';
       _attachedKnowledge = [];
       _replyTo = null;
     });
+    _replyBuffer.clear();
+    _streamingReply.value = '';
+    // Incondicional a propósito: el usuario acaba de escribir y espera ver su
+    // propio mensaje, mire donde mire la vista.
     scrollToEnd(_scrollController, animate: false);
 
     final history = _messages.where((m) => m.role != 'system').toList();
@@ -50,13 +53,16 @@ extension _ChatStreaming on _ChatPageState {
         .listen(
           (event) {
             if (event.type == 'token') {
-              refresh(() {
-                _streamingReply += event.token ?? '';
-                if (_streamingReply.isNotEmpty) _thinking = false;
-              });
-              scrollToEnd(_scrollController, animate: false);
+              _replyBuffer.write(event.token ?? '');
+              _streamingReply.value = _replyBuffer.toString();
+              // El único cambio de estado real del token: ocurre una vez por
+              // respuesta, no una vez por token.
+              if (_thinking && _streamingReply.value.isNotEmpty) {
+                refresh(() => _thinking = false);
+              }
+              maybeScrollToEnd(_scrollController);
             } else if (event.type == 'done') {
-              final reply = event.reply ?? _streamingReply;
+              final reply = event.reply ?? _streamingReply.value;
               refresh(() {
                 _thinking = false;
                 if (reply.isNotEmpty) {
@@ -71,9 +77,10 @@ extension _ChatStreaming on _ChatPageState {
                     ),
                   ];
                 }
-                _streamingReply = '';
               });
-              scrollToEnd(_scrollController, animate: false);
+              _replyBuffer.clear();
+              _streamingReply.value = '';
+              maybeScrollToEnd(_scrollController);
             } else if (event.type == 'error') {
               refresh(
                 () => _error = event.message ?? 'Error de respuesta del agente',

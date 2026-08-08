@@ -6,6 +6,7 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../models/agents/agent_models.dart';
 import '../../../shared/graph/graph_models.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
+import '../../../shared/widgets/buttons/overflow_menu_button.dart';
 import '../../../shared/widgets/inactive_badge.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/origin_badge.dart';
@@ -134,6 +135,66 @@ class AgentCard extends StatelessWidget {
       GraphEdge(sourceId: 'root', targetId: node.id),
   ];
 
+  /// Ocho acciones no caben en la fila de una tarjeta a ancho de móvil (328 px
+  /// en la rejilla de un teléfono de 360): el `Row` desbordaba 70 px y las
+  /// últimas —incluida eliminar— quedaban recortadas fuera y sin poder
+  /// pulsarse. Solo se quedan a la vista las tres frecuentes; el resto entra
+  /// en el menú, que siempre cabe.
+  List<OverflowMenuAction> _overflowActions() {
+    final exportar = tx('agents.export_tooltip', 'Exportar');
+    return [
+      OverflowMenuAction(
+        icon: Icons.group_add_outlined,
+        label: tx('common.share_group', 'Compartir con grupo'),
+        onSelected: onShare,
+      ),
+      OverflowMenuAction(
+        icon: Icons.history,
+        label: tx('history.dialog_title', 'Historial de versiones'),
+        onSelected: onHistory,
+      ),
+      OverflowMenuAction(
+        icon: Icons.ios_share_outlined,
+        label: '$exportar · ${tx('agents.export_openai', 'OpenAI')}',
+        onSelected: () => onExport('openai'),
+        separatedBefore: true,
+      ),
+      OverflowMenuAction(
+        icon: Icons.ios_share_outlined,
+        label: '$exportar · ${tx('agents.export_claude', 'Claude')}',
+        onSelected: () => onExport('claude'),
+      ),
+      OverflowMenuAction(
+        icon: Icons.ios_share_outlined,
+        label: '$exportar · ${tx('agents.export_github', 'GitHub Copilot')}',
+        onSelected: () => onExport('github'),
+      ),
+      OverflowMenuAction(
+        icon: Icons.ios_share_outlined,
+        label: '$exportar · ${tx('agents.export_mcp', 'Servidor MCP')}',
+        onSelected: () => onExport('mcp'),
+      ),
+      if (onToggleActive != null)
+        OverflowMenuAction(
+          icon: item.isActive
+              ? Icons.toggle_on_outlined
+              : Icons.toggle_off_outlined,
+          label: item.isActive
+              ? tx('common.deactivate', 'Desactivar')
+              : tx('common.activate', 'Activar'),
+          onSelected: onToggleActive!,
+          separatedBefore: true,
+        ),
+      OverflowMenuAction(
+        icon: Icons.delete_outline,
+        label: tx('common.delete', 'Eliminar'),
+        onSelected: onDelete,
+        danger: true,
+        separatedBefore: true,
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final subtitleParts = <String>[item.agentType];
@@ -213,33 +274,10 @@ class AgentCard extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                PopupMenuButton<String>(
-                  tooltip: tx('agents.export_tooltip', 'Exportar'),
-                  icon: const Icon(Icons.ios_share_outlined, size: 18),
-                  onSelected: onExport,
-                  itemBuilder: (context) => [
-                    PopupMenuItem(
-                      value: 'openai',
-                      child: Text(tx('agents.export_openai', 'OpenAI')),
-                    ),
-                    PopupMenuItem(
-                      value: 'claude',
-                      child: Text(tx('agents.export_claude', 'Claude')),
-                    ),
-                    PopupMenuItem(
-                      value: 'github',
-                      child: Text(tx('agents.export_github', 'GitHub Copilot')),
-                    ),
-                    PopupMenuItem(
-                      value: 'mcp',
-                      child: Text(tx('agents.export_mcp', 'Servidor MCP')),
-                    ),
-                  ],
-                ),
                 ActionIconButton(
-                  icon: Icons.group_add_outlined,
-                  tooltip: tx('common.share_group', 'Compartir con grupo'),
-                  onPressed: onShare,
+                  icon: Icons.edit_outlined,
+                  tooltip: tx('common.edit', 'Editar'),
+                  onPressed: onEdit,
                 ),
                 ResourceGraphButton(
                   tooltip: tx('agents.graph_tooltip', 'Ver grafo de contenido'),
@@ -288,31 +326,9 @@ class AgentCard extends StatelessWidget {
                     'Este agente todavía no tiene skills, knowledge, conexión ni memoria.',
                   ),
                 ),
-                ActionIconButton(
-                  icon: Icons.history,
-                  tooltip: tx('history.dialog_title', 'Historial de versiones'),
-                  onPressed: onHistory,
-                ),
-                ActionIconButton(
-                  icon: Icons.edit_outlined,
-                  tooltip: tx('common.edit', 'Editar'),
-                  onPressed: onEdit,
-                ),
-                if (onToggleActive != null)
-                  ActionIconButton(
-                    icon: item.isActive
-                        ? Icons.toggle_on_outlined
-                        : Icons.toggle_off_outlined,
-                    tooltip: item.isActive
-                        ? tx('common.deactivate', 'Desactivar')
-                        : tx('common.activate', 'Activar'),
-                    onPressed: onToggleActive,
-                  ),
-                ActionIconButton(
-                  icon: Icons.delete_outline,
-                  tooltip: tx('common.delete', 'Eliminar'),
-                  danger: true,
-                  onPressed: onDelete,
+                OverflowMenuButton(
+                  tooltip: tx('common.more_actions', 'Más acciones'),
+                  actions: _overflowActions(),
                 ),
               ],
             ),
