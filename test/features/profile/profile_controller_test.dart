@@ -9,9 +9,15 @@ import 'package:app_flutter/shared/state/session_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:image/image.dart' as img;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/memory_secure_store.dart';
+
+/// Un PNG mínimo pero decodificable, para probar el flujo real de
+/// compresión sin depender de un asset externo.
+List<int> _fakeImageBytes() =>
+    img.encodePng(img.Image(width: 4, height: 4));
 
 /// Devuelve el fallback tal cual: el controller no debe depender de que
 /// haya locales cargados para producir sus mensajes.
@@ -330,40 +336,60 @@ void main() {
     expect(controller.newPasswordController.text, isEmpty);
   });
 
-  test('uploadAvatar rechaza el archivo vacío y el que pasa de 2 MB', () async {
-    var uploads = 0;
-    final controller = await build((request) async {
-      if (request.url.path == '/api/auth/me/avatar') uploads++;
-      return bundleResponse(request);
-    });
+  test(
+    'uploadAvatar rechaza el archivo vacío y el que pasa el tope de entrada',
+    () async {
+      var uploads = 0;
+      final controller = await build((request) async {
+        if (request.url.path == '/api/auth/me/avatar') uploads++;
+        return bundleResponse(request);
+      });
+      await controller.load();
+
+      final empty = await controller.uploadAvatar(
+        fileName: 'foto.png',
+        fileBytes: const [],
+      );
+      expect(empty?.isError, isTrue);
+      expect(empty?.message, 'No se pudo actualizar la foto');
+
+      final huge = await controller.uploadAvatar(
+        fileName: 'foto.png',
+        fileBytes: List<int>.filled(
+          ProfileController.maxAvatarInputBytes + 1,
+          0,
+        ),
+      );
+      expect(huge?.isError, isTrue);
+      expect(huge?.message, 'La imagen original es demasiado grande');
+
+      expect(uploads, 0);
+      expect(controller.uploadingAvatar, isFalse);
+    },
+  );
+
+  test('uploadAvatar rechaza bytes que no son una imagen decodificable', () async {
+    final controller = await build((request) async => bundleResponse(request));
     await controller.load();
 
-    final empty = await controller.uploadAvatar(
+    final result = await controller.uploadAvatar(
       fileName: 'foto.png',
-      fileBytes: const [],
+      fileBytes: const [1, 2, 3],
     );
-    expect(empty?.isError, isTrue);
-    expect(empty?.message, 'No se pudo actualizar la foto');
 
-    final huge = await controller.uploadAvatar(
-      fileName: 'foto.png',
-      fileBytes: List<int>.filled(ProfileController.maxAvatarBytes + 1, 0),
-    );
-    expect(huge?.isError, isTrue);
-    expect(huge?.message, 'La imagen no puede superar 2 MB');
-
-    expect(uploads, 0);
+    expect(result?.isError, isTrue);
+    expect(result?.message, 'No se pudo actualizar la foto');
     expect(controller.uploadingAvatar, isFalse);
   });
 
-  test('uploadAvatar rompe la caché de la imagen al terminar', () async {
+  test('uploadAvatar comprime la imagen y rompe la caché al terminar', () async {
     final controller = await build((request) async => bundleResponse(request));
     await controller.load();
     final before = controller.avatarUrl;
 
     final result = await controller.uploadAvatar(
       fileName: 'foto.png',
-      fileBytes: const [1, 2, 3],
+      fileBytes: _fakeImageBytes(),
     );
 
     expect(result?.isError, isFalse);
