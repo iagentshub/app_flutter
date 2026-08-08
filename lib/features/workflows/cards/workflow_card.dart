@@ -143,6 +143,14 @@ class WorkflowCard extends StatelessWidget {
           type: 'connection',
         );
         addEdge(id, childId);
+      } else if (agent.llmOrchestrationId.isNotEmpty) {
+        final childId = 'llm-orchestration:${agent.llmOrchestrationId}';
+        nodesById[childId] = GraphNode(
+          id: childId,
+          label: agent.llmOrchestrationId,
+          type: 'connection',
+        );
+        addEdge(id, childId);
       }
       for (final skill in agent.skills) {
         final childId = 'skill:$skill';

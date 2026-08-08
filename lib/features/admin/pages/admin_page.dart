@@ -121,6 +121,7 @@ class _AdminPageState extends State<AdminPage>
   String _knowledgeType = '';
   String _knowledgeOwner = '';
   String _workflowOwner = '';
+  String _llmOrchestrationOwner = '';
   String _skillOwner = '';
   String _memoryOwner = '';
   String _promptOwner = '';
@@ -133,6 +134,7 @@ class _AdminPageState extends State<AdminPage>
   List<Map<String, dynamic>> _connections = const [];
   List<Map<String, dynamic>> _knowledge = const [];
   List<Map<String, dynamic>> _workflows = const [];
+  List<Map<String, dynamic>> _llmOrchestrations = const [];
   List<Map<String, dynamic>> _skills = const [];
   List<Map<String, dynamic>> _memories = const [];
   List<Map<String, dynamic>> _prompts = const [];
@@ -240,6 +242,7 @@ class _AdminPageState extends State<AdminPage>
         _connections = ofType(AdminResourceType.connection);
         _knowledge = ofType(AdminResourceType.knowledge);
         _workflows = ofType(AdminResourceType.workflow);
+        _llmOrchestrations = ofType(AdminResourceType.llmOrchestration);
         _skills = ofType(AdminResourceType.skill);
         _memories = ofType(AdminResourceType.memory);
         _prompts = ofType(AdminResourceType.prompt);

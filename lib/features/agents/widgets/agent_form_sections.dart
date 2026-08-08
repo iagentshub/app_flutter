@@ -77,7 +77,11 @@ extension _AgentFormSections on _AgentFormDialogState {
                   child: LinearProgressIndicator(minHeight: 2),
                 )
               : DropdownButtonFormField<String>(
-                  initialValue: _connectionId,
+                  initialValue: _connectionId != null
+                      ? 'connection:${_connectionId!}'
+                      : _llmOrchestrationId != null
+                      ? 'orchestration:${_llmOrchestrationId!}'
+                      : null,
                   isExpanded: true,
                   decoration: InputDecoration(
                     labelText: widget.tx(
@@ -94,15 +98,37 @@ extension _AgentFormSections on _AgentFormDialogState {
                     ),
                     ..._connections.map(
                       (conn) => DropdownMenuItem<String>(
-                        value: conn.id,
+                        value: 'connection:${conn.id}',
                         child: Text(
                           '${conn.name} (${conn.type})',
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ),
+                    ..._llmOrchestrations.map(
+                      (item) => DropdownMenuItem<String>(
+                        value: 'orchestration:${item.id}',
+                        child: Text(
+                          '${item.name} (${item.mode == 'balanced' ? widget.tx('llm_orchestrations.balanced', 'Balanceo') : widget.tx('llm_orchestrations.stack', 'Pila')})',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
                   ],
-                  onChanged: (value) => refresh(() => _connectionId = value),
+                  onChanged: (value) => refresh(() {
+                    if (value?.startsWith('connection:') == true) {
+                      _connectionId = value!.substring('connection:'.length);
+                      _llmOrchestrationId = null;
+                    } else if (value?.startsWith('orchestration:') == true) {
+                      _llmOrchestrationId = value!.substring(
+                        'orchestration:'.length,
+                      );
+                      _connectionId = null;
+                    } else {
+                      _connectionId = null;
+                      _llmOrchestrationId = null;
+                    }
+                  }),
                 ),
           const SizedBox(height: 20),
           Text(
@@ -157,9 +183,8 @@ extension _AgentFormSections on _AgentFormDialogState {
                             'agents.pick_existing',
                             'Elegir existente',
                           ),
-                          onSelected: (value) => refresh(
-                            () => _memoryFileController.text = value,
-                          ),
+                          onSelected: (value) =>
+                              refresh(() => _memoryFileController.text = value),
                           itemBuilder: (context) => _memoryFiles
                               .map(
                                 (file) => PopupMenuItem<String>(

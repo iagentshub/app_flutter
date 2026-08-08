@@ -1,6 +1,63 @@
 part of '../pages/admin_page.dart';
 
 extension _AdminContentCards on _AdminPageState {
+  Widget _buildAdminLlmOrchestrationCard(Map<String, dynamic> item) {
+    final name = (item['name'] ?? item['id'] ?? '').toString();
+    final owner = _ownerOf(item);
+    final mode = (item['mode'] ?? 'stack').toString();
+    final candidates = _asInt(item['candidate_count']);
+    final date = _fmtDate(item['updated_at']);
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              name,
+              style: const TextStyle(
+                fontSize: FncFonts.size16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${owner.isEmpty ? '—' : owner} · $date',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              children: [
+                _resourceTypeBadge(AdminResourceType.llmOrchestration),
+                _badge(
+                  mode == 'balanced'
+                      ? _tx('llm_orchestrations.balanced', 'Balanceo')
+                      : _tx('llm_orchestrations.stack', 'Pila'),
+                  FncColors.purple,
+                ),
+                _badge('$candidates APIs', FncColors.info),
+              ],
+            ),
+            Row(
+              children: [
+                const Spacer(),
+                _resourceGraphAction(AdminResourceType.llmOrchestration, item),
+                ActionIconButton(
+                  icon: Icons.delete_outline,
+                  tooltip: _tx('common.delete', 'Eliminar'),
+                  danger: true,
+                  onPressed: () => _deleteLlmOrchestration(item),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildAdminKnowledgeCard(Map<String, dynamic> item) {
     final title = (item['title'] ?? item['id'] ?? '').toString();
     final type = (item['type'] ?? '').toString();

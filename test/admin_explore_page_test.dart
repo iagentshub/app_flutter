@@ -98,8 +98,16 @@ void main() {
               'owner_username': 'admin',
               'steps': 2,
             },
+            {
+              'resource_type': 'llm_orchestration',
+              'id': 'llm-route-1',
+              'name': 'Private LLM route',
+              'owner_username': 'admin',
+              'mode': 'balanced',
+              'candidate_count': 3,
+            },
           ],
-          'total': 6,
+          'total': 7,
           'counts': {
             'user': 1,
             'group': 1,
@@ -107,6 +115,7 @@ void main() {
             'connection': 1,
             'knowledge': 1,
             'workflow': 1,
+            'llm_orchestration': 1,
           },
         });
       }
@@ -149,13 +158,16 @@ void main() {
     await tester.tap(find.text('Explorar'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Todos (6)'), findsOneWidget);
+    expect(find.text('Todos (7)'), findsOneWidget);
     expect(find.text('Researcher'), findsOneWidget);
     expect(find.text('Platform team'), findsOneWidget);
     expect(find.text('OpenAI'), findsWidgets);
     expect(find.text('Product guide'), findsOneWidget);
     expect(find.text('Release workflow'), findsOneWidget);
-    expect(find.byIcon(Icons.hub_outlined), findsNWidgets(6));
+    expect(find.text('Private LLM route'), findsOneWidget);
+    expect(find.text('Balanceo'), findsOneWidget);
+    expect(find.text('3 APIs'), findsOneWidget);
+    expect(find.byIcon(Icons.hub_outlined), findsNWidgets(7));
 
     // Abre el desplegable de tipo, marca solo "Agente" y cierra el menú.
     await tester.tap(find.byKey(const Key('exploreTypeDropdown')));
@@ -177,7 +189,7 @@ void main() {
     // Reabre el desplegable y marca "Todos" para volver a ver todo.
     await tester.tap(find.byKey(const Key('exploreTypeDropdown')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Todos (6)').last);
+    await tester.tap(find.text('Todos (7)').last);
     await tester.pumpAndSettle();
     await tester.tapAt(const Offset(10, 10));
     await tester.pumpAndSettle();

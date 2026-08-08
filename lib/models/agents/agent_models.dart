@@ -7,6 +7,7 @@ class AgentItem extends ResourceItem {
   String get model => raw['model'] as String? ?? '';
   String get systemPrompt => raw['system_prompt'] as String? ?? '';
   String get connectionId => raw['connection_id'] as String? ?? '';
+  String get llmOrchestrationId => raw['llm_orchestration_id'] as String? ?? '';
   bool get useMemory => raw['use_memory'] == true;
   String get memoryFile => raw['memory_file'] as String? ?? '';
   int get tokensIn => (raw['tokens_in'] as num?)?.toInt() ?? 0;

@@ -12,6 +12,10 @@ extension _AdminExploreTab on _AdminPageState {
         'Conocimiento',
       ),
       AdminResourceType.workflow => _tx('admin.type_workflow', 'Orquestación'),
+      AdminResourceType.llmOrchestration => _tx(
+        'admin.type_llm_orchestration',
+        'Orquestación LLM',
+      ),
       AdminResourceType.skill => _tx('admin.type_skill', 'Skill'),
       AdminResourceType.memory => _tx('admin.type_memory', 'Memoria'),
       AdminResourceType.prompt => _tx('admin.type_prompt', 'Prompt'),
@@ -28,6 +32,7 @@ extension _AdminExploreTab on _AdminPageState {
       AdminResourceType.connection => FncColors.info,
       AdminResourceType.knowledge => FncColors.success,
       AdminResourceType.workflow => FncColors.labelDevelopment,
+      AdminResourceType.llmOrchestration => FncColors.purple,
       AdminResourceType.skill => FncColors.labelSkill,
       AdminResourceType.memory => FncColors.labelMemory,
       AdminResourceType.prompt => FncColors.lime600,
@@ -57,6 +62,14 @@ extension _AdminExploreTab on _AdminPageState {
           .map((item) => (item['id'] ?? '').toString())
           .toSet(),
       AdminResourceType.workflow: _filteredWorkflows
+          .map((item) => (item['id'] ?? '').toString())
+          .toSet(),
+      AdminResourceType.llmOrchestration: _llmOrchestrations
+          .where(
+            (item) =>
+                _llmOrchestrationOwner.isEmpty ||
+                _ownerOf(item) == _llmOrchestrationOwner,
+          )
           .map((item) => (item['id'] ?? '').toString())
           .toSet(),
       AdminResourceType.skill: _filteredSkills
@@ -94,6 +107,8 @@ extension _AdminExploreTab on _AdminPageState {
         (_knowledgeType.isNotEmpty ? 1 : 0) +
             (_knowledgeOwner.isNotEmpty ? 1 : 0),
       AdminResourceType.workflow => _workflowOwner.isNotEmpty ? 1 : 0,
+      AdminResourceType.llmOrchestration =>
+        _llmOrchestrationOwner.isNotEmpty ? 1 : 0,
       AdminResourceType.skill => _skillOwner.isNotEmpty ? 1 : 0,
       AdminResourceType.memory => _memoryOwner.isNotEmpty ? 1 : 0,
       AdminResourceType.prompt => _promptOwner.isNotEmpty ? 1 : 0,
@@ -126,6 +141,12 @@ extension _AdminExploreTab on _AdminPageState {
           owners: _ownersOf(_workflows),
           currentOwner: _workflowOwner,
           onChanged: (value) => refresh(() => _workflowOwner = value),
+        );
+      case AdminResourceType.llmOrchestration:
+        _openOwnerFilterDialog(
+          owners: _ownersOf(_llmOrchestrations),
+          currentOwner: _llmOrchestrationOwner,
+          onChanged: (value) => refresh(() => _llmOrchestrationOwner = value),
         );
       case AdminResourceType.skill:
         _openOwnerFilterDialog(
@@ -322,6 +343,7 @@ extension _AdminExploreTab on _AdminPageState {
       AdminResourceType.connection => Icons.cable_outlined,
       AdminResourceType.knowledge => Icons.menu_book_outlined,
       AdminResourceType.workflow => Icons.account_tree_outlined,
+      AdminResourceType.llmOrchestration => Icons.hub_outlined,
       AdminResourceType.skill => Icons.bolt_outlined,
       AdminResourceType.memory => Icons.description_outlined,
       AdminResourceType.prompt => Icons.chat_bubble_outline,
@@ -337,6 +359,9 @@ extension _AdminExploreTab on _AdminPageState {
       AdminResourceType.connection => _buildAdminConnectionCard(item.data),
       AdminResourceType.knowledge => _buildAdminKnowledgeCard(item.data),
       AdminResourceType.workflow => _buildAdminWorkflowCard(item.data),
+      AdminResourceType.llmOrchestration => _buildAdminLlmOrchestrationCard(
+        item.data,
+      ),
       AdminResourceType.skill => _buildAdminSkillCard(item.data),
       AdminResourceType.memory => _buildAdminMemoryCard(item.data),
       AdminResourceType.prompt => _buildAdminPromptCard(item.data),
@@ -363,7 +388,11 @@ extension _AdminExploreTab on _AdminPageState {
     final resourceId = (item['id'] ?? '').toString();
     if (token == null || resourceId.isEmpty) return;
     try {
-      final graph = await _resourcesRepository.getResourceGraph(token, type, resourceId);
+      final graph = await _resourcesRepository.getResourceGraph(
+        token,
+        type,
+        resourceId,
+      );
       if (!mounted) return;
       await showResourceGraphDialog(
         context: context,

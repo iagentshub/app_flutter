@@ -74,23 +74,31 @@ class AgentsRepository extends ApiRepository {
   /// Conexión que este usuario prefiere para este agente (p. ej. un agente
   /// compartido cuya conexión por defecto no le pertenece), o `null` si usa
   /// la conexión predeterminada del agente.
-  Future<String?> getPreferredConnection(String token, String agentId) async {
+  Future<({String? connectionId, String? llmOrchestrationId})>
+  getPreferredTarget(String token, String agentId) async {
     final response = await apiClient.get(
       '/api/agents/${Uri.encodeComponent(agentId)}/preferences',
       gaToken: token,
     );
-    return response.json['connection_id'] as String?;
+    return (
+      connectionId: response.json['connection_id'] as String?,
+      llmOrchestrationId: response.json['llm_orchestration_id'] as String?,
+    );
   }
 
-  Future<void> setPreferredConnection(
+  Future<void> setPreferredTarget(
     String token,
     String agentId,
     String? connectionId,
+    String? llmOrchestrationId,
   ) async {
     await apiClient.put(
       '/api/agents/${Uri.encodeComponent(agentId)}/preferences',
       gaToken: token,
-      body: {'connection_id': connectionId},
+      body: {
+        'connection_id': connectionId,
+        'llm_orchestration_id': llmOrchestrationId,
+      },
     );
   }
 }
