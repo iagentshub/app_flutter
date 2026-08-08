@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/memory/memory_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
-import '../../../shared/state/locale_controller.dart';
-import '../../../shared/state/session_controller.dart';
+import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
@@ -19,22 +17,17 @@ import '../repositories/memory_repository.dart';
 part '../dialogs/memory_editor_dialog.dart';
 
 class MemoryPage extends StatefulWidget {
-  const MemoryPage({
-    required this.apiClient,
-    required this.sessionController,
-    required this.localeController,
-    super.key,
-  });
-
-  final ApiClient apiClient;
-  final SessionController sessionController;
-  final LocaleController localeController;
+  const MemoryPage({super.key});
 
   @override
   State<MemoryPage> createState() => _MemoryPageState();
 }
 
 class _MemoryPageState extends State<MemoryPage> with StateMessaging {
+  /// Servicios globales (cliente HTTP, sesión, idioma): los aporta el
+  /// AppServicesScope montado en App, no el router.
+  late final _services = AppServicesScope.of(context);
+
   late final MemoryRepository _repository;
   late final TranslatedTexts _t;
   List<MemoryFileItem> _files = const [];
@@ -46,9 +39,9 @@ class _MemoryPageState extends State<MemoryPage> with StateMessaging {
   @override
   void initState() {
     super.initState();
-    _repository = MemoryRepository(apiClient: widget.apiClient);
+    _repository = MemoryRepository(apiClient: _services.apiClient);
     _t = TranslatedTexts(
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       namespace: 'resources',
     )..addListener(_onTextsChanged);
     _load();
@@ -65,7 +58,7 @@ class _MemoryPageState extends State<MemoryPage> with StateMessaging {
     super.dispose();
   }
 
-  String? get _token => widget.sessionController.gaToken;
+  String? get _token => _services.sessionController.gaToken;
 
   Future<void> _load() async {
     final token = _token;
@@ -199,7 +192,6 @@ class _MemoryPageState extends State<MemoryPage> with StateMessaging {
       );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {

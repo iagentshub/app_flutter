@@ -5,13 +5,11 @@ import 'package:flutter/material.dart';
 import '../../../app/router/router.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
-import '../../../core/network/api_client.dart';
 import '../../../models/explore/explore_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/action_result.dart';
-import '../../../shared/state/locale_controller.dart';
-import '../../../shared/state/session_controller.dart';
+import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
@@ -31,16 +29,7 @@ part '../dialogs/preview_dialog.dart';
 part '../widgets/explore_collection_views.dart';
 
 class ExplorePage extends StatefulWidget {
-  const ExplorePage({
-    required this.apiClient,
-    required this.sessionController,
-    required this.localeController,
-    super.key,
-  });
-
-  final ApiClient apiClient;
-  final SessionController sessionController;
-  final LocaleController localeController;
+  const ExplorePage({super.key});
 
   @override
   State<ExplorePage> createState() => _ExplorePageState();
@@ -48,6 +37,10 @@ class ExplorePage extends StatefulWidget {
 
 class _ExplorePageState extends State<ExplorePage>
     with SingleTickerProviderStateMixin, StateMessaging {
+  /// Servicios globales (cliente HTTP, sesión, idioma): los aporta el
+  /// AppServicesScope montado en App, no el router.
+  late final _services = AppServicesScope.of(context);
+
   late final ExploreController _controller;
   late final TranslatedTexts _t;
   late final TabController _tabController;
@@ -58,13 +51,13 @@ class _ExplorePageState extends State<ExplorePage>
   void initState() {
     super.initState();
     _t = TranslatedTexts(
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       namespace: 'resources',
     )..addListener(_onTextsChanged);
     _controller = ExploreController(
-      repository: ExploreRepository(apiClient: widget.apiClient),
-      managerRepository: ManagerRepository(apiClient: widget.apiClient),
-      sessionController: widget.sessionController,
+      repository: ExploreRepository(apiClient: _services.apiClient),
+      managerRepository: ManagerRepository(apiClient: _services.apiClient),
+      sessionController: _services.sessionController,
       tx: _tx,
     )..addListener(_onControllerChanged);
     _tabController = TabController(length: 2, vsync: this);
@@ -90,7 +83,7 @@ class _ExplorePageState extends State<ExplorePage>
     super.dispose();
   }
 
-  String? get _token => widget.sessionController.gaToken;
+  String? get _token => _services.sessionController.gaToken;
 
   /// Ejecuta una acción del controller y muestra su mensaje, si lo hay.
   Future<void> _runAction(Future<ActionResult?> action) async {

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
-import '../../../core/network/api_client.dart';
 import '../../../models/agents/agent_models.dart';
 import '../../../models/prompts/prompt_models.dart';
 import '../../../models/skills/skill_models.dart';
@@ -10,8 +9,7 @@ import '../../../models/tools/tool_models.dart';
 import '../../../models/workflows/workflow_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/labels/label_catalog.dart';
-import '../../../shared/state/locale_controller.dart';
-import '../../../shared/state/session_controller.dart';
+import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
@@ -28,16 +26,7 @@ import '../dialogs/labels_filter_dialog.dart';
 import '../models/labeled_item.dart';
 
 class LabelsPage extends StatefulWidget {
-  const LabelsPage({
-    required this.apiClient,
-    required this.sessionController,
-    required this.localeController,
-    super.key,
-  });
-
-  final ApiClient apiClient;
-  final SessionController sessionController;
-  final LocaleController localeController;
+  const LabelsPage({super.key});
 
   @override
   State<LabelsPage> createState() => _LabelsPageState();
@@ -45,6 +34,10 @@ class LabelsPage extends StatefulWidget {
 
 class _LabelsPageState extends State<LabelsPage>
     with SingleTickerProviderStateMixin, StateMessaging {
+  /// Servicios globales (cliente HTTP, sesión, idioma): los aporta el
+  /// AppServicesScope montado en App, no el router.
+  late final _services = AppServicesScope.of(context);
+
   late final AgentsRepository _agentsRepository;
   late final SkillsRepository _skillsRepository;
   late final PromptsRepository _promptsRepository;
@@ -64,14 +57,14 @@ class _LabelsPageState extends State<LabelsPage>
   @override
   void initState() {
     super.initState();
-    _agentsRepository = AgentsRepository(apiClient: widget.apiClient);
-    _skillsRepository = SkillsRepository(apiClient: widget.apiClient);
-    _promptsRepository = PromptsRepository(apiClient: widget.apiClient);
-    _toolsRepository = ToolsRepository(apiClient: widget.apiClient);
-    _workflowsRepository = WorkflowsRepository(apiClient: widget.apiClient);
+    _agentsRepository = AgentsRepository(apiClient: _services.apiClient);
+    _skillsRepository = SkillsRepository(apiClient: _services.apiClient);
+    _promptsRepository = PromptsRepository(apiClient: _services.apiClient);
+    _toolsRepository = ToolsRepository(apiClient: _services.apiClient);
+    _workflowsRepository = WorkflowsRepository(apiClient: _services.apiClient);
     _tabController = TabController(length: 2, vsync: this);
     _t = TranslatedTexts(
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       namespace: 'resources',
     )..addListener(_onTextsChanged);
     _loadBase();
@@ -89,7 +82,7 @@ class _LabelsPageState extends State<LabelsPage>
     super.dispose();
   }
 
-  String? get _token => widget.sessionController.gaToken;
+  String? get _token => _services.sessionController.gaToken;
 
   Future<void> _loadBase() async {
     final token = _token;
@@ -188,7 +181,6 @@ class _LabelsPageState extends State<LabelsPage>
       () => _selectedOwnership = _selectedOwnership == value ? '' : value,
     );
   }
-
 
   String _itemTypeLabel(String type) {
     switch (type) {

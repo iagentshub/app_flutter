@@ -39,7 +39,8 @@ class AdminStats {
   double? get memoryUsedGb => (raw['memory_used_gb'] as num?)?.toDouble();
   double? get memoryTotalGb => (raw['memory_total_gb'] as num?)?.toDouble();
   double? get cpuLoadPct => (raw['cpu_load_pct'] as num?)?.toDouble();
-  int? get cpuCores => raw['cpu_cores'] == null ? null : _asInt(raw['cpu_cores']);
+  int? get cpuCores =>
+      raw['cpu_cores'] == null ? null : _asInt(raw['cpu_cores']);
 }
 
 /// KPIs del dashboard de Admin (`/api/admin/stats`) y el listado paginado de

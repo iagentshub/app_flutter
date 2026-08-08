@@ -22,7 +22,9 @@ String _tx(String path, String fallback) => fallback;
 Widget _host(Widget child) {
   return MaterialApp(
     home: Scaffold(
-      body: Center(child: SizedBox(width: _mobileCardWidth, child: child)),
+      body: Center(
+        child: SizedBox(width: _mobileCardWidth, child: child),
+      ),
     ),
   );
 }

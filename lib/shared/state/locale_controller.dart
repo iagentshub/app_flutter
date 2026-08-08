@@ -61,8 +61,6 @@ class LocaleController extends ChangeNotifier {
   static String _normalize(String? raw) {
     if (raw == null || raw.isEmpty) return fallbackLanguageCode;
     final code = raw.toLowerCase().split(RegExp('[_-]')).first;
-    return supportedLanguageCodes.contains(code)
-        ? code
-        : fallbackLanguageCode;
+    return supportedLanguageCodes.contains(code) ? code : fallbackLanguageCode;
   }
 }

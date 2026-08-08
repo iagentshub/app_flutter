@@ -2,7 +2,9 @@ part of '../pages/knowledge_page.dart';
 
 /// Regex del backend para el alias invocable (`app/api/routes/prompts.py`):
 /// minúsculas/dígitos, `-`/`_` en el medio, 3-30 caracteres en total.
-final RegExp _promptAliasPattern = RegExp(r'^[a-z0-9][a-z0-9_-]{1,28}[a-z0-9]$');
+final RegExp _promptAliasPattern = RegExp(
+  r'^[a-z0-9][a-z0-9_-]{1,28}[a-z0-9]$',
+);
 
 class _PromptFormDialog extends StatefulWidget {
   const _PromptFormDialog({

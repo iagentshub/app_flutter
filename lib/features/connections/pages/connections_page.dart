@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
-import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/connections/connection_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
-import '../../../shared/state/locale_controller.dart';
-import '../../../shared/state/session_controller.dart';
+import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/utils/debouncer.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
@@ -26,16 +24,7 @@ part '../dialogs/connection_form_dialog.dart';
 part '../widgets/connections_page_view.dart';
 
 class ConnectionsPage extends StatefulWidget {
-  const ConnectionsPage({
-    required this.apiClient,
-    required this.sessionController,
-    required this.localeController,
-    super.key,
-  });
-
-  final ApiClient apiClient;
-  final SessionController sessionController;
-  final LocaleController localeController;
+  const ConnectionsPage({super.key});
 
   @override
   State<ConnectionsPage> createState() => _ConnectionsPageState();
@@ -43,6 +32,10 @@ class ConnectionsPage extends StatefulWidget {
 
 class _ConnectionsPageState extends State<ConnectionsPage>
     with SingleTickerProviderStateMixin, StateMessaging {
+  /// Servicios globales (cliente HTTP, sesión, idioma): los aporta el
+  /// AppServicesScope montado en App, no el router.
+  late final _services = AppServicesScope.of(context);
+
   late final ConnectionsRepository _repository;
   late final TranslatedTexts _t;
   late final TabController _tabController;
@@ -147,11 +140,11 @@ class _ConnectionsPageState extends State<ConnectionsPage>
   @override
   void initState() {
     super.initState();
-    _repository = ConnectionsRepository(apiClient: widget.apiClient);
+    _repository = ConnectionsRepository(apiClient: _services.apiClient);
     _tabController = TabController(length: _categoryIds.length, vsync: this)
       ..addListener(_onTabChanged);
     _t = TranslatedTexts(
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       namespace: 'resources',
     )..addListener(_onTextsChanged);
     _load();
@@ -182,7 +175,7 @@ class _ConnectionsPageState extends State<ConnectionsPage>
     super.dispose();
   }
 
-  String? get _token => widget.sessionController.gaToken;
+  String? get _token => _services.sessionController.gaToken;
 
   Future<void> _load() async {
     final token = _token;
@@ -243,11 +236,11 @@ class _ConnectionsPageState extends State<ConnectionsPage>
     if (token == null || token.isEmpty) return;
     await showShareToGroupDialog(
       context: context,
-      apiClient: widget.apiClient,
+      apiClient: _services.apiClient,
       token: token,
       resourceType: 'connection',
       resourceId: item.id,
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       onShared: _load,
     );
   }

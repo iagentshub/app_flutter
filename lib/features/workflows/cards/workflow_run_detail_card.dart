@@ -311,9 +311,7 @@ class WorkflowRunDetailCard extends StatelessWidget {
       // ExpansionTile no encuentra dónde pintar su ink.
       type: MaterialType.transparency,
       child: Theme(
-        data: Theme.of(
-          context,
-        ).copyWith(dividerColor: FncColors.transparent),
+        data: Theme.of(context).copyWith(dividerColor: FncColors.transparent),
         child: ExpansionTile(
           tilePadding: EdgeInsets.zero,
           childrenPadding: const EdgeInsets.only(bottom: 4),

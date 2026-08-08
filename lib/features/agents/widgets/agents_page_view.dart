@@ -58,11 +58,11 @@ extension _AgentsPageView on _AgentsPageState {
                   AppIconButton.outlined(
                     onPressed: () => showGroupFilterDialog(
                       context,
-                      apiClient: widget.apiClient,
+                      apiClient: _services.apiClient,
                       token: _token ?? '',
                       activeGroupId: _activeGroupId,
                       onSelect: _onGroupSelect,
-                      localeController: widget.localeController,
+                      localeController: _services.localeController,
                     ),
                     icon: const Icon(Icons.groups_outlined),
                     tooltip: _tx('groups.toggle_tooltip', 'Grupos'),

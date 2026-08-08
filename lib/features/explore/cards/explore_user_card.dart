@@ -30,7 +30,7 @@ extension _ExploreUserCard on _ExplorePageState {
                         ? _userAvatarFallback(initial)
                         : Image(
                             image: ResizeImage(
-                              widget.apiClient.authenticatedImage(
+                              _services.apiClient.authenticatedImage(
                                 avatarPath,
                                 gaToken: token,
                               ),

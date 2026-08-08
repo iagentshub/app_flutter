@@ -1,0 +1,87 @@
+import 'api_repository.dart';
+
+/// Repositorio de un recurso con scope: `/api/<recurso>/<scope>/<id>`.
+///
+/// `skills_repository.dart` y `prompts_repository.dart` eran literalmente el
+/// mismo fichero salvo por la palabra «skill»/«prompt», y
+/// `tools_repository.dart` solo añadía la subida y descarga del binario. Cada
+/// cambio en el contrato —añadir `include_inactive`, cambiar la codificación
+/// del `group_id`, meter paginación— había que aplicarlo tres veces, y ya
+/// había divergencia: `agents_repository` codificaba el `group_id` con
+/// `Uri.encodeComponent` mientras los otros tres usaban
+/// `Uri.encodeQueryComponent`.
+///
+/// Construir la consulta con `Uri(queryParameters:)` zanja además esa
+/// diferencia: el codificado lo decide `Uri`, no cada repositorio.
+class ScopedResourceRepository<T> extends ApiRepository {
+  const ScopedResourceRepository({
+    required super.apiClient,
+    required this.basePath,
+    required this.parse,
+  });
+
+  /// Nombre del recurso en la API: `'skills'`, `'prompts'`, `'tools'`.
+  final String basePath;
+
+  /// Convierte cada elemento del listado en su modelo.
+  final T Function(Map<String, dynamic>) parse;
+
+  String _path([String? scope, String? id]) => [
+    '/api/$basePath',
+    if (scope != null) Uri.encodeComponent(scope),
+    if (id != null) Uri.encodeComponent(id),
+  ].join('/');
+
+  Future<List<T>> list(
+    String token, {
+    String scope = 'all',
+    String? groupId,
+    bool includeInactive = false,
+  }) async {
+    final uri = Uri(
+      path: '/api/$basePath',
+      queryParameters: {
+        'scope': scope,
+        if (groupId != null && groupId.isNotEmpty) 'group_id': groupId,
+        if (includeInactive) 'include_inactive': 'true',
+      },
+    );
+    final response = await apiClient.get(
+      uri.toString(),
+      gaToken: token,
+      cache: true,
+    );
+    final payload = response.body;
+    if (payload is! List) return const [];
+    return payload.whereType<Map<String, dynamic>>().map(parse).toList();
+  }
+
+  Future<Map<String, dynamic>> get(
+    String token,
+    String scope,
+    String id,
+  ) async {
+    final response = await apiClient.get(_path(scope, id), gaToken: token);
+    return response.json;
+  }
+
+  Future<Map<String, dynamic>> save(
+    String token,
+    String scope,
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await apiClient.post(
+      _path(scope),
+      gaToken: token,
+      body: payload,
+    );
+    return response.json;
+  }
+
+  Future<void> remove(String token, String scope, String id) async {
+    await apiClient.delete(_path(scope, id), gaToken: token);
+  }
+
+  Future<void> setResourceActive(String token, String id, bool active) =>
+      setActive(token, basePath, id, active);
+}

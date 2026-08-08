@@ -1,7 +1,7 @@
 part of '../pages/knowledge_page.dart';
 
 extension _KnowledgeActions on _KnowledgePageState {
-  String? get _token => widget.sessionController.gaToken;
+  String? get _token => _services.sessionController.gaToken;
 
   Future<void> _loadSkills() async {
     final token = _token;
@@ -43,7 +43,7 @@ extension _KnowledgeActions on _KnowledgePageState {
   }
 
   Future<void> _openCreateSkillDialog() async {
-    final allowPublic = widget.sessionController.user?.role != 'guest';
+    final allowPublic = _services.sessionController.user?.role != 'guest';
     final payload = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => _SkillFormDialog(tx: _tx, allowPublic: allowPublic),
@@ -133,9 +133,9 @@ extension _KnowledgeActions on _KnowledgePageState {
     final created = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (context) => SkillBuilderPage(
-          apiClient: widget.apiClient,
-          sessionController: widget.sessionController,
-          localeController: widget.localeController,
+          apiClient: _services.apiClient,
+          sessionController: _services.sessionController,
+          localeController: _services.localeController,
           onReviewDraft: _reviewAndSaveSkillDraft,
         ),
       ),
@@ -145,7 +145,7 @@ extension _KnowledgeActions on _KnowledgePageState {
 
   Future<bool> _reviewAndSaveSkillDraft(Map<String, dynamic> draft) async {
     if (!mounted) return false;
-    final allowPublic = widget.sessionController.user?.role != 'guest';
+    final allowPublic = _services.sessionController.user?.role != 'guest';
     final initial = <String, dynamic>{...draft, 'scope': 'private'};
     final payload = await showDialog<Map<String, dynamic>>(
       context: context,
@@ -179,7 +179,7 @@ extension _KnowledgeActions on _KnowledgePageState {
     } catch (_) {}
 
     if (!mounted) return;
-    final allowPublic = widget.sessionController.user?.role != 'guest';
+    final allowPublic = _services.sessionController.user?.role != 'guest';
     final payload = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) =>
@@ -490,11 +490,11 @@ extension _KnowledgeActions on _KnowledgePageState {
     if (token == null || token.isEmpty) return;
     await showShareToGroupDialog(
       context: context,
-      apiClient: widget.apiClient,
+      apiClient: _services.apiClient,
       token: token,
       resourceType: 'knowledge',
       resourceId: item.id,
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       onShared: _load,
     );
   }
@@ -504,11 +504,11 @@ extension _KnowledgeActions on _KnowledgePageState {
     if (token == null || token.isEmpty) return;
     await showShareToGroupDialog(
       context: context,
-      apiClient: widget.apiClient,
+      apiClient: _services.apiClient,
       token: token,
       resourceType: 'skill',
       resourceId: item.id,
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       onShared: _loadSkills,
     );
   }
@@ -518,11 +518,11 @@ extension _KnowledgeActions on _KnowledgePageState {
     if (token == null || token.isEmpty) return;
     await showResourceHistoryDialog(
       context: context,
-      apiClient: widget.apiClient,
+      apiClient: _services.apiClient,
       token: token,
       resourceType: 'skill',
       resourceId: item.id,
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       onRestored: _loadSkills,
     );
   }

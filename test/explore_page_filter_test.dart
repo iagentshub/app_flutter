@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:app_flutter/core/network/api_client.dart';
 import 'package:app_flutter/features/explore/pages/explore_page.dart';
 import 'package:app_flutter/models/auth/session_user.dart';
+import 'package:app_flutter/shared/state/app_services_scope.dart';
 import 'package:app_flutter/shared/state/backend_controller.dart';
 import 'package:app_flutter/shared/state/locale_controller.dart';
 import 'package:app_flutter/shared/state/session_controller.dart';
@@ -49,10 +50,11 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: ExplorePage(
+          body: AppServicesScope(
             apiClient: ApiClient(backend, client: client),
             sessionController: session,
             localeController: locale,
+            child: const ExplorePage(),
           ),
         ),
       ),

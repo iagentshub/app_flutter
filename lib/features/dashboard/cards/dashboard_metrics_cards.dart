@@ -68,7 +68,8 @@ class _SummaryBody extends StatelessWidget {
           value: counts[item] ?? 0,
           icon: icons[item] ?? Icons.circle_outlined,
           tint: tints[item] ?? scheme.primary,
-          onTap: () => AppRouter.go(context, routes[item] ?? InternalRoutes.dashboard),
+          onTap: () =>
+              AppRouter.go(context, routes[item] ?? InternalRoutes.dashboard),
         );
       },
     );

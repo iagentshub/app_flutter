@@ -37,7 +37,10 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   @override
   void initState() {
     super.initState();
-    _textsFuture = LocaleLoader.load(languageCode: _languageCode, namespace: 'auth');
+    _textsFuture = LocaleLoader.load(
+      languageCode: _languageCode,
+      namespace: 'auth',
+    );
     widget.localeController.addListener(_onLocaleChanged);
   }
 
@@ -200,8 +203,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                                   ),
                                   const SizedBox(height: 8),
                                   TertiaryButton(
-                                    onPressed: () =>
-                                        AppRouter.toLogin(context),
+                                    onPressed: () => AppRouter.toLogin(context),
                                     child: Text(
                                       _txt(
                                         t,

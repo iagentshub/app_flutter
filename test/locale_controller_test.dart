@@ -50,18 +50,21 @@ void main() {
     expect(prefs.getString('app_language'), 'en');
   });
 
-  test('normaliza variantes regionales y descarta idiomas sin bundle', () async {
-    SharedPreferences.setMockInitialValues({});
-    final controller = await LocaleController.bootstrap();
+  test(
+    'normaliza variantes regionales y descarta idiomas sin bundle',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final controller = await LocaleController.bootstrap();
 
-    // El backend puede devolver 'en-US' o 'es_ES'.
-    await controller.setLanguage('en-US');
-    expect(controller.languageCode, 'en');
+      // El backend puede devolver 'en-US' o 'es_ES'.
+      await controller.setLanguage('en-US');
+      expect(controller.languageCode, 'en');
 
-    // Y un idioma que todavía no tiene traducciones no deja la app en blanco.
-    await controller.setLanguage('fr');
-    expect(controller.languageCode, LocaleController.fallbackLanguageCode);
-  });
+      // Y un idioma que todavía no tiene traducciones no deja la app en blanco.
+      await controller.setLanguage('fr');
+      expect(controller.languageCode, LocaleController.fallbackLanguageCode);
+    },
+  );
 
   test('syncFromBackend ignora un valor vacío', () async {
     SharedPreferences.setMockInitialValues({'app_language': 'en'});

@@ -41,7 +41,10 @@ class _WidgetPickerDrawerContent extends StatelessWidget {
               ? Padding(
                   padding: const EdgeInsets.all(16),
                   child: Text(
-                    tx('customize_empty', 'Ya has añadido todos los widgets disponibles.'),
+                    tx(
+                      'customize_empty',
+                      'Ya has añadido todos los widgets disponibles.',
+                    ),
                   ),
                 )
               : ListView(

@@ -57,7 +57,10 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   void initState() {
     super.initState();
-    _textsFuture = LocaleLoader.load(languageCode: _languageCode, namespace: 'auth');
+    _textsFuture = LocaleLoader.load(
+      languageCode: _languageCode,
+      namespace: 'auth',
+    );
     widget.localeController.addListener(_onLocaleChanged);
     _loadPlatformSettings();
   }

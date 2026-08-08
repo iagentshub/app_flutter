@@ -229,7 +229,10 @@ class _NotificationBannerFormDialogState
           onPressed: () => Navigator.of(context).pop(),
           child: Text(_tx('common.cancel', 'Cancelar')),
         ),
-        PrimaryButton(onPressed: _submit, child: Text(_tx('common.save', 'Guardar'))),
+        PrimaryButton(
+          onPressed: _submit,
+          child: Text(_tx('common.save', 'Guardar')),
+        ),
       ],
     );
   }

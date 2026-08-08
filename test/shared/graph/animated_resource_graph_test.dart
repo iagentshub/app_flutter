@@ -75,40 +75,41 @@ void main() {
     expect(find.text('Solo'), findsNothing);
   });
 
-  testWidgets('cambiar el modo de orden desde el controlador no lanza excepciones', (
-    tester,
-  ) async {
-    const nodes = [
-      GraphNode(id: 'root', label: 'Root', type: 'agent'),
-      GraphNode(id: 'a', label: 'A', type: 'skill'),
-    ];
-    const edges = [GraphEdge(sourceId: 'root', targetId: 'a')];
-    final controller = GraphSortController();
-    addTearDown(controller.dispose);
+  testWidgets(
+    'cambiar el modo de orden desde el controlador no lanza excepciones',
+    (tester) async {
+      const nodes = [
+        GraphNode(id: 'root', label: 'Root', type: 'agent'),
+        GraphNode(id: 'a', label: 'A', type: 'skill'),
+      ];
+      const edges = [GraphEdge(sourceId: 'root', targetId: 'a')];
+      final controller = GraphSortController();
+      addTearDown(controller.dispose);
 
-    await tester.pumpWidget(
-      wrap(
-        AnimatedResourceGraph(
-          nodes: nodes,
-          edges: edges,
-          rootId: 'root',
-          sortController: controller,
-          quickViewDescriptionLabel: 'Descripción',
-          quickViewNoDescriptionLabel: 'Sin descripción',
-          quickViewConnectionsLabel: 'Conexiones',
-          quickViewNoConnectionsLabel: 'Sin conexiones',
-          quickViewCloseTooltip: 'Cerrar',
+      await tester.pumpWidget(
+        wrap(
+          AnimatedResourceGraph(
+            nodes: nodes,
+            edges: edges,
+            rootId: 'root',
+            sortController: controller,
+            quickViewDescriptionLabel: 'Descripción',
+            quickViewNoDescriptionLabel: 'Sin descripción',
+            quickViewConnectionsLabel: 'Conexiones',
+            quickViewNoConnectionsLabel: 'Sin conexiones',
+            quickViewCloseTooltip: 'Cerrar',
+          ),
         ),
-      ),
-    );
-    await tester.pump(const Duration(milliseconds: 1200));
+      );
+      await tester.pump(const Duration(milliseconds: 1200));
 
-    controller.setMode(GraphSortMode.galaxy);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 1200));
+      controller.setMode(GraphSortMode.galaxy);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1200));
 
-    expect(tester.takeException(), isNull);
-  });
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   /// Las dos animaciones cíclicas del grafo no paraban nunca mientras el
   /// widget estuviera montado: con el diálogo abierto la app no llegaba a un

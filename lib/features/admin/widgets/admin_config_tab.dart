@@ -20,8 +20,7 @@ class _AdminConfigTab extends StatefulWidget {
   State<_AdminConfigTab> createState() => _AdminConfigTabState();
 }
 
-class _AdminConfigTabState extends State<_AdminConfigTab>
-    with StateMessaging {
+class _AdminConfigTabState extends State<_AdminConfigTab> with StateMessaging {
   late bool _registrationOpen;
   late final TextEditingController _maxUsersController;
   late final TextEditingController _maxSessionsController;

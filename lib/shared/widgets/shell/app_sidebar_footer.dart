@@ -47,8 +47,9 @@ class _SidebarFooter extends StatelessWidget {
                   Tooltip(
                     message: tx(item.labelKey, item.fallback),
                     child: IconButton(
-                      onPressed: () =>
-                          onOpenPublicRoute(item.route(languageCode: languageCode)),
+                      onPressed: () => onOpenPublicRoute(
+                        item.route(languageCode: languageCode),
+                      ),
                       constraints: const BoxConstraints.tightFor(
                         width: 38,
                         height: 38,

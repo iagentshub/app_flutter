@@ -158,7 +158,10 @@ class _ProvidersSectionState extends State<ProvidersSection>
     final token = widget.token;
     if (token.isEmpty) return;
     try {
-      final deleted = await _accountsRepository.unlinkAccount(token, account.id);
+      final deleted = await _accountsRepository.unlinkAccount(
+        token,
+        account.id,
+      );
       showMessage(
         deleted > 0
             ? _tx(

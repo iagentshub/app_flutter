@@ -303,11 +303,7 @@ class _ConnectionIssueBanner extends StatelessWidget {
                   fontSize: FncFonts.size12,
                 ),
               ),
-              const Icon(
-                Icons.chevron_right,
-                color: FncColors.white,
-                size: 16,
-              ),
+              const Icon(Icons.chevron_right, color: FncColors.white, size: 16),
             ],
           ),
         ),
@@ -418,7 +414,11 @@ const _adminItems = [
     'admin_metadata',
     Icons.table_rows_outlined,
   ),
-  _NavItem(InternalRoutes.adminCentinel, 'admin_centinel', Icons.security_outlined),
+  _NavItem(
+    InternalRoutes.adminCentinel,
+    'admin_centinel',
+    Icons.security_outlined,
+  ),
 ];
 
 String _titleForLocation(

@@ -77,7 +77,10 @@ extension _ProfileViewHelpers on _ProfilePageState {
                     // pantalla) evita mantener un bitmap gigante en memoria
                     // para mostrarlo en un círculo de 64x64.
                     image: ResizeImage(
-                      widget.apiClient.authenticatedImage(url, gaToken: token),
+                      _services.apiClient.authenticatedImage(
+                        url,
+                        gaToken: token,
+                      ),
                       width: 128,
                       height: 128,
                     ),

@@ -62,32 +62,35 @@ void main() {
     }
   });
 
-  test('statusColor garantiza AA de verdes/naranjas/rojos de Admin y Centinel', () {
-    const statusColors = [
-      Colors.red,
-      Colors.orange,
-      Colors.green,
-      Colors.grey,
-    ];
-    final surfaces = [
-      AppTheme.light().colorScheme.surface,
-      AppTheme.dark().colorScheme.surface,
-    ];
+  test(
+    'statusColor garantiza AA de verdes/naranjas/rojos de Admin y Centinel',
+    () {
+      const statusColors = [
+        Colors.red,
+        Colors.orange,
+        Colors.green,
+        Colors.grey,
+      ];
+      final surfaces = [
+        AppTheme.light().colorScheme.surface,
+        AppTheme.dark().colorScheme.surface,
+      ];
 
-    for (final surface in surfaces) {
-      for (final color in statusColors) {
-        final safe = AppTheme.statusColor(color, surface);
-        final contrast = _contrastRatio(safe, surface);
-        expect(
-          contrast,
-          greaterThanOrEqualTo(4.5),
-          reason:
-              '$color sobre $surface da ${contrast.toStringAsFixed(2)}:1 '
-              'tras derivar $safe',
-        );
+      for (final surface in surfaces) {
+        for (final color in statusColors) {
+          final safe = AppTheme.statusColor(color, surface);
+          final contrast = _contrastRatio(safe, surface);
+          expect(
+            contrast,
+            greaterThanOrEqualTo(4.5),
+            reason:
+                '$color sobre $surface da ${contrast.toStringAsFixed(2)}:1 '
+                'tras derivar $safe',
+          );
+        }
       }
-    }
-  });
+    },
+  );
 
   test('interpreta la política de tema devuelta por el backend', () {
     final settings = ProfileSettings.fromJson({

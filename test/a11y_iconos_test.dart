@@ -15,7 +15,9 @@ void main() {
   test('ningún botón de icono se queda sin nombre accesible', () {
     final sinNombre = <String>[];
 
-    for (final f in Directory('lib').listSync(recursive: true).whereType<File>()) {
+    for (final f in Directory(
+      'lib',
+    ).listSync(recursive: true).whereType<File>()) {
       if (!f.path.endsWith('.dart')) continue;
       final src = _sinComentarios(f.readAsStringSync());
 
@@ -29,7 +31,12 @@ void main() {
         if (cuerpo.contains('tooltip:') || cuerpo.contains('this.tooltip')) {
           continue;
         }
-        if (_envueltoEn(src, RegExp(r'\b(?:Tooltip|Semantics)\('), m.start, fin)) {
+        if (_envueltoEn(
+          src,
+          RegExp(r'\b(?:Tooltip|Semantics)\('),
+          m.start,
+          fin,
+        )) {
           continue;
         }
         final linea = '\n'.allMatches(src.substring(0, m.start)).length + 1;

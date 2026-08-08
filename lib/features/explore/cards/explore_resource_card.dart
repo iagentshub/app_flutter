@@ -12,7 +12,7 @@ extension _ExploreResourceCard on _ExplorePageState {
 
   Widget _buildItemCard(ExploreItem item) {
     final busy = _controller.isBusy(item);
-    final myUsername = widget.sessionController.user?.username ?? '';
+    final myUsername = _services.sessionController.user?.username ?? '';
     final isOwn = myUsername.isNotEmpty && item.ownerUsername == myUsername;
     final isLinkable = !isOwn && _linkableTypes.contains(item.resourceType);
     final linked = _controller.isLinked(item);

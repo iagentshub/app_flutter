@@ -35,7 +35,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   @override
   void initState() {
     super.initState();
-    _textsFuture = LocaleLoader.load(languageCode: _languageCode, namespace: 'auth');
+    _textsFuture = LocaleLoader.load(
+      languageCode: _languageCode,
+      namespace: 'auth',
+    );
     widget.localeController.addListener(_onLocaleChanged);
   }
 

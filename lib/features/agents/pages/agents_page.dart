@@ -1,7 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
-import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/agents/agent_models.dart';
 import '../../../models/connections/connection_models.dart';
@@ -11,8 +10,7 @@ import '../../../models/prompts/prompt_models.dart';
 import '../../../models/skills/skill_models.dart';
 import '../../../models/tools/tool_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
-import '../../../shared/state/locale_controller.dart';
-import '../../../shared/state/session_controller.dart';
+import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/utils/debouncer.dart';
 import '../../../shared/utils/memoized.dart';
 import '../../../shared/widgets/async_state_panel.dart';
@@ -43,22 +41,17 @@ part '../widgets/agents_page_actions.dart';
 part '../widgets/agents_page_view.dart';
 
 class AgentsPage extends StatefulWidget {
-  const AgentsPage({
-    required this.apiClient,
-    required this.sessionController,
-    required this.localeController,
-    super.key,
-  });
-
-  final ApiClient apiClient;
-  final SessionController sessionController;
-  final LocaleController localeController;
+  const AgentsPage({super.key});
 
   @override
   State<AgentsPage> createState() => _AgentsPageState();
 }
 
 class _AgentsPageState extends State<AgentsPage> with StateMessaging {
+  /// Servicios globales (cliente HTTP, sesión, idioma): los aporta el
+  /// AppServicesScope montado en App, no el router.
+  late final _services = AppServicesScope.of(context);
+
   late final AgentsRepository _repository;
   late final SkillsRepository _skillsRepository;
   late final KnowledgeRepository _knowledgeRepository;
@@ -181,14 +174,16 @@ class _AgentsPageState extends State<AgentsPage> with StateMessaging {
   @override
   void initState() {
     super.initState();
-    _repository = AgentsRepository(apiClient: widget.apiClient);
-    _skillsRepository = SkillsRepository(apiClient: widget.apiClient);
-    _knowledgeRepository = KnowledgeRepository(apiClient: widget.apiClient);
-    _promptsRepository = PromptsRepository(apiClient: widget.apiClient);
-    _toolsRepository = ToolsRepository(apiClient: widget.apiClient);
-    _connectionsRepository = ConnectionsRepository(apiClient: widget.apiClient);
+    _repository = AgentsRepository(apiClient: _services.apiClient);
+    _skillsRepository = SkillsRepository(apiClient: _services.apiClient);
+    _knowledgeRepository = KnowledgeRepository(apiClient: _services.apiClient);
+    _promptsRepository = PromptsRepository(apiClient: _services.apiClient);
+    _toolsRepository = ToolsRepository(apiClient: _services.apiClient);
+    _connectionsRepository = ConnectionsRepository(
+      apiClient: _services.apiClient,
+    );
     _t = TranslatedTexts(
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       namespace: 'resources',
     )..addListener(_onTextsChanged);
     _load();
@@ -207,7 +202,7 @@ class _AgentsPageState extends State<AgentsPage> with StateMessaging {
     super.dispose();
   }
 
-  String? get _token => widget.sessionController.gaToken;
+  String? get _token => _services.sessionController.gaToken;
 
   Future<void> _load() async {
     final token = _token;

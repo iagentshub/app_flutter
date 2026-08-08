@@ -33,7 +33,13 @@ const kSummaryItems = [
 ];
 const kFeedTypes = ['agent', 'skill', 'knowledge', 'tool'];
 const kQuickActionItems = ['agent', 'connection', 'workflow', 'knowledge'];
-const kRecentResourceTypes = ['agent', 'skill', 'knowledge', 'workflow', 'tool'];
+const kRecentResourceTypes = [
+  'agent',
+  'skill',
+  'knowledge',
+  'workflow',
+  'tool',
+];
 
 typedef DashboardTx = String Function(String key, String fallback);
 

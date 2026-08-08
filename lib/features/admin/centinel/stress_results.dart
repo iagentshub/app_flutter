@@ -24,9 +24,7 @@ extension _CentinelStressResults on _CentinelStressTabState {
       final baseline = cumCount > 0 ? (cumWeightedSum / cumCount) : avg[i];
       cumWeightedSum += avg[i] * count;
       cumCount += count;
-      avgColors.add(
-        avg[i] > baseline ? FncColors.danger : FncColors.success,
-      );
+      avgColors.add(avg[i] > baseline ? FncColors.danger : FncColors.success);
       if (breakIndex < 0 && count > 0) {
         final errRate = (t['errors'] as num? ?? 0) / count;
         if (errRate > 0.05) breakIndex = i;

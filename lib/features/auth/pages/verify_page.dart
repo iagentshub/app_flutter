@@ -37,7 +37,10 @@ class _VerifyPageState extends State<VerifyPage> {
   @override
   void initState() {
     super.initState();
-    _textsFuture = LocaleLoader.load(languageCode: _languageCode, namespace: 'auth');
+    _textsFuture = LocaleLoader.load(
+      languageCode: _languageCode,
+      namespace: 'auth',
+    );
     _verify();
   }
 

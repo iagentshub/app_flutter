@@ -6,6 +6,7 @@ import '../core/network/api_client.dart';
 import '../core/network/api_error.dart';
 import '../features/auth/repositories/auth_repository.dart';
 import '../features/dashboard/repositories/dashboard_repository.dart';
+import '../shared/state/app_services_scope.dart';
 import '../shared/state/backend_controller.dart';
 import '../shared/state/dashboard_edit_state.dart';
 import '../shared/state/locale_controller.dart';
@@ -67,7 +68,8 @@ class _AppState extends State<App> {
     );
     final initialLocation = widget.initialLocation;
     if (initialLocation != null &&
-        initialLocation != _router.routeInformationProvider.value.uri.toString()) {
+        initialLocation !=
+            _router.routeInformationProvider.value.uri.toString()) {
       _router.go(initialLocation);
     }
     _revalidatePersistedSession();
@@ -153,18 +155,23 @@ class _AppState extends State<App> {
         widget.themeController,
         widget.localeController,
       ]),
-      builder: (context, _) => MaterialApp.router(
-        debugShowCheckedModeBanner: false,
-        title: 'iAgents',
-        theme: AppTheme.light(widget.themeController.themeId),
-        darkTheme: AppTheme.dark(widget.themeController.themeId),
-        themeMode: AppTheme.mode(widget.themeController.themeId),
-        locale: widget.localeController.locale,
-        supportedLocales: LocaleController.supportedLanguageCodes.map(
-          Locale.new,
+      builder: (context, _) => AppServicesScope(
+        apiClient: _apiClient,
+        sessionController: widget.sessionController,
+        localeController: widget.localeController,
+        child: MaterialApp.router(
+          debugShowCheckedModeBanner: false,
+          title: 'iAgents',
+          theme: AppTheme.light(widget.themeController.themeId),
+          darkTheme: AppTheme.dark(widget.themeController.themeId),
+          themeMode: AppTheme.mode(widget.themeController.themeId),
+          locale: widget.localeController.locale,
+          supportedLocales: LocaleController.supportedLanguageCodes.map(
+            Locale.new,
+          ),
+          localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          routerConfig: _router,
         ),
-        localizationsDelegates: GlobalMaterialLocalizations.delegates,
-        routerConfig: _router,
       ),
     );
   }

@@ -94,7 +94,6 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection>
     }
   }
 
-
   Future<void> _createGroup() async {
     final controller = TextEditingController();
     final name = await showDialog<String>(

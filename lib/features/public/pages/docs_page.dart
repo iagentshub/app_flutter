@@ -21,7 +21,10 @@ class DocsPage extends StatelessWidget {
 
     return Scaffold(
       body: FutureBuilder<Map<String, dynamic>>(
-        future: LocaleLoader.load(languageCode: languageCode, namespace: 'docs'),
+        future: LocaleLoader.load(
+          languageCode: languageCode,
+          namespace: 'docs',
+        ),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());

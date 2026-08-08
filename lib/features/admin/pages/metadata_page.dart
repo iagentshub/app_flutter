@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
-import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../shared/i18n/translated_texts.dart';
-import '../../../shared/state/locale_controller.dart';
-import '../../../shared/state/session_controller.dart';
+import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../repositories/metadata_repository.dart';
 import 'logs_page.dart';
@@ -23,16 +21,7 @@ String _fmtBytes(int bytes) {
 /// Página "Sistema": Logs + Tablas de la base de datos, igual que
 /// Pantalla de metadatos del sistema.
 class MetadataPage extends StatefulWidget {
-  const MetadataPage({
-    required this.apiClient,
-    required this.sessionController,
-    required this.localeController,
-    super.key,
-  });
-
-  final ApiClient apiClient;
-  final SessionController sessionController;
-  final LocaleController localeController;
+  const MetadataPage({super.key});
 
   @override
   State<MetadataPage> createState() => _MetadataPageState();
@@ -40,6 +29,10 @@ class MetadataPage extends StatefulWidget {
 
 class _MetadataPageState extends State<MetadataPage>
     with SingleTickerProviderStateMixin {
+  /// Servicios globales (cliente HTTP, sesión, idioma): los aporta el
+  /// AppServicesScope montado en App, no el router.
+  late final _services = AppServicesScope.of(context);
+
   late final MetadataRepository _repository;
   late final TabController _tabController;
   late final TranslatedTexts _t;
@@ -53,16 +46,16 @@ class _MetadataPageState extends State<MetadataPage>
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
-  String? get _token => widget.sessionController.gaToken;
+  String? get _token => _services.sessionController.gaToken;
 
   @override
   void initState() {
     super.initState();
-    _repository = MetadataRepository(apiClient: widget.apiClient);
+    _repository = MetadataRepository(apiClient: _services.apiClient);
     _tabController = TabController(length: 2, vsync: this)
       ..addListener(_onTabChanged);
     _t = TranslatedTexts(
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       namespace: 'resources',
     )..addListener(_onTextsChanged);
     _loadTables();
@@ -195,9 +188,9 @@ class _MetadataPageState extends State<MetadataPage>
             index: _tabController.index,
             children: [
               LogsPageView(
-                apiClient: widget.apiClient,
-                sessionController: widget.sessionController,
-                localeController: widget.localeController,
+                apiClient: _services.apiClient,
+                sessionController: _services.sessionController,
+                localeController: _services.localeController,
               ),
               _buildTablesTab(),
             ],
@@ -299,12 +292,7 @@ class _MetadataPageState extends State<MetadataPage>
                       (table) => DataRow(
                         onSelectChanged: (_) => _openTableDialog(table),
                         cells: [
-                          DataCell(
-                            Text(
-                              table.name,
-                              style: FncFonts.code,
-                            ),
-                          ),
+                          DataCell(Text(table.name, style: FncFonts.code)),
                           DataCell(Text('${table.rows}')),
                           DataCell(Text('${table.colCount}')),
                           DataCell(Text(_fmtBytes(table.sizeBytes))),

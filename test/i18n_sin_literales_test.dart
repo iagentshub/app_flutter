@@ -15,7 +15,9 @@ void main() {
     // texto literal en vez de una clave traducida.
     final literal = RegExp(r"showMessage\(\s*'");
 
-    for (final f in Directory('lib').listSync(recursive: true).whereType<File>()) {
+    for (final f in Directory(
+      'lib',
+    ).listSync(recursive: true).whereType<File>()) {
       if (!f.path.endsWith('.dart')) continue;
       final lineas = f.readAsLinesSync();
       for (var i = 0; i < lineas.length; i++) {
@@ -35,7 +37,9 @@ void main() {
   test('cada clave de es tiene su equivalente en en', () {
     final faltan = <String>[];
 
-    for (final esFile in Directory('assets/locales/es').listSync().whereType<File>()) {
+    for (final esFile in Directory(
+      'assets/locales/es',
+    ).listSync().whereType<File>()) {
       if (!esFile.path.endsWith('.json')) continue;
       final nombre = esFile.uri.pathSegments.last;
       final enFile = File('assets/locales/en/$nombre');

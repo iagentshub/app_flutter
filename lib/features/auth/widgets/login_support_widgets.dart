@@ -36,9 +36,7 @@ class _OauthButton extends StatelessWidget {
     final button = SecondaryButton(
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         minimumSize: const Size(44, 44),
         padding: const EdgeInsets.symmetric(horizontal: 10),
       ),

@@ -22,7 +22,10 @@ class AboutPage extends StatelessWidget {
 
     return Scaffold(
       body: FutureBuilder<Map<String, dynamic>>(
-        future: LocaleLoader.load(languageCode: languageCode, namespace: 'about'),
+        future: LocaleLoader.load(
+          languageCode: languageCode,
+          namespace: 'about',
+        ),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());

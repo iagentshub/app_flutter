@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
-import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/admin/admin_explore_models.dart';
 import '../../../shared/graph/graph_dialog.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/labels/label_catalog.dart';
-import '../../../shared/state/locale_controller.dart';
-import '../../../shared/state/session_controller.dart';
+import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/state/theme_controller.dart';
 import '../../../shared/utils/debouncer.dart';
 import '../../../shared/utils/memoized.dart';
@@ -76,16 +74,7 @@ String _ownerOf(Map<String, dynamic> item) =>
     (item['owner_username'] ?? '').toString();
 
 class AdminPage extends StatefulWidget {
-  const AdminPage({
-    required this.apiClient,
-    required this.sessionController,
-    required this.localeController,
-    super.key,
-  });
-
-  final ApiClient apiClient;
-  final SessionController sessionController;
-  final LocaleController localeController;
+  const AdminPage({super.key});
 
   @override
   State<AdminPage> createState() => _AdminPageState();
@@ -93,6 +82,10 @@ class AdminPage extends StatefulWidget {
 
 class _AdminPageState extends State<AdminPage>
     with SingleTickerProviderStateMixin, StateMessaging {
+  /// Servicios globales (cliente HTTP, sesión, idioma): los aporta el
+  /// AppServicesScope montado en App, no el router.
+  late final _services = AppServicesScope.of(context);
+
   late final AdminStatsRepository _statsRepository;
   late final AdminUsersRepository _usersRepository;
   late final AdminGroupsRepository _groupsRepository;
@@ -163,29 +156,31 @@ class _AdminPageState extends State<AdminPage>
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
-  String? get _token => widget.sessionController.gaToken;
+  String? get _token => _services.sessionController.gaToken;
 
   @override
   void initState() {
     super.initState();
-    _statsRepository = AdminStatsRepository(apiClient: widget.apiClient);
-    _usersRepository = AdminUsersRepository(apiClient: widget.apiClient);
-    _groupsRepository = AdminGroupsRepository(apiClient: widget.apiClient);
-    _agentsRepository = AdminAgentsRepository(apiClient: widget.apiClient);
+    _statsRepository = AdminStatsRepository(apiClient: _services.apiClient);
+    _usersRepository = AdminUsersRepository(apiClient: _services.apiClient);
+    _groupsRepository = AdminGroupsRepository(apiClient: _services.apiClient);
+    _agentsRepository = AdminAgentsRepository(apiClient: _services.apiClient);
     _connectionsRepository = AdminConnectionsRepository(
-      apiClient: widget.apiClient,
+      apiClient: _services.apiClient,
     );
     _knowledgeRepository = AdminKnowledgeRepository(
-      apiClient: widget.apiClient,
+      apiClient: _services.apiClient,
     );
     _resourcesRepository = AdminResourcesRepository(
-      apiClient: widget.apiClient,
+      apiClient: _services.apiClient,
     );
-    _platformRepository = AdminPlatformRepository(apiClient: widget.apiClient);
+    _platformRepository = AdminPlatformRepository(
+      apiClient: _services.apiClient,
+    );
     _tabController = TabController(length: _tabIds.length, vsync: this)
       ..addListener(_onTabChanged);
     _t = TranslatedTexts(
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       namespace: 'resources',
     )..addListener(_onTextsChanged);
     _load();
@@ -286,7 +281,7 @@ class _AdminPageState extends State<AdminPage>
   ) async {
     try {
       await action();
-      widget.apiClient.invalidateCache();
+      _services.apiClient.invalidateCache();
       showMessage(successMessage);
       await _load();
     } on ApiError catch (error) {

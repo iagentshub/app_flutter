@@ -22,7 +22,10 @@ class PricingPage extends StatelessWidget {
 
     return Scaffold(
       body: FutureBuilder<Map<String, dynamic>>(
-        future: LocaleLoader.load(languageCode: languageCode, namespace: 'pricing'),
+        future: LocaleLoader.load(
+          languageCode: languageCode,
+          namespace: 'pricing',
+        ),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());

@@ -74,7 +74,9 @@ extension _ChatMentionOverlay on _ChatPageState {
 
   void _showOrUpdateMentionOverlay() {
     if (_mentionOverlay == null) {
-      _mentionOverlay = OverlayEntry(builder: (context) => _buildMentionOverlay());
+      _mentionOverlay = OverlayEntry(
+        builder: (context) => _buildMentionOverlay(),
+      );
       Overlay.of(context).insert(_mentionOverlay!);
     } else {
       _mentionOverlay!.markNeedsBuild();
@@ -144,10 +146,7 @@ extension _ChatMentionOverlay on _ChatPageState {
                   for (final item in _knowledgeMentionMatches)
                     ListTile(
                       dense: true,
-                      leading: const Icon(
-                        Icons.description_outlined,
-                        size: 18,
-                      ),
+                      leading: const Icon(Icons.description_outlined, size: 18),
                       title: Text(
                         item.name,
                         maxLines: 1,

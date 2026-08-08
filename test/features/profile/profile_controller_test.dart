@@ -16,8 +16,7 @@ import '../../support/memory_secure_store.dart';
 
 /// Un PNG mínimo pero decodificable, para probar el flujo real de
 /// compresión sin depender de un asset externo.
-List<int> _fakeImageBytes() =>
-    img.encodePng(img.Image(width: 4, height: 4));
+List<int> _fakeImageBytes() => img.encodePng(img.Image(width: 4, height: 4));
 
 /// Devuelve el fallback tal cual: el controller no debe depender de que
 /// haya locales cargados para producir sus mensajes.
@@ -236,25 +235,28 @@ void main() {
     expect(body!['language'], 'es');
   });
 
-  test('saveSettings aplica lo que responde el backend, no el borrador', () async {
-    final themes = <String>[];
-    final controller = await build((request) async {
-      if (request.method == 'PUT') {
-        // El backend puede devolver algo distinto de lo enviado.
-        return http.Response(jsonEncode(_settings(theme: 'light')), 200);
-      }
-      return bundleResponse(request);
-    }, themes: themes);
-    await controller.load();
-    themes.clear();
+  test(
+    'saveSettings aplica lo que responde el backend, no el borrador',
+    () async {
+      final themes = <String>[];
+      final controller = await build((request) async {
+        if (request.method == 'PUT') {
+          // El backend puede devolver algo distinto de lo enviado.
+          return http.Response(jsonEncode(_settings(theme: 'light')), 200);
+        }
+        return bundleResponse(request);
+      }, themes: themes);
+      await controller.load();
+      themes.clear();
 
-    controller.setTheme('dark-blue');
-    await controller.saveSettings();
+      controller.setTheme('dark-blue');
+      await controller.saveSettings();
 
-    expect(controller.theme, 'light');
-    expect(controller.savingSettings, isFalse);
-    expect(themes, ['light']);
-  });
+      expect(controller.theme, 'light');
+      expect(controller.savingSettings, isFalse);
+      expect(themes, ['light']);
+    },
+  );
 
   test('saveSettings informa del error del backend', () async {
     final controller = await build((request) async {
@@ -368,35 +370,45 @@ void main() {
     },
   );
 
-  test('uploadAvatar rechaza bytes que no son una imagen decodificable', () async {
-    final controller = await build((request) async => bundleResponse(request));
-    await controller.load();
+  test(
+    'uploadAvatar rechaza bytes que no son una imagen decodificable',
+    () async {
+      final controller = await build(
+        (request) async => bundleResponse(request),
+      );
+      await controller.load();
 
-    final result = await controller.uploadAvatar(
-      fileName: 'foto.png',
-      fileBytes: const [1, 2, 3],
-    );
+      final result = await controller.uploadAvatar(
+        fileName: 'foto.png',
+        fileBytes: const [1, 2, 3],
+      );
 
-    expect(result?.isError, isTrue);
-    expect(result?.message, 'No se pudo actualizar la foto');
-    expect(controller.uploadingAvatar, isFalse);
-  });
+      expect(result?.isError, isTrue);
+      expect(result?.message, 'No se pudo actualizar la foto');
+      expect(controller.uploadingAvatar, isFalse);
+    },
+  );
 
-  test('uploadAvatar comprime la imagen y rompe la caché al terminar', () async {
-    final controller = await build((request) async => bundleResponse(request));
-    await controller.load();
-    final before = controller.avatarUrl;
+  test(
+    'uploadAvatar comprime la imagen y rompe la caché al terminar',
+    () async {
+      final controller = await build(
+        (request) async => bundleResponse(request),
+      );
+      await controller.load();
+      final before = controller.avatarUrl;
 
-    final result = await controller.uploadAvatar(
-      fileName: 'foto.png',
-      fileBytes: _fakeImageBytes(),
-    );
+      final result = await controller.uploadAvatar(
+        fileName: 'foto.png',
+        fileBytes: _fakeImageBytes(),
+      );
 
-    expect(result?.isError, isFalse);
-    expect(before, contains('/api/users/alice/avatar?v=0'));
-    expect(controller.avatarUrl, contains('v=1'));
-    expect(controller.uploadingAvatar, isFalse);
-  });
+      expect(result?.isError, isFalse);
+      expect(before, contains('/api/users/alice/avatar?v=0'));
+      expect(controller.avatarUrl, contains('v=1'));
+      expect(controller.uploadingAvatar, isFalse);
+    },
+  );
 
   test('requestDeletion devuelve el mensaje del backend', () async {
     final controller = await build((request) async {

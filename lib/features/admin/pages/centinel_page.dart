@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
-import '../../../core/network/api_client.dart';
 import '../../../shared/i18n/translated_texts.dart';
-import '../../../shared/state/locale_controller.dart';
-import '../../../shared/state/session_controller.dart';
+import '../../../shared/state/app_services_scope.dart';
 import '../repositories/centinel_repository.dart';
 import '../widgets/centinel_functional_tab.dart';
 import '../widgets/centinel_probe_tab.dart';
@@ -13,16 +11,7 @@ import '../widgets/centinel_stress_tab.dart';
 /// Página Centinel: 3 pestañas (Funcionalidad/Rendimiento/Buscar límite),
 /// Página principal de administración de Centinel.
 class CentinelPage extends StatefulWidget {
-  const CentinelPage({
-    required this.apiClient,
-    required this.sessionController,
-    required this.localeController,
-    super.key,
-  });
-
-  final ApiClient apiClient;
-  final SessionController sessionController;
-  final LocaleController localeController;
+  const CentinelPage({super.key});
 
   @override
   State<CentinelPage> createState() => _CentinelPageState();
@@ -30,22 +19,26 @@ class CentinelPage extends StatefulWidget {
 
 class _CentinelPageState extends State<CentinelPage>
     with SingleTickerProviderStateMixin {
+  /// Servicios globales (cliente HTTP, sesión, idioma): los aporta el
+  /// AppServicesScope montado en App, no el router.
+  late final _services = AppServicesScope.of(context);
+
   late final CentinelRepository _repository;
   late final TabController _tabController;
   late final TranslatedTexts _t;
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
-  String? get _token => widget.sessionController.gaToken;
+  String? get _token => _services.sessionController.gaToken;
 
   @override
   void initState() {
     super.initState();
-    _repository = CentinelRepository(apiClient: widget.apiClient);
+    _repository = CentinelRepository(apiClient: _services.apiClient);
     _tabController = TabController(length: 3, vsync: this)
       ..addListener(_onTabChanged);
     _t = TranslatedTexts(
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       namespace: 'resources',
     )..addListener(_onTextsChanged);
   }

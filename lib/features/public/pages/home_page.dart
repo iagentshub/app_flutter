@@ -176,7 +176,9 @@ class HomePage extends StatelessWidget {
                           PrimaryButton(
                             onPressed: () => AppRouter.go(
                               context,
-                              isEnglish ? ExternalRoutes.docsEn : ExternalRoutes.docs,
+                              isEnglish
+                                  ? ExternalRoutes.docsEn
+                                  : ExternalRoutes.docs,
                             ),
                             style: FilledButton.styleFrom(
                               backgroundColor: FncColors.red,

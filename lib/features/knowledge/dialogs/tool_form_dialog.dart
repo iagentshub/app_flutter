@@ -238,10 +238,7 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
             borderRadius: BorderRadius.circular(10),
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                vertical: 20,
-                horizontal: 12,
-              ),
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
@@ -295,10 +292,7 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
         ),
         if (_fileError != null) ...[
           const SizedBox(height: 6),
-          Text(
-            _fileError!,
-            style: TextStyle(color: theme.colorScheme.error),
-          ),
+          Text(_fileError!, style: TextStyle(color: theme.colorScheme.error)),
         ],
       ],
     );

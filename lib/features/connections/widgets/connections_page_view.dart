@@ -104,11 +104,11 @@ extension _ConnectionsPageView on _ConnectionsPageState {
                             AppIconButton.outlined(
                               onPressed: () => showGroupFilterDialog(
                                 context,
-                                apiClient: widget.apiClient,
+                                apiClient: _services.apiClient,
                                 token: _token ?? '',
                                 activeGroupId: _activeGroupId,
                                 onSelect: _onGroupSelect,
-                                localeController: widget.localeController,
+                                localeController: _services.localeController,
                               ),
                               icon: const Icon(Icons.groups_outlined),
                               tooltip: _tx('groups.toggle_tooltip', 'Grupos'),
@@ -174,9 +174,9 @@ extension _ConnectionsPageView on _ConnectionsPageState {
         sliver: SliverToBoxAdapter(
           child: Text(
             '$providerLabel (${items.length})',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
         ),
       ),

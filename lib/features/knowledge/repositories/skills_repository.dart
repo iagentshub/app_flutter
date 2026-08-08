@@ -1,64 +1,44 @@
-import '../../../core/network/api_repository.dart';
+import '../../../core/network/scoped_resource_repository.dart';
 import '../../../models/skills/skill_models.dart';
 
-class SkillsRepository extends ApiRepository {
-  SkillsRepository({required super.apiClient});
+/// Skills: `/api/skills/<scope>/<id>`.
+///
+/// Todo el contrato vive en [ScopedResourceRepository]; aquí solo quedan los
+/// nombres de dominio, que en el punto de llamada dicen más que un `list()`
+/// suelto.
+class SkillsRepository extends ScopedResourceRepository<SkillItem> {
+  SkillsRepository({required super.apiClient})
+    : super(basePath: 'skills', parse: _asSkill);
+
+  static SkillItem _asSkill(Map<String, dynamic> raw) => SkillItem(raw: raw);
 
   Future<List<SkillItem>> listSkills(
     String token, {
     String scope = 'all',
     String? groupId,
     bool includeInactive = false,
-  }) async {
-    final query = groupId == null || groupId.isEmpty
-        ? ''
-        : '&group_id=${Uri.encodeQueryComponent(groupId)}';
-    final inactive = includeInactive ? '&include_inactive=true' : '';
-    final response = await apiClient.get(
-      '/api/skills?scope=$scope$query$inactive',
-      gaToken: token,
-      cache: true,
-    );
-    final payload = response.body;
-    if (payload is! List) return const [];
-    return payload
-        .whereType<Map<String, dynamic>>()
-        .map((item) => SkillItem(raw: item))
-        .toList();
-  }
+  }) => list(
+    token,
+    scope: scope,
+    groupId: groupId,
+    includeInactive: includeInactive,
+  );
 
   Future<Map<String, dynamic>> getSkill(
     String token,
     String scope,
     String id,
-  ) async {
-    final response = await apiClient.get(
-      '/api/skills/${Uri.encodeComponent(scope)}/${Uri.encodeComponent(id)}',
-      gaToken: token,
-    );
-    return response.json;
-  }
+  ) => get(token, scope, id);
 
   Future<Map<String, dynamic>> saveSkill(
     String token,
     String scope,
     Map<String, dynamic> payload,
-  ) async {
-    final response = await apiClient.post(
-      '/api/skills/${Uri.encodeComponent(scope)}',
-      gaToken: token,
-      body: payload,
-    );
-    return response.json;
-  }
+  ) => save(token, scope, payload);
 
-  Future<void> deleteSkill(String token, String scope, String id) async {
-    await apiClient.delete(
-      '/api/skills/${Uri.encodeComponent(scope)}/${Uri.encodeComponent(id)}',
-      gaToken: token,
-    );
-  }
+  Future<void> deleteSkill(String token, String scope, String id) =>
+      remove(token, scope, id);
 
   Future<void> setSkillActive(String token, String id, bool active) =>
-      setActive(token, 'skills', id, active);
+      setResourceActive(token, id, active);
 }

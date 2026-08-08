@@ -5,8 +5,7 @@ import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_error.dart';
 import '../../../shared/i18n/locale_loader.dart';
-import '../../../shared/state/locale_controller.dart';
-import '../../../shared/state/session_controller.dart';
+import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../repositories/auth_repository.dart';
 
@@ -33,16 +32,12 @@ Uri? _safeCallback(String? value) {
 class VsCodeAuthPage extends StatefulWidget {
   const VsCodeAuthPage({
     required this.authRepository,
-    required this.sessionController,
-    required this.localeController,
     this.state,
     this.callback,
     super.key,
   });
 
   final AuthRepository authRepository;
-  final SessionController sessionController;
-  final LocaleController localeController;
   final String? state;
   final String? callback;
 
@@ -51,20 +46,27 @@ class VsCodeAuthPage extends StatefulWidget {
 }
 
 class _VsCodeAuthPageState extends State<VsCodeAuthPage> {
+  /// Servicios globales (cliente HTTP, sesión, idioma): los aporta el
+  /// AppServicesScope montado en App, no el router.
+  late final _services = AppServicesScope.of(context);
+
   bool _loading = false;
   bool _done = false;
   String? _error;
   late Future<Map<String, dynamic>> _textsFuture;
 
-  String get _languageCode => widget.localeController.languageCode;
+  String get _languageCode => _services.localeController.languageCode;
 
   Uri? get _target => _safeCallback(widget.callback);
 
   @override
   void initState() {
     super.initState();
-    _textsFuture = LocaleLoader.load(languageCode: _languageCode, namespace: 'auth');
-    widget.localeController.addListener(_onLocaleChanged);
+    _textsFuture = LocaleLoader.load(
+      languageCode: _languageCode,
+      namespace: 'auth',
+    );
+    _services.localeController.addListener(_onLocaleChanged);
   }
 
   void _onLocaleChanged() {
@@ -79,7 +81,7 @@ class _VsCodeAuthPageState extends State<VsCodeAuthPage> {
 
   @override
   void dispose() {
-    widget.localeController.removeListener(_onLocaleChanged);
+    _services.localeController.removeListener(_onLocaleChanged);
     super.dispose();
   }
 
@@ -88,7 +90,7 @@ class _VsCodeAuthPageState extends State<VsCodeAuthPage> {
   }
 
   Future<void> _authorize(Map<String, dynamic> t) async {
-    final token = widget.sessionController.gaToken;
+    final token = _services.sessionController.gaToken;
     final state = widget.state;
     final target = _target;
     if (token == null || state == null || target == null) return;
@@ -156,7 +158,7 @@ class _VsCodeAuthPageState extends State<VsCodeAuthPage> {
             ),
           );
         } else {
-          final username = widget.sessionController.user?.username ?? '';
+          final username = _services.sessionController.user?.username ?? '';
           body = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,

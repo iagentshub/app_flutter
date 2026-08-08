@@ -15,7 +15,10 @@ extension _PromptSections on _KnowledgePageState {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _tx('knowledge.prompts_error_title', 'Error cargando Prompts'),
+                  _tx(
+                    'knowledge.prompts_error_title',
+                    'Error cargando Prompts',
+                  ),
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
@@ -35,7 +38,9 @@ extension _PromptSections on _KnowledgePageState {
   }
 
   Widget _buildPromptsSection() {
-    if (_promptsLoading) return const Center(child: CircularProgressIndicator());
+    if (_promptsLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
     if (_promptsError != null) return _buildPromptsErrorState();
 
     final filteredPrompts = _filteredPrompts;
@@ -153,7 +158,7 @@ extension _PromptSections on _KnowledgePageState {
                 // activate/deactivate no tiene rama is_guest en el backend:
                 // sigue cerrado al invitado, así que se oculta aquí también.
                 if (!item.readOnly &&
-                    widget.sessionController.user?.role != 'guest')
+                    _services.sessionController.user?.role != 'guest')
                   ActionIconButton(
                     icon: item.isActive
                         ? Icons.toggle_on_outlined

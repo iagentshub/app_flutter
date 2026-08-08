@@ -386,9 +386,7 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog>
                                 'groups.leave_panel_body',
                                 'Dejarás de tener acceso a los recursos compartidos con este grupo.',
                               ),
-                              style: const TextStyle(
-                                fontSize: FncFonts.size12,
-                              ),
+                              style: const TextStyle(fontSize: FncFonts.size12),
                             ),
                           ),
                           const SizedBox(width: 10),

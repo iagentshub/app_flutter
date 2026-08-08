@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
-import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../features/memory/pages/memory_page.dart';
 import '../../../models/knowledge/knowledge_models.dart';
@@ -15,8 +14,7 @@ import '../../../models/skills/skill_models.dart';
 import '../../../models/tools/tool_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/labels/label_catalog.dart';
-import '../../../shared/state/locale_controller.dart';
-import '../../../shared/state/session_controller.dart';
+import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/tools/tool_language.dart';
 import '../../../shared/utils/memoized.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
@@ -108,16 +106,7 @@ String skillCategoryLabel(
 }
 
 class KnowledgePage extends StatefulWidget {
-  const KnowledgePage({
-    required this.apiClient,
-    required this.sessionController,
-    required this.localeController,
-    super.key,
-  });
-
-  final ApiClient apiClient;
-  final SessionController sessionController;
-  final LocaleController localeController;
+  const KnowledgePage({super.key});
 
   @override
   State<KnowledgePage> createState() => _KnowledgePageState();
@@ -125,6 +114,10 @@ class KnowledgePage extends StatefulWidget {
 
 class _KnowledgePageState extends State<KnowledgePage>
     with SingleTickerProviderStateMixin, StateMessaging {
+  /// Servicios globales (cliente HTTP, sesión, idioma): los aporta el
+  /// AppServicesScope montado en App, no el router.
+  late final _services = AppServicesScope.of(context);
+
   late final KnowledgeRepository _repository;
   late final SkillsRepository _skillsRepository;
   late final PromptsRepository _promptsRepository;
@@ -399,14 +392,14 @@ class _KnowledgePageState extends State<KnowledgePage>
   @override
   void initState() {
     super.initState();
-    _repository = KnowledgeRepository(apiClient: widget.apiClient);
-    _skillsRepository = SkillsRepository(apiClient: widget.apiClient);
-    _promptsRepository = PromptsRepository(apiClient: widget.apiClient);
-    _toolsRepository = ToolsRepository(apiClient: widget.apiClient);
+    _repository = KnowledgeRepository(apiClient: _services.apiClient);
+    _skillsRepository = SkillsRepository(apiClient: _services.apiClient);
+    _promptsRepository = PromptsRepository(apiClient: _services.apiClient);
+    _toolsRepository = ToolsRepository(apiClient: _services.apiClient);
     _tabController = TabController(length: _sectionIds.length, vsync: this)
       ..addListener(_onTabChanged);
     _t = TranslatedTexts(
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       namespace: 'resources',
     )..addListener(_onTextsChanged);
     _ensureSectionLoaded(_sectionIds.first);
@@ -496,11 +489,11 @@ class _KnowledgePageState extends State<KnowledgePage>
       AppIconButton.outlined(
         onPressed: () => showGroupFilterDialog(
           context,
-          apiClient: widget.apiClient,
+          apiClient: _services.apiClient,
           token: _token ?? '',
           activeGroupId: _activeGroupId,
           onSelect: _onGroupSelect,
-          localeController: widget.localeController,
+          localeController: _services.localeController,
         ),
         icon: const Icon(Icons.groups_outlined),
         tooltip: _tx('groups.toggle_tooltip', 'Grupos'),
@@ -520,11 +513,7 @@ class _KnowledgePageState extends State<KnowledgePage>
       'tools' => _buildToolsSection(),
       'urls' => _buildUrlsSection(),
       'documents' => _buildDocumentsSection(),
-      'memory' => MemoryPage(
-        apiClient: widget.apiClient,
-        sessionController: widget.sessionController,
-        localeController: widget.localeController,
-      ),
+      'memory' => const MemoryPage(),
       _ => _buildSkillsSection(),
     };
   }

@@ -4,14 +4,12 @@ import 'package:flutter/material.dart';
 import '../../../app/router/router.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
-import '../../../core/network/api_client.dart';
 import '../../../features/connections/widgets/providers_section.dart';
 import '../../../models/profile/profile_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/action_result.dart';
+import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/state/brand_icon_controller.dart';
-import '../../../shared/state/locale_controller.dart';
-import '../../../shared/state/session_controller.dart';
 import '../../../shared/state/theme_controller.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/brand_icon.dart';
@@ -35,16 +33,7 @@ part '../widgets/profile_view_helpers.dart';
 const _languageOptions = [('es', 'Español', '🇪🇸'), ('en', 'English', '🇬🇧')];
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({
-    required this.apiClient,
-    required this.sessionController,
-    required this.localeController,
-    super.key,
-  });
-
-  final ApiClient apiClient;
-  final SessionController sessionController;
-  final LocaleController localeController;
+  const ProfilePage({super.key});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -52,6 +41,10 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage>
     with SingleTickerProviderStateMixin, StateMessaging {
+  /// Servicios globales (cliente HTTP, sesión, idioma): los aporta el
+  /// AppServicesScope montado en App, no el router.
+  late final _services = AppServicesScope.of(context);
+
   late final ProfileController _controller;
   late final TranslatedTexts _t;
   late final TabController _tabController;
@@ -65,17 +58,16 @@ class _ProfilePageState extends State<ProfilePage>
     super.initState();
     // `_t` primero: el controller recibe `_tx` y lo usa para sus mensajes.
     _t = TranslatedTexts(
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       namespace: 'resources',
     )..addListener(_onTextsChanged);
-    _controller =
-        ProfileController(
-          repository: ProfileRepository(apiClient: widget.apiClient),
-          sessionController: widget.sessionController,
-          localeController: widget.localeController,
-          syncTheme: _syncTheme,
-          tx: _tx,
-        )..addListener(_onControllerChanged);
+    _controller = ProfileController(
+      repository: ProfileRepository(apiClient: _services.apiClient),
+      sessionController: _services.sessionController,
+      localeController: _services.localeController,
+      syncTheme: _syncTheme,
+      tx: _tx,
+    )..addListener(_onControllerChanged);
     _tabController = TabController(length: _sectionIds.length, vsync: this)
       ..addListener(_onTabChanged);
     _controller.load();
@@ -330,9 +322,9 @@ class _ProfilePageState extends State<ProfilePage>
               ? (token == null || token.isEmpty
                     ? const SizedBox.shrink()
                     : ProvidersSection(
-                        apiClient: widget.apiClient,
+                        apiClient: _services.apiClient,
                         token: token,
-                        localeController: widget.localeController,
+                        localeController: _services.localeController,
                       ))
               : RefreshIndicator(
                   onRefresh: _controller.load,

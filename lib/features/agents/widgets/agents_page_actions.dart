@@ -6,11 +6,11 @@ extension _AgentsPageActions on _AgentsPageState {
     if (token == null || token.isEmpty) return;
     await showShareToGroupDialog(
       context: context,
-      apiClient: widget.apiClient,
+      apiClient: _services.apiClient,
       token: token,
       resourceType: 'agent',
       resourceId: item.id,
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       onShared: _load,
     );
   }
@@ -20,11 +20,11 @@ extension _AgentsPageActions on _AgentsPageState {
     if (token == null || token.isEmpty) return;
     await showResourceHistoryDialog(
       context: context,
-      apiClient: widget.apiClient,
+      apiClient: _services.apiClient,
       token: token,
       resourceType: 'agent',
       resourceId: item.id,
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       onRestored: _load,
     );
   }
@@ -34,8 +34,11 @@ extension _AgentsPageActions on _AgentsPageState {
     if (token == null || token.isEmpty) return;
     final payload = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) =>
-          AgentFormDialog(apiClient: widget.apiClient, token: token, tx: _tx),
+      builder: (context) => AgentFormDialog(
+        apiClient: _services.apiClient,
+        token: token,
+        tx: _tx,
+      ),
     );
     if (payload == null) return;
     await _saveAgent(payload);
@@ -137,7 +140,7 @@ extension _AgentsPageActions on _AgentsPageState {
 
     // Los agentes públicos de CUALQUIER usuario se descubren vía Explore
     // (/api/agents?scope=X para un usuario normal solo devuelve los tuyos).
-    final exploreRepository = ExploreRepository(apiClient: widget.apiClient);
+    final exploreRepository = ExploreRepository(apiClient: _services.apiClient);
     List<ExploreItem> publicAgents;
     try {
       publicAgents = await exploreRepository.listResources(
@@ -213,7 +216,7 @@ extension _AgentsPageActions on _AgentsPageState {
     final payload = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => AgentFormDialog(
-        apiClient: widget.apiClient,
+        apiClient: _services.apiClient,
         token: currentToken,
         initial: template,
         tx: _tx,
@@ -246,7 +249,7 @@ extension _AgentsPageActions on _AgentsPageState {
     final payload = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => AgentFormDialog(
-        apiClient: widget.apiClient,
+        apiClient: _services.apiClient,
         token: token,
         initial: initial,
         tx: _tx,
@@ -362,9 +365,9 @@ extension _AgentsPageActions on _AgentsPageState {
       MaterialPageRoute(
         builder: (context) => ChatPage(
           agent: item,
-          apiClient: widget.apiClient,
-          sessionController: widget.sessionController,
-          localeController: widget.localeController,
+          apiClient: _services.apiClient,
+          sessionController: _services.sessionController,
+          localeController: _services.localeController,
         ),
       ),
     );
@@ -378,9 +381,9 @@ extension _AgentsPageActions on _AgentsPageState {
     final created = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (context) => AgentBuilderPage(
-          apiClient: widget.apiClient,
-          sessionController: widget.sessionController,
-          localeController: widget.localeController,
+          apiClient: _services.apiClient,
+          sessionController: _services.sessionController,
+          localeController: _services.localeController,
         ),
       ),
     );

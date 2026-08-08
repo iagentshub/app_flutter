@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
-import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/manager/group_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
-import '../../../shared/state/locale_controller.dart';
-import '../../../shared/state/session_controller.dart';
+import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
@@ -21,22 +19,17 @@ part '../cards/group_invitations_card.dart';
 part '../cards/group_members_card.dart';
 
 class ManagerPage extends StatefulWidget {
-  const ManagerPage({
-    required this.apiClient,
-    required this.sessionController,
-    required this.localeController,
-    super.key,
-  });
-
-  final ApiClient apiClient;
-  final SessionController sessionController;
-  final LocaleController localeController;
+  const ManagerPage({super.key});
 
   @override
   State<ManagerPage> createState() => _ManagerPageState();
 }
 
 class _ManagerPageState extends State<ManagerPage> with StateMessaging {
+  /// Servicios globales (cliente HTTP, sesión, idioma): los aporta el
+  /// AppServicesScope montado en App, no el router.
+  late final _services = AppServicesScope.of(context);
+
   late final ManagerRepository _repository;
   late final TranslatedTexts _t;
   List<GroupItem> _groups = const [];
@@ -52,9 +45,9 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
   @override
   void initState() {
     super.initState();
-    _repository = ManagerRepository(apiClient: widget.apiClient);
+    _repository = ManagerRepository(apiClient: _services.apiClient);
     _t = TranslatedTexts(
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       namespace: 'resources',
     )..addListener(_onTextsChanged);
     _load();
@@ -71,7 +64,7 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
     super.dispose();
   }
 
-  String? get _token => widget.sessionController.gaToken;
+  String? get _token => _services.sessionController.gaToken;
 
   Future<void> _load() async {
     final token = _token;
@@ -241,9 +234,9 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
     setState(() => _switchingGroupId = item.id);
     try {
       final nextToken = await _repository.switchGroup(token, item.id);
-      final user = widget.sessionController.user;
+      final user = _services.sessionController.user;
       if (nextToken != null && user != null) {
-        await widget.sessionController.login(token: nextToken, user: user);
+        await _services.sessionController.login(token: nextToken, user: user);
       }
       showMessage(
         _tx(
@@ -433,7 +426,6 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
     controller.dispose();
     return value;
   }
-
 
   @override
   Widget build(BuildContext context) {

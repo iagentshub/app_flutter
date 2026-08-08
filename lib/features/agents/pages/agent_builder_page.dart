@@ -395,7 +395,6 @@ class _AgentBuilderPageState extends State<AgentBuilderPage>
     }
   }
 
-
   Widget _buildModernPage(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return Scaffold(

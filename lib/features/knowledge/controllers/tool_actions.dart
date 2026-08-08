@@ -193,11 +193,11 @@ extension _ToolActions on _KnowledgePageState {
     if (token == null || token.isEmpty) return;
     await showShareToGroupDialog(
       context: context,
-      apiClient: widget.apiClient,
+      apiClient: _services.apiClient,
       token: token,
       resourceType: 'tool',
       resourceId: item.id,
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       onShared: _loadTools,
     );
   }
@@ -207,11 +207,11 @@ extension _ToolActions on _KnowledgePageState {
     if (token == null || token.isEmpty) return;
     await showResourceHistoryDialog(
       context: context,
-      apiClient: widget.apiClient,
+      apiClient: _services.apiClient,
       token: token,
       resourceType: 'tool',
       resourceId: item.id,
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       onRestored: _loadTools,
     );
   }
