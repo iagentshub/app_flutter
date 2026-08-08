@@ -209,7 +209,7 @@ class AgentCard extends StatelessWidget {
                   child: PrimaryButton.icon(
                     onPressed: item.connectionId.isEmpty ? null : onChat,
                     icon: const Icon(Icons.chat_bubble_outline),
-                    label: const Text('Chat'),
+                    label: Text(tx('agents.chat_action', 'Chat')),
                   ),
                 ),
                 const Spacer(),

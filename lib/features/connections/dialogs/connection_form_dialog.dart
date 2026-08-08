@@ -139,12 +139,19 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
 
     return AlertDialog(
       title: Text(
-        widget.initial == null ? 'Nueva conexión' : 'Editar conexión',
+        widget.initial == null
+            ? widget.tx('connections.new', 'Nueva conexión')
+            : widget.tx('connections.edit_title', 'Editar conexión'),
       ),
       content: SizedBox(
         width: dialogContentWidth(context, 560),
         child: provider == null
-            ? const Text('No hay proveedores disponibles')
+            ? Text(
+                widget.tx(
+                  'connections.no_providers',
+                  'No hay proveedores disponibles',
+                ),
+              )
             : Form(
                 key: _formKey,
                 child: ListView(
@@ -210,9 +217,12 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
       actions: [
         TertiaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
+          child: Text(widget.tx('common.cancel', 'Cancelar')),
         ),
-        PrimaryButton(onPressed: _submit, child: const Text('Guardar')),
+        PrimaryButton(
+          onPressed: _submit,
+          child: Text(widget.tx('common.save', 'Guardar')),
+        ),
       ],
     );
   }

@@ -229,6 +229,7 @@
     "preferences_use_default": "Usar la conexión del agente",
     "preferences_saved": "Preferencia guardada",
     "preferences_load_error": "No se pudieron cargar las preferencias",
+    "chat_action": "Chat",
     "chat": {
       "send": "Enviar mensaje",
       "stop": "Detener respuesta",
@@ -292,7 +293,11 @@
     "discover_models": "Descubrir modelos",
     "discover_models_empty": "No se encontraron modelos en ese host",
     "discover_models_error": "No se pudo conectar con Ollama en ese host",
-    "sync_hub": "Sincronizar"
+    "sync_hub": "Sincronizar",
+    "edit_title": "Editar conexión",
+    "no_providers": "No hay proveedores disponibles",
+    "mass_test_title": "Test masivo ({{n}})",
+    "mass_test_summary": "Correctas: {{ok}} | Fallidas: {{fail}}"
   },
   "providers": {
     "add_account": "Añadir cuenta",
@@ -364,6 +369,7 @@
     "empty": "No hay resultados para ese filtro.",
     "error_title": "Error cargando Explore",
     "preview": "Vista previa",
+    "preview_dialog_title": "Vista previa: {{title}}",
     "link": "Enlazar",
     "linked_tooltip": "Ya enlazado",
     "star": "Añadir a favoritos",
@@ -828,6 +834,11 @@
     "field_prompt_content": "Contenido del prompt",
     "content_required": "El contenido es obligatorio",
     "scope_temp_session": "private · temporal durante esta sesión",
+    "add_text_title": "Añadir texto",
+    "import_url_title": "Importar URL",
+    "import_action": "Importar",
+    "new_skill_title": "Nueva skill",
+    "edit_skill_title": "Editar skill",
     "prompt_saved": "Prompt guardado",
     "prompt_save_error": "No se pudo guardar el prompt",
     "prompt_activated": "Prompt activado",

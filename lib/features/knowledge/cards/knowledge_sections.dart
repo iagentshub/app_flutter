@@ -21,7 +21,7 @@ extension _KnowledgeSections on _KnowledgePageState {
                 PrimaryButton.icon(
                   onPressed: _load,
                   icon: const Icon(Icons.refresh),
-                  label: const Text('Reintentar'),
+                  label: Text(_tx('common.retry', 'Reintentar')),
                 ),
               ],
             ),
@@ -196,7 +196,7 @@ extension _KnowledgeSections on _KnowledgePageState {
                   PrimaryButton.icon(
                     onPressed: _loadSkills,
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Reintentar'),
+                    label: Text(_tx('common.retry', 'Reintentar')),
                   ),
                 ],
               ),

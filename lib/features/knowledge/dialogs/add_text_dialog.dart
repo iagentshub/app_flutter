@@ -1,7 +1,9 @@
 part of '../pages/knowledge_page.dart';
 
 class _AddTextDialog extends StatefulWidget {
-  const _AddTextDialog();
+  const _AddTextDialog({required this.tx});
+
+  final String Function(String path, String fallback) tx;
 
   @override
   State<_AddTextDialog> createState() => _AddTextDialogState();
@@ -33,7 +35,7 @@ class _AddTextDialogState extends State<_AddTextDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Añadir texto'),
+      title: Text(widget.tx('knowledge.add_text_title', 'Añadir texto')),
       content: SizedBox(
         width: dialogContentWidth(context, 620),
         child: Form(
@@ -78,9 +80,12 @@ class _AddTextDialogState extends State<_AddTextDialog> {
       actions: [
         TertiaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
+          child: Text(widget.tx('common.cancel', 'Cancelar')),
         ),
-        PrimaryButton(onPressed: _submit, child: const Text('Guardar')),
+        PrimaryButton(
+          onPressed: _submit,
+          child: Text(widget.tx('common.save', 'Guardar')),
+        ),
       ],
     );
   }

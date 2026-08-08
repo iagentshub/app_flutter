@@ -264,7 +264,7 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
             PrimaryButton.icon(
               onPressed: _bootstrap,
               icon: const Icon(Icons.refresh),
-              label: const Text('Reintentar'),
+              label: Text(_tx('common.retry', 'Reintentar')),
             ),
           ],
         ),

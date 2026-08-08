@@ -182,7 +182,7 @@ class _ExplorePageState extends State<ExplorePage>
       await showDialog<void>(
         context: context,
         builder: (context) =>
-            _PreviewDialog(title: item.name, jsonPayload: preview),
+            _PreviewDialog(title: item.name, jsonPayload: preview, tx: _tx),
       );
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
@@ -260,7 +260,6 @@ class _ExplorePageState extends State<ExplorePage>
       if (mounted) setState(() => _busyKeys.remove(key));
     }
   }
-
 
   // ── Pestaña Usuarios ────────────────────────────────────────────────
 

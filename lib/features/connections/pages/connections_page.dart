@@ -341,10 +341,7 @@ class _ConnectionsPageState extends State<ConnectionsPage>
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        'No se pudo cambiar el estado de la conexión',
-        isError: true,
-      );
+      showMessage('No se pudo cambiar el estado de la conexión', isError: true);
     }
   }
 
@@ -486,14 +483,24 @@ class _ConnectionsPageState extends State<ConnectionsPage>
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('Test masivo (${results.length})'),
+          title: Text(
+            _tx(
+              'connections.mass_test_title',
+              'Test masivo ({{n}})',
+            ).replaceAll('{{n}}', '${results.length}'),
+          ),
           content: SizedBox(
             width: dialogContentWidth(context, 520),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Correctas: $ok | Fallidas: $fail'),
+                Text(
+                  _tx(
+                    'connections.mass_test_summary',
+                    'Correctas: {{ok}} | Fallidas: {{fail}}',
+                  ).replaceAll('{{ok}}', '$ok').replaceAll('{{fail}}', '$fail'),
+                ),
                 const SizedBox(height: 12),
                 Flexible(
                   child: ListView(
@@ -523,7 +530,7 @@ class _ConnectionsPageState extends State<ConnectionsPage>
           actions: [
             PrimaryButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cerrar'),
+              child: Text(_tx('common.close', 'Cerrar')),
             ),
           ],
         ),

@@ -2,11 +2,13 @@ part of '../pages/knowledge_page.dart';
 
 class _SkillFormDialog extends StatefulWidget {
   const _SkillFormDialog({
+    required this.tx,
     this.initial,
     this.allowPublic = true,
     this.requireQualityContent = false,
   });
 
+  final String Function(String path, String fallback) tx;
   final Map<String, dynamic>? initial;
   final bool allowPublic;
   final bool requireQualityContent;
@@ -67,7 +69,11 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.initial == null ? 'Nueva skill' : 'Editar skill'),
+      title: Text(
+        widget.initial == null
+            ? widget.tx('knowledge.new_skill_title', 'Nueva skill')
+            : widget.tx('knowledge.edit_skill_title', 'Editar skill'),
+      ),
       content: SizedBox(
         width: dialogContentWidth(context, 620),
         child: Form(
@@ -156,9 +162,12 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
       actions: [
         TertiaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
+          child: Text(widget.tx('common.cancel', 'Cancelar')),
         ),
-        PrimaryButton(onPressed: _submit, child: const Text('Guardar')),
+        PrimaryButton(
+          onPressed: _submit,
+          child: Text(widget.tx('common.save', 'Guardar')),
+        ),
       ],
     );
   }

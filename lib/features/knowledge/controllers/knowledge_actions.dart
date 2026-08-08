@@ -46,7 +46,7 @@ extension _KnowledgeActions on _KnowledgePageState {
     final allowPublic = widget.sessionController.user?.role != 'guest';
     final payload = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) => _SkillFormDialog(allowPublic: allowPublic),
+      builder: (context) => _SkillFormDialog(tx: _tx, allowPublic: allowPublic),
     );
     if (payload == null) return;
     await _saveSkill(payload);
@@ -150,6 +150,7 @@ extension _KnowledgeActions on _KnowledgePageState {
     final payload = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => _SkillFormDialog(
+        tx: _tx,
         initial: initial,
         allowPublic: allowPublic,
         requireQualityContent: true,
@@ -177,7 +178,7 @@ extension _KnowledgeActions on _KnowledgePageState {
     final payload = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) =>
-          _SkillFormDialog(initial: initial, allowPublic: allowPublic),
+          _SkillFormDialog(tx: _tx, initial: initial, allowPublic: allowPublic),
     );
     if (payload == null) return;
     payload['id'] = item.id;
@@ -218,9 +219,7 @@ extension _KnowledgeActions on _KnowledgePageState {
 
   Future<void> _deleteSkill(SkillItem item) async {
     if (item.readOnly) {
-      showMessage(
-        'Esta skill no se puede eliminar (del sistema o compartida)',
-      );
+      showMessage('Esta skill no se puede eliminar (del sistema o compartida)');
       return;
     }
     final confirm = await showConfirmActionDialog(
@@ -289,7 +288,7 @@ extension _KnowledgeActions on _KnowledgePageState {
   Future<void> _openAddTextDialog() async {
     final payload = await showDialog<Map<String, String>>(
       context: context,
-      builder: (context) => const _AddTextDialog(),
+      builder: (context) => _AddTextDialog(tx: _tx),
     );
     if (payload == null) return;
 
@@ -315,7 +314,7 @@ extension _KnowledgeActions on _KnowledgePageState {
   Future<void> _openAddUrlDialog() async {
     final payload = await showDialog<Map<String, String>>(
       context: context,
-      builder: (context) => const _AddUrlDialog(),
+      builder: (context) => _AddUrlDialog(tx: _tx),
     );
     if (payload == null) return;
 

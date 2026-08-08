@@ -1,7 +1,9 @@
 part of '../pages/knowledge_page.dart';
 
 class _AddUrlDialog extends StatefulWidget {
-  const _AddUrlDialog();
+  const _AddUrlDialog({required this.tx});
+
+  final String Function(String path, String fallback) tx;
 
   @override
   State<_AddUrlDialog> createState() => _AddUrlDialogState();
@@ -30,7 +32,7 @@ class _AddUrlDialogState extends State<_AddUrlDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Importar URL'),
+      title: Text(widget.tx('knowledge.import_url_title', 'Importar URL')),
       content: SizedBox(
         width: dialogContentWidth(context, 620),
         child: Form(
@@ -65,9 +67,12 @@ class _AddUrlDialogState extends State<_AddUrlDialog> {
       actions: [
         TertiaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
+          child: Text(widget.tx('common.cancel', 'Cancelar')),
         ),
-        PrimaryButton(onPressed: _submit, child: const Text('Importar')),
+        PrimaryButton(
+          onPressed: _submit,
+          child: Text(widget.tx('knowledge.import_action', 'Importar')),
+        ),
       ],
     );
   }
