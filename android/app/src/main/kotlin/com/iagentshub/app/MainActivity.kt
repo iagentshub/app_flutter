@@ -15,6 +15,7 @@ class MainActivity : FlutterFragmentActivity() {
         "coordinatorRedOnBlack",
         "coordinatorBlackOnRed",
         "coordinatorRedOnWhite",
+        "iaInterWhiteOnRed",
         "iaInterRedOnBlack",
         "iaInterBlackOnRed",
         "iaInterRedOnWhite",

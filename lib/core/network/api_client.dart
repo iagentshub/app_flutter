@@ -23,6 +23,7 @@ class ApiClient {
     int maxResponseBytes = 20 * 1024 * 1024,
     int maxDownloadBytes = 200 * 1024 * 1024,
     int maxStreamLineChars = 1024 * 1024,
+    this.onUnauthorized,
   }) : _client = client ?? createHttpClient(),
        _requestTimeout = requestTimeout,
        _maxResponseBytes = maxResponseBytes,
@@ -41,6 +42,12 @@ class ApiClient {
   final int _maxResponseBytes;
   final int _maxDownloadBytes;
   final int _maxStreamLineChars;
+
+  /// Se invoca cuando cualquier petición autenticada recibe un 401 (token
+  /// caducado, revocado o inválido), sea cual sea la vista que la disparó,
+  /// para que la app pueda cerrar la sesión y volver a login de forma
+  /// centralizada en vez de depender de que cada pantalla lo compruebe.
+  final VoidCallback? onUnauthorized;
 
   final ApiResponseCache _cache = ApiResponseCache();
 
@@ -398,6 +405,9 @@ class ApiClient {
   }
 
   ApiError _toApiError(ApiResponse response) {
+    if (response.statusCode == 401) {
+      onUnauthorized?.call();
+    }
     final payload = response.body;
     if (payload is Map<String, dynamic>) {
       final detail = payload['detail'];

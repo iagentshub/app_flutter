@@ -46,7 +46,7 @@ class AppSidebarRail extends StatelessWidget {
             child: InkWell(
               onTap: onExpand,
               borderRadius: BorderRadius.circular(10),
-              child: const BrandIcon(size: 34, borderRadius: 10),
+              child: const BrandIcon(size: 34),
             ),
           ),
         ),

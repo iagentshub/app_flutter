@@ -111,6 +111,10 @@ class SessionController extends ChangeNotifier {
   }
 
   Future<void> logout() async {
+    // Evita trabajo y notificaciones redundantes cuando varias peticiones
+    // en vuelo reciben un 401 casi a la vez (p. ej. una vista que dispara
+    // varias llamadas en paralelo justo cuando el token caduca).
+    if (!_isLoggedIn) return;
     _isLoggedIn = false;
     _gaToken = null;
     _user = null;

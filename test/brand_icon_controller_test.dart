@@ -26,21 +26,27 @@ void main() {
         );
   });
 
-  test('usa iA blanco sobre rojo de forma predeterminada', () async {
+  test('usa coordinator blanco sobre rojo de forma predeterminada', () async {
     final controller = await BrandIconController.bootstrap();
 
-    expect(controller.selected, BrandIconVariant.iaInterWhiteOnRed);
-    expect(controller.assetPath, 'assets/icons/ia/ia_inter_white_on_red.png');
+    expect(controller.selected, BrandIconVariant.coordinatorWhiteOnRed);
+    expect(
+      controller.assetPath,
+      'assets/icons/coordinator/coordinator_white_on_red.png',
+    );
   });
 
   test('persiste y recupera el icono seleccionado', () async {
     final controller = await BrandIconController.bootstrap();
-    await controller.select(BrandIconVariant.iaInterRedOnBlack);
+    await controller.select(BrandIconVariant.coordinatorRedOnBlack);
 
     final restored = await BrandIconController.bootstrap();
 
-    expect(restored.selected, BrandIconVariant.iaInterRedOnBlack);
-    expect(restored.assetPath, 'assets/icons/ia/ia_inter_red_on_black.png');
+    expect(restored.selected, BrandIconVariant.coordinatorRedOnBlack);
+    expect(
+      restored.assetPath,
+      'assets/icons/coordinator/coordinator_red_on_black.png',
+    );
   });
 
   test('envía la variante seleccionada al canal del icono nativo', () async {
@@ -56,19 +62,34 @@ void main() {
     final controller = await BrandIconController.bootstrap();
 
     await controller.select(BrandIconVariant.agentCoordinator);
+    await controller.select(BrandIconVariant.iaInterWhiteOnRed);
     await controller.select(BrandIconController.defaultVariant);
 
-    expect(calls, hasLength(2));
+    expect(calls, hasLength(3));
     expect(calls.first.method, 'setIcon');
     expect(calls.first.arguments, containsPair('name', 'agentCoordinator'));
+    expect(calls[1].arguments, containsPair('name', 'iaInterWhiteOnRed'));
     expect(calls.last.arguments, containsPair('name', null));
   });
 
-  test('todas las variantes apuntan a un recurso PNG único', () {
+  test('expone cinco coordinator y cuatro iA sin recursos duplicados', () {
     final paths = BrandIconVariant.values
         .map((variant) => variant.assetPath)
         .toSet();
 
+    expect(BrandIconVariant.values, hasLength(9));
+    expect(
+      BrandIconVariant.values.where(
+        (variant) => variant.assetPath.contains('/coordinator/'),
+      ),
+      hasLength(5),
+    );
+    expect(
+      BrandIconVariant.values.where(
+        (variant) => variant.assetPath.contains('/ia/'),
+      ),
+      hasLength(4),
+    );
     expect(paths, hasLength(BrandIconVariant.values.length));
     expect(paths.every((path) => path.endsWith('.png')), isTrue);
   });
@@ -80,7 +101,31 @@ void main() {
 
     final controller = await BrandIconController.bootstrap();
 
-    expect(controller.selected, BrandIconVariant.iaInterWhiteOnRed);
+    expect(controller.selected, BrandIconVariant.coordinatorWhiteOnRed);
+  });
+
+  test('recupera todas las preferencias iA guardadas', () async {
+    const variants = {
+      'iaInterWhiteOnRed': BrandIconVariant.iaInterWhiteOnRed,
+      'iaInterRedOnBlack': BrandIconVariant.iaInterRedOnBlack,
+      'iaInterBlackOnRed': BrandIconVariant.iaInterBlackOnRed,
+      'iaInterRedOnWhite': BrandIconVariant.iaInterRedOnWhite,
+    };
+
+    for (final entry in variants.entries) {
+      SharedPreferences.setMockInitialValues({
+        BrandIconController.storageKey: entry.key,
+      });
+
+      final controller = await BrandIconController.bootstrap();
+      final preferences = await SharedPreferences.getInstance();
+
+      expect(controller.selected, entry.value);
+      expect(
+        preferences.getString(BrandIconController.storageKey),
+        entry.value.name,
+      );
+    }
   });
 
   testWidgets('BrandIcon se actualiza al cambiar la preferencia', (

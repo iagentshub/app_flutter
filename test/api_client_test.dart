@@ -264,6 +264,53 @@ void main() {
   });
 
   test(
+    'invoca onUnauthorized cuando el backend responde 401, sin importar el verbo',
+    () async {
+      var unauthorizedCalls = 0;
+      final mock = MockClient(
+        (request) async => http.Response('{"detail":"expirado"}', 401),
+      );
+      final client = ApiClient(
+        backendController,
+        client: mock,
+        onUnauthorized: () => unauthorizedCalls += 1,
+      );
+      addTearDown(client.close);
+
+      await expectLater(
+        client.get('/api/items', gaToken: 'session'),
+        throwsA(isA<ApiError>()),
+      );
+      expect(unauthorizedCalls, 1);
+
+      await expectLater(
+        client.post('/api/items', gaToken: 'session', body: {}),
+        throwsA(isA<ApiError>()),
+      );
+      expect(unauthorizedCalls, 2);
+    },
+  );
+
+  test('no invoca onUnauthorized en respuestas distintas de 401', () async {
+    var unauthorizedCalls = 0;
+    final mock = MockClient(
+      (request) async => http.Response('{"detail":"prohibido"}', 403),
+    );
+    final client = ApiClient(
+      backendController,
+      client: mock,
+      onUnauthorized: () => unauthorizedCalls += 1,
+    );
+    addTearDown(client.close);
+
+    await expectLater(
+      client.get('/api/items', gaToken: 'session'),
+      throwsA(isA<ApiError>()),
+    );
+    expect(unauthorizedCalls, 0);
+  });
+
+  test(
     'no sigue redirects automáticamente en peticiones autenticadas',
     () async {
       final followRedirects = <bool>[];

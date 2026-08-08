@@ -23,10 +23,15 @@ class LaunchSplash extends StatefulWidget {
   State<LaunchSplash> createState() => _LaunchSplashState();
 }
 
-/// Las tres formas del icono del splash. `ia` es la marca canónica
-/// ("i" + "A"); `ai` es su espejo horizontal, usado como variación en el
-/// ciclo de la animación de arranque.
-enum SplashMark { ia, ai }
+/// Los tres estados de la secuencia fija de arranque.
+enum SplashMark { logo, ia, ai }
+
+const splashSequence = [
+  SplashMark.logo,
+  SplashMark.ia,
+  SplashMark.ai,
+  SplashMark.logo,
+];
 
 class _LaunchSplashState extends State<LaunchSplash>
     with TickerProviderStateMixin {
@@ -34,21 +39,13 @@ class _LaunchSplashState extends State<LaunchSplash>
   static const _initialPause = Duration(milliseconds: 140);
   static const _animationDuration = Duration(milliseconds: 1050);
   static const _finalPause = Duration(milliseconds: 260);
-
-  /// Máximo que se espera a que llegue la config de plataforma (ciclos/modo
-  /// final) antes de arrancar la animación igualmente con los valores por
-  /// defecto — un backend lento o inalcanzable no debe congelar el splash.
   static const _configTimeout = Duration(milliseconds: 400);
 
-  /// Formación inicial del icono: las líneas se trazan y el punto cae antes
-  /// de que arranque el ciclo de morph gobernado por [_controller].
   late final AnimationController _entranceController;
   late final AnimationController _controller;
 
-  /// Un ciclo = una ida y vuelta completa A→B→A del logo.
-  int _cycles = 1;
-  bool _endOnLogo = true;
-  SplashMark _targetMark = SplashMark.ia;
+  SplashMark _fromMark = SplashMark.logo;
+  SplashMark _toMark = SplashMark.ia;
 
   @override
   void initState() {
@@ -71,67 +68,44 @@ class _LaunchSplashState extends State<LaunchSplash>
     super.dispose();
   }
 
-  Future<void> _loadPlatformConfig() async {
+  Future<void> _warmPlatformCache() async {
     final apiClient = ApiClient(widget.backendController);
     final authRepository = AuthRepository(apiClient);
     try {
       final platform = await authRepository.platformPublic();
       BootPlatformCache.set(platform: platform, reachable: true);
-      if (!mounted) return;
-      _cycles = _asCycles(platform['splash_cycles']);
-      _endOnLogo = platform['splash_end_on_logo'] != false;
     } catch (_) {
       BootPlatformCache.set(platform: null, reachable: false);
     }
   }
 
-  int _asCycles(Object? value) {
-    if (value is num) return value.toInt().clamp(1, 10);
-    return 1;
-  }
-
   Future<void> _runSequence() async {
     await _entranceController.forward();
     if (!mounted) return;
-
     await Future<void>.delayed(_initialPause);
     if (!mounted) return;
 
-    // Se espera un poco a la config real (ciclos/modo final), pero sin
-    // bloquear el splash si el backend tarda o no responde — mejor arrancar
-    // con los valores por defecto que dejar la pantalla congelada.
     await Future.any([
-      _loadPlatformConfig(),
+      _warmPlatformCache(),
       Future<void>.delayed(_configTimeout),
     ]);
     if (!mounted) return;
 
-    // Instantánea local: si _loadPlatformConfig sigue en vuelo tras el
-    // timeout y termina a mitad del bucle, no debe alterar cuántas vueltas
-    // ya decidimos dar.
-    final cycles = _cycles;
-    final endOnLogo = _endOnLogo;
-    for (var i = 0; i < cycles; i++) {
-      await _playMark(SplashMark.ia);
-      if (!mounted) return;
-      await _playMark(SplashMark.ai);
-      if (!mounted) return;
-    }
-    if (endOnLogo) {
-      setState(() => _targetMark = SplashMark.ia);
-      await _controller.forward();
+    for (var index = 0; index < splashSequence.length - 1; index++) {
+      await _playTransition(splashSequence[index], splashSequence[index + 1]);
       if (!mounted) return;
     }
     await Future<void>.delayed(_finalPause);
     if (mounted) widget.onFinished();
   }
 
-  /// Una "pata" del ciclo: símbolo → [mark] → símbolo.
-  Future<void> _playMark(SplashMark mark) async {
-    setState(() => _targetMark = mark);
+  Future<void> _playTransition(SplashMark from, SplashMark to) async {
+    setState(() {
+      _fromMark = from;
+      _toMark = to;
+    });
+    _controller.reset();
     await _controller.forward();
-    if (!mounted) return;
-    await _controller.reverse();
   }
 
   @override
@@ -153,7 +127,8 @@ class _LaunchSplashState extends State<LaunchSplash>
           child: CoordinatorToIaMark(
             animation: _controller,
             entrance: _entranceController,
-            mark: _targetMark,
+            fromMark: _fromMark,
+            toMark: _toMark,
           ),
         ),
       ),
@@ -161,24 +136,22 @@ class _LaunchSplashState extends State<LaunchSplash>
   }
 }
 
-/// Transición contenida en una única superficie: el coordinador se repliega
-/// mientras la marca iA ocupa su lugar. Al compartir encuadre y color de fondo
-/// se percibe como una transformación, no como dos logos consecutivos.
+/// Superficie de marca del splash. El nombre de clase se conserva para no
+/// romper consumidores internos del painter.
 class CoordinatorToIaMark extends StatelessWidget {
   const CoordinatorToIaMark({
     required this.animation,
-    required this.mark,
+    required this.fromMark,
+    required this.toMark,
     Animation<double>? entrance,
     this.size = 124,
     super.key,
   }) : entrance = entrance ?? const AlwaysStoppedAnimation<double>(1);
 
   final Animation<double> animation;
-
-  /// Animación de formación inicial del icono (líneas trazándose y punto
-  /// cayendo). Mientras no esté completa, sustituye al morph coordinador↔iA.
   final Animation<double> entrance;
-  final SplashMark mark;
+  final SplashMark fromMark;
+  final SplashMark toMark;
   final double size;
 
   @override
@@ -190,7 +163,9 @@ class CoordinatorToIaMark extends StatelessWidget {
         dimension: size,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(size * 0.22),
+            borderRadius: BorderRadius.circular(
+              size * BrandMarkGeometry.tileCornerRadius,
+            ),
             boxShadow: const [
               BoxShadow(
                 color: FncColors.overlayMaroon40,
@@ -200,13 +175,15 @@ class CoordinatorToIaMark extends StatelessWidget {
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(size * 0.22),
+            borderRadius: BorderRadius.circular(
+              size * BrandMarkGeometry.tileCornerRadius,
+            ),
             child: ColoredBox(
               color: FncColors.red,
               child: AnimatedBuilder(
                 animation: Listenable.merge([animation, entrance]),
                 builder: (context, _) {
-                  if (entrance.value < 1.0) {
+                  if (entrance.value < 1) {
                     return CustomPaint(
                       key: const Key('splash-icon-entrance'),
                       painter: MarkEntrancePainter(progress: entrance.value),
@@ -218,7 +195,8 @@ class CoordinatorToIaMark extends StatelessWidget {
                       progress: Curves.easeInOutCubic.transform(
                         animation.value,
                       ),
-                      mark: mark,
+                      fromMark: fromMark,
+                      toMark: toMark,
                     ),
                   );
                 },
@@ -231,141 +209,93 @@ class CoordinatorToIaMark extends StatelessWidget {
   }
 }
 
-/// Formación de entrada del símbolo del coordinador: cada línea (brazos,
-/// conector, tronco) se traza serpenteando su contorno y luego se rellena de
-/// sólido, mientras el punto cae desde arriba y rebota al posarse. El último
-/// frame coincide exactamente con `progress: 0` de [CoordinatorToIaPainter],
-/// así que el relevo entre ambos painters no da salto visual.
+Path _cubicPath(Size size, BrandCubic curve) {
+  Offset point(BrandPoint value) =>
+      Offset(value.x * size.width, value.y * size.height);
+
+  final start = point(curve.start);
+  final control1 = point(curve.control1);
+  final control2 = point(curve.control2);
+  final end = point(curve.end);
+  return Path()
+    ..moveTo(start.dx, start.dy)
+    ..cubicTo(
+      control1.dx,
+      control1.dy,
+      control2.dx,
+      control2.dy,
+      end.dx,
+      end.dy,
+    );
+}
+
+Path _linePath(Size size, BrandLine line) {
+  return Path()
+    ..moveTo(line.start.x * size.width, line.start.y * size.height)
+    ..lineTo(line.end.x * size.width, line.end.y * size.height);
+}
+
+Paint _brandStroke(Size size, {double opacity = 1}) {
+  return Paint()
+    ..color = FncColors.white.withValues(alpha: opacity)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = size.shortestSide * BrandMarkGeometry.strokeWidth
+    ..strokeCap = StrokeCap.round
+    ..strokeJoin = StrokeJoin.round;
+}
+
 class MarkEntrancePainter extends CustomPainter {
   const MarkEntrancePainter({required this.progress});
 
-  /// 0..1 sobre la duración total de la entrada.
   final double progress;
 
-  /// Fracción del intervalo de cada pieza dedicada a trazar su contorno; el
-  /// resto se dedica a desvanecer ese trazo mientras aparece el relleno.
-  static const _traceFraction = 0.65;
-  static const _strokeWidthFactor = 0.032;
-
-  /// Punto de partida del punto, por encima del lienzo (fracción de alto).
-  static const _dotDropStartY = -0.35;
-
-  static const _leftInterval = Interval(0, 0.55, curve: Curves.easeInOut);
-  static const _rightInterval = Interval(0.08, 0.62, curve: Curves.easeInOut);
-  static const _stemInterval = Interval(0.20, 0.68, curve: Curves.easeInOut);
-  static const _connectorInterval = Interval(
-    0.36,
-    0.80,
-    curve: Curves.easeInOut,
-  );
-  static const _dotInterval = Interval(0.55, 1);
-
-  Offset _scaled(Size size, BrandPoint point) =>
-      Offset(point.x * size.width, point.y * size.height);
-
-  Path _polygonPath(Size size, List<BrandPoint> points) {
-    final path = Path();
-    for (var index = 0; index < points.length; index++) {
-      final offset = _scaled(size, points[index]);
-      if (index == 0) {
-        path.moveTo(offset.dx, offset.dy);
-      } else {
-        path.lineTo(offset.dx, offset.dy);
-      }
-    }
-    return path..close();
-  }
-
-  Path _rectPath(Size size, BrandRect rect, double cornerRadius) {
-    final scaledRect = Rect.fromLTRB(
-      rect.left * size.width,
-      rect.top * size.height,
-      rect.right * size.width,
-      rect.bottom * size.height,
-    );
-    return Path()
-      ..addRRect(
-        RRect.fromRectAndRadius(scaledRect, Radius.circular(cornerRadius)),
-      );
-  }
-
-  /// Traza el contorno de [path] hasta `pieceProgress`, después desvanece
-  /// ese trazo mientras aparece el relleno sólido — la "serpiente" se
-  /// convierte en la forma final.
-  void _paintSnakePiece(Canvas canvas, Size size, Path path, double pieceT) {
-    if (pieceT <= 0) return;
-    final traceT = (pieceT / _traceFraction).clamp(0.0, 1.0);
-    final fillT = ((pieceT - _traceFraction) / (1 - _traceFraction)).clamp(
-      0.0,
-      1.0,
-    );
-
-    if (traceT > 0 && fillT < 1) {
-      final metric = path.computeMetrics().first;
-      final traced = metric.extractPath(0, metric.length * traceT);
-      canvas.drawPath(
-        traced,
-        Paint()
-          ..color = FncColors.white.withValues(alpha: 1 - fillT)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = size.shortestSide * _strokeWidthFactor
-          ..strokeCap = StrokeCap.round
-          ..strokeJoin = StrokeJoin.round,
-      );
-    }
-    if (fillT > 0) {
-      canvas.drawPath(
-        path,
-        Paint()
-          ..color = FncColors.white.withValues(alpha: fillT)
-          ..style = PaintingStyle.fill,
-      );
+  void _drawPartial(Canvas canvas, Path path, Paint paint, double value) {
+    if (value <= 0) return;
+    for (final metric in path.computeMetrics()) {
+      canvas.drawPath(metric.extractPath(0, metric.length * value), paint);
     }
   }
 
   @override
   void paint(Canvas canvas, Size size) {
-    final shortestSide = size.shortestSide;
-    final cornerRadius =
-        shortestSide * BrandMarkGeometry.coordinatorCornerRadius;
-
-    _paintSnakePiece(
-      canvas,
-      size,
-      _polygonPath(size, BrandMarkGeometry.coordinatorLeft),
-      _leftInterval.transform(progress),
+    final paint = _brandStroke(size);
+    final armsT = Curves.easeInOut.transform(
+      const Interval(0, 0.72).transform(progress),
     );
-    _paintSnakePiece(
-      canvas,
-      size,
-      _polygonPath(size, BrandMarkGeometry.coordinatorRight),
-      _rightInterval.transform(progress),
+    final stemT = Curves.easeOut.transform(
+      const Interval(0.18, 0.78).transform(progress),
     );
-    _paintSnakePiece(
+    _drawPartial(
       canvas,
-      size,
-      _rectPath(size, BrandMarkGeometry.coordinatorConnector, cornerRadius),
-      _connectorInterval.transform(progress),
+      _cubicPath(size, BrandMarkGeometry.coordinatorLeft),
+      paint,
+      armsT,
     );
-    _paintSnakePiece(
+    _drawPartial(
       canvas,
-      size,
-      _rectPath(size, BrandMarkGeometry.coordinatorStem, cornerRadius),
-      _stemInterval.transform(progress),
+      _cubicPath(size, BrandMarkGeometry.coordinatorRight),
+      paint,
+      armsT,
+    );
+    _drawPartial(
+      canvas,
+      _linePath(size, BrandMarkGeometry.coordinatorStem),
+      paint,
+      stemT,
     );
 
     final dotT = Curves.bounceOut.transform(
-      _dotInterval.transform(progress),
+      const Interval(0.55, 1).transform(progress),
     );
     if (dotT > 0) {
-      final dotStart = Offset(
+      final start = Offset(size.width * 0.5, -size.height * 0.2);
+      final end = Offset(
         BrandMarkGeometry.coordinatorDot.x * size.width,
-        _dotDropStartY * size.height,
+        BrandMarkGeometry.coordinatorDot.y * size.height,
       );
-      final dotEnd = _scaled(size, BrandMarkGeometry.coordinatorDot);
       canvas.drawCircle(
-        Offset.lerp(dotStart, dotEnd, dotT)!,
-        shortestSide * BrandMarkGeometry.coordinatorDotRadius,
+        Offset.lerp(start, end, dotT)!,
+        size.shortestSide * BrandMarkGeometry.coordinatorDotRadius,
         Paint()..color = FncColors.white,
       );
     }
@@ -376,149 +306,106 @@ class MarkEntrancePainter extends CustomPainter {
       oldDelegate.progress != progress;
 }
 
-/// Morph vectorial con correspondencia entre trazos:
-/// punto → punto de la i, tronco → cuerpo de la i y brazos → patas de la A.
 class CoordinatorToIaPainter extends CustomPainter {
-  const CoordinatorToIaPainter({required this.progress, required this.mark});
+  const CoordinatorToIaPainter({
+    required this.progress,
+    required this.fromMark,
+    required this.toMark,
+  });
 
   final double progress;
-  final SplashMark mark;
+  final SplashMark fromMark;
+  final SplashMark toMark;
 
-  List<BrandPoint> get _targetLeft => mark == SplashMark.ia
-      ? BrandMarkGeometry.iaLeft
-      : BrandMarkGeometry.aiLeft;
-  List<BrandPoint> get _targetRight => mark == SplashMark.ia
-      ? BrandMarkGeometry.iaRight
-      : BrandMarkGeometry.aiRight;
-  BrandRect get _targetConnector => mark == SplashMark.ia
-      ? BrandMarkGeometry.iaConnector
-      : BrandMarkGeometry.aiConnector;
-  BrandRect get _targetStem => mark == SplashMark.ia
-      ? BrandMarkGeometry.iaStem
-      : BrandMarkGeometry.aiStem;
-  BrandPoint get _targetDot => mark == SplashMark.ia
-      ? BrandMarkGeometry.iaDot
-      : BrandMarkGeometry.aiDot;
-  double get _targetDotRadius => mark == SplashMark.ia
-      ? BrandMarkGeometry.iaDotRadius
-      : BrandMarkGeometry.aiDotRadius;
+  BrandCubic _left(SplashMark mark) => switch (mark) {
+    SplashMark.logo => BrandMarkGeometry.coordinatorLeft,
+    SplashMark.ia => BrandMarkGeometry.iaLeft,
+    SplashMark.ai => BrandMarkGeometry.aiLeft,
+  };
 
-  Offset _point(Size size, BrandPoint start, BrandPoint end) {
-    return Offset.lerp(
-      Offset(start.x * size.width, start.y * size.height),
-      Offset(end.x * size.width, end.y * size.height),
-      progress,
-    )!;
-  }
+  BrandCubic _right(SplashMark mark) => switch (mark) {
+    SplashMark.logo => BrandMarkGeometry.coordinatorRight,
+    SplashMark.ia => BrandMarkGeometry.iaRight,
+    SplashMark.ai => BrandMarkGeometry.aiRight,
+  };
 
-  Rect _rect(Size size, BrandRect start, BrandRect end) {
-    final normalized = Rect.lerp(
-      Rect.fromLTRB(start.left, start.top, start.right, start.bottom),
-      Rect.fromLTRB(end.left, end.top, end.right, end.bottom),
-      progress,
-    )!;
-    return Rect.fromLTRB(
-      normalized.left * size.width,
-      normalized.top * size.height,
-      normalized.right * size.width,
-      normalized.bottom * size.height,
+  BrandLine _stem(SplashMark mark) => switch (mark) {
+    SplashMark.logo => BrandMarkGeometry.coordinatorStem,
+    SplashMark.ia => BrandMarkGeometry.iaStem,
+    SplashMark.ai => BrandMarkGeometry.aiStem,
+  };
+
+  BrandLine _connector(SplashMark mark) => switch (mark) {
+    SplashMark.logo => BrandMarkGeometry.coordinatorConnector,
+    SplashMark.ia => BrandMarkGeometry.iaConnector,
+    SplashMark.ai => BrandMarkGeometry.aiConnector,
+  };
+
+  BrandPoint _dot(SplashMark mark) => switch (mark) {
+    SplashMark.logo => BrandMarkGeometry.coordinatorDot,
+    SplashMark.ia => BrandMarkGeometry.iaDot,
+    SplashMark.ai => BrandMarkGeometry.aiDot,
+  };
+
+  double _dotRadius(SplashMark mark) => mark == SplashMark.logo
+      ? BrandMarkGeometry.coordinatorDotRadius
+      : BrandMarkGeometry.letterDotRadius;
+
+  BrandPoint _point(BrandPoint start, BrandPoint end) {
+    return BrandPoint(
+      start.x + ((end.x - start.x) * progress),
+      start.y + ((end.y - start.y) * progress),
     );
   }
 
-  void _drawPolygon(
-    Canvas canvas,
-    Size size,
-    Paint paint,
-    List<BrandPoint> start,
-    List<BrandPoint> end,
-  ) {
-    assert(start.length == end.length);
-    final path = Path();
-    for (var index = 0; index < start.length; index++) {
-      final point = _point(size, start[index], end[index]);
-      if (index == 0) {
-        path.moveTo(point.dx, point.dy);
-      } else {
-        path.lineTo(point.dx, point.dy);
-      }
-    }
-    canvas.drawPath(path..close(), paint);
+  BrandCubic _curve(BrandCubic start, BrandCubic end) {
+    return BrandCubic(
+      _point(start.start, end.start),
+      _point(start.control1, end.control1),
+      _point(start.control2, end.control2),
+      _point(start.end, end.end),
+    );
+  }
+
+  BrandLine _line(BrandLine start, BrandLine end) {
+    return BrandLine(
+      _point(start.start, end.start),
+      _point(start.end, end.end),
+    );
   }
 
   @override
   void paint(Canvas canvas, Size size) {
-    final shortestSide = size.shortestSide;
-    final fillPaint = Paint()
-      ..color = FncColors.white
-      ..style = PaintingStyle.fill;
+    final stroke = _brandStroke(size);
+    canvas
+      ..drawPath(
+        _cubicPath(size, _curve(_left(fromMark), _left(toMark))),
+        stroke,
+      )
+      ..drawPath(
+        _cubicPath(size, _curve(_right(fromMark), _right(toMark))),
+        stroke,
+      )
+      ..drawPath(_linePath(size, _line(_stem(fromMark), _stem(toMark))), stroke)
+      ..drawPath(
+        _linePath(size, _line(_connector(fromMark), _connector(toMark))),
+        stroke,
+      );
 
-    _drawPolygon(
-      canvas,
-      size,
-      fillPaint,
-      BrandMarkGeometry.coordinatorLeft,
-      _targetLeft,
-    );
-
-    _drawPolygon(
-      canvas,
-      size,
-      fillPaint,
-      BrandMarkGeometry.coordinatorRight,
-      _targetRight,
-    );
-
-    final connectorRect = _rect(
-      size,
-      BrandMarkGeometry.coordinatorConnector,
-      _targetConnector,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        connectorRect,
-        Radius.circular(
-          shortestSide *
-              BrandMarkGeometry.coordinatorCornerRadius *
-              (1 - progress),
-        ),
-      ),
-      fillPaint,
-    );
-
-    final stemRect = _rect(
-      size,
-      BrandMarkGeometry.coordinatorStem,
-      _targetStem,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        stemRect,
-        Radius.circular(
-          shortestSide *
-              BrandMarkGeometry.coordinatorCornerRadius *
-              (1 - progress),
-        ),
-      ),
-      fillPaint,
-    );
-
-    final dotCenter = _point(
-      size,
-      BrandMarkGeometry.coordinatorDot,
-      _targetDot,
-    );
+    final dot = _point(_dot(fromMark), _dot(toMark));
+    final fromDotRadius = _dotRadius(fromMark);
+    final dotRadius =
+        fromDotRadius + ((_dotRadius(toMark) - fromDotRadius) * progress);
     canvas.drawCircle(
-      dotCenter,
-      shortestSide *
-          (BrandMarkGeometry.coordinatorDotRadius -
-              ((BrandMarkGeometry.coordinatorDotRadius - _targetDotRadius) *
-                  progress)),
-      fillPaint,
+      Offset(dot.x * size.width, dot.y * size.height),
+      dotRadius * size.shortestSide,
+      Paint()..color = FncColors.white,
     );
   }
 
   @override
-  bool shouldRepaint(CoordinatorToIaPainter oldDelegate) {
-    return oldDelegate.progress != progress || oldDelegate.mark != mark;
-  }
+  bool shouldRepaint(CoordinatorToIaPainter oldDelegate) =>
+      oldDelegate.progress != progress ||
+      oldDelegate.fromMark != fromMark ||
+      oldDelegate.toMark != toMark;
 }

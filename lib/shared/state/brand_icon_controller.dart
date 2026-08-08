@@ -36,7 +36,7 @@ enum BrandIconVariant {
   };
 
   String? get nativeIconName =>
-      this == BrandIconVariant.iaInterWhiteOnRed ? null : name;
+      this == BrandIconVariant.coordinatorWhiteOnRed ? null : name;
 }
 
 /// Preferencia local de identidad visual y sincronización con el icono nativo
@@ -45,7 +45,7 @@ class BrandIconController extends ChangeNotifier {
   BrandIconController._(this._selected);
 
   static const storageKey = 'brand_icon';
-  static const defaultVariant = BrandIconVariant.iaInterWhiteOnRed;
+  static const defaultVariant = BrandIconVariant.coordinatorWhiteOnRed;
 
   BrandIconVariant _selected;
 
