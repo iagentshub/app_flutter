@@ -86,7 +86,7 @@ class _ShareToGroupDialogState extends State<_ShareToGroupDialog> {
     try {
       final results = await Future.wait([
         LocaleLoader.load(
-          isEnglish: widget.localeController.isEnglish,
+          languageCode: widget.localeController.languageCode,
           namespace: 'resources',
         ),
         _managerRepository.listGroups(widget.token),

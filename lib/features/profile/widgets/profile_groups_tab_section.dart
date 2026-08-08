@@ -5,10 +5,10 @@ extension _ProfileGroupsTabSection on _ProfilePageState {
     final token = _controller.token;
     if (token == null || token.isEmpty) return const SizedBox.shrink();
     return ProfileGroupsSection(
-      apiClient: widget.apiClient,
+      apiClient: _services.apiClient,
       token: token,
       currentUsername: bundle.session.username,
-      localeController: widget.localeController,
+      localeController: _services.localeController,
     );
   }
 }

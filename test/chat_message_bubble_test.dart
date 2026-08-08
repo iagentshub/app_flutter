@@ -105,7 +105,7 @@ void main() {
     testWidgets('el indicador de "pensando" no ofrece el menú contextual', (
       tester,
     ) async {
-      final message = ChatMessage(role: 'assistant', content: '');
+      const message = ChatMessage(role: 'assistant', content: '');
 
       await tester.pumpWidget(
         _host(

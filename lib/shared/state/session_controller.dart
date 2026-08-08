@@ -77,6 +77,18 @@ class SessionController extends ChangeNotifier {
   String? get gaToken => _gaToken;
   SessionUser? get user => _user;
 
+  /// Cambia con cada login y cada logout, además de con la cuenta.
+  int _epoch = 0;
+
+  /// Identidad de la sesión activa, para claves de caché.
+  ///
+  /// No sirve el token: en web `extractGaToken` devuelve siempre la misma
+  /// constante porque la cookie real es HttpOnly y la app no la ve, así que
+  /// una clave construida con él vale lo mismo para todas las cuentas. Este
+  /// valor sí cambia al cambiar de usuario, también en web.
+  String get cacheIdentity =>
+      _isLoggedIn ? '${_user?.username ?? ''}#$_epoch' : 'anon#$_epoch';
+
   /// [remember] controla si la sesión sobrevive a reiniciar la app. Si es
   /// false (invitado, o "recordar cuenta" desmarcado en login), la sesión
   /// vive solo en memoria durante esta ejecución y se limpia cualquier
@@ -89,6 +101,7 @@ class SessionController extends ChangeNotifier {
     _gaToken = token;
     _user = user;
     _isLoggedIn = true;
+    _epoch += 1;
 
     final prefs = await LocalStore.instance();
     if (remember) {
@@ -118,6 +131,7 @@ class SessionController extends ChangeNotifier {
     _isLoggedIn = false;
     _gaToken = null;
     _user = null;
+    _epoch += 1;
 
     final prefs = await LocalStore.instance();
     await _deleteSecureToken();

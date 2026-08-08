@@ -1,5 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:app_flutter/core/config/backend_url.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 // ── Tabla compartida con la extensión de VS Code ──────────────────────────────
 // Los MISMOS casos están en vs_code/src/test/url.test.ts. Si los dos clientes
@@ -62,7 +62,10 @@ void main() {
         BackendUrl.normalize('http://192.168.1.50:8765'),
         'http://192.168.1.50:8765',
       );
-      expect(BackendUrl.normalize('http://hub.local:8765'), 'http://hub.local:8765');
+      expect(
+        BackendUrl.normalize('http://hub.local:8765'),
+        'http://hub.local:8765',
+      );
     });
 
     test('rechaza http hacia internet', () {
@@ -89,7 +92,10 @@ void main() {
     });
 
     test('no distingue mayúsculas', () {
-      expect(BackendUrl.normalize('HTTP://LOCALHOST:8765'), 'http://localhost:8765');
+      expect(
+        BackendUrl.normalize('HTTP://LOCALHOST:8765'),
+        'http://localhost:8765',
+      );
     });
 
     test('la cadena vacía no es una URL', () {

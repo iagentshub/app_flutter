@@ -1,7 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-
-import '../../../shared/widgets/buttons/app_buttons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/router/external_router.dart';
@@ -11,6 +9,7 @@ import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_error.dart';
 import '../../../shared/i18n/locale_loader.dart';
 import '../../../shared/state/locale_controller.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../utils/validators.dart';
 import '../repositories/auth_repository.dart';
 
@@ -40,7 +39,8 @@ class _RegisterPageState extends State<RegisterPage> {
   String? _message;
   late Future<Map<String, dynamic>> _textsFuture;
 
-  bool get _isEnglish => widget.localeController.isEnglish;
+  String get _languageCode => widget.localeController.languageCode;
+  bool get _isEnglish => _languageCode == 'en';
 
   /// Las páginas legales las sirve React en la raíz del mismo origen, fuera de
   /// /app/, así que son navegación del navegador y no una ruta de GoRouter.
@@ -57,19 +57,22 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   void initState() {
     super.initState();
-    _textsFuture = LocaleLoader.load(isEnglish: _isEnglish, namespace: 'auth');
+    _textsFuture = LocaleLoader.load(
+      languageCode: _languageCode,
+      namespace: 'auth',
+    );
     widget.localeController.addListener(_onLocaleChanged);
     _loadPlatformSettings();
   }
 
   void _onLocaleChanged() {
     if (!mounted) return;
-    setState(
-      () => _textsFuture = LocaleLoader.load(
-        isEnglish: _isEnglish,
+    setState(() {
+      _textsFuture = LocaleLoader.load(
+        languageCode: _languageCode,
         namespace: 'auth',
-      ),
-    );
+      );
+    });
   }
 
   @override

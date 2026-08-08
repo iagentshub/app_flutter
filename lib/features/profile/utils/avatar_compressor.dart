@@ -40,7 +40,9 @@ AvatarCompressionResult compressAvatarBytes(AvatarCompressionInput input) {
     throw AvatarCompressionException('No se pudo decodificar la imagen');
   }
 
-  final longestSide = decoded.width > decoded.height ? decoded.width : decoded.height;
+  final longestSide = decoded.width > decoded.height
+      ? decoded.width
+      : decoded.height;
   final resized = longestSide > input.maxDimension
       ? img.copyResize(
           decoded,

@@ -362,9 +362,9 @@ class AgentBuilderController extends ChangeNotifier {
   }
 
   void stop() {
-    final subscription = _subscription;
+    final cancellation = _subscription?.cancel();
     _subscription = null;
-    if (subscription != null) unawaited(subscription.cancel());
+    if (cancellation != null) unawaited(cancellation);
     final completer = _sendCompleter;
     _sendCompleter = null;
     if (completer != null && !completer.isCompleted) completer.complete();
@@ -403,9 +403,9 @@ class AgentBuilderController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
-    final subscription = _subscription;
+    final cancellation = _subscription?.cancel();
     _subscription = null;
-    if (subscription != null) unawaited(subscription.cancel());
+    if (cancellation != null) unawaited(cancellation);
     final completer = _sendCompleter;
     _sendCompleter = null;
     if (completer != null && !completer.isCompleted) completer.complete();

@@ -58,11 +58,11 @@ extension _AgentsPageView on _AgentsPageState {
                   AppIconButton.outlined(
                     onPressed: () => showGroupFilterDialog(
                       context,
-                      apiClient: widget.apiClient,
+                      apiClient: _services.apiClient,
                       token: _token ?? '',
                       activeGroupId: _activeGroupId,
                       onSelect: _onGroupSelect,
-                      localeController: widget.localeController,
+                      localeController: _services.localeController,
                     ),
                     icon: const Icon(Icons.groups_outlined),
                     tooltip: _tx('groups.toggle_tooltip', 'Grupos'),
@@ -84,20 +84,39 @@ extension _AgentsPageView on _AgentsPageState {
           if (filteredAgents.isEmpty)
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              // Dos situaciones distintas que antes se veían igual: no haber
+              // creado nada todavía —donde la salida es crear el primero— y
+              // una búsqueda sin resultados, que no se arregla creando nada.
               sliver: SliverToBoxAdapter(
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      _agents.isEmpty
-                          ? _tx('agents.empty', 'No hay agentes disponibles.')
-                          : _tx(
-                              'agents.empty_search',
-                              'Sin resultados para esa búsqueda.',
-                            ),
-                    ),
-                  ),
-                ),
+                child: _agents.isEmpty
+                    ? AsyncStatePanel.empty(
+                        padding: EdgeInsets.zero,
+                        icon: Icons.smart_toy_outlined,
+                        title: _tx('agents.empty_title', 'Todavía sin agentes'),
+                        message: _tx(
+                          'agents.empty',
+                          'Un agente combina un modelo, sus instrucciones y el '
+                              'conocimiento que le des.',
+                        ),
+                        actionLabel: _tx(
+                          'agents.empty_action',
+                          'Crear el primero',
+                        ),
+                        onAction: _openCreateChoiceDialog,
+                      )
+                    : AsyncStatePanel.empty(
+                        padding: EdgeInsets.zero,
+                        icon: Icons.search_off,
+                        title: _tx(
+                          'agents.empty_search_title',
+                          'Sin resultados',
+                        ),
+                        message: _tx(
+                          'agents.empty_search',
+                          'Ningún agente coincide con esa búsqueda o esos '
+                              'filtros.',
+                        ),
+                      ),
               ),
             )
           else

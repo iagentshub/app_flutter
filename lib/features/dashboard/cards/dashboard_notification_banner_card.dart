@@ -18,7 +18,11 @@ class _NotificationBannerCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.campaign_outlined, color: colors.onPrimaryContainer, size: 20),
+            Icon(
+              Icons.campaign_outlined,
+              color: colors.onPrimaryContainer,
+              size: 20,
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(

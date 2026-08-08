@@ -101,12 +101,12 @@ extension _ConnectionsPageView on _ConnectionsPageState {
                             AppIconButton.outlined(
                               onPressed: () => showGroupFilterDialog(
                                 context,
-                                apiClient: widget.apiClient,
+                                apiClient: _services.apiClient,
                                 token: _controller.token ?? '',
                                 activeGroupId: _controller.activeGroupId,
                                 onSelect: (groupId) =>
                                     unawaited(_controller.selectGroup(groupId)),
-                                localeController: widget.localeController,
+                                localeController: _services.localeController,
                               ),
                               icon: const Icon(Icons.groups_outlined),
                               tooltip: _tx('groups.toggle_tooltip', 'Grupos'),

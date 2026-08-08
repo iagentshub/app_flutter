@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_fonts.dart';
-import '../../../shared/widgets/buttons/app_buttons.dart';
-
 import '../../../models/connections/connection_models.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/buttons/overflow_menu_button.dart';
 import '../../../shared/widgets/inactive_badge.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/origin_badge.dart';
@@ -55,6 +55,46 @@ class ConnectionCard extends StatelessWidget {
   /// Sincronizar con el hub remoto (solo conexiones tipo `iagentshub`).
   /// Null = acción no disponible (no es una conexión de este tipo).
   final VoidCallback? onSyncHub;
+
+  /// Igual que en `AgentCard`: la fila de acciones no cabía a ancho de móvil
+  /// —el botón de sincronizar la hacía desbordar 240 px— y lo que quedaba
+  /// fuera no se podía pulsar. Probar y editar siguen a la vista; el resto
+  /// entra en el menú.
+  List<OverflowMenuAction> _overflowActions() {
+    return [
+      if (onSyncHub != null)
+        OverflowMenuAction(
+          icon: Icons.sync,
+          label: tx('connections.sync_hub', 'Sincronizar'),
+          onSelected: onSyncHub!,
+        ),
+      OverflowMenuAction(
+        icon: Icons.group_add_outlined,
+        label: tx('common.share_group', 'Compartir con grupo'),
+        onSelected: onShare,
+        // Una conexión virtual (la comparte otro) no es de nadie aquí: no se
+        // puede volver a compartir.
+        enabled: !item.isVirtual,
+      ),
+      if (onToggleActive != null)
+        OverflowMenuAction(
+          icon: item.isActive
+              ? Icons.toggle_on_outlined
+              : Icons.toggle_off_outlined,
+          label: item.isActive
+              ? tx('common.deactivate', 'Desactivar')
+              : tx('common.activate', 'Activar'),
+          onSelected: onToggleActive!,
+        ),
+      OverflowMenuAction(
+        icon: Icons.delete_outline,
+        label: tx('common.delete', 'Eliminar'),
+        onSelected: onDelete,
+        danger: true,
+        separatedBefore: true,
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -149,40 +189,15 @@ class ConnectionCard extends StatelessWidget {
                   icon: const Icon(Icons.health_and_safety_outlined),
                   label: Text(tx('connections.test', 'Test')),
                 ),
-                if (onSyncHub != null) ...[
-                  const SizedBox(width: 8),
-                  SecondaryButton.icon(
-                    onPressed: onSyncHub,
-                    icon: const Icon(Icons.sync),
-                    label: Text(tx('connections.sync_hub', 'Sincronizar')),
-                  ),
-                ],
                 const Spacer(),
-                ActionIconButton(
-                  icon: Icons.group_add_outlined,
-                  tooltip: tx('common.share_group', 'Compartir con grupo'),
-                  onPressed: item.isVirtual ? null : onShare,
-                ),
                 ActionIconButton(
                   icon: Icons.edit_outlined,
                   tooltip: tx('common.edit', 'Editar'),
                   onPressed: onEdit,
                 ),
-                if (onToggleActive != null)
-                  ActionIconButton(
-                    icon: item.isActive
-                        ? Icons.toggle_on_outlined
-                        : Icons.toggle_off_outlined,
-                    tooltip: item.isActive
-                        ? tx('common.deactivate', 'Desactivar')
-                        : tx('common.activate', 'Activar'),
-                    onPressed: onToggleActive,
-                  ),
-                ActionIconButton(
-                  icon: Icons.delete_outline,
-                  tooltip: tx('common.delete', 'Eliminar'),
-                  danger: true,
-                  onPressed: onDelete,
+                OverflowMenuButton(
+                  tooltip: tx('common.more_actions', 'Más acciones'),
+                  actions: _overflowActions(),
                 ),
               ],
             ),
@@ -192,6 +207,6 @@ class ConnectionCard extends StatelessWidget {
     );
 
     if (item.isActive) return card;
-    return Opacity(opacity: 0.6, child: card);
+    return dimmedWhenInactive(context, card);
   }
 }

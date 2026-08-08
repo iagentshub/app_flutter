@@ -13,11 +13,10 @@ import '../../core/network/api_client.dart';
 import '../../features/auth/repositories/auth_repository.dart';
 import '../../models/dashboard/dashboard_widget_config.dart';
 import '../../models/dashboard/dashboard_widget_registry.dart';
-import '../i18n/locale_loader.dart';
+import '../i18n/translated_texts.dart';
 import '../navigation/shell_navigation.dart';
+import '../state/app_services_scope.dart';
 import '../state/dashboard_edit_state.dart';
-import '../state/locale_controller.dart';
-import '../state/session_controller.dart';
 import '../state/theme_controller.dart';
 import 'brand_icon.dart';
 import 'terminal_view_transition.dart';
@@ -40,22 +39,16 @@ const _drawerWidth = 304.0;
 
 class AppShell extends StatefulWidget {
   const AppShell({
-    required this.sessionController,
     required this.authRepository,
     required this.dashboardEditState,
-    required this.localeController,
-    required this.apiClient,
     required this.contentNavigatorKey,
     required this.location,
     required this.child,
     super.key,
   });
 
-  final SessionController sessionController;
   final AuthRepository authRepository;
   final DashboardEditState dashboardEditState;
-  final LocaleController localeController;
-  final ApiClient apiClient;
   final GlobalKey<NavigatorState> contentNavigatorKey;
   final String location;
   final Widget child;
@@ -65,7 +58,17 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
-  Map<String, dynamic> _texts = const {};
+  /// Servicios globales (cliente HTTP, sesión, idioma): los aporta el
+  /// AppServicesScope montado en App, no el router.
+  late final _services = AppServicesScope.of(context);
+
+  /// `TranslatedTexts` se escribió precisamente para no repetir aquí el
+  /// «_loadTexts en initState + listener de cambio de idioma», pero el
+  /// AppShell —el fichero que dio nombre al problema— se había quedado con el
+  /// patrón antiguo. Además es el widget más persistente de la app: cada
+  /// cambio de idioma hacía un setState sobre todo el layout en lugar de
+  /// repintar el ListenableBuilder acotado que da el helper.
+  late final TranslatedTexts _t;
   bool _sidebarCollapsed = false;
 
   bool _billingEnabled = false;
@@ -74,7 +77,10 @@ class _AppShellState extends State<AppShell> {
   @override
   void initState() {
     super.initState();
-    _loadTexts();
+    _t = TranslatedTexts(
+      localeController: _services.localeController,
+      namespace: 'nav',
+    );
     _loadPlatformFlags();
     // billing_enabled lo puede cambiar un admin en cualquier momento durante
     // una sesión ya abierta — sin este refresco periódico, un usuario con la
@@ -83,13 +89,12 @@ class _AppShellState extends State<AppShell> {
       const Duration(minutes: 5),
       (_) => _loadPlatformFlags(),
     );
-    widget.localeController.addListener(_onLocaleChanged);
   }
 
   @override
   void dispose() {
     _platformFlagsTimer?.cancel();
-    widget.localeController.removeListener(_onLocaleChanged);
+    _t.dispose();
     super.dispose();
   }
 
@@ -105,19 +110,7 @@ class _AppShellState extends State<AppShell> {
     }
   }
 
-  void _onLocaleChanged() => _loadTexts();
-
-  Future<void> _loadTexts() async {
-    final texts = await LocaleLoader.load(
-      isEnglish: widget.localeController.isEnglish,
-      namespace: 'nav',
-    );
-    if (!mounted) return;
-    setState(() => _texts = texts);
-  }
-
-  String _tx(String key, String fallback) =>
-      LocaleLoader.text(_texts, key, fallback: fallback);
+  String _tx(String key, String fallback) => _t.text(key, fallback: fallback);
 
   Future<void> _openPublicRoute(String path) async {
     await launchUrl(
@@ -161,12 +154,12 @@ class _AppShellState extends State<AppShell> {
     );
     if (confirm != true) return;
 
-    final token = widget.sessionController.gaToken;
+    final token = _services.sessionController.gaToken;
     if (token != null && token.isNotEmpty) {
       await widget.authRepository.logout(token);
     }
-    await widget.sessionController.logout();
-    widget.apiClient.invalidateCache();
+    await _services.sessionController.logout();
+    _services.apiClient.invalidateCache();
     try {
       final platform = await widget.authRepository.platformPublic();
       await themeController.syncFromBackend(
@@ -189,9 +182,11 @@ class _AppShellState extends State<AppShell> {
     // cambia el RouteMatchList, no cuando sessionController.notifyListeners()
     // se dispara estando en la misma pantalla.
     return ListenableBuilder(
-      listenable: widget.sessionController,
+      // Los textos van en la misma escucha que la sesión: al cambiar de
+      // idioma solo se repinta este subárbol.
+      listenable: Listenable.merge([_services.sessionController, _t]),
       builder: (context, _) {
-        final isAdmin = widget.sessionController.user?.role == 'admin';
+        final isAdmin = _services.sessionController.user?.role == 'admin';
         final location = widget.location;
 
         return ListenableBuilder(
@@ -203,18 +198,19 @@ class _AppShellState extends State<AppShell> {
                 final navContent = widget.dashboardEditState.editing
                     ? _WidgetPickerDrawerContent(
                         state: widget.dashboardEditState,
-                        t: _texts,
+                        tx: _tx,
                       )
                     : AppSidebarNavigation(
                         isAdmin: isAdmin,
                         location: location,
                         username:
-                            widget.sessionController.user?.username ??
+                            _services.sessionController.user?.username ??
                             'Usuario',
-                        displayName: widget.sessionController.user?.displayName,
-                        email: widget.sessionController.user?.email,
-                        role: widget.sessionController.user?.role ?? 'user',
-                        isEnglish: widget.localeController.isEnglish,
+                        displayName:
+                            _services.sessionController.user?.displayName,
+                        email: _services.sessionController.user?.email,
+                        role: _services.sessionController.user?.role ?? 'user',
+                        languageCode: _services.localeController.languageCode,
                         billingEnabled: _billingEnabled,
                         tx: _tx,
                         showCloseButton: !wide,
@@ -228,11 +224,11 @@ class _AppShellState extends State<AppShell> {
                       );
 
                 final body = ListenableBuilder(
-                  listenable: widget.apiClient.backendController,
+                  listenable: _services.apiClient.backendController,
                   builder: (context, _) => Column(
                     children: [
                       _ConnectionIssueBanner(
-                        apiClient: widget.apiClient,
+                        apiClient: _services.apiClient,
                         tx: _tx,
                       ),
                       Expanded(
@@ -271,17 +267,20 @@ class _AppShellState extends State<AppShell> {
                                   ? AppSidebarRail(
                                       isAdmin: isAdmin,
                                       role:
-                                          widget.sessionController.user?.role ??
+                                          _services
+                                              .sessionController
+                                              .user
+                                              ?.role ??
                                           'user',
                                       location: location,
                                       initial: sidebarAvatarInitial(
                                         sidebarVisibleName(
-                                          widget
+                                          _services
                                                   .sessionController
                                                   .user
                                                   ?.username ??
                                               'Usuario',
-                                          widget
+                                          _services
                                               .sessionController
                                               .user
                                               ?.displayName,
@@ -306,7 +305,7 @@ class _AppShellState extends State<AppShell> {
                           child: Column(
                             children: [
                               _ShellTopBar(
-                                title: _titleForLocation(location, _texts),
+                                title: _titleForLocation(location, _tx),
                               ),
                               Expanded(child: body),
                             ],
@@ -322,7 +321,7 @@ class _AppShellState extends State<AppShell> {
                     toolbarHeight: 68,
                     titleSpacing: 4,
                     title: Text(
-                      _titleForLocation(location, _texts),
+                      _titleForLocation(location, _tx),
                       style: const TextStyle(
                         fontSize: FncFonts.size18,
                         fontWeight: FontWeight.w700,

@@ -6,11 +6,11 @@ extension _AgentsPageActions on _AgentsPageState {
     if (token == null || token.isEmpty) return;
     await showShareToGroupDialog(
       context: context,
-      apiClient: widget.apiClient,
+      apiClient: _services.apiClient,
       token: token,
       resourceType: 'agent',
       resourceId: item.id,
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       onShared: _load,
     );
   }
@@ -20,11 +20,11 @@ extension _AgentsPageActions on _AgentsPageState {
     if (token == null || token.isEmpty) return;
     await showResourceHistoryDialog(
       context: context,
-      apiClient: widget.apiClient,
+      apiClient: _services.apiClient,
       token: token,
       resourceType: 'agent',
       resourceId: item.id,
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       onRestored: _load,
     );
   }
@@ -34,8 +34,11 @@ extension _AgentsPageActions on _AgentsPageState {
     if (token == null || token.isEmpty) return;
     final payload = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) =>
-          AgentFormDialog(apiClient: widget.apiClient, token: token, tx: _tx),
+      builder: (context) => AgentFormDialog(
+        apiClient: _services.apiClient,
+        token: token,
+        tx: _tx,
+      ),
     );
     if (payload == null) return;
     await _saveAgent(payload);
@@ -137,7 +140,7 @@ extension _AgentsPageActions on _AgentsPageState {
 
     // Los agentes públicos de CUALQUIER usuario se descubren vía Explore
     // (/api/agents?scope=X para un usuario normal solo devuelve los tuyos).
-    final exploreRepository = ExploreRepository(apiClient: widget.apiClient);
+    final exploreRepository = ExploreRepository(apiClient: _services.apiClient);
     List<ExploreItem> publicAgents;
     try {
       publicAgents = await exploreRepository.listResources(
@@ -213,7 +216,7 @@ extension _AgentsPageActions on _AgentsPageState {
     final payload = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => AgentFormDialog(
-        apiClient: widget.apiClient,
+        apiClient: _services.apiClient,
         token: currentToken,
         initial: template,
         tx: _tx,
@@ -225,7 +228,12 @@ extension _AgentsPageActions on _AgentsPageState {
 
   Future<void> _openEditDialog(AgentItem item) async {
     if (item.readOnly) {
-      showMessage('Este agente no es editable (público o compartido)');
+      showMessage(
+        _tx(
+          'agents.msg_not_editable',
+          'Este agente no es editable (público o compartido)',
+        ),
+      );
       return;
     }
 
@@ -241,7 +249,7 @@ extension _AgentsPageActions on _AgentsPageState {
     final payload = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => AgentFormDialog(
-        apiClient: widget.apiClient,
+        apiClient: _services.apiClient,
         token: token,
         initial: initial,
         tx: _tx,
@@ -257,27 +265,39 @@ extension _AgentsPageActions on _AgentsPageState {
     if (token == null || token.isEmpty) return;
     try {
       await _repository.saveAgent(token, payload);
-      showMessage('Agente guardado');
+      showMessage(_tx('agents.msg_saved', 'Agente guardado'));
       await _load();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage('No se pudo guardar el agente', isError: true);
+      showMessage(
+        _tx('agents.msg_save_failed', 'No se pudo guardar el agente'),
+        isError: true,
+      );
     }
   }
 
   Future<void> _deleteAgent(AgentItem item) async {
     if (item.readOnly) {
-      showMessage('Este agente no se puede eliminar (público o compartido)');
+      showMessage(
+        _tx(
+          'agents.msg_not_deletable',
+          'Este agente no se puede eliminar (público o compartido)',
+        ),
+      );
       return;
     }
 
     final confirm = await showConfirmActionDialog(
       context,
-      title: 'Eliminar agente',
-      message: '¿Seguro que quieres eliminar "${item.name}"?',
+      title: _tx('agents.delete_dialog_title', 'Eliminar agente'),
+      message: _tx(
+        'common.delete_confirm_body',
+        '¿Seguro que quieres eliminar "{{nombre}}"?',
+      ).replaceAll('{{nombre}}', item.name),
       cancelLabel: 'Cancelar',
-      confirmLabel: 'Eliminar',
+      confirmLabel: _tx('common.delete', 'Eliminar'),
+      destructive: true,
     );
     if (!confirm) return;
 
@@ -285,12 +305,15 @@ extension _AgentsPageActions on _AgentsPageState {
     if (token == null || token.isEmpty) return;
     try {
       await _repository.deleteAgent(token, item.id);
-      showMessage('Agente eliminado');
+      showMessage(_tx('agents.msg_deleted', 'Agente eliminado'));
       await _load();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage('No se pudo eliminar el agente', isError: true);
+      showMessage(
+        _tx('agents.msg_delete_failed', 'No se pudo eliminar el agente'),
+        isError: true,
+      );
     }
   }
 
@@ -305,7 +328,13 @@ extension _AgentsPageActions on _AgentsPageState {
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage('No se pudo cambiar el estado del agente', isError: true);
+      showMessage(
+        _tx(
+          'agents.msg_toggle_failed',
+          'No se pudo cambiar el estado del agente',
+        ),
+        isError: true,
+      );
     }
   }
 
@@ -336,9 +365,9 @@ extension _AgentsPageActions on _AgentsPageState {
       MaterialPageRoute(
         builder: (context) => ChatPage(
           agent: item,
-          apiClient: widget.apiClient,
-          sessionController: widget.sessionController,
-          localeController: widget.localeController,
+          apiClient: _services.apiClient,
+          sessionController: _services.sessionController,
+          localeController: _services.localeController,
         ),
       ),
     );
@@ -352,9 +381,9 @@ extension _AgentsPageActions on _AgentsPageState {
     final created = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (context) => AgentBuilderPage(
-          apiClient: widget.apiClient,
-          sessionController: widget.sessionController,
-          localeController: widget.localeController,
+          apiClient: _services.apiClient,
+          sessionController: _services.sessionController,
+          localeController: _services.localeController,
         ),
       ),
     );

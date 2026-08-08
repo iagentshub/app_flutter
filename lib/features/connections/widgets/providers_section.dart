@@ -152,12 +152,16 @@ class _ProvidersSectionState extends State<ProvidersSection>
       ),
       cancelLabel: _tx('common.cancel', 'Cancelar'),
       confirmLabel: _tx('providers.unlink_action', 'Desvincular'),
+      destructive: true,
     );
     if (!confirm) return;
     final token = widget.token;
     if (token.isEmpty) return;
     try {
-      final deleted = await _accountsRepository.unlinkAccount(token, account.id);
+      final deleted = await _accountsRepository.unlinkAccount(
+        token,
+        account.id,
+      );
       showMessage(
         deleted > 0
             ? _tx(

@@ -126,6 +126,7 @@ class _AdminBannersCardState extends State<_AdminBannersCard>
       ),
       cancelLabel: _tx('common.cancel', 'Cancelar'),
       confirmLabel: _tx('common.delete', 'Eliminar'),
+      destructive: true,
     );
     if (!confirmed) return;
     try {

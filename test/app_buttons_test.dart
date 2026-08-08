@@ -1,6 +1,6 @@
+import 'package:app_flutter/shared/widgets/buttons/app_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:app_flutter/shared/widgets/buttons/app_buttons.dart';
 
 void main() {
   testWidgets('los botones semánticos delegan sus acciones', (tester) async {

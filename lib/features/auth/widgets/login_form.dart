@@ -221,9 +221,8 @@ extension _LoginForm on _LoginPageState {
                     builder: (context, actionConstraints) {
                       final stacked = actionConstraints.maxWidth < 360;
                       final rememberControl = InkWell(
-                        onTap: () => refresh(
-                          () => _rememberAccount = !_rememberAccount,
-                        ),
+                        onTap: () =>
+                            refresh(() => _rememberAccount = !_rememberAccount),
                         borderRadius: BorderRadius.circular(6),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 4),

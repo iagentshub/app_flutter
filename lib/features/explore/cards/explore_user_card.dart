@@ -5,10 +5,10 @@ extension _ExploreUserCard on _ExplorePageState {
     final username = user.username;
     final initial = username.isNotEmpty ? username[0].toUpperCase() : '?';
     final token = _token;
+    // La ruta va tal cual al cliente: él la resuelve contra el backend activo
+    // y, en web, contra el mismo origen —que es lo que hace que la cookie de
+    // sesión viaje con la petición de la imagen.
     final avatarPath = user.avatarPath;
-    final avatarUrl = avatarPath != null
-        ? '${widget.apiClient.backendController.effectiveBaseUrl}$avatarPath'
-        : null;
     final inviting = _controller.isInviting(username);
 
     return Card(
@@ -26,21 +26,25 @@ extension _ExploreUserCard on _ExplorePageState {
                   child: SizedBox(
                     width: 40,
                     height: 40,
-                    child: (avatarUrl != null && token != null)
-                        ? Image.network(
-                            avatarUrl,
-                            headers: {'Cookie': 'ga_token=$token'},
+                    child: avatarPath == null
+                        ? _userAvatarFallback(initial)
+                        : Image(
+                            image: ResizeImage(
+                              _services.apiClient.authenticatedImage(
+                                avatarPath,
+                                gaToken: token,
+                              ),
+                              width: 80,
+                              height: 80,
+                            ),
                             fit: BoxFit.cover,
-                            cacheWidth: 80,
-                            cacheHeight: 80,
                             errorBuilder: (context, error, stack) =>
                                 _userAvatarFallback(initial),
-                            loadingBuilder: (context, child, progress) =>
-                                progress == null
-                                ? child
-                                : _userAvatarFallback(initial),
-                          )
-                        : _userAvatarFallback(initial),
+                            frameBuilder: (context, child, frame, _) =>
+                                frame == null
+                                ? _userAvatarFallback(initial)
+                                : child,
+                          ),
                   ),
                 ),
                 const SizedBox(width: 10),

@@ -20,7 +20,7 @@ class TranslatedTexts extends ChangeNotifier {
 
   Future<void> _load() async {
     _bundle = await LocaleLoader.load(
-      isEnglish: localeController.isEnglish,
+      languageCode: localeController.languageCode,
       namespace: namespace,
     );
     notifyListeners();

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../shared/widgets/buttons/app_buttons.dart';
-
 import '../../../core/network/api_client.dart';
 import '../../../features/connections/repositories/connections_repository.dart';
 import '../../../features/knowledge/repositories/knowledge_repository.dart';
@@ -16,6 +14,7 @@ import '../../../models/prompts/prompt_models.dart';
 import '../../../models/skills/skill_models.dart';
 import '../../../models/tools/tool_models.dart';
 import '../../../shared/tools/tool_language.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/grouped_label_picker.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
@@ -47,6 +46,9 @@ class AgentFormDialog extends StatefulWidget {
 }
 
 class _AgentFormDialogState extends State<AgentFormDialog> with StateMessaging {
+  /// Un único indicador para los seis catálogos: llegan juntos.
+  bool _loadingCatalogs = true;
+
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _descriptionController;
@@ -61,7 +63,6 @@ class _AgentFormDialogState extends State<AgentFormDialog> with StateMessaging {
   late final ToolsRepository _toolsRepository;
 
   List<ConnectionItem> _connections = const [];
-  bool _loadingConnections = true;
   String? _connectionId;
   double _temperature = 0.7;
   Set<String> _selectedLabels = {};
@@ -69,23 +70,18 @@ class _AgentFormDialogState extends State<AgentFormDialog> with StateMessaging {
 
   bool _useMemory = false;
   List<MemoryFileItem> _memoryFiles = const [];
-  bool _loadingMemory = true;
 
   Set<String> _selectedSkillIds = {};
   List<SkillItem> _skills = const [];
-  bool _loadingSkills = true;
 
   Set<String> _selectedKnowledgeIds = {};
   List<KnowledgeItem> _knowledgeItems = const [];
-  bool _loadingKnowledge = true;
 
   Set<String> _selectedPromptIds = {};
   List<PromptItem> _prompts = const [];
-  bool _loadingPrompts = true;
 
   Set<String> _selectedToolIds = {};
   List<ToolItem> _tools = const [];
-  bool _loadingTools = true;
 
   /// La visibilidad ya no es un campo aparte: es la label "private"/"public"
   /// del grupo excluyente de Visibilidad (una sola fuente de verdad).
@@ -158,104 +154,38 @@ class _AgentFormDialogState extends State<AgentFormDialog> with StateMessaging {
         ? toolsRaw.map((e) => e.toString()).toSet()
         : {};
 
-    _loadConnections();
-    _loadMemory();
-    _loadSkills();
-    _loadKnowledge();
-    _loadPrompts();
-    _loadTools();
+    _loadCatalogs();
   }
 
-  Future<void> _loadConnections() async {
-    try {
-      final connections = await _connectionsRepository.listConnections(
-        widget.token,
-      );
-      if (!mounted) return;
-      refresh(() {
-        _connections = connections;
-        _loadingConnections = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      refresh(() => _loadingConnections = false);
-    }
-  }
+  /// Los seis catálogos se pedían con seis métodos calcados, seis flags y seis
+  /// setState: llegaban en orden impredecible y el formulario se reconstruía
+  /// hasta seis veces, con las secciones apareciendo a saltos. Una sola espera
+  /// deja un único repintado y un único indicador de carga.
+  ///
+  /// Cada petición conserva su propio catch: que falle el catálogo de memoria
+  /// no debe dejar sin skills al formulario.
+  Future<void> _loadCatalogs() async {
+    Future<List<T>> opcional<T>(Future<List<T>> peticion) =>
+        peticion.catchError((_) => <T>[]);
 
-  Future<void> _loadMemory() async {
-    try {
-      final list = await _memoryRepository.listFiles(widget.token);
-      if (!mounted) return;
-      refresh(() {
-        _memoryFiles = list;
-        _loadingMemory = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      refresh(() => _loadingMemory = false);
-    }
-  }
-
-  Future<void> _loadSkills() async {
-    try {
-      final list = await _skillsRepository.listSkills(
-        widget.token,
-        scope: 'all',
-      );
-      if (!mounted) return;
-      refresh(() {
-        _skills = list;
-        _loadingSkills = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      refresh(() => _loadingSkills = false);
-    }
-  }
-
-  Future<void> _loadKnowledge() async {
-    try {
-      final list = await _knowledgeRepository.listItems(widget.token);
-      if (!mounted) return;
-      refresh(() {
-        _knowledgeItems = list;
-        _loadingKnowledge = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      refresh(() => _loadingKnowledge = false);
-    }
-  }
-
-  Future<void> _loadPrompts() async {
-    try {
-      final list = await _promptsRepository.listPrompts(
-        widget.token,
-        scope: 'all',
-      );
-      if (!mounted) return;
-      refresh(() {
-        _prompts = list;
-        _loadingPrompts = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      refresh(() => _loadingPrompts = false);
-    }
-  }
-
-  Future<void> _loadTools() async {
-    try {
-      final list = await _toolsRepository.listTools(widget.token, scope: 'all');
-      if (!mounted) return;
-      refresh(() {
-        _tools = list;
-        _loadingTools = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      refresh(() => _loadingTools = false);
-    }
+    final resultados = await Future.wait([
+      opcional(_connectionsRepository.listConnections(widget.token)),
+      opcional(_memoryRepository.listFiles(widget.token)),
+      opcional(_skillsRepository.listSkills(widget.token, scope: 'all')),
+      opcional(_knowledgeRepository.listItems(widget.token)),
+      opcional(_promptsRepository.listPrompts(widget.token, scope: 'all')),
+      opcional(_toolsRepository.listTools(widget.token, scope: 'all')),
+    ]);
+    if (!mounted) return;
+    refresh(() {
+      _connections = resultados[0] as List<ConnectionItem>;
+      _memoryFiles = resultados[1] as List<MemoryFileItem>;
+      _skills = resultados[2] as List<SkillItem>;
+      _knowledgeItems = resultados[3] as List<KnowledgeItem>;
+      _prompts = resultados[4] as List<PromptItem>;
+      _tools = resultados[5] as List<ToolItem>;
+      _loadingCatalogs = false;
+    });
   }
 
   @override

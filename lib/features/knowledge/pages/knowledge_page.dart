@@ -1,43 +1,41 @@
 import 'dart:convert';
 
+import 'package:desktop_drop/desktop_drop.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
-import '../../../shared/widgets/buttons/app_buttons.dart';
-import '../../../shared/widgets/confirm_action_dialog.dart';
-import 'package:desktop_drop/desktop_drop.dart';
-import 'package:file_picker/file_picker.dart';
-
-import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../features/memory/pages/memory_page.dart';
 import '../../../models/knowledge/knowledge_models.dart';
 import '../../../models/prompts/prompt_models.dart';
 import '../../../models/skills/skill_models.dart';
 import '../../../models/tools/tool_models.dart';
-import '../repositories/knowledge_repository.dart';
-import '../repositories/prompts_repository.dart';
-import '../repositories/skills_repository.dart';
-import '../repositories/tools_repository.dart';
-import 'skill_builder_page.dart';
 import '../../../shared/i18n/translated_texts.dart';
-import '../../../shared/state/locale_controller.dart';
-import '../../../shared/state/session_controller.dart';
 import '../../../shared/labels/label_catalog.dart';
+import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/tools/tool_language.dart';
+import '../../../shared/utils/memoized.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
+import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
 import '../../../shared/widgets/grouped_label_picker.dart';
-import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/inactive_badge.dart';
+import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/origin_badge.dart';
 import '../../../shared/widgets/resource_history_dialog.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../repositories/knowledge_repository.dart';
+import '../repositories/prompts_repository.dart';
+import '../repositories/skills_repository.dart';
+import '../repositories/tools_repository.dart';
+import 'skill_builder_page.dart';
 
 part '../cards/knowledge_sections.dart';
 part '../cards/prompt_sections.dart';
@@ -83,34 +81,32 @@ IconData skillCategoryIcon(String category) {
   };
 }
 
-/// Etiqueta legible por categoría — mismos textos que
-/// `skills.categories.*` en frontend_react (sin emoji).
-String skillCategoryLabel(String category) {
+/// Etiqueta legible por categoría, siempre vía `tx` — mismo patrón que
+/// [toolLanguageLabel], que está justo al lado y ya lo hacía bien.
+///
+/// Estaba fija en español para todos los idiomas: es la etiqueta que se ve en
+/// el filtro de categorías y en cada tarjeta de skill, así que un usuario con
+/// la app en inglés leía «IA y Agentes» y «Mensajería».
+String skillCategoryLabel(
+  String Function(String path, String fallback) tx,
+  String category,
+) {
   return switch (category) {
-    'ai' => 'IA y Agentes',
-    'messaging' => 'Mensajería',
-    'notes' => 'Notas',
-    'productivity' => 'Productividad',
-    'dev' => 'Desarrollo',
-    'security' => 'Seguridad',
-    'media' => 'Media',
-    'data' => 'Datos',
-    'company' => 'Empresa',
-    _ => 'Sin categoría',
+    'ai' => tx('knowledge.category_ai', 'IA y Agentes'),
+    'messaging' => tx('knowledge.category_messaging', 'Mensajería'),
+    'notes' => tx('knowledge.category_notes', 'Notas'),
+    'productivity' => tx('knowledge.category_productivity', 'Productividad'),
+    'dev' => tx('knowledge.category_dev', 'Desarrollo'),
+    'security' => tx('knowledge.category_security', 'Seguridad'),
+    'media' => tx('knowledge.category_media', 'Media'),
+    'data' => tx('knowledge.category_data', 'Datos'),
+    'company' => tx('knowledge.category_company', 'Empresa'),
+    _ => tx('knowledge.category_none', 'Sin categoría'),
   };
 }
 
 class KnowledgePage extends StatefulWidget {
-  const KnowledgePage({
-    required this.apiClient,
-    required this.sessionController,
-    required this.localeController,
-    super.key,
-  });
-
-  final ApiClient apiClient;
-  final SessionController sessionController;
-  final LocaleController localeController;
+  const KnowledgePage({super.key});
 
   @override
   State<KnowledgePage> createState() => _KnowledgePageState();
@@ -118,6 +114,10 @@ class KnowledgePage extends StatefulWidget {
 
 class _KnowledgePageState extends State<KnowledgePage>
     with SingleTickerProviderStateMixin, StateMessaging {
+  /// Servicios globales (cliente HTTP, sesión, idioma): los aporta el
+  /// AppServicesScope montado en App, no el router.
+  late final _services = AppServicesScope.of(context);
+
   late final KnowledgeRepository _repository;
   late final SkillsRepository _skillsRepository;
   late final PromptsRepository _promptsRepository;
@@ -161,14 +161,24 @@ class _KnowledgePageState extends State<KnowledgePage>
   String _skillScope = 'all';
   String _skillCategory = 'all';
 
-  List<KnowledgeItem> get _urlItems => _items
-      .where((item) => item.type == 'url')
-      .where(_matchesKnowledgeOrigin)
-      .toList();
-  List<KnowledgeItem> get _documentItems => _items
-      .where((item) => item.type != 'url')
-      .where(_matchesKnowledgeOrigin)
-      .toList();
+  final _urlItemsMemo = Memoized<List<KnowledgeItem>>();
+  final _documentItemsMemo = Memoized<List<KnowledgeItem>>();
+
+  List<KnowledgeItem> get _urlItems =>
+      _urlItemsMemo.of([_items, _knowledgeOrigin], () {
+        return _items
+            .where((item) => item.type == 'url')
+            .where(_matchesKnowledgeOrigin)
+            .toList();
+      });
+
+  List<KnowledgeItem> get _documentItems =>
+      _documentItemsMemo.of([_items, _knowledgeOrigin], () {
+        return _items
+            .where((item) => item.type != 'url')
+            .where(_matchesKnowledgeOrigin)
+            .toList();
+      });
 
   bool _matchesKnowledgeOrigin(KnowledgeItem item) {
     if (_knowledgeOrigin == 'own') return !item.shared;
@@ -185,20 +195,31 @@ class _KnowledgePageState extends State<KnowledgePage>
   int get _skillFilterCount =>
       (_skillScope != 'all' ? 1 : 0) + (_skillCategory != 'all' ? 1 : 0);
 
-  List<SkillItem> get _filteredSkills => _skills.where((item) {
-    if (_skillScope != 'all' && item.scope != _skillScope) return false;
-    if (_skillCategory != 'all' && item.category != _skillCategory) {
-      return false;
-    }
-    return true;
-  }).toList();
+  final _filteredSkillsMemo = Memoized<List<SkillItem>>();
+
+  List<SkillItem> get _filteredSkills =>
+      _filteredSkillsMemo.of([_skills, _skillScope, _skillCategory], () {
+        return _skills.where((item) {
+          if (_skillScope != 'all' && item.scope != _skillScope) return false;
+          if (_skillCategory != 'all' && item.category != _skillCategory) {
+            return false;
+          }
+          return true;
+        }).toList();
+      });
 
   int get _promptFilterCount => _promptScope != 'all' ? 1 : 0;
 
-  List<PromptItem> get _filteredPrompts => _prompts.where((item) {
-    if (_promptScope != 'all' && item.scope != _promptScope) return false;
-    return true;
-  }).toList();
+  final _filteredPromptsMemo = Memoized<List<PromptItem>>();
+
+  List<PromptItem> get _filteredPrompts => _filteredPromptsMemo.of(
+    [_prompts, _promptScope],
+    () {
+      return _prompts
+          .where((item) => _promptScope == 'all' || item.scope == _promptScope)
+          .toList();
+    },
+  );
 
   List<String> get _toolLanguageOptions =>
       _tools.map((t) => t.language).where((l) => l.isNotEmpty).toSet().toList()
@@ -207,13 +228,18 @@ class _KnowledgePageState extends State<KnowledgePage>
   int get _toolFilterCount =>
       (_toolScope != 'all' ? 1 : 0) + (_toolLanguage != 'all' ? 1 : 0);
 
-  List<ToolItem> get _filteredTools => _tools.where((item) {
-    if (_toolScope != 'all' && item.scope != _toolScope) return false;
-    if (_toolLanguage != 'all' && item.language != _toolLanguage) {
-      return false;
-    }
-    return true;
-  }).toList();
+  final _filteredToolsMemo = Memoized<List<ToolItem>>();
+
+  List<ToolItem> get _filteredTools =>
+      _filteredToolsMemo.of([_tools, _toolScope, _toolLanguage], () {
+        return _tools.where((item) {
+          if (_toolScope != 'all' && item.scope != _toolScope) return false;
+          if (_toolLanguage != 'all' && item.language != _toolLanguage) {
+            return false;
+          }
+          return true;
+        }).toList();
+      });
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
@@ -254,7 +280,7 @@ class _KnowledgePageState extends State<KnowledgePage>
     ];
     final categoryOptions = [
       ('all', optionAll),
-      ..._skillCategoryOptions.map((c) => (c, skillCategoryLabel(c))),
+      ..._skillCategoryOptions.map((c) => (c, skillCategoryLabel(_tx, c))),
     ];
 
     showFilterDialog(
@@ -366,20 +392,17 @@ class _KnowledgePageState extends State<KnowledgePage>
   @override
   void initState() {
     super.initState();
-    _repository = KnowledgeRepository(apiClient: widget.apiClient);
-    _skillsRepository = SkillsRepository(apiClient: widget.apiClient);
-    _promptsRepository = PromptsRepository(apiClient: widget.apiClient);
-    _toolsRepository = ToolsRepository(apiClient: widget.apiClient);
+    _repository = KnowledgeRepository(apiClient: _services.apiClient);
+    _skillsRepository = SkillsRepository(apiClient: _services.apiClient);
+    _promptsRepository = PromptsRepository(apiClient: _services.apiClient);
+    _toolsRepository = ToolsRepository(apiClient: _services.apiClient);
     _tabController = TabController(length: _sectionIds.length, vsync: this)
       ..addListener(_onTabChanged);
     _t = TranslatedTexts(
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       namespace: 'resources',
     )..addListener(_onTextsChanged);
-    _load();
-    _loadSkills();
-    _loadPrompts();
-    _loadTools();
+    _ensureSectionLoaded(_sectionIds.first);
   }
 
   void _onTextsChanged() {
@@ -387,7 +410,35 @@ class _KnowledgePageState extends State<KnowledgePage>
   }
 
   void _onTabChanged() {
-    if (mounted) refresh(() {});
+    if (!mounted) return;
+    _ensureSectionLoaded(_sectionIds[_tabController.index]);
+    refresh(() {});
+  }
+
+  /// Secciones cuyo listado ya se ha pedido alguna vez.
+  final Set<String> _loadedSections = {};
+
+  /// La página arrancaba disparando las cuatro cargas a la vez, con seis
+  /// pestañas y solo la primera a la vista: tres de esas peticiones eran para
+  /// contenido que el usuario todavía no miraba —y puede que no mirara nunca—
+  /// y en una conexión lenta competían con la pestaña visible. Cada sección se
+  /// carga la primera vez que se abre; volver a ella no repite la petición, y
+  /// la caché de 60 s de ApiClient mantiene la sensación de instantaneidad.
+  void _ensureSectionLoaded(String section) {
+    // `urls` y `documents` salen del mismo listado de Knowledge.
+    final clave = section == 'documents' ? 'urls' : section;
+    if (!_loadedSections.add(clave)) return;
+    switch (clave) {
+      case 'skills':
+        _loadSkills();
+      case 'prompts':
+        _loadPrompts();
+      case 'tools':
+        _loadTools();
+      case 'urls':
+        _load();
+      // `memory` monta MemoryPage, que carga lo suyo por su cuenta.
+    }
   }
 
   @override
@@ -438,11 +489,11 @@ class _KnowledgePageState extends State<KnowledgePage>
       AppIconButton.outlined(
         onPressed: () => showGroupFilterDialog(
           context,
-          apiClient: widget.apiClient,
+          apiClient: _services.apiClient,
           token: _token ?? '',
           activeGroupId: _activeGroupId,
           onSelect: _onGroupSelect,
-          localeController: widget.localeController,
+          localeController: _services.localeController,
         ),
         icon: const Icon(Icons.groups_outlined),
         tooltip: _tx('groups.toggle_tooltip', 'Grupos'),
@@ -462,11 +513,7 @@ class _KnowledgePageState extends State<KnowledgePage>
       'tools' => _buildToolsSection(),
       'urls' => _buildUrlsSection(),
       'documents' => _buildDocumentsSection(),
-      'memory' => MemoryPage(
-        apiClient: widget.apiClient,
-        sessionController: widget.sessionController,
-        localeController: widget.localeController,
-      ),
+      'memory' => const MemoryPage(),
       _ => _buildSkillsSection(),
     };
   }

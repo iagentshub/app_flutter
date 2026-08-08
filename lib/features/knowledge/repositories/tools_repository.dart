@@ -1,68 +1,43 @@
 import 'dart:typed_data';
 
-import '../../../core/network/api_repository.dart';
+import '../../../core/network/scoped_resource_repository.dart';
 import '../../../models/tools/tool_models.dart';
 
-class ToolsRepository extends ApiRepository {
-  ToolsRepository({required super.apiClient});
+/// Tools: `/api/tools/<scope>/<id>`, más la subida y descarga del binario de
+/// las tools `cpp`, que es lo único que este recurso no comparte con skills y
+/// prompts.
+class ToolsRepository extends ScopedResourceRepository<ToolItem> {
+  ToolsRepository({required super.apiClient})
+    : super(basePath: 'tools', parse: _asTool);
+
+  static ToolItem _asTool(Map<String, dynamic> raw) => ToolItem(raw: raw);
 
   Future<List<ToolItem>> listTools(
     String token, {
     String scope = 'all',
     String? groupId,
     bool includeInactive = false,
-  }) async {
-    final query = groupId == null || groupId.isEmpty
-        ? ''
-        : '&group_id=${Uri.encodeQueryComponent(groupId)}';
-    final inactive = includeInactive ? '&include_inactive=true' : '';
-    final response = await apiClient.get(
-      '/api/tools?scope=$scope$query$inactive',
-      gaToken: token,
-      cache: true,
-    );
-    final payload = response.body;
-    if (payload is! List) return const [];
-    return payload
-        .whereType<Map<String, dynamic>>()
-        .map((item) => ToolItem(raw: item))
-        .toList();
-  }
+  }) => list(
+    token,
+    scope: scope,
+    groupId: groupId,
+    includeInactive: includeInactive,
+  );
 
-  Future<Map<String, dynamic>> getTool(
-    String token,
-    String scope,
-    String id,
-  ) async {
-    final response = await apiClient.get(
-      '/api/tools/${Uri.encodeComponent(scope)}/${Uri.encodeComponent(id)}',
-      gaToken: token,
-    );
-    return response.json;
-  }
+  Future<Map<String, dynamic>> getTool(String token, String scope, String id) =>
+      get(token, scope, id);
 
   Future<Map<String, dynamic>> saveTool(
     String token,
     String scope,
     Map<String, dynamic> payload,
-  ) async {
-    final response = await apiClient.post(
-      '/api/tools/${Uri.encodeComponent(scope)}',
-      gaToken: token,
-      body: payload,
-    );
-    return response.json;
-  }
+  ) => save(token, scope, payload);
 
-  Future<void> deleteTool(String token, String scope, String id) async {
-    await apiClient.delete(
-      '/api/tools/${Uri.encodeComponent(scope)}/${Uri.encodeComponent(id)}',
-      gaToken: token,
-    );
-  }
+  Future<void> deleteTool(String token, String scope, String id) =>
+      remove(token, scope, id);
 
   Future<void> setToolActive(String token, String id, bool active) =>
-      setActive(token, 'tools', id, active);
+      setResourceActive(token, id, active);
 
   /// Sube el binario de una tool `cpp`, segundo paso del flujo en dos pasos
   /// (`POST /api/tools/{scope}` para los metadatos, luego este endpoint) —

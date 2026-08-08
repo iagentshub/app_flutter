@@ -99,6 +99,7 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog>
       ),
       cancelLabel: widget.tx('common.cancel', 'Cancelar'),
       confirmLabel: widget.tx('common.delete', 'Eliminar'),
+      destructive: true,
     );
     if (!confirm) return;
     try {
@@ -130,6 +131,7 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog>
         ),
         cancelLabel: widget.tx('common.cancel', 'Cancelar'),
         confirmLabel: widget.tx('groups.leave', 'Abandonar'),
+        destructive: true,
       );
       if (!confirm) return;
       try {
@@ -161,6 +163,7 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog>
         ),
         cancelLabel: widget.tx('common.cancel', 'Cancelar'),
         confirmLabel: widget.tx('common.delete', 'Eliminar'),
+        destructive: true,
       );
       if (!confirm) return;
       await _deleteGroup();
@@ -383,9 +386,7 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog>
                                 'groups.leave_panel_body',
                                 'Dejarás de tener acceso a los recursos compartidos con este grupo.',
                               ),
-                              style: const TextStyle(
-                                fontSize: FncFonts.size12,
-                              ),
+                              style: const TextStyle(fontSize: FncFonts.size12),
                             ),
                           ),
                           const SizedBox(width: 10),

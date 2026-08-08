@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:app_flutter/shared/navigation/shell_navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,9 +22,13 @@ void main() {
       ),
     );
 
-    navigatorKey.currentState!.push<void>(
-      MaterialPageRoute(
-        builder: (context) => const Scaffold(body: Text('Editor abierto')),
+    // El Future de push se resuelve al cerrarse la ruta: esperarlo aquí
+    // colgaría el test.
+    unawaited(
+      navigatorKey.currentState!.push<void>(
+        MaterialPageRoute(
+          builder: (context) => const Scaffold(body: Text('Editor abierto')),
+        ),
       ),
     );
     await tester.pumpAndSettle();

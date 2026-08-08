@@ -3,20 +3,18 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
-import '../../../core/network/api_client.dart';
 import '../../../models/connections/connection_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/action_result.dart';
-import '../../../shared/state/locale_controller.dart';
-import '../../../shared/state/session_controller.dart';
+import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
+import '../../../shared/widgets/resource_toolbar.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
-import '../../../shared/widgets/resource_toolbar.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../../shared/widgets/status_dot.dart';
@@ -28,16 +26,7 @@ part '../dialogs/connection_form_dialog.dart';
 part '../widgets/connections_page_view.dart';
 
 class ConnectionsPage extends StatefulWidget {
-  const ConnectionsPage({
-    required this.apiClient,
-    required this.sessionController,
-    required this.localeController,
-    super.key,
-  });
-
-  final ApiClient apiClient;
-  final SessionController sessionController;
-  final LocaleController localeController;
+  const ConnectionsPage({super.key});
 
   @override
   State<ConnectionsPage> createState() => _ConnectionsPageState();
@@ -46,6 +35,11 @@ class ConnectionsPage extends StatefulWidget {
 class _ConnectionsPageState extends State<ConnectionsPage>
     with SingleTickerProviderStateMixin, StateMessaging {
   late final ConnectionsController _controller;
+
+  /// Servicios globales (cliente HTTP, sesión, idioma): los aporta el
+  /// AppServicesScope montado en App, no el router.
+  late final _services = AppServicesScope.of(context);
+
   late final TranslatedTexts _t;
   late final TabController _tabController;
 
@@ -55,12 +49,12 @@ class _ConnectionsPageState extends State<ConnectionsPage>
   void initState() {
     super.initState();
     _t = TranslatedTexts(
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       namespace: 'resources',
     )..addListener(_onTextsChanged);
     _controller = ConnectionsController(
-      repository: ConnectionsRepository(apiClient: widget.apiClient),
-      sessionController: widget.sessionController,
+      repository: ConnectionsRepository(apiClient: _services.apiClient),
+      sessionController: _services.sessionController,
       tx: _tx,
     )..addListener(_onControllerChanged);
     _tabController = TabController(
@@ -138,11 +132,11 @@ class _ConnectionsPageState extends State<ConnectionsPage>
     if (token == null || token.isEmpty) return;
     await showShareToGroupDialog(
       context: context,
-      apiClient: widget.apiClient,
+      apiClient: _services.apiClient,
       token: token,
       resourceType: 'connection',
       resourceId: item.id,
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       onShared: _controller.load,
     );
   }

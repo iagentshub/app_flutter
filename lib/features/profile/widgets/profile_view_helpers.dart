@@ -69,23 +69,27 @@ extension _ProfileViewHelpers on _ProfilePageState {
           child: SizedBox(
             width: 64,
             height: 64,
-            child: (url != null && token != null)
-                ? Image.network(
-                    url,
-                    headers: {'Cookie': 'ga_token=$token'},
-                    fit: BoxFit.cover,
+            child: url == null
+                ? _avatarFallback(initial)
+                : Image(
                     // El avatar subido puede pesar hasta 2MB a resolución
                     // completa; decodificar solo a 128px (2x el tamaño en
                     // pantalla) evita mantener un bitmap gigante en memoria
                     // para mostrarlo en un círculo de 64x64.
-                    cacheWidth: 128,
-                    cacheHeight: 128,
+                    image: ResizeImage(
+                      _services.apiClient.authenticatedImage(
+                        url,
+                        gaToken: token,
+                      ),
+                      width: 128,
+                      height: 128,
+                    ),
+                    fit: BoxFit.cover,
                     errorBuilder: (context, error, stack) =>
                         _avatarFallback(initial),
-                    loadingBuilder: (context, child, progress) =>
-                        progress == null ? child : _avatarFallback(initial),
-                  )
-                : _avatarFallback(initial),
+                    frameBuilder: (context, child, frame, _) =>
+                        frame == null ? _avatarFallback(initial) : child,
+                  ),
           ),
         ),
         Positioned(

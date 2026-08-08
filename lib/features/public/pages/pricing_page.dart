@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-
-import '../../../shared/widgets/buttons/app_buttons.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router/external_router.dart';
 import '../../../app/router/router.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../shared/i18n/locale_loader.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/public_top_bar.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 
@@ -18,11 +17,15 @@ class PricingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
-    final isEnglish = LocaleLoader.isEnglishRoute(location);
+    final languageCode = LocaleLoader.routeLanguageCode(location);
+    final isEnglish = languageCode == 'en';
 
     return Scaffold(
       body: FutureBuilder<Map<String, dynamic>>(
-        future: LocaleLoader.load(isEnglish: isEnglish, namespace: 'pricing'),
+        future: LocaleLoader.load(
+          languageCode: languageCode,
+          namespace: 'pricing',
+        ),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
@@ -88,7 +91,7 @@ class PricingPage extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 14, 24, 8),
                   child: PublicTopBar(
-                    isEnglish: isEnglish,
+                    languageCode: languageCode,
                     loginLabel: loginLabel,
                     onLogin: () => AppRouter.toLogin(context),
                     onLanguageSelected: (selected) {

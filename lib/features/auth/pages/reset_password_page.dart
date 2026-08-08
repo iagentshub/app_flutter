@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../../shared/widgets/buttons/app_buttons.dart';
-
 import '../../../app/router/router.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_error.dart';
 import '../../../shared/i18n/locale_loader.dart';
 import '../../../shared/state/locale_controller.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../utils/validators.dart';
 import '../repositories/auth_repository.dart';
 
@@ -33,23 +32,26 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   String? _message;
   late Future<Map<String, dynamic>> _textsFuture;
 
-  bool get _isEnglish => widget.localeController.isEnglish;
+  String get _languageCode => widget.localeController.languageCode;
 
   @override
   void initState() {
     super.initState();
-    _textsFuture = LocaleLoader.load(isEnglish: _isEnglish, namespace: 'auth');
+    _textsFuture = LocaleLoader.load(
+      languageCode: _languageCode,
+      namespace: 'auth',
+    );
     widget.localeController.addListener(_onLocaleChanged);
   }
 
   void _onLocaleChanged() {
     if (!mounted) return;
-    setState(
-      () => _textsFuture = LocaleLoader.load(
-        isEnglish: _isEnglish,
+    setState(() {
+      _textsFuture = LocaleLoader.load(
+        languageCode: _languageCode,
         namespace: 'auth',
-      ),
-    );
+      );
+    });
   }
 
   @override
@@ -201,8 +203,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                                   ),
                                   const SizedBox(height: 8),
                                   TertiaryButton(
-                                    onPressed: () =>
-                                        AppRouter.toLogin(context),
+                                    onPressed: () => AppRouter.toLogin(context),
                                     child: Text(
                                       _txt(
                                         t,

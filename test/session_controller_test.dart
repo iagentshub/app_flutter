@@ -141,4 +141,43 @@ void main() {
       expect(prefs.getString('session_role'), 'admin');
     },
   );
+
+  /// La identidad de caché tiene que cambiar con la cuenta y con cada login,
+  /// también en web, donde el token que ve la app es una constante igual para
+  /// todos los usuarios.
+  test('cacheIdentity distingue cuentas y sesiones sucesivas', () async {
+    SharedPreferences.setMockInitialValues({});
+    final controller = await SessionController.bootstrap(
+      secureStore: MemorySecureStore(),
+    );
+
+    final anonima = controller.cacheIdentity;
+    expect(anonima, startsWith('anon'));
+
+    await controller.login(
+      token: 'token',
+      user: const SessionUser(username: 'ana', role: 'user'),
+    );
+    final deAna = controller.cacheIdentity;
+    expect(deAna, isNot(anonima));
+    expect(deAna, contains('ana'));
+
+    await controller.logout();
+    await controller.login(
+      token: 'token',
+      user: const SessionUser(username: 'bruno', role: 'user'),
+    );
+    final deBruno = controller.cacheIdentity;
+    expect(deBruno, isNot(deAna));
+    expect(deBruno, contains('bruno'));
+
+    // Y volver a entrar con la misma cuenta tampoco reutiliza la identidad
+    // anterior: cada sesión es una generación nueva.
+    await controller.logout();
+    await controller.login(
+      token: 'token',
+      user: const SessionUser(username: 'ana', role: 'user'),
+    );
+    expect(controller.cacheIdentity, isNot(deAna));
+  });
 }

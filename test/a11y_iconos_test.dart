@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:app_flutter/shared/widgets/buttons/action_icon_button.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Un botón que solo lleva un icono no tiene texto que leer: si no se le da un
@@ -13,7 +15,9 @@ void main() {
   test('ningún botón de icono se queda sin nombre accesible', () {
     final sinNombre = <String>[];
 
-    for (final f in Directory('lib').listSync(recursive: true).whereType<File>()) {
+    for (final f in Directory(
+      'lib',
+    ).listSync(recursive: true).whereType<File>()) {
       if (!f.path.endsWith('.dart')) continue;
       final src = _sinComentarios(f.readAsStringSync());
 
@@ -27,7 +31,12 @@ void main() {
         if (cuerpo.contains('tooltip:') || cuerpo.contains('this.tooltip')) {
           continue;
         }
-        if (_envueltoEn(src, RegExp(r'\b(?:Tooltip|Semantics)\('), m.start, fin)) {
+        if (_envueltoEn(
+          src,
+          RegExp(r'\b(?:Tooltip|Semantics)\('),
+          m.start,
+          fin,
+        )) {
           continue;
         }
         final linea = '\n'.allMatches(src.substring(0, m.start)).length + 1;
@@ -42,6 +51,43 @@ void main() {
           'Añade tooltip: al botón, o envuélvelo en Tooltip/Semantics:\n'
           '${sinNombre.join('\n')}',
     );
+  });
+
+  /// El nombre accesible ya estaba cubierto; el tamaño del blanco se había
+  /// quedado fuera. `ActionIconButton` es el botón de editar, eliminar,
+  /// compartir e historial de todas las tarjetas —unos 40 usos— y medía
+  /// 34x34, por debajo de los 48x48 que piden Material y la WCAG 2.5.5.
+  testWidgets('el blanco táctil de ActionIconButton llega a 48x48', (
+    tester,
+  ) async {
+    var pulsado = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: ActionIconButton(
+              icon: Icons.delete_outline,
+              tooltip: 'Eliminar',
+              onPressed: () => pulsado = true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final size = tester.getSize(find.byType(ActionIconButton));
+    expect(size.width, greaterThanOrEqualTo(48));
+    expect(size.height, greaterThanOrEqualTo(48));
+
+    // Y el blanco es real, no solo hueco de layout: un toque a 22 px del
+    // centro —fuera de los 34 px que se pintan— tiene que contar.
+    final centro = tester.getCenter(find.byType(ActionIconButton));
+    await tester.tapAt(centro + const Offset(22, 22));
+    expect(pulsado, isTrue);
+
+    // Lo que se ve no ha cambiado de tamaño: el icono sigue siendo de 18.
+    final icono = tester.widget<Icon>(find.byType(Icon));
+    expect(icono.size, 18);
   });
 }
 

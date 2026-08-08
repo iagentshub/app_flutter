@@ -273,7 +273,8 @@
     "history_tooltip": "Historial de conversaciones",
     "delete_conversation": "Borrar conversación",
     "stop": "Detener respuesta",
-    "send": "Enviar mensaje"
+    "send": "Enviar mensaje",
+    "jump_to_last": "Último mensaje"
   },
   "builder_actions": {
     "saving": "Guardando…",

@@ -151,10 +151,10 @@ extension _AdminPageSections on _AdminPageState {
           progress: (stats.cpuLoadPct! / 100).clamp(0.0, 1.0),
           progressLabel: stats.cpuCores == null
               ? null
-              : _tx('admin.stat_cpu_cores', '{n} núcleos').replaceAll(
-                  '{n}',
-                  '${stats.cpuCores}',
-                ),
+              : _tx(
+                  'admin.stat_cpu_cores',
+                  '{n} núcleos',
+                ).replaceAll('{n}', '${stats.cpuCores}'),
         ),
     ];
 
@@ -217,9 +217,9 @@ extension _AdminPageSections on _AdminPageState {
               sliver: SliverToBoxAdapter(
                 child: Text(
                   _tx('admin.stat_section_server', 'Salud del servidor'),
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                 ),
               ),
             ),

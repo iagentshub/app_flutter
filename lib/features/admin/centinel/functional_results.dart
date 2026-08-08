@@ -287,10 +287,8 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
     return ListView.builder(
       padding: const EdgeInsets.all(8),
       itemCount: _logLines.length,
-      itemBuilder: (context, index) => Text(
-        _logLines[index],
-        style: FncFonts.codeSmall,
-      ),
+      itemBuilder: (context, index) =>
+          Text(_logLines[index], style: FncFonts.codeSmall),
     );
   }
 
@@ -426,7 +424,10 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
     );
   }
 
-  Future<void> _deleteHistoryEntry(String runId, StateSetter setDialogState) async {
+  Future<void> _deleteHistoryEntry(
+    String runId,
+    StateSetter setDialogState,
+  ) async {
     final confirmed = await showConfirmActionDialog(
       context,
       title: _tx('centinel.history_delete_title', 'Borrar ejecución'),
@@ -436,6 +437,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
       ),
       cancelLabel: _tx('common.cancel', 'Cancelar'),
       confirmLabel: _tx('common.delete', 'Eliminar'),
+      destructive: true,
     );
     if (!confirmed) return;
     try {

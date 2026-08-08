@@ -89,7 +89,9 @@ void main() {
     // arriba). Aquí solo se persigue el pegado sin espacio.
     final offenders = <String>[];
     for (final dir in ['lib', 'assets/locales']) {
-      for (final f in Directory(dir).listSync(recursive: true).whereType<File>()) {
+      for (final f in Directory(
+        dir,
+      ).listSync(recursive: true).whereType<File>()) {
         if (!f.path.endsWith('.dart') && !f.path.endsWith('.json')) continue;
         if (f.readAsStringSync().contains('iAgentsHub')) offenders.add(f.path);
       }

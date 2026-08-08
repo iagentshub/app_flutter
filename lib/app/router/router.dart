@@ -79,12 +79,9 @@ abstract final class AppRouter {
         buildShellRoute(
           shellNavigatorKey: shellNavigatorKey,
           backendController: backendController,
-          sessionController: sessionController,
           authRepository: authRepository,
           dashboardRepository: dashboardRepository,
-          apiClient: apiClient,
           dashboardEditState: dashboardEditState,
-          localeController: localeController,
         ),
       ],
     );
@@ -92,8 +89,7 @@ abstract final class AppRouter {
 
   // --- Navegación externa (marketing público y auth) ---
 
-  static void toLogin(BuildContext context) =>
-      context.go(ExternalRoutes.login);
+  static void toLogin(BuildContext context) => context.go(ExternalRoutes.login);
 
   static void toRegister(BuildContext context) =>
       context.go(ExternalRoutes.register);

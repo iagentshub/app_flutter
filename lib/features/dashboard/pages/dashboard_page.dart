@@ -1,30 +1,29 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 
-import '../../../shared/widgets/buttons/app_buttons.dart';
+import 'package:flutter/material.dart';
 
 import '../../../app/router/internal_router.dart';
 import '../../../app/router/router.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
-import '../../../core/network/api_client.dart';
 import '../../../models/dashboard/dashboard_data.dart';
 import '../../../models/dashboard/dashboard_widget_config.dart';
 import '../../../models/dashboard/dashboard_widget_instance.dart';
 import '../../../models/dashboard/dashboard_widget_registry.dart';
 import '../../../models/dashboard/notification_banner.dart';
+import '../../../shared/i18n/translated_texts.dart';
+import '../../../shared/labels/label_catalog.dart';
+import '../../../shared/state/app_services_scope.dart';
+import '../../../shared/state/backend_controller.dart';
+import '../../../shared/state/dashboard_edit_state.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/kpi/kpi_row_tile.dart';
+import '../../../shared/widgets/resource_type_badge.dart';
+import '../../../shared/widgets/responsive_dialog.dart';
 import '../../auth/repositories/auth_repository.dart';
 import '../../explore/repositories/explore_repository.dart';
 import '../cards/dashboard_widget_card.dart';
 import '../repositories/dashboard_repository.dart';
-import '../../../shared/i18n/translated_texts.dart';
-import '../../../shared/labels/label_catalog.dart';
-import '../../../shared/state/backend_controller.dart';
-import '../../../shared/state/dashboard_edit_state.dart';
-import '../../../shared/state/locale_controller.dart';
-import '../../../shared/state/session_controller.dart';
-import '../../../shared/widgets/kpi/kpi_row_tile.dart';
-import '../../../shared/widgets/responsive_dialog.dart';
-import '../../../shared/widgets/resource_type_badge.dart';
 import '../widgets/responsive_dashboard_grid.dart';
 
 part '../cards/dashboard_activity_cards.dart';
@@ -37,28 +36,26 @@ part '../dialogs/dashboard_widget_config_dialog.dart';
 class DashboardPage extends StatefulWidget {
   const DashboardPage({
     required this.backendController,
-    required this.sessionController,
     required this.authRepository,
     required this.dashboardRepository,
-    required this.apiClient,
     required this.dashboardEditState,
-    required this.localeController,
     super.key,
   });
 
   final BackendController backendController;
-  final SessionController sessionController;
   final AuthRepository authRepository;
   final DashboardRepository dashboardRepository;
-  final ApiClient apiClient;
   final DashboardEditState dashboardEditState;
-  final LocaleController localeController;
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  /// Servicios globales (cliente HTTP, sesión, idioma): los aporta el
+  /// AppServicesScope montado en App, no el router.
+  late final _services = AppServicesScope.of(context);
+
   late final ExploreRepository _exploreRepository;
   late final TranslatedTexts _t;
 
@@ -77,9 +74,9 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
-    _exploreRepository = ExploreRepository(apiClient: widget.apiClient);
+    _exploreRepository = ExploreRepository(apiClient: _services.apiClient);
     _t = TranslatedTexts(
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       namespace: 'resources',
     )..addListener(_onTextsChanged);
     _load();
@@ -97,7 +94,7 @@ class _DashboardPageState extends State<DashboardPage> {
     super.dispose();
   }
 
-  String? get _token => widget.sessionController.gaToken;
+  String? get _token => _services.sessionController.gaToken;
 
   Future<void> _load() async {
     final token = _token;
@@ -120,9 +117,7 @@ class _DashboardPageState extends State<DashboardPage> {
         gaToken: token,
         sources: dashboardDataSourcesFor(preferences.instances),
       );
-      final banners = await widget.dashboardRepository.getActiveBanners(
-        token,
-      );
+      final banners = await widget.dashboardRepository.getActiveBanners(token);
       if (!mounted) return;
       setState(() {
         _data = data;
@@ -130,7 +125,7 @@ class _DashboardPageState extends State<DashboardPage> {
         _banners = banners;
         _loading = false;
       });
-      if (!preferences.isVersioned) _persistLayout();
+      if (!preferences.isVersioned) unawaited(_persistLayout());
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -197,10 +192,12 @@ class _DashboardPageState extends State<DashboardPage> {
     if (mounted) setState(() => _data = data);
   }
 
+  /// `onReorderItem` entrega el destino ya ajustado a la lista sin el
+  /// elemento arrastrado, así que aquí no hace falta el `newIndex -= 1` que
+  /// exigía el `onReorder` deprecado.
   void _reorder(int oldIndex, int newIndex) {
     setState(() {
       final list = [..._layout];
-      if (newIndex > oldIndex) newIndex -= 1;
       final item = list.removeAt(oldIndex);
       list.insert(newIndex, item);
       _layout = list;
@@ -228,7 +225,7 @@ class _DashboardPageState extends State<DashboardPage> {
             item,
       ];
     });
-    _persistLayout();
+    unawaited(_persistLayout());
   }
 
   @override
@@ -322,7 +319,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     padding: const EdgeInsets.all(16),
                     buildDefaultDragHandles: false,
                     itemCount: _layout.length,
-                    onReorder: _reorder,
+                    onReorderItem: _reorder,
                     itemBuilder: (context, index) =>
                         _buildCard(_layout[index], data, index: index),
                   )

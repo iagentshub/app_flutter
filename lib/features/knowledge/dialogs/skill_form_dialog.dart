@@ -126,14 +126,14 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
                 children: [
                   ChoiceChip(
                     avatar: Icon(skillCategoryIcon(''), size: 16),
-                    label: Text(skillCategoryLabel('')),
+                    label: Text(skillCategoryLabel(widget.tx, '')),
                     selected: _category.isEmpty,
                     onSelected: (_) => setState(() => _category = ''),
                   ),
                   for (final category in kSkillCategories)
                     ChoiceChip(
                       avatar: Icon(skillCategoryIcon(category), size: 16),
-                      label: Text(skillCategoryLabel(category)),
+                      label: Text(skillCategoryLabel(widget.tx, category)),
                       selected: _category == category,
                       onSelected: (_) => setState(() => _category = category),
                     ),

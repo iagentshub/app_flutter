@@ -4,13 +4,13 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/connections/connection_models.dart';
 import '../../../models/workflows/llm_orchestration_models.dart';
-import '../../../shared/state/session_controller.dart';
 import '../../../shared/state/locale_controller.dart';
+import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
-import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/resource_toolbar.dart';
+import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 import '../../connections/repositories/connections_repository.dart';
 import '../cards/llm_orchestration_card.dart';
@@ -133,6 +133,7 @@ class _LlmOrchestrationsPanelState extends State<LlmOrchestrationsPanel> {
           .replaceAll('{{name}}', item.name),
       cancelLabel: widget.tx('common.cancel', 'Cancelar'),
       confirmLabel: widget.tx('common.delete', 'Eliminar'),
+      destructive: true,
     );
     if (!confirmed) return;
     try {

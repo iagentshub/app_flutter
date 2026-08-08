@@ -5,14 +5,17 @@ import '../../app/theme/fnc_fonts.dart';
 
 class PublicTopBar extends StatelessWidget {
   const PublicTopBar({
-    required this.isEnglish,
+    required this.languageCode,
     required this.onLogin,
     required this.onLanguageSelected,
     required this.loginLabel,
     super.key,
   });
 
-  final bool isEnglish;
+  final String languageCode;
+
+  /// El conmutador solo alterna entre los dos idiomas publicados.
+  bool get _isEnglish => languageCode == 'en';
   final VoidCallback onLogin;
   final ValueChanged<String> onLanguageSelected;
   final String loginLabel;
@@ -28,7 +31,9 @@ class PublicTopBar extends StatelessWidget {
             children: [
               ListTile(
                 leading: Icon(
-                  isEnglish ? Icons.radio_button_unchecked : Icons.check_circle,
+                  _isEnglish
+                      ? Icons.radio_button_unchecked
+                      : Icons.check_circle,
                   color: FncColors.red,
                 ),
                 title: const Text('Español'),
@@ -36,7 +41,9 @@ class PublicTopBar extends StatelessWidget {
               ),
               ListTile(
                 leading: Icon(
-                  isEnglish ? Icons.check_circle : Icons.radio_button_unchecked,
+                  _isEnglish
+                      ? Icons.check_circle
+                      : Icons.radio_button_unchecked,
                   color: FncColors.red,
                 ),
                 title: const Text('English'),
@@ -116,7 +123,7 @@ class PublicTopBar extends StatelessWidget {
             side: const BorderSide(color: FncColors.overlayWhite40),
             minimumSize: const Size(56, 40),
           ),
-          child: Text(isEnglish ? 'ES' : 'EN'),
+          child: Text(_isEnglish ? 'ES' : 'EN'),
         ),
       ],
     );

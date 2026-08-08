@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/chat/chat_models.dart';
@@ -23,7 +24,11 @@ class ChatMessageList extends StatelessWidget {
   final List<ChatMessage> messages;
   final bool streaming;
   final bool thinking;
-  final String streamingReply;
+
+  /// Texto de la respuesta en curso. Llega como notificador para que los
+  /// tokens repinten únicamente la última burbuja, no la lista entera ni la
+  /// página que la contiene.
+  final ValueListenable<String> streamingReply;
   final ScrollController scrollController;
   final ValueChanged<ChatMessage> onReply;
   final String copyCodeTooltip;
@@ -38,20 +43,27 @@ class ChatMessageList extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       itemCount: messages.length + (streaming ? 1 : 0),
       itemBuilder: (context, index) {
-        final message = index >= messages.length
-            ? ChatMessage(role: 'assistant', content: streamingReply)
-            : messages[index];
-        return ChatMessageBubble(
-          message: message,
-          thinking:
-              index >= messages.length && thinking && streamingReply.isEmpty,
-          onReply: onReply,
-          copyCodeTooltip: copyCodeTooltip,
-          replyActionLabel: replyActionLabel,
-          copyActionLabel: copyActionLabel,
-          messageCopiedLabel: messageCopiedLabel,
+        if (index < messages.length) return _bubble(messages[index]);
+        return ValueListenableBuilder<String>(
+          valueListenable: streamingReply,
+          builder: (context, reply, _) => _bubble(
+            ChatMessage(role: 'assistant', content: reply),
+            thinking: thinking && reply.isEmpty,
+          ),
         );
       },
+    );
+  }
+
+  Widget _bubble(ChatMessage message, {bool thinking = false}) {
+    return ChatMessageBubble(
+      message: message,
+      thinking: thinking,
+      onReply: onReply,
+      copyCodeTooltip: copyCodeTooltip,
+      replyActionLabel: replyActionLabel,
+      copyActionLabel: copyActionLabel,
+      messageCopiedLabel: messageCopiedLabel,
     );
   }
 }

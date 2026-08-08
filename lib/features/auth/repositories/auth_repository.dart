@@ -9,13 +9,18 @@ import '../../../models/github/github_device_flow.dart';
 /// (igual que tras `AuthRepository.login`); si no, mira [tokenResult] para
 /// saber si sigue pendiente o hubo un error.
 class GithubLoginPollResult {
-  const GithubLoginPollResult({required this.tokenResult, this.authResult, this.gaToken});
+  const GithubLoginPollResult({
+    required this.tokenResult,
+    this.authResult,
+    this.gaToken,
+  });
 
   final GithubDeviceTokenResult tokenResult;
   final AuthResult? authResult;
   final String? gaToken;
 
-  bool get isReady => authResult != null && gaToken != null && gaToken!.isNotEmpty;
+  bool get isReady =>
+      authResult != null && gaToken != null && gaToken!.isNotEmpty;
 }
 
 class AuthRepository {

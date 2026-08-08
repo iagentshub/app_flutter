@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-
-import '../../../shared/widgets/buttons/app_buttons.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router/external_router.dart';
@@ -8,6 +6,7 @@ import '../../../app/router/router.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/i18n/locale_loader.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/public_top_bar.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 
@@ -20,7 +19,8 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final location = GoRouterState.of(context).matchedLocation;
-    final isEnglish = LocaleLoader.isEnglishRoute(location);
+    final languageCode = LocaleLoader.routeLanguageCode(location);
+    final isEnglish = languageCode == 'en';
     final loginLabel = isEnglish ? 'Sign in' : 'Iniciar sesión';
     final docsLabel = isEnglish
         ? 'Explore the documentation'
@@ -97,7 +97,7 @@ class HomePage extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 14, 24, 8),
                   child: PublicTopBar(
-                    isEnglish: isEnglish,
+                    languageCode: languageCode,
                     loginLabel: loginLabel,
                     onLogin: () => AppRouter.toLogin(context),
                     onLanguageSelected: (selected) {
@@ -176,7 +176,9 @@ class HomePage extends StatelessWidget {
                           PrimaryButton(
                             onPressed: () => AppRouter.go(
                               context,
-                              isEnglish ? ExternalRoutes.docsEn : ExternalRoutes.docs,
+                              isEnglish
+                                  ? ExternalRoutes.docsEn
+                                  : ExternalRoutes.docs,
                             ),
                             style: FilledButton.styleFrom(
                               backgroundColor: FncColors.red,

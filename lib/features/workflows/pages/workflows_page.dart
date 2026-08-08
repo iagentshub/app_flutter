@@ -2,46 +2,38 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../../shared/widgets/buttons/app_buttons.dart';
-import '../../../shared/widgets/async_state_panel.dart';
-
-import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../features/agents/repositories/agents_repository.dart';
 import '../../../models/agents/agent_models.dart';
 import '../../../models/workflows/workflow_models.dart';
-import '../repositories/workflows_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
-import '../../../shared/state/locale_controller.dart';
-import '../../../shared/state/session_controller.dart';
+import '../../../shared/state/app_services_scope.dart';
+import '../../../shared/widgets/async_state_panel.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
-import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/resource_toolbar.dart';
+import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../cards/workflow_card.dart';
 import '../dialogs/run_progress_dialog.dart';
 import '../dialogs/run_workflow_dialog.dart';
+import '../repositories/workflows_repository.dart';
 import '../widgets/llm_orchestrations_panel.dart';
 import 'workflow_editor_page.dart';
 
 class WorkflowsPage extends StatefulWidget {
-  const WorkflowsPage({
-    required this.apiClient,
-    required this.sessionController,
-    required this.localeController,
-    super.key,
-  });
-
-  final ApiClient apiClient;
-  final SessionController sessionController;
-  final LocaleController localeController;
+  const WorkflowsPage({super.key});
 
   @override
   State<WorkflowsPage> createState() => _WorkflowsPageState();
 }
 
 class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
+  /// Servicios globales (cliente HTTP, sesión, idioma): los aporta el
+  /// AppServicesScope montado en App, no el router.
+  late final _services = AppServicesScope.of(context);
+
   late final WorkflowsRepository _repository;
   late final AgentsRepository _agentsRepository;
   late final TranslatedTexts _t;
@@ -90,10 +82,10 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
   @override
   void initState() {
     super.initState();
-    _repository = WorkflowsRepository(apiClient: widget.apiClient);
-    _agentsRepository = AgentsRepository(apiClient: widget.apiClient);
+    _repository = WorkflowsRepository(apiClient: _services.apiClient);
+    _agentsRepository = AgentsRepository(apiClient: _services.apiClient);
     _t = TranslatedTexts(
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       namespace: 'resources',
     )..addListener(_onTextsChanged);
     _load();
@@ -110,7 +102,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
     super.dispose();
   }
 
-  String? get _token => widget.sessionController.gaToken;
+  String? get _token => _services.sessionController.gaToken;
 
   Future<void> _load() async {
     final token = _token;
@@ -160,9 +152,9 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
     final payload = await Navigator.of(context).push<Map<String, dynamic>>(
       MaterialPageRoute(
         builder: (context) => WorkflowEditorPage(
-          apiClient: widget.apiClient,
-          sessionController: widget.sessionController,
-          localeController: widget.localeController,
+          apiClient: _services.apiClient,
+          sessionController: _services.sessionController,
+          localeController: _services.localeController,
         ),
       ),
     );
@@ -193,9 +185,9 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
     final payload = await Navigator.of(context).push<Map<String, dynamic>>(
       MaterialPageRoute(
         builder: (context) => WorkflowEditorPage(
-          apiClient: widget.apiClient,
-          sessionController: widget.sessionController,
-          localeController: widget.localeController,
+          apiClient: _services.apiClient,
+          sessionController: _services.sessionController,
+          localeController: _services.localeController,
           initial: initial,
         ),
       ),
@@ -265,6 +257,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
       ).replaceAll('{{name}}', item.name),
       cancelLabel: _tx('common.cancel', 'Cancelar'),
       confirmLabel: _tx('common.delete', 'Eliminar'),
+      destructive: true,
     );
     if (!confirm) return;
 
@@ -513,9 +506,9 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
               children: [
                 _buildAgentWorkflows(context),
                 LlmOrchestrationsPanel(
-                  apiClient: widget.apiClient,
-                  sessionController: widget.sessionController,
-                  localeController: widget.localeController,
+                  apiClient: _services.apiClient,
+                  sessionController: _services.sessionController,
+                  localeController: _services.localeController,
                   tx: _tx,
                 ),
               ],

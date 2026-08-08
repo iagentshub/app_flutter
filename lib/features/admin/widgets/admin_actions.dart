@@ -25,6 +25,7 @@ extension _AdminActions on _AdminPageState {
         '¿Ascender a "{username}" a administrador?',
       ).replaceAll('{username}', username),
       confirmLabel: _tx('admin.action_make_admin', 'Hacer admin'),
+      destructive: false,
     );
     if (!ok) return;
     await _run(
@@ -112,6 +113,8 @@ extension _AdminActions on _AdminPageState {
           '¿Desactivar el grupo "{name}"?',
         ).replaceAll('{name}', name),
         confirmLabel: _tx('admin.action_deactivate', 'Desactivar'),
+        // Reversible: el grupo se puede reactivar desde el mismo sitio.
+        destructive: false,
       );
       if (!ok) return;
     }

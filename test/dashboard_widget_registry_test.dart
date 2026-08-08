@@ -34,7 +34,7 @@ void main() {
   });
 
   test('migra el nombre anterior del widget de grupo', () {
-    final legacyType =
+    const legacyType =
         'work'
         'space';
     final restored = DashboardWidgetInstance.fromJson({

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/network/api_client.dart';
 import '../../features/admin/pages/admin_page.dart';
 import '../../features/admin/pages/centinel_page.dart';
 import '../../features/admin/pages/metadata_page.dart';
@@ -22,8 +21,6 @@ import '../../features/public/pages/public_profile_page.dart';
 import '../../features/workflows/pages/workflows_page.dart';
 import '../../shared/state/backend_controller.dart';
 import '../../shared/state/dashboard_edit_state.dart';
-import '../../shared/state/locale_controller.dart';
-import '../../shared/state/session_controller.dart';
 import '../../shared/widgets/app_shell.dart';
 
 /// Rutas que requieren sesión iniciada, servidas dentro del [AppShell].
@@ -54,21 +51,15 @@ abstract final class InternalRoutes {
 ShellRoute buildShellRoute({
   required GlobalKey<NavigatorState> shellNavigatorKey,
   required BackendController backendController,
-  required SessionController sessionController,
   required AuthRepository authRepository,
   required DashboardRepository dashboardRepository,
-  required ApiClient apiClient,
   required DashboardEditState dashboardEditState,
-  required LocaleController localeController,
 }) {
   return ShellRoute(
     navigatorKey: shellNavigatorKey,
     builder: (context, state, child) => AppShell(
-      sessionController: sessionController,
       authRepository: authRepository,
       dashboardEditState: dashboardEditState,
-      localeController: localeController,
-      apiClient: apiClient,
       contentNavigatorKey: shellNavigatorKey,
       location: state.matchedLocation,
       child: child,
@@ -79,34 +70,21 @@ ShellRoute buildShellRoute({
         pageBuilder: (context, state) => NoTransitionPage(
           child: DashboardPage(
             backendController: backendController,
-            sessionController: sessionController,
             authRepository: authRepository,
             dashboardRepository: dashboardRepository,
-            apiClient: apiClient,
             dashboardEditState: dashboardEditState,
-            localeController: localeController,
           ),
         ),
       ),
       GoRoute(
         path: InternalRoutes.agents,
-        pageBuilder: (context, state) => NoTransitionPage(
-          child: AgentsPage(
-            apiClient: apiClient,
-            sessionController: sessionController,
-            localeController: localeController,
-          ),
-        ),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: AgentsPage()),
       ),
       GoRoute(
         path: InternalRoutes.orchestrations,
-        pageBuilder: (context, state) => NoTransitionPage(
-          child: WorkflowsPage(
-            apiClient: apiClient,
-            sessionController: sessionController,
-            localeController: localeController,
-          ),
-        ),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: WorkflowsPage()),
       ),
       GoRoute(
         path: InternalRoutes.workflowsLegacy,
@@ -114,81 +92,43 @@ ShellRoute buildShellRoute({
       ),
       GoRoute(
         path: InternalRoutes.connections,
-        pageBuilder: (context, state) => NoTransitionPage(
-          child: ConnectionsPage(
-            apiClient: apiClient,
-            sessionController: sessionController,
-            localeController: localeController,
-          ),
-        ),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: ConnectionsPage()),
       ),
       GoRoute(
         path: InternalRoutes.memory,
-        pageBuilder: (context, state) => NoTransitionPage(
-          child: MemoryPage(
-            apiClient: apiClient,
-            sessionController: sessionController,
-            localeController: localeController,
-          ),
-        ),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: MemoryPage()),
       ),
       GoRoute(
         path: InternalRoutes.knowledge,
-        pageBuilder: (context, state) => NoTransitionPage(
-          child: KnowledgePage(
-            apiClient: apiClient,
-            sessionController: sessionController,
-            localeController: localeController,
-          ),
-        ),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: KnowledgePage()),
       ),
       GoRoute(
         path: InternalRoutes.explore,
-        pageBuilder: (context, state) => NoTransitionPage(
-          child: ExplorePage(
-            apiClient: apiClient,
-            sessionController: sessionController,
-            localeController: localeController,
-          ),
-        ),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: ExplorePage()),
       ),
       GoRoute(
         path: InternalRoutes.labels,
-        pageBuilder: (context, state) => NoTransitionPage(
-          child: LabelsPage(
-            apiClient: apiClient,
-            sessionController: sessionController,
-            localeController: localeController,
-          ),
-        ),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: LabelsPage()),
       ),
       GoRoute(
         path: InternalRoutes.manager,
-        pageBuilder: (context, state) => NoTransitionPage(
-          child: ManagerPage(
-            apiClient: apiClient,
-            sessionController: sessionController,
-            localeController: localeController,
-          ),
-        ),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: ManagerPage()),
       ),
       GoRoute(
         path: InternalRoutes.profile,
-        pageBuilder: (context, state) => NoTransitionPage(
-          child: ProfilePage(
-            apiClient: apiClient,
-            sessionController: sessionController,
-            localeController: localeController,
-          ),
-        ),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: ProfilePage()),
       ),
       GoRoute(
         path: InternalRoutes.checkout,
         pageBuilder: (context, state) => NoTransitionPage(
-          child: CheckoutPage(
-            apiClient: apiClient,
-            queryParameters: state.uri.queryParameters,
-          ),
+          child: CheckoutPage(queryParameters: state.uri.queryParameters),
         ),
       ),
       GoRoute(
@@ -196,8 +136,6 @@ ShellRoute buildShellRoute({
         pageBuilder: (context, state) => NoTransitionPage(
           child: VsCodeAuthPage(
             authRepository: authRepository,
-            sessionController: sessionController,
-            localeController: localeController,
             state: state.uri.queryParameters['state'],
             callback: state.uri.queryParameters['callback'],
           ),
@@ -205,33 +143,18 @@ ShellRoute buildShellRoute({
       ),
       GoRoute(
         path: InternalRoutes.admin,
-        pageBuilder: (context, state) => NoTransitionPage(
-          child: AdminPage(
-            apiClient: apiClient,
-            sessionController: sessionController,
-            localeController: localeController,
-          ),
-        ),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: AdminPage()),
       ),
       GoRoute(
         path: InternalRoutes.adminMetadata,
-        pageBuilder: (context, state) => NoTransitionPage(
-          child: MetadataPage(
-            apiClient: apiClient,
-            sessionController: sessionController,
-            localeController: localeController,
-          ),
-        ),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: MetadataPage()),
       ),
       GoRoute(
         path: InternalRoutes.adminCentinel,
-        pageBuilder: (context, state) => NoTransitionPage(
-          child: CentinelPage(
-            apiClient: apiClient,
-            sessionController: sessionController,
-            localeController: localeController,
-          ),
-        ),
+        pageBuilder: (context, state) =>
+            const NoTransitionPage(child: CentinelPage()),
       ),
       GoRoute(
         path: InternalRoutes.adminLogs,
@@ -242,9 +165,6 @@ ShellRoute buildShellRoute({
         pageBuilder: (context, state) => NoTransitionPage(
           child: PublicProfilePage(
             username: state.pathParameters['username'] ?? '',
-            apiClient: apiClient,
-            sessionController: sessionController,
-            localeController: localeController,
           ),
         ),
       ),

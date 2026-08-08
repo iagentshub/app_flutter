@@ -38,7 +38,7 @@ class AdminExploreItem {
       (json['resource_type'] ?? '').toString(),
     );
     if (type == null) {
-      throw FormatException('Unknown admin resource type');
+      throw const FormatException('Unknown admin resource type');
     }
     return AdminExploreItem(type: type, data: Map<String, dynamic>.from(json));
   }

@@ -1,13 +1,13 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:app_flutter/models/admin/admin_explore_models.dart';
 import 'package:app_flutter/models/agents/agent_models.dart';
 import 'package:app_flutter/models/chat/chat_models.dart';
 import 'package:app_flutter/models/connections/connection_models.dart';
 import 'package:app_flutter/models/workflows/llm_orchestration_models.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('parses an ordered balanced LLM orchestration', () {
-    final item = LlmOrchestrationItem(
+    const item = LlmOrchestrationItem(
       raw: {
         'id': 'route-1',
         'name': 'Code router',
@@ -29,7 +29,7 @@ void main() {
   });
 
   test('agent exposes an LLM orchestration as its connection', () {
-    final agent = AgentItem(
+    const agent = AgentItem(
       raw: {
         'id': 'agent',
         'name': 'Agent',
@@ -40,7 +40,7 @@ void main() {
   });
 
   test('LLM orchestration connection facade is read-only and virtual', () {
-    final connection = ConnectionItem(
+    const connection = ConnectionItem(
       raw: {
         'id': 'llm-orchestration:route-1',
         'name': 'Code router',

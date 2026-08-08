@@ -2,12 +2,27 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
-import '../../../shared/widgets/buttons/app_buttons.dart';
-import '../../../shared/widgets/async_state_panel.dart';
-
-import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/admin/admin_explore_models.dart';
+import '../../../shared/graph/graph_dialog.dart';
+import '../../../shared/i18n/translated_texts.dart';
+import '../../../shared/labels/label_catalog.dart';
+import '../../../shared/state/app_services_scope.dart';
+import '../../../shared/state/theme_controller.dart';
+import '../../../shared/utils/debouncer.dart';
+import '../../../shared/utils/memoized.dart';
+import '../../../shared/widgets/async_state_panel.dart';
+import '../../../shared/widgets/buttons/action_icon_button.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/buttons/filter_button.dart';
+import '../../../shared/widgets/confirm_action_dialog.dart';
+import '../../../shared/widgets/explore_search_toolbar.dart';
+import '../../../shared/widgets/kpi/kpi_hero_card.dart';
+import '../../../shared/widgets/kpi/kpi_tile.dart';
+import '../../../shared/widgets/responsive_dialog.dart';
+import '../../../shared/widgets/responsive_masonry_grid.dart';
+import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../../../utils/validators.dart';
 import '../repositories/admin_agents_repository.dart';
 import '../repositories/admin_connections_repository.dart';
 import '../repositories/admin_groups_repository.dart';
@@ -16,36 +31,19 @@ import '../repositories/admin_platform_repository.dart';
 import '../repositories/admin_resources_repository.dart';
 import '../repositories/admin_stats_repository.dart';
 import '../repositories/admin_users_repository.dart';
-import '../../../shared/graph/graph_dialog.dart';
-import '../../../shared/i18n/translated_texts.dart';
-import '../../../shared/labels/label_catalog.dart';
-import '../../../shared/state/locale_controller.dart';
-import '../../../shared/state/session_controller.dart';
-import '../../../shared/state/theme_controller.dart';
-import '../../../shared/utils/debouncer.dart';
-import '../../../shared/widgets/buttons/action_icon_button.dart';
-import '../../../shared/widgets/buttons/filter_button.dart';
-import '../../../shared/widgets/confirm_action_dialog.dart';
-import '../../../shared/widgets/explore_search_toolbar.dart';
-import '../../../shared/widgets/responsive_dialog.dart';
-import '../../../shared/widgets/kpi/kpi_hero_card.dart';
-import '../../../shared/widgets/kpi/kpi_tile.dart';
-import '../../../shared/widgets/responsive_masonry_grid.dart';
-import '../../../shared/widgets/state_messaging_mixin.dart';
-import '../../../utils/validators.dart';
 
+part '../cards/admin_content_cards.dart';
+part '../cards/admin_integration_cards.dart';
+part '../cards/admin_people_cards.dart';
 part '../dialogs/admin_agent_dialog.dart';
 part '../dialogs/admin_filter_dialogs.dart';
 part '../dialogs/admin_user_dialogs.dart';
 part '../dialogs/notification_banner_form_dialog.dart';
-part '../cards/admin_content_cards.dart';
-part '../cards/admin_integration_cards.dart';
-part '../cards/admin_people_cards.dart';
+part '../widgets/admin_actions.dart';
 part '../widgets/admin_config_banners_card.dart';
 part '../widgets/admin_config_tab.dart';
 part '../widgets/admin_config_updates_card.dart';
 part '../widgets/admin_explore_tab.dart';
-part '../widgets/admin_actions.dart';
 part '../widgets/admin_overview_section.dart';
 part '../widgets/admin_page_view.dart';
 part '../widgets/admin_view_helpers.dart';
@@ -76,16 +74,7 @@ String _ownerOf(Map<String, dynamic> item) =>
     (item['owner_username'] ?? '').toString();
 
 class AdminPage extends StatefulWidget {
-  const AdminPage({
-    required this.apiClient,
-    required this.sessionController,
-    required this.localeController,
-    super.key,
-  });
-
-  final ApiClient apiClient;
-  final SessionController sessionController;
-  final LocaleController localeController;
+  const AdminPage({super.key});
 
   @override
   State<AdminPage> createState() => _AdminPageState();
@@ -93,6 +82,10 @@ class AdminPage extends StatefulWidget {
 
 class _AdminPageState extends State<AdminPage>
     with SingleTickerProviderStateMixin, StateMessaging {
+  /// Servicios globales (cliente HTTP, sesión, idioma): los aporta el
+  /// AppServicesScope montado en App, no el router.
+  late final _services = AppServicesScope.of(context);
+
   late final AdminStatsRepository _statsRepository;
   late final AdminUsersRepository _usersRepository;
   late final AdminGroupsRepository _groupsRepository;
@@ -144,34 +137,50 @@ class _AdminPageState extends State<AdminPage>
   Map<AdminResourceType, int> _exploreCounts = const {};
   Map<String, dynamic>? _platformSettings;
 
+  /// Cachés de las listas filtradas del panel (ver `_adminFilterDeps` en
+  /// admin_filter_dialogs.dart). Viven aquí porque una extension no puede
+  /// declarar campos.
+  final _filteredUsersMemo = Memoized<List<Map<String, dynamic>>>();
+  final _filteredGroupsMemo = Memoized<List<Map<String, dynamic>>>();
+  final _filteredAgentsMemo = Memoized<List<Map<String, dynamic>>>();
+  final _filteredConnectionsMemo = Memoized<List<Map<String, dynamic>>>();
+  final _filteredKnowledgeMemo = Memoized<List<Map<String, dynamic>>>();
+  final _filteredWorkflowsMemo = Memoized<List<Map<String, dynamic>>>();
+  final _filteredSkillsMemo = Memoized<List<Map<String, dynamic>>>();
+  final _filteredPromptsMemo = Memoized<List<Map<String, dynamic>>>();
+  final _filteredToolsMemo = Memoized<List<Map<String, dynamic>>>();
+  final _filteredMemoriesMemo = Memoized<List<Map<String, dynamic>>>();
+
   bool _loading = true;
   String? _error;
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
-  String? get _token => widget.sessionController.gaToken;
+  String? get _token => _services.sessionController.gaToken;
 
   @override
   void initState() {
     super.initState();
-    _statsRepository = AdminStatsRepository(apiClient: widget.apiClient);
-    _usersRepository = AdminUsersRepository(apiClient: widget.apiClient);
-    _groupsRepository = AdminGroupsRepository(apiClient: widget.apiClient);
-    _agentsRepository = AdminAgentsRepository(apiClient: widget.apiClient);
+    _statsRepository = AdminStatsRepository(apiClient: _services.apiClient);
+    _usersRepository = AdminUsersRepository(apiClient: _services.apiClient);
+    _groupsRepository = AdminGroupsRepository(apiClient: _services.apiClient);
+    _agentsRepository = AdminAgentsRepository(apiClient: _services.apiClient);
     _connectionsRepository = AdminConnectionsRepository(
-      apiClient: widget.apiClient,
+      apiClient: _services.apiClient,
     );
     _knowledgeRepository = AdminKnowledgeRepository(
-      apiClient: widget.apiClient,
+      apiClient: _services.apiClient,
     );
     _resourcesRepository = AdminResourcesRepository(
-      apiClient: widget.apiClient,
+      apiClient: _services.apiClient,
     );
-    _platformRepository = AdminPlatformRepository(apiClient: widget.apiClient);
+    _platformRepository = AdminPlatformRepository(
+      apiClient: _services.apiClient,
+    );
     _tabController = TabController(length: _tabIds.length, vsync: this)
       ..addListener(_onTabChanged);
     _t = TranslatedTexts(
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       namespace: 'resources',
     )..addListener(_onTextsChanged);
     _load();
@@ -272,7 +281,7 @@ class _AdminPageState extends State<AdminPage>
   ) async {
     try {
       await action();
-      widget.apiClient.invalidateCache();
+      _services.apiClient.invalidateCache();
       showMessage(successMessage);
       await _load();
     } on ApiError catch (error) {
@@ -285,10 +294,15 @@ class _AdminPageState extends State<AdminPage>
     }
   }
 
+  /// Casi todo lo que se confirma desde el panel de administración es un
+  /// borrado —de ahí que [destructive] venga marcado por defecto—; las
+  /// acciones que no lo son (ascender a admin, desactivar un grupo) lo pasan
+  /// a false explícitamente.
   Future<bool> _confirm(
     String title,
     String body, {
     String? confirmLabel,
+    bool destructive = true,
   }) async {
     return showConfirmActionDialog(
       context,
@@ -296,6 +310,7 @@ class _AdminPageState extends State<AdminPage>
       message: body,
       cancelLabel: _tx('common.cancel', 'Cancelar'),
       confirmLabel: confirmLabel ?? _tx('common.delete', 'Eliminar'),
+      destructive: destructive,
     );
   }
 

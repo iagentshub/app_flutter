@@ -2,43 +2,35 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
-import '../../../shared/widgets/buttons/app_buttons.dart';
-
-import '../../../core/network/api_client.dart';
 import '../../../models/manager/group_models.dart';
-import '../controllers/manager_controller.dart';
-import '../repositories/manager_repository.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/action_result.dart';
-import '../../../shared/state/locale_controller.dart';
-import '../../../shared/state/session_controller.dart';
-import '../../../shared/widgets/buttons/action_icon_button.dart';
+import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/widgets/async_state_panel.dart';
+import '../../../shared/widgets/buttons/action_icon_button.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../controllers/manager_controller.dart';
+import '../repositories/manager_repository.dart';
 
 part '../cards/group_card.dart';
 part '../cards/group_invitations_card.dart';
 part '../cards/group_members_card.dart';
 
 class ManagerPage extends StatefulWidget {
-  const ManagerPage({
-    required this.apiClient,
-    required this.sessionController,
-    required this.localeController,
-    super.key,
-  });
-
-  final ApiClient apiClient;
-  final SessionController sessionController;
-  final LocaleController localeController;
+  const ManagerPage({super.key});
 
   @override
   State<ManagerPage> createState() => _ManagerPageState();
 }
 
 class _ManagerPageState extends State<ManagerPage> with StateMessaging {
+  /// Servicios globales (cliente HTTP, sesión, idioma): los aporta el
+  /// AppServicesScope montado en App, no el router.
+  late final _services = AppServicesScope.of(context);
+
   late final ManagerController _controller;
   late final TranslatedTexts _t;
 
@@ -49,15 +41,14 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
     super.initState();
     // `_t` primero: el controller recibe `_tx` y lo usa para sus mensajes.
     _t = TranslatedTexts(
-      localeController: widget.localeController,
+      localeController: _services.localeController,
       namespace: 'resources',
     )..addListener(_onTextsChanged);
-    _controller =
-        ManagerController(
-          repository: ManagerRepository(apiClient: widget.apiClient),
-          sessionController: widget.sessionController,
-          tx: _tx,
-        )..addListener(_onControllerChanged);
+    _controller = ManagerController(
+      repository: ManagerRepository(apiClient: _services.apiClient),
+      sessionController: _services.sessionController,
+      tx: _tx,
+    )..addListener(_onControllerChanged);
     _controller.load();
   }
 
@@ -227,7 +218,10 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
                       AppIconButton.filled(
                         onPressed: _createGroup,
                         icon: const Icon(Icons.add),
-                        tooltip: _tx('manager.new_group_tooltip', 'Nuevo grupo'),
+                        tooltip: _tx(
+                          'manager.new_group_tooltip',
+                          'Nuevo grupo',
+                        ),
                       ),
                       AppIconButton.outlined(
                         onPressed: _controller.load,

@@ -1,13 +1,13 @@
 part of '../app_shell.dart';
 
 class _WidgetPickerDrawerContent extends StatelessWidget {
-  const _WidgetPickerDrawerContent({required this.state, required this.t});
+  const _WidgetPickerDrawerContent({required this.state, required this.tx});
 
   final DashboardEditState state;
-  final Map<String, dynamic> t;
+  final String Function(String key, String fallback) tx;
 
   String _dashboardTx(String key, String fallback) =>
-      LocaleLoader.text(t, 'dashboard_$key', fallback: fallback);
+      tx('dashboard_$key', fallback);
 
   @override
   Widget build(BuildContext context) {
@@ -18,11 +18,7 @@ class _WidgetPickerDrawerContent extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: Text(
-            LocaleLoader.text(
-              t,
-              'customize_dashboard',
-              fallback: 'Personalizar dashboard',
-            ),
+            tx('customize_dashboard', 'Personalizar dashboard'),
             style: const TextStyle(
               fontSize: FncFonts.size16,
               fontWeight: FontWeight.w700,
@@ -32,11 +28,7 @@ class _WidgetPickerDrawerContent extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
-            LocaleLoader.text(
-              t,
-              'customize_hint',
-              fallback: 'Toca un widget para añadirlo al dashboard.',
-            ),
+            tx('customize_hint', 'Toca un widget para añadirlo al dashboard.'),
             style: const TextStyle(
               fontSize: FncFonts.size12,
               color: FncColors.materialGrey,
@@ -49,10 +41,9 @@ class _WidgetPickerDrawerContent extends StatelessWidget {
               ? Padding(
                   padding: const EdgeInsets.all(16),
                   child: Text(
-                    LocaleLoader.text(
-                      t,
+                    tx(
                       'customize_empty',
-                      fallback: 'Ya has añadido todos los widgets disponibles.',
+                      'Ya has añadido todos los widgets disponibles.',
                     ),
                   ),
                 )

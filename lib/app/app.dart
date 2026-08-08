@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/network/api_client.dart';
 import '../core/network/api_error.dart';
 import '../features/auth/repositories/auth_repository.dart';
 import '../features/dashboard/repositories/dashboard_repository.dart';
+import '../shared/state/app_services_scope.dart';
 import '../shared/state/backend_controller.dart';
 import '../shared/state/dashboard_edit_state.dart';
 import '../shared/state/locale_controller.dart';
@@ -50,6 +52,7 @@ class _AppState extends State<App> {
     _apiClient = ApiClient(
       widget.backendController,
       onUnauthorized: _handleUnauthorized,
+      sessionIdentity: () => widget.sessionController.cacheIdentity,
     );
     _authRepository = AuthRepository(_apiClient);
     _dashboardRepository = DashboardRepository(_apiClient);
@@ -65,7 +68,8 @@ class _AppState extends State<App> {
     );
     final initialLocation = widget.initialLocation;
     if (initialLocation != null &&
-        initialLocation != _router.routeInformationProvider.value.uri.toString()) {
+        initialLocation !=
+            _router.routeInformationProvider.value.uri.toString()) {
       _router.go(initialLocation);
     }
     _revalidatePersistedSession();
@@ -141,15 +145,33 @@ class _AppState extends State<App> {
 
   @override
   Widget build(BuildContext context) {
+    // Escucha también al idioma: sin `locale` ni `localizationsDelegates`,
+    // Flutter caía en DefaultMaterialLocalizations —inglés fijo— y todo lo
+    // que la app no dibuja a mano (Cut/Copy/Paste, selectores de fecha,
+    // «Show menu» de los PopupMenuButton, VoiceOver/TalkBack) salía en
+    // inglés aunque la app estuviera en español.
     return ListenableBuilder(
-      listenable: widget.themeController,
-      builder: (context, _) => MaterialApp.router(
-        debugShowCheckedModeBanner: false,
-        title: 'iAgents',
-        theme: AppTheme.light(widget.themeController.themeId),
-        darkTheme: AppTheme.dark(widget.themeController.themeId),
-        themeMode: AppTheme.mode(widget.themeController.themeId),
-        routerConfig: _router,
+      listenable: Listenable.merge([
+        widget.themeController,
+        widget.localeController,
+      ]),
+      builder: (context, _) => AppServicesScope(
+        apiClient: _apiClient,
+        sessionController: widget.sessionController,
+        localeController: widget.localeController,
+        child: MaterialApp.router(
+          debugShowCheckedModeBanner: false,
+          title: 'iAgents',
+          theme: AppTheme.light(widget.themeController.themeId),
+          darkTheme: AppTheme.dark(widget.themeController.themeId),
+          themeMode: AppTheme.mode(widget.themeController.themeId),
+          locale: widget.localeController.locale,
+          supportedLocales: LocaleController.supportedLanguageCodes.map(
+            Locale.new,
+          ),
+          localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          routerConfig: _router,
+        ),
       ),
     );
   }

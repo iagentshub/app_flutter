@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../models/connections/connection_models.dart';
 import '../../../models/workflows/llm_orchestration_models.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
+import '../../../shared/widgets/buttons/overflow_menu_button.dart';
 import '../../../shared/widgets/inactive_badge.dart';
 import '../../../shared/widgets/origin_badge.dart';
 
@@ -178,29 +179,13 @@ class LlmOrchestrationCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 ActionIconButton(
-                  icon: item.isActive
-                      ? Icons.toggle_on_outlined
-                      : Icons.toggle_off_outlined,
-                  tooltip: item.isActive
-                      ? tx('common.deactivate', 'Desactivar')
-                      : tx('common.activate', 'Activar'),
-                  onPressed: item.readOnly ? null : onToggleActive,
-                ),
-                ActionIconButton(
                   icon: Icons.edit_outlined,
                   tooltip: tx('common.edit', 'Editar'),
                   onPressed: item.readOnly ? null : onEdit,
                 ),
-                ActionIconButton(
-                  icon: Icons.group_add_outlined,
-                  tooltip: tx('common.share_group', 'Compartir con grupo'),
-                  onPressed: item.readOnly ? null : onShare,
-                ),
-                ActionIconButton(
-                  icon: Icons.delete_outline,
-                  tooltip: tx('common.delete', 'Eliminar'),
-                  danger: true,
-                  onPressed: item.readOnly ? null : onDelete,
+                OverflowMenuButton(
+                  tooltip: tx('common.more_actions', 'Más acciones'),
+                  actions: _overflowActions(),
                 ),
               ],
             ),
@@ -209,7 +194,39 @@ class LlmOrchestrationCard extends StatelessWidget {
       ),
     );
 
-    return item.isActive ? card : Opacity(opacity: 0.6, child: card);
+    return item.isActive ? card : dimmedWhenInactive(context, card);
+  }
+
+  /// Con el blanco táctil a 48 px, las cuatro acciones más el badge de origen
+  /// desbordaban 16 px a ancho de móvil. Editar se queda a la vista, como en
+  /// el resto de tarjetas; lo demás pasa al menú.
+  List<OverflowMenuAction> _overflowActions() {
+    return [
+      OverflowMenuAction(
+        icon: item.isActive
+            ? Icons.toggle_on_outlined
+            : Icons.toggle_off_outlined,
+        label: item.isActive
+            ? tx('common.deactivate', 'Desactivar')
+            : tx('common.activate', 'Activar'),
+        onSelected: onToggleActive,
+        enabled: !item.readOnly,
+      ),
+      OverflowMenuAction(
+        icon: Icons.group_add_outlined,
+        label: tx('common.share_group', 'Compartir con grupo'),
+        onSelected: onShare,
+        enabled: !item.readOnly,
+      ),
+      OverflowMenuAction(
+        icon: Icons.delete_outline,
+        label: tx('common.delete', 'Eliminar'),
+        onSelected: onDelete,
+        danger: true,
+        enabled: !item.readOnly,
+        separatedBefore: true,
+      ),
+    ];
   }
 
   String _connectionLabel(ConnectionItem? connection, String fallback) {

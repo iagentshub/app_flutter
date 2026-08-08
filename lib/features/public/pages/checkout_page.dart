@@ -1,20 +1,16 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
 import '../../../app/router/router.dart';
 import '../../../core/config/runtime_config.dart';
-import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
+import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../billing/widgets/payment_element.dart';
 
 class CheckoutPage extends StatefulWidget {
-  const CheckoutPage({
-    required this.apiClient,
-    required this.queryParameters,
-    super.key,
-  });
+  const CheckoutPage({required this.queryParameters, super.key});
 
-  final ApiClient apiClient;
   final Map<String, String> queryParameters;
 
   @override
@@ -22,6 +18,10 @@ class CheckoutPage extends StatefulWidget {
 }
 
 class _CheckoutPageState extends State<CheckoutPage> {
+  /// Servicios globales (cliente HTTP, sesión, idioma): los aporta el
+  /// AppServicesScope montado en App, no el router.
+  late final _services = AppServicesScope.of(context);
+
   int? _amountCents;
   String? _clientSecret;
   String? _subscriptionId;
@@ -65,7 +65,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   Future<void> _completeRedirect(String subscriptionId) async {
     try {
-      await widget.apiClient.post(
+      await _services.apiClient.post(
         '/api/billing/confirm',
         body: {'subscription_id': subscriptionId},
       );
@@ -94,11 +94,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   Future<void> _startCheckout() async {
     try {
-      final quote = await widget.apiClient.post(
+      final quote = await _services.apiClient.post(
         '/api/billing/quote',
         body: _requestBody,
       );
-      final subscription = await widget.apiClient.post(
+      final subscription = await _services.apiClient.post(
         '/api/billing/subscribe',
         body: _requestBody,
       );
@@ -142,7 +142,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
           )
           .toString();
       await confirmPaymentElement(returnUrl);
-      await widget.apiClient.post(
+      await _services.apiClient.post(
         '/api/billing/confirm',
         body: {'subscription_id': subscriptionId},
       );

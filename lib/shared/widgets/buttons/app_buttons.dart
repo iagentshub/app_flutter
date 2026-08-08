@@ -130,12 +130,71 @@ class TertiaryButton extends StatelessWidget {
     required this.onPressed,
     required Widget child,
     this.style,
+    this.autofocus = false,
     super.key,
   }) : _child = child,
        _icon = null,
        _label = null;
 
   const TertiaryButton.icon({
+    required this.onPressed,
+    required Widget icon,
+    required Widget label,
+    this.style,
+    this.autofocus = false,
+    super.key,
+  }) : _child = null,
+       _icon = icon,
+       _label = label;
+
+  final VoidCallback? onPressed;
+  final ButtonStyle? style;
+
+  /// Recibe el foco al abrirse la vista. Lo usan los diálogos destructivos
+  /// para que Enter cancele en vez de confirmar.
+  final bool autofocus;
+  final Widget? _child;
+  final Widget? _icon;
+  final Widget? _label;
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = _icon;
+    if (icon != null) {
+      return TextButton.icon(
+        onPressed: onPressed,
+        style: style,
+        autofocus: autofocus,
+        icon: icon,
+        label: _label!,
+      );
+    }
+    return TextButton(
+      onPressed: onPressed,
+      style: style,
+      autofocus: autofocus,
+      child: _child!,
+    );
+  }
+}
+
+/// Acción irreversible: eliminar un recurso, descartar cambios sin guardar.
+///
+/// La app ya tenía el concepto —`ActionIconButton` expone `danger: true` y
+/// pinta el icono en rojo—, pero el diálogo que remataba la acción usaba el
+/// mismo [PrimaryButton] con el color de marca que «Guardar» o «Continuar»:
+/// nada distinguía visualmente confirmar de destruir.
+class DangerButton extends StatelessWidget {
+  const DangerButton({
+    required this.onPressed,
+    required Widget child,
+    this.style,
+    super.key,
+  }) : _child = child,
+       _icon = null,
+       _label = null;
+
+  const DangerButton.icon({
     required this.onPressed,
     required Widget icon,
     required Widget label,
@@ -153,16 +212,26 @@ class TertiaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final dangerStyle = FilledButton.styleFrom(
+      backgroundColor: scheme.error,
+      foregroundColor: scheme.onError,
+    ).merge(style);
+
     final icon = _icon;
     if (icon != null) {
-      return TextButton.icon(
+      return FilledButton.icon(
         onPressed: onPressed,
-        style: style,
+        style: dangerStyle,
         icon: icon,
         label: _label!,
       );
     }
-    return TextButton(onPressed: onPressed, style: style, child: _child!);
+    return FilledButton(
+      onPressed: onPressed,
+      style: dangerStyle,
+      child: _child!,
+    );
   }
 }
 

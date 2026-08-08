@@ -71,7 +71,7 @@ extension _AgentFormSections on _AgentFormDialogState {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _loadingConnections
+          _loadingCatalogs
               ? const Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
                   child: LinearProgressIndicator(minHeight: 2),
@@ -135,7 +135,7 @@ extension _AgentFormSections on _AgentFormDialogState {
             onChanged: (value) => refresh(() => _useMemory = value),
           ),
           if (_useMemory) ...[
-            _loadingMemory
+            _loadingCatalogs
                 ? const LinearProgressIndicator(minHeight: 2)
                 : Row(
                     children: [
@@ -177,7 +177,7 @@ extension _AgentFormSections on _AgentFormDialogState {
             style: Theme.of(context).textTheme.labelMedium,
           ),
           const SizedBox(height: 6),
-          _loadingSkills
+          _loadingCatalogs
               ? const LinearProgressIndicator(minHeight: 2)
               : _skills.isEmpty
               ? Text(
@@ -220,7 +220,7 @@ extension _AgentFormSections on _AgentFormDialogState {
             style: Theme.of(context).textTheme.labelMedium,
           ),
           const SizedBox(height: 6),
-          _loadingKnowledge
+          _loadingCatalogs
               ? const LinearProgressIndicator(minHeight: 2)
               : _knowledgeItems.isEmpty
               ? Text(
@@ -270,7 +270,7 @@ extension _AgentFormSections on _AgentFormDialogState {
             style: Theme.of(context).textTheme.labelMedium,
           ),
           const SizedBox(height: 6),
-          _loadingPrompts
+          _loadingCatalogs
               ? const LinearProgressIndicator(minHeight: 2)
               : _prompts.isEmpty
               ? Text(
@@ -318,7 +318,7 @@ extension _AgentFormSections on _AgentFormDialogState {
             style: Theme.of(context).textTheme.labelMedium,
           ),
           const SizedBox(height: 6),
-          _loadingTools
+          _loadingCatalogs
               ? const LinearProgressIndicator(minHeight: 2)
               : _tools.isEmpty
               ? Text(

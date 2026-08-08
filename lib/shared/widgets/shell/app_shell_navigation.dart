@@ -19,7 +19,7 @@ class AppSidebarNavigation extends StatelessWidget {
     required this.displayName,
     required this.email,
     required this.role,
-    required this.isEnglish,
+    required this.languageCode,
     required this.billingEnabled,
     required this.tx,
     required this.showCloseButton,
@@ -36,7 +36,7 @@ class AppSidebarNavigation extends StatelessWidget {
   final String? displayName;
   final String? email;
   final String role;
-  final bool isEnglish;
+  final String languageCode;
   final bool billingEnabled;
   final String Function(String key, String fallback) tx;
   final bool showCloseButton;
@@ -98,7 +98,7 @@ class AppSidebarNavigation extends StatelessWidget {
           visibleName: visibleName,
           accountDetail: accountDetail,
           initial: initial,
-          isEnglish: isEnglish,
+          languageCode: languageCode,
           billingEnabled: billingEnabled,
           tx: tx,
           onOpenPublicRoute: onOpenPublicRoute,
@@ -303,11 +303,7 @@ class _ConnectionIssueBanner extends StatelessWidget {
                   fontSize: FncFonts.size12,
                 ),
               ),
-              const Icon(
-                Icons.chevron_right,
-                color: FncColors.white,
-                size: 16,
-              ),
+              const Icon(Icons.chevron_right, color: FncColors.white, size: 16),
             ],
           ),
         ),
@@ -418,17 +414,22 @@ const _adminItems = [
     'admin_metadata',
     Icons.table_rows_outlined,
   ),
-  _NavItem(InternalRoutes.adminCentinel, 'admin_centinel', Icons.security_outlined),
+  _NavItem(
+    InternalRoutes.adminCentinel,
+    'admin_centinel',
+    Icons.security_outlined,
+  ),
 ];
 
-String _titleForLocation(String location, Map<String, dynamic> t) {
+String _titleForLocation(
+  String location,
+  String Function(String key, String fallback) tx,
+) {
   for (final item in [..._mainItems, ..._secondaryItems, ..._adminItems]) {
-    if (location == item.route) {
-      return LocaleLoader.text(t, item.labelKey, fallback: item.labelKey);
-    }
+    if (location == item.route) return tx(item.labelKey, item.labelKey);
   }
   if (location.startsWith(InternalRoutes.publicProfilePrefix)) {
-    return LocaleLoader.text(t, 'public_profile', fallback: 'Public Profile');
+    return tx('public_profile', 'Public Profile');
   }
-  return LocaleLoader.text(t, 'app_title', fallback: 'iAgents');
+  return tx('app_title', 'iAgents');
 }

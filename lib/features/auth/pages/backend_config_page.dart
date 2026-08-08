@@ -4,12 +4,11 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
-import '../../../shared/widgets/buttons/app_buttons.dart';
-import '../../../shared/widgets/confirm_action_dialog.dart';
-
 import '../../../shared/i18n/locale_loader.dart';
 import '../../../shared/state/backend_controller.dart';
 import '../../../shared/state/locale_controller.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/status_dot.dart';
 
@@ -40,7 +39,7 @@ class _BackendConfigPageState extends State<BackendConfigPage> {
   void initState() {
     super.initState();
     _textsFuture = LocaleLoader.load(
-      isEnglish: widget.localeController.isEnglish,
+      languageCode: widget.localeController.languageCode,
       namespace: 'auth',
     );
     widget.backendController.addListener(_onChanged);
@@ -136,6 +135,7 @@ class _BackendConfigPageState extends State<BackendConfigPage> {
       ).replaceAll('{name}', backend.name),
       cancelLabel: _txt(t, 'backend_config.cancel', 'Cancelar'),
       confirmLabel: _txt(t, 'backend_config.delete_confirm', 'Eliminar'),
+      destructive: true,
     );
     if (confirm) {
       await widget.backendController.removeBackend(backend.id);

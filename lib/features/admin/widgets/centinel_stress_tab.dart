@@ -8,9 +8,8 @@ import 'package:flutter/material.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
-import '../../../shared/widgets/buttons/app_buttons.dart';
-
 import '../../../core/network/api_error.dart';
+import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../repositories/centinel_repository.dart';
 import 'centinel_chart.dart';
@@ -189,7 +188,7 @@ class _CentinelStressTabState extends State<CentinelStressTab>
   }
 
   Future<void> _exportCsv() async {
-    final header = 'tick,count,errors,avg_s,p95_s,min_s,max_s,rps,active_users';
+    const header = 'tick,count,errors,avg_s,p95_s,min_s,max_s,rps,active_users';
     final rows = _ticks.map((t) {
       return [
         t['tick'],
