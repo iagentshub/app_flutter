@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:app_flutter/app/theme/app_theme.dart';
 import 'package:app_flutter/core/network/api_client.dart';
-import 'package:app_flutter/core/storage/secure_store.dart';
 import 'package:app_flutter/features/auth/pages/login_page.dart';
 import 'package:app_flutter/features/auth/repositories/auth_repository.dart';
 import 'package:app_flutter/shared/state/backend_controller.dart';
@@ -12,18 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class _MemorySecureStore implements SecureStore {
-  final Map<String, String> _values = {};
-
-  @override
-  Future<void> delete(String key) async => _values.remove(key);
-
-  @override
-  Future<String?> read(String key) async => _values[key];
-
-  @override
-  Future<void> write(String key, String value) async => _values[key] = value;
-}
+import 'support/memory_secure_store.dart';
 
 class _PendingAuthRepository extends AuthRepository {
   _PendingAuthRepository(super.apiClient);
@@ -38,7 +26,7 @@ Future<LoginPage> _buildLoginPage() async {
   SharedPreferences.setMockInitialValues({});
   final backendController = await BackendController.bootstrap();
   final sessionController = await SessionController.bootstrap(
-    secureStore: _MemorySecureStore(),
+    secureStore: MemorySecureStore(),
   );
   final localeController = await LocaleController.bootstrap();
   final authRepository = _PendingAuthRepository(ApiClient(backendController));

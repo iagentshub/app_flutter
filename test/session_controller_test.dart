@@ -1,8 +1,9 @@
-import 'package:app_flutter/core/storage/secure_store.dart';
 import 'package:app_flutter/models/auth/session_user.dart';
 import 'package:app_flutter/shared/state/session_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'support/memory_secure_store.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -116,26 +117,4 @@ void main() {
       expect(prefs.getString('session_role'), 'admin');
     },
   );
-}
-
-class MemorySecureStore implements SecureStore {
-  final values = <String, String>{};
-
-  @override
-  Future<void> delete(String key) async {
-    values.remove(key);
-  }
-
-  @override
-  Future<String?> read(String key) async => values[key];
-
-  @override
-  Future<void> write(String key, String value) async {
-    values[key] = value;
-  }
-}
-
-class ThrowingReadSecureStore extends MemorySecureStore {
-  @override
-  Future<String?> read(String key) => Future.error(StateError('unavailable'));
 }

@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:app_flutter/core/network/api_client.dart';
-import 'package:app_flutter/core/storage/secure_store.dart';
 import 'package:app_flutter/features/admin/pages/admin_page.dart';
 import 'package:app_flutter/models/auth/session_user.dart';
 import 'package:app_flutter/shared/state/backend_controller.dart';
@@ -12,6 +11,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'support/memory_secure_store.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -27,7 +28,7 @@ void main() {
     final backend = await BackendController.bootstrap();
     final locale = await LocaleController.bootstrap();
     final session = await SessionController.bootstrap(
-      secureStore: _MemorySecureStore(),
+      secureStore: MemorySecureStore(),
     );
     await session.login(
       token: 'admin-token',
@@ -196,17 +197,4 @@ http.Response _json(Object body, {int statusCode = 200}) {
     statusCode,
     headers: {'content-type': 'application/json'},
   );
-}
-
-class _MemorySecureStore implements SecureStore {
-  final _values = <String, String>{};
-
-  @override
-  Future<void> delete(String key) async => _values.remove(key);
-
-  @override
-  Future<String?> read(String key) async => _values[key];
-
-  @override
-  Future<void> write(String key, String value) async => _values[key] = value;
 }
