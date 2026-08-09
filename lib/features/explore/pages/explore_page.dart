@@ -99,6 +99,33 @@ class _ExplorePageState extends State<ExplorePage>
 
   String? get _token => _services.sessionController.gaToken;
 
+  Future<void> _loadOfficialPackages() async {
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+    if (mounted) {
+      setState(() {
+        _officialLoading = true;
+        _officialError = null;
+      });
+    }
+    try {
+      final items = await _officialRepository.list(token);
+      final copies = await _officialRepository.listCopies(token);
+      if (!mounted) return;
+      setState(() {
+        _officialPackages = items;
+        _officialCopies = copies;
+        _officialLoading = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _officialError = error.toString();
+        _officialLoading = false;
+      });
+    }
+  }
+
   /// Ejecuta una acción del controller y muestra su mensaje, si lo hay.
   Future<void> _runAction(Future<ActionResult?> action) async {
     final result = await action;

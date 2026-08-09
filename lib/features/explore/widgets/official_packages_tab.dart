@@ -1,33 +1,6 @@
 part of '../pages/explore_page.dart';
 
 extension _OfficialPackagesTab on _ExplorePageState {
-  Future<void> _loadOfficialPackages() async {
-    final token = _token;
-    if (token == null || token.isEmpty) return;
-    if (mounted) {
-      setState(() {
-        _officialLoading = true;
-        _officialError = null;
-      });
-    }
-    try {
-      final items = await _officialRepository.list(token);
-      final copies = await _officialRepository.listCopies(token);
-      if (!mounted) return;
-      setState(() {
-        _officialPackages = items;
-        _officialCopies = copies;
-        _officialLoading = false;
-      });
-    } catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _officialError = error.toString();
-        _officialLoading = false;
-      });
-    }
-  }
-
   Widget _buildOfficialPackagesTab() {
     if (_officialLoading) {
       return const Center(child: CircularProgressIndicator());
