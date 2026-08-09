@@ -5,8 +5,4 @@ class SkillItem extends ResourceItem {
 
   String get category => raw['category'] as String? ?? '';
   String get content => raw['content'] as String? ?? '';
-
-  @override
-  bool get readOnly =>
-      shared || (scope == 'public' && raw['origin_type'] != 'owner');
 }

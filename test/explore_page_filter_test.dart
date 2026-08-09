@@ -120,7 +120,16 @@ void main() {
       user: const SessionUser(id: 'user-1', username: 'ada', role: 'user'),
       remember: false,
     );
+    String? linkedPath;
+    Map<String, dynamic>? linkedBody;
     final client = MockClient((request) async {
+      if (request.method == 'POST' &&
+          request.url.path ==
+              '/api/official-packages/package-private-id/link') {
+        linkedPath = request.url.path;
+        linkedBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return _json({'name': 'Official Analyst'});
+      }
       if (request.url.path == '/api/explore') {
         return _json([
           {
@@ -128,8 +137,8 @@ void main() {
             'resource_id': 'package-private-id:agent-private-id',
             'name': 'Official Analyst',
             'description': 'Analiza fuentes',
-            'category': 'Other',
-            'labels': ['production', 'lang_es'],
+            'category': '',
+            'labels': ['official', 'lang_es'],
             'owner_username': 'iAgentsHub',
             'is_official': true,
             'hub_installable': true,
@@ -168,14 +177,32 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Official Analyst'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Text &&
+            {'Oficial', 'Official', 'official'}.contains(widget.data),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Otros'), findsNothing);
+    expect(find.text('Producción'), findsNothing);
     expect(find.text('Research Pack'), findsOneWidget);
-    expect(find.text('Oficial'), findsOneWidget);
     expect(find.textContaining('private-id'), findsNothing);
     expect(find.byIcon(Icons.star), findsOneWidget);
     expect(find.byIcon(Icons.bookmark_outline), findsNothing);
     expect(find.byIcon(Icons.hub_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.link_outlined), findsOneWidget);
     expect(find.byIcon(Icons.add_circle_outline), findsOneWidget);
     expect(find.text('Oficiales'), findsNothing);
+
+    await tester.tap(find.byIcon(Icons.link_outlined));
+    await tester.pumpAndSettle();
+    expect(linkedPath, '/api/official-packages/package-private-id/link');
+    expect(linkedBody, {
+      'component_ids': ['agent-private-id'],
+    });
+    expect(find.byIcon(Icons.link), findsOneWidget);
 
     for (final width in [768.0, 1024.0, 1440.0, 1920.0]) {
       tester.view.physicalSize = Size(width, 900);

@@ -26,6 +26,14 @@ void main() {
     ]);
   });
 
+  test('el origen es visible en catálogo pero no asignable por el usuario', () {
+    expect(kOriginGroup.keys, ['community', 'official']);
+    expect(kOriginGroup.exclusive, isTrue);
+    expect(kOriginGroup.required, isTrue);
+    expect(kLabelKeys, containsAll(['community', 'official']));
+    expect(kLabelGroups, isNot(contains(kOriginGroup)));
+  });
+
   testWidgets('el selector permite marcar más de un idioma', (tester) async {
     var selected = <String>{};
     await tester.pumpWidget(

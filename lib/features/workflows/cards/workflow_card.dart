@@ -19,6 +19,7 @@ class WorkflowCard extends StatelessWidget {
     required this.connectionsLabel,
     required this.ownerLabel,
     required this.linkedLabel,
+    required this.forkLabel,
     required this.labelText,
     required this.runLabel,
     required this.editTooltip,
@@ -57,6 +58,7 @@ class WorkflowCard extends StatelessWidget {
   final String connectionsLabel;
   final String ownerLabel;
   final String linkedLabel;
+  final String forkLabel;
   final String Function(String label) labelText;
   final String runLabel;
   final String editTooltip;
@@ -259,13 +261,14 @@ class WorkflowCard extends StatelessWidget {
             ],
             const SizedBox(height: 14),
             LabelChipsRow(
-              labels: item.labels,
+              labels: item.displayLabels,
               labelText: labelText,
               leading: [
                 OriginBadge(
-                  shared: item.shared,
+                  propertyType: item.propertyType,
                   ownerLabel: ownerLabel,
                   linkedLabel: linkedLabel,
+                  forkLabel: forkLabel,
                 ),
               ],
             ),
@@ -327,18 +330,20 @@ class WorkflowCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                 ],
-                ActionIconButton(
-                  icon: Icons.edit_outlined,
-                  tooltip: editTooltip,
-                  onPressed: onEdit,
-                ),
-                const SizedBox(width: 4),
-                ActionIconButton(
-                  icon: Icons.delete_outline,
-                  tooltip: deleteTooltip,
-                  danger: true,
-                  onPressed: onDelete,
-                ),
+                if (!item.readOnly) ...[
+                  ActionIconButton(
+                    icon: Icons.edit_outlined,
+                    tooltip: editTooltip,
+                    onPressed: onEdit,
+                  ),
+                  const SizedBox(width: 4),
+                  ActionIconButton(
+                    icon: Icons.delete_outline,
+                    tooltip: deleteTooltip,
+                    danger: true,
+                    onPressed: onDelete,
+                  ),
+                ],
               ],
             ),
           ],

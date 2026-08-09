@@ -107,7 +107,30 @@ class ExploreRepository extends ApiRepository {
     String token, {
     required String resourceType,
     required String resourceId,
+    String officialPackageId = '',
+    String officialComponentId = '',
   }) async {
+    if (officialPackageId.isNotEmpty && officialComponentId.isNotEmpty) {
+      final response = await apiClient.post(
+        '/api/official-packages/${Uri.encodeComponent(officialPackageId)}/link',
+        gaToken: token,
+        body: {
+          'component_ids': [officialComponentId],
+        },
+      );
+      for (final path in const [
+        '/api/agents',
+        '/api/skills',
+        '/api/prompts',
+        '/api/tools',
+        '/api/knowledge',
+        '/api/workflows',
+        '/api/social/me/resources',
+      ]) {
+        apiClient.invalidateCache(path);
+      }
+      return response.json;
+    }
     switch (resourceType) {
       case 'knowledge':
         return (await apiClient.post(

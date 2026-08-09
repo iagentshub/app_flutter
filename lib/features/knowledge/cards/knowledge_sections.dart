@@ -289,13 +289,14 @@ extension _KnowledgeSections on _KnowledgePageState {
             ],
             const SizedBox(height: 8),
             LabelChipsRow(
-              labels: item.labels,
+              labels: item.displayLabels,
               labelText: (label) => _tx('labels.$label', label),
               leading: [
                 OriginBadge(
-                  shared: item.shared,
+                  propertyType: item.propertyType,
                   ownerLabel: _tx('common.owner', 'Propietario'),
-                  linkedLabel: _tx('common.linked', 'Enlazado'),
+                  linkedLabel: _tx('common.linked', 'Enlace'),
+                  forkLabel: _tx('common.fork', 'Fork'),
                 ),
               ],
             ),
@@ -303,11 +304,12 @@ extension _KnowledgeSections on _KnowledgePageState {
             Row(
               children: [
                 const Spacer(),
-                ActionIconButton(
-                  icon: Icons.group_add_outlined,
-                  tooltip: _tx('common.share_group', 'Compartir con grupo'),
-                  onPressed: () => _shareSkill(item),
-                ),
+                if (!item.readOnly)
+                  ActionIconButton(
+                    icon: Icons.group_add_outlined,
+                    tooltip: _tx('common.share_group', 'Compartir con grupo'),
+                    onPressed: () => _shareSkill(item),
+                  ),
                 ActionIconButton(
                   icon: Icons.history,
                   tooltip: _tx(
@@ -316,11 +318,12 @@ extension _KnowledgeSections on _KnowledgePageState {
                   ),
                   onPressed: () => _showSkillHistory(item),
                 ),
-                ActionIconButton(
-                  icon: Icons.edit_outlined,
-                  tooltip: _tx('common.edit', 'Editar'),
-                  onPressed: () => _openEditSkillDialog(item),
-                ),
+                if (!item.readOnly)
+                  ActionIconButton(
+                    icon: Icons.edit_outlined,
+                    tooltip: _tx('common.edit', 'Editar'),
+                    onPressed: () => _openEditSkillDialog(item),
+                  ),
                 if (!item.readOnly)
                   ActionIconButton(
                     icon: item.isActive
@@ -331,12 +334,13 @@ extension _KnowledgeSections on _KnowledgePageState {
                         : _tx('common.activate', 'Activar'),
                     onPressed: () => _toggleSkillActive(item),
                   ),
-                ActionIconButton(
-                  icon: Icons.delete_outline,
-                  tooltip: _tx('common.delete', 'Eliminar'),
-                  danger: true,
-                  onPressed: () => _deleteSkill(item),
-                ),
+                if (!item.readOnly)
+                  ActionIconButton(
+                    icon: Icons.delete_outline,
+                    tooltip: _tx('common.delete', 'Eliminar'),
+                    danger: true,
+                    onPressed: () => _deleteSkill(item),
+                  ),
               ],
             ),
           ],
@@ -395,20 +399,28 @@ extension _KnowledgeSections on _KnowledgePageState {
               ),
             ],
             const SizedBox(height: 8),
-            OriginBadge(
-              shared: item.shared,
-              ownerLabel: _tx('common.owner', 'Propietario'),
-              linkedLabel: _tx('common.linked', 'Enlazado'),
+            LabelChipsRow(
+              labels: item.displayLabels,
+              labelText: (label) => _tx('labels.$label', label),
+              leading: [
+                OriginBadge(
+                  propertyType: item.propertyType,
+                  ownerLabel: _tx('common.owner', 'Propietario'),
+                  linkedLabel: _tx('common.linked', 'Enlace'),
+                  forkLabel: _tx('common.fork', 'Fork'),
+                ),
+              ],
             ),
             const SizedBox(height: 10),
             Row(
               children: [
                 const Spacer(),
-                ActionIconButton(
-                  icon: Icons.group_add_outlined,
-                  tooltip: _tx('common.share_group', 'Compartir con grupo'),
-                  onPressed: () => _shareItem(item),
-                ),
+                if (!item.readOnly)
+                  ActionIconButton(
+                    icon: Icons.group_add_outlined,
+                    tooltip: _tx('common.share_group', 'Compartir con grupo'),
+                    onPressed: () => _shareItem(item),
+                  ),
                 if (!item.readOnly)
                   ActionIconButton(
                     icon: item.isActive
@@ -419,12 +431,13 @@ extension _KnowledgeSections on _KnowledgePageState {
                         : _tx('common.activate', 'Activar'),
                     onPressed: () => _toggleItemActive(item),
                   ),
-                ActionIconButton(
-                  icon: Icons.delete_outline,
-                  tooltip: _tx('common.delete', 'Eliminar'),
-                  danger: true,
-                  onPressed: () => _deleteItem(item),
-                ),
+                if (!item.readOnly)
+                  ActionIconButton(
+                    icon: Icons.delete_outline,
+                    tooltip: _tx('common.delete', 'Eliminar'),
+                    danger: true,
+                    onPressed: () => _deleteItem(item),
+                  ),
               ],
             ),
           ],

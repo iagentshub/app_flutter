@@ -72,6 +72,7 @@ abstract final class FncColors {
   // ---------------------------------------------------------------------
   static const labelOwner = Color(0xFF059669);
   static const labelLinked = Color(0xFF0891B2);
+  static const labelFork = Color(0xFF7C3AED);
   static const labelAgent = Color(0xFF2563EB);
   static const labelSkill = Color(0xFF9333EA);
   static const labelPrompt = Color(0xFFD97706);
@@ -83,6 +84,8 @@ abstract final class FncColors {
   static const labelTool = Color(0xFF0EA5E9);
   static const labelPrivate = Color(0xFF64748B);
   static const labelPublic = Color(0xFF059669);
+  static const labelOfficial = warning;
+  static const labelCommunity = Color(0xFF2563EB);
   static const labelProduction = Color(0xFF0891B2);
   static const labelStaging = Color(0xFF475569);
   static const labelDevelopment = Color(0xFFD97706);

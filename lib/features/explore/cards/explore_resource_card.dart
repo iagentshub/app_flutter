@@ -15,7 +15,9 @@ extension _ExploreResourceCard on _ExplorePageState {
         _controller.isBusy(item) || _officialBusyKeys.contains(item.resourceId);
     final myUsername = _services.sessionController.user?.username ?? '';
     final isOwn = myUsername.isNotEmpty && item.ownerUsername == myUsername;
-    final isLinkable = !isOwn && _linkableTypes.contains(item.resourceType);
+    final isLinkable =
+        (item.isOfficial || !isOwn) &&
+        _linkableTypes.contains(item.resourceType);
     final linked = _controller.isLinked(item);
     final starred = _controller.isStarred(item);
 
@@ -59,16 +61,14 @@ extension _ExploreResourceCard on _ExplorePageState {
                 ),
                 const SizedBox(width: 10),
                 if (item.isOfficial) ...[
-                  Icon(
-                    Icons.star,
-                    size: 17,
-                    color: FncColors.warning,
-                    semanticLabel: _tx('official.badge', 'Oficial'),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    _tx('official.badge', 'Oficial'),
-                    style: Theme.of(context).textTheme.bodySmall,
+                  Tooltip(
+                    message: _tx('official.badge', 'Oficial'),
+                    child: Icon(
+                      Icons.star,
+                      size: 17,
+                      color: FncColors.warning,
+                      semanticLabel: _tx('official.badge', 'Oficial'),
+                    ),
                   ),
                 ] else ...[
                   Icon(
@@ -96,12 +96,13 @@ extension _ExploreResourceCard on _ExplorePageState {
             LabelChipsRow(
               labels: item.labels,
               labelText: (label) => _tx('labels.$label', label),
-              leading: [
+              leading: <Widget>[
                 ResourceTypeBadge(
                   type: item.resourceType,
                   label: _typeChipLabel(item.resourceType),
                 ),
-                _chip(_categoryChipLabel(item.category)),
+                if (item.category.trim().isNotEmpty)
+                  _chip(_categoryChipLabel(item.category)),
               ],
             ),
             if (item.tags.isNotEmpty) ...[
@@ -126,6 +127,16 @@ extension _ExploreResourceCard on _ExplorePageState {
                 if (item.isOfficial && item.dependencies.isNotEmpty)
                   _officialGraphButton(item),
                 if (item.isOfficial) ...[
+                  if (isLinkable)
+                    ActionIconButton(
+                      icon: linked ? Icons.link : Icons.link_outlined,
+                      tooltip: linked
+                          ? _tx('explore.linked_tooltip', 'Ya enlazado')
+                          : _tx('explore.link', 'Enlazar'),
+                      onPressed: (busy || linked)
+                          ? null
+                          : () => _runAction(_controller.link(item)),
+                    ),
                   if (item.hubInstallable)
                     ActionIconButton(
                       icon: Icons.add_circle_outline,

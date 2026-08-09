@@ -142,37 +142,40 @@ class AgentCard extends StatelessWidget {
   List<OverflowMenuAction> _overflowActions() {
     final exportar = tx('agents.export_tooltip', 'Exportar');
     return [
-      OverflowMenuAction(
-        icon: Icons.group_add_outlined,
-        label: tx('common.share_group', 'Compartir con grupo'),
-        onSelected: onShare,
-      ),
+      if (!item.readOnly)
+        OverflowMenuAction(
+          icon: Icons.group_add_outlined,
+          label: tx('common.share_group', 'Compartir con grupo'),
+          onSelected: onShare,
+        ),
       OverflowMenuAction(
         icon: Icons.history,
         label: tx('history.dialog_title', 'Historial de versiones'),
         onSelected: onHistory,
       ),
-      OverflowMenuAction(
-        icon: Icons.ios_share_outlined,
-        label: '$exportar · ${tx('agents.export_openai', 'OpenAI')}',
-        onSelected: () => onExport('openai'),
-        separatedBefore: true,
-      ),
-      OverflowMenuAction(
-        icon: Icons.ios_share_outlined,
-        label: '$exportar · ${tx('agents.export_claude', 'Claude')}',
-        onSelected: () => onExport('claude'),
-      ),
-      OverflowMenuAction(
-        icon: Icons.ios_share_outlined,
-        label: '$exportar · ${tx('agents.export_github', 'GitHub Copilot')}',
-        onSelected: () => onExport('github'),
-      ),
-      OverflowMenuAction(
-        icon: Icons.ios_share_outlined,
-        label: '$exportar · ${tx('agents.export_mcp', 'Servidor MCP')}',
-        onSelected: () => onExport('mcp'),
-      ),
+      if (!item.readOnly) ...[
+        OverflowMenuAction(
+          icon: Icons.ios_share_outlined,
+          label: '$exportar · ${tx('agents.export_openai', 'OpenAI')}',
+          onSelected: () => onExport('openai'),
+          separatedBefore: true,
+        ),
+        OverflowMenuAction(
+          icon: Icons.ios_share_outlined,
+          label: '$exportar · ${tx('agents.export_claude', 'Claude')}',
+          onSelected: () => onExport('claude'),
+        ),
+        OverflowMenuAction(
+          icon: Icons.ios_share_outlined,
+          label: '$exportar · ${tx('agents.export_github', 'GitHub Copilot')}',
+          onSelected: () => onExport('github'),
+        ),
+        OverflowMenuAction(
+          icon: Icons.ios_share_outlined,
+          label: '$exportar · ${tx('agents.export_mcp', 'Servidor MCP')}',
+          onSelected: () => onExport('mcp'),
+        ),
+      ],
       if (onToggleActive != null)
         OverflowMenuAction(
           icon: item.isActive
@@ -184,13 +187,14 @@ class AgentCard extends StatelessWidget {
           onSelected: onToggleActive!,
           separatedBefore: true,
         ),
-      OverflowMenuAction(
-        icon: Icons.delete_outline,
-        label: tx('common.delete', 'Eliminar'),
-        onSelected: onDelete,
-        danger: true,
-        separatedBefore: true,
-      ),
+      if (!item.readOnly)
+        OverflowMenuAction(
+          icon: Icons.delete_outline,
+          label: tx('common.delete', 'Eliminar'),
+          onSelected: onDelete,
+          danger: true,
+          separatedBefore: true,
+        ),
     ];
   }
 
@@ -242,13 +246,14 @@ class AgentCard extends StatelessWidget {
             ],
             const SizedBox(height: 8),
             LabelChipsRow(
-              labels: item.labels,
+              labels: item.displayLabels,
               labelText: (label) => tx('labels.$label', label),
               leading: [
                 OriginBadge(
-                  shared: item.shared,
+                  propertyType: item.propertyType,
                   ownerLabel: tx('common.owner', 'Propietario'),
-                  linkedLabel: tx('common.linked', 'Enlazado'),
+                  linkedLabel: tx('common.linked', 'Enlace'),
+                  forkLabel: tx('common.fork', 'Fork'),
                 ),
                 TokenUsageBadge(
                   tokensIn: item.tokensIn,
@@ -274,11 +279,12 @@ class AgentCard extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                ActionIconButton(
-                  icon: Icons.edit_outlined,
-                  tooltip: tx('common.edit', 'Editar'),
-                  onPressed: onEdit,
-                ),
+                if (!item.readOnly)
+                  ActionIconButton(
+                    icon: Icons.edit_outlined,
+                    tooltip: tx('common.edit', 'Editar'),
+                    onPressed: onEdit,
+                  ),
                 ResourceGraphButton(
                   tooltip: tx('agents.graph_tooltip', 'Ver grafo de contenido'),
                   dialogTitle: item.name,

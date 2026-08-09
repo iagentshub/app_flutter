@@ -267,6 +267,8 @@ class ExploreController extends ChangeNotifier {
         token,
         resourceType: item.resourceType,
         resourceId: item.resourceId,
+        officialPackageId: item.officialPackageId,
+        officialComponentId: item.officialComponentId,
       );
       _linkedKeys.add(key);
       return ActionResult(

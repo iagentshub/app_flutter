@@ -3,25 +3,29 @@ import 'package:flutter/material.dart';
 import '../../app/theme/fnc_colors.dart';
 import '../../app/theme/fnc_fonts.dart';
 
-/// Chip de origen del recurso: si es tuyo directamente ("Propietario") o
-/// llegó vía group share ("Enlazado"), igual al originChip de
-/// Usa el mismo estilo visual que un label-chip.
+/// Chip de propiedad del recurso: propietario, enlace de solo lectura o fork
+/// editable. Usa el mismo estilo visual que un label-chip.
 class OriginBadge extends StatelessWidget {
   const OriginBadge({
-    required this.shared,
+    required this.propertyType,
     required this.ownerLabel,
     required this.linkedLabel,
+    required this.forkLabel,
     super.key,
   });
 
-  final bool shared;
+  final String propertyType;
   final String ownerLabel;
   final String linkedLabel;
+  final String forkLabel;
 
   @override
   Widget build(BuildContext context) {
-    final color = shared ? FncColors.labelLinked : FncColors.labelOwner;
-    final text = shared ? linkedLabel : ownerLabel;
+    final (color, text) = switch (propertyType) {
+      'fork' => (FncColors.labelFork, forkLabel),
+      'linked' => (FncColors.labelLinked, linkedLabel),
+      _ => (FncColors.labelOwner, ownerLabel),
+    };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(

@@ -4,11 +4,12 @@ import '../../app/theme/fnc_colors.dart';
 
 /// Tabla canónica de colores para labels.
 /// (assets/js/labels.js): 3 grupos exclusivos (visibilidad, entorno, estado).
-/// Incluye también "owner"/"linked", usados por el badge de origen
+/// Incluye también "owner"/"linked"/"fork", usados por el badge de propiedad
 /// (OriginBadge) y por el grupo informativo de propiedad del catálogo.
 const Map<String, Color> _labelColors = {
   'owner': FncColors.labelOwner,
   'linked': FncColors.labelLinked,
+  'fork': FncColors.labelFork,
   'agent': FncColors.labelAgent,
   'skill': FncColors.labelSkill,
   'prompt': FncColors.labelPrompt,
@@ -20,6 +21,8 @@ const Map<String, Color> _labelColors = {
   'evaluator': FncColors.labelEvaluator,
   'private': FncColors.labelPrivate,
   'public': FncColors.labelPublic,
+  'official': FncColors.labelOfficial,
+  'community': FncColors.labelCommunity,
   'production': FncColors.labelProduction,
   'staging': FncColors.labelStaging,
   'development': FncColors.labelDevelopment,
@@ -49,6 +52,8 @@ Color labelColor(String key) => _labelColors[key] ?? FncColors.labelFallback;
 const List<String> kLabelKeys = [
   'private',
   'public',
+  'official',
+  'community',
   'production',
   'staging',
   'development',
@@ -154,14 +159,13 @@ class LabelGroupDef {
   final bool required;
 }
 
-/// Grupo de propiedad ("Propietario" vs "Enlazado"): no es un label real
-/// asignable al recurso (no vive en `labels`, se calcula del flag `_shared`),
-/// por eso vive fuera de `kLabelGroups` y no aparece en GroupedLabelPicker.
+/// Grupo informativo de propiedad. `linked` y `fork` también se persisten en
+/// recursos locales para que sus permisos no dependan del contexto de listado.
 /// Debe mostrarse siempre primero en el catálogo explicativo.
 const kOwnershipGroup = LabelGroupDef(
   titleKey: 'labels.group_ownership',
   fallbackTitle: 'Propiedad',
-  keys: ['owner', 'linked'],
+  keys: ['owner', 'linked', 'fork'],
   exclusive: true,
   required: true,
 );
@@ -184,6 +188,17 @@ const kResourceTypeGroup = LabelGroupDef(
     'memory',
     'workflow',
   ],
+  exclusive: true,
+  required: true,
+);
+
+/// Origen editorial gestionado por el sistema. Se muestra en el catálogo y
+/// en las cards, pero queda fuera de `kLabelGroups` para que ningún selector
+/// de usuario pueda modificarlo.
+const kOriginGroup = LabelGroupDef(
+  titleKey: 'labels.group_origin',
+  fallbackTitle: 'Origen',
+  keys: ['community', 'official'],
   exclusive: true,
   required: true,
 );

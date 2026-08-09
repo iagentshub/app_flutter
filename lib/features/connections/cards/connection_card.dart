@@ -62,20 +62,19 @@ class ConnectionCard extends StatelessWidget {
   /// entra en el menú.
   List<OverflowMenuAction> _overflowActions() {
     return [
-      if (onSyncHub != null)
+      if (onSyncHub != null && !item.readOnly)
         OverflowMenuAction(
           icon: Icons.sync,
           label: tx('connections.sync_hub', 'Sincronizar'),
           onSelected: onSyncHub!,
         ),
-      OverflowMenuAction(
-        icon: Icons.group_add_outlined,
-        label: tx('common.share_group', 'Compartir con grupo'),
-        onSelected: onShare,
-        // Una conexión virtual (la comparte otro) no es de nadie aquí: no se
-        // puede volver a compartir.
-        enabled: !item.isVirtual,
-      ),
+      if (!item.readOnly)
+        OverflowMenuAction(
+          icon: Icons.group_add_outlined,
+          label: tx('common.share_group', 'Compartir con grupo'),
+          onSelected: onShare,
+          enabled: !item.isVirtual,
+        ),
       if (onToggleActive != null)
         OverflowMenuAction(
           icon: item.isActive
@@ -86,13 +85,14 @@ class ConnectionCard extends StatelessWidget {
               : tx('common.activate', 'Activar'),
           onSelected: onToggleActive!,
         ),
-      OverflowMenuAction(
-        icon: Icons.delete_outline,
-        label: tx('common.delete', 'Eliminar'),
-        onSelected: onDelete,
-        danger: true,
-        separatedBefore: true,
-      ),
+      if (!item.readOnly)
+        OverflowMenuAction(
+          icon: Icons.delete_outline,
+          label: tx('common.delete', 'Eliminar'),
+          onSelected: onDelete,
+          danger: true,
+          separatedBefore: true,
+        ),
     ];
   }
 
@@ -167,15 +167,16 @@ class ConnectionCard extends StatelessWidget {
             const SizedBox(height: 8),
             LabelChipsRow(
               labels: [
-                ...item.labels,
+                ...item.displayLabels,
                 if (item.personalKey) 'Personal',
                 if (item.isVirtual) 'Virtual',
               ],
               leading: [
                 OriginBadge(
-                  shared: item.shared,
+                  propertyType: item.propertyType,
                   ownerLabel: tx('common.owner', 'Propietario'),
-                  linkedLabel: tx('common.linked', 'Enlazado'),
+                  linkedLabel: tx('common.linked', 'Enlace'),
+                  forkLabel: tx('common.fork', 'Fork'),
                 ),
                 TokenUsageBadge(
                   tokensIn: item.tokensIn,
@@ -196,15 +197,17 @@ class ConnectionCard extends StatelessWidget {
                   label: Text(tx('connections.test', 'Test')),
                 ),
                 const Spacer(),
-                ActionIconButton(
-                  icon: Icons.edit_outlined,
-                  tooltip: tx('common.edit', 'Editar'),
-                  onPressed: onEdit,
-                ),
-                OverflowMenuButton(
-                  tooltip: tx('common.more_actions', 'Más acciones'),
-                  actions: _overflowActions(),
-                ),
+                if (!item.readOnly)
+                  ActionIconButton(
+                    icon: Icons.edit_outlined,
+                    tooltip: tx('common.edit', 'Editar'),
+                    onPressed: onEdit,
+                  ),
+                if (!item.readOnly)
+                  OverflowMenuButton(
+                    tooltip: tx('common.more_actions', 'Más acciones'),
+                    actions: _overflowActions(),
+                  ),
               ],
             ),
           ],

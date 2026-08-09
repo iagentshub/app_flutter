@@ -181,12 +181,13 @@ extension _ToolSections on _KnowledgePageState {
               const SizedBox(height: 8),
             ],
             LabelChipsRow(
-              labels: item.labels,
+              labels: item.displayLabels,
               leading: [
                 OriginBadge(
-                  shared: item.shared,
+                  propertyType: item.propertyType,
                   ownerLabel: _tx('common.owner', 'Propietario'),
-                  linkedLabel: _tx('common.linked', 'Enlazado'),
+                  linkedLabel: _tx('common.linked', 'Enlace'),
+                  forkLabel: _tx('common.fork', 'Fork'),
                 ),
                 _executionComingSoonBadge(),
               ],
@@ -195,11 +196,12 @@ extension _ToolSections on _KnowledgePageState {
             Row(
               children: [
                 const Spacer(),
-                ActionIconButton(
-                  icon: Icons.group_add_outlined,
-                  tooltip: _tx('common.share_group', 'Compartir con grupo'),
-                  onPressed: () => _shareTool(item),
-                ),
+                if (!item.readOnly)
+                  ActionIconButton(
+                    icon: Icons.group_add_outlined,
+                    tooltip: _tx('common.share_group', 'Compartir con grupo'),
+                    onPressed: () => _shareTool(item),
+                  ),
                 ActionIconButton(
                   icon: Icons.history,
                   tooltip: _tx(
@@ -208,11 +210,12 @@ extension _ToolSections on _KnowledgePageState {
                   ),
                   onPressed: () => _showToolHistory(item),
                 ),
-                ActionIconButton(
-                  icon: Icons.edit_outlined,
-                  tooltip: _tx('common.edit', 'Editar'),
-                  onPressed: () => _openEditToolDialog(item),
-                ),
+                if (!item.readOnly)
+                  ActionIconButton(
+                    icon: Icons.edit_outlined,
+                    tooltip: _tx('common.edit', 'Editar'),
+                    onPressed: () => _openEditToolDialog(item),
+                  ),
                 if (!item.readOnly)
                   ActionIconButton(
                     icon: item.isActive
@@ -223,12 +226,13 @@ extension _ToolSections on _KnowledgePageState {
                         : _tx('common.activate', 'Activar'),
                     onPressed: () => _toggleToolActive(item),
                   ),
-                ActionIconButton(
-                  icon: Icons.delete_outline,
-                  tooltip: _tx('common.delete', 'Eliminar'),
-                  danger: true,
-                  onPressed: () => _deleteTool(item),
-                ),
+                if (!item.readOnly)
+                  ActionIconButton(
+                    icon: Icons.delete_outline,
+                    tooltip: _tx('common.delete', 'Eliminar'),
+                    danger: true,
+                    onPressed: () => _deleteTool(item),
+                  ),
               ],
             ),
           ],

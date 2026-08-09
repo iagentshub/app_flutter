@@ -13,8 +13,4 @@ class ToolItem extends ResourceItem {
   String? get binaryUploadedAt => raw['binary_uploaded_at'] as String?;
 
   bool get hasBinary => (binaryFilename ?? '').isNotEmpty;
-
-  @override
-  bool get readOnly =>
-      shared || (scope == 'public' && raw['origin_type'] != 'owner');
 }

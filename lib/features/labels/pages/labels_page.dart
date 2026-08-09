@@ -152,8 +152,10 @@ class _LabelsPageState extends State<LabelsPage>
       if (_selectedTypes.isNotEmpty && !_selectedTypes.contains(item.type)) {
         return false;
       }
-      if (_selectedOwnership == 'owner' && item.shared) return false;
-      if (_selectedOwnership == 'linked' && !item.shared) return false;
+      if (_selectedOwnership.isNotEmpty &&
+          item.propertyType != _selectedOwnership) {
+        return false;
+      }
       if (!_selectedLabels.every(item.labels.contains)) {
         return false;
       }
@@ -174,12 +176,12 @@ class _LabelsPageState extends State<LabelsPage>
       (_selectedOwnership.isNotEmpty ? 1 : 0) + _selectedLabels.length;
 
   Map<String, int> _ownershipCounts() {
-    final counts = {'owner': 0, 'linked': 0};
+    final counts = {'owner': 0, 'linked': 0, 'fork': 0};
     for (final item in _all) {
       if (_selectedTypes.isNotEmpty && !_selectedTypes.contains(item.type)) {
         continue;
       }
-      final key = item.shared ? 'linked' : 'owner';
+      final key = item.propertyType;
       counts[key] = (counts[key] ?? 0) + 1;
     }
     return counts;
@@ -272,8 +274,9 @@ class _LabelsPageState extends State<LabelsPage>
       ),
       (
         'linked',
-        '${_tx('labels.linked', 'Enlazado')} (${counts['linked'] ?? 0})',
+        '${_tx('labels.linked', 'Enlace')} (${counts['linked'] ?? 0})',
       ),
+      ('fork', '${_tx('labels.fork', 'Fork')} (${counts['fork'] ?? 0})'),
     ];
   }
 
@@ -349,7 +352,12 @@ class _LabelsPageState extends State<LabelsPage>
   }
 
   Widget _buildCatalogTab() {
-    final groups = [kResourceTypeGroup, kOwnershipGroup, ...kLabelGroups];
+    final groups = [
+      kResourceTypeGroup,
+      kOwnershipGroup,
+      kOriginGroup,
+      ...kLabelGroups,
+    ];
     return CustomScrollView(
       slivers: [
         SliverPadding(
@@ -456,7 +464,8 @@ class _LabelsPageState extends State<LabelsPage>
                     item: item,
                     typeLabel: _itemTypeLabel(item.type),
                     ownerLabel: _tx('common.owner', 'Propietario'),
-                    linkedLabel: _tx('common.linked', 'Enlazado'),
+                    linkedLabel: _tx('common.linked', 'Enlace'),
+                    forkLabel: _tx('common.fork', 'Fork'),
                     labelText: (label) => _tx('labels.$label', label),
                     onTap: () => showMessage(
                       item.description.isEmpty

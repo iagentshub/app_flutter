@@ -180,26 +180,8 @@ class _ExplorePageState extends State<ExplorePage>
       .where((l) => l != 'public' && l != 'private' && !isLanguageLabel(l))
       .toList();
 
-  static const _labelKeys = {
-    'production': 'label_production',
-    'staging': 'label_staging',
-    'development': 'label_development',
-    'test': 'label_test',
-    'favorite': 'label_favorite',
-    'draft': 'label_draft',
-    'review': 'label_review',
-    'deprecated': 'label_deprecated',
-    'quarantine': 'label_quarantine',
-    'archived': 'label_archived',
-    'delete': 'label_delete',
-  };
-
   /// Traduce el nombre de una label ("favorite", "draft"...) al idioma del sistema.
-  String _labelChipLabel(String label) {
-    final key = _labelKeys[label];
-    if (key == null) return label;
-    return _tx('explore.$key', label);
-  }
+  String _labelChipLabel(String label) => _tx('labels.$label', label);
 
   List<ExploreTypeOption> get _publicExploreTypeOptions => [
     for (final option in _typeOptions.skip(1))

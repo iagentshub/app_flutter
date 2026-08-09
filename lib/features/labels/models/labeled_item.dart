@@ -7,7 +7,7 @@ class LabeledItem {
     required this.description,
     required this.type,
     required this.labels,
-    required this.shared,
+    required this.propertyType,
   });
 
   /// Construye un LabeledItem desde cualquier recurso (agente, skill, workflow…).
@@ -18,8 +18,8 @@ class LabeledItem {
       name: resource.name,
       description: resource.description,
       type: type,
-      labels: resource.labels,
-      shared: resource.shared,
+      labels: resource.displayLabels,
+      propertyType: resource.propertyType,
     );
   }
 
@@ -28,5 +28,5 @@ class LabeledItem {
   final String description;
   final String type;
   final List<String> labels;
-  final bool shared;
+  final String propertyType;
 }

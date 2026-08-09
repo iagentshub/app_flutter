@@ -173,20 +173,23 @@ class LlmOrchestrationCard extends StatelessWidget {
             Row(
               children: [
                 OriginBadge(
-                  shared: item.shared,
+                  propertyType: item.propertyType,
                   ownerLabel: tx('common.owner', 'Propietario'),
-                  linkedLabel: tx('common.linked', 'Enlazado'),
+                  linkedLabel: tx('common.linked', 'Enlace'),
+                  forkLabel: tx('common.fork', 'Fork'),
                 ),
                 const Spacer(),
-                ActionIconButton(
-                  icon: Icons.edit_outlined,
-                  tooltip: tx('common.edit', 'Editar'),
-                  onPressed: item.readOnly ? null : onEdit,
-                ),
-                OverflowMenuButton(
-                  tooltip: tx('common.more_actions', 'Más acciones'),
-                  actions: _overflowActions(),
-                ),
+                if (!item.readOnly)
+                  ActionIconButton(
+                    icon: Icons.edit_outlined,
+                    tooltip: tx('common.edit', 'Editar'),
+                    onPressed: onEdit,
+                  ),
+                if (!item.readOnly)
+                  OverflowMenuButton(
+                    tooltip: tx('common.more_actions', 'Más acciones'),
+                    actions: _overflowActions(),
+                  ),
               ],
             ),
           ],
@@ -202,30 +205,29 @@ class LlmOrchestrationCard extends StatelessWidget {
   /// el resto de tarjetas; lo demás pasa al menú.
   List<OverflowMenuAction> _overflowActions() {
     return [
-      OverflowMenuAction(
-        icon: item.isActive
-            ? Icons.toggle_on_outlined
-            : Icons.toggle_off_outlined,
-        label: item.isActive
-            ? tx('common.deactivate', 'Desactivar')
-            : tx('common.activate', 'Activar'),
-        onSelected: onToggleActive,
-        enabled: !item.readOnly,
-      ),
-      OverflowMenuAction(
-        icon: Icons.group_add_outlined,
-        label: tx('common.share_group', 'Compartir con grupo'),
-        onSelected: onShare,
-        enabled: !item.readOnly,
-      ),
-      OverflowMenuAction(
-        icon: Icons.delete_outline,
-        label: tx('common.delete', 'Eliminar'),
-        onSelected: onDelete,
-        danger: true,
-        enabled: !item.readOnly,
-        separatedBefore: true,
-      ),
+      if (!item.readOnly) ...[
+        OverflowMenuAction(
+          icon: item.isActive
+              ? Icons.toggle_on_outlined
+              : Icons.toggle_off_outlined,
+          label: item.isActive
+              ? tx('common.deactivate', 'Desactivar')
+              : tx('common.activate', 'Activar'),
+          onSelected: onToggleActive,
+        ),
+        OverflowMenuAction(
+          icon: Icons.group_add_outlined,
+          label: tx('common.share_group', 'Compartir con grupo'),
+          onSelected: onShare,
+        ),
+        OverflowMenuAction(
+          icon: Icons.delete_outline,
+          label: tx('common.delete', 'Eliminar'),
+          onSelected: onDelete,
+          danger: true,
+          separatedBefore: true,
+        ),
+      ],
     ];
   }
 

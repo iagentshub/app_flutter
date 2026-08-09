@@ -19,20 +19,36 @@ void main() {
     });
   });
 
-  group('SkillItem.readOnly', () {
-    test('permite editar una skill pública propia', () {
+  group('ResourceItem.propertyType', () {
+    test('propietario puede gestionar el recurso', () {
       const item = SkillItem(raw: {'scope': 'public', 'origin_type': 'owner'});
+      expect(item.propertyType, 'owner');
       expect(item.readOnly, isFalse);
     });
 
-    test('protege skills públicas ajenas o del sistema', () {
-      expect(const SkillItem(raw: {'scope': 'public'}).readOnly, isTrue);
-      expect(
-        const SkillItem(
-          raw: {'scope': 'public', 'origin_type': 'linked'},
-        ).readOnly,
-        isTrue,
+    test('enlace es de solo lectura por etiqueta o dato calculado', () {
+      const byLabel = SkillItem(
+        raw: {
+          'labels': ['private', 'linked'],
+        },
       );
+      const byOrigin = SkillItem(raw: {'origin_type': 'linked'});
+      expect(byLabel.propertyType, 'linked');
+      expect(byLabel.readOnly, isTrue);
+      expect(byOrigin.readOnly, isTrue);
+    });
+
+    test('fork es una copia gestionable y prevalece sobre linked', () {
+      const item = SkillItem(
+        raw: {
+          'origin_type': 'linked',
+          'labels': ['private', 'fork'],
+        },
+      );
+      expect(item.propertyType, 'fork');
+      expect(item.forked, isTrue);
+      expect(item.readOnly, isFalse);
+      expect(item.displayLabels, ['private']);
     });
   });
 }

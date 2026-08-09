@@ -22,8 +22,24 @@ abstract class ResourceItem {
   /// Llega de un group share ajeno: no soy el dueño.
   bool get shared => raw['_shared'] == true;
 
-  /// Solo-lectura si es un recurso compartido por otro.
-  bool get readOnly => shared;
+  /// Tipo de propiedad efectivo. Las etiquetas persistidas tienen prioridad
+  /// sobre el dato calculado por la API para que los enlaces locales también
+  /// sean de solo lectura y los forks sigan siendo gestionables.
+  String get propertyType {
+    final explicit = raw['origin_type']?.toString();
+    if (labels.contains('fork') || explicit == 'fork') return 'fork';
+    if (labels.contains('linked') || shared || explicit == 'linked') {
+      return 'linked';
+    }
+    return 'owner';
+  }
+
+  bool get linked => propertyType == 'linked';
+  bool get forked => propertyType == 'fork';
+
+  /// Un enlace es una referencia de solo lectura. Propietarios y forks son
+  /// copias gestionables: se pueden editar, compartir y eliminar.
+  bool get readOnly => linked;
 
   /// Activo por defecto: tolera respuestas anteriores a `is_active` y acepta
   /// tanto el booleano de la API como el flag entero 0/1 de persistencia.
@@ -41,4 +57,10 @@ abstract class ResourceItem {
     if (value is List) return value.map((item) => item.toString()).toList();
     return const ['private'];
   }
+
+  /// Labels editoriales/operativas que acompañan al badge de propiedad sin
+  /// repetir `Enlace` o `Fork` una segunda vez en la misma card.
+  List<String> get displayLabels => labels
+      .where((label) => !const {'owner', 'linked', 'fork'}.contains(label))
+      .toList();
 }

@@ -9,7 +9,7 @@ class ExploreItem {
   String get ownerUsername => raw['owner_username'] as String? ?? '';
   String get name => raw['name'] as String? ?? '(sin nombre)';
   String get description => raw['description'] as String? ?? '';
-  String get category => raw['category'] as String? ?? 'Other';
+  String get category => raw['category'] as String? ?? '';
   bool get isOfficial => raw['is_official'] == true;
   bool get hubInstallable => raw['hub_installable'] == true;
   String get officialPackageId => raw['official_package_id']?.toString() ?? '';

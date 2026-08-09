@@ -88,4 +88,67 @@ void main() {
     expect(tested, isFalse);
     expect(find.text('Virtual'), findsOneWidget);
   });
+
+  testWidgets('AgentCard muestra Enlace sin acciones de gestión', (
+    tester,
+  ) async {
+    const item = AgentItem(
+      raw: {
+        'id': 'agent-link',
+        'name': 'Referencia',
+        'labels': ['private', 'linked'],
+      },
+    );
+
+    await tester.pumpWidget(
+      _host(
+        AgentCard(
+          item: item,
+          tx: _tx,
+          onChat: () {},
+          onExport: (_) {},
+          onShare: () {},
+          onHistory: () {},
+          onEdit: () {},
+          onDelete: () {},
+        ),
+      ),
+    );
+
+    expect(find.text('Enlace'), findsOneWidget);
+    expect(find.byTooltip('Editar'), findsNothing);
+
+    await tester.tap(find.byTooltip('Más acciones'));
+    await tester.pumpAndSettle();
+    expect(find.text('Compartir con grupo'), findsNothing);
+    expect(find.text('Eliminar'), findsNothing);
+  });
+
+  testWidgets('AgentCard muestra Fork como copia editable', (tester) async {
+    const item = AgentItem(
+      raw: {
+        'id': 'agent-fork',
+        'name': 'Copia',
+        'labels': ['private', 'fork'],
+      },
+    );
+
+    await tester.pumpWidget(
+      _host(
+        AgentCard(
+          item: item,
+          tx: _tx,
+          onChat: () {},
+          onExport: (_) {},
+          onShare: () {},
+          onHistory: () {},
+          onEdit: () {},
+          onDelete: () {},
+        ),
+      ),
+    );
+
+    expect(find.text('Fork'), findsOneWidget);
+    expect(find.byTooltip('Editar'), findsOneWidget);
+  });
 }

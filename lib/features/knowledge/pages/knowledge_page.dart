@@ -182,8 +182,9 @@ class _KnowledgePageState extends State<KnowledgePage>
       });
 
   bool _matchesKnowledgeOrigin(KnowledgeItem item) {
-    if (_knowledgeOrigin == 'own') return !item.shared;
-    if (_knowledgeOrigin == 'linked') return item.shared;
+    if (_knowledgeOrigin == 'owner') return item.propertyType == 'owner';
+    if (_knowledgeOrigin == 'linked') return item.propertyType == 'linked';
+    if (_knowledgeOrigin == 'fork') return item.propertyType == 'fork';
     return true;
   }
 
@@ -248,8 +249,9 @@ class _KnowledgePageState extends State<KnowledgePage>
     final optionAll = _tx('explore.option_all', 'Todas');
     final originOptions = [
       ('all', optionAll),
-      ('own', _tx('knowledge.origin_own', 'Propio')),
-      ('linked', _tx('knowledge.origin_linked', 'Enlazado')),
+      ('owner', _tx('knowledge.origin_owner', 'Propietario')),
+      ('linked', _tx('knowledge.origin_linked', 'Enlace')),
+      ('fork', _tx('knowledge.origin_fork', 'Fork')),
     ];
 
     showFilterDialog(

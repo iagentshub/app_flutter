@@ -7,6 +7,7 @@ import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
+import '../dialogs/official_package_dialogs.dart';
 import '../repositories/admin_official_packages_repository.dart';
 
 class OfficialPackagesAdminTab extends StatefulWidget {
@@ -166,7 +167,9 @@ class _OfficialPackagesAdminTabState extends State<OfficialPackagesAdminTab> {
 
   Future<void> deletePackage(Map<String, dynamic> package) async {
     final id = package['id'].toString();
-    final name = package['name']?.toString() ?? id;
+    final name = package['name']?.toString().trim().isNotEmpty == true
+        ? package['name'].toString()
+        : widget.tx('official.unnamed_package', 'Paquete sin nombre');
     final confirmed = await showConfirmActionDialog(
       context,
       title: widget.tx('official.delete_title', 'Eliminar fuente oficial'),
@@ -184,6 +187,52 @@ class _OfficialPackagesAdminTabState extends State<OfficialPackagesAdminTab> {
     await run(id, () => repository.deletePackage(widget.token, id));
   }
 
+  Future<void> editPackage(Map<String, dynamic> package) async {
+    final payload = await showOfficialPackageEditDialog(
+      context,
+      package: package,
+      tx: widget.tx,
+    );
+    if (payload == null || !mounted) return;
+    final id = package['id'].toString();
+    await run(id, () => repository.updatePackage(widget.token, id, payload));
+  }
+
+  Future<void> syncPackages() async {
+    final selected = await showOfficialPackageSyncDialog(
+      context,
+      packages: packages,
+      tx: widget.tx,
+    );
+    if (selected == null || selected.isEmpty || !mounted) return;
+    setState(() => busy.add('sync-selected'));
+    final failed = <String>[];
+    for (final id in selected) {
+      try {
+        await repository.sync(widget.token, id);
+      } catch (_) {
+        failed.add(id);
+      }
+    }
+    await load();
+    if (!mounted) return;
+    setState(() => busy.remove('sync-selected'));
+    final message = failed.isEmpty
+        ? widget
+              .tx('official.sync_completed', '{count} paquetes sincronizados')
+              .replaceAll('{count}', '${selected.length}')
+        : widget
+              .tx(
+                'official.sync_partial',
+                '{synced} sincronizados, {failed} con error',
+              )
+              .replaceAll('{synced}', '${selected.length - failed.length}')
+              .replaceAll('{failed}', '${failed.length}');
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   Widget build(BuildContext context) {
     if (loading) return const Center(child: CircularProgressIndicator());
@@ -195,12 +244,30 @@ class _OfficialPackagesAdminTabState extends State<OfficialPackagesAdminTab> {
         children: [
           Align(
             alignment: Alignment.centerLeft,
-            child: PrimaryButton.icon(
-              onPressed: busy.contains('import') ? null : openImport,
-              icon: const Icon(Icons.add_link),
-              label: Text(
-                widget.tx('official.admin_add_source', 'Añadir fuente oficial'),
-              ),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                PrimaryButton.icon(
+                  onPressed: busy.contains('import') ? null : openImport,
+                  icon: const Icon(Icons.add_link),
+                  label: Text(
+                    widget.tx(
+                      'official.admin_add_source',
+                      'Añadir fuente oficial',
+                    ),
+                  ),
+                ),
+                SecondaryButton.icon(
+                  onPressed: packages.isEmpty || busy.contains('sync-selected')
+                      ? null
+                      : syncPackages,
+                  icon: const Icon(Icons.sync),
+                  label: Text(
+                    widget.tx('official.sync_packages', 'Sincronizar'),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 12),
@@ -224,6 +291,7 @@ class _OfficialPackagesAdminTabState extends State<OfficialPackagesAdminTab> {
 
   Widget _packageCard(Map<String, dynamic> package) {
     final id = package['id'].toString();
+    final name = package['name']?.toString().trim() ?? '';
     final versions = (package['versions'] as List? ?? const [])
         .whereType<Map>()
         .map((item) => item.cast<String, dynamic>())
@@ -240,16 +308,21 @@ class _OfficialPackagesAdminTabState extends State<OfficialPackagesAdminTab> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    package['name']?.toString() ?? id,
+                    name.isNotEmpty
+                        ? name
+                        : widget.tx(
+                            'official.unnamed_package',
+                            'Paquete sin nombre',
+                          ),
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
                 ActionIconButton(
-                  tooltip: widget.tx('official.sync', 'Buscar actualizaciones'),
+                  tooltip: widget.tx('common.edit', 'Editar'),
                   onPressed: busy.contains(id)
                       ? null
-                      : () => run(id, () => repository.sync(widget.token, id)),
-                  icon: Icons.sync,
+                      : () => editPackage(package),
+                  icon: Icons.edit_outlined,
                 ),
                 ActionIconButton(
                   tooltip: widget.tx(

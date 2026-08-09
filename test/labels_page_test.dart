@@ -26,6 +26,11 @@ String _catalogText(String path, String fallback) => switch (path) {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test('el catálogo incluye Propietario, Enlace y Fork', () {
+    expect(kOwnershipGroup.keys, ['owner', 'linked', 'fork']);
+    expect(labelColor('fork'), isNot(labelColor('linked')));
+  });
+
   testWidgets('los grupos del catálogo empiezan cerrados y se despliegan', (
     tester,
   ) async {

@@ -12,6 +12,7 @@ class LabeledItemCard extends StatelessWidget {
     required this.typeLabel,
     required this.ownerLabel,
     required this.linkedLabel,
+    required this.forkLabel,
     required this.onTap,
     required this.labelText,
     super.key,
@@ -21,6 +22,7 @@ class LabeledItemCard extends StatelessWidget {
   final String typeLabel;
   final String ownerLabel;
   final String linkedLabel;
+  final String forkLabel;
   final VoidCallback onTap;
   final String Function(String label) labelText;
 
@@ -50,9 +52,10 @@ class LabeledItemCard extends StatelessWidget {
                 labelText: labelText,
                 leading: [
                   OriginBadge(
-                    shared: item.shared,
+                    propertyType: item.propertyType,
                     ownerLabel: ownerLabel,
                     linkedLabel: linkedLabel,
+                    forkLabel: forkLabel,
                   ),
                 ],
               ),
