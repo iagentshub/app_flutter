@@ -1,11 +1,13 @@
 import 'dart:convert';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/router/router.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../models/explore/explore_models.dart';
+import '../../../models/official_packages/official_package_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/action_result.dart';
@@ -23,10 +25,12 @@ import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../manager/repositories/manager_repository.dart';
 import '../controllers/explore_controller.dart';
 import '../repositories/explore_repository.dart';
+import '../repositories/official_packages_repository.dart';
 
 part '../cards/explore_resource_card.dart';
 part '../cards/explore_user_card.dart';
 part '../dialogs/preview_dialog.dart';
+part '../widgets/official_packages_tab.dart';
 part '../widgets/explore_collection_views.dart';
 
 class ExplorePage extends StatefulWidget {
@@ -43,8 +47,13 @@ class _ExplorePageState extends State<ExplorePage>
   late final _services = AppServicesScope.of(context);
 
   late final ExploreController _controller;
+  late final OfficialPackagesRepository _officialRepository;
   late final TranslatedTexts _t;
   late final TabController _tabController;
+  List<OfficialPackageItem> _officialPackages = const [];
+  List<OfficialPackageCopy> _officialCopies = const [];
+  bool _officialLoading = true;
+  String? _officialError;
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
@@ -61,9 +70,13 @@ class _ExplorePageState extends State<ExplorePage>
       sessionController: _services.sessionController,
       tx: _tx,
     )..addListener(_onControllerChanged);
-    _tabController = TabController(length: 2, vsync: this);
+    _officialRepository = OfficialPackagesRepository(
+      apiClient: _services.apiClient,
+    );
+    _tabController = TabController(length: 3, vsync: this);
     _controller.load();
     _controller.loadUsers();
+    _loadOfficialPackages();
   }
 
   void _onTextsChanged() {
@@ -312,13 +325,18 @@ class _ExplorePageState extends State<ExplorePage>
             tabs: [
               Tab(text: _tx('explore.tab_resources', 'Recursos')),
               Tab(text: _tx('explore.tab_users', 'Usuarios')),
+              Tab(text: _tx('explore.tab_official', 'Oficiales')),
             ],
           ),
         ),
         Expanded(
           child: TabBarView(
             controller: _tabController,
-            children: [_buildResourcesTab(), _buildUsersTab()],
+            children: [
+              _buildResourcesTab(),
+              _buildUsersTab(),
+              _buildOfficialPackagesTab(),
+            ],
           ),
         ),
       ],

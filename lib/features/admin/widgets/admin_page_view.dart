@@ -20,6 +20,7 @@ extension _AdminPageView on _AdminPageState {
     final tabLabels = [
       _tx('admin.tab_general', 'General'),
       _tx('admin.tab_explore', 'Explorar'),
+      _tx('admin.tab_official', 'Paquetes oficiales'),
       _tx('admin.tab_config', 'Configuración'),
     ];
     final section = _AdminPageState._tabIds[_tabController.index];
@@ -46,6 +47,11 @@ extension _AdminPageView on _AdminPageState {
   Widget _buildSection(String section) {
     return switch (section) {
       'explore' => _buildExploreTab(),
+      'official' => OfficialPackagesAdminTab(
+        apiClient: _services.apiClient,
+        token: _token ?? '',
+        tx: _tx,
+      ),
       'config' => _buildConfigTab(),
       _ => _buildGeneralTab(),
     };

@@ -239,6 +239,50 @@ class ApiClient {
     );
   }
 
+  /// Variante binaria de POST para exportaciones cuyo cuerpo contiene una
+  /// selección de componentes. Comparte límites y saneado con [getBytes].
+  Future<({Uint8List bytes, String? filename})> postBytes(
+    String path, {
+    Map<String, dynamic>? body,
+    String? gaToken,
+  }) async {
+    final headers = <String, String>{'Accept': 'application/zip'};
+    if (!kIsWeb && gaToken != null && gaToken.isNotEmpty) {
+      headers['Cookie'] = 'ga_token=$gaToken';
+    }
+    if (body != null) headers['Content-Type'] = 'application/json';
+    final request = http.Request('POST', _uri(path));
+    request.followRedirects = false;
+    request.headers.addAll(headers);
+    if (body != null) request.body = jsonEncode(body);
+
+    final streamed = await _send(request);
+    final response = await _readBoundedResponse(
+      streamed,
+      maxBytes: _maxDownloadBytes,
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final parsed = _parseBody(
+        utf8.decode(response.bodyBytes, allowMalformed: true),
+      );
+      throw _toApiError(
+        ApiResponse(
+          statusCode: response.statusCode,
+          headers: response.headers,
+          body: parsed,
+        ),
+      );
+    }
+    final disposition = response.headers['content-disposition'];
+    final match = disposition == null
+        ? null
+        : RegExp('filename="?([^"; ]+)"?').firstMatch(disposition);
+    return (
+      bytes: response.bodyBytes,
+      filename: _sanitizeDownloadFilename(match?.group(1)),
+    );
+  }
+
   /// Envía un POST y expone la respuesta como flujo de líneas crudas
   /// (Server-Sent Events: `data: {...}`). Usado por streaming de chat.
   Stream<String> postStream(

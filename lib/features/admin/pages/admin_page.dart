@@ -31,6 +31,7 @@ import '../repositories/admin_platform_repository.dart';
 import '../repositories/admin_resources_repository.dart';
 import '../repositories/admin_stats_repository.dart';
 import '../repositories/admin_users_repository.dart';
+import '../widgets/official_packages_admin_tab.dart';
 
 part '../cards/admin_content_cards.dart';
 part '../cards/admin_integration_cards.dart';
@@ -97,7 +98,7 @@ class _AdminPageState extends State<AdminPage>
   late final TranslatedTexts _t;
   late final TabController _tabController;
 
-  static const _tabIds = ['general', 'explore', 'config'];
+  static const _tabIds = ['general', 'explore', 'official', 'config'];
 
   final TextEditingController _exploreSearchController =
       TextEditingController();
