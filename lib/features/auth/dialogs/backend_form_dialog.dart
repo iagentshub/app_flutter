@@ -3,19 +3,12 @@ part of '../pages/backend_config_page.dart';
 class _BackendFormDialog extends StatefulWidget {
   const _BackendFormDialog({
     required this.backendController,
-    required this.t,
-    required this.txt,
+    required this.tx,
     this.existing,
   });
 
   final BackendController backendController;
-  final Map<String, dynamic> t;
-  final String Function(
-    Map<String, dynamic> bundle,
-    String path,
-    String fallback,
-  )
-  txt;
+  final String Function(String path, String fallback) tx;
   final SavedBackend? existing;
 
   @override
@@ -34,11 +27,11 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
   bool? _verified;
   String? _verifiedUrl;
   String? _statusMessage;
+  bool _insecureTransportAccepted = false;
 
   bool get _isEditing => widget.existing != null;
 
-  String _tx(String path, String fallback) =>
-      widget.txt(widget.t, path, fallback);
+  String _tx(String path, String fallback) => widget.tx(path, fallback);
 
   @override
   void initState() {
@@ -60,7 +53,12 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
   }
 
   void _invalidateVerification() {
-    if (_verified != null) setState(() => _verified = null);
+    if (_verified != null || _insecureTransportAccepted) {
+      setState(() {
+        _verified = null;
+        _insecureTransportAccepted = false;
+      });
+    }
   }
 
   String? _composedUrl() {
@@ -134,7 +132,12 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final readyToSave = _verified == true && _verifiedUrl != null;
+    final connectionVerified = _verified == true && _verifiedUrl != null;
+    final insecureTransport =
+        connectionVerified && BackendUrl.usesInsecureTransport(_verifiedUrl);
+    final readyToSave =
+        connectionVerified &&
+        (!insecureTransport || _insecureTransportAccepted);
     return AlertDialog(
       title: Text(
         _isEditing
@@ -207,6 +210,37 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
                   ),
                 ),
               ],
+              if (insecureTransport) ...[
+                const SizedBox(height: 12),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.errorContainer.withValues(alpha: 0.45),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: CheckboxListTile(
+                    value: _insecureTransportAccepted,
+                    onChanged: (value) => setState(
+                      () => _insecureTransportAccepted = value ?? false,
+                    ),
+                    controlAffinity: ListTileControlAffinity.leading,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                    title: Text(
+                      _tx(
+                        'backend_config.http_warning_title',
+                        'Conexión HTTP sin cifrar',
+                      ),
+                    ),
+                    subtitle: Text(
+                      _tx(
+                        'backend_config.http_warning_body',
+                        'La cookie de sesión y las respuestas podrán verse o modificarse en la red local. Confirma que confías en esta red y servidor.',
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -216,7 +250,7 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: Text(_tx('backend_config.cancel', 'Cancelar')),
         ),
-        if (!readyToSave)
+        if (!connectionVerified)
           PrimaryButton.icon(
             onPressed: _testing ? null : _testConnection,
             icon: _testing
@@ -234,7 +268,7 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
           )
         else
           PrimaryButton.icon(
-            onPressed: _save,
+            onPressed: readyToSave ? _save : null,
             icon: Icon(_isEditing ? Icons.save_outlined : Icons.add),
             label: Text(
               _isEditing

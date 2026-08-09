@@ -4,7 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_error.dart';
-import '../../../shared/i18n/locale_loader.dart';
+import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../repositories/auth_repository.dart';
@@ -53,43 +53,33 @@ class _VsCodeAuthPageState extends State<VsCodeAuthPage> {
   bool _loading = false;
   bool _done = false;
   String? _error;
-  late Future<Map<String, dynamic>> _textsFuture;
-
-  String get _languageCode => _services.localeController.languageCode;
+  late final TranslatedTexts _t;
 
   Uri? get _target => _safeCallback(widget.callback);
 
   @override
   void initState() {
     super.initState();
-    _textsFuture = LocaleLoader.load(
-      languageCode: _languageCode,
+    _t = TranslatedTexts(
+      localeController: _services.localeController,
       namespace: 'auth',
-    );
-    _services.localeController.addListener(_onLocaleChanged);
+    )..addListener(_onTextsChanged);
   }
 
-  void _onLocaleChanged() {
-    if (!mounted) return;
-    setState(() {
-      _textsFuture = LocaleLoader.load(
-        languageCode: _languageCode,
-        namespace: 'auth',
-      );
-    });
+  void _onTextsChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
-    _services.localeController.removeListener(_onLocaleChanged);
+    _t.removeListener(_onTextsChanged);
+    _t.dispose();
     super.dispose();
   }
 
-  String _txt(Map<String, dynamic> bundle, String path, String fallback) {
-    return LocaleLoader.text(bundle, path, fallback: fallback);
-  }
+  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
-  Future<void> _authorize(Map<String, dynamic> t) async {
+  Future<void> _authorize() async {
     final token = _services.sessionController.gaToken;
     final state = widget.state;
     final target = _target;
@@ -120,8 +110,7 @@ class _VsCodeAuthPageState extends State<VsCodeAuthPage> {
     } catch (_) {
       if (!mounted) return;
       setState(
-        () => _error = _txt(
-          t,
+        () => _error = _tx(
           'vscode_auth.error_generic',
           'No se pudo autorizar la conexión',
         ),
@@ -133,108 +122,95 @@ class _VsCodeAuthPageState extends State<VsCodeAuthPage> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Map<String, dynamic>>(
-      future: _textsFuture,
-      builder: (context, snapshot) {
-        final t = snapshot.data ?? const {};
-        final target = _target;
-        final state = widget.state;
+    final target = _target;
+    final state = widget.state;
 
-        Widget body;
-        if (target == null || state == null || state.isEmpty) {
-          body = Text(
-            _txt(
-              t,
-              'vscode_auth.invalid_link',
-              'Enlace de autorización inválido o incompleto.',
+    Widget body;
+    if (target == null || state == null || state.isEmpty) {
+      body = Text(
+        _tx(
+          'vscode_auth.invalid_link',
+          'Enlace de autorización inválido o incompleto.',
+        ),
+      );
+    } else if (_done) {
+      body = Text(
+        _tx(
+          'vscode_auth.done_message',
+          'Autorización completada. Puedes volver a tu editor.',
+        ),
+      );
+    } else {
+      final username = _services.sessionController.user?.username ?? '';
+      body = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            _tx(
+              'vscode_auth.connect_prompt',
+              'Vas a conectar tu editor con la cuenta de {{username}}.',
+            ).replaceAll('{{username}}', username),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _error!,
+              style: TextStyle(color: FncColors.materialRed.shade700),
             ),
-          );
-        } else if (_done) {
-          body = Text(
-            _txt(
-              t,
-              'vscode_auth.done_message',
-              'Autorización completada. Puedes volver a tu editor.',
-            ),
-          );
-        } else {
-          final username = _services.sessionController.user?.username ?? '';
-          body = Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+          ],
+          const SizedBox(height: 16),
+          Row(
             children: [
-              Text(
-                _txt(
-                  t,
-                  'vscode_auth.connect_prompt',
-                  'Vas a conectar tu editor con la cuenta de {{username}}.',
-                ).replaceAll('{{username}}', username),
-              ),
-              if (_error != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  _error!,
-                  style: TextStyle(color: FncColors.materialRed.shade700),
+              PrimaryButton(
+                onPressed: _loading ? null : _authorize,
+                child: Text(
+                  _loading
+                      ? _tx('vscode_auth.authorize_btn_loading', 'Autorizando…')
+                      : _tx('vscode_auth.authorize_btn', 'Autorizar'),
                 ),
-              ],
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  PrimaryButton(
-                    onPressed: _loading ? null : () => _authorize(t),
-                    child: Text(
-                      _loading
-                          ? _txt(
-                              t,
-                              'vscode_auth.authorize_btn_loading',
-                              'Autorizando…',
-                            )
-                          : _txt(t, 'vscode_auth.authorize_btn', 'Autorizar'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  TertiaryButton(
-                    onPressed: _loading
-                        ? null
-                        : () => Navigator.of(context).maybePop(),
-                    child: Text(_txt(t, 'vscode_auth.cancel_btn', 'Cancelar')),
-                  ),
-                ],
+              ),
+              const SizedBox(width: 8),
+              TertiaryButton(
+                onPressed: _loading
+                    ? null
+                    : () => Navigator.of(context).maybePop(),
+                child: Text(_tx('vscode_auth.cancel_btn', 'Cancelar')),
               ),
             ],
-          );
-        }
+          ),
+        ],
+      );
+    }
 
-        return Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Card(
             child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _txt(t, 'vscode_auth.title', 'Autorizar VS Code'),
-                        style: const TextStyle(
-                          fontSize: FncFonts.size20,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      body,
-                    ],
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _tx('vscode_auth.title', 'Autorizar VS Code'),
+                    style: const TextStyle(
+                      fontSize: FncFonts.size20,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 12),
+                  body,
+                ],
               ),
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }

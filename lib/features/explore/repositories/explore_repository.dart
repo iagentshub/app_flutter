@@ -77,6 +77,7 @@ class ExploreRepository extends ApiRepository {
       gaToken: token,
     );
     apiClient.invalidateCache('/api/explore');
+    apiClient.invalidateCache('/api/feed');
     final payload = response.json;
     final stars = payload['stars'];
     if (stars is int) return stars;
@@ -94,6 +95,7 @@ class ExploreRepository extends ApiRepository {
       gaToken: token,
     );
     apiClient.invalidateCache('/api/explore');
+    apiClient.invalidateCache('/api/feed');
     final payload = response.json;
     final stars = payload['stars'];
     if (stars is int) return stars;

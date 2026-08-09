@@ -1,4 +1,9 @@
 abstract final class BackendUrl {
+  static bool usesInsecureTransport(String? url) {
+    if (url == null) return false;
+    return Uri.tryParse(url)?.scheme.toLowerCase() == 'http';
+  }
+
   static String normalize(String input) {
     var value = input.trim();
     if (value.isEmpty) return '';

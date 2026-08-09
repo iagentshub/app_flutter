@@ -183,4 +183,84 @@ void main() {
     expect(estado().debugPulseAnimating, isTrue);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('respeta la preferencia de movimiento reducido', (tester) async {
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+    const nodes = [
+      GraphNode(id: 'root', label: 'Agente raíz', type: 'agent'),
+      GraphNode(id: 'skill:a', label: 'Skill A', type: 'skill'),
+    ];
+
+    await tester.pumpWidget(
+      wrap(
+        const AnimatedResourceGraph(
+          nodes: nodes,
+          edges: [GraphEdge(sourceId: 'root', targetId: 'skill:a')],
+          rootId: 'root',
+          highlightQuery: 'Skill',
+          quickViewDescriptionLabel: 'Descripción',
+          quickViewNoDescriptionLabel: 'Sin descripción',
+          quickViewConnectionsLabel: 'Conexiones',
+          quickViewNoConnectionsLabel: 'Sin conexiones',
+          quickViewCloseTooltip: 'Cerrar',
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final dynamic state = tester.state(find.byType(AnimatedResourceGraph));
+    expect(state.debugEntranceCompleted, isTrue);
+    expect(state.debugPulseAnimating, isFalse);
+    expect(state.debugBlinkAnimating, isFalse);
+  });
+
+  testWidgets('el layout Galaxia grande se reparte entre varios frames', (
+    tester,
+  ) async {
+    final nodes = [
+      const GraphNode(id: 'root', label: 'Raíz', type: 'agent'),
+      for (var i = 0; i < 64; i++)
+        GraphNode(id: 'node-$i', label: 'Nodo $i', type: 'skill'),
+    ];
+    final edges = [
+      for (var i = 0; i < 64; i++)
+        GraphEdge(sourceId: 'root', targetId: 'node-$i'),
+    ];
+    final controller = GraphSortController();
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      wrap(
+        AnimatedResourceGraph(
+          nodes: nodes,
+          edges: edges,
+          rootId: 'root',
+          sortController: controller,
+          quickViewDescriptionLabel: 'Descripción',
+          quickViewNoDescriptionLabel: 'Sin descripción',
+          quickViewConnectionsLabel: 'Conexiones',
+          quickViewNoConnectionsLabel: 'Sin conexiones',
+          quickViewCloseTooltip: 'Cerrar',
+        ),
+      ),
+    );
+    controller.setMode(GraphSortMode.galaxy);
+    await tester.pump();
+
+    dynamic state = tester.state(find.byType(AnimatedResourceGraph));
+    expect(state.debugGalaxyLayoutPending, isTrue);
+
+    for (
+      var frame = 0;
+      frame < 80 && state.debugGalaxyLayoutPending == true;
+      frame++
+    ) {
+      await tester.pump(const Duration(milliseconds: 16));
+      state = tester.state(find.byType(AnimatedResourceGraph));
+    }
+    expect(state.debugGalaxyLayoutPending, isFalse);
+    expect(tester.takeException(), isNull);
+  });
 }

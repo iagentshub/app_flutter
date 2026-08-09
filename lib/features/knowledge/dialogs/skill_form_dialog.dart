@@ -92,19 +92,33 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
             children: [
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Nombre'),
+                decoration: InputDecoration(
+                  labelText: widget.tx('knowledge.name_label', 'Nombre'),
+                ),
                 validator: (value) => (value == null || value.trim().isEmpty)
-                    ? 'Nombre obligatorio'
+                    ? widget.tx('knowledge.name_required', 'Nombre obligatorio')
                     : null,
               ),
               const SizedBox(height: 10),
               if (widget.allowPublic)
                 DropdownButtonFormField<String>(
                   initialValue: _scope,
-                  decoration: const InputDecoration(labelText: 'Scope'),
-                  items: const [
-                    DropdownMenuItem(value: 'private', child: Text('private')),
-                    DropdownMenuItem(value: 'public', child: Text('public')),
+                  decoration: InputDecoration(
+                    labelText: widget.tx('knowledge.scope_label', 'Scope'),
+                  ),
+                  items: [
+                    DropdownMenuItem(
+                      value: 'private',
+                      child: Text(
+                        widget.tx('knowledge.scope_private', 'Privado'),
+                      ),
+                    ),
+                    DropdownMenuItem(
+                      value: 'public',
+                      child: Text(
+                        widget.tx('knowledge.scope_public', 'Público'),
+                      ),
+                    ),
                   ],
                   onChanged: (value) {
                     if (value == null) return;
@@ -112,9 +126,16 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
                   },
                 )
               else
-                const InputDecorator(
-                  decoration: InputDecoration(labelText: 'Scope'),
-                  child: Text('private · temporal durante esta sesión'),
+                InputDecorator(
+                  decoration: InputDecoration(
+                    labelText: widget.tx('knowledge.scope_label', 'Scope'),
+                  ),
+                  child: Text(
+                    widget.tx(
+                      'knowledge.scope_temp_session',
+                      'Privado · temporal durante esta sesión',
+                    ),
+                  ),
                 ),
               const SizedBox(height: 10),
               GroupedLabelPicker(
@@ -128,7 +149,12 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
                 controller: _descriptionController,
                 minLines: 2,
                 maxLines: 4,
-                decoration: const InputDecoration(labelText: 'Descripción'),
+                decoration: InputDecoration(
+                  labelText: widget.tx(
+                    'knowledge.description_label',
+                    'Descripción',
+                  ),
+                ),
               ),
               const SizedBox(height: 10),
               DropdownButtonFormField<String>(
@@ -168,13 +194,19 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
                 controller: _contentController,
                 minLines: 8,
                 maxLines: 16,
-                decoration: const InputDecoration(
-                  labelText: 'Contenido de la skill',
+                decoration: InputDecoration(
+                  labelText: widget.tx(
+                    'knowledge.skill_content_label',
+                    'Contenido de la skill',
+                  ),
                 ),
                 validator: (value) {
                   if (!widget.requireQualityContent) return null;
                   if (value == null || value.trim().length < 180) {
-                    return 'Añade instrucciones más completas (mínimo 180 caracteres)';
+                    return widget.tx(
+                      'knowledge.skill_quality_error',
+                      'Añade instrucciones más completas (mínimo 180 caracteres)',
+                    );
                   }
                   return null;
                 },

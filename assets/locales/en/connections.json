@@ -1,4 +1,5 @@
 {
+  "field_required": "Required field",
   "page": {
     "title": "Connections",
     "subtitle": "Configured AI providers",

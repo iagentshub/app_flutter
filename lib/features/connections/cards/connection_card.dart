@@ -120,7 +120,13 @@ class ConnectionCard extends StatelessWidget {
                       message: testMessage?.isNotEmpty == true
                           ? testMessage!
                           : tx('connections.test', 'Test'),
-                      child: StatusDot(state: testState!, size: 9),
+                      child: StatusDot(
+                        state: testState!,
+                        semanticLabel: testMessage?.isNotEmpty == true
+                            ? testMessage!
+                            : tx('connections.test', 'Test'),
+                        size: 9,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),

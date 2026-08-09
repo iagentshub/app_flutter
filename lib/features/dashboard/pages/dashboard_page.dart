@@ -6,6 +6,7 @@ import '../../../app/router/internal_router.dart';
 import '../../../app/router/router.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
+import '../../../core/diagnostics/app_diagnostics.dart';
 import '../../../models/dashboard/dashboard_data.dart';
 import '../../../models/dashboard/dashboard_widget_config.dart';
 import '../../../models/dashboard/dashboard_widget_instance.dart';
@@ -18,16 +19,16 @@ import '../../../shared/state/backend_controller.dart';
 import '../../../shared/state/dashboard_edit_state.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/kpi/kpi_row_tile.dart';
-import '../../../shared/widgets/resource_type_badge.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../auth/repositories/auth_repository.dart';
 import '../../explore/repositories/explore_repository.dart';
+import '../cards/dashboard_feed_body.dart';
+import '../cards/dashboard_feed_cards.dart';
 import '../cards/dashboard_widget_card.dart';
 import '../repositories/dashboard_repository.dart';
 import '../widgets/responsive_dashboard_grid.dart';
 
 part '../cards/dashboard_activity_cards.dart';
-part '../cards/dashboard_feed_cards.dart';
 part '../cards/dashboard_metrics_cards.dart';
 part '../cards/dashboard_notification_banner_card.dart';
 part '../cards/dashboard_resource_cards.dart';
@@ -143,8 +144,9 @@ class _DashboardPageState extends State<DashboardPage> {
     if (token == null) return;
     try {
       await widget.dashboardRepository.savePreferences(token, _layout);
-    } catch (_) {
+    } catch (error, stackTrace) {
       // best-effort: el layout sigue aplicado localmente aunque falle el guardado
+      AppDiagnostics.report('dashboard.preferences.save', error, stackTrace);
     }
   }
 
@@ -397,7 +399,7 @@ class _DashboardPageState extends State<DashboardPage> {
       case 'composition':
         return _CompositionBody(data: data, tx: _widgetTx);
       case 'feed':
-        return _FeedBody(
+        return DashboardFeedBody(
           key: ValueKey('feed-${config.types}-${config.limit}'),
           token: _token ?? '',
           repository: widget.dashboardRepository,
@@ -406,9 +408,9 @@ class _DashboardPageState extends State<DashboardPage> {
           tx: _widgetTx,
         );
       case 'quick-actions':
-        return _QuickActionsBody(config: config, tx: _widgetTx);
+        return DashboardQuickActionsBody(config: config, tx: _widgetTx);
       case 'token-kpi':
-        return _TokenKpiBody(data: data, config: config, tx: _widgetTx);
+        return DashboardTokenKpiBody(data: data, config: config, tx: _widgetTx);
       case 'recent-resources':
         return _RecentResourcesBody(data: data, config: config, tx: _widgetTx);
       case 'agent-health':

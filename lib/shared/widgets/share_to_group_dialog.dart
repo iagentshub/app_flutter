@@ -189,6 +189,11 @@ class _ShareToGroupDialogState extends State<_ShareToGroupDialog> {
                             : shared
                             ? StatusDotState.ok
                             : StatusDotState.error,
+                        semanticLabel: pending
+                            ? _tx('groups.share_pending', 'Actualizando')
+                            : shared
+                            ? _tx('groups.shared', 'Compartido')
+                            : _tx('groups.not_shared', 'No compartido'),
                       ),
                       title: Text(group.name),
                       onTap: pending ? null : () => _toggle(group),

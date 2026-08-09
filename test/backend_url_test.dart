@@ -42,6 +42,18 @@ const publicos = <String>[
 ];
 
 void main() {
+  test('identifica los backends cuya sesión viajará sin cifrar', () {
+    expect(
+      BackendUrl.usesInsecureTransport('http://192.168.1.50:8765'),
+      isTrue,
+    );
+    expect(
+      BackendUrl.usesInsecureTransport('https://hub.ejemplo.com'),
+      isFalse,
+    );
+    expect(BackendUrl.usesInsecureTransport(null), isFalse);
+  });
+
   group('BackendUrl.normalize — esquema inferido', () {
     for (final host in localos) {
       test('$host es red local → http', () {

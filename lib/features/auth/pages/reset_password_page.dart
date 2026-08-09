@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/router/router.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_error.dart';
-import '../../../shared/i18n/locale_loader.dart';
+import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../utils/validators.dart';
@@ -30,48 +30,37 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   final _passwordController = TextEditingController();
   bool _loading = false;
   String? _message;
-  late Future<Map<String, dynamic>> _textsFuture;
-
-  String get _languageCode => widget.localeController.languageCode;
+  late final TranslatedTexts _t;
 
   @override
   void initState() {
     super.initState();
-    _textsFuture = LocaleLoader.load(
-      languageCode: _languageCode,
+    _t = TranslatedTexts(
+      localeController: widget.localeController,
       namespace: 'auth',
-    );
-    widget.localeController.addListener(_onLocaleChanged);
+    )..addListener(_onTextsChanged);
   }
 
-  void _onLocaleChanged() {
-    if (!mounted) return;
-    setState(() {
-      _textsFuture = LocaleLoader.load(
-        languageCode: _languageCode,
-        namespace: 'auth',
-      );
-    });
+  void _onTextsChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
-    widget.localeController.removeListener(_onLocaleChanged);
+    _t.removeListener(_onTextsChanged);
+    _t.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  String _txt(Map<String, dynamic> bundle, String path, String fallback) {
-    return LocaleLoader.text(bundle, path, fallback: fallback);
-  }
+  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
-  Future<void> _submit(Map<String, dynamic> t) async {
+  Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final token = widget.token?.trim() ?? '';
     if (token.isEmpty) {
       setState(
-        () => _message = _txt(
-          t,
+        () => _message = _tx(
           'reset_password.invalid_title',
           'Token de recuperación inválido',
         ),
@@ -92,10 +81,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       if (!mounted) return;
       setState(() {
         _message = ok
-            ? '${_txt(t, 'reset_password.ok_title', 'Contraseña actualizada')}. '
-                  '${_txt(t, 'reset_password.ok_sub', 'Ya puedes iniciar sesión con tu nueva contraseña.')}'
-            : _txt(
-                t,
+            ? '${_tx('reset_password.ok_title', 'Contraseña actualizada')}. '
+                  '${_tx('reset_password.ok_sub', 'Ya puedes iniciar sesión con tu nueva contraseña.')}'
+            : _tx(
                 'reset_password.update_failed',
                 'No se pudo actualizar la contraseña',
               );
@@ -122,141 +110,119 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
               child: Card(
                 child: Padding(
                   padding: const EdgeInsets.all(20),
-                  child: FutureBuilder<Map<String, dynamic>>(
-                    future: _textsFuture,
-                    builder: (context, snapshot) {
-                      final t = snapshot.data ?? const {};
-                      return hasToken
-                          ? Form(
-                              key: _formKey,
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    _txt(
-                                      t,
-                                      'reset_password.title',
-                                      'Nueva contraseña',
-                                    ),
-                                    style: const TextStyle(
-                                      fontSize: FncFonts.size24,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  TextFormField(
-                                    controller: _passwordController,
-                                    obscureText: true,
-                                    validator: (value) {
-                                      final requiredError =
-                                          Validators.requiredField(
-                                            value,
-                                            message: _txt(
-                                              t,
-                                              'reset_password.error_password_required',
-                                              'La contraseña es obligatoria',
-                                            ),
-                                          );
-                                      if (requiredError != null) {
-                                        return requiredError;
-                                      }
-                                      if ((value ?? '').trim().length < 8) {
-                                        return _txt(
-                                          t,
-                                          'reset_password.error_short_password',
-                                          'La contraseña debe tener al menos 8 caracteres',
-                                        );
-                                      }
-                                      return null;
-                                    },
-                                    decoration: InputDecoration(
-                                      labelText: _txt(
-                                        t,
-                                        'reset_password.new_password_label',
-                                        'Nueva contraseña',
-                                      ),
-                                      border: const OutlineInputBorder(),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    child: PrimaryButton(
-                                      onPressed: _loading
-                                          ? null
-                                          : () => _submit(t),
-                                      child: Text(
-                                        _loading
-                                            ? _txt(
-                                                t,
-                                                'reset_password.save_btn_loading',
-                                                'Actualizando...',
-                                              )
-                                            : _txt(
-                                                t,
-                                                'reset_password.save_btn',
-                                                'Actualizar contraseña',
-                                              ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  TertiaryButton(
-                                    onPressed: () => AppRouter.toLogin(context),
-                                    child: Text(
-                                      _txt(
-                                        t,
-                                        'reset_password.back_to_login',
-                                        'Volver al login',
-                                      ),
-                                    ),
-                                  ),
-                                  if (_message != null) ...[
-                                    const SizedBox(height: 8),
-                                    Text(_message!),
-                                  ],
-                                ],
+                  child: hasToken
+                      ? Form(
+                          key: _formKey,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _tx('reset_password.title', 'Nueva contraseña'),
+                                style: const TextStyle(
+                                  fontSize: FncFonts.size24,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
-                            )
-                          : Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  _txt(
-                                    t,
-                                    'reset_password.invalid_title',
-                                    'Enlace inválido',
-                                  ),
-                                  style: const TextStyle(
-                                    fontSize: FncFonts.size24,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  _txt(
-                                    t,
-                                    'reset_password.invalid_sub',
-                                    'No se detectó token de recuperación.',
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                TertiaryButton(
-                                  onPressed: () =>
-                                      AppRouter.toForgotPassword(context),
-                                  child: Text(
-                                    _txt(
-                                      t,
-                                      'reset_password.request_new_link',
-                                      'Solicitar nuevo enlace',
+                              const SizedBox(height: 16),
+                              TextFormField(
+                                controller: _passwordController,
+                                obscureText: true,
+                                validator: (value) {
+                                  final requiredError = Validators.requiredField(
+                                    value,
+                                    message: _tx(
+                                      'reset_password.error_password_required',
+                                      'La contraseña es obligatoria',
                                     ),
+                                  );
+                                  if (requiredError != null) {
+                                    return requiredError;
+                                  }
+                                  if ((value ?? '').trim().length < 8) {
+                                    return _tx(
+                                      'reset_password.error_short_password',
+                                      'La contraseña debe tener al menos 8 caracteres',
+                                    );
+                                  }
+                                  return null;
+                                },
+                                decoration: InputDecoration(
+                                  labelText: _tx(
+                                    'reset_password.new_password_label',
+                                    'Nueva contraseña',
+                                  ),
+                                  border: const OutlineInputBorder(),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              SizedBox(
+                                width: double.infinity,
+                                child: PrimaryButton(
+                                  onPressed: _loading ? null : _submit,
+                                  child: Text(
+                                    _loading
+                                        ? _tx(
+                                            'reset_password.save_btn_loading',
+                                            'Actualizando...',
+                                          )
+                                        : _tx(
+                                            'reset_password.save_btn',
+                                            'Actualizar contraseña',
+                                          ),
                                   ),
                                 ),
+                              ),
+                              const SizedBox(height: 8),
+                              TertiaryButton(
+                                onPressed: () => AppRouter.toLogin(context),
+                                child: Text(
+                                  _tx(
+                                    'reset_password.back_to_login',
+                                    'Volver al login',
+                                  ),
+                                ),
+                              ),
+                              if (_message != null) ...[
+                                const SizedBox(height: 8),
+                                Text(_message!),
                               ],
-                            );
-                    },
-                  ),
+                            ],
+                          ),
+                        )
+                      : Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _tx(
+                                'reset_password.invalid_title',
+                                'Enlace inválido',
+                              ),
+                              style: const TextStyle(
+                                fontSize: FncFonts.size24,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              _tx(
+                                'reset_password.invalid_sub',
+                                'No se detectó token de recuperación.',
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TertiaryButton(
+                              onPressed: () =>
+                                  AppRouter.toForgotPassword(context),
+                              child: Text(
+                                _tx(
+                                  'reset_password.request_new_link',
+                                  'Solicitar nuevo enlace',
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                 ),
               ),
             ),

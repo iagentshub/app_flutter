@@ -47,10 +47,15 @@ class _AddTextDialogState extends State<_AddTextDialog> {
             children: [
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(labelText: 'Título'),
+                decoration: InputDecoration(
+                  labelText: widget.tx('knowledge.title_label', 'Título'),
+                ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Título obligatorio';
+                    return widget.tx(
+                      'knowledge.title_required',
+                      'Título obligatorio',
+                    );
                   }
                   return null;
                 },
@@ -65,8 +70,11 @@ class _AddTextDialogState extends State<_AddTextDialog> {
               ),
               TextFormField(
                 controller: _sourceController,
-                decoration: const InputDecoration(
-                  labelText: 'Fuente (opcional)',
+                decoration: InputDecoration(
+                  labelText: widget.tx(
+                    'knowledge.optional_source',
+                    'Fuente (opcional)',
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
@@ -74,10 +82,15 @@ class _AddTextDialogState extends State<_AddTextDialog> {
                 controller: _contentController,
                 minLines: 6,
                 maxLines: 12,
-                decoration: const InputDecoration(labelText: 'Contenido'),
+                decoration: InputDecoration(
+                  labelText: widget.tx('knowledge.content_label', 'Contenido'),
+                ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Contenido obligatorio';
+                    return widget.tx(
+                      'knowledge.content_required',
+                      'Contenido obligatorio',
+                    );
                   }
                   return null;
                 },

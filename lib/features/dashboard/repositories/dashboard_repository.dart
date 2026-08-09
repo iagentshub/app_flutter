@@ -1,5 +1,6 @@
 import '../../../core/network/api_client.dart';
 import '../../../models/dashboard/dashboard_data.dart';
+import '../../../models/dashboard/dashboard_feed_item.dart';
 import '../../../models/dashboard/dashboard_widget_config.dart';
 import '../../../models/dashboard/dashboard_widget_instance.dart';
 import '../../../models/dashboard/dashboard_widget_registry.dart';
@@ -264,7 +265,7 @@ class DashboardRepository {
     );
   }
 
-  Future<List<Map<String, dynamic>>> fetchFeed(
+  Future<List<DashboardFeedItem>> fetchFeed(
     String gaToken, {
     List<String>? types,
     int limit = 8,
@@ -276,17 +277,12 @@ class DashboardRepository {
       path: '/api/feed',
       queryParameters: {'limit': '$fetchLimit', 'type': ?single},
     ).toString();
-    try {
-      final response = await _apiClient.get(
-        path,
-        gaToken: gaToken,
-        cache: true,
-      );
-      final body = response.body;
-      if (body is! List) return const [];
-      return body.whereType<Map<String, dynamic>>().toList();
-    } catch (_) {
-      return const [];
-    }
+    final response = await _apiClient.get(path, gaToken: gaToken, cache: true);
+    final body = response.body;
+    if (body is! List) return const [];
+    return body
+        .whereType<Map<String, dynamic>>()
+        .map(DashboardFeedItem.fromJson)
+        .toList();
   }
 }

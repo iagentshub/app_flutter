@@ -1,145 +1,17 @@
-part of '../pages/dashboard_page.dart';
+import 'package:flutter/material.dart';
 
-class _FeedBody extends StatefulWidget {
-  const _FeedBody({
-    super.key,
-    required this.token,
-    required this.repository,
-    required this.exploreRepository,
+import '../../../app/router/internal_router.dart';
+import '../../../app/router/router.dart';
+import '../../../models/dashboard/dashboard_data.dart';
+import '../../../models/dashboard/dashboard_widget_config.dart';
+import '../dashboard_formatters.dart';
+
+class DashboardQuickActionsBody extends StatelessWidget {
+  const DashboardQuickActionsBody({
     required this.config,
     required this.tx,
+    super.key,
   });
-
-  final String token;
-  final DashboardRepository repository;
-  final ExploreRepository exploreRepository;
-  final DashboardWidgetConfig config;
-  final DashboardTx tx;
-
-  @override
-  State<_FeedBody> createState() => _FeedBodyState();
-}
-
-class _FeedBodyState extends State<_FeedBody> {
-  bool _loading = true;
-  List<Map<String, dynamic>> _items = const [];
-  final Map<String, bool> _starredOverride = {};
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    setState(() => _loading = true);
-    final items = await widget.repository.fetchFeed(
-      widget.token,
-      types: widget.config.types ?? kFeedTypes,
-      limit: widget.config.limit ?? 8,
-    );
-    if (!mounted) return;
-    setState(() {
-      _items = items;
-      _loading = false;
-    });
-  }
-
-  Future<void> _toggleStar(Map<String, dynamic> item) async {
-    final type = item['resource_type']?.toString() ?? '';
-    final id = item['resource_id']?.toString() ?? '';
-    final key = '$type:$id';
-    final starred = _starredOverride[key] ?? item['starred'] == true;
-    try {
-      if (starred) {
-        await widget.exploreRepository.unstar(
-          widget.token,
-          resourceType: type,
-          resourceId: id,
-        );
-      } else {
-        await widget.exploreRepository.star(
-          widget.token,
-          resourceType: type,
-          resourceId: id,
-        );
-      }
-      if (!mounted) return;
-      setState(() => _starredOverride[key] = !starred);
-    } catch (_) {
-      // ignorar fallo de star silenciosamente
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_loading) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-    if (_items.isEmpty) {
-      return Text(
-        widget.tx(
-          'no_recent_activity',
-          'No hay actividad reciente de la comunidad',
-        ),
-      );
-    }
-
-    final defaultResourceName = widget.tx('default_resource_name', 'Recurso');
-
-    return Column(
-      children: _items.map((item) {
-        final type = item['resource_type']?.toString() ?? '';
-        final id = item['resource_id']?.toString() ?? '';
-        final key = '$type:$id';
-        final starred = _starredOverride[key] ?? item['starred'] == true;
-        final name = item['name']?.toString() ?? defaultResourceName;
-        return ListTile(
-          contentPadding: EdgeInsets.zero,
-          dense: true,
-          leading: CircleAvatar(
-            radius: 16,
-            child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?'),
-          ),
-          title: Text(name),
-          subtitle: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ResourceTypeBadge(
-                type: type,
-                label: feedTypeLabel(type, widget.tx),
-              ),
-              if ((item['owner_username']?.toString() ?? '').isNotEmpty) ...[
-                const SizedBox(width: 6),
-                Text('@${item['owner_username']}'),
-              ],
-            ],
-          ),
-          trailing: AppIconButton(
-            icon: Icon(
-              starred ? Icons.star : Icons.star_border,
-              color: starred ? FncColors.materialAmber : null,
-              size: 20,
-            ),
-            tooltip: widget.tx(
-              'toggle_favorite',
-              'Marcar o quitar de favoritos',
-            ),
-            onPressed: () => _toggleStar(item),
-          ),
-        );
-      }).toList(),
-    );
-  }
-}
-
-class _QuickActionsBody extends StatelessWidget {
-  const _QuickActionsBody({required this.config, required this.tx});
 
   final DashboardWidgetConfig config;
   final DashboardTx tx;
@@ -186,11 +58,12 @@ class _QuickActionsBody extends StatelessWidget {
   }
 }
 
-class _TokenKpiBody extends StatelessWidget {
-  const _TokenKpiBody({
+class DashboardTokenKpiBody extends StatelessWidget {
+  const DashboardTokenKpiBody({
     required this.data,
     required this.config,
     required this.tx,
+    super.key,
   });
 
   final DashboardData data;
@@ -245,7 +118,7 @@ class _TokenKpiBody extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                _formatCompactInt(current),
+                formatCompactDashboardInt(current),
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),

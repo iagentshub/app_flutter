@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/router/router.dart';
 import '../../../core/network/api_error.dart';
-import '../../../shared/i18n/locale_loader.dart';
+import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/state/theme_controller.dart';
@@ -30,33 +30,40 @@ class VerifyPage extends StatefulWidget {
 class _VerifyPageState extends State<VerifyPage> {
   bool _loading = true;
   String? _message;
-  late Future<Map<String, dynamic>> _textsFuture;
-
-  String get _languageCode => widget.localeController.languageCode;
+  late final TranslatedTexts _t;
 
   @override
   void initState() {
     super.initState();
-    _textsFuture = LocaleLoader.load(
-      languageCode: _languageCode,
+    _t = TranslatedTexts(
+      localeController: widget.localeController,
       namespace: 'auth',
-    );
+    )..addListener(_onTextsChanged);
     _verify();
   }
 
-  String _txt(Map<String, dynamic> bundle, String path, String fallback) {
-    return LocaleLoader.text(bundle, path, fallback: fallback);
+  void _onTextsChanged() {
+    if (mounted) setState(() {});
   }
+
+  @override
+  void dispose() {
+    _t.removeListener(_onTextsChanged);
+    _t.dispose();
+    super.dispose();
+  }
+
+  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
   Future<void> _verify() async {
     final themeController = ThemeControllerScope.of(context, listen: false);
-    final t = await _textsFuture;
+    await _t.ready;
+    if (!mounted) return;
     final token = widget.token?.trim() ?? '';
     if (token.isEmpty) {
       setState(() {
         _loading = false;
-        _message = _txt(
-          t,
+        _message = _tx(
           'verify.error_sub',
           'El enlace de verificación es inválido o ha expirado.',
         );
@@ -69,8 +76,7 @@ class _VerifyPageState extends State<VerifyPage> {
       if (!ok) {
         setState(() {
           _loading = false;
-          _message = _txt(
-            t,
+          _message = _tx(
             'verify.error_sub',
             'El enlace de verificación es inválido o ha expirado.',
           );
@@ -81,8 +87,7 @@ class _VerifyPageState extends State<VerifyPage> {
       if (gaToken == null || gaToken.isEmpty) {
         setState(() {
           _loading = false;
-          _message = _txt(
-            t,
+          _message = _tx(
             'verify.manual_login_required',
             'Cuenta verificada. Inicia sesión manualmente para continuar.',
           );
@@ -111,11 +116,7 @@ class _VerifyPageState extends State<VerifyPage> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _message = _txt(
-          t,
-          'verify.error_generic',
-          'Error verificando la cuenta',
-        );
+        _message = _tx('verify.error_generic', 'Error verificando la cuenta');
       });
     }
   }
@@ -130,30 +131,22 @@ class _VerifyPageState extends State<VerifyPage> {
             child: Card(
               child: Padding(
                 padding: const EdgeInsets.all(20),
-                child: FutureBuilder<Map<String, dynamic>>(
-                  future: _textsFuture,
-                  builder: (context, snapshot) {
-                    final t = snapshot.data ?? const {};
-                    final message =
-                        _message ??
-                        _txt(t, 'verify.loading_title', 'Verificando cuenta…');
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (_loading) const CircularProgressIndicator(),
-                        const SizedBox(height: 12),
-                        Text(message),
-                        const SizedBox(height: 10),
-                        if (!_loading)
-                          TertiaryButton(
-                            onPressed: () => AppRouter.toLogin(context),
-                            child: Text(
-                              _txt(t, 'verify.go_login', 'Volver al login'),
-                            ),
-                          ),
-                      ],
-                    );
-                  },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_loading) const CircularProgressIndicator(),
+                    const SizedBox(height: 12),
+                    Text(
+                      _message ??
+                          _tx('verify.loading_title', 'Verificando cuenta…'),
+                    ),
+                    const SizedBox(height: 10),
+                    if (!_loading)
+                      TertiaryButton(
+                        onPressed: () => AppRouter.toLogin(context),
+                        child: Text(_tx('verify.go_login', 'Volver al login')),
+                      ),
+                  ],
                 ),
               ),
             ),

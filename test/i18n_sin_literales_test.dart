@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:analyzer/dart/analysis/utilities.dart';
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Había 34 llamadas a `showMessage('…')` con el texto escrito en español
@@ -58,6 +61,79 @@ void main() {
       reason: 'Traduce también al inglés:\n${faltan.join('\n')}',
     );
   });
+
+  test('las pantallas auditadas no introducen literales directos en UI', () {
+    const auditedFiles = [
+      'lib/features/public/pages/checkout_page.dart',
+      'lib/features/public/pages/not_found_page.dart',
+      'lib/features/billing/widgets/payment_element_stub.dart',
+      'lib/features/knowledge/dialogs/add_url_dialog.dart',
+      'lib/features/knowledge/dialogs/add_text_dialog.dart',
+      'lib/features/knowledge/dialogs/skill_form_dialog.dart',
+      'lib/features/agents/widgets/chat_composer.dart',
+      'lib/features/connections/dialogs/connection_form_dialog.dart',
+    ];
+    final violations = <String>[];
+
+    for (final path in auditedFiles) {
+      final source = File(path).readAsStringSync();
+      final unit = parseString(content: source, path: path).unit;
+      unit.accept(_UiLiteralVisitor(path, source, violations));
+    }
+
+    expect(
+      violations,
+      isEmpty,
+      reason:
+          'Pasa cada texto visible por tx/_tx y añade la clave a ambos locales:\n'
+          '${violations.join('\n')}',
+    );
+  });
+}
+
+class _UiLiteralVisitor extends RecursiveAstVisitor<void> {
+  _UiLiteralVisitor(this.path, this.source, this.violations);
+
+  final String path;
+  final String source;
+  final List<String> violations;
+
+  static const _namedSinks = {
+    'InputDecoration': {'labelText', 'hintText', 'helperText', 'errorText'},
+    'Tooltip': {'message'},
+    'Semantics': {'label', 'value', 'hint'},
+  };
+
+  @override
+  void visitInstanceCreationExpression(InstanceCreationExpression node) {
+    final type = node.constructorName.type.name.lexeme;
+    final arguments = node.argumentList.arguments;
+    if (type == 'Text' && arguments.isNotEmpty) {
+      _recordIfLiteral(arguments.first);
+    }
+    final names = _namedSinks[type];
+    if (names != null) {
+      for (final argument in arguments.whereType<NamedExpression>()) {
+        if (names.contains(argument.name.label.name)) {
+          _recordIfLiteral(argument.expression);
+        }
+      }
+    }
+    super.visitInstanceCreationExpression(node);
+  }
+
+  @override
+  void visitReturnStatement(ReturnStatement node) {
+    _recordIfLiteral(node.expression);
+    super.visitReturnStatement(node);
+  }
+
+  void _recordIfLiteral(Expression? expression) {
+    if (expression is! SimpleStringLiteral || expression.value.isEmpty) return;
+    final line =
+        '\n'.allMatches(source.substring(0, expression.offset)).length + 1;
+    violations.add('$path:$line → ${expression.value}');
+  }
 }
 
 /// Recorre el árbol de claves de [es] comprobando que [en] tiene las mismas.

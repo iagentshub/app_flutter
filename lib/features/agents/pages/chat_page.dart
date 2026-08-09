@@ -384,6 +384,7 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
           onStop: _stop,
           sendTooltip: _tx('agents.chat.send', 'Enviar mensaje'),
           stopTooltip: _tx('agents.chat.stop', 'Detener respuesta'),
+          composerHint: _tx('agents.chat.placeholder', 'Escribe un mensaje…'),
           replyTo: _replyTo,
           replyToLabel: _replyTo == null ? null : _replyLabelFor(_replyTo!),
           onCancelReply: _cancelReply,

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:app_flutter/core/network/api_client.dart';
+import 'package:app_flutter/core/network/api_error.dart';
 import 'package:app_flutter/features/dashboard/repositories/dashboard_repository.dart';
 import 'package:app_flutter/models/dashboard/dashboard_widget_instance.dart';
 import 'package:app_flutter/shared/state/backend_controller.dart';
@@ -85,4 +86,20 @@ void main() {
     expect(data.conversations.single['id'], 'conversation-a');
     expect(data.agents, isEmpty);
   });
+
+  test(
+    'propaga el error del feed para que la interfaz pueda mostrarlo',
+    () async {
+      final client = ApiClient(
+        backendController,
+        client: MockClient((_) async => http.Response('fallo', 503)),
+      );
+      addTearDown(client.close);
+
+      expect(
+        DashboardRepository(client).fetchFeed('token'),
+        throwsA(isA<ApiError>()),
+      );
+    },
+  );
 }

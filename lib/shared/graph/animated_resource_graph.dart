@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:collection';
 import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 import '../../app/theme/fnc_colors.dart';
@@ -146,12 +148,18 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
 
   /// Ventana en primer plano. Con la app oculta no hay nada que animar.
   bool _appVisible = true;
+  bool _reduceMotion = false;
   late final AppLifecycleListener _lifecycle;
 
   // Posiciones arrastrables por el usuario, indexadas por id de nodo. Solo se
   // calcula el layout por niveles por defecto para los nodos que aún no
   // tienen una posición manual asignada.
   final Map<String, Offset> _positions = {};
+  final Set<String> _draggedNodeIds = {};
+  bool _galaxyLayoutPending = false;
+  int _galaxyLayoutGeneration = 0;
+  Size? _galaxyLayoutSize;
+  String? _galaxyLayoutFingerprint;
   final Map<String, FocusNode> _nodeFocusNodes = {};
   String? _focusedNodeId;
 
@@ -201,8 +209,16 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
         _syncRepeatingAnimations();
       },
     );
-    _syncRepeatingAnimations();
     _sortController.addListener(_handleSortModeChanged);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    if (_reduceMotion != reduceMotion) _reduceMotion = reduceMotion;
+    if (_reduceMotion) _entrance.value = 1;
+    _syncRepeatingAnimations();
   }
 
   /// El grafo se abre desde cada tarjeta en un diálogo a pantalla completa y
@@ -213,8 +229,9 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
   /// El pulso solo hace falta con la ventana en primer plano, y el parpadeo
   /// además solo cuando hay una búsqueda que resaltar.
   void _syncRepeatingAnimations() {
-    _sync(_pulse, activa: _appVisible);
-    _sync(_blink, activa: _appVisible && widget.highlightQuery.isNotEmpty);
+    final animate = _appVisible && !_reduceMotion;
+    _sync(_pulse, activa: animate);
+    _sync(_blink, activa: animate && widget.highlightQuery.isNotEmpty);
   }
 
   void _sync(AnimationController controller, {required bool activa}) {
@@ -231,12 +248,23 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
   @visibleForTesting
   bool get debugBlinkAnimating => _blink.isAnimating;
 
+  @visibleForTesting
+  bool get debugEntranceCompleted => _entrance.value == 1;
+
+  @visibleForTesting
+  bool get debugGalaxyLayoutPending => _galaxyLayoutPending;
+
   /// Cambiar de modo reordena desde cero: se descartan las posiciones
   /// (incluidas las arrastradas a mano) y se recentra el lienzo, ya que
   /// cada modo tiene una forma y un tamaño de lienzo muy distintos.
   void _handleSortModeChanged() {
     setState(() {
+      _galaxyLayoutGeneration++;
+      _galaxyLayoutPending = false;
+      _galaxyLayoutSize = null;
+      _galaxyLayoutFingerprint = null;
       _positions.clear();
+      _draggedNodeIds.clear();
       _panInitialized = false;
       _scale = 1.0;
     });
@@ -263,6 +291,24 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
       _syncRepeatingAnimations();
     }
     final currentIds = widget.nodes.map((node) => node.id).toSet();
+    final oldFingerprint = _fingerprintFor(
+      oldWidget.nodes,
+      oldWidget.edges,
+      oldWidget.rootId,
+    );
+    final currentFingerprint = _fingerprintFor(
+      widget.nodes,
+      widget.edges,
+      widget.rootId,
+    );
+    if (oldFingerprint != currentFingerprint) {
+      _galaxyLayoutGeneration++;
+      _galaxyLayoutPending = false;
+      _galaxyLayoutSize = null;
+      _galaxyLayoutFingerprint = null;
+      _positions.removeWhere((id, _) => !currentIds.contains(id));
+      _draggedNodeIds.removeWhere((id) => !currentIds.contains(id));
+    }
     final removedIds = _nodeFocusNodes.keys
         .where((id) => !currentIds.contains(id))
         .toList();
@@ -340,10 +386,10 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
   }
 
   void _ensurePositions(Size canvasSize, Map<String, int> levels) {
-    if (_positions.length == widget.nodes.length) return;
     if (_sortMode == GraphSortMode.galaxy) {
       _ensureGalaxyPositions(canvasSize);
     } else {
+      if (_positions.length == widget.nodes.length) return;
       _ensureLayeredPositions(
         canvasSize,
         levels,
@@ -362,52 +408,103 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     return 90;
   }
 
-  /// Layout de fuerzas (tipo Fruchterman-Reingold): cada nodo se repele de
-  /// todos los demás y se atrae a lo largo de sus aristas, con una leve
-  /// gravedad hacia el centro para no dispersarse sin límite. A diferencia
-  /// de los layouts jerárquicos, los clusters emergen del propio grafo en
-  /// vez de imponerse por niveles, lo que evita el amontonamiento típico
-  /// de grafos grandes (cientos de nodos) en una disposición fija.
-  ///
-  /// Se ejecuta con arrays indexados (no `Map<String,Offset>`) porque el
-  /// bucle de repulsión es O(n²) por iteración: con cientos de nodos el
-  /// coste de hashing/autoboxing de `Offset` sí se nota.
+  String _fingerprintFor(
+    List<GraphNode> nodes,
+    List<GraphEdge> edges,
+    String rootId,
+  ) =>
+      '$rootId|${nodes.map((node) => node.id).join('|')}|'
+      '${edges.map((edge) => '${edge.sourceId}>${edge.targetId}').join('|')}';
+
+  /// Prepara posiciones iniciales baratas durante el build y difiere la
+  /// simulación de fuerzas hasta después del frame. La simulación cede el
+  /// isolate entre lotes en grafos grandes: funciona tanto en web como en
+  /// nativo y evita un único bloqueo de millones de pares en el build.
   void _ensureGalaxyPositions(Size canvasSize) {
     final n = widget.nodes.length;
     if (n == 0) return;
+
+    final fingerprint = _fingerprintFor(
+      widget.nodes,
+      widget.edges,
+      widget.rootId,
+    );
+    if (_galaxyLayoutPending) return;
+    if (_positions.length == n &&
+        _galaxyLayoutFingerprint == fingerprint &&
+        _galaxyLayoutSize == canvasSize) {
+      return;
+    }
 
     final ids = [for (final node in widget.nodes) node.id];
     final rootIndex = ids.indexOf(widget.rootId);
     final center = Offset(canvasSize.width / 2, canvasSize.height / 2);
     final random = math.Random(_galaxySeed);
-
-    final px = List<double>.filled(n, 0);
-    final py = List<double>.filled(n, 0);
-    final pinned = List<bool>.filled(n, false);
+    final existingIds = _galaxyLayoutFingerprint == fingerprint
+        ? <String>{..._draggedNodeIds}
+        : <String>{..._positions.keys, ..._draggedNodeIds};
     final seedRadius = math.min(canvasSize.width, canvasSize.height) * 0.35;
     for (var i = 0; i < n; i++) {
-      final existing = _positions[ids[i]];
-      if (existing != null) {
-        px[i] = existing.dx;
-        py[i] = existing.dy;
-        pinned[i] = true;
-        continue;
-      }
+      if (_positions.containsKey(ids[i])) continue;
       if (i == rootIndex) {
-        px[i] = center.dx;
-        py[i] = center.dy;
-        pinned[i] = true;
+        _positions[ids[i]] = center;
         continue;
       }
       final angle = random.nextDouble() * 2 * math.pi;
       final radius = seedRadius * math.sqrt(random.nextDouble());
-      px[i] = center.dx + radius * math.cos(angle);
-      py[i] = center.dy + radius * math.sin(angle);
+      _positions[ids[i]] = Offset(
+        center.dx + radius * math.cos(angle),
+        center.dy + radius * math.sin(angle),
+      );
     }
+
+    final generation = ++_galaxyLayoutGeneration;
+    _galaxyLayoutPending = true;
+    _galaxyLayoutSize = canvasSize;
+    _galaxyLayoutFingerprint = fingerprint;
+    final initialPositions = Map<String, Offset>.of(_positions);
+    final nodes = List<GraphNode>.of(widget.nodes);
+    final edges = List<GraphEdge>.of(widget.edges);
+    final rootId = widget.rootId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || generation != _galaxyLayoutGeneration) return;
+      unawaited(
+        _calculateGalaxyPositions(
+          nodes: nodes,
+          edges: edges,
+          rootId: rootId,
+          canvasSize: canvasSize,
+          initialPositions: initialPositions,
+          pinnedIds: existingIds,
+          generation: generation,
+        ),
+      );
+    });
+  }
+
+  Future<void> _calculateGalaxyPositions({
+    required List<GraphNode> nodes,
+    required List<GraphEdge> edges,
+    required String rootId,
+    required Size canvasSize,
+    required Map<String, Offset> initialPositions,
+    required Set<String> pinnedIds,
+    required int generation,
+  }) async {
+    final n = nodes.length;
+    final ids = [for (final node in nodes) node.id];
+    final rootIndex = ids.indexOf(rootId);
+    final center = Offset(canvasSize.width / 2, canvasSize.height / 2);
+    final random = math.Random(_galaxySeed);
+    final px = [for (final id in ids) initialPositions[id]!.dx];
+    final py = [for (final id in ids) initialPositions[id]!.dy];
+    final pinned = [
+      for (var i = 0; i < n; i++) i == rootIndex || pinnedIds.contains(ids[i]),
+    ];
 
     final idIndex = {for (var i = 0; i < n; i++) ids[i]: i};
     final edgesIdx = [
-      for (final edge in widget.edges)
+      for (final edge in edges)
         if (idIndex.containsKey(edge.sourceId) &&
             idIndex.containsKey(edge.targetId))
           (idIndex[edge.sourceId]!, idIndex[edge.targetId]!),
@@ -419,6 +516,13 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     final t0 = math.max(canvasSize.width, canvasSize.height) * 0.05;
     final dispX = List<double>.filled(n, 0);
     final dispY = List<double>.filled(n, 0);
+    final yieldEvery = n > 300
+        ? 1
+        : n > 150
+        ? 2
+        : n > 60
+        ? 4
+        : iterations;
 
     for (var iter = 0; iter < iterations; iter++) {
       dispX.fillRange(0, n, 0);
@@ -484,11 +588,30 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
           math.max(30.0, canvasSize.height - 30.0),
         );
       }
+
+      if ((iter + 1) % yieldEvery == 0 && iter + 1 < iterations) {
+        await SchedulerBinding.instance.endOfFrame;
+        if (!mounted ||
+            generation != _galaxyLayoutGeneration ||
+            _sortMode != GraphSortMode.galaxy) {
+          return;
+        }
+      }
     }
 
-    for (var i = 0; i < n; i++) {
-      _positions[ids[i]] = Offset(px[i], py[i]);
+    if (!mounted ||
+        generation != _galaxyLayoutGeneration ||
+        _sortMode != GraphSortMode.galaxy) {
+      return;
     }
+    setState(() {
+      for (var i = 0; i < n; i++) {
+        if (!_draggedNodeIds.contains(ids[i])) {
+          _positions[ids[i]] = Offset(px[i], py[i]);
+        }
+      }
+      _galaxyLayoutPending = false;
+    });
   }
 
   /// Layout jerárquico: la raíz queda en el extremo superior (o izquierdo,
@@ -874,6 +997,7 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
               onTap: openQuickView,
               onPanUpdate: (details) {
                 setState(() {
+                  _draggedNodeIds.add(node.id);
                   final updated = pos + details.delta / _scale;
                   _positions[node.id] = Offset(
                     updated.dx.clamp(

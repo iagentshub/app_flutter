@@ -148,7 +148,7 @@ extension _ProfileAccountSection on _ProfilePageState {
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 10),
-                const _BrandIconSelector(),
+                _BrandIconSelector(tx: _tx),
                 const SizedBox(height: 12),
                 PrimaryButton.icon(
                   onPressed: _controller.savingSettings

@@ -44,13 +44,20 @@ class _AddUrlDialogState extends State<_AddUrlDialog> {
             children: [
               TextFormField(
                 controller: _urlController,
-                decoration: const InputDecoration(labelText: 'URL'),
+                decoration: InputDecoration(
+                  labelText: widget.tx('knowledge.url_label', 'URL'),
+                ),
                 validator: (value) {
                   final raw = value?.trim() ?? '';
-                  if (raw.isEmpty) return 'URL obligatoria';
+                  if (raw.isEmpty) {
+                    return widget.tx(
+                      'knowledge.url_required',
+                      'URL obligatoria',
+                    );
+                  }
                   final uri = Uri.tryParse(raw);
                   if (uri == null || !uri.hasScheme || !uri.hasAuthority) {
-                    return 'URL no válida';
+                    return widget.tx('knowledge.url_invalid', 'URL no válida');
                   }
                   return null;
                 },
@@ -65,8 +72,11 @@ class _AddUrlDialogState extends State<_AddUrlDialog> {
               ),
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Título (opcional)',
+                decoration: InputDecoration(
+                  labelText: widget.tx(
+                    'knowledge.optional_title',
+                    'Título (opcional)',
+                  ),
                 ),
               ),
             ],

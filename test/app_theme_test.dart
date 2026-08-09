@@ -1,13 +1,20 @@
 import 'package:app_flutter/app/theme/app_theme.dart';
+import 'package:app_flutter/app/theme/fnc_fonts.dart';
 import 'package:app_flutter/models/profile/profile_models.dart';
 import 'package:app_flutter/shared/state/theme_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  GoogleFonts.config.allowRuntimeFetching = false;
+
+  test('la tipografía usa recursos del sistema sin descarga en runtime', () {
+    final expected = ThemeData.light(useMaterial3: true).textTheme;
+    final actual = FncFonts.textTheme(Brightness.light);
+
+    expect(actual.bodyMedium?.fontFamily, expected.bodyMedium?.fontFamily);
+    expect(actual.titleLarge?.fontFamily, expected.titleLarge?.fontFamily);
+  });
 
   test('selecciona correctamente el modo claro u oscuro', () {
     expect(AppTheme.mode('dark-blue'), ThemeMode.dark);

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/router/router.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_error.dart';
-import '../../../shared/i18n/locale_loader.dart';
+import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../utils/validators.dart';
@@ -28,42 +28,32 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final _emailController = TextEditingController();
   bool _loading = false;
   String? _message;
-  late Future<Map<String, dynamic>> _textsFuture;
-
-  String get _languageCode => widget.localeController.languageCode;
+  late final TranslatedTexts _t;
 
   @override
   void initState() {
     super.initState();
-    _textsFuture = LocaleLoader.load(
-      languageCode: _languageCode,
+    _t = TranslatedTexts(
+      localeController: widget.localeController,
       namespace: 'auth',
-    );
-    widget.localeController.addListener(_onLocaleChanged);
+    )..addListener(_onTextsChanged);
   }
 
-  void _onLocaleChanged() {
-    if (!mounted) return;
-    setState(() {
-      _textsFuture = LocaleLoader.load(
-        languageCode: _languageCode,
-        namespace: 'auth',
-      );
-    });
+  void _onTextsChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
-    widget.localeController.removeListener(_onLocaleChanged);
+    _t.removeListener(_onTextsChanged);
+    _t.dispose();
     _emailController.dispose();
     super.dispose();
   }
 
-  String _txt(Map<String, dynamic> bundle, String path, String fallback) {
-    return LocaleLoader.text(bundle, path, fallback: fallback);
-  }
+  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
-  Future<void> _submit(Map<String, dynamic> t) async {
+  Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() {
       _loading = true;
@@ -74,8 +64,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       await widget.authRepository.forgotPassword(email: _emailController.text);
       if (!mounted) return;
       setState(() {
-        _message = _txt(
-          t,
+        _message = _tx(
           'forgot_password_page.sent_body',
           'Si el correo existe, se enviaron instrucciones de recuperación.',
         );
@@ -100,79 +89,68 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               child: Card(
                 child: Padding(
                   padding: const EdgeInsets.all(20),
-                  child: FutureBuilder<Map<String, dynamic>>(
-                    future: _textsFuture,
-                    builder: (context, snapshot) {
-                      final t = snapshot.data ?? const {};
-                      return Form(
-                        key: _formKey,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _txt(
-                                t,
-                                'forgot_password_page.title',
-                                'Recuperar contraseña',
-                              ),
-                              style: const TextStyle(
-                                fontSize: FncFonts.size24,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            TextFormField(
-                              controller: _emailController,
-                              validator: Validators.email,
-                              decoration: InputDecoration(
-                                labelText: _txt(
-                                  t,
-                                  'forgot_password_page.email_label',
-                                  'Email',
-                                ),
-                                border: const OutlineInputBorder(),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            SizedBox(
-                              width: double.infinity,
-                              child: PrimaryButton(
-                                onPressed: _loading ? null : () => _submit(t),
-                                child: Text(
-                                  _loading
-                                      ? _txt(
-                                          t,
-                                          'forgot_password_page.send_btn_loading',
-                                          'Enviando...',
-                                        )
-                                      : _txt(
-                                          t,
-                                          'forgot_password_page.send_btn',
-                                          'Enviar enlace',
-                                        ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            TertiaryButton(
-                              onPressed: () => AppRouter.toLogin(context),
-                              child: Text(
-                                _txt(
-                                  t,
-                                  'forgot_password_page.back_to_login_arrow',
-                                  'Volver al login',
-                                ),
-                              ),
-                            ),
-                            if (_message != null) ...[
-                              const SizedBox(height: 8),
-                              Text(_message!),
-                            ],
-                          ],
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _tx(
+                            'forgot_password_page.title',
+                            'Recuperar contraseña',
+                          ),
+                          style: const TextStyle(
+                            fontSize: FncFonts.size24,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      );
-                    },
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _emailController,
+                          validator: Validators.email,
+                          decoration: InputDecoration(
+                            labelText: _tx(
+                              'forgot_password_page.email_label',
+                              'Email',
+                            ),
+                            border: const OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: PrimaryButton(
+                            onPressed: _loading ? null : _submit,
+                            child: Text(
+                              _loading
+                                  ? _tx(
+                                      'forgot_password_page.send_btn_loading',
+                                      'Enviando...',
+                                    )
+                                  : _tx(
+                                      'forgot_password_page.send_btn',
+                                      'Enviar enlace',
+                                    ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TertiaryButton(
+                          onPressed: () => AppRouter.toLogin(context),
+                          child: Text(
+                            _tx(
+                              'forgot_password_page.back_to_login_arrow',
+                              'Volver al login',
+                            ),
+                          ),
+                        ),
+                        if (_message != null) ...[
+                          const SizedBox(height: 8),
+                          Text(_message!),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
               ),

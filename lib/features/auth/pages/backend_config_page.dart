@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
-import '../../../shared/i18n/locale_loader.dart';
+import '../../../core/config/backend_url.dart';
+import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/backend_controller.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
@@ -29,7 +30,7 @@ class BackendConfigPage extends StatefulWidget {
 }
 
 class _BackendConfigPageState extends State<BackendConfigPage> {
-  late Future<Map<String, dynamic>> _textsFuture;
+  late final TranslatedTexts _t;
 
   // null = comprobando/desconocido, true = responde, false = no responde.
   final Map<String, bool?> _health = {};
@@ -38,10 +39,10 @@ class _BackendConfigPageState extends State<BackendConfigPage> {
   @override
   void initState() {
     super.initState();
-    _textsFuture = LocaleLoader.load(
-      languageCode: widget.localeController.languageCode,
+    _t = TranslatedTexts(
+      localeController: widget.localeController,
       namespace: 'auth',
-    );
+    )..addListener(_onTextsChanged);
     widget.backendController.addListener(_onChanged);
     _refreshHealth();
     _healthTimer = Timer.periodic(
@@ -53,11 +54,17 @@ class _BackendConfigPageState extends State<BackendConfigPage> {
   @override
   void dispose() {
     widget.backendController.removeListener(_onChanged);
+    _t.removeListener(_onTextsChanged);
+    _t.dispose();
     _healthTimer?.cancel();
     super.dispose();
   }
 
   void _onChanged() {
+    if (mounted) setState(() {});
+  }
+
+  void _onTextsChanged() {
     if (mounted) setState(() {});
   }
 
@@ -74,17 +81,14 @@ class _BackendConfigPageState extends State<BackendConfigPage> {
     );
   }
 
-  String _txt(Map<String, dynamic> bundle, String path, String fallback) {
-    return LocaleLoader.text(bundle, path, fallback: fallback);
-  }
+  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
-  Future<void> _openAddDialog(Map<String, dynamic> t) async {
+  Future<void> _openAddDialog() async {
     final saved = await showDialog<SavedBackend>(
       context: context,
       builder: (context) => _BackendFormDialog(
         backendController: widget.backendController,
-        t: t,
-        txt: _txt,
+        tx: _tx,
       ),
     );
     if (saved != null && mounted) {
@@ -92,8 +96,7 @@ class _BackendConfigPageState extends State<BackendConfigPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _txt(
-              t,
+            _tx(
               'backend_config.added_toast',
               'Backend "{name}" añadido',
             ).replaceAll('{name}', saved.name),
@@ -103,16 +106,12 @@ class _BackendConfigPageState extends State<BackendConfigPage> {
     }
   }
 
-  Future<void> _openEditDialog(
-    Map<String, dynamic> t,
-    SavedBackend backend,
-  ) async {
+  Future<void> _openEditDialog(SavedBackend backend) async {
     final saved = await showDialog<SavedBackend>(
       context: context,
       builder: (context) => _BackendFormDialog(
         backendController: widget.backendController,
-        t: t,
-        txt: _txt,
+        tx: _tx,
         existing: backend,
       ),
     );
@@ -121,20 +120,16 @@ class _BackendConfigPageState extends State<BackendConfigPage> {
     }
   }
 
-  Future<void> _confirmDelete(
-    Map<String, dynamic> t,
-    SavedBackend backend,
-  ) async {
+  Future<void> _confirmDelete(SavedBackend backend) async {
     final confirm = await showConfirmActionDialog(
       context,
-      title: _txt(t, 'backend_config.delete_dialog_title', 'Eliminar backend'),
-      message: _txt(
-        t,
+      title: _tx('backend_config.delete_dialog_title', 'Eliminar backend'),
+      message: _tx(
         'backend_config.delete_dialog_body',
         '¿Seguro que quieres eliminar "{name}"?',
       ).replaceAll('{name}', backend.name),
-      cancelLabel: _txt(t, 'backend_config.cancel', 'Cancelar'),
-      confirmLabel: _txt(t, 'backend_config.delete_confirm', 'Eliminar'),
+      cancelLabel: _tx('backend_config.cancel', 'Cancelar'),
+      confirmLabel: _tx('backend_config.delete_confirm', 'Eliminar'),
       destructive: true,
     );
     if (confirm) {
@@ -144,104 +139,94 @@ class _BackendConfigPageState extends State<BackendConfigPage> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Map<String, dynamic>>(
-      future: _textsFuture,
-      builder: (context, snapshot) {
-        final t = snapshot.data ?? const <String, dynamic>{};
-        final selectedId = widget.backendController.selectedBackendId;
-        final options = widget.backendController.options;
-        final connectionError = widget.backendController.lastConnectionError;
+    final selectedId = widget.backendController.selectedBackendId;
+    final options = widget.backendController.options;
+    final connectionError = widget.backendController.lastConnectionError;
 
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(
-              _txt(t, 'backend_config.page_title', 'Configurar backend'),
-            ),
-          ),
-          body: SafeArea(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 560),
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    Text(
-                      _txt(
-                        t,
-                        'backend_config.list_title',
-                        'Backends disponibles',
-                      ),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _txt(
-                        t,
-                        'backend_config.list_subtitle',
-                        'Elige a cuál conectarte, o añade uno nuevo.',
-                      ),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 14),
-                    ...options.map((option) {
-                      final selected = option.id == selectedId;
-                      final official = widget.backendController.isOfficial(
-                        option.id,
-                      );
-                      final savedEntry = widget.backendController.savedBackends
-                          .where((b) => b.id == option.id)
-                          .firstOrNull;
-                      return _BackendRow(
-                        label: option.label,
-                        url: option.baseUrl,
-                        selected: selected,
-                        official: official,
-                        health: _health[option.id],
-                        errorMessage: (selected && connectionError != null)
-                            ? connectionError
-                            : null,
-                        officialLabel: _txt(
-                          t,
-                          'backend_config.official_badge',
-                          'Oficial',
-                        ),
-                        editTooltip: _txt(
-                          t,
-                          'backend_config.edit_tooltip',
-                          'Editar',
-                        ),
-                        deleteTooltip: _txt(
-                          t,
-                          'backend_config.delete_tooltip',
-                          'Eliminar',
-                        ),
-                        onTap: () => widget.backendController
-                            .setSelectedBackend(option.id),
-                        onEdit: (official || savedEntry == null)
-                            ? null
-                            : () => _openEditDialog(t, savedEntry),
-                        onDelete: (official || savedEntry == null)
-                            ? null
-                            : () => _confirmDelete(t, savedEntry),
-                      );
-                    }),
-                    const SizedBox(height: 8),
-                    SecondaryButton.icon(
-                      onPressed: () => _openAddDialog(t),
-                      icon: const Icon(Icons.add),
-                      label: Text(
-                        _txt(t, 'backend_config.add_button', 'Añadir backend'),
-                      ),
-                    ),
-                  ],
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_tx('backend_config.page_title', 'Configurar backend')),
+      ),
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                Text(
+                  _tx('backend_config.list_title', 'Backends disponibles'),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 4),
+                Text(
+                  _tx(
+                    'backend_config.list_subtitle',
+                    'Elige a cuál conectarte, o añade uno nuevo.',
+                  ),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 14),
+                ...options.map((option) {
+                  final selected = option.id == selectedId;
+                  final official = widget.backendController.isOfficial(
+                    option.id,
+                  );
+                  final savedEntry = widget.backendController.savedBackends
+                      .where((b) => b.id == option.id)
+                      .firstOrNull;
+                  return _BackendRow(
+                    label: option.label,
+                    url: option.baseUrl,
+                    selected: selected,
+                    official: official,
+                    health: _health[option.id],
+                    errorMessage: (selected && connectionError != null)
+                        ? connectionError
+                        : null,
+                    officialLabel: _tx(
+                      'backend_config.official_badge',
+                      'Oficial',
+                    ),
+                    healthOkLabel: _tx('backend_config.test_ok', 'Conexión OK'),
+                    healthErrorLabel: _tx(
+                      'backend_config.test_connection_error_short',
+                      'Sin conexión',
+                    ),
+                    healthUnknownLabel: _tx(
+                      'backend_config.health_unknown',
+                      'Estado desconocido',
+                    ),
+                    editTooltip: _tx('backend_config.edit_tooltip', 'Editar'),
+                    deleteTooltip: _tx(
+                      'backend_config.delete_tooltip',
+                      'Eliminar',
+                    ),
+                    onTap: () =>
+                        widget.backendController.setSelectedBackend(option.id),
+                    onEdit: (official || savedEntry == null)
+                        ? null
+                        : () => _openEditDialog(savedEntry),
+                    onDelete: (official || savedEntry == null)
+                        ? null
+                        : () => _confirmDelete(savedEntry),
+                  );
+                }),
+                const SizedBox(height: 8),
+                SecondaryButton.icon(
+                  onPressed: _openAddDialog,
+                  icon: const Icon(Icons.add),
+                  label: Text(
+                    _tx('backend_config.add_button', 'Añadir backend'),
+                  ),
+                ),
+              ],
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
@@ -259,6 +244,9 @@ class _BackendRow extends StatelessWidget {
     required this.health,
     required this.errorMessage,
     required this.officialLabel,
+    required this.healthOkLabel,
+    required this.healthErrorLabel,
+    required this.healthUnknownLabel,
     required this.editTooltip,
     required this.deleteTooltip,
     required this.onTap,
@@ -273,6 +261,9 @@ class _BackendRow extends StatelessWidget {
   final bool? health;
   final String? errorMessage;
   final String officialLabel;
+  final String healthOkLabel;
+  final String healthErrorLabel;
+  final String healthUnknownLabel;
   final String editTooltip;
   final String deleteTooltip;
   final VoidCallback onTap;
@@ -319,6 +310,11 @@ class _BackendRow extends StatelessWidget {
                             true => StatusDotState.ok,
                             false => StatusDotState.error,
                             null => StatusDotState.unknown,
+                          },
+                          semanticLabel: switch (health) {
+                            true => healthOkLabel,
+                            false => healthErrorLabel,
+                            null => healthUnknownLabel,
                           },
                         ),
                         const SizedBox(width: 6),

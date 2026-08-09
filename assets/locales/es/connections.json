@@ -1,4 +1,5 @@
 {
+  "field_required": "Campo obligatorio",
   "page": {
     "title": "Conexiones",
     "subtitle": "Proveedores de IA configurados",

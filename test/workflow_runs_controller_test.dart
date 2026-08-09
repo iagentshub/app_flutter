@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:app_flutter/core/network/api_client.dart';
@@ -12,10 +13,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/memory_secure_store.dart';
 
-Map<String, dynamic> _run({String status = 'running'}) => {
-  'id': 'run-1',
+Map<String, dynamic> _run({
+  String id = 'run-1',
+  String name = 'Informe',
+  String status = 'running',
+}) => {
+  'id': id,
   'workflow_id': 'workflow-1',
-  'workflow_name': 'Informe',
+  'workflow_name': name,
   'status': status,
   'definition': {
     'nodes': [
@@ -87,4 +92,113 @@ void main() {
     expect(requests, contains('POST /api/workflows/workflow-1/runs'));
     expect(requests, contains('GET /api/workflow-runs/run-1/events'));
   });
+
+  test(
+    'descarta una respuesta en vuelo después de cambiar de cuenta',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final backend = await BackendController.bootstrap();
+      final session = await SessionController.bootstrap(
+        secureStore: MemorySecureStore(),
+      );
+      await session.login(
+        token: 'alice-token',
+        user: const SessionUser(username: 'alice', role: 'user'),
+        remember: false,
+      );
+
+      final aliceResponse = Completer<http.Response>();
+      var requestCount = 0;
+      final client = ApiClient(
+        backend,
+        client: MockClient((request) {
+          requestCount += 1;
+          if (requestCount == 1) return aliceResponse.future;
+          return Future.value(
+            http.Response(
+              jsonEncode([_run(id: 'bob-run', name: 'Privado de Bob')]),
+              200,
+            ),
+          );
+        }),
+      );
+      final controller = WorkflowRunsController(
+        apiClient: client,
+        sessionController: session,
+      );
+      addTearDown(controller.dispose);
+      addTearDown(client.close);
+
+      final publishedNames = <String>[];
+      controller.addListener(() {
+        publishedNames.addAll(controller.runs.map((run) => run.workflowName));
+      });
+      await _waitUntil(() => controller.loading);
+
+      await session.login(
+        token: 'bob-token',
+        user: const SessionUser(username: 'bob', role: 'user'),
+        remember: false,
+      );
+      aliceResponse.complete(
+        http.Response(
+          jsonEncode([_run(id: 'alice-run', name: 'Privado de Alice')]),
+          200,
+        ),
+      );
+
+      await _waitUntil(
+        () =>
+            controller.runs.any((run) => run.workflowName == 'Privado de Bob'),
+      );
+      expect(session.user?.username, 'bob');
+      expect(publishedNames, isNot(contains('Privado de Alice')));
+      expect(controller.runs.single.workflowName, 'Privado de Bob');
+    },
+  );
+
+  test('reduce el polling cuando no hay ejecuciones activas', () async {
+    SharedPreferences.setMockInitialValues({});
+    final backend = await BackendController.bootstrap();
+    final session = await SessionController.bootstrap(
+      secureStore: MemorySecureStore(),
+    );
+    await session.login(
+      token: 'token',
+      user: const SessionUser(username: 'alice', role: 'user'),
+      remember: false,
+    );
+
+    final client = ApiClient(
+      backend,
+      client: MockClient((request) async {
+        if (request.method == 'POST') {
+          return http.Response(jsonEncode(_run()), 202);
+        }
+        return http.Response('[]', 200);
+      }),
+    );
+    final controller = WorkflowRunsController(
+      apiClient: client,
+      sessionController: session,
+    );
+    addTearDown(controller.dispose);
+    addTearDown(client.close);
+
+    await _waitUntil(
+      () => controller.debugNextPollDelay == const Duration(minutes: 1),
+    );
+    await controller.startRun(workflowId: 'workflow-1', input: 'datos');
+
+    expect(controller.activeCount, 1);
+    expect(controller.debugNextPollDelay, const Duration(seconds: 5));
+  });
+}
+
+Future<void> _waitUntil(bool Function() condition) async {
+  for (var attempt = 0; attempt < 100; attempt++) {
+    if (condition()) return;
+    await Future<void>.delayed(const Duration(milliseconds: 1));
+  }
+  fail('La condición no se cumplió a tiempo');
 }

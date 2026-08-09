@@ -22,6 +22,7 @@ class ChatComposer extends StatelessWidget {
     required this.onStop,
     required this.sendTooltip,
     required this.stopTooltip,
+    required this.composerHint,
     this.replyTo,
     this.replyToLabel,
     this.onCancelReply,
@@ -38,6 +39,7 @@ class ChatComposer extends StatelessWidget {
   final VoidCallback onStop;
   final String sendTooltip;
   final String stopTooltip;
+  final String composerHint;
 
   /// Mensaje citado al responder, y el nombre de quien lo escribió
   /// ("Tú" o el nombre del agente). `null` cuando no hay respuesta activa.
@@ -90,9 +92,9 @@ class ChatComposer extends StatelessWidget {
                       minLines: 1,
                       maxLines: 5,
                       textInputAction: TextInputAction.send,
-                      decoration: const InputDecoration(
-                        hintText: 'Escribe un mensaje…',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        hintText: composerHint,
+                        border: const OutlineInputBorder(),
                       ),
                       onSubmitted: (_) => onSend(),
                     ),

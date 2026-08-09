@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// Fuente única de verdad para toda tipografía usada en la app. Nada fuera
 /// de este archivo debe declarar un `fontFamily:` o `fontSize:` numérico
 /// literal — siempre una constante de aquí.
 ///
 /// - Texto con un rol Material natural (título, cuerpo, etiqueta) usa
-///   `Theme.of(context).textTheme.X`, que hereda la familia Inter aplicada
-///   por [textTheme] y reacciona al color del tema activo automáticamente.
+///   `Theme.of(context).textTheme.X`, que hereda la familia del sistema y
+///   reacciona al color del tema activo automáticamente, sin descargar una
+///   fuente durante el arranque.
 /// - `FncFonts.X` (estático) se usa para: construir `ThemeData` en
 ///   `app_theme.dart` (sin `BuildContext`), los roles con nombre que no
 ///   tienen slot Material (`badge`/`overline`/`code*`), y cualquier
@@ -21,7 +21,7 @@ abstract final class FncFonts {
     final base = brightness == Brightness.dark
         ? ThemeData.dark(useMaterial3: true).textTheme
         : ThemeData.light(useMaterial3: true).textTheme;
-    return GoogleFonts.interTextTheme(base);
+    return base;
   }
 
   // -----------------------------------------------------------------------

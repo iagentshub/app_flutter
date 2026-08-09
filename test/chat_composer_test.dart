@@ -22,6 +22,7 @@ void main() {
             onStop: () {},
             sendTooltip: 'Enviar mensaje',
             stopTooltip: 'Detener respuesta',
+            composerHint: 'Write a message…',
           ),
         ),
       );
@@ -51,6 +52,7 @@ void main() {
               onStop: () {},
               sendTooltip: 'Enviar mensaje',
               stopTooltip: 'Detener respuesta',
+              composerHint: 'Write a message…',
               replyTo: replyTo,
               replyToLabel: 'Asistente',
               onCancelReply: () => cancelled = true,
@@ -68,5 +70,27 @@ void main() {
         expect(cancelled, isTrue);
       },
     );
+
+    testWidgets('usa el placeholder recibido por contrato', (tester) async {
+      await tester.pumpWidget(
+        _host(
+          ChatComposer(
+            textController: TextEditingController(),
+            mentionLink: LayerLink(),
+            attachedKnowledge: const [],
+            onRemoveKnowledge: (_) {},
+            streaming: false,
+            onSend: () {},
+            onStop: () {},
+            sendTooltip: 'Send',
+            stopTooltip: 'Stop',
+            composerHint: 'Write a message…',
+          ),
+        ),
+      );
+
+      expect(find.text('Write a message…'), findsOneWidget);
+      expect(find.text('Escribe un mensaje…'), findsNothing);
+    });
   });
 }

@@ -27,6 +27,13 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
   final Map<String, bool> _boolValues = {};
   bool _discoveringModels = false;
 
+  String? _requiredField(String? value, ProviderField field) {
+    if (field.required && (value == null || value.trim().isEmpty)) {
+      return widget.tx('connections.field_required', 'Campo obligatorio');
+    }
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -156,10 +163,18 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
                   children: [
                     TextFormField(
                       controller: _nameController,
-                      decoration: const InputDecoration(labelText: 'Nombre'),
+                      decoration: InputDecoration(
+                        labelText: widget.tx(
+                          'connections.name_label',
+                          'Nombre',
+                        ),
+                      ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'El nombre es obligatorio';
+                          return widget.tx(
+                            'connections.name_required',
+                            'El nombre es obligatorio',
+                          );
                         }
                         return null;
                       },
@@ -182,7 +197,12 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
                           _syncControllersFromProvider();
                         });
                       },
-                      decoration: const InputDecoration(labelText: 'Proveedor'),
+                      decoration: InputDecoration(
+                        labelText: widget.tx(
+                          'connections.provider_label',
+                          'Proveedor',
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 10),
                     ...provider.fields
@@ -320,12 +340,7 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
           controller.text = value ?? '';
           setState(() {});
         },
-        validator: (value) {
-          if (field.required && (value == null || value.trim().isEmpty)) {
-            return 'Campo obligatorio';
-          }
-          return null;
-        },
+        validator: (value) => _requiredField(value, field),
       );
     }
 
@@ -346,12 +361,7 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
         labelText: field.label,
         hintText: field.placeholder.isEmpty ? null : field.placeholder,
       ),
-      validator: (value) {
-        if (field.required && (value == null || value.trim().isEmpty)) {
-          return 'Campo obligatorio';
-        }
-        return null;
-      },
+      validator: (value) => _requiredField(value, field),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../../core/diagnostics/app_diagnostics.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/state/session_controller.dart';
 import '../models/workflow_run.dart';
@@ -12,14 +13,18 @@ class WorkflowRunsController extends ChangeNotifier {
     required ApiClient apiClient,
     required SessionController sessionController,
     bool autoStart = true,
+    Duration activePollInterval = const Duration(seconds: 5),
+    Duration idlePollInterval = const Duration(minutes: 1),
   }) : _repository = WorkflowsRepository(apiClient: apiClient),
        _apiClient = apiClient,
-       _session = sessionController {
+       _session = sessionController,
+       _autoStart = autoStart,
+       _activePollInterval = activePollInterval,
+       _idlePollInterval = idlePollInterval {
     _lastIdentity = _identity;
     if (autoStart) {
       _session.addListener(_identityChanged);
       _apiClient.backendController.addListener(_identityChanged);
-      _timer = Timer.periodic(const Duration(seconds: 5), (_) => refresh());
       scheduleMicrotask(refresh);
     }
   }
@@ -27,15 +32,25 @@ class WorkflowRunsController extends ChangeNotifier {
   final WorkflowsRepository _repository;
   final ApiClient _apiClient;
   final SessionController _session;
+  final bool _autoStart;
+  final Duration _activePollInterval;
+  final Duration _idlePollInterval;
   Timer? _timer;
   bool _loading = false;
+  bool _refreshQueued = false;
+  bool _disposed = false;
+  int _generation = 0;
   List<WorkflowRun> _runs = const [];
   late String _lastIdentity;
+  Duration? _nextPollDelay;
 
   List<WorkflowRun> get runs => _runs;
   List<WorkflowRun> get activeRuns => _runs.where((run) => run.active).toList();
   int get activeCount => activeRuns.length;
   bool get loading => _loading;
+
+  @visibleForTesting
+  Duration? get debugNextPollDelay => _nextPollDelay;
 
   String? get _token {
     final value = _session.gaToken;
@@ -49,23 +64,50 @@ class WorkflowRunsController extends ChangeNotifier {
     final next = _identity;
     if (next == _lastIdentity) return;
     _lastIdentity = next;
+    _generation += 1;
+    _timer?.cancel();
+    _nextPollDelay = null;
     _runs = const [];
     notifyListeners();
-    refresh();
+    if (_token != null) unawaited(refresh());
   }
 
   Future<void> refresh() async {
     final token = _token;
-    if (token == null || _loading) return;
+    if (token == null || _disposed) return;
+    if (_loading) {
+      _refreshQueued = true;
+      return;
+    }
+    final generation = _generation;
     _loading = true;
     try {
-      _runs = await _repository.listRuns(token);
+      final runs = await _repository.listRuns(token);
+      if (_disposed || generation != _generation) return;
+      _runs = runs;
       notifyListeners();
-    } catch (_) {
+    } catch (error, stackTrace) {
       // El indicador conserva el último estado conocido durante cortes breves.
+      AppDiagnostics.report('workflow_runs.refresh', error, stackTrace);
     } finally {
       _loading = false;
+      if (!_disposed) {
+        if (_refreshQueued) {
+          _refreshQueued = false;
+          unawaited(refresh());
+        } else {
+          _scheduleNextPoll();
+        }
+      }
     }
+  }
+
+  void _scheduleNextPoll() {
+    if (!_autoStart || _disposed || _token == null) return;
+    _timer?.cancel();
+    final delay = activeRuns.isEmpty ? _idlePollInterval : _activePollInterval;
+    _nextPollDelay = delay;
+    _timer = Timer(delay, refresh);
   }
 
   Future<WorkflowRun> startRun({
@@ -129,11 +171,14 @@ class WorkflowRunsController extends ChangeNotifier {
   void _upsert(WorkflowRun run) {
     _runs = [run, ..._runs.where((item) => item.id != run.id)];
     notifyListeners();
+    _scheduleNextPoll();
   }
 
   @override
   void dispose() {
+    _disposed = true;
     _timer?.cancel();
+    _nextPollDelay = null;
     _session.removeListener(_identityChanged);
     _apiClient.backendController.removeListener(_identityChanged);
     super.dispose();
