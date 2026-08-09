@@ -19,8 +19,10 @@ import '../cards/workflow_card.dart';
 import '../controllers/workflow_runs_controller.dart';
 import '../dialogs/run_progress_dialog.dart';
 import '../dialogs/run_workflow_dialog.dart';
+import '../models/workflow_run.dart';
 import '../repositories/workflows_repository.dart';
 import '../widgets/llm_orchestrations_panel.dart';
+import '../widgets/workflow_runs_panel.dart';
 import 'workflow_editor_page.dart';
 
 class WorkflowsPage extends StatefulWidget {
@@ -336,6 +338,50 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
     }
   }
 
+  Future<void> _openRun(WorkflowRun summary) async {
+    try {
+      final run = await _workflowRuns.detail(summary.id);
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => RunProgressDialog(
+          workflowName: run.workflowName,
+          definition: run.definition,
+          agents: run.agents.map((raw) => AgentItem(raw: raw)).toList(),
+          tx: _tx,
+          stream: _workflowRuns.events(run.id),
+          onCancel: () async {
+            await _workflowRuns.cancel(run.id);
+          },
+        ),
+      );
+    } on ApiError catch (error) {
+      showMessage(error.message, isError: true);
+    } catch (_) {
+      showMessage(
+        _tx('workflows.run_open_error', 'No se pudo abrir la ejecución'),
+        isError: true,
+      );
+    }
+  }
+
+  Future<void> _openRunsPanel() async {
+    await _workflowRuns.refresh();
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => WorkflowRunsPanel(
+        controller: _workflowRuns,
+        tx: _tx,
+        onOpen: (run) {
+          Navigator.of(dialogContext).pop();
+          _openRun(run);
+        },
+      ),
+    );
+  }
+
   String? _workflowRunIssue(WorkflowItem item) {
     if (item.nodes.isEmpty) {
       return _tx(
@@ -398,6 +444,18 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
           onPressed: _openCreateDialog,
           icon: const Icon(Icons.add),
           tooltip: _tx('workflows.create_action', 'Crear workflow'),
+        ),
+        ListenableBuilder(
+          listenable: _workflowRuns,
+          builder: (context, _) => Badge(
+            isLabelVisible: _workflowRuns.activeCount > 0,
+            label: Text('${_workflowRuns.activeCount}'),
+            child: AppIconButton.outlined(
+              onPressed: _openRunsPanel,
+              icon: const Icon(Icons.motion_photos_on_outlined),
+              tooltip: _tx('workflows.run_history_title', 'Ejecuciones'),
+            ),
+          ),
         ),
         AppIconButton.outlined(
           onPressed: _load,

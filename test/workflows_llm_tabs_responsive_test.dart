@@ -1,5 +1,6 @@
 import 'package:app_flutter/core/network/api_client.dart';
 import 'package:app_flutter/features/workflows/pages/workflows_page.dart';
+import 'package:app_flutter/models/auth/session_user.dart';
 import 'package:app_flutter/shared/state/app_services_scope.dart';
 import 'package:app_flutter/shared/state/backend_controller.dart';
 import 'package:app_flutter/shared/state/locale_controller.dart';
@@ -29,7 +30,18 @@ void main() {
       final session = await SessionController.bootstrap(
         secureStore: MemorySecureStore(),
       );
-      final client = MockClient((_) async => http.Response('{}', 404));
+      await session.login(
+        token: 'user-token',
+        user: const SessionUser(id: 'user-1', username: 'ada', role: 'user'),
+        remember: false,
+      );
+      final client = MockClient((request) async {
+        if (request.url.path == '/api/workflows' ||
+            request.url.path == '/api/agents') {
+          return http.Response('[]', 200);
+        }
+        return http.Response('{}', 404);
+      });
 
       await tester.pumpWidget(
         MaterialApp(
@@ -49,6 +61,10 @@ void main() {
       expect(find.text('APIs LLM'), findsOneWidget);
       expect(find.byIcon(Icons.account_tree_outlined), findsNothing);
       expect(find.byIcon(Icons.hub_outlined), findsNothing);
+      expect(find.byIcon(Icons.add), findsOneWidget);
+      expect(find.byIcon(Icons.motion_photos_on_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.refresh), findsOneWidget);
+      expect(find.byIcon(Icons.filter_list), findsOneWidget);
       await tester.tap(find.text('APIs LLM'));
       await tester.pump(const Duration(milliseconds: 500));
       expect(tester.takeException(), isNull);

@@ -211,15 +211,9 @@ class _NavigationSection extends StatelessWidget {
 }
 
 class _ShellTopBar extends StatelessWidget {
-  const _ShellTopBar({
-    required this.title,
-    required this.workflowRunsController,
-    required this.onOpenRuns,
-  });
+  const _ShellTopBar({required this.title});
 
   final String title;
-  final WorkflowRunsController? workflowRunsController;
-  final VoidCallback onOpenRuns;
 
   @override
   Widget build(BuildContext context) {
@@ -253,39 +247,10 @@ class _ShellTopBar extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          if (workflowRunsController != null)
-            _WorkflowRunsButton(
-              controller: workflowRunsController!,
-              onPressed: onOpenRuns,
-            ),
         ],
       ),
     );
   }
-}
-
-class _WorkflowRunsButton extends StatelessWidget {
-  const _WorkflowRunsButton({
-    required this.controller,
-    required this.onPressed,
-  });
-
-  final WorkflowRunsController controller;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) => ListenableBuilder(
-    listenable: controller,
-    builder: (context, _) => Badge(
-      isLabelVisible: controller.activeCount > 0,
-      label: Text('${controller.activeCount}'),
-      child: IconButton(
-        tooltip: 'Ejecuciones',
-        onPressed: onPressed,
-        icon: const Icon(Icons.motion_photos_on_outlined),
-      ),
-    ),
-  );
 }
 
 /// Aviso persistente cuando el backend seleccionado deja de responder.
