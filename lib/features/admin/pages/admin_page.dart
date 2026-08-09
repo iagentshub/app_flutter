@@ -27,11 +27,12 @@ import '../repositories/admin_agents_repository.dart';
 import '../repositories/admin_connections_repository.dart';
 import '../repositories/admin_groups_repository.dart';
 import '../repositories/admin_knowledge_repository.dart';
+import '../repositories/admin_official_sources_repository.dart';
 import '../repositories/admin_platform_repository.dart';
 import '../repositories/admin_resources_repository.dart';
 import '../repositories/admin_stats_repository.dart';
 import '../repositories/admin_users_repository.dart';
-import '../widgets/official_packages_admin_tab.dart';
+import '../widgets/official_sources_admin_tab.dart';
 
 part '../cards/admin_content_cards.dart';
 part '../cards/admin_integration_cards.dart';
@@ -94,6 +95,7 @@ class _AdminPageState extends State<AdminPage>
   late final AdminConnectionsRepository _connectionsRepository;
   late final AdminKnowledgeRepository _knowledgeRepository;
   late final AdminResourcesRepository _resourcesRepository;
+  late final AdminOfficialSourcesRepository _officialSourcesRepository;
   late final AdminPlatformRepository _platformRepository;
   late final TranslatedTexts _t;
   late final TabController _tabController;
@@ -173,6 +175,9 @@ class _AdminPageState extends State<AdminPage>
       apiClient: _services.apiClient,
     );
     _resourcesRepository = AdminResourcesRepository(
+      apiClient: _services.apiClient,
+    );
+    _officialSourcesRepository = AdminOfficialSourcesRepository(
       apiClient: _services.apiClient,
     );
     _platformRepository = AdminPlatformRepository(

@@ -102,10 +102,10 @@ void main() {
     expect(requestedLanguages, ['es']);
   });
 
-  testWidgets('official resources are individual cards without visible ids', (
+  testWidgets('la card oficial es idéntica a la de comunidad salvo la etiqueta', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(360, 800);
+    tester.view.physicalSize = const Size(900, 1200);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -121,72 +121,32 @@ void main() {
       remember: false,
     );
     String? linkedPath;
-    Map<String, dynamic>? linkedBody;
     final client = MockClient((request) async {
-      if (request.method == 'GET' &&
-          request.url.path == '/api/official-packages/package-private-id') {
-        return _json({
-          'id': 'package-private-id',
-          'name': 'Research Pack',
-          'version': {
-            'components': [
-              {
-                'component_id': 'agent-private-id',
-                'component_type': 'agent',
-                'name': 'Official Analyst',
-                'source_path': 'agents/analyst.md',
-                'dependencies': ['skill-private-id'],
-              },
-              {
-                'component_id': 'skill-private-id',
-                'component_type': 'skill',
-                'name': 'Research Skill',
-                'source_path': 'skills/research/SKILL.md',
-                'dependencies': [],
-              },
-              {
-                'component_id': 'knowledge-private-id',
-                'component_type': 'knowledge',
-                'name': 'Research Notes',
-                'source_path': 'knowledge/notes.md',
-                'dependencies': [],
-              },
-            ],
-          },
-        });
-      }
-      if (request.method == 'POST' &&
-          request.url.path ==
-              '/api/official-packages/package-private-id/link') {
+      if (request.method == 'POST' && request.url.path.endsWith('/link')) {
         linkedPath = request.url.path;
-        linkedBody = jsonDecode(request.body) as Map<String, dynamic>;
         return _json({'name': 'Official Analyst'});
       }
       if (request.url.path == '/api/explore') {
         return _json([
           {
             'resource_type': 'agent',
-            'resource_id': 'package-private-id:agent-private-id',
+            'resource_id': 'agent-oficial',
             'name': 'Official Analyst',
             'description': 'Analiza fuentes',
             'category': '',
-            'labels': ['official', 'lang_es'],
+            'labels': ['public', 'official'],
             'owner_username': 'iAgentsHub',
-            'is_official': true,
-            'hub_installable': true,
-            'official_package_id': 'package-private-id',
-            'official_package_name': 'Research Pack',
-            'official_component_id': 'agent-private-id',
-            'official_version': 'v1',
-            'direct_dependency_ids': ['skill-private-id'],
-            'dependencies': [
-              {
-                'component_id': 'skill-private-id',
-                'name': 'Research Skill',
-                'component_type': 'skill',
-                'dependencies': [],
-              },
-            ],
+            'stars_count': 3,
+          },
+          {
+            'resource_type': 'agent',
+            'resource_id': 'agent-comunidad',
+            'name': 'Community Analyst',
+            'description': 'También analiza',
+            'category': '',
+            'labels': ['public', 'community'],
+            'owner_username': 'grace',
+            'stars_count': 7,
           },
         ]);
       }
@@ -209,6 +169,21 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Official Analyst'), findsOneWidget);
+    expect(find.text('Community Analyst'), findsOneWidget);
+    // Mismo juego de botones y mismos datos en ambas: propietario, favoritos,
+    // vista previa, enlazar. Lo único distinto es el chip de origen.
+    expect(find.byIcon(Icons.visibility_outlined), findsNWidgets(2));
+    expect(find.byIcon(Icons.link_outlined), findsNWidgets(2));
+    expect(find.byIcon(Icons.bookmark_outline), findsNWidgets(4));
+    expect(find.byIcon(Icons.person_outline), findsNWidgets(2));
+    expect(find.text('iAgentsHub'), findsOneWidget);
+    expect(find.text('grace'), findsOneWidget);
+    expect(find.text('3'), findsOneWidget);
+    expect(find.text('7'), findsOneWidget);
+    // Nada de acciones exclusivas del catálogo antiguo.
+    expect(find.byIcon(Icons.add_circle_outline), findsNothing);
+    expect(find.byIcon(Icons.download_outlined), findsNothing);
+    expect(find.byIcon(Icons.hub_outlined), findsNothing);
     expect(
       find.byWidgetPredicate(
         (widget) =>
@@ -217,33 +192,12 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.text('Otros'), findsNothing);
-    expect(find.text('Producción'), findsNothing);
-    expect(find.text('Research Pack'), findsOneWidget);
-    expect(find.textContaining('private-id'), findsNothing);
-    // La etiqueta "official" ya marca el origen: la card no repite la estrella.
-    expect(find.byIcon(Icons.star), findsNothing);
-    expect(find.byIcon(Icons.bookmark_outline), findsNothing);
-    expect(find.byIcon(Icons.hub_outlined), findsOneWidget);
-    expect(find.byIcon(Icons.link_outlined), findsOneWidget);
-    expect(find.byIcon(Icons.add_circle_outline), findsOneWidget);
-    expect(find.text('Oficiales'), findsNothing);
 
-    await tester.tap(find.byIcon(Icons.link_outlined));
+    // Enlazar usa la ruta normal del recurso, no una de catálogo.
+    await tester.tap(find.byIcon(Icons.link_outlined).first);
     await tester.pumpAndSettle();
-    expect(find.text('Elegir contenido de la fuente'), findsOneWidget);
-    expect(find.textContaining('private-id'), findsNothing);
-    await tester.tap(find.widgetWithText(CheckboxListTile, 'Research Notes'));
-    await tester.pump();
-    await tester.tap(find.text('Usar selección'));
-    await tester.pumpAndSettle();
-    expect(linkedPath, '/api/official-packages/package-private-id/link');
-    expect((linkedBody?['component_ids'] as List).toSet(), {
-      'agent-private-id',
-      'skill-private-id',
-      'knowledge-private-id',
-    });
-    expect(find.byIcon(Icons.link), findsOneWidget);
+    expect(linkedPath, contains('/api/agents/'));
+    expect(linkedPath, isNot(contains('official')));
 
     for (final width in [768.0, 1024.0, 1440.0, 1920.0]) {
       tester.view.physicalSize = Size(width, 900);

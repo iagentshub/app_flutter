@@ -10,18 +10,6 @@ class ExploreItem {
   String get name => raw['name'] as String? ?? '(sin nombre)';
   String get description => raw['description'] as String? ?? '';
   String get category => raw['category'] as String? ?? '';
-  bool get isOfficial => raw['is_official'] == true;
-  bool get hubInstallable => raw['hub_installable'] == true;
-  String get officialPackageId => raw['official_package_id']?.toString() ?? '';
-  String get officialPackageName =>
-      raw['official_package_name']?.toString() ?? '';
-  String get officialComponentId =>
-      raw['official_component_id']?.toString() ?? '';
-  String get officialVersion => raw['official_version']?.toString() ?? '';
-  String get officialLicense => raw['official_license']?.toString() ?? '';
-  String get officialRepositoryUrl =>
-      raw['official_repository_url']?.toString() ?? '';
-
   List<ExploreDependency> get dependencies {
     final value = raw['dependencies'];
     if (value is! List) return const [];

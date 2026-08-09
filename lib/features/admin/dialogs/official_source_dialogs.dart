@@ -23,25 +23,25 @@ String _componentTypeLabel(AdminTx tx, String type) {
   };
 }
 
-Future<Map<String, dynamic>?> showOfficialPackageEditDialog(
+Future<Map<String, dynamic>?> showOfficialSourceEditDialog(
   BuildContext context, {
-  required Map<String, dynamic> package,
+  required Map<String, dynamic> source,
   required AdminTx tx,
 }) async {
-  final name = TextEditingController(text: package['name']?.toString() ?? '');
+  final name = TextEditingController(text: source['name']?.toString() ?? '');
   final description = TextEditingController(
-    text: package['description']?.toString() ?? '',
+    text: source['description']?.toString() ?? '',
   );
   final repositoryUrl = TextEditingController(
-    text: package['repository_url']?.toString() ?? '',
+    text: source['repository_url']?.toString() ?? '',
   );
   final trackingRef = TextEditingController(
-    text: package['tracking_ref']?.toString() ?? 'main',
+    text: source['tracking_ref']?.toString() ?? 'main',
   );
   final license = TextEditingController(
-    text: package['license']?.toString() ?? '',
+    text: source['license']?.toString() ?? '',
   );
-  var trackingMode = package['tracking_mode']?.toString() == 'branch'
+  var trackingMode = source['tracking_mode']?.toString() == 'branch'
       ? 'branch'
       : 'release';
   final result = await showDialog<Map<String, dynamic>>(
@@ -160,109 +160,22 @@ Future<Map<String, dynamic>?> showOfficialPackageEditDialog(
   return result;
 }
 
-Future<Set<String>?> showOfficialPackageSyncDialog(
-  BuildContext context, {
-  required List<Map<String, dynamic>> packages,
-  required AdminTx tx,
-}) {
-  final selected = packages.map((item) => item['id'].toString()).toSet();
-  return showDialog<Set<String>>(
-    context: context,
-    builder: (context) => StatefulBuilder(
-      builder: (context, setDialogState) => AlertDialog(
-        title: Text(
-          tx('official.sync_choose_title', 'Elegir paquetes para sincronizar'),
-        ),
-        content: SizedBox(
-          width: dialogContentWidth(context, 540),
-          height: dialogContentHeight(context, 420),
-          child: Column(
-            children: [
-              Wrap(
-                spacing: 8,
-                children: [
-                  TertiaryButton(
-                    onPressed: () => setDialogState(() {
-                      selected
-                        ..clear()
-                        ..addAll(packages.map((item) => item['id'].toString()));
-                    }),
-                    child: Text(
-                      tx('official.sync_select_all', 'Seleccionar todo'),
-                    ),
-                  ),
-                  TertiaryButton(
-                    onPressed: () => setDialogState(selected.clear),
-                    child: Text(tx('official.sync_clear', 'Limpiar')),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Expanded(
-                child: ListView(
-                  children: [
-                    for (final package in packages)
-                      CheckboxListTile(
-                        value: selected.contains(package['id'].toString()),
-                        title: Text(
-                          package['name']?.toString().trim().isNotEmpty == true
-                              ? package['name'].toString()
-                              : tx(
-                                  'official.unnamed_package',
-                                  'Paquete sin nombre',
-                                ),
-                        ),
-                        subtitle: Text(
-                          package['repository_url']?.toString() ?? '',
-                        ),
-                        onChanged: (checked) => setDialogState(() {
-                          final id = package['id'].toString();
-                          if (checked == true) {
-                            selected.add(id);
-                          } else {
-                            selected.remove(id);
-                          }
-                        }),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TertiaryButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(tx('common.cancel', 'Cancelar')),
-          ),
-          PrimaryButton(
-            onPressed: selected.isEmpty
-                ? null
-                : () => Navigator.pop(context, Set.of(selected)),
-            child: Text(
-              tx('official.sync_selected', 'Sincronizar seleccionados'),
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-/// Selector del contenido que se publica de una versión.
+/// Selector del contenido que la fuente deja en el hub.
 ///
-/// Arranca marcando lo que ya está publicado (`published_components`, vacío =
-/// todo), de modo que desmarcar una fila y confirmar retira ese componente del
-/// catálogo y borra los recursos que los usuarios tengan enlazados a él.
-Future<Set<String>?> showOfficialVersionPublishDialog(
+/// Arranca marcando lo que ya está (``alreadySelected``); en una fuente nueva,
+/// todo. Desmarcar una fila y confirmar borra ese objeto del hub.
+Future<Set<String>?> showOfficialComponentsDialog(
   BuildContext context, {
-  required Map<String, dynamic> version,
+  required List<dynamic> components,
+  required Set<String> alreadySelected,
+  required List<String> errors,
   required AdminTx tx,
 }) {
-  final components =
-      (version['components'] as List? ?? const [])
+  final rows =
+      components
           .whereType<Map>()
           .map((item) => item.cast<String, dynamic>())
+          .where((item) => item['materializable'] != false)
           .toList()
         ..sort((a, b) {
           final type = (a['component_type']?.toString() ?? '').compareTo(
@@ -274,16 +187,12 @@ Future<Set<String>?> showOfficialVersionPublishDialog(
                   b['name']?.toString() ?? '',
                 );
         });
-  final published = (version['published_components'] as List? ?? const [])
-      .map((item) => item.toString())
-      .toSet();
-  final selected = components
+  final selected = rows
       .map((item) => item['component_id'].toString())
-      .where((id) => published.isEmpty || published.contains(id))
+      .where((id) => alreadySelected.isEmpty || alreadySelected.contains(id))
       .toSet();
   final byId = {
-    for (final component in components)
-      component['component_id'].toString(): component,
+    for (final component in rows) component['component_id'].toString(): component,
   };
 
   bool dependsOn(String candidateId, String dependencyId, Set<String> seen) {
@@ -302,7 +211,7 @@ Future<Set<String>?> showOfficialVersionPublishDialog(
     builder: (context) => StatefulBuilder(
       builder: (context, setDialogState) => AlertDialog(
         title: Text(
-          tx('official.choose_publish_content', 'Elegir contenido a publicar'),
+          tx('official.choose_publish_content', 'Elegir contenido de la fuente'),
         ),
         content: SizedBox(
           width: dialogContentWidth(context, 620),
@@ -314,17 +223,29 @@ Future<Set<String>?> showOfficialVersionPublishDialog(
                 child: Text(
                   tx(
                     'official.publish_selection_hint',
-                    'Lo que desmarques dejará de estar disponible y se borrará '
-                        'de las cuentas que lo tengan enlazado. Los forks se conservan.',
+                    'Lo marcado queda publicado en el hub como un recurso más. '
+                        'Lo que desmarques se borra.',
                   ),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
+              if (errors.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    errors.join('\n'),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 8),
               Expanded(
                 child: ListView(
                   children: [
-                    for (final component in components)
+                    for (final component in rows)
                       CheckboxListTile(
                         value: selected.contains(
                           component['component_id'].toString(),
@@ -390,10 +311,10 @@ Future<Set<String>?> showOfficialVersionPublishDialog(
             child: Text(tx('common.cancel', 'Cancelar')),
           ),
           PrimaryButton(
-            onPressed: selected.isEmpty
-                ? null
-                : () => Navigator.pop(context, Set.of(selected)),
-            child: Text(tx('official.publish_selection', 'Publicar selección')),
+            // Vaciar la selección es una acción válida: deja la fuente dada de
+            // alta pero sin nada suyo publicado en el hub.
+            onPressed: () => Navigator.pop(context, Set.of(selected)),
+            child: Text(tx('official.publish_selection', 'Aplicar selección')),
           ),
         ],
       ),

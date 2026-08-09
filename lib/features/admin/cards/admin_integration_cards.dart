@@ -51,6 +51,7 @@ extension _AdminIntegrationCards on _AdminPageState {
               children: [
                 const Spacer(),
                 _resourceGraphAction(AdminResourceType.agent, agent),
+                _officialAction(agent, 'agent'),
                 ActionIconButton(
                   icon: Icons.edit_outlined,
                   tooltip: _tx('common.edit', 'Editar'),

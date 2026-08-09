@@ -367,5 +367,44 @@ extension _AdminActions on _AdminPageState {
     );
   }
 
+  /// Marca o desmarca a mano un recurso como oficial. No lo mueve de sitio ni
+  /// cambia de dueño: solo le pone la fuente interna, que es lo que hace que
+  /// se vea con la etiqueta `official`.
+  Future<void> _toggleOfficial(
+    Map<String, dynamic> item,
+    String resourceType,
+  ) async {
+    final token = _token;
+    if (token == null) return;
+    final official = _isOfficial(item);
+    await _run(
+      () => _officialSourcesRepository.markOfficial(
+        token,
+        resourceType: resourceType,
+        resourceId: (item['id'] ?? '').toString(),
+        official: !official,
+      ),
+      official
+          ? _tx('admin.toast_official_removed', 'Ya no es oficial')
+          : _tx('admin.toast_official_set', 'Marcado como oficial'),
+    );
+  }
+
+  bool _isOfficial(Map<String, dynamic> item) {
+    final labels = item['labels'];
+    return labels is List && labels.map((e) => e.toString()).contains('official');
+  }
+
+  Widget _officialAction(Map<String, dynamic> item, String resourceType) {
+    final official = _isOfficial(item);
+    return ActionIconButton(
+      icon: official ? Icons.verified : Icons.verified_outlined,
+      tooltip: official
+          ? _tx('admin.action_unset_official', 'Quitar el sello oficial')
+          : _tx('admin.action_set_official', 'Marcar como oficial'),
+      onPressed: () => _toggleOfficial(item, resourceType),
+    );
+  }
+
   // ── UI helpers ────────────────────────────────────────────────────────
 }

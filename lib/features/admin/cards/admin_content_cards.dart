@@ -108,6 +108,7 @@ extension _AdminContentCards on _AdminPageState {
               children: [
                 const Spacer(),
                 _resourceGraphAction(AdminResourceType.knowledge, item),
+                _officialAction(item, 'knowledge'),
                 ActionIconButton(
                   icon: Icons.swap_horiz,
                   tooltip: _tx(
@@ -173,6 +174,7 @@ extension _AdminContentCards on _AdminPageState {
               children: [
                 const Spacer(),
                 _resourceGraphAction(AdminResourceType.workflow, item),
+                _officialAction(item, 'workflow'),
                 ActionIconButton(
                   icon: Icons.swap_horiz,
                   tooltip: _tx(
@@ -235,6 +237,7 @@ extension _AdminContentCards on _AdminPageState {
               children: [
                 const Spacer(),
                 _resourceGraphAction(AdminResourceType.skill, item),
+                _officialAction(item, 'skill'),
                 ActionIconButton(
                   icon: Icons.swap_horiz,
                   tooltip: _tx(
@@ -297,6 +300,7 @@ extension _AdminContentCards on _AdminPageState {
               children: [
                 const Spacer(),
                 _resourceGraphAction(AdminResourceType.prompt, item),
+                _officialAction(item, 'prompt'),
                 ActionIconButton(
                   icon: Icons.swap_horiz,
                   tooltip: _tx(
@@ -367,6 +371,7 @@ extension _AdminContentCards on _AdminPageState {
               children: [
                 const Spacer(),
                 _resourceGraphAction(AdminResourceType.tool, item),
+                _officialAction(item, 'tool'),
                 ActionIconButton(
                   icon: Icons.swap_horiz,
                   tooltip: _tx(

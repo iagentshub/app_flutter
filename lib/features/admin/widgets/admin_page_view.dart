@@ -47,7 +47,7 @@ extension _AdminPageView on _AdminPageState {
   Widget _buildSection(String section) {
     return switch (section) {
       'explore' => _buildExploreTab(),
-      'official' => OfficialPackagesAdminTab(
+      'official' => OfficialSourcesAdminTab(
         apiClient: _services.apiClient,
         token: _token ?? '',
         tx: _tx,

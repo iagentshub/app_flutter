@@ -1,13 +1,11 @@
 import 'dart:convert';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/router/router.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../models/explore/explore_models.dart';
-import '../../../shared/graph/graph_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/action_result.dart';
@@ -18,7 +16,6 @@ import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/explore_search_toolbar.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/multi_select_dropdown.dart';
-import '../../../shared/widgets/resource_graph_button.dart';
 import '../../../shared/widgets/resource_type_badge.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
@@ -26,12 +23,10 @@ import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../manager/repositories/manager_repository.dart';
 import '../controllers/explore_controller.dart';
 import '../repositories/explore_repository.dart';
-import '../repositories/official_resource_actions_repository.dart';
 
 part '../cards/explore_resource_card.dart';
 part '../cards/explore_user_card.dart';
 part '../dialogs/preview_dialog.dart';
-part '../widgets/official_resource_actions.dart';
 part '../widgets/explore_collection_views.dart';
 
 class ExplorePage extends StatefulWidget {
@@ -48,10 +43,8 @@ class _ExplorePageState extends State<ExplorePage>
   late final _services = AppServicesScope.of(context);
 
   late final ExploreController _controller;
-  late final OfficialResourceActionsRepository _officialRepository;
   late final TranslatedTexts _t;
   late final TabController _tabController;
-  final Set<String> _officialBusyKeys = <String>{};
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
@@ -68,9 +61,6 @@ class _ExplorePageState extends State<ExplorePage>
       sessionController: _services.sessionController,
       tx: _tx,
     )..addListener(_onControllerChanged);
-    _officialRepository = OfficialResourceActionsRepository(
-      apiClient: _services.apiClient,
-    );
     _tabController = TabController(length: 2, vsync: this);
     _controller.load();
     _controller.loadUsers();
@@ -82,17 +72,6 @@ class _ExplorePageState extends State<ExplorePage>
 
   void _onControllerChanged() {
     if (mounted) setState(() {});
-  }
-
-  void _setOfficialBusy(String resourceId, {required bool busy}) {
-    if (!mounted) return;
-    setState(() {
-      if (busy) {
-        _officialBusyKeys.add(resourceId);
-      } else {
-        _officialBusyKeys.remove(resourceId);
-      }
-    });
   }
 
   @override
