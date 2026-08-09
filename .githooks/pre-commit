@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+
+echo "Checking presentation architecture..."
+flutter test test/feature_architecture_test.dart --reporter compact

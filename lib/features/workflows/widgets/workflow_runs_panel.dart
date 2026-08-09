@@ -4,6 +4,33 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../controllers/workflow_runs_controller.dart';
 import '../models/workflow_run.dart';
 
+class WorkflowRunsButton extends StatelessWidget {
+  const WorkflowRunsButton({
+    required this.controller,
+    required this.onPressed,
+    required this.tooltip,
+    super.key,
+  });
+
+  final WorkflowRunsController controller;
+  final VoidCallback onPressed;
+  final String tooltip;
+
+  @override
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: controller,
+    builder: (context, _) => Badge(
+      isLabelVisible: controller.activeCount > 0,
+      label: Text('${controller.activeCount}'),
+      child: AppIconButton.outlined(
+        onPressed: onPressed,
+        icon: const Icon(Icons.motion_photos_on_outlined),
+        tooltip: tooltip,
+      ),
+    ),
+  );
+}
+
 class WorkflowRunsPanel extends StatelessWidget {
   const WorkflowRunsPanel({
     required this.controller,

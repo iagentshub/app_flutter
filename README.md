@@ -27,6 +27,16 @@ flutter analyze
 flutter test
 ```
 
+Para detectar antes del push páginas o componentes que superen los límites de
+arquitectura, activa una vez los hooks versionados del repositorio:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+El hook `pre-commit` ejecuta la comprobación rápida de arquitectura y bloquea el
+commit si es necesario dividir algún componente.
+
 ---
 
 ## Platforms
