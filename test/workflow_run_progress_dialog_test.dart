@@ -21,8 +21,9 @@ String _tx(String path, String fallback) => fallback;
 /// dimensione contra la pantalla y no contra una caja artificial.
 Future<void> _open(
   WidgetTester tester,
-  Stream<Map<String, dynamic>> stream,
-) async {
+  Stream<Map<String, dynamic>> stream, {
+  Future<void> Function()? onCancel,
+}) async {
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
@@ -40,6 +41,7 @@ Future<void> _open(
                 ],
                 stream: stream,
                 tx: _tx,
+                onCancel: onCancel,
               ),
             ),
             child: const Text('abrir'),
@@ -143,5 +145,26 @@ void main() {
     await tester.pump();
     await tester.pumpWidget(const SizedBox.shrink());
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('cerrar el visor no cancela la ejecución del servidor', (
+    tester,
+  ) async {
+    final events = StreamController<Map<String, dynamic>>();
+    var cancellations = 0;
+    await _open(
+      tester,
+      events.stream,
+      onCancel: () async => cancellations += 1,
+    );
+
+    await tester.tap(find.text('Cerrar'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(cancellations, 0);
+    expect(find.text('Informe semanal'), findsNothing);
+    unawaited(events.close());
+    await tester.pumpWidget(const SizedBox.shrink());
   });
 }

@@ -27,6 +27,7 @@ class RunProgressDialog extends StatefulWidget {
     required this.agents,
     required this.stream,
     required this.tx,
+    this.onCancel,
     super.key,
   });
 
@@ -35,6 +36,7 @@ class RunProgressDialog extends StatefulWidget {
   final List<AgentItem> agents;
   final Stream<Map<String, dynamic>> stream;
   final String Function(String path, String fallback) tx;
+  final Future<void> Function()? onCancel;
 
   @override
   State<RunProgressDialog> createState() => _RunProgressDialogState();
@@ -46,6 +48,7 @@ class _RunProgressDialogState extends State<RunProgressDialog> {
   StreamSubscription<Map<String, dynamic>>? _subscription;
   Timer? _ticker;
   String? _selectedStepId;
+  bool _cancelling = false;
 
   @override
   void initState() {
@@ -75,7 +78,7 @@ class _RunProgressDialogState extends State<RunProgressDialog> {
   @override
   void dispose() {
     _ticker?.cancel();
-    _subscription?.cancel();
+    unawaited(_subscription?.cancel());
     super.dispose();
   }
 
@@ -112,8 +115,22 @@ class _RunProgressDialogState extends State<RunProgressDialog> {
   /// ponytail: cancelar solo cierra el stream del cliente. El backend no tiene
   /// endpoint de cancelación, así que las tareas del servidor siguen corriendo
   /// y consumiendo tokens. Cancelación real = endpoint nuevo en workflow_runner.
-  void _cancel() {
-    _subscription?.cancel();
+  Future<void> _cancel() async {
+    final cancel = widget.onCancel;
+    if (cancel != null) {
+      setState(() => _cancelling = true);
+      try {
+        await cancel();
+      } catch (error) {
+        if (!mounted) return;
+        setState(() {
+          _cancelling = false;
+          _state.markStreamError(_readError(error), DateTime.now());
+        });
+      }
+      return;
+    }
+    await _subscription?.cancel();
     _subscription = null;
     setState(() => _state.markCancelled(DateTime.now()));
   }
@@ -316,8 +333,25 @@ class _RunProgressDialogState extends State<RunProgressDialog> {
       actions: [
         if (_state.running)
           TertiaryButton(
-            onPressed: _cancel,
-            child: Text(_tx('workflows.run_cancel_btn', 'Cancelar ejecución')),
+            onPressed: _cancelling ? null : _cancel,
+            child: Text(
+              _cancelling
+                  ? _tx('workflows.run_cancelling', 'Cancelando…')
+                  : _tx('workflows.run_cancel_btn', 'Cancelar ejecución'),
+            ),
+          ),
+        if (_state.running)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              _tx(
+                'workflows.run_background_hint',
+                'Puedes cerrar: seguirá ejecutándose en segundo plano.',
+              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
+            ),
           ),
         PrimaryButton(
           onPressed: () => Navigator.of(context).pop(),

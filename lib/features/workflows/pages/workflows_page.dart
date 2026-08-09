@@ -16,6 +16,7 @@ import '../../../shared/widgets/resource_toolbar.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../cards/workflow_card.dart';
+import '../controllers/workflow_runs_controller.dart';
 import '../dialogs/run_progress_dialog.dart';
 import '../dialogs/run_workflow_dialog.dart';
 import '../repositories/workflows_repository.dart';
@@ -37,6 +38,8 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
   late final WorkflowsRepository _repository;
   late final AgentsRepository _agentsRepository;
   late final TranslatedTexts _t;
+  late final WorkflowRunsController _workflowRuns;
+  late final bool _ownsWorkflowRuns;
   List<WorkflowItem> _workflows = const [];
   Map<String, AgentItem> _agentsById = const {};
   bool _loading = true;
@@ -84,6 +87,14 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
     super.initState();
     _repository = WorkflowsRepository(apiClient: _services.apiClient);
     _agentsRepository = AgentsRepository(apiClient: _services.apiClient);
+    _ownsWorkflowRuns = _services.workflowRunsController == null;
+    _workflowRuns =
+        _services.workflowRunsController ??
+        WorkflowRunsController(
+          apiClient: _services.apiClient,
+          sessionController: _services.sessionController,
+          autoStart: false,
+        );
     _t = TranslatedTexts(
       localeController: _services.localeController,
       namespace: 'resources',
@@ -99,6 +110,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
   void dispose() {
     _t.removeListener(_onTextsChanged);
     _t.dispose();
+    if (_ownsWorkflowRuns) _workflowRuns.dispose();
     super.dispose();
   }
 
@@ -155,6 +167,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
           apiClient: _services.apiClient,
           sessionController: _services.sessionController,
           localeController: _services.localeController,
+          workflowRunsController: _workflowRuns,
         ),
       ),
     );
@@ -188,6 +201,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
           apiClient: _services.apiClient,
           sessionController: _services.sessionController,
           localeController: _services.localeController,
+          workflowRunsController: _workflowRuns,
           initial: initial,
         ),
       ),
@@ -291,25 +305,35 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
     );
     if (input == null || input.trim().isEmpty) return;
 
-    final token = _token;
-    if (token == null || token.isEmpty) return;
     if (!mounted) return;
-
-    await showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => RunProgressDialog(
-        workflowName: item.name,
-        definition: item.definition,
-        agents: _agentsById.values.toList(),
-        tx: _tx,
-        stream: _repository.streamRun(
-          token,
-          workflowId: item.id,
-          input: input.trim(),
+    try {
+      final run = await _workflowRuns.startRun(
+        workflowId: item.id,
+        input: input.trim(),
+      );
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => RunProgressDialog(
+          workflowName: run.workflowName,
+          definition: run.definition,
+          agents: run.agents.map((raw) => AgentItem(raw: raw)).toList(),
+          tx: _tx,
+          stream: _workflowRuns.events(run.id),
+          onCancel: () async {
+            await _workflowRuns.cancel(run.id);
+          },
         ),
-      ),
-    );
+      );
+    } on ApiError catch (error) {
+      showMessage(error.message, isError: true);
+    } catch (_) {
+      showMessage(
+        _tx('workflows.run_start_error', 'No se pudo iniciar la ejecución'),
+        isError: true,
+      );
+    }
   }
 
   String? _workflowRunIssue(WorkflowItem item) {

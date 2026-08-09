@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import '../../../core/network/api_repository.dart';
 import '../../../models/workflows/workflow_models.dart';
+import '../models/workflow_run.dart';
 
 class WorkflowsRepository extends ApiRepository {
   WorkflowsRepository({required super.apiClient});
@@ -54,18 +55,71 @@ class WorkflowsRepository extends ApiRepository {
   Future<void> setWorkflowActive(String token, String id, bool active) =>
       setActive(token, 'workflows', id, active);
 
+  Future<WorkflowRun> startRun(
+    String token, {
+    required String workflowId,
+    required String input,
+  }) async {
+    final response = await apiClient.post(
+      '/api/workflows/${Uri.encodeComponent(workflowId)}/runs',
+      gaToken: token,
+      body: {'input': input},
+    );
+    return WorkflowRun(raw: response.json);
+  }
+
+  Future<List<WorkflowRun>> listRuns(String token) async {
+    final response = await apiClient.get('/api/workflow-runs', gaToken: token);
+    final payload = response.body;
+    if (payload is! List) return const [];
+    return payload
+        .whereType<Map<String, dynamic>>()
+        .map((raw) => WorkflowRun(raw: raw))
+        .toList();
+  }
+
+  Future<WorkflowRun> getRun(String token, String runId) async {
+    final response = await apiClient.get(
+      '/api/workflow-runs/${Uri.encodeComponent(runId)}',
+      gaToken: token,
+    );
+    return WorkflowRun(raw: response.json);
+  }
+
+  Future<WorkflowRun> cancelRun(String token, String runId) async {
+    final response = await apiClient.post(
+      '/api/workflow-runs/${Uri.encodeComponent(runId)}/cancel',
+      gaToken: token,
+    );
+    return WorkflowRun(raw: response.json);
+  }
+
+  Stream<Map<String, dynamic>> streamRunEvents(
+    String token, {
+    required String runId,
+    int after = 0,
+  }) => _decodeSse(
+    apiClient.getStream(
+      '/api/workflow-runs/${Uri.encodeComponent(runId)}/events?after=$after',
+      gaToken: token,
+    ),
+  );
+
   /// Ejecuta el workflow y transmite cada evento SSE a medida que llega
   /// (stage_started/stage_done/evaluation_*/workflow_done/error).
   Stream<Map<String, dynamic>> streamRun(
     String token, {
     required String workflowId,
     required String input,
-  }) async* {
-    final lines = apiClient.postStream(
+  }) => _decodeSse(
+    apiClient.postStream(
       '/api/workflows/${Uri.encodeComponent(workflowId)}/run',
       gaToken: token,
       body: {'input': input},
-    );
+    ),
+  );
+
+  Stream<Map<String, dynamic>> _decodeSse(Stream<String> lines) async* {
     await for (final line in lines) {
       final trimmed = line.trim();
       if (!trimmed.startsWith('data:')) continue;

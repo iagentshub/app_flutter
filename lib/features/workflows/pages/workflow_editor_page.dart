@@ -12,11 +12,11 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../agents/repositories/agents_repository.dart';
 import '../cards/workflow_metadata_card.dart';
+import '../controllers/workflow_runs_controller.dart';
 import '../dialogs/run_progress_dialog.dart';
 import '../dialogs/run_workflow_dialog.dart';
 import '../models/workflow_graph_validation.dart';
 import '../models/workflow_step_draft.dart';
-import '../repositories/workflows_repository.dart';
 import '../widgets/workflow_editor_toolbar.dart';
 import '../widgets/workflow_issues_panel.dart';
 import '../widgets/workflow_visual_canvas.dart';
@@ -30,6 +30,7 @@ class WorkflowEditorPage extends StatefulWidget {
     required this.apiClient,
     required this.sessionController,
     required this.localeController,
+    this.workflowRunsController,
     this.initial,
     super.key,
   });
@@ -37,6 +38,7 @@ class WorkflowEditorPage extends StatefulWidget {
   final ApiClient apiClient;
   final SessionController sessionController;
   final LocaleController localeController;
+  final WorkflowRunsController? workflowRunsController;
   final Map<String, dynamic>? initial;
 
   @override
@@ -59,6 +61,8 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
   List<AgentItem> _agents = const [];
   bool _loadingAgents = true;
   String? _error;
+  late final WorkflowRunsController _workflowRuns;
+  late final bool _ownsWorkflowRuns;
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
@@ -72,6 +76,14 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
   @override
   void initState() {
     super.initState();
+    _ownsWorkflowRuns = widget.workflowRunsController == null;
+    _workflowRuns =
+        widget.workflowRunsController ??
+        WorkflowRunsController(
+          apiClient: widget.apiClient,
+          sessionController: widget.sessionController,
+          autoStart: false,
+        );
     _t = TranslatedTexts(
       localeController: widget.localeController,
       namespace: 'resources',
@@ -108,6 +120,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
 
   @override
   void dispose() {
+    if (_ownsWorkflowRuns) _workflowRuns.dispose();
     _t.removeListener(_onTextsChanged);
     _t.dispose();
     _nameController.dispose();
@@ -235,8 +248,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
 
   Future<void> _testRun() async {
     final id = _workflowId;
-    final token = _token;
-    if (id == null || id.isEmpty || token == null || token.isEmpty) return;
+    if (id == null || id.isEmpty || _token == null || _token!.isEmpty) return;
     final name = _nameController.text.trim();
 
     final input = await showDialog<String>(
@@ -245,17 +257,23 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
     );
     if (input == null || input.trim().isEmpty || !mounted) return;
 
+    final run = await _workflowRuns.startRun(
+      workflowId: id,
+      input: input.trim(),
+    );
+    if (!mounted) return;
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (context) => RunProgressDialog(
-        workflowName: name,
-        definition: buildDefinition(_steps),
-        agents: _agents,
+        workflowName: run.workflowName,
+        definition: run.definition,
+        agents: run.agents.map((raw) => AgentItem(raw: raw)).toList(),
         tx: _tx,
-        stream: WorkflowsRepository(
-          apiClient: widget.apiClient,
-        ).streamRun(token, workflowId: id, input: input.trim()),
+        stream: _workflowRuns.events(run.id),
+        onCancel: () async {
+          await _workflowRuns.cancel(run.id);
+        },
       ),
     );
   }

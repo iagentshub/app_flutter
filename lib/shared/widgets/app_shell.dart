@@ -11,6 +11,11 @@ import '../../app/theme/fnc_colors.dart';
 import '../../app/theme/fnc_fonts.dart';
 import '../../core/network/api_client.dart';
 import '../../features/auth/repositories/auth_repository.dart';
+import '../../features/workflows/controllers/workflow_runs_controller.dart';
+import '../../features/workflows/dialogs/run_progress_dialog.dart';
+import '../../features/workflows/models/workflow_run.dart';
+import '../../features/workflows/widgets/workflow_runs_panel.dart';
+import '../../models/agents/agent_models.dart';
 import '../../models/dashboard/dashboard_widget_config.dart';
 import '../../models/dashboard/dashboard_widget_registry.dart';
 import '../i18n/translated_texts.dart';
@@ -108,6 +113,49 @@ class _AppShellState extends State<AppShell> {
     } catch (_) {
       // Sin red se mantiene el último estado conocido.
     }
+  }
+
+  Future<void> _openRun(WorkflowRun summary) async {
+    final controller = _services.workflowRunsController;
+    if (controller == null) return;
+    try {
+      final run = await controller.detail(summary.id);
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => RunProgressDialog(
+          workflowName: run.workflowName,
+          definition: run.definition,
+          agents: run.agents.map((raw) => AgentItem(raw: raw)).toList(),
+          tx: _tx,
+          stream: controller.events(run.id),
+          onCancel: () async {
+            await controller.cancel(run.id);
+          },
+        ),
+      );
+    } catch (_) {
+      // El siguiente refresco mantiene el indicador alineado con el backend.
+    }
+  }
+
+  Future<void> _openRunsPanel() async {
+    final controller = _services.workflowRunsController;
+    if (controller == null) return;
+    await controller.refresh();
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => WorkflowRunsPanel(
+        controller: controller,
+        tx: _tx,
+        onOpen: (run) {
+          Navigator.of(dialogContext).pop();
+          _openRun(run);
+        },
+      ),
+    );
   }
 
   String _tx(String key, String fallback) => _t.text(key, fallback: fallback);
@@ -306,6 +354,9 @@ class _AppShellState extends State<AppShell> {
                             children: [
                               _ShellTopBar(
                                 title: _titleForLocation(location, _tx),
+                                workflowRunsController:
+                                    _services.workflowRunsController,
+                                onOpenRuns: _openRunsPanel,
                               ),
                               Expanded(child: body),
                             ],
@@ -327,6 +378,13 @@ class _AppShellState extends State<AppShell> {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
+                    actions: [
+                      if (_services.workflowRunsController != null)
+                        _WorkflowRunsButton(
+                          controller: _services.workflowRunsController!,
+                          onPressed: _openRunsPanel,
+                        ),
+                    ],
                   ),
                   drawer: Drawer(
                     width: _drawerWidth,
