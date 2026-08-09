@@ -101,6 +101,88 @@ void main() {
     await tester.pumpAndSettle();
     expect(requestedLanguages, ['es']);
   });
+
+  testWidgets('official resources are individual cards without visible ids', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    SharedPreferences.setMockInitialValues({});
+    final backend = await BackendController.bootstrap();
+    final locale = await LocaleController.bootstrap();
+    final session = await SessionController.bootstrap(
+      secureStore: MemorySecureStore(),
+    );
+    await session.login(
+      token: 'user-token',
+      user: const SessionUser(id: 'user-1', username: 'ada', role: 'user'),
+      remember: false,
+    );
+    final client = MockClient((request) async {
+      if (request.url.path == '/api/explore') {
+        return _json([
+          {
+            'resource_type': 'agent',
+            'resource_id': 'package-private-id:agent-private-id',
+            'name': 'Official Analyst',
+            'description': 'Analiza fuentes',
+            'category': 'Other',
+            'labels': ['production', 'lang_es'],
+            'owner_username': 'iAgentsHub',
+            'is_official': true,
+            'hub_installable': true,
+            'official_package_id': 'package-private-id',
+            'official_package_name': 'Research Pack',
+            'official_component_id': 'agent-private-id',
+            'official_version': 'v1',
+            'direct_dependency_ids': ['skill-private-id'],
+            'dependencies': [
+              {
+                'component_id': 'skill-private-id',
+                'name': 'Research Skill',
+                'component_type': 'skill',
+                'dependencies': [],
+              },
+            ],
+          },
+        ]);
+      }
+      if (request.url.path == '/api/users') return _json([]);
+      return _json({}, statusCode: 404);
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AppServicesScope(
+            apiClient: ApiClient(backend, client: client),
+            sessionController: session,
+            localeController: locale,
+            child: const ExplorePage(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Official Analyst'), findsOneWidget);
+    expect(find.text('Research Pack'), findsOneWidget);
+    expect(find.text('Oficial'), findsOneWidget);
+    expect(find.textContaining('private-id'), findsNothing);
+    expect(find.byIcon(Icons.star), findsOneWidget);
+    expect(find.byIcon(Icons.bookmark_outline), findsNothing);
+    expect(find.byIcon(Icons.hub_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.add_circle_outline), findsOneWidget);
+    expect(find.text('Oficiales'), findsNothing);
+
+    for (final width in [768.0, 1024.0, 1440.0, 1920.0]) {
+      tester.view.physicalSize = Size(width, 900);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: 'overflow at $width px');
+    }
+  });
 }
 
 http.Response _json(Object body, {int statusCode = 200}) {

@@ -53,6 +53,10 @@ class OfficialPackagesRepository extends ApiRepository {
     );
     apiClient.invalidateCache('/api/skills');
     apiClient.invalidateCache('/api/agents');
+    apiClient.invalidateCache('/api/knowledge');
+    apiClient.invalidateCache('/api/prompts');
+    apiClient.invalidateCache('/api/tools');
+    apiClient.invalidateCache('/api/workflows');
     apiClient.invalidateCache('/api/official-packages/copies');
     return response.json;
   }

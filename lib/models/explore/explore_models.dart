@@ -10,6 +10,31 @@ class ExploreItem {
   String get name => raw['name'] as String? ?? '(sin nombre)';
   String get description => raw['description'] as String? ?? '';
   String get category => raw['category'] as String? ?? 'Other';
+  bool get isOfficial => raw['is_official'] == true;
+  bool get hubInstallable => raw['hub_installable'] == true;
+  String get officialPackageId => raw['official_package_id']?.toString() ?? '';
+  String get officialPackageName =>
+      raw['official_package_name']?.toString() ?? '';
+  String get officialComponentId =>
+      raw['official_component_id']?.toString() ?? '';
+  String get officialVersion => raw['official_version']?.toString() ?? '';
+  String get officialLicense => raw['official_license']?.toString() ?? '';
+  String get officialRepositoryUrl =>
+      raw['official_repository_url']?.toString() ?? '';
+
+  List<ExploreDependency> get dependencies {
+    final value = raw['dependencies'];
+    if (value is! List) return const [];
+    return value
+        .whereType<Map>()
+        .map((item) => ExploreDependency(raw: item.cast<String, dynamic>()))
+        .toList();
+  }
+
+  List<String> get directDependencyIds =>
+      (raw['direct_dependency_ids'] as List? ?? const [])
+          .map((item) => item.toString())
+          .toList();
 
   int get stars {
     final value = raw['stars_count'];
@@ -53,6 +78,19 @@ class ExploreItem {
         .map((label) => label.substring('lang_'.length))
         .toList();
   }
+}
+
+class ExploreDependency {
+  const ExploreDependency({required this.raw});
+
+  final Map<String, dynamic> raw;
+
+  String get componentId => raw['component_id']?.toString() ?? '';
+  String get name => raw['name']?.toString() ?? '';
+  String get type => raw['component_type']?.toString() ?? 'unknown';
+  List<String> get dependencies => (raw['dependencies'] as List? ?? const [])
+      .map((item) => item.toString())
+      .toList();
 }
 
 class ExploreUserItem {

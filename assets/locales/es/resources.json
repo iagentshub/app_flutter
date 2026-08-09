@@ -1387,6 +1387,7 @@
   },
   "official": {
     "badge": "Oficial",
+    "use": "Usar recurso oficial",
     "load_error": "No se pudo cargar la biblioteca oficial",
     "empty": "Todavía no hay paquetes oficiales publicados.",
     "choose_components": "Elegir componentes",

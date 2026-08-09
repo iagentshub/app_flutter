@@ -7,7 +7,7 @@ import '../../../app/router/router.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../models/explore/explore_models.dart';
-import '../../../models/official_packages/official_package_models.dart';
+import '../../../shared/graph/graph_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/action_result.dart';
@@ -18,6 +18,7 @@ import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/explore_search_toolbar.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/multi_select_dropdown.dart';
+import '../../../shared/widgets/resource_graph_button.dart';
 import '../../../shared/widgets/resource_type_badge.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
@@ -50,10 +51,7 @@ class _ExplorePageState extends State<ExplorePage>
   late final OfficialPackagesRepository _officialRepository;
   late final TranslatedTexts _t;
   late final TabController _tabController;
-  List<OfficialPackageItem> _officialPackages = const [];
-  List<OfficialPackageCopy> _officialCopies = const [];
-  bool _officialLoading = true;
-  String? _officialError;
+  final Set<String> _officialBusyKeys = <String>{};
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
@@ -73,10 +71,9 @@ class _ExplorePageState extends State<ExplorePage>
     _officialRepository = OfficialPackagesRepository(
       apiClient: _services.apiClient,
     );
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     _controller.load();
     _controller.loadUsers();
-    _loadOfficialPackages();
   }
 
   void _onTextsChanged() {
@@ -85,6 +82,17 @@ class _ExplorePageState extends State<ExplorePage>
 
   void _onControllerChanged() {
     if (mounted) setState(() {});
+  }
+
+  void _setOfficialBusy(String resourceId, {required bool busy}) {
+    if (!mounted) return;
+    setState(() {
+      if (busy) {
+        _officialBusyKeys.add(resourceId);
+      } else {
+        _officialBusyKeys.remove(resourceId);
+      }
+    });
   }
 
   @override
@@ -98,33 +106,6 @@ class _ExplorePageState extends State<ExplorePage>
   }
 
   String? get _token => _services.sessionController.gaToken;
-
-  Future<void> _loadOfficialPackages() async {
-    final token = _token;
-    if (token == null || token.isEmpty) return;
-    if (mounted) {
-      setState(() {
-        _officialLoading = true;
-        _officialError = null;
-      });
-    }
-    try {
-      final items = await _officialRepository.list(token);
-      final copies = await _officialRepository.listCopies(token);
-      if (!mounted) return;
-      setState(() {
-        _officialPackages = items;
-        _officialCopies = copies;
-        _officialLoading = false;
-      });
-    } catch (error) {
-      if (!mounted) return;
-      setState(() {
-        _officialError = error.toString();
-        _officialLoading = false;
-      });
-    }
-  }
 
   /// Ejecuta una acción del controller y muestra su mensaje, si lo hay.
   Future<void> _runAction(Future<ActionResult?> action) async {
@@ -352,18 +333,13 @@ class _ExplorePageState extends State<ExplorePage>
             tabs: [
               Tab(text: _tx('explore.tab_resources', 'Recursos')),
               Tab(text: _tx('explore.tab_users', 'Usuarios')),
-              Tab(text: _tx('explore.tab_official', 'Oficiales')),
             ],
           ),
         ),
         Expanded(
           child: TabBarView(
             controller: _tabController,
-            children: [
-              _buildResourcesTab(),
-              _buildUsersTab(),
-              _buildOfficialPackagesTab(),
-            ],
+            children: [_buildResourcesTab(), _buildUsersTab()],
           ),
         ),
       ],
