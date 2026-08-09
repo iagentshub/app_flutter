@@ -15,8 +15,10 @@ class BackendController extends ChangeNotifier {
   BackendController._({
     required String selectedBackendId,
     required List<SavedBackend> savedBackends,
+    http.Client? pingClient,
   }) : _selectedBackendId = selectedBackendId,
-       _savedBackends = savedBackends;
+       _savedBackends = savedBackends,
+       _pingClient = pingClient;
 
   static const _selectedKey = 'selected_backend_id';
   static const _savedBackendsJsonKey = 'saved_backends_json';
@@ -26,6 +28,7 @@ class BackendController extends ChangeNotifier {
 
   String _selectedBackendId;
   final List<SavedBackend> _savedBackends;
+  final http.Client? _pingClient;
 
   // Último fallo de conexión detectado por ApiClient contra el backend
   // seleccionado (fallo de red real, no una respuesta HTTP de error) — se
@@ -34,7 +37,7 @@ class BackendController extends ChangeNotifier {
   String? _lastConnectionError;
   DateTime? _lastConnectionErrorAt;
 
-  static Future<BackendController> bootstrap() async {
+  static Future<BackendController> bootstrap({http.Client? pingClient}) async {
     final prefs = await LocalStore.instance();
     var selected =
         prefs.getString(_selectedKey) ?? BackendDefaults.selectedBackendId;
@@ -79,6 +82,7 @@ class BackendController extends ChangeNotifier {
     final controller = BackendController._(
       selectedBackendId: selected,
       savedBackends: saved,
+      pingClient: pingClient,
     );
     for (var i = controller._savedBackends.length - 1; i >= 0; i--) {
       final entry = controller._savedBackends[i];
@@ -170,8 +174,9 @@ class BackendController extends ChangeNotifier {
   }
 
   /// Comprueba si un backend responde en `/api/settings/platform/public`,
-  /// sin necesidad de sesión. Usado tanto por el test manual del diálogo
-  /// como por el chequeo periódico de salud de la lista.
+  /// sin necesidad de sesión, y valida que la respuesta tenga el contrato
+  /// público de iAgents Hub. Usado tanto por el test manual del diálogo como
+  /// por el chequeo periódico de salud de la lista.
   Future<BackendPingResult> pingBackend(String baseUrl) async {
     final normalized = normalizeBackendInput(baseUrl);
     if (normalized.isEmpty) {
@@ -179,14 +184,46 @@ class BackendController extends ChangeNotifier {
     }
     try {
       final uri = Uri.parse('$normalized/api/settings/platform/public');
-      final response = await http.get(uri).timeout(const Duration(seconds: 8));
+      final response = await (_pingClient?.get(uri) ?? http.get(uri)).timeout(
+        const Duration(seconds: 8),
+      );
       if (response.statusCode >= 200 && response.statusCode < 300) {
+        final Object? payload;
+        try {
+          payload = jsonDecode(response.body);
+        } catch (_) {
+          return BackendPingResult(
+            ok: false,
+            statusCode: response.statusCode,
+            error: 'La respuesta no es JSON válido de iAgents Hub',
+          );
+        }
+        if (!_isCompatibleBackend(payload)) {
+          return BackendPingResult(
+            ok: false,
+            statusCode: response.statusCode,
+            error: 'El servidor no expone una API compatible de iAgents Hub',
+          );
+        }
         return BackendPingResult(ok: true, statusCode: response.statusCode);
       }
       return BackendPingResult(ok: false, statusCode: response.statusCode);
     } catch (error) {
       return BackendPingResult(ok: false, error: error.toString());
     }
+  }
+
+  static bool _isCompatibleBackend(Object? payload) {
+    if (payload is! Map<String, dynamic>) return false;
+    if (payload['service'] == 'iagentshub') {
+      return payload['api_version'] is int;
+    }
+
+    // Compatibilidad con backends anteriores al identificador explícito. Son
+    // campos estables y tipados del mismo endpoint que consume el login.
+    return payload['registration'] is String &&
+        payload['guest_enabled'] is bool &&
+        payload['billing_enabled'] is bool;
   }
 
   Future<void> setSelectedBackend(String id) async {

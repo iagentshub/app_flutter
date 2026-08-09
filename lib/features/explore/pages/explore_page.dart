@@ -26,12 +26,12 @@ import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../manager/repositories/manager_repository.dart';
 import '../controllers/explore_controller.dart';
 import '../repositories/explore_repository.dart';
-import '../repositories/official_packages_repository.dart';
+import '../repositories/official_resource_actions_repository.dart';
 
 part '../cards/explore_resource_card.dart';
 part '../cards/explore_user_card.dart';
 part '../dialogs/preview_dialog.dart';
-part '../widgets/official_packages_tab.dart';
+part '../widgets/official_resource_actions.dart';
 part '../widgets/explore_collection_views.dart';
 
 class ExplorePage extends StatefulWidget {
@@ -48,7 +48,7 @@ class _ExplorePageState extends State<ExplorePage>
   late final _services = AppServicesScope.of(context);
 
   late final ExploreController _controller;
-  late final OfficialPackagesRepository _officialRepository;
+  late final OfficialResourceActionsRepository _officialRepository;
   late final TranslatedTexts _t;
   late final TabController _tabController;
   final Set<String> _officialBusyKeys = <String>{};
@@ -68,7 +68,7 @@ class _ExplorePageState extends State<ExplorePage>
       sessionController: _services.sessionController,
       tx: _tx,
     )..addListener(_onControllerChanged);
-    _officialRepository = OfficialPackagesRepository(
+    _officialRepository = OfficialResourceActionsRepository(
       apiClient: _services.apiClient,
     );
     _tabController = TabController(length: 2, vsync: this);

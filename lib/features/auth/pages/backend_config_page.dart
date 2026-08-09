@@ -92,6 +92,11 @@ class _BackendConfigPageState extends State<BackendConfigPage> {
       ),
     );
     if (saved != null && mounted) {
+      // El backend que el usuario acaba de verificar y añadir es el que espera
+      // usar al volver al login. Antes se quedaba seleccionado el anterior,
+      // aunque la nueva fila apareciese con el indicador verde.
+      await widget.backendController.setSelectedBackend(saved.id);
+      if (!mounted) return;
       setState(() => _health[saved.id] = true);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

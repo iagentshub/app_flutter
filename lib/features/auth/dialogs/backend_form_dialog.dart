@@ -89,6 +89,10 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
     });
     final result = await widget.backendController.pingBackend(url);
     if (!mounted) return;
+    _applyConnectionResult(result, url);
+  }
+
+  void _applyConnectionResult(BackendPingResult result, String url) {
     if (result.ok) {
       setState(() {
         _verified = true;
@@ -99,7 +103,13 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
     } else {
       setState(() {
         _verified = false;
-        _statusMessage = result.statusCode != null
+        _verifiedUrl = null;
+        _statusMessage = result.error != null
+            ? _tx(
+                'backend_config.test_connection_error',
+                'No se pudo conectar: {error}',
+              ).replaceAll('{error}', result.error!)
+            : result.statusCode != null
             ? _tx(
                 'backend_config.test_http_error',
                 'El servidor respondió HTTP {code}',
@@ -115,16 +125,35 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
 
   Future<void> _save() async {
     if (_verified != true || _verifiedUrl == null) return;
+    final url = _verifiedUrl!;
+    setState(() {
+      _testing = true;
+      _statusMessage = _tx(
+        'backend_config.test_button_loading',
+        'Comprobando…',
+      );
+    });
+
+    // La comprobación que habilitó el botón puede haberse quedado obsoleta.
+    // Se valida de nuevo inmediatamente antes de persistir para no guardar un
+    // backend que ya no responde o que dejó de exponer el contrato esperado.
+    final result = await widget.backendController.pingBackend(url);
+    if (!mounted) return;
+    if (!result.ok) {
+      _applyConnectionResult(result, url);
+      return;
+    }
+
     final existing = widget.existing;
     final entry = existing == null
         ? await widget.backendController.addBackend(
             name: _nameController.text.trim(),
-            url: _verifiedUrl!,
+            url: url,
           )
         : await widget.backendController.updateBackend(
             existing.id,
             name: _nameController.text.trim(),
-            url: _verifiedUrl!,
+            url: url,
           );
     if (!mounted) return;
     Navigator.of(context).pop(entry);
@@ -137,6 +166,7 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
         connectionVerified && BackendUrl.usesInsecureTransport(_verifiedUrl);
     final readyToSave =
         connectionVerified &&
+        !_testing &&
         (!insecureTransport || _insecureTransportAccepted);
     return AlertDialog(
       title: Text(
@@ -269,9 +299,17 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
         else
           PrimaryButton.icon(
             onPressed: readyToSave ? _save : null,
-            icon: Icon(_isEditing ? Icons.save_outlined : Icons.add),
+            icon: _testing
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Icon(_isEditing ? Icons.save_outlined : Icons.add),
             label: Text(
-              _isEditing
+              _testing
+                  ? _tx('backend_config.test_button_loading', 'Comprobando…')
+                  : _isEditing
                   ? _tx('backend_config.save_button', 'Guardar cambios')
                   : _tx(
                       'backend_config.add_confirmed_button',

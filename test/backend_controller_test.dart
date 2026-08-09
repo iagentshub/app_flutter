@@ -1,5 +1,9 @@
+import 'dart:convert';
+
 import 'package:app_flutter/shared/state/backend_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -59,5 +63,59 @@ void main() {
       controller.normalizeBackendInput('https://example.com/#fragment'),
       isEmpty,
     );
+  });
+
+  test('solo marca OK una respuesta compatible de iAgents Hub', () async {
+    controller = await BackendController.bootstrap(
+      pingClient: MockClient(
+        (_) async => http.Response(
+          jsonEncode({'service': 'iagentshub', 'api_version': 1}),
+          200,
+        ),
+      ),
+    );
+
+    final result = await controller.pingBackend('https://backend.example.com');
+
+    expect(result.ok, isTrue);
+    expect(result.statusCode, 200);
+  });
+
+  test(
+    'un HTTP 200 que no es la API de iAgents Hub se marca como fallo',
+    () async {
+      controller = await BackendController.bootstrap(
+        pingClient: MockClient(
+          (_) async => http.Response('<html>Portal</html>', 200),
+        ),
+      );
+
+      final result = await controller.pingBackend(
+        'https://backend.example.com',
+      );
+
+      expect(result.ok, isFalse);
+      expect(result.statusCode, 200);
+      expect(result.error, contains('JSON'));
+    },
+  );
+
+  test('mantiene compatibilidad con el contrato público anterior', () async {
+    controller = await BackendController.bootstrap(
+      pingClient: MockClient(
+        (_) async => http.Response(
+          jsonEncode({
+            'registration': 'open',
+            'guest_enabled': true,
+            'billing_enabled': false,
+          }),
+          200,
+        ),
+      ),
+    );
+
+    final result = await controller.pingBackend('https://backend.example.com');
+
+    expect(result.ok, isTrue);
   });
 }
