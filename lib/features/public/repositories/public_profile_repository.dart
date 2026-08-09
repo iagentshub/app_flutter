@@ -1,5 +1,6 @@
 import '../../../core/network/api_repository.dart';
 import '../../../models/explore/explore_models.dart';
+import '../../../models/profile/profile_models.dart';
 
 class PublicFollowStatus {
   const PublicFollowStatus({
@@ -30,6 +31,14 @@ class PublicFollowStatus {
 class PublicProfileRepository extends ApiRepository {
   PublicProfileRepository({required super.apiClient});
 
+  Future<SocialProfile> getProfile(String token, String username) async {
+    final response = await apiClient.get(
+      '/api/users/${Uri.encodeComponent(username)}',
+      gaToken: token,
+    );
+    return SocialProfile.fromJson(response.json);
+  }
+
   Future<List<ExploreItem>> listResources(
     String token, {
     required String username,
@@ -38,7 +47,6 @@ class PublicProfileRepository extends ApiRepository {
     final response = await apiClient.get(
       '/api/users/${Uri.encodeComponent(username)}/resources?type=${Uri.encodeQueryComponent(type)}',
       gaToken: token,
-      cache: true,
     );
     final payload = response.body;
     if (payload is! List) return const [];
@@ -55,7 +63,6 @@ class PublicProfileRepository extends ApiRepository {
     final response = await apiClient.get(
       '/api/users/${Uri.encodeComponent(username)}/follow-status',
       gaToken: token,
-      cache: true,
     );
     return PublicFollowStatus.fromJson(response.json);
   }

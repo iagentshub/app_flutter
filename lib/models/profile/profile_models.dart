@@ -73,6 +73,7 @@ class DeletionStatus {
 class SocialProfile {
   const SocialProfile({
     required this.username,
+    this.avatarUrl,
     this.bio,
     this.emailPublic,
     this.github,
@@ -82,6 +83,7 @@ class SocialProfile {
   });
 
   final String username;
+  final String? avatarUrl;
   final String? bio;
   final String? emailPublic;
   final String? github;
@@ -102,12 +104,13 @@ class SocialProfile {
 
     return SocialProfile(
       username: json['username'] as String? ?? '',
+      avatarUrl: json['avatar_url'] as String?,
       bio: json['bio'] as String?,
       emailPublic: json['email_public'] as String?,
       github: json['github'] as String?,
       cv: json['cv'] as String?,
       languages: languages,
-      createdAt: json['created_at'] as String?,
+      createdAt: (json['joined_at'] ?? json['created_at']) as String?,
     );
   }
 }

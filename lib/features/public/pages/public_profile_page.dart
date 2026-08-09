@@ -5,17 +5,21 @@ import 'package:flutter/material.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/explore/explore_models.dart';
+import '../../../models/profile/profile_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
+import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
-import '../../../shared/widgets/buttons/filter_button.dart';
+import '../../../shared/widgets/explore_search_toolbar.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../explore/repositories/explore_repository.dart';
 import '../cards/public_resource_card.dart';
 import '../repositories/public_profile_repository.dart';
+import '../utils/public_profile_resource_filter.dart';
+import '../widgets/public_profile_presentation.dart';
 
 class PublicProfilePage extends StatefulWidget {
   const PublicProfilePage({required this.username, super.key});
@@ -35,13 +39,15 @@ class _PublicProfilePageState extends State<PublicProfilePage>
   late final PublicProfileRepository _repository;
   late final ExploreRepository _exploreRepository;
   late final TranslatedTexts _t;
+  final TextEditingController _searchController = TextEditingController();
 
   List<ExploreItem> _resources = const [];
+  SocialProfile? _profile;
   PublicFollowStatus? _followStatus;
   bool _loading = true;
   String? _error;
   bool _followBusy = false;
-  String _type = 'all';
+  Set<String> _selectedTypes = <String>{};
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
@@ -63,6 +69,7 @@ class _PublicProfilePageState extends State<PublicProfilePage>
 
   @override
   void dispose() {
+    _searchController.dispose();
     _t.removeListener(_onTextsChanged);
     _t.dispose();
     super.dispose();
@@ -72,39 +79,56 @@ class _PublicProfilePageState extends State<PublicProfilePage>
 
   String get _cleanUsername => widget.username.trim();
 
-  void _openFiltersDialog() {
-    showFilterDialog(
-      context,
-      title: _tx('common.filters', 'Filtros'),
-      clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
-      closeLabel: _tx('common.close', 'Cerrar'),
-      onClear: () {
-        setState(() => _type = 'all');
-        _load();
-      },
-      buildFields: (setDialogState) => [
-        DropdownButtonFormField<String>(
-          initialValue: _type,
-          decoration: InputDecoration(
-            labelText: _tx('labels.type_label', 'Tipo de recurso'),
-          ),
-          items: const [
-            DropdownMenuItem(value: 'all', child: Text('all')),
-            DropdownMenuItem(value: 'agent', child: Text('agent')),
-            DropdownMenuItem(value: 'skill', child: Text('skill')),
-            DropdownMenuItem(value: 'knowledge', child: Text('knowledge')),
-            DropdownMenuItem(value: 'workflow', child: Text('workflow')),
-          ],
-          onChanged: (value) {
-            if (value == null) return;
-            setState(() => _type = value);
-            _load();
-            setDialogState(() {});
-          },
-        ),
-      ],
-    );
-  }
+  static const _resourceTypes = [
+    'agent',
+    'skill',
+    'prompt',
+    'tool',
+    'knowledge',
+    'workflow',
+  ];
+
+  List<ExploreItem> get _filteredResources => filterPublicProfileResources(
+    _resources,
+    query: _searchController.text,
+    selectedTypes: _selectedTypes,
+  );
+
+  int get _totalStars => _resources.fold(0, (sum, item) => sum + item.stars);
+
+  int _typeCount(String type) =>
+      _resources.where((item) => item.resourceType == type).length;
+
+  String _typeLabel(String type) => switch (type) {
+    'agent' => _tx('explore.type_agents', 'Agentes'),
+    'skill' => _tx('explore.type_skills', 'Skills'),
+    'prompt' => _tx('explore.type_prompts', 'Prompts'),
+    'tool' => _tx('explore.type_tools', 'Herramientas'),
+    'knowledge' => _tx('explore.type_knowledge', 'Knowledge'),
+    'workflow' => _tx('explore.type_workflows', 'Workflows'),
+    _ => type,
+  };
+
+  IconData _typeIcon(String type) => switch (type) {
+    'agent' => Icons.smart_toy_outlined,
+    'skill' => Icons.bolt_outlined,
+    'prompt' => Icons.chat_bubble_outline,
+    'tool' => Icons.build_outlined,
+    'knowledge' => Icons.menu_book_outlined,
+    'workflow' => Icons.account_tree_outlined,
+    _ => Icons.category_outlined,
+  };
+
+  List<ExploreTypeOption> get _typeOptions => [
+    for (final type in _resourceTypes)
+      ExploreTypeOption(
+        value: type,
+        label: _typeLabel(type),
+        icon: _typeIcon(type),
+        color: labelColor(type),
+        count: _typeCount(type),
+      ),
+  ];
 
   Future<void> _load() async {
     final token = _token;
@@ -123,14 +147,16 @@ class _PublicProfilePageState extends State<PublicProfilePage>
 
     try {
       final results = await Future.wait([
-        _repository.listResources(token, username: _cleanUsername, type: _type),
+        _repository.getProfile(token, _cleanUsername),
+        _repository.listResources(token, username: _cleanUsername),
         _repository.getFollowStatus(token, _cleanUsername),
       ]);
 
       if (!mounted) return;
       setState(() {
-        _resources = results[0] as List<ExploreItem>;
-        _followStatus = results[1] as PublicFollowStatus;
+        _profile = results[0] as SocialProfile;
+        _resources = results[1] as List<ExploreItem>;
+        _followStatus = results[2] as PublicFollowStatus;
         _loading = false;
       });
     } on ApiError catch (error) {
@@ -176,6 +202,36 @@ class _PublicProfilePageState extends State<PublicProfilePage>
     } finally {
       if (mounted) setState(() => _followBusy = false);
     }
+  }
+
+  Widget _avatarFallback() {
+    final initial = _cleanUsername.isEmpty
+        ? '?'
+        : _cleanUsername[0].toUpperCase();
+    return CircleAvatar(
+      radius: 36,
+      child: Text(initial, style: Theme.of(context).textTheme.headlineSmall),
+    );
+  }
+
+  Widget _buildAvatar(SocialProfile profile) {
+    final path = profile.avatarUrl;
+    if (path == null || path.isEmpty) return _avatarFallback();
+    return ClipOval(
+      child: SizedBox(
+        width: 72,
+        height: 72,
+        child: Image(
+          image: ResizeImage(
+            _services.apiClient.authenticatedImage(path, gaToken: _token),
+            width: 144,
+            height: 144,
+          ),
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => _avatarFallback(),
+        ),
+      ),
+    );
   }
 
   Future<void> _preview(ExploreItem item) async {
@@ -239,7 +295,8 @@ class _PublicProfilePageState extends State<PublicProfilePage>
     }
 
     final followStatus = _followStatus;
-    if (followStatus == null) {
+    final profile = _profile;
+    if (followStatus == null || profile == null) {
       return Center(
         child: Text(
           _tx('public_profile.no_follow_status', 'Sin estado de seguimiento'),
@@ -247,62 +304,119 @@ class _PublicProfilePageState extends State<PublicProfilePage>
       );
     }
 
+    final filteredResources = _filteredResources;
+    final isOwnProfile =
+        _services.sessionController.user?.username == _cleanUsername;
     final header = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Text(
-                  '${_tx('public_profile.title_prefix', 'Perfil público')} @$_cleanUsername',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                Text(
-                  '${_tx('public_profile.followers', 'Seguidores')}: ${followStatus.followersCount}',
-                ),
-                Text(
-                  '${_tx('public_profile.following', 'Siguiendo')}: ${followStatus.followingCount}',
-                ),
-                PrimaryButton.icon(
-                  onPressed: _followBusy ? null : _toggleFollow,
-                  icon: Icon(
-                    followStatus.following
-                        ? Icons.person_remove_alt_1
-                        : Icons.person_add_alt_1,
+        PublicProfilePresentation(
+          profile: profile,
+          avatar: _buildAvatar(profile),
+          followersCount: followStatus.followersCount,
+          followingCount: followStatus.followingCount,
+          resourcesCount: _resources.length,
+          starsCount: _totalStars,
+          isOwnProfile: isOwnProfile,
+          following: followStatus.following,
+          followBusy: _followBusy,
+          onToggleFollow: _toggleFollow,
+          tx: _tx,
+        ),
+        if (profile.cv?.isNotEmpty ?? false) ...[
+          const SizedBox(height: 12),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 3,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
                   ),
-                  label: Text(
-                    _followBusy
-                        ? _tx('profile.updating', 'Actualizando...')
-                        : (followStatus.following
-                              ? _tx(
-                                  'public_profile.unfollow_btn',
-                                  'Dejar de seguir',
-                                )
-                              : _tx('public_profile.follow_btn', 'Seguir')),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _tx(
+                            'public_profile.professional_summary',
+                            'Presentación profesional',
+                          ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 8),
+                        SelectableText(
+                          profile.cv!,
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium?.copyWith(height: 1.55),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
+          ),
+        ],
+        const SizedBox(height: 24),
+        Text(
+          _tx(
+            'public_profile.resources_title',
+            'Proyectos y recursos públicos',
+          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          _tx(
+            'public_profile.resources_subtitle',
+            'Explora el trabajo publicado por este usuario.',
+          ),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            FilterButton(
-              activeCount: _type != 'all' ? 1 : 0,
-              tooltip: _tx('common.filters', 'Filtros'),
-              onPressed: _openFiltersDialog,
-            ),
+        ExploreSearchToolbar(
+          searchController: _searchController,
+          searchHint: _tx(
+            'public_profile.search_hint',
+            'Buscar por nombre, descripción, categoría o etiqueta',
+          ),
+          typeOptions: _typeOptions,
+          selectedTypes: _selectedTypes,
+          allTypesLabel: _tx('explore.type_all', 'Todos'),
+          typeFilterTooltip: _tx(
+            'explore.type_filter_tooltip',
+            'Filtrar recursos por tipo',
+          ),
+          multipleTypesLabel: (count) => _tx(
+            'labels.types_selected',
+            '{count} tipos',
+          ).replaceAll('{count}', '$count'),
+          allowMultipleTypes: false,
+          onSearchChanged: (_) => setState(() {}),
+          onTypesChanged: (types) {
+            setState(() => _selectedTypes = types);
+          },
+          actions: [
             Text(
-              '${_tx('public_profile.resources_count', 'Recursos')}: ${_resources.length}',
+              _tx(
+                'public_profile.results_count',
+                '{count} resultados',
+              ).replaceAll('{count}', '${filteredResources.length}'),
+              style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
         ),
@@ -318,7 +432,7 @@ class _PublicProfilePageState extends State<PublicProfilePage>
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             sliver: SliverToBoxAdapter(child: header),
           ),
-          if (_resources.isEmpty)
+          if (filteredResources.isEmpty)
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               sliver: SliverToBoxAdapter(
@@ -328,7 +442,7 @@ class _PublicProfilePageState extends State<PublicProfilePage>
                     child: Text(
                       _tx(
                         'public_profile.empty_resources',
-                        'Este usuario no tiene recursos públicos en este filtro.',
+                        'No hay recursos públicos que coincidan con la búsqueda.',
                       ),
                     ),
                   ),
@@ -339,15 +453,12 @@ class _PublicProfilePageState extends State<PublicProfilePage>
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               sliver: ResponsiveSliverMasonryGrid(
-                itemCount: _resources.length,
+                itemCount: filteredResources.length,
                 itemBuilder: (context, index) {
-                  final item = _resources[index];
+                  final item = filteredResources[index];
                   return PublicResourceCard(
                     item: item,
-                    typeLabel: _tx(
-                      'labels.${item.resourceType}',
-                      item.resourceType,
-                    ),
+                    typeLabel: _typeLabel(item.resourceType),
                     previewTooltip: _tx('explore.preview', 'Vista previa'),
                     onPreview: () => _preview(item),
                   );

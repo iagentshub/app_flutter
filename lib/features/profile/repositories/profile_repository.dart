@@ -89,6 +89,9 @@ class ProfileRepository extends ApiRepository {
         'languages': languages,
       },
     );
+    // El PUT vive bajo /api/auth, pero los datos sociales se leen desde
+    // /api/users. La invalidacion automatica solo conoce la raiz mutada.
+    apiClient.invalidateCache('/api/users');
   }
 
   Future<void> changePassword(

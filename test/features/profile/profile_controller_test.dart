@@ -300,6 +300,36 @@ void main() {
     expect(controller.savingProfile, isFalse);
   });
 
+  test(
+    'savePublicProfile recarga los idiomas sin usar el perfil cacheado',
+    () async {
+      var saved = false;
+      var profileReads = 0;
+      final controller = await build((request) async {
+        if (request.url.path == '/api/auth/me/profile') {
+          saved = true;
+          return http.Response('{}', 200);
+        }
+        if (request.url.path.startsWith('/api/users/')) {
+          profileReads++;
+          return http.Response(
+            jsonEncode(_social(languages: saved ? const ['en'] : const ['es'])),
+            200,
+          );
+        }
+        return bundleResponse(request);
+      });
+      await controller.load();
+
+      controller.setLanguages({'en'});
+      final result = await controller.savePublicProfile();
+
+      expect(result?.isError, isFalse);
+      expect(profileReads, 2);
+      expect(controller.selectedLanguages, {'en'});
+    },
+  );
+
   test('changePassword valida antes de llamar a la API', () async {
     var calls = 0;
     final controller = await build((request) async {
