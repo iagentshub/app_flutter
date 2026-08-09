@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../repositories/admin_official_packages_repository.dart';
 
@@ -163,6 +164,26 @@ class _OfficialPackagesAdminTabState extends State<OfficialPackagesAdminTab> {
     );
   }
 
+  Future<void> deletePackage(Map<String, dynamic> package) async {
+    final id = package['id'].toString();
+    final name = package['name']?.toString() ?? id;
+    final confirmed = await showConfirmActionDialog(
+      context,
+      title: widget.tx('official.delete_title', 'Eliminar fuente oficial'),
+      message: widget
+          .tx(
+            'official.delete_confirm',
+            'Se eliminarán {name}, sus versiones y revisiones. Las copias privadas creadas por los usuarios no se borrarán.',
+          )
+          .replaceAll('{name}', name),
+      cancelLabel: widget.tx('common.cancel', 'Cancelar'),
+      confirmLabel: widget.tx('common.delete', 'Eliminar'),
+      destructive: true,
+    );
+    if (!confirmed || !mounted) return;
+    await run(id, () => repository.deletePackage(widget.token, id));
+  }
+
   @override
   Widget build(BuildContext context) {
     if (loading) return const Center(child: CircularProgressIndicator());
@@ -229,6 +250,17 @@ class _OfficialPackagesAdminTabState extends State<OfficialPackagesAdminTab> {
                       ? null
                       : () => run(id, () => repository.sync(widget.token, id)),
                   icon: Icons.sync,
+                ),
+                ActionIconButton(
+                  tooltip: widget.tx(
+                    'official.delete_source',
+                    'Eliminar fuente',
+                  ),
+                  onPressed: busy.contains(id)
+                      ? null
+                      : () => deletePackage(package),
+                  icon: Icons.delete_outline,
+                  danger: true,
                 ),
               ],
             ),

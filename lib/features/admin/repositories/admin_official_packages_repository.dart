@@ -37,6 +37,15 @@ class AdminOfficialPackagesRepository extends ApiRepository {
     );
   }
 
+  Future<void> deletePackage(String token, String packageId) async {
+    await apiClient.delete(
+      '/api/admin/official-packages/${Uri.encodeComponent(packageId)}',
+      gaToken: token,
+    );
+    apiClient.invalidateCache('/api/official-packages');
+    apiClient.invalidateCache('/api/official-packages/copies');
+  }
+
   Future<Map<String, dynamic>> diff(
     String token,
     String packageId,

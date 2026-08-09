@@ -1404,6 +1404,9 @@
     "tracking": "Seguimiento",
     "sync": "Buscar actualizaciones",
     "review_changes": "Revisar cambios"
+    ,"delete_source": "Eliminar fuente"
+    ,"delete_title": "Eliminar fuente oficial"
+    ,"delete_confirm": "Se eliminarán {name}, sus versiones y revisiones. Las copias privadas creadas por los usuarios no se borrarán."
   },
   "centinel": {
     "actions_abort": "Abortar",

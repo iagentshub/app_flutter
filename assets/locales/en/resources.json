@@ -1404,6 +1404,9 @@
     "tracking": "Tracking",
     "sync": "Check for updates",
     "review_changes": "Review changes"
+    ,"delete_source": "Delete source"
+    ,"delete_title": "Delete official source"
+    ,"delete_confirm": "{name}, its versions, and reviews will be deleted. Private copies created by users will not be deleted."
   },
   "centinel": {
     "actions_abort": "Abort",
