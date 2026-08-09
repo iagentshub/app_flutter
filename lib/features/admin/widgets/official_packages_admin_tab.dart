@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_client.dart';
+import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../repositories/admin_official_packages_repository.dart';
@@ -222,12 +223,12 @@ class _OfficialPackagesAdminTabState extends State<OfficialPackagesAdminTab> {
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
-                IconButton(
+                ActionIconButton(
                   tooltip: widget.tx('official.sync', 'Buscar actualizaciones'),
                   onPressed: busy.contains(id)
                       ? null
                       : () => run(id, () => repository.sync(widget.token, id)),
-                  icon: const Icon(Icons.sync),
+                  icon: Icons.sync,
                 ),
               ],
             ),
@@ -261,13 +262,13 @@ class _OfficialPackagesAdminTabState extends State<OfficialPackagesAdminTab> {
       trailing: Wrap(
         spacing: 4,
         children: [
-          IconButton(
+          ActionIconButton(
             tooltip: widget.tx('official.review_changes', 'Revisar cambios'),
             onPressed: () => showDiff(package, value),
-            icon: const Icon(Icons.difference_outlined),
+            icon: Icons.difference_outlined,
           ),
           if (status == 'pending_review') ...[
-            IconButton(
+            ActionIconButton(
               tooltip: widget.tx('common.reject', 'Rechazar'),
               onPressed: busy.contains(key)
                   ? null
@@ -280,9 +281,10 @@ class _OfficialPackagesAdminTabState extends State<OfficialPackagesAdminTab> {
                         publish: false,
                       ),
                     ),
-              icon: const Icon(Icons.close),
+              icon: Icons.close,
+              danger: true,
             ),
-            IconButton(
+            ActionIconButton(
               tooltip: widget.tx('common.publish', 'Publicar'),
               onPressed: busy.contains(key)
                   ? null
@@ -295,7 +297,7 @@ class _OfficialPackagesAdminTabState extends State<OfficialPackagesAdminTab> {
                         publish: true,
                       ),
                     ),
-              icon: const Icon(Icons.publish),
+              icon: Icons.publish,
             ),
           ],
         ],

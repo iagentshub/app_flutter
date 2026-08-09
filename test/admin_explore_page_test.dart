@@ -154,7 +154,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byType(Tab), findsNWidgets(3));
+    expect(find.byType(Tab), findsNWidgets(4));
     expect(find.text('Explorar'), findsOneWidget);
 
     await tester.tap(find.text('Explorar'));
