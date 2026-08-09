@@ -1412,6 +1412,7 @@
     "name": "Nombre",
     "publish_selection": "Aplicar selección",
     "publish_selection_hint": "Lo marcado queda publicado en el hub como un recurso más. Lo que desmarques se borra.",
+    "unsupported_hint": "{count} objetos del repositorio no tienen equivalente en el hub (hooks, MCP, reglas): salen en gris y no se pueden traer.",
     "repository_url": "Repositorio de GitHub",
     "source_resources": "{count} objetos en el hub",
     "sync_applied": "{kept} objetos disponibles, {removed} eliminados",

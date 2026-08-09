@@ -1412,6 +1412,7 @@
     "name": "Name",
     "publish_selection": "Apply selection",
     "publish_selection_hint": "Whatever is checked is published in the hub as one more resource. Whatever you uncheck is deleted.",
+    "unsupported_hint": "{count} objects in the repository have no equivalent in the hub (hooks, MCP, rules): they appear greyed out and cannot be brought in.",
     "repository_url": "GitHub repository",
     "source_resources": "{count} objects in the hub",
     "sync_applied": "{kept} objects available, {removed} deleted",

@@ -175,7 +175,6 @@ Future<Set<String>?> showOfficialComponentsDialog(
       components
           .whereType<Map>()
           .map((item) => item.cast<String, dynamic>())
-          .where((item) => item['materializable'] != false)
           .toList()
         ..sort((a, b) {
           final type = (a['component_type']?.toString() ?? '').compareTo(
@@ -187,10 +186,14 @@ Future<Set<String>?> showOfficialComponentsDialog(
                   b['name']?.toString() ?? '',
                 );
         });
+  bool supported(Map<String, dynamic> component) =>
+      component['materializable'] != false;
   final selected = rows
+      .where(supported)
       .map((item) => item['component_id'].toString())
       .where((id) => alreadySelected.isEmpty || alreadySelected.contains(id))
       .toSet();
+  final unsupported = rows.where((item) => !supported(item)).length;
   final byId = {
     for (final component in rows) component['component_id'].toString(): component,
   };
@@ -229,6 +232,20 @@ Future<Set<String>?> showOfficialComponentsDialog(
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
+              if (unsupported > 0) ...[
+                const SizedBox(height: 6),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    tx(
+                      'official.unsupported_hint',
+                      '{count} objetos del repositorio no tienen equivalente en el hub '
+                          '(hooks, MCP, reglas): salen en gris y no se pueden traer.',
+                    ).replaceAll('{count}', '$unsupported'),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+              ],
               if (errors.isNotEmpty) ...[
                 const SizedBox(height: 6),
                 Align(
@@ -250,6 +267,7 @@ Future<Set<String>?> showOfficialComponentsDialog(
                         value: selected.contains(
                           component['component_id'].toString(),
                         ),
+                        enabled: supported(component),
                         isThreeLine: true,
                         title: Text(component['name']?.toString() ?? ''),
                         // Dos componentes pueden llamarse igual (un SKILL.md
