@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
@@ -356,7 +357,11 @@ class _OfficialPackagesAdminTabState extends State<OfficialPackagesAdminTab> {
             ),
           ),
           const SizedBox(height: 12),
-          for (final package in packages) _packageCard(package),
+          for (final package in packages)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _packageCard(package),
+            ),
           if (packages.isEmpty)
             Card(
               child: Padding(
@@ -374,34 +379,101 @@ class _OfficialPackagesAdminTabState extends State<OfficialPackagesAdminTab> {
     );
   }
 
+  /// Card con la misma anatomía que las del resto del panel: título, línea de
+  /// contexto en `bodySmall` y las acciones al pie a la derecha. Ni el
+  /// identificador de la versión ni su estado se pintan: lo único accionable
+  /// es que haya cambios sin revisar, y eso ya lo dicen los botones.
   Widget _packageCard(Map<String, dynamic> package) {
     final id = package['id'].toString();
     final name = package['name']?.toString().trim() ?? '';
-    final versions = (package['versions'] as List? ?? const [])
+    final syncError = package['last_sync_error']?.toString() ?? '';
+    final pending = (package['versions'] as List? ?? const [])
         .whereType<Map>()
         .map((item) => item.cast<String, dynamic>())
+        .where((item) => item['status'].toString() == 'pending_review')
+        .firstOrNull;
+    final errors = (pending?['validation_errors'] as List? ?? const [])
+        .map((item) => item.toString())
         .toList();
+    final pendingVersion = pending?['version'].toString() ?? '';
+    final busyKey = pendingVersion.isEmpty ? id : '$id:$pendingVersion';
+
     return Card(
+      margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text(
+              name.isNotEmpty
+                  ? name
+                  : widget.tx('official.unnamed_package', 'Paquete sin nombre'),
+              style: const TextStyle(
+                fontSize: FncFonts.size16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              package['repository_url']?.toString() ?? '',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            if (syncError.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                syncError,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.error,
+                ),
+              ),
+            ],
+            if (errors.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                errors.join('\n'),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.error,
+                ),
+              ),
+            ],
+            const SizedBox(height: 4),
             Row(
               children: [
-                const Icon(Icons.verified_outlined),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    name.isNotEmpty
-                        ? name
-                        : widget.tx(
-                            'official.unnamed_package',
-                            'Paquete sin nombre',
-                          ),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                const Spacer(),
+                if (pending != null) ...[
+                  ActionIconButton(
+                    tooltip: widget.tx(
+                      'official.review_changes',
+                      'Revisar cambios',
+                    ),
+                    onPressed: () => showDiff(package, pendingVersion),
+                    icon: Icons.difference_outlined,
                   ),
-                ),
+                  ActionIconButton(
+                    tooltip: widget.tx('common.reject', 'Rechazar'),
+                    onPressed: busy.contains(busyKey)
+                        ? null
+                        : () => run(
+                            busyKey,
+                            () => repository.review(
+                              widget.token,
+                              id,
+                              pendingVersion,
+                              publish: false,
+                            ),
+                          ),
+                    icon: Icons.close,
+                    danger: true,
+                  ),
+                  ActionIconButton(
+                    tooltip: widget.tx('common.publish', 'Publicar'),
+                    onPressed: busy.contains(busyKey)
+                        ? null
+                        : () => publishVersion(package, pending),
+                    icon: Icons.publish,
+                  ),
+                ],
                 ActionIconButton(
                   tooltip: widget.tx(
                     'official.sync_source',
@@ -443,68 +515,10 @@ class _OfficialPackagesAdminTabState extends State<OfficialPackagesAdminTab> {
                 ),
               ],
             ),
-            Text(package['repository_url']?.toString() ?? ''),
-            if ((package['last_sync_error']?.toString() ?? '').isNotEmpty)
-              Text(
-                package['last_sync_error'].toString(),
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
-            const Divider(),
-            for (final version in versions) _versionRow(package, version),
           ],
         ),
       ),
     );
   }
 
-  Widget _versionRow(
-    Map<String, dynamic> package,
-    Map<String, dynamic> version,
-  ) {
-    final packageId = package['id'].toString();
-    final value = version['version'].toString();
-    final status = version['status'].toString();
-    final key = '$packageId:$value';
-    final errors = version['validation_errors'] as List? ?? const [];
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text('$value · $status'),
-      subtitle: errors.isEmpty ? null : Text(errors.join('\n')),
-      trailing: Wrap(
-        spacing: 4,
-        children: [
-          ActionIconButton(
-            tooltip: widget.tx('official.review_changes', 'Revisar cambios'),
-            onPressed: () => showDiff(package, value),
-            icon: Icons.difference_outlined,
-          ),
-          if (status == 'pending_review') ...[
-            ActionIconButton(
-              tooltip: widget.tx('common.reject', 'Rechazar'),
-              onPressed: busy.contains(key)
-                  ? null
-                  : () => run(
-                      key,
-                      () => repository.review(
-                        widget.token,
-                        packageId,
-                        value,
-                        publish: false,
-                      ),
-                    ),
-              icon: Icons.close,
-              danger: true,
-            ),
-            ActionIconButton(
-              tooltip: widget.tx('common.publish', 'Publicar'),
-              onPressed: busy.contains(key)
-                  ? null
-                  : () => publishVersion(package, version),
-              icon: Icons.publish,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
 }

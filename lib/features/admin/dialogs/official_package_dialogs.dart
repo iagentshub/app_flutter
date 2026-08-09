@@ -2,10 +2,26 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/resource_type_badge.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 
 typedef AdminTx = String Function(String path, String fallback);
+
+/// Mismos textos que el filtro de tipo de Explorar, para que un componente se
+/// llame igual en todo el producto.
+String _componentTypeLabel(AdminTx tx, String type) {
+  return switch (type) {
+    'agent' => tx('explore.type_agents', 'Agentes'),
+    'skill' => tx('explore.type_skills', 'Skills'),
+    'prompt' => tx('explore.type_prompts', 'Prompts'),
+    'tool' => tx('explore.type_tools', 'Herramientas'),
+    'knowledge' => tx('explore.type_knowledge', 'Knowledge'),
+    'workflow' => tx('explore.type_workflows', 'Workflows'),
+    _ => type,
+  };
+}
 
 Future<Map<String, dynamic>?> showOfficialPackageEditDialog(
   BuildContext context, {
@@ -313,9 +329,36 @@ Future<Set<String>?> showOfficialVersionPublishDialog(
                         value: selected.contains(
                           component['component_id'].toString(),
                         ),
+                        isThreeLine: true,
                         title: Text(component['name']?.toString() ?? ''),
-                        subtitle: Text(
-                          component['component_type']?.toString() ?? '',
+                        // Dos componentes pueden llamarse igual (un SKILL.md
+                        // por carpeta): la ruta en el repositorio es lo único
+                        // que los distingue sin enseñar ids internos.
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              component['source_path']?.toString() ?? '',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(fontFamily: FncFonts.monospace),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Builder(
+                                builder: (context) {
+                                  final type =
+                                      component['component_type']?.toString() ??
+                                      '';
+                                  return ResourceTypeBadge(
+                                    type: type,
+                                    label: _componentTypeLabel(tx, type),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
                         ),
                         onChanged: (checked) => setDialogState(() {
                           final id = component['component_id'].toString();

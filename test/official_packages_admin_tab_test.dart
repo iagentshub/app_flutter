@@ -44,18 +44,21 @@ void main() {
                 'component_id': 'agent-hidden-id',
                 'component_type': 'agent',
                 'name': 'Official Agent',
+                'source_path': 'agents/official.md',
                 'dependencies': ['skill-hidden-id'],
               },
               {
                 'component_id': 'skill-hidden-id',
                 'component_type': 'skill',
                 'name': 'Official Skill',
+                'source_path': 'skills/official/SKILL.md',
                 'dependencies': <Object>[],
               },
               {
                 'component_id': 'knowledge-hidden-id',
                 'component_type': 'knowledge',
                 'name': 'Optional Knowledge',
+                'source_path': 'knowledge/optional.md',
                 'dependencies': <Object>[],
               },
             ],
@@ -111,6 +114,10 @@ void main() {
     expect(find.text('Package Beta'), findsOneWidget);
     expect(find.text('hidden-package-a'), findsNothing);
     expect(find.text('hidden-package-b'), findsNothing);
+    // La card se queda en título + url + acciones: ni versión ni estado.
+    expect(find.text('https://github.com/example/alpha'), findsOneWidget);
+    expect(find.textContaining('pending_review'), findsNothing);
+    expect(find.textContaining('v2'), findsNothing);
 
     await tester.tap(find.byIcon(Icons.edit_outlined).first);
     await tester.pumpAndSettle();
@@ -141,6 +148,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Elegir contenido a publicar'), findsOneWidget);
     expect(find.textContaining('hidden-id'), findsNothing);
+    // La ruta distingue componentes que se llaman igual.
+    expect(find.text('skills/official/SKILL.md'), findsOneWidget);
+    expect(find.text('knowledge/optional.md'), findsOneWidget);
     await tester.tap(
       find.widgetWithText(CheckboxListTile, 'Optional Knowledge'),
     );
