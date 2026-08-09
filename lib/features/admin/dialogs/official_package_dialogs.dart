@@ -232,3 +232,98 @@ Future<Set<String>?> showOfficialPackageSyncDialog(
     ),
   );
 }
+
+Future<Set<String>?> showOfficialVersionPublishDialog(
+  BuildContext context, {
+  required Map<String, dynamic> version,
+  required AdminTx tx,
+}) {
+  final components =
+      (version['components'] as List? ?? const [])
+          .whereType<Map>()
+          .map((item) => item.cast<String, dynamic>())
+          .toList()
+        ..sort((a, b) {
+          final type = (a['component_type']?.toString() ?? '').compareTo(
+            b['component_type']?.toString() ?? '',
+          );
+          return type != 0
+              ? type
+              : (a['name']?.toString() ?? '').compareTo(
+                  b['name']?.toString() ?? '',
+                );
+        });
+  final selected = components
+      .map((item) => item['component_id'].toString())
+      .toSet();
+  final byId = {
+    for (final component in components)
+      component['component_id'].toString(): component,
+  };
+
+  bool dependsOn(String candidateId, String dependencyId, Set<String> seen) {
+    if (!seen.add(candidateId)) return false;
+    final candidate = byId[candidateId];
+    for (final dependency
+        in (candidate?['dependencies'] as List? ?? const [])) {
+      final id = dependency.toString();
+      if (id == dependencyId || dependsOn(id, dependencyId, seen)) return true;
+    }
+    return false;
+  }
+
+  return showDialog<Set<String>>(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setDialogState) => AlertDialog(
+        title: Text(
+          tx('official.choose_publish_content', 'Elegir contenido a publicar'),
+        ),
+        content: SizedBox(
+          width: dialogContentWidth(context, 620),
+          height: dialogContentHeight(context, 500),
+          child: ListView(
+            children: [
+              for (final component in components)
+                CheckboxListTile(
+                  value: selected.contains(
+                    component['component_id'].toString(),
+                  ),
+                  title: Text(component['name']?.toString() ?? ''),
+                  subtitle: Text(component['component_type']?.toString() ?? ''),
+                  onChanged: (checked) => setDialogState(() {
+                    final id = component['component_id'].toString();
+                    if (checked == true) {
+                      selected.add(id);
+                      for (final dependency
+                          in (component['dependencies'] as List? ?? const [])) {
+                        selected.add(dependency.toString());
+                      }
+                    } else {
+                      selected.removeWhere(
+                        (candidate) =>
+                            candidate == id ||
+                            dependsOn(candidate, id, <String>{}),
+                      );
+                    }
+                  }),
+                ),
+            ],
+          ),
+        ),
+        actions: [
+          TertiaryButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(tx('common.cancel', 'Cancelar')),
+          ),
+          PrimaryButton(
+            onPressed: selected.isEmpty
+                ? null
+                : () => Navigator.pop(context, Set.of(selected)),
+            child: Text(tx('official.publish_selection', 'Publicar selección')),
+          ),
+        ],
+      ),
+    ),
+  );
+}

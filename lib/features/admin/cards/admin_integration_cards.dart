@@ -9,6 +9,9 @@ extension _AdminIntegrationCards on _AdminPageState {
     final scope = (agent['scope'] ?? 'private').toString();
     final tokens = _asInt(agent['tokens_in']) + _asInt(agent['tokens_out']);
     final date = _fmtDate(agent['created_at']);
+    // Las labels ya incluyen la visibilidad; el badge de scope solo hace falta
+    // para agentes antiguos que aún no las tienen.
+    final labels = _labelBadges(agent);
 
     return Card(
       margin: EdgeInsets.zero,
@@ -36,7 +39,10 @@ extension _AdminIntegrationCards on _AdminPageState {
               children: [
                 _resourceTypeBadge(AdminResourceType.agent),
                 _badge(type, FncColors.slate),
-                _badge(scope, labelColor(scope)),
+                if (labels.isEmpty)
+                  _badge(scope, labelColor(scope))
+                else
+                  ...labels,
                 if (tokens > 0) _badge(_fmtTokens(tokens), FncColors.info),
               ],
             ),

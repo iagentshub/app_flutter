@@ -5,6 +5,17 @@ import '../../../core/network/api_repository.dart';
 class OfficialResourceActionsRepository extends ApiRepository {
   OfficialResourceActionsRepository({required super.apiClient});
 
+  Future<Map<String, dynamic>> getPackage(
+    String token,
+    String packageId,
+  ) async {
+    final response = await apiClient.get(
+      '/api/official-packages/${Uri.encodeComponent(packageId)}',
+      gaToken: token,
+    );
+    return response.json;
+  }
+
   Future<Map<String, dynamic>> copy(
     String token,
     String packageId,

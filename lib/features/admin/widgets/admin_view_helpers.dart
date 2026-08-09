@@ -20,6 +20,22 @@ extension _AdminViewHelpers on _AdminPageState {
     );
   }
 
+  /// Chips de las labels reales del recurso (visibilidad, origen, idioma,
+  /// estado…) con el color canónico del catálogo, para que el explorar de
+  /// admin muestre el mismo origen —`official` incluido— que Explorar.
+  List<Widget> _labelBadges(Map<String, dynamic> item) {
+    final raw = item['labels'];
+    if (raw is! List) return const [];
+    return [
+      for (final value in raw)
+        if (value.toString().isNotEmpty)
+          _badge(
+            _tx('labels.${value.toString()}', value.toString()),
+            labelColor(value.toString()),
+          ),
+    ];
+  }
+
   Widget _dropdown({
     required String label,
     required String value,

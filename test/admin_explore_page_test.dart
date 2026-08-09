@@ -203,6 +203,96 @@ void main() {
     expect(find.text('Relaciones de usuario'), findsOneWidget);
     expect(find.text('Researcher'), findsWidgets);
   });
+
+  testWidgets('official catalogue components are listed read-only', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1600, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    SharedPreferences.setMockInitialValues({});
+    final backend = await BackendController.bootstrap();
+    final locale = await LocaleController.bootstrap();
+    final session = await SessionController.bootstrap(
+      secureStore: MemorySecureStore(),
+    );
+    await session.login(
+      token: 'admin-token',
+      user: const SessionUser(id: 'user-1', username: 'admin', role: 'admin'),
+      remember: false,
+    );
+    final client = MockClient((request) async {
+      final path = request.url.path;
+      if (path == '/api/admin/stats') {
+        return _json({
+          'users_total': 1,
+          'users_active': 1,
+          'users_verified': 1,
+          'connections_total': 0,
+          'workflows_total': 0,
+          'knowledge_total': 0,
+          'conversations_total': 0,
+          'agents_public': 0,
+          'agents_private': 0,
+        });
+      }
+      if (path == '/api/admin/explore') {
+        return _json({
+          'items': [
+            {
+              'resource_type': 'skill',
+              'id': 'package-1:brainstorming',
+              'name': 'Brainstorming',
+              'description': 'Genera ideas',
+              'owner_username': 'obra',
+              'labels': ['official'],
+              'is_official': true,
+              'official_package_id': 'package-1',
+              'official_package_name': 'Superpowers',
+              'official_version': 'v1',
+            },
+          ],
+          'total': 1,
+          'counts': {'skill': 1},
+        });
+      }
+      if (path == '/api/settings/platform') return _json({});
+      return _json({}, statusCode: 404);
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AppServicesScope(
+            apiClient: ApiClient(backend, client: client),
+            sessionController: session,
+            localeController: locale,
+            child: const AdminPage(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Explorar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Brainstorming'), findsOneWidget);
+    expect(find.text('obra · Superpowers · v1'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Text &&
+            {'Oficial', 'Official', 'official'}.contains(widget.data),
+      ),
+      findsOneWidget,
+    );
+    // No es un recurso de la BD: nada de borrar, mover de dueño ni grafo.
+    expect(find.byIcon(Icons.delete_outline), findsNothing);
+    expect(find.byIcon(Icons.swap_horiz), findsNothing);
+    expect(find.byIcon(Icons.hub_outlined), findsNothing);
+  });
 }
 
 http.Response _json(Object body, {int statusCode = 200}) {

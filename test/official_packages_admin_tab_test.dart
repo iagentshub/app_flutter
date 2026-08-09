@@ -23,6 +23,7 @@ void main() {
     final backend = await BackendController.bootstrap();
     String? editedPath;
     Map<String, dynamic>? editedBody;
+    Map<String, dynamic>? publishedBody;
     final syncedPaths = <String>[];
     final packages = [
       {
@@ -33,7 +34,33 @@ void main() {
         'tracking_mode': 'release',
         'tracking_ref': 'main',
         'license': 'MIT',
-        'versions': <Object>[],
+        'versions': <Object>[
+          {
+            'version': 'v2',
+            'status': 'pending_review',
+            'validation_errors': <Object>[],
+            'components': <Object>[
+              {
+                'component_id': 'agent-hidden-id',
+                'component_type': 'agent',
+                'name': 'Official Agent',
+                'dependencies': ['skill-hidden-id'],
+              },
+              {
+                'component_id': 'skill-hidden-id',
+                'component_type': 'skill',
+                'name': 'Official Skill',
+                'dependencies': <Object>[],
+              },
+              {
+                'component_id': 'knowledge-hidden-id',
+                'component_type': 'knowledge',
+                'name': 'Optional Knowledge',
+                'dependencies': <Object>[],
+              },
+            ],
+          },
+        ],
       },
       {
         'id': 'hidden-package-b',
@@ -58,6 +85,10 @@ void main() {
       }
       if (request.method == 'POST' && request.url.path.endsWith('/sync')) {
         syncedPaths.add(request.url.path);
+        return _json({});
+      }
+      if (request.method == 'POST' && request.url.path.endsWith('/publish')) {
+        publishedBody = jsonDecode(request.body) as Map<String, dynamic>;
         return _json({});
       }
       return _json({}, statusCode: 404);
@@ -91,6 +122,11 @@ void main() {
     expect(editedBody?['name'], 'Alpha edited');
     expect(editedBody?.containsKey('id'), isFalse);
 
+    await tester.tap(find.byTooltip('Sincronizar esta fuente').first);
+    await tester.pumpAndSettle();
+    expect(syncedPaths, ['/api/admin/official-packages/hidden-package-a/sync']);
+    syncedPaths.clear();
+
     await tester.tap(find.text('Sincronizar'));
     await tester.pumpAndSettle();
     expect(find.text('Elegir paquetes para sincronizar'), findsOneWidget);
@@ -100,6 +136,21 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(syncedPaths, ['/api/admin/official-packages/hidden-package-a/sync']);
+
+    await tester.tap(find.byIcon(Icons.publish));
+    await tester.pumpAndSettle();
+    expect(find.text('Elegir contenido a publicar'), findsOneWidget);
+    expect(find.textContaining('hidden-id'), findsNothing);
+    await tester.tap(
+      find.widgetWithText(CheckboxListTile, 'Optional Knowledge'),
+    );
+    await tester.pump();
+    await tester.tap(find.text('Publicar selección'));
+    await tester.pumpAndSettle();
+    expect((publishedBody?['component_ids'] as List).toSet(), {
+      'agent-hidden-id',
+      'skill-hidden-id',
+    });
   });
 }
 

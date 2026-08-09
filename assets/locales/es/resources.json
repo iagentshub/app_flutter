@@ -1422,6 +1422,12 @@
     "unnamed_package": "Paquete sin nombre",
     "sync": "Buscar actualizaciones",
     "sync_packages": "Sincronizar",
+    "sync_source": "Sincronizar esta fuente",
+    "choose_content": "Elegir contenido de la fuente",
+    "use_selection": "Usar selección",
+    "required_dependency": "Dependencia requerida",
+    "choose_publish_content": "Elegir contenido a publicar",
+    "publish_selection": "Publicar selección",
     "sync_choose_title": "Elegir paquetes para sincronizar",
     "sync_select_all": "Seleccionar todo",
     "sync_clear": "Limpiar",
@@ -1431,7 +1437,7 @@
     "review_changes": "Revisar cambios",
     "delete_source": "Eliminar fuente",
     "delete_title": "Eliminar fuente oficial",
-    "delete_confirm": "Se eliminarán {name}, sus versiones y revisiones. Las copias privadas creadas por los usuarios no se borrarán."
+    "delete_confirm": "Se eliminarán {name}, sus versiones y revisiones. Dejará de aparecer en Explorar y se retirarán todos sus enlaces. Los forks privados se conservarán."
   },
   "centinel": {
     "actions_abort": "Abortar",

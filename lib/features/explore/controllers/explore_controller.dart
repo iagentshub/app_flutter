@@ -255,7 +255,10 @@ class ExploreController extends ChangeNotifier {
     }
   }
 
-  Future<ActionResult?> link(ExploreItem item) async {
+  Future<ActionResult?> link(
+    ExploreItem item, {
+    Set<String>? officialComponentIds,
+  }) async {
     final token = _token;
     if (token == null || token.isEmpty) return null;
     final key = itemKey(item);
@@ -269,6 +272,7 @@ class ExploreController extends ChangeNotifier {
         resourceId: item.resourceId,
         officialPackageId: item.officialPackageId,
         officialComponentId: item.officialComponentId,
+        officialComponentIds: officialComponentIds,
       );
       _linkedKeys.add(key);
       return ActionResult(

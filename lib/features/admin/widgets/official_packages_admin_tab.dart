@@ -176,7 +176,7 @@ class _OfficialPackagesAdminTabState extends State<OfficialPackagesAdminTab> {
       message: widget
           .tx(
             'official.delete_confirm',
-            'Se eliminarán {name}, sus versiones y revisiones. Las copias privadas creadas por los usuarios no se borrarán.',
+            'Se eliminarán {name}, sus versiones y revisiones. Dejará de aparecer en Explorar y se retirarán todos sus enlaces. Los forks privados se conservarán.',
           )
           .replaceAll('{name}', name),
       cancelLabel: widget.tx('common.cancel', 'Cancelar'),
@@ -196,6 +196,35 @@ class _OfficialPackagesAdminTabState extends State<OfficialPackagesAdminTab> {
     if (payload == null || !mounted) return;
     final id = package['id'].toString();
     await run(id, () => repository.updatePackage(widget.token, id, payload));
+  }
+
+  Future<void> syncPackage(Map<String, dynamic> package) async {
+    final id = package['id'].toString();
+    await run(id, () => repository.sync(widget.token, id));
+  }
+
+  Future<void> publishVersion(
+    Map<String, dynamic> package,
+    Map<String, dynamic> version,
+  ) async {
+    final selected = await showOfficialVersionPublishDialog(
+      context,
+      version: version,
+      tx: widget.tx,
+    );
+    if (selected == null || selected.isEmpty || !mounted) return;
+    final packageId = package['id'].toString();
+    final value = version['version'].toString();
+    await run(
+      '$packageId:$value',
+      () => repository.review(
+        widget.token,
+        packageId,
+        value,
+        publish: true,
+        componentIds: selected,
+      ),
+    );
   }
 
   Future<void> syncPackages() async {
@@ -318,6 +347,16 @@ class _OfficialPackagesAdminTabState extends State<OfficialPackagesAdminTab> {
                   ),
                 ),
                 ActionIconButton(
+                  tooltip: widget.tx(
+                    'official.sync_source',
+                    'Sincronizar esta fuente',
+                  ),
+                  onPressed: busy.contains(id)
+                      ? null
+                      : () => syncPackage(package),
+                  icon: Icons.sync,
+                ),
+                ActionIconButton(
                   tooltip: widget.tx('common.edit', 'Editar'),
                   onPressed: busy.contains(id)
                       ? null
@@ -393,15 +432,7 @@ class _OfficialPackagesAdminTabState extends State<OfficialPackagesAdminTab> {
               tooltip: widget.tx('common.publish', 'Publicar'),
               onPressed: busy.contains(key)
                   ? null
-                  : () => run(
-                      key,
-                      () => repository.review(
-                        widget.token,
-                        packageId,
-                        value,
-                        publish: true,
-                      ),
-                    ),
+                  : () => publishVersion(package, version),
               icon: Icons.publish,
             ),
           ],

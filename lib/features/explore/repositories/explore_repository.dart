@@ -109,13 +109,15 @@ class ExploreRepository extends ApiRepository {
     required String resourceId,
     String officialPackageId = '',
     String officialComponentId = '',
+    Set<String>? officialComponentIds,
   }) async {
     if (officialPackageId.isNotEmpty && officialComponentId.isNotEmpty) {
       final response = await apiClient.post(
         '/api/official-packages/${Uri.encodeComponent(officialPackageId)}/link',
         gaToken: token,
         body: {
-          'component_ids': [officialComponentId],
+          'component_ids': (officialComponentIds ?? {officialComponentId})
+              .toList(),
         },
       );
       for (final path in const [

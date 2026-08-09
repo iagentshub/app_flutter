@@ -76,11 +76,13 @@ class AdminOfficialPackagesRepository extends ApiRepository {
     String packageId,
     String version, {
     required bool publish,
+    Set<String> componentIds = const {},
   }) async {
     final action = publish ? 'publish' : 'reject';
     await apiClient.post(
       '/api/admin/official-packages/${Uri.encodeComponent(packageId)}/versions/${Uri.encodeComponent(version)}/$action',
       gaToken: token,
+      body: publish ? {'component_ids': componentIds.toList()} : null,
     );
     apiClient.invalidateCache('/api/official-packages');
   }

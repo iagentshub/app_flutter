@@ -262,6 +262,7 @@ extension _AdminExploreTab on _AdminPageState {
   }
 
   Widget _buildExploreCard(AdminExploreItem item) {
+    if (item.data['is_official'] == true) return _buildAdminOfficialCard(item);
     return switch (item.type) {
       AdminResourceType.user => _buildUserCard(item.data),
       AdminResourceType.group => _buildGroupCard(item.data),
@@ -277,6 +278,69 @@ extension _AdminExploreTab on _AdminPageState {
       AdminResourceType.prompt => _buildAdminPromptCard(item.data),
       AdminResourceType.tool => _buildAdminToolCard(item.data),
     };
+  }
+
+  /// Componente de un paquete oficial publicado. No es una fila de la BD de
+  /// recursos (vive en el catálogo hasta que alguien lo enlaza o copia), así
+  /// que se pinta en modo lectura: sin borrar, sin cambiar propietario y sin
+  /// grafo de relaciones. Lo que sí enseña son sus etiquetas reales, las
+  /// mismas que Explorar.
+  Widget _buildAdminOfficialCard(AdminExploreItem item) {
+    final data = item.data;
+    final name = (data['name'] ?? data['title'] ?? data['id'] ?? '').toString();
+    final owner = _ownerOf(data);
+    final packageName = (data['official_package_name'] ?? '').toString();
+    final version = (data['official_version'] ?? '').toString();
+    final description = (data['description'] ?? '').toString();
+    // La versión llega tal cual la publica el paquete ("v1", "1.4.0"…), así
+    // que se muestra sin prefijos añadidos.
+    final source = [
+      if (owner.isNotEmpty) owner,
+      if (packageName.isNotEmpty) packageName,
+      if (version.isNotEmpty) version,
+    ].join(' · ');
+
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              name,
+              style: const TextStyle(
+                fontSize: FncFonts.size16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              source.isEmpty ? '—' : source,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            if (description.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                description,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                _resourceTypeBadge(item.type),
+                ..._labelBadges(data),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _resourceGraphAction(

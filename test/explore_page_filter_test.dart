@@ -123,6 +123,38 @@ void main() {
     String? linkedPath;
     Map<String, dynamic>? linkedBody;
     final client = MockClient((request) async {
+      if (request.method == 'GET' &&
+          request.url.path == '/api/official-packages/package-private-id') {
+        return _json({
+          'id': 'package-private-id',
+          'name': 'Research Pack',
+          'version': {
+            'components': [
+              {
+                'component_id': 'agent-private-id',
+                'component_type': 'agent',
+                'name': 'Official Analyst',
+                'source_path': 'agents/analyst.md',
+                'dependencies': ['skill-private-id'],
+              },
+              {
+                'component_id': 'skill-private-id',
+                'component_type': 'skill',
+                'name': 'Research Skill',
+                'source_path': 'skills/research/SKILL.md',
+                'dependencies': [],
+              },
+              {
+                'component_id': 'knowledge-private-id',
+                'component_type': 'knowledge',
+                'name': 'Research Notes',
+                'source_path': 'knowledge/notes.md',
+                'dependencies': [],
+              },
+            ],
+          },
+        });
+      }
       if (request.method == 'POST' &&
           request.url.path ==
               '/api/official-packages/package-private-id/link') {
@@ -189,7 +221,8 @@ void main() {
     expect(find.text('Producción'), findsNothing);
     expect(find.text('Research Pack'), findsOneWidget);
     expect(find.textContaining('private-id'), findsNothing);
-    expect(find.byIcon(Icons.star), findsOneWidget);
+    // La etiqueta "official" ya marca el origen: la card no repite la estrella.
+    expect(find.byIcon(Icons.star), findsNothing);
     expect(find.byIcon(Icons.bookmark_outline), findsNothing);
     expect(find.byIcon(Icons.hub_outlined), findsOneWidget);
     expect(find.byIcon(Icons.link_outlined), findsOneWidget);
@@ -198,9 +231,17 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.link_outlined));
     await tester.pumpAndSettle();
+    expect(find.text('Elegir contenido de la fuente'), findsOneWidget);
+    expect(find.textContaining('private-id'), findsNothing);
+    await tester.tap(find.widgetWithText(CheckboxListTile, 'Research Notes'));
+    await tester.pump();
+    await tester.tap(find.text('Usar selección'));
+    await tester.pumpAndSettle();
     expect(linkedPath, '/api/official-packages/package-private-id/link');
-    expect(linkedBody, {
-      'component_ids': ['agent-private-id'],
+    expect((linkedBody?['component_ids'] as List).toSet(), {
+      'agent-private-id',
+      'skill-private-id',
+      'knowledge-private-id',
     });
     expect(find.byIcon(Icons.link), findsOneWidget);
 

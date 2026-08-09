@@ -59,18 +59,11 @@ extension _ExploreResourceCard on _ExplorePageState {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const SizedBox(width: 10),
-                if (item.isOfficial) ...[
-                  Tooltip(
-                    message: _tx('official.badge', 'Oficial'),
-                    child: Icon(
-                      Icons.star,
-                      size: 17,
-                      color: FncColors.warning,
-                      semanticLabel: _tx('official.badge', 'Oficial'),
-                    ),
-                  ),
-                ] else ...[
+                // Los oficiales no llevan icono de origen: la etiqueta
+                // "official" de la fila de labels ya lo dice, y tampoco
+                // acumulan favoritos.
+                if (!item.isOfficial) ...[
+                  const SizedBox(width: 10),
                   Icon(
                     Icons.bookmark_outline,
                     size: 14,
@@ -135,7 +128,7 @@ extension _ExploreResourceCard on _ExplorePageState {
                           : _tx('explore.link', 'Enlazar'),
                       onPressed: (busy || linked)
                           ? null
-                          : () => _runAction(_controller.link(item)),
+                          : () => _linkOfficialResource(item),
                     ),
                   if (item.hubInstallable)
                     ActionIconButton(
