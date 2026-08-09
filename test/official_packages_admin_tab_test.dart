@@ -152,6 +152,122 @@ void main() {
       'skill-hidden-id',
     });
   });
+
+  testWidgets('sincronizar pregunta qué publicar y reeditar parte de lo ya '
+      'publicado', (tester) async {
+    tester.view.physicalSize = const Size(900, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    SharedPreferences.setMockInitialValues({});
+    final backend = await BackendController.bootstrap();
+    final publishedBodies = <Map<String, dynamic>>[];
+    final components = <Object>[
+      {
+        'component_id': 'kept-skill',
+        'component_type': 'skill',
+        'name': 'Kept Skill',
+        'dependencies': <Object>[],
+      },
+      {
+        'component_id': 'dropped-knowledge',
+        'component_type': 'knowledge',
+        'name': 'Dropped Knowledge',
+        'dependencies': <Object>[],
+      },
+    ];
+    final packages = [
+      {
+        'id': 'package-a',
+        'name': 'Package Alpha',
+        'repository_url': 'https://github.com/example/alpha',
+        'tracking_mode': 'release',
+        'tracking_ref': 'main',
+        'license': 'MIT',
+        'published_version': 'v1',
+        'versions': <Object>[
+          {
+            'version': 'v1',
+            'status': 'published',
+            'validation_errors': <Object>[],
+            'published_components': ['kept-skill'],
+            'components': components,
+          },
+        ],
+      },
+    ];
+    final client = MockClient((request) async {
+      if (request.method == 'GET' &&
+          request.url.path == '/api/admin/official-packages') {
+        return _json(packages);
+      }
+      if (request.method == 'POST' && request.url.path.endsWith('/sync')) {
+        return _json({
+          'changed': true,
+          'package': packages.first,
+          'version': {
+            'version': 'v2',
+            'status': 'pending_review',
+            'validation_errors': <Object>[],
+            'published_components': <Object>[],
+            'components': components,
+          },
+        });
+      }
+      if (request.method == 'POST' && request.url.path.endsWith('/publish')) {
+        publishedBodies.add(jsonDecode(request.body) as Map<String, dynamic>);
+        return _json({});
+      }
+      return _json({}, statusCode: 404);
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: OfficialPackagesAdminTab(
+            apiClient: ApiClient(backend, client: client),
+            token: 'admin-token',
+            tx: (_, fallback) => fallback,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Sincronizar la fuente abre el selector con todo marcado y publica.
+    await tester.tap(find.byTooltip('Sincronizar esta fuente').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Elegir contenido a publicar'), findsOneWidget);
+    await tester.tap(
+      find.widgetWithText(CheckboxListTile, 'Dropped Knowledge'),
+    );
+    await tester.pump();
+    await tester.tap(find.text('Publicar selección'));
+    await tester.pumpAndSettle();
+    expect((publishedBodies.last['component_ids'] as List), ['kept-skill']);
+
+    // Reeditar la selección publicada arranca solo con lo que está publicado.
+    await tester.tap(find.byTooltip('Elegir contenido publicado').first);
+    await tester.pumpAndSettle();
+    final dropped = tester.widget<CheckboxListTile>(
+      find.widgetWithText(CheckboxListTile, 'Dropped Knowledge'),
+    );
+    final kept = tester.widget<CheckboxListTile>(
+      find.widgetWithText(CheckboxListTile, 'Kept Skill'),
+    );
+    expect(dropped.value, isFalse);
+    expect(kept.value, isTrue);
+    await tester.tap(
+      find.widgetWithText(CheckboxListTile, 'Dropped Knowledge'),
+    );
+    await tester.pump();
+    await tester.tap(find.text('Publicar selección'));
+    await tester.pumpAndSettle();
+    expect((publishedBodies.last['component_ids'] as List).toSet(), {
+      'kept-skill',
+      'dropped-knowledge',
+    });
+  });
 }
 
 http.Response _json(Object body, {int statusCode = 200}) {

@@ -233,6 +233,11 @@ Future<Set<String>?> showOfficialPackageSyncDialog(
   );
 }
 
+/// Selector del contenido que se publica de una versión.
+///
+/// Arranca marcando lo que ya está publicado (`published_components`, vacío =
+/// todo), de modo que desmarcar una fila y confirmar retira ese componente del
+/// catálogo y borra los recursos que los usuarios tengan enlazados a él.
 Future<Set<String>?> showOfficialVersionPublishDialog(
   BuildContext context, {
   required Map<String, dynamic> version,
@@ -253,8 +258,12 @@ Future<Set<String>?> showOfficialVersionPublishDialog(
                   b['name']?.toString() ?? '',
                 );
         });
+  final published = (version['published_components'] as List? ?? const [])
+      .map((item) => item.toString())
+      .toSet();
   final selected = components
       .map((item) => item['component_id'].toString())
+      .where((id) => published.isEmpty || published.contains(id))
       .toSet();
   final byId = {
     for (final component in components)
@@ -282,32 +291,53 @@ Future<Set<String>?> showOfficialVersionPublishDialog(
         content: SizedBox(
           width: dialogContentWidth(context, 620),
           height: dialogContentHeight(context, 500),
-          child: ListView(
+          child: Column(
             children: [
-              for (final component in components)
-                CheckboxListTile(
-                  value: selected.contains(
-                    component['component_id'].toString(),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  tx(
+                    'official.publish_selection_hint',
+                    'Lo que desmarques dejará de estar disponible y se borrará '
+                        'de las cuentas que lo tengan enlazado. Los forks se conservan.',
                   ),
-                  title: Text(component['name']?.toString() ?? ''),
-                  subtitle: Text(component['component_type']?.toString() ?? ''),
-                  onChanged: (checked) => setDialogState(() {
-                    final id = component['component_id'].toString();
-                    if (checked == true) {
-                      selected.add(id);
-                      for (final dependency
-                          in (component['dependencies'] as List? ?? const [])) {
-                        selected.add(dependency.toString());
-                      }
-                    } else {
-                      selected.removeWhere(
-                        (candidate) =>
-                            candidate == id ||
-                            dependsOn(candidate, id, <String>{}),
-                      );
-                    }
-                  }),
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: ListView(
+                  children: [
+                    for (final component in components)
+                      CheckboxListTile(
+                        value: selected.contains(
+                          component['component_id'].toString(),
+                        ),
+                        title: Text(component['name']?.toString() ?? ''),
+                        subtitle: Text(
+                          component['component_type']?.toString() ?? '',
+                        ),
+                        onChanged: (checked) => setDialogState(() {
+                          final id = component['component_id'].toString();
+                          if (checked == true) {
+                            selected.add(id);
+                            for (final dependency
+                                in (component['dependencies'] as List? ??
+                                    const [])) {
+                              selected.add(dependency.toString());
+                            }
+                          } else {
+                            selected.removeWhere(
+                              (candidate) =>
+                                  candidate == id ||
+                                  dependsOn(candidate, id, <String>{}),
+                            );
+                          }
+                        }),
+                      ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),

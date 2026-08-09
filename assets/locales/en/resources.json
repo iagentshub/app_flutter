@@ -1437,7 +1437,9 @@
     "review_changes": "Review changes",
     "delete_source": "Delete source",
     "delete_title": "Delete official source",
-    "delete_confirm": "{name}, its versions, and reviews will be deleted. It will disappear from Explore and all links will be removed. Private forks will be preserved."
+    "delete_confirm": "{name}, its versions, and reviews will be deleted. It will disappear from Explore and all links will be removed. Private forks will be preserved.",
+    "choose_published_content": "Choose published content",
+    "publish_selection_hint": "Whatever you uncheck stops being available and is deleted from the accounts that have it linked. Forks are kept."
   },
   "centinel": {
     "actions_abort": "Abort",

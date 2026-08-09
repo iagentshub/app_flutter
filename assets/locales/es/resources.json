@@ -1437,7 +1437,9 @@
     "review_changes": "Revisar cambios",
     "delete_source": "Eliminar fuente",
     "delete_title": "Eliminar fuente oficial",
-    "delete_confirm": "Se eliminarán {name}, sus versiones y revisiones. Dejará de aparecer en Explorar y se retirarán todos sus enlaces. Los forks privados se conservarán."
+    "delete_confirm": "Se eliminarán {name}, sus versiones y revisiones. Dejará de aparecer en Explorar y se retirarán todos sus enlaces. Los forks privados se conservarán.",
+    "choose_published_content": "Elegir contenido publicado",
+    "publish_selection_hint": "Lo que desmarques dejará de estar disponible y se borrará de las cuentas que lo tengan enlazado. Los forks se conservan."
   },
   "centinel": {
     "actions_abort": "Abortar",

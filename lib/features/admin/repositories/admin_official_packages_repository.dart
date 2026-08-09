@@ -14,12 +14,15 @@ class AdminOfficialPackagesRepository extends ApiRepository {
         : const [];
   }
 
-  Future<void> importRepository(
+  /// Devuelve el resultado del sync implícito (`changed`, `package`,
+  /// `version` con sus componentes) para poder elegir qué se publica sin
+  /// tener que recargar la lista antes.
+  Future<Map<String, dynamic>> importRepository(
     String token,
     String repositoryUrl, {
     String trackingMode = 'release',
   }) async {
-    await apiClient.post(
+    final response = await apiClient.post(
       '/api/admin/official-packages/import',
       gaToken: token,
       body: {
@@ -28,13 +31,15 @@ class AdminOfficialPackagesRepository extends ApiRepository {
         'tracking_ref': 'main',
       },
     );
+    return response.json;
   }
 
-  Future<void> sync(String token, String packageId) async {
-    await apiClient.post(
+  Future<Map<String, dynamic>> sync(String token, String packageId) async {
+    final response = await apiClient.post(
       '/api/admin/official-packages/${Uri.encodeComponent(packageId)}/sync',
       gaToken: token,
     );
+    return response.json;
   }
 
   Future<void> updatePackage(
@@ -85,5 +90,10 @@ class AdminOfficialPackagesRepository extends ApiRepository {
       body: publish ? {'component_ids': componentIds.toList()} : null,
     );
     apiClient.invalidateCache('/api/official-packages');
+    // Publicar puede retirar componentes, y con ellos los recursos enlazados
+    // en las cuentas: el catálogo y el inventario de admin quedan obsoletos.
+    apiClient.invalidateCache('/api/official-packages/copies');
+    apiClient.invalidateCache('/api/explore');
+    apiClient.invalidateCache('/api/admin/explore');
   }
 }

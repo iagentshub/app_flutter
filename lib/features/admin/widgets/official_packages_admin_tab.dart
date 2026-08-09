@@ -129,9 +129,37 @@ class _OfficialPackagesAdminTabState extends State<OfficialPackagesAdminTab> {
     final url = controller.text.trim();
     controller.dispose();
     if (accepted != true || url.isEmpty) return;
-    await run(
-      'import',
-      () => repository.importRepository(widget.token, url, trackingMode: mode),
+    await run('import', () async {
+      final result = await repository.importRepository(
+        widget.token,
+        url,
+        trackingMode: mode,
+      );
+      await chooseAndPublish(result);
+    });
+  }
+
+  /// Cierra el paso de sincronización eligiendo qué se publica: el admin marca
+  /// el contenido y se publica en la misma acción. Cancelar deja la versión sin
+  /// publicar (queda pendiente de revisión en la lista).
+  Future<void> chooseAndPublish(Map<String, dynamic> syncResult) async {
+    final package = (syncResult['package'] as Map?)?.cast<String, dynamic>();
+    final version = (syncResult['version'] as Map?)?.cast<String, dynamic>();
+    if (package == null || version == null || !mounted) return;
+    final components = version['components'] as List? ?? const [];
+    if (components.isEmpty) return;
+    final selected = await showOfficialVersionPublishDialog(
+      context,
+      version: version,
+      tx: widget.tx,
+    );
+    if (selected == null || selected.isEmpty || !mounted) return;
+    await repository.review(
+      widget.token,
+      package['id'].toString(),
+      version['version'].toString(),
+      publish: true,
+      componentIds: selected,
     );
   }
 
@@ -200,7 +228,27 @@ class _OfficialPackagesAdminTabState extends State<OfficialPackagesAdminTab> {
 
   Future<void> syncPackage(Map<String, dynamic> package) async {
     final id = package['id'].toString();
-    await run(id, () => repository.sync(widget.token, id));
+    await run(id, () async {
+      final result = await repository.sync(widget.token, id);
+      await chooseAndPublish(result);
+    });
+  }
+
+  /// Reedita la selección publicada sin pasar por GitHub: útil para retirar
+  /// (o recuperar) un objeto de un paquete que ya está publicado.
+  Future<void> editPublishedSelection(Map<String, dynamic> package) async {
+    final versions = (package['versions'] as List? ?? const [])
+        .whereType<Map>()
+        .map((item) => item.cast<String, dynamic>());
+    final publishedVersion = package['published_version']?.toString() ?? '';
+    final version = versions
+        .where((item) => item['version'].toString() == publishedVersion)
+        .firstOrNull;
+    if (version == null) return;
+    await run(
+      package['id'].toString(),
+      () => chooseAndPublish({'package': package, 'version': version}),
+    );
   }
 
   Future<void> publishVersion(
@@ -236,12 +284,20 @@ class _OfficialPackagesAdminTabState extends State<OfficialPackagesAdminTab> {
     if (selected == null || selected.isEmpty || !mounted) return;
     setState(() => busy.add('sync-selected'));
     final failed = <String>[];
+    final pending = <Map<String, dynamic>>[];
     for (final id in selected) {
       try {
-        await repository.sync(widget.token, id);
+        final result = await repository.sync(widget.token, id);
+        // Solo se pregunta por lo que trae contenido nuevo; para reeditar la
+        // selección de un paquete sin cambios está el botón de la card.
+        if (result['changed'] == true) pending.add(result);
       } catch (_) {
         failed.add(id);
       }
+    }
+    for (final result in pending) {
+      if (!mounted) break;
+      await chooseAndPublish(result);
     }
     await load();
     if (!mounted) return;
@@ -356,6 +412,17 @@ class _OfficialPackagesAdminTabState extends State<OfficialPackagesAdminTab> {
                       : () => syncPackage(package),
                   icon: Icons.sync,
                 ),
+                if ((package['published_version']?.toString() ?? '').isNotEmpty)
+                  ActionIconButton(
+                    tooltip: widget.tx(
+                      'official.choose_published_content',
+                      'Elegir contenido publicado',
+                    ),
+                    onPressed: busy.contains(id)
+                        ? null
+                        : () => editPublishedSelection(package),
+                    icon: Icons.checklist,
+                  ),
                 ActionIconButton(
                   tooltip: widget.tx('common.edit', 'Editar'),
                   onPressed: busy.contains(id)
