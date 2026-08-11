@@ -9,7 +9,9 @@ import '../../../shared/widgets/responsive_dialog.dart';
 import '../dialogs/official_source_dialogs.dart';
 import '../models/official_import_models.dart';
 import '../pages/official_import_review_page.dart';
+import '../repositories/admin_connections_repository.dart';
 import '../repositories/admin_official_sources_repository.dart';
+import 'official_import_progress_dialog.dart';
 
 /// Fuentes oficiales: repositorios de GitHub cuyo contenido se trae al hub
 /// como recursos normales. Sincronizar es elegir qué se queda; lo que se
@@ -33,6 +35,9 @@ class OfficialSourcesAdminTab extends StatefulWidget {
 
 class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
   late final repository = AdminOfficialSourcesRepository(
+    apiClient: widget.apiClient,
+  );
+  late final connectionsRepository = AdminConnectionsRepository(
     apiClient: widget.apiClient,
   );
   List<OfficialSource> sources = const [];
@@ -86,42 +91,121 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
 
   Future<void> openImport() async {
     final controller = TextEditingController();
-    String mode = 'release';
+    String trackingMode = 'release';
+    String importMode = 'deterministic';
+    String? llmConnectionId;
+    List<OfficialImportLlmConnection> llmConnections = const [];
+    try {
+      llmConnections = await connectionsRepository.listLlmConnections(
+        widget.token,
+      );
+    } catch (_) {
+      // El modo determinista sigue disponible si el catálogo de conexiones
+      // no se puede cargar.
+    }
+    if (!mounted) {
+      controller.dispose();
+      return;
+    }
     final accepted = await showDialog<bool>(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 24,
+          ),
           title: Text(
-            widget.tx('official.admin_import', 'Importar desde GitHub'),
+            widget.tx(
+              'official.admin_import',
+              'Importar desde GitHub o GitLab',
+            ),
           ),
           content: SizedBox(
             width: dialogContentWidth(context, 560),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: controller,
-                  decoration: const InputDecoration(
-                    labelText: 'https://github.com/owner/repository',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: mode,
-                  decoration: InputDecoration(
-                    labelText: widget.tx('official.tracking', 'Seguimiento'),
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'release',
-                      child: Text('Última release'),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: controller,
+                    decoration: const InputDecoration(
+                      labelText: 'https://github.com/owner/repository',
                     ),
-                    DropdownMenuItem(value: 'branch', child: Text('Rama main')),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: importMode,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      labelText: widget.tx(
+                        'official.analysis_mode',
+                        'Modo de análisis',
+                      ),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'deterministic',
+                        child: Text('Manual · reglas deterministas'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'llm',
+                        child: Text('LLM · análisis semántico'),
+                      ),
+                    ],
+                    onChanged: (value) => setDialogState(() {
+                      importMode = value ?? importMode;
+                      if (importMode != 'llm') llmConnectionId = null;
+                    }),
+                  ),
+                  if (importMode == 'llm') ...[
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: llmConnectionId,
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        labelText: widget.tx(
+                          'official.llm_connection',
+                          'Conexión LLM de Admin',
+                        ),
+                        helperText: llmConnections.isEmpty
+                            ? 'No hay conexiones LLM activas compatibles.'
+                            : 'Puede realizar varias llamadas y consumir tokens.',
+                      ),
+                      items: [
+                        for (final connection in llmConnections)
+                          DropdownMenuItem(
+                            value: connection.id,
+                            child: Text(connection.displayName),
+                          ),
+                      ],
+                      onChanged: (value) =>
+                          setDialogState(() => llmConnectionId = value),
+                    ),
                   ],
-                  onChanged: (value) =>
-                      setDialogState(() => mode = value ?? mode),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: trackingMode,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      labelText: widget.tx('official.tracking', 'Seguimiento'),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'release',
+                        child: Text('Última release'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'branch',
+                        child: Text('Rama main'),
+                      ),
+                    ],
+                    onChanged: (value) => setDialogState(
+                      () => trackingMode = value ?? trackingMode,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           actions: [
@@ -130,7 +214,9 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
               child: Text(widget.tx('common.cancel', 'Cancelar')),
             ),
             PrimaryButton(
-              onPressed: () => Navigator.pop(context, true),
+              onPressed: importMode == 'llm' && llmConnectionId == null
+                  ? null
+                  : () => Navigator.pop(context, true),
               child: Text(widget.tx('common.import', 'Importar')),
             ),
           ],
@@ -141,11 +227,21 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
     controller.dispose();
     if (accepted != true || url.isEmpty) return;
     await run('import', () async {
-      final result = await repository.importRepository(
-        widget.token,
-        url,
-        trackingMode: mode,
+      final result = await showDialog<ImportDraft>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => OfficialImportProgressDialog(
+          events: repository.importRepositoryStream(
+            widget.token,
+            url,
+            trackingMode: trackingMode,
+            importMode: importMode,
+            llmConnectionId: llmConnectionId,
+          ),
+          tx: widget.tx,
+        ),
       );
+      if (result == null || !mounted) return;
       await chooseAndApply(result);
     });
   }
@@ -348,6 +444,13 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
               widget
                   .tx('official.source_resources', '{count} objetos en el hub')
                   .replaceAll('{count}', '$resources'),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              source.importMode == 'llm'
+                  ? widget.tx('official.mode_llm', 'Análisis LLM')
+                  : widget.tx('official.mode_deterministic', 'Análisis manual'),
               style: Theme.of(context).textTheme.bodySmall,
             ),
             if (syncError.isNotEmpty) ...[

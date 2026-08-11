@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:app_flutter/core/network/api_client.dart';
 import 'package:app_flutter/features/admin/models/official_import_models.dart';
 import 'package:app_flutter/features/admin/pages/official_import_review_page.dart';
 import 'package:app_flutter/features/admin/repositories/admin_official_sources_repository.dart';
+import 'package:app_flutter/features/admin/widgets/official_import_progress_dialog.dart';
 import 'package:app_flutter/shared/graph/animated_resource_graph.dart';
 import 'package:app_flutter/shared/state/backend_controller.dart';
 import 'package:flutter/material.dart';
@@ -32,8 +34,129 @@ void main() {
     expect(draft.id, 'draft-1');
     expect(draft.components.single.selected, isFalse);
     expect(draft.components.single.state, 'new');
+    expect(draft.logs, isEmpty);
     expect(diff.counts['delete'], 3);
     expect(origin.sourcePath, 'skills/demo/SKILL.md');
+  });
+
+  test('separa los eventos de log de las advertencias', () {
+    final draft = ImportDraft.fromJson({
+      ..._draftJson(),
+      'security_warnings': [
+        'Revisar licencia',
+        'reviewer: referencia fuera del repositorio (../../guide.md)',
+        {
+          'level': 'log',
+          'code': 'external_markdown_reference',
+          'message': 'Referencia externa detectada',
+        },
+      ],
+    });
+
+    expect(draft.warnings, ['Revisar licencia']);
+    expect(draft.logs, [
+      'reviewer: referencia fuera del repositorio (../../guide.md)',
+      'Referencia externa detectada',
+    ]);
+  });
+
+  test('normaliza commands como prompts y conserva relaciones tipadas', () {
+    final component = ImportComponent.fromJson({
+      'component_id': 'plan',
+      'component_type': 'command',
+      'name': 'Plan',
+      'source_path': 'commands/plan.md',
+      'relations': [
+        {'target_id': 'reviewer', 'relation_type': 'orchestrates'},
+      ],
+    });
+
+    expect(component.effectiveType, 'prompt');
+    expect(component.relations.single.type, 'orchestrates');
+  });
+
+  test('separa idioma humano y lenguaje de ejecución de una tool', () {
+    final invalid = ImportComponent.fromJson({
+      'component_id': 'runner',
+      'component_type': 'tool',
+      'name': 'Runner',
+      'source_path': 'tools/runner.js',
+      'language': 'lang_javascript',
+      'tool_language': 'javascript',
+    });
+    final valid = ImportComponent.fromJson({
+      'component_id': 'runner',
+      'component_type': 'tool',
+      'name': 'Runner',
+      'source_path': 'tools/runner.py',
+      'language': 'lang_en',
+      'forced_tool_language': 'python',
+    });
+
+    expect(invalid.language, isEmpty);
+    expect(invalid.toolLanguage, isEmpty);
+    expect(valid.language, 'lang_en');
+    expect(valid.toolLanguage, 'python');
+  });
+
+  test('envía el modo LLM y la conexión seleccionada', () async {
+    SharedPreferences.setMockInitialValues({});
+    final backend = await BackendController.bootstrap();
+    Map<String, dynamic>? body;
+    final repository = AdminOfficialSourcesRepository(
+      apiClient: ApiClient(
+        backend,
+        client: MockClient((request) async {
+          body = jsonDecode(request.body) as Map<String, dynamic>;
+          return _json(_draftJson());
+        }),
+      ),
+    );
+
+    await repository.importRepository(
+      'token',
+      'https://github.com/example/demo',
+      importMode: 'llm',
+      llmConnectionId: 'connection-1',
+    );
+
+    expect(body?['import_mode'], 'llm');
+    expect(body?['llm_connection_id'], 'connection-1');
+  });
+
+  test('recibe progreso y resultado por streaming sin timeout corto', () async {
+    SharedPreferences.setMockInitialValues({});
+    final backend = await BackendController.bootstrap();
+    final repository = AdminOfficialSourcesRepository(
+      apiClient: ApiClient(
+        backend,
+        client: MockClient(
+          (_) async => http.Response(
+            'data: {"type":"started"}\n\n'
+            'data: {"type":"progress","stage":"llm_analyzing",'
+            '"current":1,"total":3,"files":20,"components":4,'
+            '"paths":["agents/reviewer.md"]}\n\n'
+            'data: {"type":"result","draft":${jsonEncode(_draftJson())}}\n\n',
+            200,
+            headers: {'content-type': 'text/event-stream'},
+          ),
+        ),
+      ),
+    );
+
+    final events = await repository
+        .importRepositoryStream(
+          'token',
+          'https://github.com/example/demo',
+          importMode: 'llm',
+          llmConnectionId: 'connection-1',
+        )
+        .toList();
+
+    expect(events.first.progress?.stage, 'llm_analyzing');
+    expect(events.first.progress?.components, 4);
+    expect(events.first.progress?.paths, ['agents/reviewer.md']);
+    expect(events.last.draft?.id, 'draft-1');
   });
 
   test('carga todos los componentes de un borrador paginado', () async {
@@ -109,16 +232,120 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        final tile = tester.widget<CheckboxListTile>(
-          find.widgetWithText(CheckboxListTile, 'Demo skill'),
-        );
-        expect(tile.value, isFalse);
+        expect(find.text('Demo skill'), findsNothing);
+        await tester.tap(find.text('skills (1)'));
+        await tester.pumpAndSettle();
+        if (width < 600) {
+          expect(
+            tester.widget<Checkbox>(find.byType(Checkbox).first).value,
+            isFalse,
+          );
+          expect(find.text('Aplicar cambios'), findsOneWidget);
+        } else {
+          final tile = tester.widget<CheckboxListTile>(
+            find.widgetWithText(CheckboxListTile, 'Demo skill'),
+          );
+          expect(tile.value, isFalse);
+        }
         expect(tester.takeException(), isNull, reason: 'width=$width');
+        await tester.tap(find.text('skills (1)'));
+        await tester.pumpAndSettle();
       }
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
     },
   );
+
+  testWidgets('muestra progreso y hallazgos del análisis LLM', (tester) async {
+    tester.view.physicalSize = const Size(360, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final events = StreamController<OfficialImportEvent>(sync: true);
+    addTearDown(events.close);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OfficialImportProgressDialog(
+          events: events.stream,
+          tx: (_, fallback) => fallback,
+        ),
+      ),
+    );
+    events.add(
+      const OfficialImportEvent(
+        progress: OfficialImportProgress(
+          stage: 'llm_analyzing',
+          current: 2,
+          total: 5,
+          files: 42,
+          components: 9,
+          paths: ['agents/reviewer.md', 'skills/review/SKILL.md'],
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('El LLM está analizando el repositorio'), findsOneWidget);
+    expect(find.text('Fragmento 2 de 5'), findsOneWidget);
+    expect(find.text('42 archivos · 9 candidatos encontrados'), findsOneWidget);
+    expect(find.text('Actividad (1)'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 2));
+    expect(find.text('00:02'), findsOneWidget);
+
+    events.add(
+      const OfficialImportEvent(
+        progress: OfficialImportProgress(
+          stage: 'llm_chunk_complete',
+          current: 2,
+          total: 5,
+          files: 42,
+          components: 10,
+          chunkComponents: 1,
+          chunkRelations: 2,
+          findings: [
+            OfficialImportFinding(
+              name: 'Reviewer',
+              resourceType: 'agent',
+              sourcePath: 'agents/reviewer.md',
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pump();
+    final activityButton = find.text('Actividad (3)', skipOffstage: false);
+    expect(activityButton, findsOneWidget);
+    await tester.ensureVisible(activityButton);
+    await tester.tap(activityButton);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(
+      find.textContaining(
+        'Detectado agent: Reviewer · agents/reviewer.md',
+        skipOffstage: false,
+      ),
+      findsOneWidget,
+    );
+    events.add(
+      const OfficialImportEvent(
+        error: 'El modelo no devolvió el manifiesto requerido',
+      ),
+    );
+    await tester.pump();
+    expect(
+      find.text('El modelo no devolvió el manifiesto requerido'),
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .widget<LinearProgressIndicator>(find.byType(LinearProgressIndicator))
+          .value,
+      closeTo(0.4, 0.001),
+    );
+    await tester.pump(const Duration(seconds: 2));
+    expect(find.text('00:02'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('seleccionar actualiza el borrador del servidor', (tester) async {
     tester.view.physicalSize = const Size(900, 900);
@@ -157,6 +384,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.text('Demo skill'), findsNothing);
+    await tester.tap(find.text('skills (1)'));
+    await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(CheckboxListTile, 'Demo skill'));
     await tester.pumpAndSettle();
 
@@ -169,6 +399,50 @@ void main() {
           .value,
       isTrue,
     );
+  });
+
+  testWidgets('el log técnico está oculto y se alterna desde su botón', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(900, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    SharedPreferences.setMockInitialValues({});
+    final backend = await BackendController.bootstrap();
+    final repository = AdminOfficialSourcesRepository(
+      apiClient: ApiClient(backend, client: MockClient((_) async => _json({}))),
+    );
+    final json = _draftJson();
+    json['security_warnings'] = [
+      'La licencia no está reconocida',
+      'reviewer: referencia fuera del repositorio (../../guide.md)',
+    ];
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OfficialImportReviewPage(
+          draft: ImportDraft.fromJson(json),
+          repository: repository,
+          token: 'token',
+          tx: (_, fallback) => fallback,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    const legacyLog =
+        'reviewer: referencia fuera del repositorio (../../guide.md)';
+    expect(find.text(legacyLog), findsNothing);
+    expect(find.text('La licencia no está reconocida'), findsNothing);
+    await tester.tap(find.text('Log (2)'));
+    await tester.pump();
+    expect(find.text(legacyLog), findsOneWidget);
+    expect(find.text('La licencia no está reconocida'), findsOneWidget);
+    await tester.tap(find.text('Log (2)'));
+    await tester.pump();
+    expect(find.text(legacyLog), findsNothing);
+    expect(find.text('La licencia no está reconocida'), findsNothing);
   });
 
   testWidgets('el grafo previo reutiliza el grafo animado de la aplicación', (

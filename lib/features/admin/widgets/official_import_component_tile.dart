@@ -13,6 +13,7 @@ class OfficialImportComponentTile extends StatelessWidget {
     required this.onToggle,
     required this.onClassify,
     required this.onLanguage,
+    required this.onToolLanguage,
     required this.onEditRelations,
     required this.onReviewTool,
     super.key,
@@ -24,112 +25,192 @@ class OfficialImportComponentTile extends StatelessWidget {
   final ValueChanged<bool> onToggle;
   final ValueChanged<String?> onClassify;
   final ValueChanged<String?> onLanguage;
+  final ValueChanged<String?> onToolLanguage;
   final VoidCallback onEditRelations;
   final VoidCallback onReviewTool;
 
   @override
   Widget build(BuildContext context) {
     final needsClassification = !component.materializable;
-    return CheckboxListTile(
-      key: ValueKey(component.id),
-      value: component.selected,
-      enabled: !busy && !component.securityBlocked,
-      onChanged: (value) => onToggle(value == true),
-      title: Wrap(
-        spacing: 8,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          Text(component.name),
-          ResourceTypeBadge(
-            type: component.effectiveType,
-            label: component.effectiveType,
-          ),
-          Chip(label: Text(component.state)),
-        ],
-      ),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            component.sourcePath,
-            style: const TextStyle(fontFamily: FncFonts.monospace),
-          ),
-          if (component.variants.isNotEmpty)
-            Text('${component.variants.length} variantes agrupadas'),
-          if (component.dependencies.isNotEmpty)
-            Text('Depende de: ${component.dependencies.join(', ')}'),
-          if (component.effectiveType == 'agent')
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TertiaryButton.icon(
-                onPressed: busy ? null : onEditRelations,
-                icon: const Icon(Icons.account_tree_outlined),
-                label: Text(tx('official.edit_relations', 'Editar relaciones')),
-              ),
+    final canSelect = component.materializable || component.forcedType != null;
+    final enabled = !busy && !component.securityBlocked && canSelect;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final mobile = constraints.maxWidth < 600;
+        final title = Wrap(
+          spacing: 8,
+          runSpacing: 6,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(component.name),
+            ResourceTypeBadge(
+              type: component.effectiveType,
+              label: component.effectiveType,
             ),
-          if (needsClassification)
-            SizedBox(
-              width: 220,
-              child: DropdownButtonFormField<String>(
-                isExpanded: true,
-                initialValue: component.forcedType,
-                decoration: InputDecoration(
-                  labelText: tx('official.classify_as', 'Clasificar como'),
-                ),
-                items: const [
-                  DropdownMenuItem(value: 'skill', child: Text('skill')),
-                  DropdownMenuItem(value: 'prompt', child: Text('prompt')),
-                  DropdownMenuItem(
-                    value: 'knowledge',
-                    child: Text('knowledge'),
+            Chip(label: Text(component.state)),
+            if (component.omitted)
+              Chip(label: Text(tx('official.omitted', 'Omitido'))),
+          ],
+        );
+        final details = _details(
+          context,
+          needsClassification: needsClassification,
+          fieldWidth: mobile ? constraints.maxWidth : 220,
+        );
+        if (!mobile) {
+          return CheckboxListTile(
+            key: ValueKey(component.id),
+            value: component.selected,
+            enabled: enabled,
+            onChanged: canSelect ? (value) => onToggle(value == true) : null,
+            title: title,
+            subtitle: details,
+          );
+        }
+        return Padding(
+          key: ValueKey(component.id),
+          padding: const EdgeInsets.fromLTRB(8, 4, 8, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Semantics(
+                    label: component.name,
+                    checked: component.selected,
+                    child: Checkbox(
+                      value: component.selected,
+                      onChanged: enabled
+                          ? (value) => onToggle(value == true)
+                          : null,
+                    ),
                   ),
-                  DropdownMenuItem(value: 'tool', child: Text('tool')),
+                  const SizedBox(width: 4),
+                  Expanded(child: title),
                 ],
-                onChanged: busy ? null : onClassify,
               ),
-            ),
-          SizedBox(
-            width: 220,
-            child: DropdownButtonFormField<String>(
-              isExpanded: true,
-              initialValue: component.language.isEmpty
-                  ? ''
-                  : component.language,
-              decoration: InputDecoration(
-                labelText: tx('official.language', 'Idioma'),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: details,
               ),
-              items: const [
-                DropdownMenuItem(value: '', child: Text('Sin especificar')),
-                DropdownMenuItem(value: 'lang_es', child: Text('Español')),
-                DropdownMenuItem(value: 'lang_en', child: Text('English')),
-                DropdownMenuItem(value: 'lang_fr', child: Text('Français')),
-                DropdownMenuItem(value: 'lang_de', child: Text('Deutsch')),
-                DropdownMenuItem(value: 'lang_it', child: Text('Italiano')),
-                DropdownMenuItem(value: 'lang_pt', child: Text('Português')),
-              ],
-              onChanged: busy ? null : onLanguage,
-            ),
+            ],
           ),
-          if (component.securityReviewRequired ||
-              component.effectiveType == 'tool')
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TertiaryButton.icon(
-                onPressed: busy ? null : onReviewTool,
-                icon: Icon(
-                  component.securityAccepted
-                      ? Icons.verified_outlined
-                      : Icons.code,
-                ),
-                label: Text(
-                  component.securityAccepted
-                      ? tx('official.reviewed', 'Código revisado')
-                      : tx('official.review_code', 'Revisar código'),
-                ),
-              ),
-            ),
-        ],
-      ),
+        );
+      },
     );
   }
+
+  Widget _details(
+    BuildContext context, {
+    required bool needsClassification,
+    required double fieldWidth,
+  }) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        component.sourcePath,
+        style: const TextStyle(fontFamily: FncFonts.monospace),
+      ),
+      if (component.variants.isNotEmpty)
+        Text('${component.variants.length} variantes agrupadas'),
+      if (component.dependencies.isNotEmpty)
+        Text('Depende de: ${component.dependencies.join(', ')}'),
+      for (final relation in component.relations)
+        Text('${relation.type}: ${relation.targetId}'),
+      if (component.omitted)
+        Text(
+          tx(
+            'official.omitted_explanation',
+            'No se importará. Puedes clasificarlo manualmente si realmente es un recurso.',
+          ),
+        ),
+      if (component.effectiveType == 'agent')
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TertiaryButton.icon(
+            onPressed: busy ? null : onEditRelations,
+            icon: const Icon(Icons.account_tree_outlined),
+            label: Text(tx('official.edit_relations', 'Editar relaciones')),
+          ),
+        ),
+      if (needsClassification)
+        SizedBox(
+          width: fieldWidth,
+          child: DropdownButtonFormField<String>(
+            isExpanded: true,
+            initialValue: component.forcedType,
+            decoration: InputDecoration(
+              labelText: tx('official.classify_as', 'Clasificar como'),
+            ),
+            items: const [
+              DropdownMenuItem(value: 'agent', child: Text('agent')),
+              DropdownMenuItem(value: 'skill', child: Text('skill')),
+              DropdownMenuItem(value: 'prompt', child: Text('prompt')),
+              DropdownMenuItem(value: 'knowledge', child: Text('knowledge')),
+              DropdownMenuItem(value: 'tool', child: Text('tool')),
+              DropdownMenuItem(value: 'memory', child: Text('memory')),
+              DropdownMenuItem(value: 'workflow', child: Text('workflow')),
+            ],
+            onChanged: busy ? null : onClassify,
+          ),
+        ),
+      SizedBox(
+        width: fieldWidth,
+        child: DropdownButtonFormField<String>(
+          isExpanded: true,
+          initialValue: component.language.isEmpty ? '' : component.language,
+          decoration: InputDecoration(
+            labelText: tx('official.language', 'Idioma'),
+          ),
+          items: const [
+            DropdownMenuItem(value: '', child: Text('Sin especificar')),
+            DropdownMenuItem(value: 'lang_es', child: Text('Español')),
+            DropdownMenuItem(value: 'lang_en', child: Text('English')),
+            DropdownMenuItem(value: 'lang_fr', child: Text('Français')),
+            DropdownMenuItem(value: 'lang_de', child: Text('Deutsch')),
+            DropdownMenuItem(value: 'lang_it', child: Text('Italiano')),
+            DropdownMenuItem(value: 'lang_pt', child: Text('Português')),
+            DropdownMenuItem(value: 'lang_zh', child: Text('中文')),
+            DropdownMenuItem(value: 'lang_ja', child: Text('日本語')),
+            DropdownMenuItem(value: 'lang_ar', child: Text('العربية')),
+          ],
+          onChanged: busy ? null : onLanguage,
+        ),
+      ),
+      if (component.effectiveType == 'tool')
+        SizedBox(
+          width: fieldWidth,
+          child: DropdownButtonFormField<String>(
+            isExpanded: true,
+            initialValue: component.toolLanguage,
+            decoration: InputDecoration(
+              labelText: tx('official.tool_language', 'Lenguaje de ejecución'),
+            ),
+            items: const [
+              DropdownMenuItem(value: '', child: Text('Sin especificar')),
+              DropdownMenuItem(value: 'python', child: Text('Python')),
+              DropdownMenuItem(value: 'shell', child: Text('Shell')),
+              DropdownMenuItem(value: 'cpp', child: Text('C++')),
+            ],
+            onChanged: busy ? null : onToolLanguage,
+          ),
+        ),
+      if (component.securityReviewRequired || component.effectiveType == 'tool')
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TertiaryButton.icon(
+            onPressed: busy ? null : onReviewTool,
+            icon: Icon(
+              component.securityAccepted ? Icons.verified_outlined : Icons.code,
+            ),
+            label: Text(
+              component.securityAccepted
+                  ? tx('official.reviewed', 'Código revisado')
+                  : tx('official.review_code', 'Revisar código'),
+            ),
+          ),
+        ),
+    ],
+  );
 }

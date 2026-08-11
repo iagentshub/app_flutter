@@ -148,6 +148,31 @@ void main() {
     expect(syncBodies.first, isNull);
     expect(jsonDecode(syncBodies.last!)['component_ids'], isEmpty);
   });
+
+  testWidgets('el diálogo de importación cabe en móvil', (tester) async {
+    tester.view.physicalSize = const Size(360, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    SharedPreferences.setMockInitialValues({});
+    final backend = await BackendController.bootstrap();
+    final client = MockClient((request) async {
+      if (request.url.path == '/api/admin/official-sources' ||
+          request.url.path == '/api/admin/connections') {
+        return _json([]);
+      }
+      return _json({}, statusCode: 404);
+    });
+
+    await tester.pumpWidget(_tab(backend, client));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Añadir fuente oficial'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Importar desde GitHub o GitLab'), findsOneWidget);
+    expect(find.text('Modo de análisis'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 Widget _tab(BackendController backend, http.Client client) {

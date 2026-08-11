@@ -15,6 +15,8 @@ class OfficialSource {
     this.lastCommitSha,
     this.syncState = 'idle',
     this.lastSyncError,
+    this.importMode = 'deterministic',
+    this.llmConnectionId,
   });
 
   factory OfficialSource.fromJson(Map<String, dynamic> json) => OfficialSource(
@@ -32,6 +34,8 @@ class OfficialSource {
     lastCommitSha: json['last_commit_sha']?.toString(),
     syncState: '${json['sync_state'] ?? 'idle'}',
     lastSyncError: json['last_sync_error']?.toString(),
+    importMode: '${json['import_mode'] ?? 'deterministic'}',
+    llmConnectionId: json['llm_connection_id']?.toString(),
     resources: (json['resources'] as List? ?? const [])
         .whereType<Map>()
         .map((item) => Map<String, dynamic>.from(item))
@@ -52,6 +56,8 @@ class OfficialSource {
   final String? lastCommitSha;
   final String syncState;
   final String? lastSyncError;
+  final String importMode;
+  final String? llmConnectionId;
   final List<Map<String, dynamic>> resources;
 
   Map<String, dynamic> toJson() => {
@@ -69,8 +75,41 @@ class OfficialSource {
     'last_commit_sha': lastCommitSha,
     'sync_state': syncState,
     'last_sync_error': lastSyncError,
+    'import_mode': importMode,
+    'llm_connection_id': llmConnectionId,
     'resources': resources,
   };
+}
+
+const _contentLanguageLabels = {
+  'lang_es',
+  'lang_en',
+  'lang_fr',
+  'lang_de',
+  'lang_pt',
+  'lang_it',
+  'lang_zh',
+  'lang_ja',
+  'lang_ar',
+};
+const _toolLanguages = {'python', 'shell', 'cpp'};
+
+String _knownValue(Object? value, Set<String> allowed) {
+  final normalized = '${value ?? ''}';
+  return allowed.contains(normalized) ? normalized : '';
+}
+
+String _componentToolLanguage(Map<String, dynamic> json) {
+  final explicit = _knownValue(
+    json['forced_tool_language'] ?? json['tool_language'],
+    _toolLanguages,
+  );
+  if (explicit.isNotEmpty) return explicit;
+  final path = '${json['source_path'] ?? ''}'.toLowerCase();
+  if (path.endsWith('.py')) return 'python';
+  if (path.endsWith('.sh')) return 'shell';
+  if (path.endsWith('.cpp')) return 'cpp';
+  return '';
 }
 
 class ImportComponent {
@@ -88,9 +127,11 @@ class ImportComponent {
     this.content = '',
     this.forcedType,
     this.language = '',
+    this.toolLanguage = '',
     this.securityAccepted = false,
     this.securityBlocked = false,
     this.securityReviewRequired = false,
+    this.relations = const [],
   });
 
   factory ImportComponent.fromJson(Map<String, dynamic> json) =>
@@ -111,10 +152,20 @@ class ImportComponent {
             .map((item) => '$item')
             .toList(growable: false),
         forcedType: json['forced_type']?.toString(),
-        language: '${json['forced_language'] ?? json['language'] ?? ''}',
+        language: _knownValue(
+          json['forced_language'] ?? json['language'],
+          _contentLanguageLabels,
+        ),
+        toolLanguage: _componentToolLanguage(json),
         securityAccepted: json['security_accepted'] == true,
         securityBlocked: json['security_blocked'] == true,
         securityReviewRequired: json['security_review_required'] == true,
+        relations: (json['relations'] as List? ?? const [])
+            .whereType<Map>()
+            .map(
+              (item) => ImportRelation.fromJson(item.cast<String, dynamic>()),
+            )
+            .toList(growable: false),
       );
 
   final String id;
@@ -130,11 +181,145 @@ class ImportComponent {
   final List<String> variants;
   final String? forcedType;
   final String language;
+  final String toolLanguage;
   final bool securityAccepted;
   final bool securityBlocked;
   final bool securityReviewRequired;
+  final List<ImportRelation> relations;
 
-  String get effectiveType => forcedType ?? type;
+  String get effectiveType {
+    final value = forcedType ?? type;
+    return value == 'command' ? 'prompt' : value;
+  }
+
+  bool get omitted => !materializable && forcedType == null;
+}
+
+class ImportRelation {
+  const ImportRelation({
+    required this.targetId,
+    required this.type,
+    this.evidencePath = '',
+    this.evidence = '',
+  });
+
+  factory ImportRelation.fromJson(Map<String, dynamic> json) => ImportRelation(
+    targetId: '${json['target_id'] ?? ''}',
+    type: '${json['relation_type'] ?? 'uses'}',
+    evidencePath: '${json['evidence_path'] ?? ''}',
+    evidence: '${json['evidence'] ?? ''}',
+  );
+
+  final String targetId;
+  final String type;
+  final String evidencePath;
+  final String evidence;
+}
+
+class OfficialImportLlmConnection {
+  const OfficialImportLlmConnection({
+    required this.id,
+    required this.name,
+    required this.type,
+    required this.model,
+  });
+
+  factory OfficialImportLlmConnection.fromJson(Map<String, dynamic> json) =>
+      OfficialImportLlmConnection(
+        id: '${json['id'] ?? ''}',
+        name: '${json['name'] ?? json['label'] ?? json['type'] ?? ''}',
+        type: '${json['type'] ?? ''}'.toLowerCase(),
+        model: '${json['model'] ?? ''}',
+      );
+
+  final String id;
+  final String name;
+  final String type;
+  final String model;
+
+  static const supportedTypes = {
+    'openai',
+    'claude',
+    'gemini',
+    'grok',
+    'nvidia',
+    'qwen',
+    'ollama',
+  };
+
+  bool get compatible => id.isNotEmpty && supportedTypes.contains(type);
+  String get displayName => model.isEmpty ? '$name · $type' : '$name · $model';
+}
+
+class OfficialImportProgress {
+  const OfficialImportProgress({
+    required this.stage,
+    this.current = 0,
+    this.total = 0,
+    this.files = 0,
+    this.components = 0,
+    this.paths = const [],
+    this.chunkComponents = 0,
+    this.chunkRelations = 0,
+    this.findings = const [],
+  });
+
+  factory OfficialImportProgress.fromJson(Map<String, dynamic> json) =>
+      OfficialImportProgress(
+        stage: '${json['stage'] ?? 'starting'}',
+        current: (json['current'] as num?)?.toInt() ?? 0,
+        total: (json['total'] as num?)?.toInt() ?? 0,
+        files: (json['files'] as num?)?.toInt() ?? 0,
+        components: (json['components'] as num?)?.toInt() ?? 0,
+        paths: (json['paths'] as List? ?? const [])
+            .map((item) => '$item')
+            .toList(growable: false),
+        chunkComponents: (json['chunk_components'] as num?)?.toInt() ?? 0,
+        chunkRelations: (json['chunk_relations'] as num?)?.toInt() ?? 0,
+        findings: (json['findings'] as List? ?? const [])
+            .whereType<Map>()
+            .map((item) => OfficialImportFinding.fromJson(item.cast()))
+            .toList(growable: false),
+      );
+
+  final String stage;
+  final int current;
+  final int total;
+  final int files;
+  final int components;
+  final List<String> paths;
+  final int chunkComponents;
+  final int chunkRelations;
+  final List<OfficialImportFinding> findings;
+
+  double? get fraction => total > 0 ? current / total : null;
+}
+
+class OfficialImportFinding {
+  const OfficialImportFinding({
+    required this.name,
+    required this.resourceType,
+    required this.sourcePath,
+  });
+
+  factory OfficialImportFinding.fromJson(Map<String, dynamic> json) =>
+      OfficialImportFinding(
+        name: '${json['name'] ?? ''}',
+        resourceType: '${json['resource_type'] ?? ''}',
+        sourcePath: '${json['source_path'] ?? ''}',
+      );
+
+  final String name;
+  final String resourceType;
+  final String sourcePath;
+}
+
+class OfficialImportEvent {
+  const OfficialImportEvent({this.progress, this.draft, this.error});
+
+  final OfficialImportProgress? progress;
+  final ImportDraft? draft;
+  final String? error;
 }
 
 class ImportDraft {
@@ -144,12 +329,34 @@ class ImportDraft {
     required this.components,
     required this.errors,
     required this.warnings,
+    required this.logs,
     required this.status,
     required this.expired,
   });
 
   factory ImportDraft.fromJson(Map<String, dynamic> json) {
     final rawSource = (json['source'] as Map?)?.cast<String, dynamic>() ?? json;
+    final warnings = <String>[];
+    final logs = <String>[];
+    for (final item in json['security_warnings'] as List? ?? const []) {
+      if (item is Map) {
+        final notice = item.cast<String, dynamic>();
+        final message = '${notice['message'] ?? ''}'.trim();
+        if (message.isEmpty) continue;
+        if (notice['level'] == 'log') {
+          logs.add(message);
+        } else {
+          warnings.add(message);
+        }
+      } else {
+        final message = '$item';
+        if (_isLegacyImportLog(message)) {
+          logs.add(message);
+        } else {
+          warnings.add(message);
+        }
+      }
+    }
     final selected = (json['selected'] as List? ?? const [])
         .map((item) => '$item')
         .toSet();
@@ -170,9 +377,8 @@ class ImportDraft {
       errors: (json['errors'] as List? ?? const [])
           .map((item) => '$item')
           .toList(growable: false),
-      warnings: (json['security_warnings'] as List? ?? const [])
-          .map((item) => '$item')
-          .toList(growable: false),
+      warnings: List.unmodifiable(warnings),
+      logs: List.unmodifiable(logs),
       status: '${json['status'] ?? 'pending'}',
       expired: json['expired'] == true,
     );
@@ -183,6 +389,7 @@ class ImportDraft {
   final List<ImportComponent> components;
   final List<String> errors;
   final List<String> warnings;
+  final List<String> logs;
   final String status;
   final bool expired;
 
@@ -192,10 +399,15 @@ class ImportDraft {
     components: value,
     errors: errors,
     warnings: warnings,
+    logs: logs,
     status: status,
     expired: expired,
   );
 }
+
+bool _isLegacyImportLog(String message) => RegExp(
+  r'^[^:]+: referencia fuera del repositorio \(.+\)$',
+).hasMatch(message.trim());
 
 class ImportDiff {
   const ImportDiff({required this.counts, required this.warnings});

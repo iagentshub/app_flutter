@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../../../core/network/api_repository.dart';
 import '../../../models/admin/admin_explore_models.dart';
 import '../models/official_import_models.dart';
@@ -32,6 +34,8 @@ class AdminOfficialSourcesRepository extends ApiRepository {
     String token,
     String repositoryUrl, {
     String trackingMode = 'release',
+    String importMode = 'deterministic',
+    String? llmConnectionId,
   }) async {
     final response = await apiClient.post(
       '/api/admin/official-sources/inspect',
@@ -40,10 +44,56 @@ class AdminOfficialSourcesRepository extends ApiRepository {
         'repository_url': repositoryUrl,
         'tracking_mode': trackingMode,
         'tracking_ref': 'main',
+        'import_mode': importMode,
+        'llm_connection_id': ?llmConnectionId,
       },
     );
     _invalidate();
     return _hydrateDraft(token, response.json);
+  }
+
+  Stream<OfficialImportEvent> importRepositoryStream(
+    String token,
+    String repositoryUrl, {
+    String trackingMode = 'release',
+    String importMode = 'deterministic',
+    String? llmConnectionId,
+  }) async* {
+    final lines = apiClient.postStream(
+      '/api/admin/official-sources/inspect-stream',
+      gaToken: token,
+      body: {
+        'repository_url': repositoryUrl,
+        'tracking_mode': trackingMode,
+        'tracking_ref': 'main',
+        'import_mode': importMode,
+        'llm_connection_id': ?llmConnectionId,
+      },
+    );
+    await for (final line in lines) {
+      if (!line.startsWith('data: ')) continue;
+      final decoded = jsonDecode(line.substring(6));
+      if (decoded is! Map) continue;
+      final event = decoded.cast<String, dynamic>();
+      switch ('${event['type'] ?? ''}') {
+        case 'progress':
+          yield OfficialImportEvent(
+            progress: OfficialImportProgress.fromJson(event),
+          );
+          break;
+        case 'result':
+          final value = event['draft'];
+          if (value is Map) {
+            yield OfficialImportEvent(
+              draft: await _hydrateDraft(token, value.cast<String, dynamic>()),
+            );
+          }
+          break;
+        case 'error':
+          yield OfficialImportEvent(error: '${event['message'] ?? ''}');
+          break;
+      }
+    }
   }
 
   Future<ImportDraft> createSyncDraft(String token, String sourceId) async {
@@ -61,6 +111,7 @@ class AdminOfficialSourcesRepository extends ApiRepository {
     bool? selected,
     String? forcedType,
     String? forcedLanguage,
+    String? forcedToolLanguage,
     bool? securityAccepted,
     List<String>? dependencies,
   }) async {
@@ -73,6 +124,7 @@ class AdminOfficialSourcesRepository extends ApiRepository {
           MapEntry('selected', selected),
           MapEntry('forced_type', forcedType),
           MapEntry('forced_language', forcedLanguage),
+          MapEntry('forced_tool_language', forcedToolLanguage),
           MapEntry('security_accepted', securityAccepted),
           MapEntry('dependencies', dependencies),
         ].where((entry) => entry.value != null),

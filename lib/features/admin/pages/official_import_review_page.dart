@@ -5,9 +5,8 @@ import '../../../shared/graph/graph_dialog.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../models/official_import_models.dart';
 import '../repositories/admin_official_sources_repository.dart';
-import '../widgets/official_import_component_tile.dart';
-
-typedef OfficialImportTx = String Function(String path, String fallback);
+import '../widgets/official_import_groups.dart';
+import '../widgets/official_import_message_box.dart';
 
 class OfficialImportReviewPage extends StatefulWidget {
   const OfficialImportReviewPage({
@@ -21,7 +20,7 @@ class OfficialImportReviewPage extends StatefulWidget {
   final ImportDraft draft;
   final AdminOfficialSourcesRepository repository;
   final String token;
-  final OfficialImportTx tx;
+  final String Function(String path, String fallback) tx;
 
   @override
   State<OfficialImportReviewPage> createState() =>
@@ -34,6 +33,8 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
   String type = 'all';
   String state = 'all';
   bool busy = false;
+  bool showOmitted = false;
+  bool showLogs = false;
   String? error;
 
   @override
@@ -46,6 +47,7 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
     final needle = search.text.trim().toLowerCase();
     return draft.components
         .where((component) {
+          if (!showOmitted && component.omitted) return false;
           if (type != 'all' && component.effectiveType != type) return false;
           if (state != 'all' && component.state != state) return false;
           if (needle.isEmpty) return true;
@@ -118,6 +120,16 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
       forcedLanguage: value ?? '',
     ),
   );
+
+  Future<void> setToolLanguage(ImportComponent component, String? value) =>
+      mutate(
+        () async => widget.repository.updateDraftComponent(
+          widget.token,
+          draft.id,
+          component.id,
+          forcedToolLanguage: value ?? '',
+        ),
+      );
 
   Future<void> reviewTool(ImportComponent component) async {
     var accepted = component.securityAccepted;
@@ -208,7 +220,6 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
                 'skill',
                 'knowledge',
                 'prompt',
-                'command',
                 'tool',
                 'memory',
               }.contains(item.effectiveType),
@@ -270,6 +281,9 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
       if ((!component.materializable && component.forcedType == null) ||
           component.securityBlocked ||
           (component.effectiveType == 'tool' && !component.securityAccepted)) {
+        return false;
+      }
+      if (component.effectiveType == 'tool' && component.toolLanguage.isEmpty) {
         return false;
       }
     }
@@ -394,79 +408,89 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
           : '/';
       groups.putIfAbsent(directory, () => []).add(component);
     }
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.tx('official.review_title', 'Revisar repositorio oficial'),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: PrimaryButton(
-              onPressed: canApply ? apply : null,
-              child: Text(widget.tx('official.apply', 'Aplicar cambios')),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final mobile = constraints.maxWidth < 700;
+        final padding = constraints.maxWidth >= 1024 ? 28.0 : 12.0;
+        final groupWidgets = OfficialImportGroups(
+          groups: groups,
+          busy: busy,
+          tx: widget.tx,
+          onToggle: toggle,
+          onClassify: setClassification,
+          onLanguage: setLanguage,
+          onToolLanguage: setToolLanguage,
+          onEditRelations: editRelations,
+          onReviewTool: reviewTool,
+        );
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(
+              widget.tx('official.review_title', 'Revisar repositorio oficial'),
             ),
+            actions: mobile
+                ? null
+                : [
+                    Padding(
+                      padding: const EdgeInsets.only(right: 12),
+                      child: PrimaryButton(
+                        onPressed: canApply ? apply : null,
+                        child: Text(
+                          widget.tx('official.apply', 'Aplicar cambios'),
+                        ),
+                      ),
+                    ),
+                  ],
           ),
-        ],
-      ),
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final padding = constraints.maxWidth >= 1024 ? 28.0 : 12.0;
-            return Column(
-              children: [
-                Padding(
-                  padding: EdgeInsets.fromLTRB(padding, 12, padding, 8),
-                  child: _header(),
-                ),
-                Expanded(
-                  child: ListView(
-                    padding: EdgeInsets.fromLTRB(padding, 0, padding, 24),
+          bottomNavigationBar: mobile
+              ? SafeArea(
+                  minimum: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                  child: PrimaryButton(
+                    onPressed: canApply ? apply : null,
+                    child: Text(widget.tx('official.apply', 'Aplicar cambios')),
+                  ),
+                )
+              : null,
+          body: SafeArea(
+            child: mobile
+                ? ListView(
+                    padding: EdgeInsets.fromLTRB(padding, 12, padding, 24),
                     children: [
-                      for (final entry in groups.entries)
-                        Card(
-                          child: ExpansionTile(
-                            initiallyExpanded: true,
-                            title: Text('${entry.key} (${entry.value.length})'),
-                            children: [
-                              for (final component in entry.value)
-                                OfficialImportComponentTile(
-                                  component: component,
-                                  busy: busy,
-                                  tx: widget.tx,
-                                  onToggle: (value) => toggle(component, value),
-                                  onClassify: (value) =>
-                                      setClassification(component, value),
-                                  onLanguage: (value) =>
-                                      setLanguage(component, value),
-                                  onEditRelations: () =>
-                                      editRelations(component),
-                                  onReviewTool: () => reviewTool(component),
-                                ),
-                            ],
-                          ),
+                      _header(
+                        availableWidth: constraints.maxWidth - (padding * 2),
+                        mobile: true,
+                      ),
+                      const SizedBox(height: 8),
+                      groupWidgets,
+                    ],
+                  )
+                : Column(
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(padding, 12, padding, 8),
+                        child: _header(
+                          availableWidth: constraints.maxWidth - (padding * 2),
+                          mobile: false,
                         ),
-                      if (groups.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Center(
-                            child: Text(
-                              widget.tx('common.no_results', 'Sin resultados'),
-                            ),
-                          ),
+                      ),
+                      Expanded(
+                        child: ListView(
+                          padding: EdgeInsets.fromLTRB(padding, 0, padding, 24),
+                          children: [groupWidgets],
                         ),
+                      ),
                     ],
                   ),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _header() => Column(
+  Widget _header({
+    required double availableWidth,
+    required bool mobile,
+  }) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Text(
@@ -475,18 +499,32 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
       ),
       const SizedBox(height: 8),
       if (draft.errors.isNotEmpty)
-        _messageBox(draft.errors, Theme.of(context).colorScheme.error),
-      if (draft.warnings.isNotEmpty)
-        _messageBox(draft.warnings, Theme.of(context).colorScheme.tertiary),
+        OfficialImportMessageBox(
+          messages: draft.errors,
+          color: Theme.of(context).colorScheme.error,
+        ),
+      if (showLogs && draft.warnings.isNotEmpty)
+        OfficialImportMessageBox(
+          messages: draft.warnings,
+          color: Theme.of(context).colorScheme.tertiary,
+        ),
+      if (showLogs && draft.logs.isNotEmpty)
+        OfficialImportMessageBox(
+          messages: draft.logs,
+          color: Theme.of(context).colorScheme.outline,
+        ),
       if (error != null)
-        _messageBox([error!], Theme.of(context).colorScheme.error),
+        OfficialImportMessageBox(
+          messages: [error!],
+          color: Theme.of(context).colorScheme.error,
+        ),
       const SizedBox(height: 8),
       Wrap(
         spacing: 8,
         runSpacing: 8,
         children: [
           SizedBox(
-            width: 320,
+            width: mobile ? availableWidth : 320,
             child: TextField(
               controller: search,
               onChanged: (_) => setState(() {}),
@@ -497,6 +535,7 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
             ),
           ),
           _filter(
+            width: mobile ? availableWidth : 180,
             value: type,
             label: widget.tx('common.type', 'Tipo'),
             values: const [
@@ -504,7 +543,6 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
               'agent',
               'skill',
               'prompt',
-              'command',
               'knowledge',
               'memory',
               'tool',
@@ -513,7 +551,25 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
             ],
             onChanged: (value) => setState(() => type = value ?? 'all'),
           ),
+          FilterChip(
+            selected: showOmitted,
+            label: Text(widget.tx('official.show_omitted', 'Mostrar omitidos')),
+            onSelected: busy
+                ? null
+                : (value) => setState(() => showOmitted = value),
+          ),
+          if (draft.warnings.isNotEmpty || draft.logs.isNotEmpty)
+            FilterChip(
+              selected: showLogs,
+              avatar: const Icon(Icons.receipt_long_outlined, size: 18),
+              label: Text(
+                '${widget.tx('official.log', 'Log')} '
+                '(${draft.warnings.length + draft.logs.length})',
+              ),
+              onSelected: (value) => setState(() => showLogs = value),
+            ),
           _filter(
+            width: mobile ? availableWidth : 180,
             value: state,
             label: widget.tx('common.status', 'Estado'),
             values: const [
@@ -551,24 +607,14 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
     ],
   );
 
-  Widget _messageBox(List<String> messages, Color color) => Container(
-    width: double.infinity,
-    margin: const EdgeInsets.only(bottom: 8),
-    padding: const EdgeInsets.all(10),
-    decoration: BoxDecoration(
-      border: Border.all(color: color),
-      borderRadius: BorderRadius.circular(8),
-    ),
-    child: Text(messages.join('\n')),
-  );
-
   Widget _filter({
+    required double width,
     required String value,
     required String label,
     required List<String> values,
     required ValueChanged<String?> onChanged,
   }) => SizedBox(
-    width: 180,
+    width: width,
     child: DropdownButtonFormField<String>(
       isExpanded: true,
       initialValue: value,
