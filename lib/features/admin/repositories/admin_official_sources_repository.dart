@@ -1,4 +1,6 @@
 import '../../../core/network/api_repository.dart';
+import '../../../models/admin/admin_explore_models.dart';
+import '../models/official_import_models.dart';
 
 /// Fuentes oficiales del panel de administración.
 ///
@@ -8,26 +10,31 @@ import '../../../core/network/api_repository.dart';
 class AdminOfficialSourcesRepository extends ApiRepository {
   AdminOfficialSourcesRepository({required super.apiClient});
 
-  Future<List<Map<String, dynamic>>> list(String token) async {
+  Future<List<OfficialSource>> list(String token) async {
     final response = await apiClient.get(
       '/api/admin/official-sources',
       gaToken: token,
     );
     final payload = response.body;
     return payload is List
-        ? payload.whereType<Map<String, dynamic>>().toList()
-        : const [];
+        ? payload
+              .whereType<Map>()
+              .map(
+                (item) => OfficialSource.fromJson(item.cast<String, dynamic>()),
+              )
+              .toList(growable: false)
+        : const <OfficialSource>[];
   }
 
   /// Alta de la fuente + primera descarga. Devuelve sus componentes para que
   /// el admin elija qué se queda, sin materializar nada todavía.
-  Future<Map<String, dynamic>> importRepository(
+  Future<ImportDraft> importRepository(
     String token,
     String repositoryUrl, {
     String trackingMode = 'release',
   }) async {
     final response = await apiClient.post(
-      '/api/admin/official-sources/import',
+      '/api/admin/official-sources/inspect',
       gaToken: token,
       body: {
         'repository_url': repositoryUrl,
@@ -36,7 +43,116 @@ class AdminOfficialSourcesRepository extends ApiRepository {
       },
     );
     _invalidate();
+    return _hydrateDraft(token, response.json);
+  }
+
+  Future<ImportDraft> createSyncDraft(String token, String sourceId) async {
+    final response = await apiClient.post(
+      '/api/admin/official-sources/${Uri.encodeComponent(sourceId)}/sync',
+      gaToken: token,
+    );
+    return _hydrateDraft(token, response.json);
+  }
+
+  Future<ImportComponent> updateDraftComponent(
+    String token,
+    String draftId,
+    String componentId, {
+    bool? selected,
+    String? forcedType,
+    String? forcedLanguage,
+    bool? securityAccepted,
+    List<String>? dependencies,
+  }) async {
+    final response = await apiClient.patch(
+      '/api/admin/official-source-drafts/${Uri.encodeComponent(draftId)}/'
+      'components/${Uri.encodeComponent(componentId)}',
+      gaToken: token,
+      body: Map<String, dynamic>.fromEntries(
+        <MapEntry<String, dynamic>>[
+          MapEntry('selected', selected),
+          MapEntry('forced_type', forcedType),
+          MapEntry('forced_language', forcedLanguage),
+          MapEntry('security_accepted', securityAccepted),
+          MapEntry('dependencies', dependencies),
+        ].where((entry) => entry.value != null),
+      ),
+    );
+    return ImportComponent.fromJson(response.json);
+  }
+
+  Future<ImportDraft> getDraft(String token, String draftId) async {
+    final response = await apiClient.get(
+      '/api/admin/official-source-drafts/${Uri.encodeComponent(draftId)}',
+      gaToken: token,
+    );
+    return _hydrateDraft(token, response.json);
+  }
+
+  Future<ImportDraft> _hydrateDraft(
+    String token,
+    Map<String, dynamic> payload,
+  ) async {
+    final draft = ImportDraft.fromJson(payload);
+    final total =
+        (payload['component_count'] as num?)?.toInt() ??
+        draft.components.length;
+    if (draft.components.length >= total) return draft;
+
+    const pageSize = 500;
+    final components = <ImportComponent>[];
+    for (var offset = 0; offset < total; offset += pageSize) {
+      final response = await apiClient.get(
+        '/api/admin/official-source-drafts/${Uri.encodeComponent(draft.id)}/'
+        'components?offset=$offset&limit=$pageSize',
+        gaToken: token,
+      );
+      final items = response.json['items'] as List? ?? const [];
+      components.addAll(
+        items.whereType<Map>().map(
+          (item) => ImportComponent.fromJson(item.cast<String, dynamic>()),
+        ),
+      );
+    }
+    return draft.withComponents(components);
+  }
+
+  Future<ImportDiff> getDiff(String token, String draftId) async {
+    final response = await apiClient.get(
+      '/api/admin/official-source-drafts/${Uri.encodeComponent(draftId)}/diff',
+      gaToken: token,
+    );
+    return ImportDiff.fromJson(response.json);
+  }
+
+  Future<AdminResourceGraph> getDraftGraph(String token, String draftId) async {
+    final response = await apiClient.get(
+      '/api/admin/official-source-drafts/${Uri.encodeComponent(draftId)}/graph',
+      gaToken: token,
+    );
+    return AdminResourceGraph.fromJson(response.json);
+  }
+
+  Future<Map<String, dynamic>> applyDraft(String token, String draftId) async {
+    final response = await apiClient.post(
+      '/api/admin/official-source-drafts/${Uri.encodeComponent(draftId)}/apply',
+      gaToken: token,
+    );
+    _invalidate();
     return response.json;
+  }
+
+  Future<OriginInfo> getOrigin(
+    String token, {
+    required String resourceType,
+    required String resourceId,
+  }) async {
+    final response = await apiClient.get(
+      '/api/admin/resources/${Uri.encodeComponent(resourceType)}/'
+      '${Uri.encodeComponent(resourceId)}/origin',
+      gaToken: token,
+    );
+    return OriginInfo.fromJson(response.json);
   }
 
   /// Sin [componentIds] solo mira qué trae la fuente; con lista, esa pasa a

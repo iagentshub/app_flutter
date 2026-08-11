@@ -7,6 +7,8 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../dialogs/official_source_dialogs.dart';
+import '../models/official_import_models.dart';
+import '../pages/official_import_review_page.dart';
 import '../repositories/admin_official_sources_repository.dart';
 
 /// Fuentes oficiales: repositorios de GitHub cuyo contenido se trae al hub
@@ -33,7 +35,7 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
   late final repository = AdminOfficialSourcesRepository(
     apiClient: widget.apiClient,
   );
-  List<Map<String, dynamic>> sources = const [];
+  List<OfficialSource> sources = const [];
   bool loading = true;
   String? error;
   final Set<String> busy = {};
@@ -150,25 +152,60 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
 
   /// Descarga la fuente, deja elegir qué se queda y lo aplica. Cancelar no
   /// cambia nada de lo que ya hubiera.
-  Future<void> chooseAndApply(Map<String, dynamic> fetched) async {
-    final source = (fetched['source'] as Map?)?.cast<String, dynamic>();
-    final components = fetched['components'] as List? ?? const [];
-    if (source == null || components.isEmpty || !mounted) return;
+  Future<void> chooseAndApply(ImportDraft draft) async {
+    if (draft.components.isEmpty || !mounted) return;
+    if (draft.id.isNotEmpty) {
+      final applied = await Navigator.of(context).push<Map<String, dynamic>>(
+        MaterialPageRoute(
+          builder: (_) => OfficialImportReviewPage(
+            draft: draft,
+            repository: repository,
+            token: widget.token,
+            tx: widget.tx,
+          ),
+        ),
+      );
+      if (applied == null || !mounted) return;
+      final kept = (applied['resources'] as List? ?? const []).length;
+      final removed = applied['removed'] ?? 0;
+      notify(
+        widget
+            .tx(
+              'official.sync_applied',
+              '{kept} objetos disponibles, {removed} eliminados',
+            )
+            .replaceAll('{kept}', '$kept')
+            .replaceAll('{removed}', '$removed'),
+      );
+      return;
+    }
+
+    // Compatibilidad temporal con backends anteriores al contrato de draft.
     final selected = await showOfficialComponentsDialog(
       context,
-      components: components,
-      alreadySelected: (fetched['selected'] as List? ?? const [])
-          .map((item) => item.toString())
+      components: draft.components
+          .map(
+            (item) => {
+              'component_id': item.id,
+              'component_type': item.type,
+              'name': item.name,
+              'source_path': item.sourcePath,
+              'dependencies': item.dependencies,
+              'materializable': item.materializable,
+            },
+          )
+          .toList(growable: false),
+      alreadySelected: draft.components
+          .where((item) => item.selected)
+          .map((item) => item.id)
           .toSet(),
-      errors: (fetched['errors'] as List? ?? const [])
-          .map((item) => item.toString())
-          .toList(),
+      errors: draft.errors,
       tx: widget.tx,
     );
     if (selected == null || !mounted) return;
     final applied = await repository.sync(
       widget.token,
-      source['id'].toString(),
+      draft.source.id,
       componentIds: selected,
     );
     final result = (applied['applied'] as Map?)?.cast<String, dynamic>();
@@ -186,29 +223,29 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
     );
   }
 
-  Future<void> syncSource(Map<String, dynamic> source) async {
-    final id = source['id'].toString();
+  Future<void> syncSource(OfficialSource source) async {
+    final id = source.id;
     await run(id, () async {
-      final fetched = await repository.sync(widget.token, id);
+      final fetched = await repository.createSyncDraft(widget.token, id);
       await chooseAndApply(fetched);
     });
   }
 
-  Future<void> editSource(Map<String, dynamic> source) async {
+  Future<void> editSource(OfficialSource source) async {
     final payload = await showOfficialSourceEditDialog(
       context,
-      source: source,
+      source: source.toJson(),
       tx: widget.tx,
     );
     if (payload == null || !mounted) return;
-    final id = source['id'].toString();
+    final id = source.id;
     await run(id, () => repository.updateSource(widget.token, id, payload));
   }
 
-  Future<void> deleteSource(Map<String, dynamic> source) async {
-    final id = source['id'].toString();
-    final name = source['name']?.toString().trim().isNotEmpty == true
-        ? source['name'].toString()
+  Future<void> deleteSource(OfficialSource source) async {
+    final id = source.id;
+    final name = source.name.trim().isNotEmpty
+        ? source.name
         : widget.tx('official.unnamed_package', 'Fuente sin nombre');
     final confirmed = await showConfirmActionDialog(
       context,
@@ -279,11 +316,11 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
 
   /// Misma anatomía que las demás cards del panel: título, contexto y
   /// acciones al pie.
-  Widget _sourceCard(Map<String, dynamic> source) {
-    final id = source['id'].toString();
-    final name = source['name']?.toString().trim() ?? '';
-    final syncError = source['last_sync_error']?.toString() ?? '';
-    final resources = (source['resources'] as List? ?? const []).length;
+  Widget _sourceCard(OfficialSource source) {
+    final id = source.id;
+    final name = source.name.trim();
+    final syncError = source.lastSyncError ?? '';
+    final resources = source.resources.length;
 
     return Card(
       margin: EdgeInsets.zero,
@@ -303,7 +340,7 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
             ),
             const SizedBox(height: 4),
             Text(
-              source['repository_url']?.toString() ?? '',
+              source.repositoryUrl,
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 4),
@@ -331,12 +368,16 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
                     'official.sync_source',
                     'Sincronizar y elegir contenido',
                   ),
-                  onPressed: busy.contains(id) ? null : () => syncSource(source),
+                  onPressed: busy.contains(id)
+                      ? null
+                      : () => syncSource(source),
                   icon: Icons.sync,
                 ),
                 ActionIconButton(
                   tooltip: widget.tx('common.edit', 'Editar'),
-                  onPressed: busy.contains(id) ? null : () => editSource(source),
+                  onPressed: busy.contains(id)
+                      ? null
+                      : () => editSource(source),
                   icon: Icons.edit_outlined,
                 ),
                 ActionIconButton(
