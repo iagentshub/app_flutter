@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 
 import '../../../core/network/api_error.dart';
@@ -8,6 +10,8 @@ import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/debouncer.dart';
 import '../../manager/repositories/manager_repository.dart';
 import '../repositories/explore_repository.dart';
+
+part 'explore_resource_loading.dart';
 
 /// Orquesta las dos pestañas de Explore (recursos y usuarios).
 ///
@@ -29,6 +33,7 @@ class ExploreController extends ChangeNotifier {
        _tx = tx;
 
   static const usersPageSize = 20;
+  static const resourcesPageSize = 40;
 
   final ExploreRepository _repository;
   final ManagerRepository _managerRepository;
@@ -47,6 +52,9 @@ class ExploreController extends ChangeNotifier {
   List<ExploreOfficialPack> _officialPacks = const [];
   bool _officialPacksMode = true;
   bool _loading = true;
+  bool _resourcesLoadingMore = false;
+  bool _resourcesHasMore = false;
+  int _resourcesOffset = 0;
   String? _error;
   String _type = 'all';
   String _category = '';
@@ -57,6 +65,9 @@ class ExploreController extends ChangeNotifier {
   final Set<String> _linkedKeys = <String>{};
   final Set<String> _starredKeys = <String>{};
   final Set<String> _busyPackIds = <String>{};
+  int _resourceLoadGeneration = 0;
+  Timer? _resourceFilterTimer;
+  Completer<void>? _resourceFilterCompleter;
 
   // Los getters devuelven la colección viva, no una copia: `build` los
   // consulta una vez por elemento y copiar aquí sería cuadrático. Sólo el
@@ -66,6 +77,8 @@ class ExploreController extends ChangeNotifier {
   bool get officialPacksMode => _officialPacksMode;
   int get resultCount => _items.length + _officialPacks.length;
   bool get loading => _loading;
+  bool get resourcesLoadingMore => _resourcesLoadingMore;
+  bool get resourcesHasMore => _resourcesHasMore;
   String? get error => _error;
   String get type => _type;
   String get category => _category;
@@ -118,20 +131,20 @@ class ExploreController extends ChangeNotifier {
   Future<void> setType(String value) {
     _type = value;
     _notify();
-    return load();
+    return _scheduleResourceLoad();
   }
 
   Future<void> setOfficialPacksMode(bool value) {
     if (_officialPacksMode == value) return Future.value();
     _officialPacksMode = value;
     _notify();
-    return load();
+    return _scheduleResourceLoad();
   }
 
   Future<void> setCategory(String value) {
     _category = value;
     _notify();
-    return load();
+    return _scheduleResourceLoad();
   }
 
   Future<void> toggleLabel(String label, {required bool selected}) {
@@ -141,7 +154,7 @@ class ExploreController extends ChangeNotifier {
       _labels.remove(label);
     }
     _notify();
-    return load();
+    return _scheduleResourceLoad();
   }
 
   Future<void> toggleLanguage(String language, {required bool selected}) {
@@ -151,7 +164,7 @@ class ExploreController extends ChangeNotifier {
       _languages.remove(language);
     }
     _notify();
-    return load();
+    return _scheduleResourceLoad();
   }
 
   Future<void> setLabels(Set<String> labels) {
@@ -159,7 +172,7 @@ class ExploreController extends ChangeNotifier {
       ..clear()
       ..addAll(labels);
     _notify();
-    return load();
+    return _scheduleResourceLoad();
   }
 
   Future<void> setLanguages(Set<String> languages) {
@@ -167,7 +180,7 @@ class ExploreController extends ChangeNotifier {
       ..clear()
       ..addAll(languages);
     _notify();
-    return load();
+    return _scheduleResourceLoad();
   }
 
   Future<void> clearFilters() {
@@ -176,7 +189,7 @@ class ExploreController extends ChangeNotifier {
     _labels.clear();
     _languages.clear();
     _notify();
-    return load();
+    return _scheduleResourceLoad();
   }
 
   Future<void> clearSecondaryFilters() {
@@ -184,7 +197,7 @@ class ExploreController extends ChangeNotifier {
     _labels.clear();
     _languages.clear();
     _notify();
-    return load();
+    return _scheduleResourceLoad();
   }
 
   Future<void> clearExploreFilters() {
@@ -193,81 +206,12 @@ class ExploreController extends ChangeNotifier {
     _languages.clear();
     _officialPacksMode = true;
     _notify();
-    return load();
+    return _scheduleResourceLoad();
   }
 
   // ── Carga y acciones ──────────────────────────────────────────────────
 
   String? get _token => _sessionController.gaToken;
-
-  Future<void> load() async {
-    final token = _token;
-    if (token == null || token.isEmpty) {
-      _error = _tx('common.no_session', 'No hay sesión activa');
-      _loading = false;
-      _notify();
-      return;
-    }
-
-    _loading = true;
-    _error = null;
-    _notify();
-
-    try {
-      final resourcesFuture = _repository.listResources(
-        token,
-        type: _type,
-        query: queryController.text,
-        category: _category,
-        labels: _labels.toList(),
-        languages: _languages.toList(),
-        includeOfficial: !_officialPacksMode,
-      );
-      final packsFuture = _officialPacksMode
-          ? _repository.listOfficialPacks(
-              token,
-              type: _type,
-              query: queryController.text,
-              category: _category,
-              labels: _labels.toList(),
-              languages: _languages.toList(),
-            )
-          : Future<List<ExploreOfficialPack>>.value(const []);
-      final results = await Future.wait([resourcesFuture, packsFuture]);
-      _items = results[0] as List<ExploreItem>;
-      _officialPacks = results[1] as List<ExploreOfficialPack>;
-      if (_type == 'all') {
-        _typeCounts.clear();
-        for (final item in _items) {
-          _typeCounts.update(
-            item.resourceType,
-            (count) => count + 1,
-            ifAbsent: () => 1,
-          );
-        }
-        for (final pack in _officialPacks) {
-          for (final entry in pack.counts.entries) {
-            _typeCounts.update(
-              entry.key,
-              (count) => count + entry.value,
-              ifAbsent: () => entry.value,
-            );
-          }
-        }
-      }
-      _loading = false;
-      if (_category.isNotEmpty && !categoryOptions.contains(_category)) {
-        _category = '';
-      }
-    } on ApiError catch (error) {
-      _error = error.message;
-      _loading = false;
-    } catch (_) {
-      _error = _tx('explore.error_title', 'No se pudo cargar Explore');
-      _loading = false;
-    }
-    _notify();
-  }
 
   Future<ActionResult?> linkOfficialPack(
     ExploreOfficialPack pack, {
@@ -335,6 +279,63 @@ class ExploreController extends ChangeNotifier {
       );
     } finally {
       _busyKeys.remove(key);
+      _notify();
+    }
+  }
+
+  Future<ActionResult?> showResourceGraph(
+    ExploreItem item, {
+    required Future<void> Function(ExploreResourceGraph graph) present,
+  }) async {
+    final token = _token;
+    if (token == null || token.isEmpty) return null;
+    final key = itemKey(item);
+    _busyKeys.add(key);
+    _notify();
+    try {
+      final graph = await _repository.getResourceGraph(
+        token,
+        resourceType: item.resourceType,
+        resourceId: item.resourceId,
+      );
+      await present(graph);
+      return null;
+    } on ApiError catch (error) {
+      return ActionResult.error(error.message);
+    } catch (_) {
+      return ActionResult.error(
+        _tx('explore.graph_error', 'No se pudo cargar el grafo'),
+      );
+    } finally {
+      _busyKeys.remove(key);
+      _notify();
+    }
+  }
+
+  Future<ActionResult?> showOfficialPackGraph(
+    ExploreOfficialPack pack, {
+    required Future<void> Function(ExploreOfficialPackGraph graph) present,
+  }) async {
+    final token = _token;
+    if (token == null || token.isEmpty) return null;
+    if (_busyPackIds.contains(pack.sourceId)) return null;
+    _busyPackIds.add(pack.sourceId);
+    _notify();
+    try {
+      final graph = await _repository.getOfficialPackGraph(
+        token,
+        pack.sourceId,
+      );
+      await present(graph);
+      return null;
+    } on ApiError catch (error) {
+      return ActionResult.error(error.message);
+    } catch (_) {
+      return ActionResult.error(
+        _tx('explore.graph_error', 'No se pudo cargar el grafo'),
+      );
+    } finally {
+      _busyPackIds.remove(pack.sourceId);
       _notify();
     }
   }
@@ -533,6 +534,12 @@ class ExploreController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    _resourceLoadGeneration++;
+    _resourceFilterTimer?.cancel();
+    final pendingFilter = _resourceFilterCompleter;
+    if (pendingFilter != null && !pendingFilter.isCompleted) {
+      pendingFilter.complete();
+    }
     queryController.dispose();
     userQueryController.dispose();
     _userSearchDebouncer.dispose();

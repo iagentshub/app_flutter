@@ -1,0 +1,141 @@
+part of 'explore_controller.dart';
+
+extension ExploreResourceLoading on ExploreController {
+  Future<void> _scheduleResourceLoad() {
+    // Invalida inmediatamente una página o carga anterior; no esperamos a que
+    // venza el debounce para impedir que una respuesta del filtro viejo entre.
+    _resourceLoadGeneration++;
+    _resourceFilterTimer?.cancel();
+    final previous = _resourceFilterCompleter;
+    if (previous != null && !previous.isCompleted) previous.complete();
+    final completer = Completer<void>();
+    _resourceFilterCompleter = completer;
+    _resourceFilterTimer = Timer(const Duration(milliseconds: 150), () async {
+      await load();
+      if (!completer.isCompleted) completer.complete();
+    });
+    return completer.future;
+  }
+
+  Future<void> load() async {
+    final generation = ++_resourceLoadGeneration;
+    final token = _token;
+    if (token == null || token.isEmpty) {
+      _error = _tx('common.no_session', 'No hay sesión activa');
+      _loading = false;
+      _notify();
+      return;
+    }
+
+    _loading = true;
+    _error = null;
+    _notify();
+
+    try {
+      final resourcesFuture = _repository.listResourcePage(
+        token,
+        type: _type,
+        query: queryController.text,
+        category: _category,
+        labels: _labels.toList(),
+        languages: _languages.toList(),
+        includeOfficial: !_officialPacksMode,
+        limit: ExploreController.resourcesPageSize,
+        offset: 0,
+      );
+      final packsFuture = _officialPacksMode
+          ? _repository.listOfficialPacks(
+              token,
+              type: _type,
+              query: queryController.text,
+              category: _category,
+              labels: _labels.toList(),
+              languages: _languages.toList(),
+            )
+          : Future<List<ExploreOfficialPack>>.value(const []);
+      final results = await Future.wait([resourcesFuture, packsFuture]);
+      if (generation != _resourceLoadGeneration || _disposed) return;
+      final resourcePage = results[0] as ({List<ExploreItem> items, int total});
+      _items = resourcePage.items;
+      _resourcesOffset = _items.length;
+      _resourcesHasMore = _resourcesOffset < resourcePage.total;
+      _officialPacks = results[1] as List<ExploreOfficialPack>;
+      if (_type == 'all') {
+        _typeCounts.clear();
+        for (final item in _items) {
+          _typeCounts.update(
+            item.resourceType,
+            (count) => count + 1,
+            ifAbsent: () => 1,
+          );
+        }
+        for (final pack in _officialPacks) {
+          for (final entry in pack.counts.entries) {
+            _typeCounts.update(
+              entry.key,
+              (count) => count + entry.value,
+              ifAbsent: () => entry.value,
+            );
+          }
+        }
+      }
+      _loading = false;
+      if (_category.isNotEmpty && !categoryOptions.contains(_category)) {
+        _category = '';
+      }
+    } on ApiError catch (error) {
+      if (generation != _resourceLoadGeneration || _disposed) return;
+      _error = error.message;
+      _loading = false;
+    } catch (_) {
+      if (generation != _resourceLoadGeneration || _disposed) return;
+      _error = _tx('explore.error_title', 'No se pudo cargar Explore');
+      _loading = false;
+    }
+    _notify();
+  }
+
+  Future<ActionResult?> loadMoreResources() async {
+    final token = _token;
+    if (token == null ||
+        token.isEmpty ||
+        _resourcesLoadingMore ||
+        !_resourcesHasMore) {
+      return null;
+    }
+    final generation = _resourceLoadGeneration;
+    _resourcesLoadingMore = true;
+    _notify();
+    try {
+      final page = await _repository.listResourcePage(
+        token,
+        type: _type,
+        query: queryController.text,
+        category: _category,
+        labels: _labels.toList(),
+        languages: _languages.toList(),
+        includeOfficial: !_officialPacksMode,
+        limit: ExploreController.resourcesPageSize,
+        offset: _resourcesOffset,
+      );
+      if (generation != _resourceLoadGeneration || _disposed) return null;
+      final known = _items.map(itemKey).toSet();
+      _items = [
+        ..._items,
+        ...page.items.where((item) => known.add(itemKey(item))),
+      ];
+      _resourcesOffset += page.items.length;
+      _resourcesHasMore = _resourcesOffset < page.total;
+      return null;
+    } on ApiError catch (error) {
+      return ActionResult.error(error.message);
+    } catch (_) {
+      return ActionResult.error(
+        _tx('explore.error_title', 'No se pudo cargar Explore'),
+      );
+    } finally {
+      _resourcesLoadingMore = false;
+      _notify();
+    }
+  }
+}

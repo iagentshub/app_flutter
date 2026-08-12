@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:app_flutter/core/network/api_client.dart';
 import 'package:app_flutter/features/explore/controllers/explore_controller.dart';
 import 'package:app_flutter/features/explore/repositories/explore_repository.dart';
 import 'package:app_flutter/features/manager/repositories/manager_repository.dart';
+import 'package:app_flutter/models/explore/explore_models.dart';
 import 'package:app_flutter/shared/state/backend_controller.dart';
 import 'package:app_flutter/shared/state/session_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -122,6 +124,88 @@ void main() {
     expect(controller.categoryOptions, ['Writing']);
   });
 
+  test('load ignora una respuesta anterior que termina más tarde', () async {
+    final oldStarted = Completer<void>();
+    final releaseOld = Completer<void>();
+    final controller = await build((request) async {
+      if (request.url.path.endsWith('/official-packs')) {
+        return http.Response('[]', 200);
+      }
+      final query = request.url.queryParameters['q'];
+      if (query == 'old') {
+        oldStarted.complete();
+        await releaseOld.future;
+        return http.Response(jsonEncode([_resource(id: 'old')]), 200);
+      }
+      if (query == 'new') {
+        return http.Response(jsonEncode([_resource(id: 'new')]), 200);
+      }
+      return http.Response('[]', 200);
+    });
+    await controller.setOfficialPacksMode(false);
+
+    controller.queryController.text = 'old';
+    final oldLoad = controller.load();
+    await oldStarted.future;
+    controller.queryController.text = 'new';
+    await controller.load();
+    releaseOld.complete();
+    await oldLoad;
+
+    expect(controller.items.single.resourceId, 'new');
+    expect(controller.loading, isFalse);
+  });
+
+  test(
+    'Explore no conserva una respuesta que otro usuario puede cambiar',
+    () async {
+      var resourceCalls = 0;
+      final controller = await build((request) async {
+        if (request.url.path.endsWith('/official-packs')) {
+          return http.Response('[]', 200);
+        }
+        resourceCalls++;
+        return http.Response(
+          jsonEncode([_resource(id: 'a$resourceCalls')]),
+          200,
+        );
+      });
+
+      await controller.load();
+      await controller.load();
+
+      expect(resourceCalls, 2);
+      expect(controller.items.single.resourceId, 'a2');
+    },
+  );
+
+  test('carga las páginas posteriores del catálogo de recursos', () async {
+    final controller = await build((request) async {
+      if (request.url.path.endsWith('/official-packs')) {
+        return http.Response('[]', 200);
+      }
+      final offset = int.parse(request.url.queryParameters['offset'] ?? '0');
+      final count = offset == 0 ? 40 : 1;
+      return http.Response(
+        jsonEncode([
+          for (var index = 0; index < count; index++)
+            _resource(id: 'agent-${offset + index}'),
+        ]),
+        200,
+        headers: {'x-total-count': '41'},
+      );
+    });
+
+    await controller.load();
+    expect(controller.items, hasLength(40));
+    expect(controller.resourcesHasMore, isTrue);
+
+    await controller.loadMoreResources();
+    expect(controller.items, hasLength(41));
+    expect(controller.items.last.resourceId, 'agent-40');
+    expect(controller.resourcesHasMore, isFalse);
+  });
+
   test('clearFilters deja el filtro en su estado inicial', () async {
     final controller = await build(
       (request) async => http.Response(jsonEncode([_resource()]), 200),
@@ -154,6 +238,22 @@ void main() {
     expect(controller.hasLabel('draft'), isFalse);
     expect(controller.hasLanguage('en'), isFalse);
     expect(controller.secondaryActiveFilterCount, 0);
+  });
+
+  test('agrupa cambios rápidos de filtros en una sola carga', () async {
+    var exploreCalls = 0;
+    final controller = await build((request) async {
+      if (request.url.path == '/api/explore') exploreCalls++;
+      return http.Response('[]', 200);
+    });
+
+    final first = controller.toggleLabel('draft', selected: true);
+    final second = controller.toggleLanguage('es', selected: true);
+    await Future.wait([first, second]);
+
+    expect(exploreCalls, 1);
+    expect(controller.hasLabel('draft'), isTrue);
+    expect(controller.hasLanguage('es'), isTrue);
   });
 
   test(
@@ -256,6 +356,85 @@ void main() {
     expect(shown?['name'], 'Agente A');
     expect(busyWhileShown, isTrue);
     expect(controller.isBusy(item), isFalse);
+  });
+
+  test('carga y presenta el grafo público de un recurso', () async {
+    final controller = await build((request) async {
+      if (request.url.path.endsWith('/graph')) {
+        return http.Response(
+          jsonEncode({
+            'root_id': 'agent:a1',
+            'nodes': [
+              {'id': 'agent:a1', 'label': 'Agente A', 'type': 'agent'},
+              {'id': 'skill:s1', 'label': 'Skill A', 'type': 'skill'},
+            ],
+            'edges': [
+              {'source_id': 'agent:a1', 'target_id': 'skill:s1'},
+            ],
+          }),
+          200,
+        );
+      }
+      return http.Response(jsonEncode([_resource()]), 200);
+    });
+    await controller.load();
+    final item = controller.items.single;
+
+    late bool busyWhileShown;
+    String? shownRoot;
+    final result = await controller.showResourceGraph(
+      item,
+      present: (graph) async {
+        shownRoot = graph.rootId;
+        busyWhileShown = controller.isBusy(item);
+      },
+    );
+
+    expect(result, isNull);
+    expect(shownRoot, 'agent:a1');
+    expect(busyWhileShown, isTrue);
+    expect(controller.isBusy(item), isFalse);
+  });
+
+  test('carga y presenta el grafo de un pack oficial', () async {
+    final controller = await build((request) async {
+      if (request.url.path.endsWith('/graph')) {
+        return http.Response(
+          jsonEncode({
+            'root_id': 'official_source:source-1',
+            'nodes': [
+              {
+                'id': 'official_source:source-1',
+                'label': 'Pack',
+                'type': 'official_source',
+              },
+            ],
+            'edges': <Map<String, dynamic>>[],
+          }),
+          200,
+        );
+      }
+      return http.Response('[]', 200);
+    });
+    const pack = ExploreOfficialPack(
+      sourceId: 'source-1',
+      name: 'Pack',
+      repositoryUrl: 'https://github.com/example/pack',
+      counts: {'agent': 1},
+    );
+
+    String? shownRoot;
+    final result = await controller.showOfficialPackGraph(
+      pack,
+      present: (graph) async {
+        shownRoot = graph.rootId;
+        expect(controller.isPackBusy(pack), isTrue);
+      },
+    );
+
+    expect(result, isNull);
+    expect(shownRoot, 'official_source:source-1');
+    expect(controller.isPackBusy(pack), isFalse);
   });
 
   test('loadMoreUsers acumula la página siguiente', () async {

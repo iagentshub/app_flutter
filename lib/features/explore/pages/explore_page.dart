@@ -6,6 +6,8 @@ import '../../../app/router/router.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../models/explore/explore_models.dart';
+import '../../../shared/graph/graph_dialog.dart';
+import '../../../shared/graph/graph_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/action_result.dart';
@@ -108,6 +110,77 @@ class _ExplorePageState extends State<ExplorePage>
       },
     ),
   );
+
+  Future<void> _showResourceGraph(ExploreItem item) => _runAction(
+    _controller.showResourceGraph(
+      item,
+      present: (graph) => _presentGraph(
+        title: item.name,
+        nodes: graph.nodes,
+        edges: graph.edges,
+        rootId: graph.rootId,
+      ),
+    ),
+  );
+
+  Future<void> _showOfficialPackGraph(ExploreOfficialPack pack) => _runAction(
+    _controller.showOfficialPackGraph(
+      pack,
+      present: (graph) => _presentGraph(
+        title: pack.name,
+        nodes: graph.nodes,
+        edges: graph.edges,
+        rootId: graph.rootId,
+      ),
+    ),
+  );
+
+  Future<void> _presentGraph({
+    required String title,
+    required List<GraphNode> nodes,
+    required List<GraphEdge> edges,
+    required String rootId,
+  }) async {
+    if (!mounted) return;
+    await showResourceGraphDialog(
+      context: context,
+      title: title,
+      nodes: nodes,
+      edges: edges,
+      rootId: rootId,
+      closeLabel: _tx('common.close', 'Cerrar'),
+      searchHint: _tx('graph.search_hint', 'Buscar en el grafo...'),
+      sortTooltip: _tx('graph.sort_tooltip', 'Ordenar'),
+      sortHierarchyVerticalLabel: _tx(
+        'graph.sort_hierarchy_vertical',
+        'Jerárquico (arriba-abajo)',
+      ),
+      sortHierarchyHorizontalLabel: _tx(
+        'graph.sort_hierarchy_horizontal',
+        'Jerárquico (izquierda-derecha)',
+      ),
+      sortGalaxyLabel: _tx('graph.sort_galaxy', 'Galaxia'),
+      showLabelsTooltip: _tx('graph.show_labels_tooltip', 'Mostrar nombres'),
+      hideLabelsTooltip: _tx('graph.hide_labels_tooltip', 'Ocultar nombres'),
+      quickViewDescriptionLabel: _tx(
+        'graph.quick_view_description',
+        'Descripción',
+      ),
+      quickViewNoDescriptionLabel: _tx(
+        'graph.quick_view_no_description',
+        'Sin descripción',
+      ),
+      quickViewConnectionsLabel: _tx(
+        'graph.quick_view_connections',
+        'Conexiones',
+      ),
+      quickViewNoConnectionsLabel: _tx(
+        'graph.quick_view_no_connections',
+        'Sin conexiones',
+      ),
+      emptyLabel: _tx('explore.graph_empty', 'El recurso no tiene relaciones'),
+    );
+  }
 
   void _openProfile(String username) {
     AppRouter.toPublicProfile(context, username);

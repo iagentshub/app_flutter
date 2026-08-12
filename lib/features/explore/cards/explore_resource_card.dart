@@ -108,6 +108,16 @@ extension _ExploreResourceCard on _ExplorePageState {
                   tooltip: _tx('explore.preview', 'Vista previa'),
                   onPressed: busy ? null : () => _preview(item),
                 ),
+                if (item.resourceType == 'agent' ||
+                    item.resourceType == 'workflow')
+                  ActionIconButton(
+                    key: ValueKey(
+                      'explore-graph-${item.resourceType}-${item.resourceId}',
+                    ),
+                    icon: Icons.hub_outlined,
+                    tooltip: _tx('explore.graph', 'Ver grafo'),
+                    onPressed: busy ? null : () => _showResourceGraph(item),
+                  ),
                 if (isLinkable)
                   ActionIconButton(
                     icon: linked ? Icons.link : Icons.link_outlined,

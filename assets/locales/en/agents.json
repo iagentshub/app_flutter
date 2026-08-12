@@ -94,6 +94,11 @@
   "confirm_delete": "Delete this agent?",
   "deleted": "Agent deleted",
   "saved": "Agent saved",
+  "publish_dependencies_title": "Publish agent",
+  "publish_dependencies_help": "Select which dependencies to publish and link to the agent.",
+  "connections_never_public": "Connections are never published.",
+  "already_public": "Already public",
+  "publish": "Publish",
   "modal": {
     "title_new": "New agent",
     "title_edit": "Edit agent",

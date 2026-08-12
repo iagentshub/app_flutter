@@ -18,6 +18,7 @@ import '../../../shared/tools/tool_language.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/grouped_label_picker.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../dialogs/agent_publish_dependencies_dialog.dart';
 import '../dialogs/agent_resource_picker_dialog.dart';
 
 part '../widgets/agent_form_sections.dart';
@@ -84,6 +85,7 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
 
   Set<String> _selectedToolIds = {};
   List<ToolItem> _tools = const [];
+  Set<String> _publishedDependencyKeys = {};
 
   /// La visibilidad ya no es un campo aparte: es la label "private"/"public"
   /// del grupo excluyente de Visibilidad (una sola fuente de verdad).
@@ -161,6 +163,10 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
     _selectedToolIds = toolsRaw is List
         ? toolsRaw.map((e) => e.toString()).toSet()
         : {};
+    final publishedDependenciesRaw = initial?['public_dependencies'];
+    _publishedDependencyKeys = publishedDependenciesRaw is List
+        ? publishedDependenciesRaw.map((value) => value.toString()).toSet()
+        : {};
 
     _loadCatalogs();
   }
@@ -206,8 +212,24 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    Set<String> dependenciesToPublish = {};
+    if (_scope == 'public') {
+      final options = _publicationOptions();
+      if (options.isNotEmpty) {
+        final selection = await showAgentPublishDependenciesDialog(
+          context: context,
+          options: options,
+          initialSelection: _publishedDependencyKeys,
+          tx: widget.tx,
+        );
+        if (!mounted || selection == null) return;
+        dependenciesToPublish = selection;
+        _publishedDependencyKeys = selection;
+      }
+    }
 
     final payload = <String, dynamic>{
       'name': _nameController.text.trim(),
@@ -227,13 +249,84 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
       'memory_file': _useMemory && _memoryFileController.text.trim().isNotEmpty
           ? _memoryFileController.text.trim()
           : null,
+      'use_memory': _useMemory,
       'skills': _selectedSkillIds.toList(),
       'knowledge': _selectedKnowledgeIds.toList(),
       'prompts': _selectedPromptIds.toList(),
       'tools': _selectedToolIds.toList(),
+      'publish_dependencies': dependenciesToPublish.toList()..sort(),
     };
 
     Navigator.of(context).pop(payload);
+  }
+
+  List<AgentPublishDependencyOption> _publicationOptions() {
+    bool isPublic(List<String> labels, String scope) =>
+        scope == 'public' || labels.contains('public');
+
+    final options = <AgentPublishDependencyOption>[];
+    for (final id in _selectedSkillIds) {
+      final item = _skills.where((candidate) => candidate.id == id).firstOrNull;
+      options.add(
+        AgentPublishDependencyOption(
+          key: 'skill:$id',
+          name: item?.name ?? id,
+          typeLabel: widget.tx('resources.skill', 'Skill'),
+          alreadyPublic: item != null && isPublic(item.labels, item.scope),
+        ),
+      );
+    }
+    for (final id in _selectedKnowledgeIds) {
+      final item = _knowledgeItems
+          .where((candidate) => candidate.id == id)
+          .firstOrNull;
+      options.add(
+        AgentPublishDependencyOption(
+          key: 'knowledge:$id',
+          name: item?.title ?? id,
+          typeLabel: widget.tx('resources.knowledge', 'Conocimiento'),
+          alreadyPublic: item != null && isPublic(item.labels, item.scope),
+        ),
+      );
+    }
+    for (final id in _selectedPromptIds) {
+      final item = _prompts
+          .where((candidate) => candidate.id == id)
+          .firstOrNull;
+      options.add(
+        AgentPublishDependencyOption(
+          key: 'prompt:$id',
+          name: item?.name ?? id,
+          typeLabel: widget.tx('resources.prompt', 'Prompt'),
+          alreadyPublic: item != null && isPublic(item.labels, item.scope),
+        ),
+      );
+    }
+    for (final id in _selectedToolIds) {
+      final item = _tools.where((candidate) => candidate.id == id).firstOrNull;
+      options.add(
+        AgentPublishDependencyOption(
+          key: 'tool:$id',
+          name: item?.name ?? id,
+          typeLabel: widget.tx('resources.tool', 'Tool'),
+          alreadyPublic: item != null && isPublic(item.labels, item.scope),
+        ),
+      );
+    }
+    final memoryFile = _memoryFileController.text.trim();
+    if (_useMemory && memoryFile.isNotEmpty) {
+      options.add(
+        AgentPublishDependencyOption(
+          key: 'memory:$memoryFile',
+          name: memoryFile,
+          typeLabel: widget.tx('resources.memory', 'Memoria'),
+        ),
+      );
+    }
+    options.sort(
+      (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+    );
+    return options;
   }
 
   Future<void> _openResourcePicker() async {

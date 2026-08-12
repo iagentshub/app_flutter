@@ -99,6 +99,12 @@ extension _ExploreOfficialPackCard on _ExplorePageState {
                   onPressed: busy ? null : () => _openOfficialPack(pack),
                 ),
                 ActionIconButton(
+                  key: ValueKey('explore-pack-graph-${pack.sourceId}'),
+                  icon: Icons.hub_outlined,
+                  tooltip: _tx('explore.pack_graph', 'Grafo del pack'),
+                  onPressed: busy ? null : () => _showOfficialPackGraph(pack),
+                ),
+                ActionIconButton(
                   icon: pack.fullyLinked ? Icons.link : Icons.link_outlined,
                   tooltip: pack.fullyLinked
                       ? _tx('explore.pack_complete', 'Pack completo')

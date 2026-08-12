@@ -171,8 +171,9 @@ void main() {
       expect(find.text('Official Analyst'), findsOneWidget);
       expect(find.text('Community Analyst'), findsOneWidget);
       // Mismo juego de botones y mismos datos en ambas: propietario, favoritos,
-      // vista previa, enlazar. Lo único distinto es el chip de origen.
+      // vista previa, grafo, enlazar. Lo único distinto es el chip de origen.
       expect(find.byIcon(Icons.visibility_outlined), findsNWidgets(2));
+      expect(find.byIcon(Icons.hub_outlined), findsNWidgets(2));
       expect(find.byIcon(Icons.link_outlined), findsNWidgets(2));
       expect(find.byIcon(Icons.bookmark_outline), findsNWidgets(4));
       expect(find.byIcon(Icons.person_outline), findsNWidgets(2));
@@ -183,7 +184,6 @@ void main() {
       // Nada de acciones exclusivas del catálogo antiguo.
       expect(find.byIcon(Icons.add_circle_outline), findsNothing);
       expect(find.byIcon(Icons.download_outlined), findsNothing);
-      expect(find.byIcon(Icons.hub_outlined), findsNothing);
       expect(
         find.byWidgetPredicate(
           (widget) =>
@@ -206,6 +206,87 @@ void main() {
       }
     },
   );
+
+  testWidgets('ofrece grafo solo en agentes, packs y workflows', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1000, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    SharedPreferences.setMockInitialValues({});
+    final backend = await BackendController.bootstrap();
+    final locale = await LocaleController.bootstrap();
+    final session = await SessionController.bootstrap(
+      secureStore: MemorySecureStore(),
+    );
+    await session.login(
+      token: 'user-token',
+      user: const SessionUser(id: 'user-1', username: 'ada', role: 'user'),
+      remember: false,
+    );
+    final client = MockClient((request) async {
+      if (request.url.path == '/api/explore/official-packs') {
+        return _json([_pack()]);
+      }
+      if (request.url.path == '/api/explore') {
+        return _json([
+          {
+            'resource_type': 'agent',
+            'resource_id': 'agent-graph',
+            'name': 'Agente grafo',
+            'owner_username': 'grace',
+          },
+          {
+            'resource_type': 'workflow',
+            'resource_id': 'workflow-graph',
+            'name': 'Workflow grafo',
+            'owner_username': 'grace',
+          },
+          {
+            'resource_type': 'skill',
+            'resource_id': 'skill-no-graph',
+            'name': 'Skill sin grafo',
+            'owner_username': 'grace',
+          },
+        ]);
+      }
+      if (request.url.path == '/api/users') return _json([]);
+      return _json({}, statusCode: 404);
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AppServicesScope(
+            apiClient: ApiClient(backend, client: client),
+            sessionController: session,
+            localeController: locale,
+            child: const ExplorePage(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('explore-graph-agent-agent-graph')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('explore-graph-workflow-workflow-graph')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('explore-pack-graph-source-1')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('explore-graph-skill-skill-no-graph')),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('agrupa oficiales por defecto y permite revisar la selección', (
     tester,

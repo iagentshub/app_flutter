@@ -119,6 +119,24 @@ extension _ExploreCollectionViews on _ExplorePageState {
                   : _buildItemCard(items[index - packs.length]),
             ),
           ),
+        if (_controller.resourcesHasMore)
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            sliver: SliverToBoxAdapter(
+              child: Center(
+                child: _controller.resourcesLoadingMore
+                    ? const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : SecondaryButton(
+                        onPressed: () =>
+                            _runAction(_controller.loadMoreResources()),
+                        child: Text(_tx('explore.load_more', 'Cargar más')),
+                      ),
+              ),
+            ),
+          ),
       ],
     );
   }

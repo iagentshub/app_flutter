@@ -5,6 +5,8 @@
   "activate": "Activar",
   "deactivate": "Desactivar",
   "more_actions": "Más acciones",
+  "select_all": "Seleccionar todo",
+  "clear": "Limpiar",
   "nav": {
     "dashboard": "Dashboard",
     "agents": "Agentes",

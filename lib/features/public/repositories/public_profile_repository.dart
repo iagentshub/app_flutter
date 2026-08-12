@@ -47,6 +47,9 @@ class PublicProfileRepository extends ApiRepository {
     final response = await apiClient.get(
       '/api/users/${Uri.encodeComponent(username)}/resources?type=${Uri.encodeQueryComponent(type)}',
       gaToken: token,
+      // Otro usuario puede publicar o retirar recursos mientras este perfil
+      // está abierto. La caché local no recibe esa invalidación.
+      cache: false,
     );
     final payload = response.body;
     if (payload is! List) return const [];

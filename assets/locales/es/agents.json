@@ -94,6 +94,11 @@
   "confirm_delete": "¿Eliminar este agente?",
   "deleted": "Agente eliminado",
   "saved": "Agente guardado",
+  "publish_dependencies_title": "Publicar agente",
+  "publish_dependencies_help": "Selecciona qué dependencias quieres publicar y enlazar al agente.",
+  "connections_never_public": "Las conexiones nunca se publican.",
+  "already_public": "Ya público",
+  "publish": "Publicar",
   "modal": {
     "title_new": "Nuevo agente",
     "title_edit": "Editar agente",

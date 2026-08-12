@@ -13,6 +13,33 @@ class ExploreRepository extends ApiRepository {
     List<String> labels = const [],
     List<String> languages = const [],
     bool includeOfficial = true,
+    int limit = 40,
+    int offset = 0,
+  }) async {
+    final page = await listResourcePage(
+      token,
+      type: type,
+      query: query,
+      category: category,
+      labels: labels,
+      languages: languages,
+      includeOfficial: includeOfficial,
+      limit: limit,
+      offset: offset,
+    );
+    return page.items;
+  }
+
+  Future<({List<ExploreItem> items, int total})> listResourcePage(
+    String token, {
+    required String type,
+    String query = '',
+    String category = '',
+    List<String> labels = const [],
+    List<String> languages = const [],
+    bool includeOfficial = true,
+    int limit = 40,
+    int offset = 0,
   }) async {
     final params = <String, dynamic>{
       'type': type,
@@ -21,19 +48,27 @@ class ExploreRepository extends ApiRepository {
       if (labels.isNotEmpty) 'label': labels,
       if (languages.isNotEmpty) 'language': languages,
       if (!includeOfficial) 'include_official': 'false',
+      'limit': '$limit',
+      'offset': '$offset',
     };
     final uri = Uri(path: '/api/explore', queryParameters: params);
     final response = await apiClient.get(
       uri.toString(),
       gaToken: token,
-      cache: true,
+      // El catálogo cambia por acciones de otros usuarios. Una caché local no
+      // puede invalidarse cuando otra sesión publica o retira un recurso.
+      cache: false,
     );
     final payload = response.body;
-    if (payload is! List) return const [];
-    return payload
+    if (payload is! List) {
+      return (items: const <ExploreItem>[], total: 0);
+    }
+    final items = payload
         .whereType<Map<String, dynamic>>()
         .map((item) => ExploreItem(raw: item))
         .toList();
+    final total = int.tryParse(response.headers['x-total-count'] ?? '');
+    return (items: items, total: total ?? offset + items.length);
   }
 
   Future<List<ExploreOfficialPack>> listOfficialPacks(
@@ -58,7 +93,7 @@ class ExploreRepository extends ApiRepository {
           queryParameters: params,
         ).toString(),
         gaToken: token,
-        cache: true,
+        cache: false,
       );
       final payload = response.body;
       if (payload is! List) return const [];
@@ -97,6 +132,19 @@ class ExploreRepository extends ApiRepository {
       gaToken: token,
     );
     return ExploreOfficialPackGraph.fromJson(response.json);
+  }
+
+  Future<ExploreResourceGraph> getResourceGraph(
+    String token, {
+    required String resourceType,
+    required String resourceId,
+  }) async {
+    final response = await apiClient.get(
+      '/api/explore/${Uri.encodeComponent(resourceType)}/${Uri.encodeComponent(resourceId)}/graph',
+      gaToken: token,
+      cache: false,
+    );
+    return ExploreResourceGraph.fromJson(response.json);
   }
 
   Future<ExploreOfficialPackLinkResult> linkOfficialPack(

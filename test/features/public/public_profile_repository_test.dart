@@ -46,4 +46,44 @@ void main() {
     expect(profile.cv, '# Experiencia');
     expect(profile.createdAt, '2026-08-01');
   });
+
+  test('no conserva en caché los recursos públicos de otro usuario', () async {
+    SharedPreferences.setMockInitialValues({});
+    final backend = await BackendController.bootstrap();
+    var requests = 0;
+    final client = ApiClient(
+      backend,
+      client: MockClient((request) async {
+        expect(request.url.path, '/api/users/alice/resources');
+        requests++;
+        return http.Response(
+          jsonEncode(
+            requests == 1
+                ? <Map<String, dynamic>>[]
+                : [
+                    {
+                      'resource_type': 'agent',
+                      'resource_id': 'agent-publico',
+                      'name': 'Agente público',
+                      'labels': ['public'],
+                    },
+                  ],
+          ),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      }),
+    );
+    addTearDown(client.close);
+    final repository = PublicProfileRepository(apiClient: client);
+
+    expect(await repository.listResources('token', username: 'alice'), isEmpty);
+    final refreshed = await repository.listResources(
+      'token',
+      username: 'alice',
+    );
+
+    expect(requests, 2);
+    expect(refreshed.single.resourceId, 'agent-publico');
+  });
 }

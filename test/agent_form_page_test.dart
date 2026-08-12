@@ -126,6 +126,104 @@ void main() {
     expect(find.byKey(const ValueKey('agent-resources-apply')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('al publicar pregunta dependencias y nunca ofrece conexiones', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final backend = await BackendController.bootstrap();
+    final httpClient = MockClient((request) async {
+      if (request.url.path == '/api/skills') {
+        return _json([
+          {
+            'id': 'skill-publicable',
+            'name': 'Skill publicable',
+            'labels': ['private'],
+            'scope': 'private',
+          },
+        ]);
+      }
+      if (request.url.path == '/api/connections') {
+        return _json([
+          {
+            'id': 'secret-connection',
+            'name': 'Conexión secreta',
+            'type': 'openai',
+          },
+        ]);
+      }
+      if ({
+        '/api/memory',
+        '/api/knowledge',
+        '/api/prompts',
+        '/api/tools',
+      }.contains(request.url.path)) {
+        return _json([]);
+      }
+      return _json({}, statusCode: 404);
+    });
+    Map<String, dynamic>? result;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => ElevatedButton(
+            onPressed: () {
+              Navigator.of(context)
+                  .push<Map<String, dynamic>>(
+                    MaterialPageRoute(
+                      builder: (_) => AgentFormPage(
+                        apiClient: ApiClient(backend, client: httpClient),
+                        token: 'publish-agent-token',
+                        tx: (_, fallback) => fallback,
+                        initial: const {
+                          'id': 'agent-publicable',
+                          'name': 'Agente publicable',
+                          'labels': ['public'],
+                          'scope': 'public',
+                          'connection_id': 'secret-connection',
+                          'skills': ['skill-publicable'],
+                          'public_dependencies': <String>[],
+                        },
+                      ),
+                    ),
+                  )
+                  .then((value) => result = value);
+            },
+            child: const Text('Abrir'),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Abrir'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('agent-form-save')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Las conexiones nunca se publican.'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('Conexión secreta'),
+      ),
+      findsNothing,
+    );
+    final skillCheckbox = find.byKey(
+      const ValueKey('publish-dependency-skill:skill-publicable'),
+    );
+    expect(skillCheckbox, findsOneWidget);
+    expect(tester.widget<CheckboxListTile>(skillCheckbox).value, isFalse);
+
+    await tester.tap(skillCheckbox);
+    await tester.tap(
+      find.byKey(const ValueKey('publish-dependencies-confirm')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(result?['publish_dependencies'], ['skill:skill-publicable']);
+    expect(result?['connection_id'], 'secret-connection');
+  });
 }
 
 http.Response _json(Object body, {int statusCode = 200}) {

@@ -233,6 +233,27 @@ class ExploreOfficialPackGraph {
   final List<GraphEdge> edges;
 }
 
+class ExploreResourceGraph {
+  const ExploreResourceGraph({
+    required this.rootId,
+    required this.nodes,
+    required this.edges,
+  });
+
+  factory ExploreResourceGraph.fromJson(Map<String, dynamic> json) {
+    final graph = ExploreOfficialPackGraph.fromJson(json);
+    return ExploreResourceGraph(
+      rootId: graph.rootId,
+      nodes: graph.nodes,
+      edges: graph.edges,
+    );
+  }
+
+  final String rootId;
+  final List<GraphNode> nodes;
+  final List<GraphEdge> edges;
+}
+
 class ExploreOfficialPackLinkResult {
   const ExploreOfficialPackLinkResult({
     required this.createdCount,
