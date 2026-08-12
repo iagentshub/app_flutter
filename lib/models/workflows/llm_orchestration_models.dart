@@ -22,6 +22,7 @@ class LlmOrchestrationItem extends ResourceItem {
   String get mode => raw['mode']?.toString() ?? 'stack';
   String get routerConnectionId =>
       raw['router_connection_id']?.toString() ?? '';
+  bool get bindingConfigured => raw['_binding_configured'] == true;
   List<LlmOrchestrationCandidate> get candidates {
     final value = raw['candidates'];
     if (value is! List) return const [];

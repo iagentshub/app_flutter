@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../models/agents/agent_models.dart';
+import '../../../models/connections/connection_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/locale_controller.dart';
@@ -11,6 +12,7 @@ import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../agents/repositories/agents_repository.dart';
+import '../../connections/repositories/connections_repository.dart';
 import '../cards/workflow_metadata_card.dart';
 import '../controllers/workflow_runs_controller.dart';
 import '../dialogs/run_progress_dialog.dart';
@@ -24,6 +26,7 @@ import '../widgets/workflow_visual_canvas.dart';
 part '../cards/workflow_step_editor_card.dart';
 part '../widgets/workflow_editor_mobile.dart';
 part 'workflow_editor_graph_actions.dart';
+part 'workflow_editor_resources.dart';
 
 class WorkflowEditorPage extends StatefulWidget {
   const WorkflowEditorPage({
@@ -52,6 +55,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
   late final TranslatedTexts _t;
   late List<WorkflowStepDraft> _steps;
   late List<String> _labels;
+  String? _llmOrchestrationConnectionId;
   late String _savedFingerprint;
   String? _selectedStepId;
   List<WorkflowIssue> _issues = const [];
@@ -59,6 +63,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
   int _mobileSection = 0;
 
   List<AgentItem> _agents = const [];
+  List<ConnectionItem> _llmOrchestrations = const [];
   bool _loadingAgents = true;
   String? _error;
   late final WorkflowRunsController _workflowRuns;
@@ -101,6 +106,12 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
     if (_labels.isEmpty) _labels = ['private'];
 
     final definition = initial?['definition'];
+    if (definition is Map<String, dynamic>) {
+      final value = definition['llm_orchestration_connection_id']?.toString();
+      _llmOrchestrationConnectionId = value == null || value.isEmpty
+          ? null
+          : value;
+    }
     _steps = definition is Map<String, dynamic>
         ? stepsFromDefinition(definition)
         : const [];
@@ -111,7 +122,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
     // Se calcula después de asignar posiciones para que abrir y cerrar sin
     // tocar nada no cuente como cambio pendiente.
     _savedFingerprint = _fingerprint();
-    _loadAgents();
+    _loadResources();
   }
 
   void _onTextsChanged() {
@@ -132,36 +143,6 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
 
   String? get _workflowId => widget.initial?['id']?.toString();
 
-  Future<void> _loadAgents() async {
-    final token = _token;
-    if (token == null || token.isEmpty) {
-      _refresh(() {
-        _error = _tx('common.no_session', 'No hay sesión activa');
-        _loadingAgents = false;
-      });
-      return;
-    }
-    try {
-      final agents = await AgentsRepository(
-        apiClient: widget.apiClient,
-      ).listAgents(token);
-      if (!mounted) return;
-      _refresh(() {
-        _agents = agents;
-        _loadingAgents = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      _refresh(() {
-        _error = _tx(
-          'workflow_editor.error_load_agents',
-          'No se pudieron cargar los agentes disponibles',
-        );
-        _loadingAgents = false;
-      });
-    }
-  }
-
   WorkflowStepDraft _newStep() {
     _stepCounter += 1;
     return WorkflowStepDraft(
@@ -175,8 +156,14 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
     'name': _nameController.text.trim(),
     'description': _descriptionController.text.trim(),
     'labels': [..._labels]..sort(),
-    'definition': buildDefinition(_steps),
+    'definition': _definition(),
   });
+
+  Map<String, dynamic> _definition() => {
+    ...buildDefinition(_steps),
+    if (_llmOrchestrationConnectionId != null)
+      'llm_orchestration_connection_id': _llmOrchestrationConnectionId,
+  };
 
   bool get _isDirty => _fingerprint() != _savedFingerprint;
 
@@ -185,7 +172,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
       'name': _nameController.text.trim(),
       'description': _descriptionController.text.trim(),
       'labels': _labels.isEmpty ? ['private'] : _labels,
-      'definition': buildDefinition(_steps),
+      'definition': _definition(),
     };
     final id = _workflowId;
     if (id != null) payload['id'] = id;
@@ -483,6 +470,12 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
                       WorkflowMetadataCard(
                         nameController: _nameController,
                         descriptionController: _descriptionController,
+                        llmOrchestrations: _llmOrchestrations,
+                        llmOrchestrationConnectionId:
+                            _llmOrchestrationConnectionId,
+                        onLlmOrchestrationChanged: (value) => _refresh(
+                          () => _llmOrchestrationConnectionId = value,
+                        ),
                         isPublic: _labels.contains('public'),
                         onChanged: () => setState(() {}),
                         onVisibilityChanged: (isPublic) => _refresh(() {

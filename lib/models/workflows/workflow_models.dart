@@ -21,6 +21,9 @@ class WorkflowItem extends ResourceItem {
     return const [];
   }
 
+  String get llmOrchestrationConnectionId =>
+      definition['llm_orchestration_connection_id']?.toString() ?? '';
+
   @override
   List<String> get labels {
     final value = raw['labels'];

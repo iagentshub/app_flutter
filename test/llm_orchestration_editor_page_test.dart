@@ -1,5 +1,6 @@
 import 'package:app_flutter/features/workflows/pages/llm_orchestration_editor_page.dart';
 import 'package:app_flutter/models/connections/connection_models.dart';
+import 'package:app_flutter/models/workflows/llm_orchestration_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -73,6 +74,44 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byIcon(Icons.drag_handle), findsNWidgets(2));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('shared orchestration maps private user connections', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    const shared = LlmOrchestrationItem(
+      raw: {
+        'id': 'shared-route',
+        'name': 'Shared route',
+        'mode': 'stack',
+        '_shared': true,
+        '_binding_configured': false,
+        'candidates': [
+          {'connection_id': '', 'routing_hint': 'fast'},
+          {'connection_id': '', 'routing_hint': 'complex'},
+        ],
+      },
+    );
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: LlmOrchestrationEditorPage(
+          connections: _connections,
+          initial: shared,
+          configureBinding: true,
+          tx: _tx,
+        ),
+      ),
+    );
+
+    expect(find.text('Configurar mis conexiones'), findsOneWidget);
+    expect(find.text('fast'), findsOneWidget);
+    expect(find.text('complex'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

@@ -91,12 +91,17 @@ class _LlmOrchestrationsPanelState extends State<LlmOrchestrationsPanel> {
   }
 
   Future<void> _edit([LlmOrchestrationItem? initial]) async {
-    if (_connections.length < 2) {
+    final requiredConnections = initial?.shared == true
+        ? initial!.candidates.length
+        : 2;
+    if (_connections.length < requiredConnections) {
       _message(
-        widget.tx(
-          'llm_orchestrations.connections_required',
-          'Necesitas al menos dos conexiones LLM activas.',
-        ),
+        widget
+            .tx(
+              'llm_orchestrations.connections_required',
+              'Necesitas al menos {{count}} conexiones LLM activas.',
+            )
+            .replaceAll('{{count}}', '$requiredConnections'),
         error: true,
       );
       return;
@@ -106,15 +111,28 @@ class _LlmOrchestrationsPanelState extends State<LlmOrchestrationsPanel> {
         builder: (context) => LlmOrchestrationEditorPage(
           connections: _connections,
           initial: initial,
+          configureBinding: initial?.shared == true,
           tx: widget.tx,
         ),
       ),
     );
     if (payload == null) return;
     try {
-      await _repository.save(_token, payload);
+      if (initial?.shared == true) {
+        await _repository.saveBinding(_token, initial!.id, payload);
+      } else {
+        await _repository.save(_token, payload);
+      }
       _message(
-        widget.tx('llm_orchestrations.saved', 'Orquestación LLM guardada'),
+        initial?.shared == true
+            ? widget.tx(
+                'llm_orchestrations.binding_saved',
+                'Tus conexiones se han vinculado',
+              )
+            : widget.tx(
+                'llm_orchestrations.saved',
+                'Orquestación LLM guardada',
+              ),
       );
       await _load();
     } on ApiError catch (error) {
@@ -234,6 +252,7 @@ class _LlmOrchestrationsPanelState extends State<LlmOrchestrationsPanel> {
                     tx: widget.tx,
                     onToggleActive: () => _toggle(item),
                     onEdit: () => _edit(item),
+                    onConfigure: () => _edit(item),
                     onShare: () => _share(item),
                     onDelete: () => _delete(item),
                   );

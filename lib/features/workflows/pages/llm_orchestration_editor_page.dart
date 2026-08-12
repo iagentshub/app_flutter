@@ -10,11 +10,13 @@ class LlmOrchestrationEditorPage extends StatefulWidget {
     required this.connections,
     required this.tx,
     this.initial,
+    this.configureBinding = false,
     super.key,
   });
 
   final List<ConnectionItem> connections;
   final LlmOrchestrationItem? initial;
+  final bool configureBinding;
   final String Function(String path, String fallback) tx;
 
   @override
@@ -47,11 +49,25 @@ class _LlmOrchestrationEditorPageState
     _routerConnectionId = initial?.routerConnectionId.isEmpty == false
         ? initial!.routerConnectionId
         : null;
-    _candidates =
-        initial?.candidates
-            .map((item) => _CandidateDraft(item.connectionId, item.routingHint))
-            .toList() ??
-        <_CandidateDraft>[];
+    _candidates = <_CandidateDraft>[];
+    for (final candidate in initial?.candidates ?? const []) {
+      final existingId =
+          widget.connections.any(
+            (connection) => connection.id == candidate.connectionId,
+          )
+          ? candidate.connectionId
+          : null;
+      final connectionId =
+          existingId ??
+          widget.connections
+              .firstWhere(
+                (connection) => !_candidates.any(
+                  (draft) => draft.connectionId == connection.id,
+                ),
+              )
+              .id;
+      _candidates.add(_CandidateDraft(connectionId, candidate.routingHint));
+    }
     while (_candidates.length < 2 &&
         _candidates.length < widget.connections.length) {
       final unused = widget.connections.firstWhere(
@@ -98,10 +114,11 @@ class _LlmOrchestrationEditorPageState
     }
     if (_mode == 'balanced' && _routerConnectionId == null) return;
     Navigator.of(context).pop(<String, dynamic>{
-      if (widget.initial != null) 'id': widget.initial!.id,
-      'name': _name.text.trim(),
-      'description': _description.text.trim(),
-      'mode': _mode,
+      if (!widget.configureBinding && widget.initial != null)
+        'id': widget.initial!.id,
+      if (!widget.configureBinding) 'name': _name.text.trim(),
+      if (!widget.configureBinding) 'description': _description.text.trim(),
+      if (!widget.configureBinding) 'mode': _mode,
       'candidates': _candidates
           .map(
             (item) => {
@@ -111,7 +128,8 @@ class _LlmOrchestrationEditorPageState
           )
           .toList(),
       'router_connection_id': _mode == 'balanced' ? _routerConnectionId : null,
-      'labels': widget.initial?.labels ?? const ['private'],
+      if (!widget.configureBinding)
+        'labels': widget.initial?.labels ?? const ['private'],
     });
   }
 
@@ -123,7 +141,12 @@ class _LlmOrchestrationEditorPageState
       backgroundColor: colors.surfaceContainerLowest,
       appBar: AppBar(
         title: Text(
-          widget.initial == null
+          widget.configureBinding
+              ? tx(
+                  'llm_orchestrations.configure_connections',
+                  'Configurar mis conexiones',
+                )
+              : widget.initial == null
               ? tx('llm_orchestrations.create', 'Nueva orquestación LLM')
               : tx('llm_orchestrations.edit', 'Editar orquestación LLM'),
         ),
@@ -158,6 +181,7 @@ class _LlmOrchestrationEditorPageState
                   children: [
                     TextFormField(
                       controller: _name,
+                      enabled: !widget.configureBinding,
                       decoration: InputDecoration(
                         labelText: tx('llm_orchestrations.name', 'Nombre'),
                       ),
@@ -172,6 +196,7 @@ class _LlmOrchestrationEditorPageState
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _description,
+                      enabled: !widget.configureBinding,
                       maxLines: 3,
                       decoration: InputDecoration(
                         labelText: tx(
@@ -206,8 +231,10 @@ class _LlmOrchestrationEditorPageState
                           ),
                         ],
                         selected: {_mode},
-                        onSelectionChanged: (selection) =>
-                            setState(() => _mode = selection.first),
+                        onSelectionChanged: widget.configureBinding
+                            ? null
+                            : (selection) =>
+                                  setState(() => _mode = selection.first),
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -351,6 +378,7 @@ class _LlmOrchestrationEditorPageState
                                     const SizedBox(height: 10),
                                     TextFormField(
                                       initialValue: draft.routingHint,
+                                      enabled: !widget.configureBinding,
                                       decoration: InputDecoration(
                                         labelText: tx(
                                           'llm_orchestrations.routing_hint',

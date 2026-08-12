@@ -138,11 +138,14 @@ class WorkflowCard extends StatelessWidget {
         type: isEvaluator ? 'evaluator' : 'agent',
         description: agent.description,
       );
-      if (agent.connectionId.isNotEmpty) {
-        final childId = 'connection:${agent.connectionId}';
+      final connectionId = item.llmOrchestrationConnectionId.isNotEmpty
+          ? item.llmOrchestrationConnectionId
+          : agent.connectionId;
+      if (connectionId.isNotEmpty) {
+        final childId = 'connection:$connectionId';
         nodesById[childId] = GraphNode(
           id: childId,
-          label: agent.connectionId,
+          label: connectionId,
           type: 'connection',
         );
         addEdge(id, childId);

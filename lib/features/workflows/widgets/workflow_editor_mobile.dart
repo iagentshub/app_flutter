@@ -58,6 +58,12 @@ extension _WorkflowEditorMobile on _WorkflowEditorPageState {
                       WorkflowMetadataCard(
                         nameController: _nameController,
                         descriptionController: _descriptionController,
+                        llmOrchestrations: _llmOrchestrations,
+                        llmOrchestrationConnectionId:
+                            _llmOrchestrationConnectionId,
+                        onLlmOrchestrationChanged: (value) => _refresh(
+                          () => _llmOrchestrationConnectionId = value,
+                        ),
                         isPublic: _labels.contains('public'),
                         onChanged: () => _refresh(() {}),
                         onVisibilityChanged: (isPublic) => _refresh(() {

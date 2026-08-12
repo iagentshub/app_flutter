@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../models/connections/connection_models.dart';
 import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/widgets/grouped_label_picker.dart';
 import '../models/workflow_graph_validation.dart';
@@ -12,6 +13,9 @@ class WorkflowMetadataCard extends StatelessWidget {
   const WorkflowMetadataCard({
     required this.nameController,
     required this.descriptionController,
+    required this.llmOrchestrations,
+    required this.llmOrchestrationConnectionId,
+    required this.onLlmOrchestrationChanged,
     required this.isPublic,
     required this.onVisibilityChanged,
     required this.onChanged,
@@ -23,6 +27,9 @@ class WorkflowMetadataCard extends StatelessWidget {
 
   final TextEditingController nameController;
   final TextEditingController descriptionController;
+  final List<ConnectionItem> llmOrchestrations;
+  final String? llmOrchestrationConnectionId;
+  final ValueChanged<String?> onLlmOrchestrationChanged;
   final bool isPublic;
   final ValueChanged<bool> onVisibilityChanged;
   final VoidCallback onChanged;
@@ -83,6 +90,40 @@ class WorkflowMetadataCard extends StatelessWidget {
                 const SizedBox(height: 12),
                 description,
               ],
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String?>(
+                initialValue: llmOrchestrationConnectionId,
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: tx(
+                    'workflow_editor.llm_orchestration_label',
+                    'Orquestación LLM predeterminada',
+                  ),
+                  helperText: tx(
+                    'workflow_editor.llm_orchestration_help',
+                    'Opcional. Sustituye la conexión de todos los agentes de este workflow.',
+                  ),
+                  prefixIcon: const Icon(Icons.hub_outlined, size: 19),
+                ),
+                items: [
+                  DropdownMenuItem<String?>(
+                    value: null,
+                    child: Text(
+                      tx(
+                        'workflow_editor.llm_orchestration_agent_default',
+                        'Usar la conexión de cada agente',
+                      ),
+                    ),
+                  ),
+                  ...llmOrchestrations.map(
+                    (item) => DropdownMenuItem<String?>(
+                      value: item.id,
+                      child: Text(item.name),
+                    ),
+                  ),
+                ],
+                onChanged: onLlmOrchestrationChanged,
+              ),
               const SizedBox(height: 12),
               _visibility(context),
               const SizedBox(height: 12),

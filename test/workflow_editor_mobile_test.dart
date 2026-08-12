@@ -40,6 +40,16 @@ void main() {
           {'id': 'agent-1', 'name': 'Agente móvil'},
         ]);
       }
+      if (request.url.path == '/api/connections') {
+        return _json([
+          {
+            'id': 'llm-orchestration:shared-route',
+            'name': 'Ruta LLM del grupo',
+            'type': 'llm_orchestration',
+            'is_virtual': true,
+          },
+        ]);
+      }
       return _json({}, statusCode: 404);
     });
 
@@ -59,6 +69,12 @@ void main() {
     expect(find.text('Diagrama'), findsOneWidget);
     expect(find.text('Paso'), findsOneWidget);
     expect(find.byKey(const ValueKey('workflow-save-mobile')), findsOneWidget);
+    expect(find.text('Orquestación LLM predeterminada'), findsOneWidget);
+    await tester.tap(find.text('Usar la conexión de cada agente'));
+    await tester.pumpAndSettle();
+    expect(find.text('Ruta LLM del grupo'), findsOneWidget);
+    await tester.tap(find.text('Ruta LLM del grupo'));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.text('Diagrama'));
     await tester.pumpAndSettle();

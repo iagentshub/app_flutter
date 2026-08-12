@@ -14,6 +14,7 @@ class LlmOrchestrationCard extends StatelessWidget {
     required this.tx,
     required this.onToggleActive,
     required this.onEdit,
+    required this.onConfigure,
     required this.onShare,
     required this.onDelete,
     super.key,
@@ -24,6 +25,7 @@ class LlmOrchestrationCard extends StatelessWidget {
   final String Function(String path, String fallback) tx;
   final VoidCallback onToggleActive;
   final VoidCallback onEdit;
+  final VoidCallback onConfigure;
   final VoidCallback onShare;
   final VoidCallback onDelete;
 
@@ -87,6 +89,18 @@ class LlmOrchestrationCard extends StatelessWidget {
                     '{{count}} conexiones',
                   ).replaceAll('{{count}}', '${item.candidates.length}'),
                 ),
+                if (item.shared)
+                  _MetadataLabel(
+                    text: item.bindingConfigured
+                        ? tx(
+                            'llm_orchestrations.binding_ready',
+                            'Conexiones configuradas',
+                          )
+                        : tx(
+                            'llm_orchestrations.binding_pending',
+                            'Falta configurar conexiones',
+                          ),
+                  ),
               ],
             ),
             if (balanced) ...[
@@ -185,6 +199,15 @@ class LlmOrchestrationCard extends StatelessWidget {
                     tooltip: tx('common.edit', 'Editar'),
                     onPressed: onEdit,
                   ),
+                if (item.shared)
+                  ActionIconButton(
+                    icon: Icons.tune_outlined,
+                    tooltip: tx(
+                      'llm_orchestrations.configure_connections',
+                      'Configurar mis conexiones',
+                    ),
+                    onPressed: onConfigure,
+                  ),
                 if (!item.readOnly)
                   OverflowMenuButton(
                     tooltip: tx('common.more_actions', 'Más acciones'),
@@ -232,7 +255,11 @@ class LlmOrchestrationCard extends StatelessWidget {
   }
 
   String _connectionLabel(ConnectionItem? connection, String fallback) {
-    if (connection == null) return fallback;
+    if (connection == null) {
+      return fallback.isEmpty
+          ? tx('llm_orchestrations.connection_unassigned', 'Por configurar')
+          : fallback;
+    }
     if (connection.model.isEmpty) return connection.name;
     return '${connection.name} · ${connection.model}';
   }

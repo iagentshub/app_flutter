@@ -31,6 +31,20 @@ class LlmOrchestrationsRepository extends ApiRepository {
     body: payload,
   )).json;
 
+  Future<Map<String, dynamic>> saveBinding(
+    String token,
+    String id,
+    Map<String, dynamic> payload,
+  ) async {
+    final response = await apiClient.put(
+      '/api/llm-orchestrations/${Uri.encodeComponent(id)}/binding',
+      gaToken: token,
+      body: payload,
+    );
+    apiClient.invalidateCache('/api/connections');
+    return response.json;
+  }
+
   Future<void> delete(String token, String id) => apiClient.delete(
     '/api/llm-orchestrations/${Uri.encodeComponent(id)}',
     gaToken: token,

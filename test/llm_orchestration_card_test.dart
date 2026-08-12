@@ -52,6 +52,7 @@ void main() {
                 tx: _tx,
                 onToggleActive: () {},
                 onEdit: () {},
+                onConfigure: () {},
                 onShare: () {},
                 onDelete: () {},
               ),

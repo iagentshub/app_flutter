@@ -367,7 +367,8 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
               : displayStep,
         );
       }
-      if (agent.connectionId.isEmpty) {
+      if (agent.connectionId.isEmpty &&
+          item.llmOrchestrationConnectionId.isEmpty) {
         return _tx(
           'workflows.run_error_agent_connection',
           'El agente “{{agent}}” no tiene una conexión configurada.',
