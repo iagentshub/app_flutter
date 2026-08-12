@@ -6,7 +6,7 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../models/official_import_models.dart';
 import '../repositories/admin_official_sources_repository.dart';
 import '../widgets/official_import_groups.dart';
-import '../widgets/official_import_message_box.dart';
+import '../widgets/official_import_review_toolbar.dart';
 
 class OfficialImportReviewPage extends StatefulWidget {
   const OfficialImportReviewPage({
@@ -456,7 +456,7 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
                 ? ListView(
                     padding: EdgeInsets.fromLTRB(padding, 12, padding, 24),
                     children: [
-                      _header(
+                      _toolbar(
                         availableWidth: constraints.maxWidth - (padding * 2),
                         mobile: true,
                       ),
@@ -468,7 +468,7 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
                     children: [
                       Padding(
                         padding: EdgeInsets.fromLTRB(padding, 12, padding, 8),
-                        child: _header(
+                        child: _toolbar(
                           availableWidth: constraints.maxWidth - (padding * 2),
                           mobile: false,
                         ),
@@ -487,143 +487,26 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
     );
   }
 
-  Widget _header({
-    required double availableWidth,
-    required bool mobile,
-  }) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        draft.source.repositoryUrl,
-        style: Theme.of(context).textTheme.bodySmall,
-      ),
-      const SizedBox(height: 8),
-      if (draft.errors.isNotEmpty)
-        OfficialImportMessageBox(
-          messages: draft.errors,
-          color: Theme.of(context).colorScheme.error,
-        ),
-      if (showLogs && draft.warnings.isNotEmpty)
-        OfficialImportMessageBox(
-          messages: draft.warnings,
-          color: Theme.of(context).colorScheme.tertiary,
-        ),
-      if (showLogs && draft.logs.isNotEmpty)
-        OfficialImportMessageBox(
-          messages: draft.logs,
-          color: Theme.of(context).colorScheme.outline,
-        ),
-      if (error != null)
-        OfficialImportMessageBox(
-          messages: [error!],
-          color: Theme.of(context).colorScheme.error,
-        ),
-      const SizedBox(height: 8),
-      Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: [
-          SizedBox(
-            width: mobile ? availableWidth : 320,
-            child: TextField(
-              controller: search,
-              onChanged: (_) => setState(() {}),
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.search),
-                labelText: widget.tx('common.search', 'Buscar'),
-              ),
-            ),
-          ),
-          _filter(
-            width: mobile ? availableWidth : 180,
-            value: type,
-            label: widget.tx('common.type', 'Tipo'),
-            values: const [
-              'all',
-              'agent',
-              'skill',
-              'prompt',
-              'knowledge',
-              'memory',
-              'tool',
-              'workflow',
-              'unknown',
-            ],
-            onChanged: (value) => setState(() => type = value ?? 'all'),
-          ),
-          FilterChip(
-            selected: showOmitted,
-            label: Text(widget.tx('official.show_omitted', 'Mostrar omitidos')),
-            onSelected: busy
-                ? null
-                : (value) => setState(() => showOmitted = value),
-          ),
-          if (draft.warnings.isNotEmpty || draft.logs.isNotEmpty)
-            FilterChip(
-              selected: showLogs,
-              avatar: const Icon(Icons.receipt_long_outlined, size: 18),
-              label: Text(
-                '${widget.tx('official.log', 'Log')} '
-                '(${draft.warnings.length + draft.logs.length})',
-              ),
-              onSelected: (value) => setState(() => showLogs = value),
-            ),
-          _filter(
-            width: mobile ? availableWidth : 180,
-            value: state,
-            label: widget.tx('common.status', 'Estado'),
-            values: const [
-              'all',
-              'new',
-              'updated',
-              'removed',
-              'unchanged',
-              'duplicate',
-              'unrecognized',
-            ],
-            onChanged: (value) => setState(() => state = value ?? 'all'),
-          ),
-          TertiaryButton.icon(
-            onPressed: busy ? null : () => bulkSelect(true),
-            icon: const Icon(Icons.select_all),
-            label: Text(
-              widget.tx('official.select_visible', 'Seleccionar visibles'),
-            ),
-          ),
-          TertiaryButton.icon(
-            onPressed: busy ? null : () => bulkSelect(false),
-            icon: const Icon(Icons.deselect),
-            label: Text(
-              widget.tx('official.deselect_visible', 'Desmarcar visibles'),
-            ),
-          ),
-          TertiaryButton.icon(
-            onPressed: busy ? null : showGraph,
-            icon: const Icon(Icons.account_tree_outlined),
-            label: Text(widget.tx('official.preview_graph', 'Grafo previo')),
-          ),
-        ],
-      ),
-    ],
-  );
-
-  Widget _filter({
-    required double width,
-    required String value,
-    required String label,
-    required List<String> values,
-    required ValueChanged<String?> onChanged,
-  }) => SizedBox(
-    width: width,
-    child: DropdownButtonFormField<String>(
-      isExpanded: true,
-      initialValue: value,
-      decoration: InputDecoration(labelText: label),
-      items: [
-        for (final item in values)
-          DropdownMenuItem(value: item, child: Text(item)),
-      ],
-      onChanged: onChanged,
-    ),
-  );
+  Widget _toolbar({required double availableWidth, required bool mobile}) =>
+      OfficialImportReviewToolbar(
+        draft: draft,
+        searchController: search,
+        selectedType: type,
+        selectedState: state,
+        showOmitted: showOmitted,
+        showLogs: showLogs,
+        busy: busy,
+        availableWidth: availableWidth,
+        mobile: mobile,
+        error: error,
+        tx: widget.tx,
+        onSearchChanged: (_) => setState(() {}),
+        onTypeChanged: (value) => setState(() => type = value ?? 'all'),
+        onStateChanged: (value) => setState(() => state = value ?? 'all'),
+        onShowOmittedChanged: (value) => setState(() => showOmitted = value),
+        onShowLogsChanged: (value) => setState(() => showLogs = value),
+        onSelectVisible: () => bulkSelect(true),
+        onDeselectVisible: () => bulkSelect(false),
+        onShowGraph: showGraph,
+      );
 }
