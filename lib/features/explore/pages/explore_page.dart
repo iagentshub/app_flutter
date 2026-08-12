@@ -23,7 +23,9 @@ import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../manager/repositories/manager_repository.dart';
 import '../controllers/explore_controller.dart';
 import '../repositories/explore_repository.dart';
+import 'official_pack_page.dart';
 
+part '../cards/explore_official_pack_card.dart';
 part '../cards/explore_resource_card.dart';
 part '../cards/explore_user_card.dart';
 part '../dialogs/preview_dialog.dart';
@@ -140,6 +142,8 @@ class _ExplorePageState extends State<ExplorePage>
   /// Traduce el tipo de recurso ("agent", "skill"...) al idioma del sistema,
   /// reutilizando las mismas etiquetas que el filtro de tipo.
   String _typeChipLabel(String type) {
+    if (type == 'memory') return _tx('explore.type_memory', 'Memoria');
+    if (type == 'official_pack') return _tx('explore.pack_badge', 'Pack');
     for (final option in _typeOptions) {
       if (option.$1 == type) return option.$2;
     }
@@ -195,8 +199,41 @@ class _ExplorePageState extends State<ExplorePage>
       title: _tx('common.filters', 'Filtros'),
       clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
       closeLabel: _tx('common.close', 'Cerrar'),
-      onClear: _controller.clearSecondaryFilters,
+      onClear: _controller.clearExploreFilters,
       buildFields: (setDialogState) => [
+        Text(
+          _tx('explore.official_display_label', 'Recursos oficiales'),
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: SegmentedButton<bool>(
+            key: const Key('officialPackModeSelector'),
+            segments: [
+              ButtonSegment(
+                value: true,
+                icon: const Icon(Icons.inventory_2_outlined, size: 16),
+                label: Text(_tx('explore.pack_mode', 'Packs')),
+              ),
+              ButtonSegment(
+                value: false,
+                icon: const Icon(Icons.view_module_outlined, size: 16),
+                label: Text(_tx('explore.individual_mode', 'Individuales')),
+              ),
+            ],
+            selected: {_controller.officialPacksMode},
+            showSelectedIcon: false,
+            expandedInsets: EdgeInsets.zero,
+            onSelectionChanged: (values) {
+              _controller.setOfficialPacksMode(values.first);
+              setDialogState(() {});
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Divider(height: 1),
+        const SizedBox(height: 16),
         _dropdown(
           label: _tx('explore.category_label', 'Categoría'),
           value: _controller.category,

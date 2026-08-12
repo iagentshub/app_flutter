@@ -1,3 +1,5 @@
+import '../../shared/graph/graph_models.dart';
+
 class ExploreItem {
   const ExploreItem({required this.raw});
 
@@ -67,6 +69,195 @@ class ExploreItem {
         .toList();
   }
 }
+
+class ExploreOfficialPack {
+  const ExploreOfficialPack({
+    required this.sourceId,
+    required this.name,
+    required this.repositoryUrl,
+    required this.counts,
+    this.description = '',
+    this.repositoryOwner = '',
+    this.repositoryName = '',
+    this.provider = 'github',
+    this.license = '',
+    this.commitSha = '',
+    this.matchingCount = 0,
+    this.totalCount = 0,
+    this.linkedCount = 0,
+    this.linkState = 'none',
+    this.ownedByRequester = false,
+  });
+
+  factory ExploreOfficialPack.fromJson(Map<String, dynamic> json) {
+    final rawCounts = json['counts'];
+    return ExploreOfficialPack(
+      sourceId: json['source_id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      repositoryUrl: json['repository_url']?.toString() ?? '',
+      repositoryOwner: json['repository_owner']?.toString() ?? '',
+      repositoryName: json['repository_name']?.toString() ?? '',
+      provider: json['provider']?.toString() ?? 'github',
+      license: json['license']?.toString() ?? '',
+      commitSha: json['commit_sha']?.toString() ?? '',
+      counts: rawCounts is Map
+          ? rawCounts.map(
+              (key, value) => MapEntry(key.toString(), _intValue(value)),
+            )
+          : const {},
+      matchingCount: _intValue(json['matching_count']),
+      totalCount: _intValue(json['total_count']),
+      linkedCount: _intValue(json['linked_count']),
+      linkState: json['link_state']?.toString() ?? 'none',
+      ownedByRequester: json['owned_by_requester'] == true,
+    );
+  }
+
+  final String sourceId;
+  final String name;
+  final String description;
+  final String repositoryUrl;
+  final String repositoryOwner;
+  final String repositoryName;
+  final String provider;
+  final String license;
+  final String commitSha;
+  final Map<String, int> counts;
+  final int matchingCount;
+  final int totalCount;
+  final int linkedCount;
+  final String linkState;
+  final bool ownedByRequester;
+
+  bool get fullyLinked => linkState == 'complete';
+}
+
+class ExploreOfficialPackComponent {
+  const ExploreOfficialPackComponent({
+    required this.componentKey,
+    required this.resourceType,
+    required this.resourceId,
+    required this.name,
+    this.description = '',
+    this.labels = const [],
+    this.dependencies = const [],
+    this.selectable = true,
+    this.linked = false,
+  });
+
+  factory ExploreOfficialPackComponent.fromJson(Map<String, dynamic> json) =>
+      ExploreOfficialPackComponent(
+        componentKey: json['component_key']?.toString() ?? '',
+        resourceType: json['resource_type']?.toString() ?? 'unknown',
+        resourceId: json['resource_id']?.toString() ?? '',
+        name: json['name']?.toString() ?? '',
+        description: json['description']?.toString() ?? '',
+        labels: _stringList(json['labels']),
+        dependencies: _stringList(json['dependencies']),
+        selectable: json['selectable'] != false,
+        linked: json['linked'] == true,
+      );
+
+  final String componentKey;
+  final String resourceType;
+  final String resourceId;
+  final String name;
+  final String description;
+  final List<String> labels;
+  final List<String> dependencies;
+  final bool selectable;
+  final bool linked;
+}
+
+class ExploreOfficialPackDetail {
+  const ExploreOfficialPackDetail({
+    required this.pack,
+    required this.components,
+  });
+
+  factory ExploreOfficialPackDetail.fromJson(Map<String, dynamic> json) =>
+      ExploreOfficialPackDetail(
+        pack: ExploreOfficialPack.fromJson(
+          (json['pack'] as Map? ?? const {}).cast<String, dynamic>(),
+        ),
+        components: (json['components'] as List? ?? const [])
+            .whereType<Map>()
+            .map(
+              (item) => ExploreOfficialPackComponent.fromJson(
+                item.cast<String, dynamic>(),
+              ),
+            )
+            .toList(),
+      );
+
+  final ExploreOfficialPack pack;
+  final List<ExploreOfficialPackComponent> components;
+}
+
+class ExploreOfficialPackGraph {
+  const ExploreOfficialPackGraph({
+    required this.rootId,
+    required this.nodes,
+    required this.edges,
+  });
+
+  factory ExploreOfficialPackGraph.fromJson(Map<String, dynamic> json) =>
+      ExploreOfficialPackGraph(
+        rootId: json['root_id']?.toString() ?? '',
+        nodes: (json['nodes'] as List? ?? const [])
+            .whereType<Map>()
+            .map(
+              (item) => GraphNode(
+                id: item['id']?.toString() ?? '',
+                label: item['label']?.toString() ?? '',
+                type: item['type']?.toString() ?? 'unknown',
+                description: item['description']?.toString() ?? '',
+              ),
+            )
+            .toList(),
+        edges: (json['edges'] as List? ?? const [])
+            .whereType<Map>()
+            .map(
+              (item) => GraphEdge(
+                sourceId: item['source_id']?.toString() ?? '',
+                targetId: item['target_id']?.toString() ?? '',
+                dashed: item['dashed'] == true,
+              ),
+            )
+            .toList(),
+      );
+
+  final String rootId;
+  final List<GraphNode> nodes;
+  final List<GraphEdge> edges;
+}
+
+class ExploreOfficialPackLinkResult {
+  const ExploreOfficialPackLinkResult({
+    required this.createdCount,
+    required this.existingCount,
+    required this.includedDependencies,
+  });
+
+  factory ExploreOfficialPackLinkResult.fromJson(Map<String, dynamic> json) =>
+      ExploreOfficialPackLinkResult(
+        createdCount: (json['created'] as List? ?? const []).length,
+        existingCount: (json['existing'] as List? ?? const []).length,
+        includedDependencies: _stringList(json['included_dependencies']),
+      );
+
+  final int createdCount;
+  final int existingCount;
+  final List<String> includedDependencies;
+}
+
+int _intValue(Object? value) => value is num ? value.toInt() : 0;
+
+List<String> _stringList(Object? value) => (value as List? ?? const [])
+    .map((item) => item.toString())
+    .where((item) => item.isNotEmpty)
+    .toList();
 
 class ExploreDependency {
   const ExploreDependency({required this.raw});

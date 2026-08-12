@@ -156,6 +156,23 @@ void main() {
     expect(controller.secondaryActiveFilterCount, 0);
   });
 
+  test(
+    'clearExploreFilters restaura la agrupación oficial por packs',
+    () async {
+      final controller = await build(
+        (request) async => http.Response(jsonEncode([]), 200),
+      );
+
+      await controller.setOfficialPacksMode(false);
+      await controller.toggleLabel('draft', selected: true);
+      await controller.clearExploreFilters();
+
+      expect(controller.officialPacksMode, isTrue);
+      expect(controller.hasLabel('draft'), isFalse);
+      expect(controller.secondaryActiveFilterCount, 0);
+    },
+  );
+
   test('toggleStar alterna el estado y refleja el contador nuevo', () async {
     final controller = await build((request) async {
       if (request.url.path.endsWith('/star')) {

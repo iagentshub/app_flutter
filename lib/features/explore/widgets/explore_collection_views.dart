@@ -45,6 +45,7 @@ extension _ExploreCollectionViews on _ExplorePageState {
 
   Widget _buildScrollView() {
     final items = _controller.items;
+    final packs = _controller.officialPacks;
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
@@ -89,12 +90,12 @@ extension _ExploreCollectionViews on _ExplorePageState {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
           sliver: SliverToBoxAdapter(
             child: Text(
-              '${_tx('explore.results', 'Resultados')}: ${items.length}',
+              '${_tx('explore.results', 'Resultados')}: ${_controller.resultCount}',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ),
         ),
-        if (items.isEmpty)
+        if (items.isEmpty && packs.isEmpty)
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
             sliver: SliverToBoxAdapter(
@@ -112,8 +113,10 @@ extension _ExploreCollectionViews on _ExplorePageState {
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
             sliver: ResponsiveSliverMasonryGrid(
-              itemCount: items.length,
-              itemBuilder: (context, index) => _buildItemCard(items[index]),
+              itemCount: packs.length + items.length,
+              itemBuilder: (context, index) => index < packs.length
+                  ? _buildOfficialPackCard(packs[index])
+                  : _buildItemCard(items[index - packs.length]),
             ),
           ),
       ],

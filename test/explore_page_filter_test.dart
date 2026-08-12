@@ -102,10 +102,115 @@ void main() {
     expect(requestedLanguages, ['es']);
   });
 
-  testWidgets('la card oficial es idéntica a la de comunidad salvo la etiqueta', (
+  testWidgets(
+    'la card oficial es idéntica a la de comunidad salvo la etiqueta',
+    (tester) async {
+      tester.view.physicalSize = const Size(900, 1200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      SharedPreferences.setMockInitialValues({});
+      final backend = await BackendController.bootstrap();
+      final locale = await LocaleController.bootstrap();
+      final session = await SessionController.bootstrap(
+        secureStore: MemorySecureStore(),
+      );
+      await session.login(
+        token: 'user-token',
+        user: const SessionUser(id: 'user-1', username: 'ada', role: 'user'),
+        remember: false,
+      );
+      String? linkedPath;
+      final client = MockClient((request) async {
+        if (request.method == 'POST' && request.url.path.endsWith('/link')) {
+          linkedPath = request.url.path;
+          return _json({'name': 'Official Analyst'});
+        }
+        if (request.url.path == '/api/explore') {
+          return _json([
+            {
+              'resource_type': 'agent',
+              'resource_id': 'agent-oficial',
+              'name': 'Official Analyst',
+              'description': 'Analiza fuentes',
+              'category': '',
+              'labels': ['public', 'official'],
+              'owner_username': 'iAgentsHub',
+              'stars_count': 3,
+            },
+            {
+              'resource_type': 'agent',
+              'resource_id': 'agent-comunidad',
+              'name': 'Community Analyst',
+              'description': 'También analiza',
+              'category': '',
+              'labels': ['public', 'community'],
+              'owner_username': 'grace',
+              'stars_count': 7,
+            },
+          ]);
+        }
+        if (request.url.path == '/api/users') return _json([]);
+        return _json({}, statusCode: 404);
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: AppServicesScope(
+              apiClient: ApiClient(backend, client: client),
+              sessionController: session,
+              localeController: locale,
+              child: const ExplorePage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Official Analyst'), findsOneWidget);
+      expect(find.text('Community Analyst'), findsOneWidget);
+      // Mismo juego de botones y mismos datos en ambas: propietario, favoritos,
+      // vista previa, enlazar. Lo único distinto es el chip de origen.
+      expect(find.byIcon(Icons.visibility_outlined), findsNWidgets(2));
+      expect(find.byIcon(Icons.link_outlined), findsNWidgets(2));
+      expect(find.byIcon(Icons.bookmark_outline), findsNWidgets(4));
+      expect(find.byIcon(Icons.person_outline), findsNWidgets(2));
+      expect(find.text('iAgentsHub'), findsOneWidget);
+      expect(find.text('grace'), findsOneWidget);
+      expect(find.text('3'), findsOneWidget);
+      expect(find.text('7'), findsOneWidget);
+      // Nada de acciones exclusivas del catálogo antiguo.
+      expect(find.byIcon(Icons.add_circle_outline), findsNothing);
+      expect(find.byIcon(Icons.download_outlined), findsNothing);
+      expect(find.byIcon(Icons.hub_outlined), findsNothing);
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Text &&
+              {'Oficial', 'Official', 'official'}.contains(widget.data),
+        ),
+        findsOneWidget,
+      );
+
+      // Enlazar usa la ruta normal del recurso, no una de catálogo.
+      await tester.tap(find.byIcon(Icons.link_outlined).first);
+      await tester.pumpAndSettle();
+      expect(linkedPath, contains('/api/agents/'));
+      expect(linkedPath, isNot(contains('official')));
+
+      for (final width in [768.0, 1024.0, 1440.0, 1920.0]) {
+        tester.view.physicalSize = Size(width, 900);
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull, reason: 'overflow at $width px');
+      }
+    },
+  );
+
+  testWidgets('agrupa oficiales por defecto y permite revisar la selección', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(900, 1200);
+    tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -120,35 +225,58 @@ void main() {
       user: const SessionUser(id: 'user-1', username: 'ada', role: 'user'),
       remember: false,
     );
-    String? linkedPath;
+    var communityRequestExcludedOfficial = false;
     final client = MockClient((request) async {
-      if (request.method == 'POST' && request.url.path.endsWith('/link')) {
-        linkedPath = request.url.path;
-        return _json({'name': 'Official Analyst'});
+      if (request.url.path == '/api/explore/official-packs/source-1') {
+        return _json({
+          'pack': _pack(),
+          'components': [
+            {
+              'component_key': 'skill-1',
+              'resource_type': 'skill',
+              'resource_id': 'official-skill',
+              'name': 'Skill del pack',
+              'dependencies': [],
+              'selectable': true,
+              'linked': false,
+            },
+            {
+              'component_key': 'agent-1',
+              'resource_type': 'agent',
+              'resource_id': 'official-agent',
+              'name': 'Agente del pack',
+              'dependencies': ['skill-1'],
+              'selectable': true,
+              'linked': false,
+            },
+          ],
+        });
+      }
+      if (request.url.path == '/api/explore/official-packs') {
+        return _json([_pack()]);
       }
       if (request.url.path == '/api/explore') {
-        return _json([
+        communityRequestExcludedOfficial =
+            request.url.queryParameters['include_official'] == 'false';
+        final resources = <Map<String, dynamic>>[
           {
             'resource_type': 'agent',
-            'resource_id': 'agent-oficial',
-            'name': 'Official Analyst',
-            'description': 'Analiza fuentes',
-            'category': '',
-            'labels': ['public', 'official'],
-            'owner_username': 'iAgentsHub',
-            'stars_count': 3,
-          },
-          {
-            'resource_type': 'agent',
-            'resource_id': 'agent-comunidad',
-            'name': 'Community Analyst',
-            'description': 'También analiza',
-            'category': '',
-            'labels': ['public', 'community'],
+            'resource_id': 'community-agent',
+            'name': 'Agente comunitario',
             'owner_username': 'grace',
-            'stars_count': 7,
+            'labels': ['community'],
           },
-        ]);
+        ];
+        if (!communityRequestExcludedOfficial) {
+          resources.add({
+            'resource_type': 'agent',
+            'resource_id': 'official-agent',
+            'name': 'Agente oficial individual',
+            'owner_username': 'iAgentsHub',
+            'labels': ['official'],
+          });
+        }
+        return _json(resources);
       }
       if (request.url.path == '/api/users') return _json([]);
       return _json({}, statusCode: 404);
@@ -168,37 +296,49 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Official Analyst'), findsOneWidget);
-    expect(find.text('Community Analyst'), findsOneWidget);
-    // Mismo juego de botones y mismos datos en ambas: propietario, favoritos,
-    // vista previa, enlazar. Lo único distinto es el chip de origen.
-    expect(find.byIcon(Icons.visibility_outlined), findsNWidgets(2));
-    expect(find.byIcon(Icons.link_outlined), findsNWidgets(2));
-    expect(find.byIcon(Icons.bookmark_outline), findsNWidgets(4));
-    expect(find.byIcon(Icons.person_outline), findsNWidgets(2));
-    expect(find.text('iAgentsHub'), findsOneWidget);
-    expect(find.text('grace'), findsOneWidget);
-    expect(find.text('3'), findsOneWidget);
-    expect(find.text('7'), findsOneWidget);
-    // Nada de acciones exclusivas del catálogo antiguo.
-    expect(find.byIcon(Icons.add_circle_outline), findsNothing);
-    expect(find.byIcon(Icons.download_outlined), findsNothing);
-    expect(find.byIcon(Icons.hub_outlined), findsNothing);
-    expect(
-      find.byWidgetPredicate(
-        (widget) =>
-            widget is Text &&
-            {'Oficial', 'Official', 'official'}.contains(widget.data),
-      ),
-      findsOneWidget,
-    );
+    expect(communityRequestExcludedOfficial, isTrue);
+    expect(find.text('Superpowers'), findsOneWidget);
+    expect(find.text('Agente comunitario'), findsOneWidget);
+    expect(find.text('Agente del pack'), findsNothing);
+    expect(find.byKey(const Key('officialPackModeSelector')), findsNothing);
+    expect(tester.takeException(), isNull);
 
-    // Enlazar usa la ruta normal del recurso, no una de catálogo.
-    await tester.tap(find.byIcon(Icons.link_outlined).first);
+    await tester.tap(find.byIcon(Icons.filter_list));
     await tester.pumpAndSettle();
-    expect(linkedPath, contains('/api/agents/'));
-    expect(linkedPath, isNot(contains('official')));
+    expect(find.text('Recursos oficiales'), findsOneWidget);
+    expect(find.byKey(const Key('officialPackModeSelector')), findsOneWidget);
+    await tester.tap(find.text('Individuales'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cerrar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Superpowers'), findsNothing);
+    expect(find.text('Agente oficial individual'), findsOneWidget);
+    expect(communityRequestExcludedOfficial, isFalse);
 
+    await tester.tap(find.byIcon(Icons.filter_list));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Packs'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cerrar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Superpowers'), findsOneWidget);
+    expect(find.text('Agente oficial individual'), findsNothing);
+
+    await tester.tap(find.byIcon(Icons.visibility_outlined).first);
+    await tester.pumpAndSettle();
+    expect(find.text('Skill del pack'), findsOneWidget);
+    expect(find.text('Agente del pack'), findsOneWidget);
+    expect(find.text('2 seleccionados'), findsOneWidget);
+
+    await tester.tap(
+      find.ancestor(
+        of: find.text('Skill del pack'),
+        matching: find.byType(CheckboxListTile),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('0 seleccionados'), findsOneWidget);
+    expect(tester.takeException(), isNull);
     for (final width in [768.0, 1024.0, 1440.0, 1920.0]) {
       tester.view.physicalSize = Size(width, 900);
       await tester.pumpAndSettle();
@@ -206,6 +346,24 @@ void main() {
     }
   });
 }
+
+Map<String, dynamic> _pack() => {
+  'item_kind': 'official_pack',
+  'source_id': 'source-1',
+  'name': 'Superpowers',
+  'description': 'Flujo oficial',
+  'repository_url': 'https://github.com/obra/superpowers',
+  'repository_owner': 'obra',
+  'repository_name': 'superpowers',
+  'provider': 'github',
+  'license': 'MIT',
+  'commit_sha': 'abc',
+  'counts': {'agent': 1, 'skill': 1},
+  'matching_count': 2,
+  'total_count': 2,
+  'linked_count': 0,
+  'link_state': 'none',
+};
 
 http.Response _json(Object body, {int statusCode = 200}) {
   return http.Response(

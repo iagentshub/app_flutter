@@ -44,6 +44,8 @@ class ExploreController extends ChangeNotifier {
   // ── Pestaña Recursos ──────────────────────────────────────────────────
 
   List<ExploreItem> _items = const [];
+  List<ExploreOfficialPack> _officialPacks = const [];
+  bool _officialPacksMode = true;
   bool _loading = true;
   String? _error;
   String _type = 'all';
@@ -54,11 +56,15 @@ class ExploreController extends ChangeNotifier {
   final Set<String> _busyKeys = <String>{};
   final Set<String> _linkedKeys = <String>{};
   final Set<String> _starredKeys = <String>{};
+  final Set<String> _busyPackIds = <String>{};
 
   // Los getters devuelven la colección viva, no una copia: `build` los
   // consulta una vez por elemento y copiar aquí sería cuadrático. Sólo el
   // controller tiene la referencia mutable.
   List<ExploreItem> get items => _items;
+  List<ExploreOfficialPack> get officialPacks => _officialPacks;
+  bool get officialPacksMode => _officialPacksMode;
+  int get resultCount => _items.length + _officialPacks.length;
   bool get loading => _loading;
   String? get error => _error;
   String get type => _type;
@@ -72,6 +78,8 @@ class ExploreController extends ChangeNotifier {
   bool isBusy(ExploreItem item) => _busyKeys.contains(itemKey(item));
   bool isLinked(ExploreItem item) => _linkedKeys.contains(itemKey(item));
   bool isStarred(ExploreItem item) => _starredKeys.contains(itemKey(item));
+  bool isPackBusy(ExploreOfficialPack pack) =>
+      _busyPackIds.contains(pack.sourceId);
 
   String itemKey(ExploreItem item) => '${item.resourceType}:${item.resourceId}';
 
@@ -109,6 +117,13 @@ class ExploreController extends ChangeNotifier {
 
   Future<void> setType(String value) {
     _type = value;
+    _notify();
+    return load();
+  }
+
+  Future<void> setOfficialPacksMode(bool value) {
+    if (_officialPacksMode == value) return Future.value();
+    _officialPacksMode = value;
     _notify();
     return load();
   }
@@ -172,6 +187,15 @@ class ExploreController extends ChangeNotifier {
     return load();
   }
 
+  Future<void> clearExploreFilters() {
+    _category = '';
+    _labels.clear();
+    _languages.clear();
+    _officialPacksMode = true;
+    _notify();
+    return load();
+  }
+
   // ── Carga y acciones ──────────────────────────────────────────────────
 
   String? get _token => _sessionController.gaToken;
@@ -190,23 +214,45 @@ class ExploreController extends ChangeNotifier {
     _notify();
 
     try {
-      final items = await _repository.listResources(
+      final resourcesFuture = _repository.listResources(
         token,
         type: _type,
         query: queryController.text,
         category: _category,
         labels: _labels.toList(),
         languages: _languages.toList(),
+        includeOfficial: !_officialPacksMode,
       );
-      _items = items;
+      final packsFuture = _officialPacksMode
+          ? _repository.listOfficialPacks(
+              token,
+              type: _type,
+              query: queryController.text,
+              category: _category,
+              labels: _labels.toList(),
+              languages: _languages.toList(),
+            )
+          : Future<List<ExploreOfficialPack>>.value(const []);
+      final results = await Future.wait([resourcesFuture, packsFuture]);
+      _items = results[0] as List<ExploreItem>;
+      _officialPacks = results[1] as List<ExploreOfficialPack>;
       if (_type == 'all') {
         _typeCounts.clear();
-        for (final item in items) {
+        for (final item in _items) {
           _typeCounts.update(
             item.resourceType,
             (count) => count + 1,
             ifAbsent: () => 1,
           );
+        }
+        for (final pack in _officialPacks) {
+          for (final entry in pack.counts.entries) {
+            _typeCounts.update(
+              entry.key,
+              (count) => count + entry.value,
+              ifAbsent: () => entry.value,
+            );
+          }
         }
       }
       _loading = false;
@@ -221,6 +267,44 @@ class ExploreController extends ChangeNotifier {
       _loading = false;
     }
     _notify();
+  }
+
+  Future<ActionResult?> linkOfficialPack(
+    ExploreOfficialPack pack, {
+    List<String>? componentKeys,
+  }) async {
+    final token = _token;
+    if (token == null ||
+        token.isEmpty ||
+        _busyPackIds.contains(pack.sourceId)) {
+      return null;
+    }
+    _busyPackIds.add(pack.sourceId);
+    _notify();
+    try {
+      final result = await _repository.linkOfficialPack(
+        token,
+        pack.sourceId,
+        commitSha: pack.commitSha,
+        componentKeys: componentKeys,
+      );
+      await load();
+      return ActionResult(
+        _tx(
+          'explore.pack_link_ok',
+          '{{count}} recursos vinculados',
+        ).replaceAll('{{count}}', '${result.createdCount}'),
+      );
+    } on ApiError catch (error) {
+      return ActionResult.error(error.message);
+    } catch (_) {
+      return ActionResult.error(
+        _tx('explore.pack_link_error', 'No se pudo vincular el pack'),
+      );
+    } finally {
+      _busyPackIds.remove(pack.sourceId);
+      _notify();
+    }
   }
 
   /// Pide la vista previa y se la pasa a [present], que es quien abre el
