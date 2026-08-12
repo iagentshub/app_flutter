@@ -16,6 +16,8 @@ const Map<String, Color> _labelColors = {
   'tool': FncColors.labelTool,
   'knowledge': FncColors.labelKnowledge,
   'connection': FncColors.labelConnection,
+  'provider': FncColors.labelConnection,
+  'official_source': FncColors.labelOfficial,
   'memory': FncColors.labelMemory,
   'workflow': FncColors.labelWorkflow,
   'evaluator': FncColors.labelEvaluator,

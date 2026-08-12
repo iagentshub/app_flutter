@@ -30,6 +30,10 @@ IconData iconForType(String type) {
       return Icons.menu_book_outlined;
     case 'connection':
       return Icons.cable_outlined;
+    case 'provider':
+      return Icons.hub_outlined;
+    case 'official_source':
+      return Icons.account_tree_outlined;
     case 'memory':
       return Icons.description_outlined;
     case 'workflow':
