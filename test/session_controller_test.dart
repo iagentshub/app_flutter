@@ -23,7 +23,8 @@ void main() {
       );
       final prefs = await SharedPreferences.getInstance();
 
-      expect(controller.isLoggedIn, isTrue);
+      expect(controller.status, SessionStatus.restoring);
+      expect(controller.isLoggedIn, isFalse);
       expect(controller.gaToken, 'token');
       expect(controller.user?.username, 'alice');
       expect(controller.user?.role, 'user');
@@ -31,6 +32,33 @@ void main() {
       expect(prefs.getString('ga_token'), isNull);
     },
   );
+
+  test('solo considera autenticada una sesión después de validarla', () async {
+    SharedPreferences.setMockInitialValues({
+      'session_username': 'alice',
+      'session_role': 'admin',
+    });
+    final secrets = MemorySecureStore()..values['ga_token'] = 'token';
+    final controller = await SessionController.bootstrap(secureStore: secrets);
+
+    expect(controller.status, SessionStatus.restoring);
+    expect(controller.hasRestorableSession, isTrue);
+
+    controller.markBackendUnavailable();
+    expect(controller.status, SessionStatus.backendUnavailable);
+    expect(controller.gaToken, 'token');
+    expect(secrets.values['ga_token'], 'token');
+
+    controller.beginRevalidation();
+    expect(controller.status, SessionStatus.restoring);
+
+    await controller.login(
+      token: 'token',
+      user: const SessionUser(username: 'alice', role: 'admin'),
+    );
+    expect(controller.status, SessionStatus.authenticated);
+    expect(controller.isLoggedIn, isTrue);
+  });
 
   test('elimina credenciales persistidas incompletas', () async {
     SharedPreferences.setMockInitialValues({

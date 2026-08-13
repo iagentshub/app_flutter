@@ -53,6 +53,10 @@ class WorkflowRunsController extends ChangeNotifier {
   Duration? get debugNextPollDelay => _nextPollDelay;
 
   String? get _token {
+    // Las credenciales restauradas no habilitan trabajo autenticado hasta que
+    // `/api/auth/me` las haya validado. Esto evita sondeos internos mientras
+    // la app muestra la compuerta de restauración o el backend está caído.
+    if (!_session.isLoggedIn) return null;
     final value = _session.gaToken;
     return value == null || value.isEmpty ? null : value;
   }

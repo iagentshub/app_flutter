@@ -193,6 +193,44 @@ void main() {
     expect(controller.activeCount, 1);
     expect(controller.debugNextPollDelay, const Duration(seconds: 5));
   });
+
+  test('no sondea con credenciales restauradas aún no validadas', () async {
+    SharedPreferences.setMockInitialValues({
+      'session_username': 'alice',
+      'session_role': 'user',
+    });
+    final secrets = MemorySecureStore()..values['ga_token'] = 'saved-token';
+    final backend = await BackendController.bootstrap();
+    final session = await SessionController.bootstrap(secureStore: secrets);
+    var requests = 0;
+    final client = ApiClient(
+      backend,
+      client: MockClient((_) async {
+        requests += 1;
+        return http.Response('[]', 200);
+      }),
+    );
+    final controller = WorkflowRunsController(
+      apiClient: client,
+      sessionController: session,
+    );
+    addTearDown(controller.dispose);
+    addTearDown(client.close);
+
+    await Future<void>.delayed(Duration.zero);
+    expect(session.status, SessionStatus.restoring);
+    expect(requests, 0);
+
+    session.markBackendUnavailable();
+    await Future<void>.delayed(Duration.zero);
+    expect(requests, 0);
+
+    await session.login(
+      token: 'saved-token',
+      user: const SessionUser(username: 'alice', role: 'user'),
+    );
+    await _waitUntil(() => requests == 1);
+  });
 }
 
 Future<void> _waitUntil(bool Function() condition) async {

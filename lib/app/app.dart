@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
 
 import '../core/network/api_client.dart';
 import '../core/network/api_error.dart';
@@ -23,6 +24,8 @@ class App extends StatefulWidget {
     required this.localeController,
     required this.themeController,
     this.initialLocation,
+    this.httpClient,
+    this.requestTimeout = const Duration(seconds: 30),
     super.key,
   });
 
@@ -36,6 +39,10 @@ class App extends StatefulWidget {
   /// el router, se restaura en [initState].
   final String? initialLocation;
 
+  /// Puntos de inyección para verificar el arranque sin tráfico real.
+  final http.Client? httpClient;
+  final Duration requestTimeout;
+
   @override
   State<App> createState() => _AppState();
 }
@@ -47,12 +54,15 @@ class _AppState extends State<App> {
   late final DashboardRepository _dashboardRepository;
   late final DashboardEditState _dashboardEditState;
   late final WorkflowRunsController _workflowRunsController;
+  bool _sessionValidationInFlight = false;
 
   @override
   void initState() {
     super.initState();
     _apiClient = ApiClient(
       widget.backendController,
+      client: widget.httpClient,
+      requestTimeout: widget.requestTimeout,
       onUnauthorized: _handleUnauthorized,
       sessionIdentity: () => widget.sessionController.cacheIdentity,
     );
@@ -71,6 +81,8 @@ class _AppState extends State<App> {
       dashboardRepository: _dashboardRepository,
       apiClient: _apiClient,
       dashboardEditState: _dashboardEditState,
+      onRetrySession: _revalidatePersistedSession,
+      onUseAnotherAccount: _discardPersistedSession,
     );
     final initialLocation = widget.initialLocation;
     if (initialLocation != null &&
@@ -82,11 +94,14 @@ class _AppState extends State<App> {
   }
 
   Future<void> _revalidatePersistedSession() async {
+    if (_sessionValidationInFlight) return;
     final token = widget.sessionController.gaToken;
     if (token == null || token.isEmpty) {
       await _syncPublicTheme();
       return;
     }
+    _sessionValidationInFlight = true;
+    widget.sessionController.beginRevalidation();
     try {
       final user = await _authRepository.me(token);
       await widget.sessionController.login(
@@ -106,18 +121,26 @@ class _AppState extends State<App> {
         // Las preferencias visuales no deben invalidar una sesión válida.
       }
     } on ApiError catch (error) {
-      // El 401 ya lo cierra _handleUnauthorized (callback global del
-      // ApiClient); aquí solo falta cubrir el 403 (p. ej. cuenta
-      // desactivada), que no es un token inválido pero igualmente exige
-      // volver a login.
-      if (error.statusCode == 403) {
+      // El callback global ya inicia el cierre en un 401; se espera también
+      // aquí para que la transición de arranque sea determinista. Un 403
+      // (p. ej. cuenta desactivada) exige igualmente volver a login.
+      if (error.statusCode == 401 || error.statusCode == 403) {
         await widget.sessionController.logout();
         _apiClient.invalidateCache();
+      } else {
+        widget.sessionController.markBackendUnavailable();
       }
     } catch (_) {
-      // Sin red se conserva la sesión con rol mínimo. Nunca se confía en el
-      // rol persistido hasta recibir una respuesta válida del backend.
+      widget.sessionController.markBackendUnavailable();
+    } finally {
+      _sessionValidationInFlight = false;
     }
+  }
+
+  Future<void> _discardPersistedSession() async {
+    await widget.sessionController.logout();
+    _apiClient.invalidateCache();
+    await _syncPublicTheme();
   }
 
   /// Callback global del [ApiClient]: cualquier petición autenticada que

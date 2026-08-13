@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/pages/backend_config_page.dart';
@@ -5,6 +6,7 @@ import '../../features/auth/pages/forgot_password_page.dart';
 import '../../features/auth/pages/login_page.dart';
 import '../../features/auth/pages/register_page.dart';
 import '../../features/auth/pages/reset_password_page.dart';
+import '../../features/auth/pages/session_recovery_page.dart';
 import '../../features/auth/pages/verify_page.dart';
 import '../../features/auth/repositories/auth_repository.dart';
 import '../../shared/state/backend_controller.dart';
@@ -31,6 +33,8 @@ abstract final class ExternalRoutes {
   static const resetPassword = '/reset-password';
   static const verify = '/verify';
   static const backendConfig = '/backend';
+  static const sessionRestore = '/session/restore';
+  static const sessionUnavailable = '/session/unavailable';
 }
 
 /// Sitio público real (marketing), fuera de esta app Flutter.
@@ -56,6 +60,8 @@ List<RouteBase> externalRoutes({
   required SessionController sessionController,
   required LocaleController localeController,
   required AuthRepository authRepository,
+  required VoidCallback onRetrySession,
+  required VoidCallback onUseAnotherAccount,
 }) {
   return [
     GoRoute(
@@ -134,5 +140,25 @@ List<RouteBase> externalRoutes({
         ),
       ),
     ),
+    for (final path in const [
+      ExternalRoutes.sessionRestore,
+      ExternalRoutes.sessionUnavailable,
+    ])
+      GoRoute(
+        path: path,
+        builder: (context, state) => TerminalViewTransition(
+          child: SessionRecoveryPage(
+            sessionController: sessionController,
+            backendController: backendController,
+            localeController: localeController,
+            onRetry: onRetrySession,
+            onConfigureBackend: () async {
+              await context.push(ExternalRoutes.backendConfig);
+              onRetrySession();
+            },
+            onUseAnotherAccount: onUseAnotherAccount,
+          ),
+        ),
+      ),
   ];
 }

@@ -27,6 +27,8 @@ abstract final class AppRouter {
     required DashboardRepository dashboardRepository,
     required ApiClient apiClient,
     required DashboardEditState dashboardEditState,
+    required VoidCallback onRetrySession,
+    required VoidCallback onUseAnotherAccount,
   }) {
     final shellNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -39,6 +41,8 @@ abstract final class AppRouter {
         ExternalRoutes.resetPassword,
         ExternalRoutes.verify,
         ExternalRoutes.backendConfig,
+        ExternalRoutes.sessionRestore,
+        ExternalRoutes.sessionUnavailable,
       };
       return publicPaths.contains(path);
     }
@@ -51,6 +55,40 @@ abstract final class AppRouter {
       redirect: (context, state) {
         final location = state.matchedLocation;
         final public = isPublicPath(location);
+        final status = sessionController.status;
+        final recoveryRoute =
+            location == ExternalRoutes.sessionRestore ||
+            location == ExternalRoutes.sessionUnavailable;
+        final canBypassRecovery =
+            location == ExternalRoutes.backendConfig ||
+            location == ExternalRoutes.register ||
+            location == ExternalRoutes.forgotPassword ||
+            location == ExternalRoutes.resetPassword ||
+            location == ExternalRoutes.verify;
+
+        String recoveryRedirect(String route) {
+          final requested =
+              location == ExternalRoutes.login ||
+                  location == ExternalRoutes.home ||
+                  recoveryRoute
+              ? safeRedirect(state.uri.queryParameters['redirect'])
+              : state.uri.toString();
+          return '$route?redirect=${Uri.encodeComponent(requested)}';
+        }
+
+        if (status == SessionStatus.restoring && !canBypassRecovery) {
+          if (location == ExternalRoutes.sessionRestore) return null;
+          return recoveryRedirect(ExternalRoutes.sessionRestore);
+        }
+
+        if (status == SessionStatus.backendUnavailable && !canBypassRecovery) {
+          if (location == ExternalRoutes.sessionUnavailable) return null;
+          return recoveryRedirect(ExternalRoutes.sessionUnavailable);
+        }
+
+        if (status == SessionStatus.signedOut && recoveryRoute) {
+          return ExternalRoutes.login;
+        }
 
         if (!sessionController.isLoggedIn && !public) {
           final redirect = Uri.encodeComponent(state.uri.toString());
@@ -59,7 +97,8 @@ abstract final class AppRouter {
 
         if (sessionController.isLoggedIn &&
             (location == ExternalRoutes.login ||
-                location == ExternalRoutes.home)) {
+                location == ExternalRoutes.home ||
+                recoveryRoute)) {
           return safeRedirect(state.uri.queryParameters['redirect']);
         }
 
@@ -75,6 +114,8 @@ abstract final class AppRouter {
           sessionController: sessionController,
           localeController: localeController,
           authRepository: authRepository,
+          onRetrySession: onRetrySession,
+          onUseAnotherAccount: onUseAnotherAccount,
         ),
         buildShellRoute(
           shellNavigatorKey: shellNavigatorKey,

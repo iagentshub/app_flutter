@@ -5,6 +5,8 @@ import '../../core/storage/local_store.dart';
 import '../../core/storage/secure_store.dart';
 import '../../models/auth/session_user.dart';
 
+enum SessionStatus { signedOut, restoring, authenticated, backendUnavailable }
+
 class SessionController extends ChangeNotifier {
   SessionController._(this._secureStore);
 
@@ -13,7 +15,7 @@ class SessionController extends ChangeNotifier {
   static const _roleKey = 'session_role';
 
   final SecureStore _secureStore;
-  bool _isLoggedIn = false;
+  SessionStatus _status = SessionStatus.signedOut;
   String? _gaToken;
   SessionUser? _user;
 
@@ -43,7 +45,7 @@ class SessionController extends ChangeNotifier {
       // autorización: puede ser manipulado fuera de la app. Hasta que
       // /api/auth/me lo revalide, la sesión arranca con privilegios mínimos.
       controller._user = SessionUser(username: username, role: 'user');
-      controller._isLoggedIn = true;
+      controller._status = SessionStatus.restoring;
 
       if (legacyToken != null) {
         if (secureToken?.isNotEmpty == true) {
@@ -73,7 +75,10 @@ class SessionController extends ChangeNotifier {
     return controller;
   }
 
-  bool get isLoggedIn => _isLoggedIn;
+  SessionStatus get status => _status;
+  bool get isLoggedIn => _status == SessionStatus.authenticated;
+  bool get hasRestorableSession =>
+      _gaToken != null && _gaToken!.isNotEmpty && _user != null;
   String? get gaToken => _gaToken;
   SessionUser? get user => _user;
 
@@ -86,8 +91,28 @@ class SessionController extends ChangeNotifier {
   /// constante porque la cookie real es HttpOnly y la app no la ve, así que
   /// una clave construida con él vale lo mismo para todas las cuentas. Este
   /// valor sí cambia al cambiar de usuario, también en web.
-  String get cacheIdentity =>
-      _isLoggedIn ? '${_user?.username ?? ''}#$_epoch' : 'anon#$_epoch';
+  String get cacheIdentity => hasRestorableSession
+      ? '${_user?.username ?? ''}#$_epoch'
+      : 'anon#$_epoch';
+
+  /// Vuelve a proteger las rutas internas mientras se comprueba la sesión
+  /// persistida. El token se conserva para poder reintentar después de un
+  /// fallo de red sin obligar al usuario a autenticarse de nuevo.
+  void beginRevalidation() {
+    if (!hasRestorableSession || _status == SessionStatus.restoring) return;
+    _status = SessionStatus.restoring;
+    notifyListeners();
+  }
+
+  /// La identidad sigue almacenada, pero no se considera autenticada mientras
+  /// el backend no pueda confirmar `/api/auth/me`.
+  void markBackendUnavailable() {
+    if (!hasRestorableSession || _status == SessionStatus.backendUnavailable) {
+      return;
+    }
+    _status = SessionStatus.backendUnavailable;
+    notifyListeners();
+  }
 
   /// [remember] controla si la sesión sobrevive a reiniciar la app. Si es
   /// false (invitado, o "recordar cuenta" desmarcado en login), la sesión
@@ -100,7 +125,7 @@ class SessionController extends ChangeNotifier {
   }) async {
     _gaToken = token;
     _user = user;
-    _isLoggedIn = true;
+    _status = SessionStatus.authenticated;
     _epoch += 1;
 
     final prefs = await LocalStore.instance();
@@ -127,8 +152,8 @@ class SessionController extends ChangeNotifier {
     // Evita trabajo y notificaciones redundantes cuando varias peticiones
     // en vuelo reciben un 401 casi a la vez (p. ej. una vista que dispara
     // varias llamadas en paralelo justo cuando el token caduca).
-    if (!_isLoggedIn) return;
-    _isLoggedIn = false;
+    if (_status == SessionStatus.signedOut && !hasRestorableSession) return;
+    _status = SessionStatus.signedOut;
     _gaToken = null;
     _user = null;
     _epoch += 1;
