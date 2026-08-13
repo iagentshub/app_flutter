@@ -26,6 +26,7 @@ class App extends StatefulWidget {
     this.initialLocation,
     this.httpClient,
     this.requestTimeout = const Duration(seconds: 30),
+    this.sessionValidationTimeout = const Duration(seconds: 5),
     super.key,
   });
 
@@ -42,6 +43,10 @@ class App extends StatefulWidget {
   /// Puntos de inyección para verificar el arranque sin tráfico real.
   final http.Client? httpClient;
   final Duration requestTimeout;
+
+  /// Tiempo máximo que el arranque espera a `/api/auth/me` antes de ofrecer
+  /// reintento o cambio de backend. No reduce el timeout de otras operaciones.
+  final Duration sessionValidationTimeout;
 
   @override
   State<App> createState() => _AppState();
@@ -103,7 +108,10 @@ class _AppState extends State<App> {
     _sessionValidationInFlight = true;
     widget.sessionController.beginRevalidation();
     try {
-      final user = await _authRepository.me(token);
+      final user = await _authRepository.me(
+        token,
+        timeout: widget.sessionValidationTimeout,
+      );
       await widget.sessionController.login(
         token: token,
         user: user,

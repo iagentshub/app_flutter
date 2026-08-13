@@ -83,9 +83,14 @@ class ApiClient {
   /// cuenta como "alcanzable"; solo un fallo de red real (sin respuesta)
   /// cuenta como problema de conexión, para no confundirlo con errores de
   /// API normales y así no fallar en silencio en el resto de la app.
-  Future<http.StreamedResponse> _send(http.BaseRequest request) async {
+  Future<http.StreamedResponse> _send(
+    http.BaseRequest request, {
+    Duration? timeout,
+  }) async {
     try {
-      final streamed = await _client.send(request).timeout(_requestTimeout);
+      final streamed = await _client
+          .send(request)
+          .timeout(timeout ?? _requestTimeout);
       backendController.reportConnectionOk();
       return streamed;
     } catch (error) {
@@ -102,6 +107,7 @@ class ApiClient {
     String? gaToken,
     bool cache = false,
     Duration? ttl,
+    Duration? timeout,
   }) async {
     // La clave incluye la identidad de la sesión para que la caché nunca
     // sirva la respuesta de un usuario a otro (p. ej. tras cerrar sesión y
@@ -121,7 +127,7 @@ class ApiClient {
     }
 
     final generation = _cache.generation;
-    final request = _request('GET', path, gaToken: gaToken);
+    final request = _request('GET', path, gaToken: gaToken, timeout: timeout);
     if (cache) _cache.track(cacheKey, request);
     try {
       final response = await request;
@@ -379,6 +385,7 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? body,
     String? gaToken,
+    Duration? timeout,
   }) async {
     final headers = <String, String>{'Accept': 'application/json'};
     if (!kIsWeb && gaToken != null && gaToken.isNotEmpty) {
@@ -394,7 +401,7 @@ class ApiClient {
     request.headers.addAll(headers);
     if (body != null) request.body = jsonEncode(body);
 
-    final streamed = await _send(request);
+    final streamed = await _send(request, timeout: timeout);
     final response = await _readBoundedResponse(streamed);
     final parsed = _parseBody(response.body);
     final apiResponse = ApiResponse(

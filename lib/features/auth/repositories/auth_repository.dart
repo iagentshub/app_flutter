@@ -95,8 +95,12 @@ class AuthRepository {
     );
   }
 
-  Future<SessionUser> me(String gaToken) async {
-    final response = await _apiClient.get('/api/auth/me', gaToken: gaToken);
+  Future<SessionUser> me(String gaToken, {Duration? timeout}) async {
+    final response = await _apiClient.get(
+      '/api/auth/me',
+      gaToken: gaToken,
+      timeout: timeout,
+    );
     return SessionUser.fromJson(response.json);
   }
 

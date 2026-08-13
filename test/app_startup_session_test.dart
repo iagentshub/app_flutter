@@ -78,6 +78,7 @@ void main() {
     themeController: state.theme,
     httpClient: client,
     requestTimeout: const Duration(milliseconds: 100),
+    sessionValidationTimeout: const Duration(milliseconds: 100),
   );
 
   testWidgets('no abre dashboard antes de validar la sesión guardada', (
@@ -160,6 +161,39 @@ void main() {
     expect(state.secrets.values['ga_token'], 'saved-token');
     expect(find.byType(SessionRecoveryPage), findsOneWidget);
     expect(find.byKey(const ValueKey('session-retry-button')), findsOneWidget);
+  });
+
+  testWidgets('limita la espera de validación aunque la conexión no responda', (
+    tester,
+  ) async {
+    final state = await restoredSession();
+    final neverResponds = Completer<http.Response>();
+    final client = MockClient((_) => neverResponds.future);
+
+    await tester.pumpWidget(
+      App(
+        backendController: state.backend,
+        sessionController: state.session,
+        localeController: state.locale,
+        themeController: state.theme,
+        httpClient: client,
+        requestTimeout: const Duration(seconds: 30),
+        sessionValidationTimeout: const Duration(milliseconds: 50),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 49));
+    expect(state.session.status, SessionStatus.restoring);
+
+    await tester.pump(const Duration(milliseconds: 2));
+    await pumpUntil(
+      tester,
+      () =>
+          state.session.status == SessionStatus.backendUnavailable &&
+          find
+              .byKey(const ValueKey('session-retry-button'))
+              .evaluate()
+              .isNotEmpty,
+    );
   });
 
   testWidgets('usar otra cuenta descarta la sesión conservada', (tester) async {
