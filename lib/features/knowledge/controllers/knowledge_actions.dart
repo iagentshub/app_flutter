@@ -289,14 +289,14 @@ extension _KnowledgeActions on _KnowledgePageState {
     });
 
     try {
-      final items = await _repository.listItems(
-        token,
-        groupId: _activeGroupId,
-        includeInactive: true,
-      );
+      final results = await Future.wait([
+        _repository.listItems(token, groupId: _activeGroupId),
+        _repository.listPacks(token, groupId: _activeGroupId),
+      ]);
       if (!mounted) return;
       refresh(() {
-        _items = items;
+        _items = results[0] as List<KnowledgeItem>;
+        _packs = results[1] as List<KnowledgePack>;
         _loading = false;
       });
     } on ApiError catch (error) {
@@ -383,84 +383,6 @@ extension _KnowledgeActions on _KnowledgePageState {
     }
   }
 
-  Future<void> _uploadDocument() async {
-    final token = _token;
-    if (token == null || token.isEmpty) return;
-
-    final result = await FilePicker.pickFiles(
-      withData: true,
-      type: FileType.custom,
-      allowedExtensions: const ['txt', 'md', 'pdf'],
-    );
-    if (result == null || result.files.isEmpty) return;
-
-    final file = result.files.first;
-    final bytes = file.bytes;
-    if (bytes == null || bytes.isEmpty) {
-      showMessage(
-        _tx(
-          'knowledge.msg_file_unreadable',
-          'No se pudieron leer los bytes del fichero',
-        ),
-        isError: true,
-      );
-      return;
-    }
-
-    if (!mounted) return;
-    final languageLabels = await _showContentLanguageDialog(context, tx: _tx);
-    if (languageLabels == null || !mounted) return;
-
-    refresh(() => _uploading = true);
-    try {
-      await _repository.uploadDocument(
-        token,
-        fileName: file.name,
-        fileBytes: bytes,
-        labels: contentLabelsForScope('private', languageLabels),
-      );
-      showMessage(
-        _tx(
-          'knowledge.msg_document_uploaded',
-          'Documento subido: {{nombre}}',
-        ).replaceAll('{{nombre}}', file.name),
-      );
-      await _load();
-    } on ApiError catch (error) {
-      showMessage(error.message, isError: true);
-    } catch (_) {
-      showMessage(
-        _tx('knowledge.msg_upload_failed', 'No se pudo subir el documento'),
-        isError: true,
-      );
-    } finally {
-      if (mounted) refresh(() => _uploading = false);
-    }
-  }
-
-  Future<void> _toggleItemActive(KnowledgeItem item) async {
-    final token = _token;
-    if (token == null || token.isEmpty) return;
-    final activate = !item.isActive;
-    try {
-      await _repository.setItemActive(token, item.id, activate);
-      showMessage(
-        activate ? 'Conocimiento activado' : 'Conocimiento desactivado',
-      );
-      await _load();
-    } on ApiError catch (error) {
-      showMessage(error.message, isError: true);
-    } catch (_) {
-      showMessage(
-        _tx(
-          'knowledge.msg_item_toggle_failed',
-          'No se pudo cambiar el estado del item',
-        ),
-        isError: true,
-      );
-    }
-  }
-
   Future<void> _deleteItem(KnowledgeItem item) async {
     final confirm = await showConfirmActionDialog(
       context,
@@ -492,8 +414,39 @@ extension _KnowledgeActions on _KnowledgePageState {
     }
   }
 
+  Future<void> _editItem(KnowledgeItem item) async {
+    final result = await _showKnowledgeEditDialog(
+      context,
+      initialName: item.title,
+      initialLabels: item.labels.toSet(),
+      isPack: false,
+      tx: _tx,
+    );
+    if (result == null || !mounted) return;
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+    try {
+      await _repository.updateItem(
+        token,
+        item.id,
+        name: result.name,
+        labels: result.labels.toList(),
+      );
+      showMessage(_tx('knowledge.edit_saved', 'Cambios guardados'));
+      await _load();
+    } on ApiError catch (error) {
+      showMessage(error.message, isError: true);
+    } catch (_) {
+      showMessage(
+        _tx('knowledge.edit_failed', 'No se pudieron guardar los cambios'),
+        isError: true,
+      );
+    }
+  }
+
   void _onGroupSelect(String? groupId) {
     refresh(() => _activeGroupId = groupId);
+    _loadGraphRelations();
     _load();
     _loadSkills();
     _loadPrompts();

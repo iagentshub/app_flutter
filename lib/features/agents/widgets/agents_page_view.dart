@@ -138,6 +138,8 @@ extension _AgentsPageView on _AgentsPageState {
       item: item,
       skillNames: _skillNames,
       knowledgeNames: _knowledgeNames,
+      knowledgePackNames: _knowledgePackNames,
+      knowledgePackItems: _knowledgePackItems,
       promptNames: _promptNames,
       toolNames: _toolNames,
       connectionNames: _connectionNames,

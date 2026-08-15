@@ -40,6 +40,7 @@ extension ExploreResourceLoading on ExploreController {
         labels: _labels.toList(),
         languages: _languages.toList(),
         includeOfficial: !_officialPacksMode,
+        packMode: _officialPacksMode,
         limit: ExploreController.resourcesPageSize,
         offset: 0,
       );
@@ -115,6 +116,7 @@ extension ExploreResourceLoading on ExploreController {
         labels: _labels.toList(),
         languages: _languages.toList(),
         includeOfficial: !_officialPacksMode,
+        packMode: _officialPacksMode,
         limit: ExploreController.resourcesPageSize,
         offset: _resourcesOffset,
       );

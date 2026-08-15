@@ -109,7 +109,8 @@ extension _ExploreResourceCard on _ExplorePageState {
                   onPressed: busy ? null : () => _preview(item),
                 ),
                 if (item.resourceType == 'agent' ||
-                    item.resourceType == 'workflow')
+                    item.resourceType == 'workflow' ||
+                    item.resourceType == 'knowledge_pack')
                   ActionIconButton(
                     key: ValueKey(
                       'explore-graph-${item.resourceType}-${item.resourceId}',

@@ -24,6 +24,12 @@ class AgentItem extends ResourceItem {
     return const [];
   }
 
+  List<String> get knowledgePacks {
+    final value = raw['knowledge_packs'];
+    if (value is List) return value.map((item) => item.toString()).toList();
+    return const [];
+  }
+
   List<String> get prompts {
     final value = raw['prompts'];
     if (value is List) return value.map((item) => item.toString()).toList();

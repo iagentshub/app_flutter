@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 
-enum AgentResourceType { skill, knowledge, prompt, tool }
+enum AgentResourceType { skill, knowledgePack, knowledge, prompt, tool }
 
 class AgentResourceOption {
   const AgentResourceOption({
@@ -23,23 +23,31 @@ class AgentResourceSelection {
   AgentResourceSelection({
     Set<String> skillIds = const {},
     Set<String> knowledgeIds = const {},
+    Set<String> knowledgePackIds = const {},
     Set<String> promptIds = const {},
     Set<String> toolIds = const {},
   }) : skillIds = {...skillIds},
        knowledgeIds = {...knowledgeIds},
+       knowledgePackIds = {...knowledgePackIds},
        promptIds = {...promptIds},
        toolIds = {...toolIds};
 
   final Set<String> skillIds;
   final Set<String> knowledgeIds;
+  final Set<String> knowledgePackIds;
   final Set<String> promptIds;
   final Set<String> toolIds;
 
   int get length =>
-      skillIds.length + knowledgeIds.length + promptIds.length + toolIds.length;
+      skillIds.length +
+      knowledgePackIds.length +
+      knowledgeIds.length +
+      promptIds.length +
+      toolIds.length;
 
   Set<String> idsFor(AgentResourceType type) => switch (type) {
     AgentResourceType.skill => skillIds,
+    AgentResourceType.knowledgePack => knowledgePackIds,
     AgentResourceType.knowledge => knowledgeIds,
     AgentResourceType.prompt => promptIds,
     AgentResourceType.tool => toolIds,
@@ -80,6 +88,7 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
     _selection = AgentResourceSelection(
       skillIds: widget.initial.skillIds,
       knowledgeIds: widget.initial.knowledgeIds,
+      knowledgePackIds: widget.initial.knowledgePackIds,
       promptIds: widget.initial.promptIds,
       toolIds: widget.initial.toolIds,
     );
@@ -103,6 +112,10 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
 
   String _typeLabel(AgentResourceType type) => switch (type) {
     AgentResourceType.skill => widget.tx('agents.field_skills', 'Skills'),
+    AgentResourceType.knowledgePack => widget.tx(
+      'agents.field_knowledge_packs',
+      'Packs de conocimiento',
+    ),
     AgentResourceType.knowledge => widget.tx(
       'agents.field_knowledge',
       'Conocimiento',
@@ -113,6 +126,7 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
 
   IconData _typeIcon(AgentResourceType type) => switch (type) {
     AgentResourceType.skill => Icons.auto_awesome_outlined,
+    AgentResourceType.knowledgePack => Icons.inventory_2_outlined,
     AgentResourceType.knowledge => Icons.description_outlined,
     AgentResourceType.prompt => Icons.short_text_outlined,
     AgentResourceType.tool => Icons.build_outlined,

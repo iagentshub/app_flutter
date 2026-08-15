@@ -1,9 +1,9 @@
 part of '../pages/knowledge_page.dart';
 
-Future<Set<String>?> _showContentLanguageDialog(
+Future<Set<String>?> _showContentLabelsDialog(
   BuildContext context, {
   required String Function(String path, String fallback) tx,
-  Set<String> initial = const {},
+  Set<String> initial = const {'private'},
 }) {
   var selected = Set<String>.of(initial);
   return showDialog<Set<String>>(
@@ -11,7 +11,7 @@ Future<Set<String>?> _showContentLanguageDialog(
     builder: (context) => StatefulBuilder(
       builder: (context, setDialogState) => AlertDialog(
         title: Text(
-          tx('knowledge.document_language_title', 'Idioma del documento'),
+          tx('knowledge.document_labels_title', 'Etiquetas del documento'),
         ),
         content: SizedBox(
           width: dialogContentWidth(context, 420),
@@ -19,7 +19,6 @@ Future<Set<String>?> _showContentLanguageDialog(
             selected: selected,
             onChanged: (next) => setDialogState(() => selected = next),
             tx: tx,
-            groups: const [kLanguageLabelGroup],
           ),
         ),
         actions: [

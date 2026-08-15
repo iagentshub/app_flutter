@@ -66,6 +66,8 @@ class _AgentsPageState extends State<AgentsPage> with StateMessaging {
   /// el grafo de contenido (AgentCard) — el agente solo guarda IDs.
   Map<String, String> _skillNames = const {};
   Map<String, String> _knowledgeNames = const {};
+  Map<String, String> _knowledgePackNames = const {};
+  Map<String, List<KnowledgeItem>> _knowledgePackItems = const {};
   Map<String, String> _promptNames = const {};
   Map<String, String> _toolNames = const {};
 
@@ -226,7 +228,8 @@ class _AgentsPageState extends State<AgentsPage> with StateMessaging {
           includeInactive: true,
         ),
         _skillsRepository.listSkills(token, includeInactive: true),
-        _knowledgeRepository.listItems(token, includeInactive: true),
+        _knowledgeRepository.listItems(token),
+        _knowledgeRepository.listPacks(token),
         _promptsRepository.listPrompts(token, includeInactive: true),
         _toolsRepository.listTools(token, includeInactive: true),
         _connectionsRepository.listConnections(token, includeInactive: true),
@@ -234,13 +237,19 @@ class _AgentsPageState extends State<AgentsPage> with StateMessaging {
       if (!mounted) return;
       final skills = results[1] as List<SkillItem>;
       final knowledge = results[2] as List<KnowledgeItem>;
-      final prompts = results[3] as List<PromptItem>;
-      final tools = results[4] as List<ToolItem>;
-      final connections = results[5] as List<ConnectionItem>;
+      final packs = results[3] as List<KnowledgePack>;
+      final prompts = results[4] as List<PromptItem>;
+      final tools = results[5] as List<ToolItem>;
+      final connections = results[6] as List<ConnectionItem>;
       setState(() {
         _agents = results[0] as List<AgentItem>;
         _skillNames = {for (final s in skills) s.id: s.name};
         _knowledgeNames = {for (final k in knowledge) k.id: k.name};
+        _knowledgePackNames = {for (final pack in packs) pack.id: pack.name};
+        _knowledgePackItems = {
+          for (final pack in packs)
+            pack.id: knowledge.where((item) => item.packId == pack.id).toList(),
+        };
         _promptNames = {for (final p in prompts) p.id: p.name};
         _toolNames = {for (final t in tools) t.id: t.name};
         _connectionNames = {

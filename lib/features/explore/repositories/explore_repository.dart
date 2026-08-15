@@ -13,6 +13,7 @@ class ExploreRepository extends ApiRepository {
     List<String> labels = const [],
     List<String> languages = const [],
     bool includeOfficial = true,
+    bool? packMode,
     int limit = 40,
     int offset = 0,
   }) async {
@@ -24,6 +25,7 @@ class ExploreRepository extends ApiRepository {
       labels: labels,
       languages: languages,
       includeOfficial: includeOfficial,
+      packMode: packMode,
       limit: limit,
       offset: offset,
     );
@@ -38,6 +40,7 @@ class ExploreRepository extends ApiRepository {
     List<String> labels = const [],
     List<String> languages = const [],
     bool includeOfficial = true,
+    bool? packMode,
     int limit = 40,
     int offset = 0,
   }) async {
@@ -48,6 +51,7 @@ class ExploreRepository extends ApiRepository {
       if (labels.isNotEmpty) 'label': labels,
       if (languages.isNotEmpty) 'language': languages,
       if (!includeOfficial) 'include_official': 'false',
+      if (packMode != null) 'pack_mode': '$packMode',
       'limit': '$limit',
       'offset': '$offset',
     };

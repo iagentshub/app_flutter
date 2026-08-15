@@ -2,6 +2,7 @@ import 'package:app_flutter/features/agents/cards/agent_card.dart';
 import 'package:app_flutter/features/connections/cards/connection_card.dart';
 import 'package:app_flutter/models/agents/agent_models.dart';
 import 'package:app_flutter/models/connections/connection_models.dart';
+import 'package:app_flutter/models/knowledge/knowledge_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -150,5 +151,53 @@ void main() {
 
     expect(find.text('Fork'), findsOneWidget);
     expect(find.byTooltip('Editar'), findsOneWidget);
+  });
+
+  testWidgets('AgentCard incluye los packs vinculados en su grafo', (
+    tester,
+  ) async {
+    const item = AgentItem(
+      raw: {
+        'id': 'agent-pack',
+        'name': 'Agente con pack',
+        'knowledge_packs': ['pack-1'],
+      },
+    );
+
+    await tester.pumpWidget(
+      _host(
+        AgentCard(
+          item: item,
+          knowledgePackNames: const {'pack-1': 'Scripts de producción'},
+          knowledgePackItems: const {
+            'pack-1': [
+              KnowledgeItem(
+                raw: {
+                  'id': 'file-1',
+                  'name': 'deploy.sh',
+                  'pack_id': 'pack-1',
+                  'pack_relative_path': 'ops/deploy.sh',
+                },
+              ),
+            ],
+          },
+          tx: _tx,
+          onChat: () {},
+          onExport: (_) {},
+          onShare: () {},
+          onHistory: () {},
+          onEdit: () {},
+          onDelete: () {},
+        ),
+      ),
+    );
+
+    await tester.tap(find.byTooltip('Ver grafo de contenido'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1200));
+
+    expect(find.text('Scripts de producción'), findsOneWidget);
+    expect(find.text('ops/deploy.sh'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

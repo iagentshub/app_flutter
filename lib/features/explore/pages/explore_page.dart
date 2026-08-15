@@ -195,6 +195,10 @@ class _ExplorePageState extends State<ExplorePage>
     ('prompt', _tx('explore.type_prompts', 'Prompts')),
     ('tool', _tx('explore.type_tools', 'Herramientas')),
     ('knowledge', _tx('explore.type_knowledge', 'Knowledge')),
+    (
+      'knowledge_pack',
+      _tx('explore.type_knowledge_pack', 'Packs de conocimiento'),
+    ),
     ('workflow', _tx('explore.type_workflows', 'Workflows')),
   ];
 
@@ -256,6 +260,7 @@ class _ExplorePageState extends State<ExplorePage>
     'prompt' => Icons.chat_bubble_outline,
     'tool' => Icons.build_outlined,
     'knowledge' => Icons.menu_book_outlined,
+    'knowledge_pack' => Icons.inventory_2_outlined,
     'workflow' => Icons.account_tree_outlined,
     _ => Icons.category_outlined,
   };

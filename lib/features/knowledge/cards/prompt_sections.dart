@@ -139,6 +139,12 @@ extension _PromptSections on _KnowledgePageState {
             Row(
               children: [
                 const Spacer(),
+                _buildResourceGraphButton(
+                  resourceId: item.id,
+                  resourceName: item.name,
+                  resourceDescription: item.description,
+                  resourceType: 'prompt',
+                ),
                 if (!item.readOnly)
                   ActionIconButton(
                     icon: Icons.group_add_outlined,

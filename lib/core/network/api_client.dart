@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -15,6 +16,28 @@ import 'bounded_line_transformer.dart';
 import 'http_client_factory.dart';
 
 export 'api_response.dart';
+
+class _ProgressMultipartRequest extends http.MultipartRequest {
+  _ProgressMultipartRequest(super.method, super.url, this.onProgress);
+
+  final void Function(int sent, int total) onProgress;
+
+  @override
+  http.ByteStream finalize() {
+    final total = contentLength;
+    var sent = 0;
+    final stream = super.finalize().transform(
+      StreamTransformer<List<int>, List<int>>.fromHandlers(
+        handleData: (chunk, sink) {
+          sent += chunk.length;
+          onProgress(sent.clamp(0, total), total);
+          sink.add(chunk);
+        },
+      ),
+    );
+    return http.ByteStream(stream);
+  }
+}
 
 class ApiClient {
   ApiClient(
@@ -347,6 +370,7 @@ class ApiClient {
     required List<int> fileBytes,
     Map<String, String>? fields,
     String? gaToken,
+    Duration? timeout,
   }) async {
     final request = http.MultipartRequest('POST', _uri(path));
     request.followRedirects = false;
@@ -363,7 +387,7 @@ class ApiClient {
       http.MultipartFile.fromBytes(fieldName, fileBytes, filename: fileName),
     );
 
-    final streamed = await _send(request);
+    final streamed = await _send(request, timeout: timeout);
     final response = await _readBoundedResponse(streamed);
     final parsed = _parseBody(response.body);
     final apiResponse = ApiResponse(
@@ -376,6 +400,81 @@ class ApiClient {
       throw _toApiError(apiResponse);
     }
 
+    _cache.invalidateForMutation(path);
+    return apiResponse;
+  }
+
+  Future<ApiResponse> postMultipartWithProgress(
+    String path, {
+    required String fieldName,
+    required String fileName,
+    required List<int> fileBytes,
+    required void Function(double progress) onProgress,
+    Map<String, String>? fields,
+    String? gaToken,
+    Duration? timeout,
+  }) async {
+    final request = _ProgressMultipartRequest('POST', _uri(path), (
+      sent,
+      total,
+    ) {
+      onProgress(total <= 0 ? 0 : (sent / total).clamp(0, 1));
+    });
+    request.followRedirects = false;
+    request.headers['Accept'] = 'application/json';
+    if (!kIsWeb && gaToken != null && gaToken.isNotEmpty) {
+      request.headers['Cookie'] = 'ga_token=$gaToken';
+    }
+    if (fields != null) request.fields.addAll(fields);
+    request.files.add(
+      http.MultipartFile.fromBytes(fieldName, fileBytes, filename: fileName),
+    );
+    final streamed = await _send(request, timeout: timeout);
+    final response = await _readBoundedResponse(streamed);
+    final apiResponse = ApiResponse(
+      statusCode: response.statusCode,
+      headers: response.headers,
+      body: _parseBody(response.body),
+    );
+    if (!apiResponse.isOk) throw _toApiError(apiResponse);
+    _cache.invalidateForMutation(path);
+    onProgress(1);
+    return apiResponse;
+  }
+
+  Future<ApiResponse> postMultipartFiles(
+    String path, {
+    required String fieldName,
+    required List<({String fileName, List<int> bytes})> files,
+    Map<String, String>? fields,
+    String? gaToken,
+    Duration? timeout,
+  }) async {
+    final request = http.MultipartRequest('POST', _uri(path));
+    request.followRedirects = false;
+    request.headers['Accept'] = 'application/json';
+    if (!kIsWeb && gaToken != null && gaToken.isNotEmpty) {
+      request.headers['Cookie'] = 'ga_token=$gaToken';
+    }
+    if (fields != null && fields.isNotEmpty) request.fields.addAll(fields);
+    for (final file in files) {
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          fieldName,
+          file.bytes,
+          filename: file.fileName,
+        ),
+      );
+    }
+    final streamed = await _send(request, timeout: timeout);
+    final response = await _readBoundedResponse(streamed);
+    final parsed = _parseBody(response.body);
+    final apiResponse = ApiResponse(
+      statusCode: response.statusCode,
+      headers: response.headers,
+      body: parsed,
+    );
+    if (!apiResponse.isOk) throw _toApiError(apiResponse);
     _cache.invalidateForMutation(path);
     return apiResponse;
   }

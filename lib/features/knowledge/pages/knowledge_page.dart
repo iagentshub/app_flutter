@@ -8,10 +8,12 @@ import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_error.dart';
 import '../../../features/memory/pages/memory_page.dart';
+import '../../../models/agents/agent_models.dart';
 import '../../../models/knowledge/knowledge_models.dart';
 import '../../../models/prompts/prompt_models.dart';
 import '../../../models/skills/skill_models.dart';
 import '../../../models/tools/tool_models.dart';
+import '../../../shared/graph/graph_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/app_services_scope.dart';
@@ -26,26 +28,38 @@ import '../../../shared/widgets/grouped_label_picker.dart';
 import '../../../shared/widgets/inactive_badge.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/origin_badge.dart';
+import '../../../shared/widgets/resource_graph_button.dart';
 import '../../../shared/widgets/resource_history_dialog.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../../agents/repositories/agents_repository.dart';
+import '../dialogs/knowledge_pack_dialog.dart';
+import '../dialogs/knowledge_pack_upload_progress_dialog.dart';
+import '../models/local_knowledge_file.dart';
 import '../repositories/knowledge_repository.dart';
 import '../repositories/prompts_repository.dart';
 import '../repositories/skills_repository.dart';
 import '../repositories/tools_repository.dart';
+import '../services/directory_picker.dart';
 import 'skill_builder_page.dart';
 
+part '../cards/knowledge_image_card.dart';
+part '../cards/knowledge_pack_card.dart';
+part '../cards/knowledge_resource_graph.dart';
 part '../cards/knowledge_sections.dart';
 part '../cards/prompt_sections.dart';
 part '../cards/tool_sections.dart';
+part '../controllers/document_actions.dart';
 part '../controllers/knowledge_actions.dart';
+part '../controllers/knowledge_pack_actions.dart';
 part '../controllers/prompt_actions.dart';
 part '../controllers/tool_actions.dart';
 part '../dialogs/add_text_dialog.dart';
 part '../dialogs/add_url_dialog.dart';
 part '../dialogs/content_language_dialog.dart';
+part '../dialogs/knowledge_labels_dialog.dart';
 part '../dialogs/prompt_form_dialog.dart';
 part '../dialogs/skill_form_dialog.dart';
 part '../dialogs/tool_form_dialog.dart';
@@ -120,26 +134,31 @@ class _KnowledgePageState extends State<KnowledgePage>
   late final _services = AppServicesScope.of(context);
 
   late final KnowledgeRepository _repository;
+  late final AgentsRepository _agentsRepository;
   late final SkillsRepository _skillsRepository;
   late final PromptsRepository _promptsRepository;
   late final ToolsRepository _toolsRepository;
   late final TranslatedTexts _t;
   late final TabController _tabController;
 
-  /// Seis pestañas independientes para cada tipo de conocimiento.
+  /// Cinco pestañas; URLs y ficheros conviven en Documentos.
   /// (no una sección "Conocimiento" genérica con filtro de tipo).
   static const _sectionIds = [
     'skills',
     'prompts',
     'tools',
-    'urls',
     'documents',
     'memory',
   ];
 
   List<KnowledgeItem> _items = const [];
+  List<KnowledgePack> _packs = const [];
+  List<AgentItem> _relatedAgents = const [];
+  int _graphRelationsGeneration = 0;
   bool _loading = true;
   bool _uploading = false;
+  String? _packOperationMessage;
+  bool _draggingDirectory = false;
   String? _error;
 
   List<SkillItem> _skills = const [];
@@ -159,6 +178,7 @@ class _KnowledgePageState extends State<KnowledgePage>
 
   String? _activeGroupId;
   String _knowledgeOrigin = 'all';
+  bool _knowledgePacksMode = true;
   String _skillScope = 'all';
   String _skillCategory = 'all';
 
@@ -188,7 +208,8 @@ class _KnowledgePageState extends State<KnowledgePage>
     return true;
   }
 
-  int get _knowledgeFilterCount => _knowledgeOrigin != 'all' ? 1 : 0;
+  int get _knowledgeFilterCount =>
+      (_knowledgeOrigin != 'all' ? 1 : 0) + (_knowledgePacksMode ? 0 : 1);
 
   List<String> get _skillCategoryOptions =>
       _skills.map((s) => s.category).where((c) => c.isNotEmpty).toSet().toList()
@@ -259,8 +280,42 @@ class _KnowledgePageState extends State<KnowledgePage>
       title: _tx('common.filters', 'Filtros'),
       clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
       closeLabel: _tx('common.close', 'Cerrar'),
-      onClear: () => refresh(() => _knowledgeOrigin = 'all'),
+      onClear: () => refresh(() {
+        _knowledgeOrigin = 'all';
+        _knowledgePacksMode = true;
+      }),
       buildFields: (setDialogState) => [
+        Text(
+          _tx('knowledge.pack_display_label', 'Visualización'),
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: SegmentedButton<bool>(
+            key: const ValueKey('knowledge-pack-mode-selector'),
+            segments: [
+              ButtonSegment(
+                value: true,
+                icon: const Icon(Icons.inventory_2_outlined, size: 16),
+                label: Text(_tx('knowledge.pack_mode', 'Packs')),
+              ),
+              ButtonSegment(
+                value: false,
+                icon: const Icon(Icons.view_module_outlined, size: 16),
+                label: Text(_tx('knowledge.individual_mode', 'Individuales')),
+              ),
+            ],
+            selected: {_knowledgePacksMode},
+            showSelectedIcon: false,
+            expandedInsets: EdgeInsets.zero,
+            onSelectionChanged: (values) {
+              refresh(() => _knowledgePacksMode = values.first);
+              setDialogState(() {});
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
         FilterDropdown(
           label: _tx('knowledge.origin_label', 'Origen'),
           value: _knowledgeOrigin,
@@ -396,6 +451,7 @@ class _KnowledgePageState extends State<KnowledgePage>
   void initState() {
     super.initState();
     _repository = KnowledgeRepository(apiClient: _services.apiClient);
+    _agentsRepository = AgentsRepository(apiClient: _services.apiClient);
     _skillsRepository = SkillsRepository(apiClient: _services.apiClient);
     _promptsRepository = PromptsRepository(apiClient: _services.apiClient);
     _toolsRepository = ToolsRepository(apiClient: _services.apiClient);
@@ -405,6 +461,7 @@ class _KnowledgePageState extends State<KnowledgePage>
       localeController: _services.localeController,
       namespace: 'resources',
     )..addListener(_onTextsChanged);
+    _loadGraphRelations();
     _ensureSectionLoaded(_sectionIds.first);
   }
 
@@ -428,8 +485,7 @@ class _KnowledgePageState extends State<KnowledgePage>
   /// carga la primera vez que se abre; volver a ella no repite la petición, y
   /// la caché de 60 s de ApiClient mantiene la sensación de instantaneidad.
   void _ensureSectionLoaded(String section) {
-    // `urls` y `documents` salen del mismo listado de Knowledge.
-    final clave = section == 'documents' ? 'urls' : section;
+    final clave = section;
     if (!_loadedSections.add(clave)) return;
     switch (clave) {
       case 'skills':
@@ -438,7 +494,7 @@ class _KnowledgePageState extends State<KnowledgePage>
         _loadPrompts();
       case 'tools':
         _loadTools();
-      case 'urls':
+      case 'documents':
         _load();
       // `memory` monta MemoryPage, que carga lo suyo por su cuenta.
     }
@@ -460,7 +516,6 @@ class _KnowledgePageState extends State<KnowledgePage>
       _tx('knowledge.tab_skills', 'Skills'),
       _tx('knowledge.tab_prompts', 'Prompts'),
       _tx('knowledge.tab_tools', 'Herramientas'),
-      _tx('knowledge.tab_urls', 'URLs'),
       _tx('knowledge.tab_documents', 'Documentos'),
       _tx('knowledge.tab_memory', 'Memoria'),
     ];
@@ -514,7 +569,6 @@ class _KnowledgePageState extends State<KnowledgePage>
     return switch (section) {
       'prompts' => _buildPromptsSection(),
       'tools' => _buildToolsSection(),
-      'urls' => _buildUrlsSection(),
       'documents' => _buildDocumentsSection(),
       'memory' => const MemoryPage(),
       _ => _buildSkillsSection(),

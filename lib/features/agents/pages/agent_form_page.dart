@@ -78,7 +78,9 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
   List<SkillItem> _skills = const [];
 
   Set<String> _selectedKnowledgeIds = {};
+  Set<String> _selectedKnowledgePackIds = {};
   List<KnowledgeItem> _knowledgeItems = const [];
+  List<KnowledgePack> _knowledgePacks = const [];
 
   Set<String> _selectedPromptIds = {};
   List<PromptItem> _prompts = const [];
@@ -155,6 +157,10 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
     _selectedKnowledgeIds = knowledgeRaw is List
         ? knowledgeRaw.map((e) => e.toString()).toSet()
         : {};
+    final packRaw = initial?['knowledge_packs'];
+    _selectedKnowledgePackIds = packRaw is List
+        ? packRaw.map((e) => e.toString()).toSet()
+        : {};
     final promptsRaw = initial?['prompts'];
     _selectedPromptIds = promptsRaw is List
         ? promptsRaw.map((e) => e.toString()).toSet()
@@ -187,6 +193,7 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
       opcional(_memoryRepository.listFiles(widget.token)),
       opcional(_skillsRepository.listSkills(widget.token, scope: 'all')),
       opcional(_knowledgeRepository.listItems(widget.token)),
+      opcional(_knowledgeRepository.listPacks(widget.token)),
       opcional(_promptsRepository.listPrompts(widget.token, scope: 'all')),
       opcional(_toolsRepository.listTools(widget.token, scope: 'all')),
     ]);
@@ -196,8 +203,9 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
       _memoryFiles = resultados[1] as List<MemoryFileItem>;
       _skills = resultados[2] as List<SkillItem>;
       _knowledgeItems = resultados[3] as List<KnowledgeItem>;
-      _prompts = resultados[4] as List<PromptItem>;
-      _tools = resultados[5] as List<ToolItem>;
+      _knowledgePacks = resultados[4] as List<KnowledgePack>;
+      _prompts = resultados[5] as List<PromptItem>;
+      _tools = resultados[6] as List<ToolItem>;
       _loadingCatalogs = false;
     });
   }
@@ -252,6 +260,7 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
       'use_memory': _useMemory,
       'skills': _selectedSkillIds.toList(),
       'knowledge': _selectedKnowledgeIds.toList(),
+      'knowledge_packs': _selectedKnowledgePackIds.toList(),
       'prompts': _selectedPromptIds.toList(),
       'tools': _selectedToolIds.toList(),
       'publish_dependencies': dependenciesToPublish.toList()..sort(),
@@ -286,6 +295,22 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
           name: item?.title ?? id,
           typeLabel: widget.tx('resources.knowledge', 'Conocimiento'),
           alreadyPublic: item != null && isPublic(item.labels, item.scope),
+        ),
+      );
+    }
+    for (final id in _selectedKnowledgePackIds) {
+      final pack = _knowledgePacks
+          .where((candidate) => candidate.id == id)
+          .firstOrNull;
+      options.add(
+        AgentPublishDependencyOption(
+          key: 'knowledge_pack:$id',
+          name: pack?.name ?? id,
+          typeLabel: widget.tx(
+            'resources.knowledge_pack',
+            'Pack de conocimiento',
+          ),
+          alreadyPublic: pack != null && isPublic(pack.labels, pack.scope),
         ),
       );
     }
@@ -349,6 +374,15 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
               title: item.title,
               subtitle: item.type,
             ),
+          for (final pack in _knowledgePacks)
+            AgentResourceOption(
+              id: pack.id,
+              type: AgentResourceType.knowledgePack,
+              title: pack.name,
+              subtitle: widget
+                  .tx('agents.pack_file_count', '{{count}} archivos')
+                  .replaceAll('{{count}}', '${pack.fileCount}'),
+            ),
           for (final prompt in _prompts)
             AgentResourceOption(
               id: prompt.id,
@@ -367,6 +401,7 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
         initial: AgentResourceSelection(
           skillIds: _selectedSkillIds,
           knowledgeIds: _selectedKnowledgeIds,
+          knowledgePackIds: _selectedKnowledgePackIds,
           promptIds: _selectedPromptIds,
           toolIds: _selectedToolIds,
         ),
@@ -377,6 +412,7 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
     refresh(() {
       _selectedSkillIds = selection.skillIds;
       _selectedKnowledgeIds = selection.knowledgeIds;
+      _selectedKnowledgePackIds = selection.knowledgePackIds;
       _selectedPromptIds = selection.promptIds;
       _selectedToolIds = selection.toolIds;
     });

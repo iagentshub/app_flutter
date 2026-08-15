@@ -14,7 +14,7 @@ class _AddTextDialogState extends State<_AddTextDialog> {
   final _titleController = TextEditingController();
   final _sourceController = TextEditingController();
   final _contentController = TextEditingController();
-  Set<String> _selectedLanguageLabels = {};
+  Set<String> _selectedLabels = {'private'};
 
   @override
   void dispose() {
@@ -30,7 +30,7 @@ class _AddTextDialogState extends State<_AddTextDialog> {
       'title': _titleController.text.trim(),
       'source': _sourceController.text.trim(),
       'content': _contentController.text.trim(),
-      'labels': contentLabelsForScope('private', _selectedLanguageLabels),
+      'labels': _selectedLabels.toList(),
     });
   }
 
@@ -62,11 +62,9 @@ class _AddTextDialogState extends State<_AddTextDialog> {
               ),
               const SizedBox(height: 10),
               GroupedLabelPicker(
-                selected: _selectedLanguageLabels,
-                onChanged: (next) =>
-                    setState(() => _selectedLanguageLabels = next),
+                selected: _selectedLabels,
+                onChanged: (next) => setState(() => _selectedLabels = next),
                 tx: widget.tx,
-                groups: const [kLanguageLabelGroup],
               ),
               TextFormField(
                 controller: _sourceController,
