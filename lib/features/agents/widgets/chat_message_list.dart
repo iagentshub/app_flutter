@@ -18,6 +18,7 @@ class ChatMessageList extends StatelessWidget {
     required this.replyActionLabel,
     required this.copyActionLabel,
     required this.messageCopiedLabel,
+    this.loadingOlder = false,
     super.key,
   });
 
@@ -35,14 +36,24 @@ class ChatMessageList extends StatelessWidget {
   final String replyActionLabel;
   final String copyActionLabel;
   final String messageCopiedLabel;
+  final bool loadingOlder;
 
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
       controller: scrollController,
       padding: const EdgeInsets.all(16),
-      itemCount: messages.length + (streaming ? 1 : 0),
+      itemCount: messages.length + (streaming ? 1 : 0) + (loadingOlder ? 1 : 0),
       itemBuilder: (context, index) {
+        if (loadingOlder) {
+          if (index == 0) {
+            return const Padding(
+              padding: EdgeInsets.all(12),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          index -= 1;
+        }
         if (index < messages.length) return _bubble(messages[index]);
         return ValueListenableBuilder<String>(
           valueListenable: streamingReply,

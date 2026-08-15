@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../../../core/network/api_repository.dart';
+import '../../../core/network/page_result.dart';
 import '../../../models/knowledge/knowledge_models.dart';
 import '../models/local_knowledge_file.dart';
 
@@ -12,25 +13,47 @@ class KnowledgeRepository extends ApiRepository {
     String? type,
     String? groupId,
   }) async {
-    final params = <String>[];
-    if (type != null && type.isNotEmpty) {
-      params.add('type=${Uri.encodeQueryComponent(type)}');
+    final items = <KnowledgeItem>[];
+    var offset = 0;
+    while (true) {
+      final page = await listItemPage(
+        token,
+        type: type,
+        groupId: groupId,
+        limit: 100,
+        offset: offset,
+      );
+      items.addAll(page.items);
+      if (!page.hasMore || page.items.isEmpty) return items;
+      offset += page.items.length;
     }
-    if (groupId != null && groupId.isNotEmpty) {
-      params.add('group_id=${Uri.encodeQueryComponent(groupId)}');
-    }
-    final query = params.isEmpty ? '' : '?${params.join('&')}';
-    final response = await apiClient.get(
-      '/api/knowledge$query',
-      gaToken: token,
-      cache: true,
+  }
+
+  Future<PageResult<KnowledgeItem>> listItemPage(
+    String token, {
+    String? type,
+    String? groupId,
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    final uri = Uri(
+      path: '/api/knowledge',
+      queryParameters: {
+        if (type != null && type.isNotEmpty) 'type': type,
+        if (groupId != null && groupId.isNotEmpty) 'group_id': groupId,
+        'limit': '$limit',
+        'offset': '$offset',
+      },
     );
-    final payload = response.body;
-    if (payload is! List) return const [];
-    return payload
-        .whereType<Map<String, dynamic>>()
-        .map((item) => KnowledgeItem(raw: item))
-        .toList();
+    final response = await apiClient.get(
+      uri.toString(),
+      gaToken: token,
+      cache: false,
+    );
+    return PageResult.fromResponse(
+      response,
+      (item) => KnowledgeItem(raw: item),
+    );
   }
 
   Future<Map<String, dynamic>> addText(

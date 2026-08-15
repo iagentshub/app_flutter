@@ -17,6 +17,17 @@ The code is organized by **functional area**, not by file type. Each area of the
 
 ---
 
+## Incremental loading
+
+`core/network/page_result.dart` is the shared HTTP page contract and reads
+`X-Total-Count`, `X-Has-More`, and `X-Next-Cursor`. Repositories expose page
+operations for long views and fetch all pages only for pickers that genuinely
+need the complete accessible catalog.
+
+Knowledge loads offset pages near the end. Chat loads conversations by cursor
+and prepends older messages while preserving scroll position. Server-backed
+collections use builders/slivers so only visible elements are built.
+
 ## The four layers
 
 **Screens** (`lib/features/*/pages/`) — what the user sees and touches. They never talk to the network directly.

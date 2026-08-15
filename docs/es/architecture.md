@@ -17,6 +17,17 @@ El código se organiza por **áreas funcionales**, no por tipo de fichero. Cada 
 
 ---
 
+## Carga incremental
+
+`core/network/page_result.dart` es el contrato común de páginas HTTP y lee
+`X-Total-Count`, `X-Has-More` y `X-Next-Cursor`. Los repositorios exponen una
+operación de página para vistas largas y recorren todas las páginas solo en
+selectores que realmente necesitan el catálogo accesible completo.
+
+Knowledge carga páginas offset al acercarse al final. Chat carga conversaciones
+por cursor y antepone mensajes antiguos preservando la posición de scroll. Los
+listados de servidor usan builders/slivers para construir solo lo visible.
+
 ## Las cuatro capas
 
 **Pantallas** (`lib/features/*/pages/`) — lo que el usuario ve y toca. No hablan con la red directamente.

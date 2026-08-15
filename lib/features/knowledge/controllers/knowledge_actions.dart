@@ -290,12 +290,15 @@ extension _KnowledgeActions on _KnowledgePageState {
 
     try {
       final results = await Future.wait([
-        _repository.listItems(token, groupId: _activeGroupId),
+        _repository.listItemPage(token, groupId: _activeGroupId),
         _repository.listPacks(token, groupId: _activeGroupId),
       ]);
       if (!mounted) return;
       refresh(() {
-        _items = results[0] as List<KnowledgeItem>;
+        final page = results[0] as PageResult<KnowledgeItem>;
+        _items = page.items;
+        _hasMoreKnowledge = page.hasMore;
+        _loadingMoreKnowledge = false;
         _packs = results[1] as List<KnowledgePack>;
         _loading = false;
       });
@@ -311,6 +314,33 @@ extension _KnowledgeActions on _KnowledgePageState {
         _error = 'No se pudo cargar Knowledge';
         _loading = false;
       });
+    }
+  }
+
+  Future<void> _loadMoreKnowledge() async {
+    final token = _token;
+    if (token == null ||
+        !_hasMoreKnowledge ||
+        _loadingMoreKnowledge ||
+        _loading) {
+      return;
+    }
+    refresh(() => _loadingMoreKnowledge = true);
+    try {
+      final page = await _repository.listItemPage(
+        token,
+        groupId: _activeGroupId,
+        offset: _items.length,
+      );
+      if (!mounted) return;
+      final known = _items.map((item) => item.id).toSet();
+      refresh(() {
+        _items = [..._items, ...page.items.where((item) => known.add(item.id))];
+        _hasMoreKnowledge = page.hasMore;
+        _loadingMoreKnowledge = false;
+      });
+    } catch (_) {
+      if (mounted) refresh(() => _loadingMoreKnowledge = false);
     }
   }
 

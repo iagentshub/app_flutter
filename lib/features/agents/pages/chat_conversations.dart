@@ -17,10 +17,11 @@ extension _ChatConversations on _ChatPageState {
     }
     refresh(() => _loadingConversations = true);
     try {
-      final conversations = await _repository.listConversations(
+      final page = await _repository.listConversationPage(
         token,
         widget.agent.id,
       );
+      final conversations = page.items;
       if (!mounted) return;
       if (conversations.isEmpty) {
         final created = await _repository.createConversation(
@@ -30,12 +31,16 @@ extension _ChatConversations on _ChatPageState {
         if (!mounted) return;
         refresh(() {
           _conversations = [created];
+          _conversationCursor = null;
+          _hasMoreConversations = false;
           _conversationId = created.id;
           _loadingConversations = false;
         });
       } else {
         refresh(() {
           _conversations = conversations;
+          _conversationCursor = page.nextCursor;
+          _hasMoreConversations = page.hasMore;
           _conversationId = conversations.first.id;
           _loadingConversations = false;
         });
@@ -56,26 +61,105 @@ extension _ChatConversations on _ChatPageState {
     }
   }
 
+  Future<void> _loadMoreConversations() async {
+    final token = _token;
+    final cursor = _conversationCursor;
+    if (token == null ||
+        cursor == null ||
+        !_hasMoreConversations ||
+        _loadingMoreConversations) {
+      return;
+    }
+    refresh(() => _loadingMoreConversations = true);
+    try {
+      final page = await _repository.listConversationPage(
+        token,
+        widget.agent.id,
+        cursor: cursor,
+      );
+      if (!mounted) return;
+      final known = _conversations.map((item) => item.id).toSet();
+      refresh(() {
+        _conversations = [
+          ..._conversations,
+          ...page.items.where((item) => known.add(item.id)),
+        ];
+        _conversationCursor = page.nextCursor;
+        _hasMoreConversations = page.hasMore;
+        _loadingMoreConversations = false;
+      });
+    } catch (_) {
+      if (mounted) refresh(() => _loadingMoreConversations = false);
+    }
+  }
+
   Future<void> _loadMessages() async {
     final token = _token;
     final conversationId = _conversationId;
     if (token == null || conversationId == null) return;
     refresh(() => _loadingMessages = true);
     try {
-      final messages = await _repository.getMessages(
+      final page = await _repository.getMessagesPage(
         token,
         widget.agent.id,
         conversationId,
       );
       if (!mounted) return;
       refresh(() {
-        _messages = messages;
+        _messages = page.items;
+        _messageCursor = page.nextCursor;
+        _hasOlderMessages = page.hasMore;
         _loadingMessages = false;
       });
       scrollToEnd(_scrollController, animate: false);
     } catch (_) {
       if (!mounted) return;
       refresh(() => _loadingMessages = false);
+    }
+  }
+
+  Future<void> _loadOlderMessages() async {
+    final token = _token;
+    final conversationId = _conversationId;
+    final cursor = _messageCursor;
+    if (token == null ||
+        conversationId == null ||
+        cursor == null ||
+        !_hasOlderMessages ||
+        _loadingMessages ||
+        _loadingOlderMessages) {
+      return;
+    }
+    refresh(() => _loadingOlderMessages = true);
+    final previousExtent = _scrollController.hasClients
+        ? _scrollController.position.maxScrollExtent
+        : 0.0;
+    try {
+      final page = await _repository.getMessagesPage(
+        token,
+        widget.agent.id,
+        conversationId,
+        cursor: cursor,
+      );
+      if (!mounted || conversationId != _conversationId) return;
+      final known = _messages.map((item) => item.id).toSet();
+      refresh(() {
+        _messages = [
+          ...page.items.where((item) => known.add(item.id)),
+          ..._messages,
+        ];
+        _messageCursor = page.nextCursor;
+        _hasOlderMessages = page.hasMore;
+        _loadingOlderMessages = false;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_scrollController.hasClients) return;
+        final delta =
+            _scrollController.position.maxScrollExtent - previousExtent;
+        _scrollController.jumpTo(_scrollController.offset + delta);
+      });
+    } catch (_) {
+      if (mounted) refresh(() => _loadingOlderMessages = false);
     }
   }
 
@@ -92,6 +176,8 @@ extension _ChatConversations on _ChatPageState {
         _conversations = [created, ..._conversations];
         _conversationId = created.id;
         _messages = [];
+        _messageCursor = null;
+        _hasOlderMessages = false;
       });
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
@@ -111,6 +197,8 @@ extension _ChatConversations on _ChatPageState {
     refresh(() {
       _conversationId = id;
       _messages = [];
+      _messageCursor = null;
+      _hasOlderMessages = false;
     });
     await _loadMessages();
   }

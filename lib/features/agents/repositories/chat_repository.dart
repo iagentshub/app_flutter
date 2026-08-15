@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../../../core/network/api_repository.dart';
+import '../../../core/network/page_result.dart';
 import '../../../models/chat/chat_models.dart';
 
 class ChatRepository extends ApiRepository {
@@ -10,17 +11,28 @@ class ChatRepository extends ApiRepository {
     String token,
     String agentId,
   ) async {
-    final response = await apiClient.get(
-      '/api/chats/${Uri.encodeComponent(agentId)}',
-      gaToken: token,
-      cache: true,
+    return (await listConversationPage(token, agentId)).items;
+  }
+
+  Future<PageResult<ChatConversation>> listConversationPage(
+    String token,
+    String agentId, {
+    int limit = 50,
+    String? cursor,
+  }) async {
+    final uri = Uri(
+      path: '/api/chats/${Uri.encodeComponent(agentId)}',
+      queryParameters: {
+        'limit': '$limit',
+        if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+      },
     );
-    final payload = response.body;
-    if (payload is! List) return const [];
-    return payload
-        .whereType<Map<String, dynamic>>()
-        .map(ChatConversation.fromJson)
-        .toList();
+    final response = await apiClient.get(
+      uri.toString(),
+      gaToken: token,
+      cache: false,
+    );
+    return PageResult.fromResponse(response, ChatConversation.fromJson);
   }
 
   Future<ChatConversation> createConversation(
@@ -41,16 +53,26 @@ class ChatRepository extends ApiRepository {
     String agentId,
     String conversationId,
   ) async {
-    final response = await apiClient.get(
-      '/api/chats/${Uri.encodeComponent(agentId)}/${Uri.encodeComponent(conversationId)}',
-      gaToken: token,
+    return (await getMessagesPage(token, agentId, conversationId)).items;
+  }
+
+  Future<PageResult<ChatMessage>> getMessagesPage(
+    String token,
+    String agentId,
+    String conversationId, {
+    int limit = 100,
+    String? cursor,
+  }) async {
+    final uri = Uri(
+      path:
+          '/api/chats/${Uri.encodeComponent(agentId)}/${Uri.encodeComponent(conversationId)}',
+      queryParameters: {
+        'limit': '$limit',
+        if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+      },
     );
-    final payload = response.body;
-    if (payload is! List) return const [];
-    return payload
-        .whereType<Map<String, dynamic>>()
-        .map(ChatMessage.fromJson)
-        .toList();
+    final response = await apiClient.get(uri.toString(), gaToken: token);
+    return PageResult.fromResponse(response, ChatMessage.fromJson);
   }
 
   Future<void> deleteConversation(

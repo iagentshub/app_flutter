@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import '../../../core/network/api_repository.dart';
+import '../../../core/network/page_result.dart';
 import '../../../models/agents/agent_models.dart';
 
 class AgentsRepository extends ApiRepository {
@@ -11,21 +12,45 @@ class AgentsRepository extends ApiRepository {
     String? groupId,
     bool includeInactive = false,
   }) async {
-    final query = groupId == null || groupId.isEmpty
-        ? ''
-        : '&group_id=${Uri.encodeComponent(groupId)}';
-    final inactive = includeInactive ? '&include_inactive=true' : '';
-    final response = await apiClient.get(
-      '/api/agents?scope=all$query$inactive',
-      gaToken: token,
-      cache: true,
+    final items = <AgentItem>[];
+    var offset = 0;
+    while (true) {
+      final page = await listAgentPage(
+        token,
+        groupId: groupId,
+        includeInactive: includeInactive,
+        limit: 100,
+        offset: offset,
+      );
+      items.addAll(page.items);
+      if (!page.hasMore || page.items.isEmpty) return items;
+      offset += page.items.length;
+    }
+  }
+
+  Future<PageResult<AgentItem>> listAgentPage(
+    String token, {
+    String? groupId,
+    bool includeInactive = false,
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    final uri = Uri(
+      path: '/api/agents',
+      queryParameters: {
+        'scope': 'all',
+        if (groupId != null && groupId.isNotEmpty) 'group_id': groupId,
+        if (includeInactive) 'include_inactive': 'true',
+        'limit': '$limit',
+        'offset': '$offset',
+      },
     );
-    final payload = response.body;
-    if (payload is! List) return const [];
-    return payload
-        .whereType<Map<String, dynamic>>()
-        .map((item) => AgentItem(raw: item))
-        .toList();
+    final response = await apiClient.get(
+      uri.toString(),
+      gaToken: token,
+      cache: false,
+    );
+    return PageResult.fromResponse(response, (item) => AgentItem(raw: item));
   }
 
   Future<Map<String, dynamic>> getAgent(String token, String id) async {

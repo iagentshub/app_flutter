@@ -27,6 +27,7 @@ class ChatMessage {
   const ChatMessage({
     required this.role,
     required this.content,
+    this.id = '',
     this.tokensIn,
     this.tokensOut,
     this.createdAt,
@@ -34,6 +35,7 @@ class ChatMessage {
 
   final String role;
   final String content;
+  final String id;
   final int? tokensIn;
   final int? tokensOut;
   final DateTime? createdAt;
@@ -47,6 +49,7 @@ class ChatMessage {
     final tokensIn = (json['tokens_in'] as num?)?.toInt();
     final tokensOut = (json['tokens_out'] as num?)?.toInt();
     return ChatMessage(
+      id: json['id']?.toString() ?? '',
       role: json['role']?.toString() ?? 'assistant',
       content: json['content']?.toString() ?? '',
       tokensIn: (tokensIn ?? 0) > 0 ? tokensIn : null,
@@ -64,6 +67,7 @@ class ChatMessage {
     DateTime? createdAt,
   }) {
     return ChatMessage(
+      id: id,
       role: role,
       content: content ?? this.content,
       tokensIn: tokensIn ?? this.tokensIn,

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_error.dart';
+import '../../../core/network/page_result.dart';
 import '../../../features/memory/pages/memory_page.dart';
 import '../../../models/agents/agent_models.dart';
 import '../../../models/knowledge/knowledge_models.dart';
@@ -152,6 +153,8 @@ class _KnowledgePageState extends State<KnowledgePage>
   ];
 
   List<KnowledgeItem> _items = const [];
+  bool _hasMoreKnowledge = false;
+  bool _loadingMoreKnowledge = false;
   List<KnowledgePack> _packs = const [];
   List<AgentItem> _relatedAgents = const [];
   int _graphRelationsGeneration = 0;

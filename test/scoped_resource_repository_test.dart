@@ -85,7 +85,11 @@ void main() {
 
     await SkillsRepository(apiClient: client).listSkills('token');
 
-    expect(peticiones.single.queryParameters, {'scope': 'all'});
+    expect(peticiones.single.queryParameters, {
+      'scope': 'all',
+      'limit': '100',
+      'offset': '0',
+    });
   });
 
   test('el id y el scope se codifican en la ruta', () async {

@@ -1,4 +1,5 @@
 import '../../../core/network/api_repository.dart';
+import '../../../core/network/page_result.dart';
 import '../../../models/connections/connection_models.dart';
 
 class ConnectionsRepository extends ApiRepository {
@@ -10,23 +11,49 @@ class ConnectionsRepository extends ApiRepository {
     bool includeInactive = false,
     bool cache = true,
   }) async {
-    final params = <String>[
-      if (groupId != null && groupId.isNotEmpty)
-        'group_id=${Uri.encodeComponent(groupId)}',
-      if (includeInactive) 'include_inactive=true',
-    ];
-    final query = params.isEmpty ? '' : '?${params.join('&')}';
+    final items = <ConnectionItem>[];
+    var offset = 0;
+    while (true) {
+      final page = await listConnectionPage(
+        token,
+        groupId: groupId,
+        includeInactive: includeInactive,
+        cache: cache,
+        limit: 100,
+        offset: offset,
+      );
+      items.addAll(page.items);
+      if (!page.hasMore || page.items.isEmpty) return items;
+      offset += page.items.length;
+    }
+  }
+
+  Future<PageResult<ConnectionItem>> listConnectionPage(
+    String token, {
+    String? groupId,
+    bool includeInactive = false,
+    bool cache = true,
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    final uri = Uri(
+      path: '/api/connections',
+      queryParameters: {
+        if (groupId != null && groupId.isNotEmpty) 'group_id': groupId,
+        if (includeInactive) 'include_inactive': 'true',
+        'limit': '$limit',
+        'offset': '$offset',
+      },
+    );
     final response = await apiClient.get(
-      '/api/connections$query',
+      uri.toString(),
       gaToken: token,
       cache: cache,
     );
-    final payload = response.body;
-    if (payload is! List) return const [];
-    return payload
-        .whereType<Map<String, dynamic>>()
-        .map((item) => ConnectionItem(raw: item))
-        .toList();
+    return PageResult.fromResponse(
+      response,
+      (item) => ConnectionItem(raw: item),
+    );
   }
 
   Future<Map<String, dynamic>> getConnection(String token, String id) async {

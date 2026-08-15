@@ -78,8 +78,14 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
   List<ChatConversation> _conversations = const [];
+  String? _conversationCursor;
+  bool _hasMoreConversations = false;
+  bool _loadingMoreConversations = false;
   String? _conversationId;
   List<ChatMessage> _messages = [];
+  String? _messageCursor;
+  bool _hasOlderMessages = false;
+  bool _loadingOlderMessages = false;
 
   /// Texto de la respuesta en curso. Es un [ValueNotifier] —y no un campo de
   /// estado— para que cada token repinte solo la burbuja que crece, en vez de
@@ -129,7 +135,12 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
     if (mounted) setState(() {});
   }
 
-  void _onScroll() => _awayFromEnd.value = !isAtEnd(_scrollController);
+  void _onScroll() {
+    _awayFromEnd.value = !isAtEnd(_scrollController);
+    if (_scrollController.position.extentBefore < 240) {
+      unawaited(_loadOlderMessages());
+    }
+  }
 
   @override
   void dispose() {
@@ -269,6 +280,9 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
         'agents.chat.delete_conversation',
         'Borrar conversación',
       ),
+      hasMore: _hasMoreConversations,
+      loadingMore: _loadingMoreConversations,
+      onLoadMore: _loadMoreConversations,
     );
   }
 
@@ -340,6 +354,7 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
                       replyActionLabel: replyActionLabel,
                       copyActionLabel: copyActionLabel,
                       messageCopiedLabel: messageCopiedLabel,
+                      loadingOlder: _loadingOlderMessages,
                     ),
                     _buildJumpToEndChip(),
                   ],

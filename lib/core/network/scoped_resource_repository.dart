@@ -1,4 +1,5 @@
 import 'api_repository.dart';
+import 'page_result.dart';
 
 /// Repositorio de un recurso con scope: `/api/<recurso>/<scope>/<id>`.
 ///
@@ -38,12 +39,39 @@ class ScopedResourceRepository<T> extends ApiRepository {
     String? groupId,
     bool includeInactive = false,
   }) async {
+    final items = <T>[];
+    var offset = 0;
+    while (true) {
+      final page = await listPage(
+        token,
+        scope: scope,
+        groupId: groupId,
+        includeInactive: includeInactive,
+        limit: 100,
+        offset: offset,
+      );
+      items.addAll(page.items);
+      if (!page.hasMore || page.items.isEmpty) return items;
+      offset += page.items.length;
+    }
+  }
+
+  Future<PageResult<T>> listPage(
+    String token, {
+    String scope = 'all',
+    String? groupId,
+    bool includeInactive = false,
+    int limit = 50,
+    int offset = 0,
+  }) async {
     final uri = Uri(
       path: '/api/$basePath',
       queryParameters: {
         'scope': scope,
         if (groupId != null && groupId.isNotEmpty) 'group_id': groupId,
         if (includeInactive) 'include_inactive': 'true',
+        'limit': '$limit',
+        'offset': '$offset',
       },
     );
     final response = await apiClient.get(
@@ -51,9 +79,7 @@ class ScopedResourceRepository<T> extends ApiRepository {
       gaToken: token,
       cache: true,
     );
-    final payload = response.body;
-    if (payload is! List) return const [];
-    return payload.whereType<Map<String, dynamic>>().map(parse).toList();
+    return PageResult.fromResponse(response, parse);
   }
 
   Future<Map<String, dynamic>> get(

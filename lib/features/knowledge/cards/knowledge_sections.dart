@@ -51,6 +51,9 @@ extension _KnowledgeSections on _KnowledgePageState {
         children: [
           _buildLazySection<Object>(
             onRefresh: _load,
+            onLoadMore: _loadMoreKnowledge,
+            hasMore: _hasMoreKnowledge,
+            loadingMore: _loadingMoreKnowledge,
             items: collection,
             itemBuilder: (entry) => entry is KnowledgePack
                 ? _buildPackCard(entry)
@@ -170,7 +173,9 @@ extension _KnowledgeSections on _KnowledgePageState {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  '${collection.length}',
+                  _hasMoreKnowledge
+                      ? '${collection.length}+'
+                      : '${collection.length}',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ],
@@ -250,37 +255,55 @@ extension _KnowledgeSections on _KnowledgePageState {
     required Widget Function(T) itemBuilder,
     required String emptyText,
     required Future<void> Function() onRefresh,
+    Future<void> Function()? onLoadMore,
+    bool hasMore = false,
+    bool loadingMore = false,
   }) {
     return RefreshIndicator(
       onRefresh: onRefresh,
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            sliver: SliverToBoxAdapter(child: toolbar),
-          ),
-          if (items.isEmpty)
+      child: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (hasMore && notification.metrics.extentAfter < 500) {
+            onLoadMore?.call();
+          }
+          return false;
+        },
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              sliver: SliverToBoxAdapter(
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(emptyText),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              sliver: SliverToBoxAdapter(child: toolbar),
+            ),
+            if (items.isEmpty)
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                sliver: SliverToBoxAdapter(
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(emptyText),
+                    ),
                   ),
                 ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                sliver: ResponsiveSliverMasonryGrid(
+                  itemCount: items.length,
+                  itemBuilder: (context, index) => itemBuilder(items[index]),
+                ),
               ),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              sliver: ResponsiveSliverMasonryGrid(
-                itemCount: items.length,
-                itemBuilder: (context, index) => itemBuilder(items[index]),
+            if (loadingMore)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
