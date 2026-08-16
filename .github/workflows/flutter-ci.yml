@@ -40,7 +40,7 @@ jobs:
         run: flutter test
 
       - name: Build web
-        run: flutter build web --release
+        run: tool/build_web.sh
 
       # El bundle es tiempo hasta la primera interacción y crece sin que nadie
       # lo note: un import sin `deferred` devuelve un módulo entero al bundle
@@ -94,7 +94,7 @@ jobs:
         working-directory: app_flutter
         run: |
           flutter pub get
-          flutter build web --release --base-href /app/
+          tool/build_web.sh --base-href /app/
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
