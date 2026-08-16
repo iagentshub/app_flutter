@@ -59,6 +59,21 @@ The iOS and macOS builds only work on macOS with Xcode; the Windows one, only on
 
 ---
 
+## Web size budget
+
+On the web the bundle size is waiting time before the first screen, so there is a limit checked on every change:
+
+```bash
+flutter build web --release
+tool/check_web_bundle_size.sh
+```
+
+The script prints the size of the main bundle and of the parts downloaded separately, and fails if the main one goes over budget or if the build produced no parts at all. It also runs in continuous integration, right after the web build.
+
+A large new module is added **deferred**, as administration, orchestrations and the checkout already are; raising the limit instead of deferring is a deliberate decision that has to be written into the script itself.
+
+---
+
 ## Application icon
 
 The icon is generated for every platform from a single image:

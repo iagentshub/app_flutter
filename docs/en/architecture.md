@@ -44,6 +44,14 @@ because Material's `ExpansionTile` always builds children and merely hides
 them. It backs the official import review and Centinel's test tree, where each
 group holds dozens of rows with dropdowns.
 
+On the web there is a second level of incremental loading: **the code for the
+heavy sections does not travel in the initial download**. Administration —
+Centinel included —, the visual orchestration editor and the checkout are
+fetched when you enter them, not when the app opens, because they are the
+largest areas and a minority uses them. The first visit shows a loading
+indicator and, if the download fails, a retry button; later visits are
+immediate. Off the web there is nothing to download and behaviour is unchanged.
+
 State follows one convention instead of a state-management library: `setState` only for
 widget-local state, one controller per feature for shared state, and **nobody reloads by
 hand after mutating**. `ApiClient` invalidates its cache and emits a `ResourceEvents`

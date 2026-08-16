@@ -59,6 +59,21 @@ Las compilaciones de iOS y macOS solo funcionan sobre macOS con Xcode; la de Win
 
 ---
 
+## Presupuesto de tamaño en web
+
+En web el tamaño del paquete es tiempo de espera antes de la primera pantalla, así que hay un límite comprobado en cada cambio:
+
+```bash
+flutter build web --release
+tool/check_web_bundle_size.sh
+```
+
+El script imprime el tamaño del paquete principal y el de las partes que se descargan aparte, y falla si el principal supera el presupuesto o si la compilación no generó ninguna parte. Se ejecuta también en integración continua, justo después de compilar la web.
+
+Un módulo nuevo y grande se añade **diferido**, como ya lo están administración, orquestaciones y el checkout; subir el límite en vez de diferir es una decisión consciente que hay que escribir en el propio script.
+
+---
+
 ## Icono de la aplicación
 
 El icono se genera para todas las plataformas a partir de una sola imagen:

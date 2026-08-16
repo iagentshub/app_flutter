@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/admin/pages/admin_page.dart';
-import '../../features/admin/pages/centinel_page.dart';
-import '../../features/admin/pages/metadata_page.dart';
+// Las cinco importaciones `deferred as` de este fichero son la única puerta
+// por la que su código entra en el bundle: admin (con Centinel), el editor de
+// workflows y el checkout de Stripe se descargan al entrar en la ruta, no al
+// abrir la app. Importar cualquiera de estas librerías sin `deferred` desde
+// otro sitio devolvería su parte al bundle principal sin que nadie lo note —
+// `test/deferred_routes_test.dart` vigila justo eso.
+import '../../features/admin/pages/admin_page.dart' deferred as admin_page;
+import '../../features/admin/pages/centinel_page.dart' deferred as centinel_page;
+import '../../features/admin/pages/metadata_page.dart' deferred as metadata_page;
 import '../../features/agents/pages/agents_page.dart';
 import '../../features/auth/pages/vscode_auth_page.dart';
 import '../../features/auth/repositories/auth_repository.dart';
@@ -16,12 +22,14 @@ import '../../features/labels/pages/labels_page.dart';
 import '../../features/manager/pages/manager_page.dart';
 import '../../features/memory/pages/memory_page.dart';
 import '../../features/profile/pages/profile_page.dart';
-import '../../features/public/pages/checkout_page.dart';
+import '../../features/public/pages/checkout_page.dart' deferred as checkout_page;
 import '../../features/public/pages/public_profile_page.dart';
-import '../../features/workflows/pages/workflows_page.dart';
+import '../../features/workflows/pages/workflows_page.dart'
+    deferred as workflows_page;
 import '../../shared/state/backend_controller.dart';
 import '../../shared/state/dashboard_edit_state.dart';
 import '../../shared/widgets/app_shell.dart';
+import 'deferred_page.dart';
 
 /// Rutas que requieren sesión iniciada, servidas dentro del [AppShell].
 abstract final class InternalRoutes {
@@ -83,8 +91,13 @@ ShellRoute buildShellRoute({
       ),
       GoRoute(
         path: InternalRoutes.orchestrations,
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: WorkflowsPage()),
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: DeferredPage(
+            name: 'workflows_page',
+            loader: workflows_page.loadLibrary,
+            builder: (context) => workflows_page.WorkflowsPage(),
+          ),
+        ),
       ),
       GoRoute(
         path: InternalRoutes.workflowsLegacy,
@@ -128,7 +141,13 @@ ShellRoute buildShellRoute({
       GoRoute(
         path: InternalRoutes.checkout,
         pageBuilder: (context, state) => NoTransitionPage(
-          child: CheckoutPage(queryParameters: state.uri.queryParameters),
+          child: DeferredPage(
+            name: 'checkout_page',
+            loader: checkout_page.loadLibrary,
+            builder: (context) => checkout_page.CheckoutPage(
+              queryParameters: state.uri.queryParameters,
+            ),
+          ),
         ),
       ),
       GoRoute(
@@ -143,18 +162,33 @@ ShellRoute buildShellRoute({
       ),
       GoRoute(
         path: InternalRoutes.admin,
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: AdminPage()),
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: DeferredPage(
+            name: 'admin_page',
+            loader: admin_page.loadLibrary,
+            builder: (context) => admin_page.AdminPage(),
+          ),
+        ),
       ),
       GoRoute(
         path: InternalRoutes.adminMetadata,
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: MetadataPage()),
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: DeferredPage(
+            name: 'metadata_page',
+            loader: metadata_page.loadLibrary,
+            builder: (context) => metadata_page.MetadataPage(),
+          ),
+        ),
       ),
       GoRoute(
         path: InternalRoutes.adminCentinel,
-        pageBuilder: (context, state) =>
-            const NoTransitionPage(child: CentinelPage()),
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: DeferredPage(
+            name: 'centinel_page',
+            loader: centinel_page.loadLibrary,
+            builder: (context) => centinel_page.CentinelPage(),
+          ),
+        ),
       ),
       GoRoute(
         path: InternalRoutes.adminLogs,

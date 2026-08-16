@@ -53,6 +53,25 @@ sido él; un «no hay resultados» tras una búsqueda que sí encontraba algo pa
 buscador roto. Explorar es el ejemplo montado: `relation` viaja en la URL y el backend
 devuelve `X-Linked-Count` para explicar el vacío.
 
+## Carga diferida en web
+
+`internal_router.dart` importa cinco páginas con `deferred as` —admin, Centinel,
+metadata, workflows y checkout— y las monta con `DeferredPage`. Son las áreas más
+pesadas y las usa una minoría; sin diferirlas, su código se descargaba antes de la
+pantalla de login. Ahorra 777 KB del bundle principal (−13 %).
+
+Lo que hay que saber al tocarlas:
+
+- **Solo el router puede importarlas.** Un `import` normal desde cualquier otro
+  fichero las devuelve al bundle principal sin romper nada visible.
+  `test/deferred_routes_test.dart` lo rechaza.
+- **Una pantalla pesada nueva se añade diferida**, con su entrada en ese test.
+- `tool/check_web_bundle_size.sh` (en CI tras `flutter build web --release`) falla
+  si el bundle principal cruza el presupuesto o si la build no generó partes.
+
+El porqué completo, con las alternativas descartadas, está en
+`docs/adr/005-carga-diferida-en-flutter-web.md` del repo `backend_fastapi`.
+
 ## Reglas que ya vigila la suite
 
 - **i18n**: todo texto de interfaz pasa por `_tx(clave, fallback)` y vive en

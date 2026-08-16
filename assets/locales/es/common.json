@@ -54,6 +54,10 @@
     "unexpected_error": "Error inesperado",
     "select": "Selecciona…"
   },
+  "deferred": {
+    "error": "No se pudo cargar esta sección.",
+    "retry": "Reintentar"
+  },
   "errors": {
     "operation": "No se pudo completar la operación.",
     "save_change": "No se pudo guardar el cambio.",

@@ -45,6 +45,14 @@ apertura, porque el `ExpansionTile` de Material lo construye siempre y solo lo
 oculta. Lo usan la revisión de importación oficial y el árbol de tests de
 Centinel, donde cada grupo trae decenas de filas con desplegables.
 
+En web hay un segundo nivel de carga incremental: **el código de las secciones
+pesadas no viaja en la descarga inicial**. Administración —Centinel incluido—,
+el editor visual de orquestaciones y el checkout se piden al entrar en ellas, no
+al abrir la aplicación, porque son las áreas más grandes y las usa una minoría.
+La primera entrada muestra un indicador de carga y, si la descarga falla, un
+botón de reintento; las siguientes visitas son inmediatas. Fuera de la web no
+hay nada que descargar y el comportamiento no cambia.
+
 El estado sigue una convención única en vez de un gestor de estado: `setState` solo para
 lo local del widget, un controlador por feature para lo compartido, y **nadie recarga a
 mano después de mutar**. `ApiClient` invalida su caché y emite `ResourceEvents` con el

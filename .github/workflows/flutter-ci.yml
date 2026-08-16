@@ -42,6 +42,12 @@ jobs:
       - name: Build web
         run: flutter build web --release
 
+      # El bundle es tiempo hasta la primera interacción y crece sin que nadie
+      # lo note: un import sin `deferred` devuelve un módulo entero al bundle
+      # principal y ningún test de comportamiento cambia.
+      - name: Presupuesto de tamaño del bundle web
+        run: tool/check_web_bundle_size.sh
+
       - name: Build Android
         run: flutter build apk --debug
 

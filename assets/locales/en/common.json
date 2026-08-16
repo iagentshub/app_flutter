@@ -54,6 +54,10 @@
     "unexpected_error": "Unexpected error",
     "select": "Select…"
   },
+  "deferred": {
+    "error": "This section could not be loaded.",
+    "retry": "Retry"
+  },
   "errors": {
     "operation": "The operation could not be completed.",
     "save_change": "The change could not be saved.",
