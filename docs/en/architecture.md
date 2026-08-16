@@ -28,6 +28,22 @@ Knowledge loads offset pages near the end. Chat loads conversations by cursor
 and prepends older messages while preserving scroll position. Server-backed
 collections use builders/slivers so only visible elements are built.
 
+The Skills, Prompts, and Tools tabs do fetch every page on purpose: they filter
+by category or language on the client, and a single page would yield incomplete
+results with no way to tell. Paginating them requires those filters to exist
+server-side first.
+
+A listing's skeleton — refresh, toolbar, lazy grid, empty state, and next-page
+loading — lives in `shared/widgets/resource_collection_view.dart` and backs all
+ten collection screens. Views that paint several collections in one scroll
+(connections grouped by provider) take `ResourceGridSliver` alone.
+
+A collapsed group must not build what it does not show either:
+`shared/widgets/lazy_expansion_tile.dart` defers its content until expansion,
+because Material's `ExpansionTile` always builds children and merely hides
+them. It backs the official import review and Centinel's test tree, where each
+group holds dozens of rows with dropdowns.
+
 ## The four layers
 
 **Screens** (`lib/features/*/pages/`) — what the user sees and touches. They never talk to the network directly.

@@ -28,6 +28,23 @@ Knowledge carga páginas offset al acercarse al final. Chat carga conversaciones
 por cursor y antepone mensajes antiguos preservando la posición de scroll. Los
 listados de servidor usan builders/slivers para construir solo lo visible.
 
+Las pestañas de Skills, Prompts y Tools sí recorren todas las páginas a
+propósito: filtran por categoría o lenguaje en cliente, y una página suelta
+daría resultados incompletos sin manera de detectarlo. Paginarlas exige antes
+que esos filtros existan en el servidor.
+
+El esqueleto de un listado —refresco, barra, rejilla perezosa, estado vacío y
+carga de la página siguiente— vive en
+`shared/widgets/resource_collection_view.dart` y lo usan las diez pantallas de
+colección. Cuando una vista pinta varias colecciones en un mismo scroll
+(conexiones por proveedor) toma solo `ResourceGridSliver`.
+
+Un grupo plegado tampoco debe construir lo que no enseña:
+`shared/widgets/lazy_expansion_tile.dart` difiere el contenido hasta la
+apertura, porque el `ExpansionTile` de Material lo construye siempre y solo lo
+oculta. Lo usan la revisión de importación oficial y el árbol de tests de
+Centinel, donde cada grupo trae decenas de filas con desplegables.
+
 ## Las cuatro capas
 
 **Pantallas** (`lib/features/*/pages/`) — lo que el usuario ve y toca. No hablan con la red directamente.

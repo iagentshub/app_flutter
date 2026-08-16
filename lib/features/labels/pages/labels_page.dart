@@ -14,6 +14,7 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/explore_search_toolbar.dart';
 import '../../../shared/widgets/multi_select_dropdown.dart';
+import '../../../shared/widgets/resource_collection_view.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../agents/repositories/agents_repository.dart';
@@ -358,126 +359,96 @@ class _LabelsPageState extends State<LabelsPage>
       kOriginGroup,
       ...kLabelGroups,
     ];
-    return CustomScrollView(
-      slivers: [
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
-          sliver: SliverToBoxAdapter(child: LabelCatalogIntro(text: _tx)),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          sliver: ResponsiveSliverMasonryGrid(
-            density: ResponsiveCardDensity.marketing,
-            itemCount: groups.length,
-            itemBuilder: (context, index) =>
-                LabelGroupCard(group: groups[index], text: _tx),
-          ),
-        ),
-      ],
+    return ResourceCollectionView(
+      header: LabelCatalogIntro(text: _tx),
+      headerPadding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+      density: ResponsiveCardDensity.marketing,
+      itemCount: groups.length,
+      itemBuilder: (context, index) =>
+          LabelGroupCard(group: groups[index], text: _tx),
     );
   }
 
   Widget _buildSearchTab(BuildContext context) {
     final filtered = _filtered;
 
-    return RefreshIndicator(
+    return ResourceCollectionView(
       onRefresh: _loadBase,
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            sliver: SliverToBoxAdapter(
-              child: ExploreSearchToolbar(
-                searchController: _queryController,
-                searchHint: _tx(
-                  'labels.search_hint',
-                  'Buscar por nombre, descripción o etiqueta',
-                ),
-                onSearchChanged: (value) => setState(() => _query = value),
-                typeOptions: _typeOptions,
-                selectedTypes: _selectedTypes,
-                allTypesLabel: _tx('explore.type_all', 'Todos'),
-                typeFilterTooltip: _tx(
-                  'labels.type_filter_tooltip',
-                  'Filtrar por tipo de recurso',
-                ),
-                multipleTypesLabel: (count) => _tx(
-                  'labels.types_selected',
-                  '{count} tipos',
-                ).replaceAll('{count}', '$count'),
-                onTypesChanged: (values) =>
-                    setState(() => _selectedTypes = values),
-                selectorKey: const Key('labelsTypeDropdown'),
-                actions: [
-                  AppIconButton.outlined(
-                    onPressed: _loadBase,
-                    icon: const Icon(Icons.refresh),
-                    tooltip: _tx('common.update', 'Actualizar'),
-                  ),
-                  FilterButton(
-                    activeCount: _activeFilterCount,
-                    tooltip: _tx('common.filters', 'Filtros'),
-                    onPressed: _openFiltersDialog,
-                  ),
-                ],
-              ),
-            ),
+      header: ExploreSearchToolbar(
+        searchController: _queryController,
+        searchHint: _tx(
+          'labels.search_hint',
+          'Buscar por nombre, descripción o etiqueta',
+        ),
+        onSearchChanged: (value) => setState(() => _query = value),
+        typeOptions: _typeOptions,
+        selectedTypes: _selectedTypes,
+        allTypesLabel: _tx('explore.type_all', 'Todos'),
+        typeFilterTooltip: _tx(
+          'labels.type_filter_tooltip',
+          'Filtrar por tipo de recurso',
+        ),
+        multipleTypesLabel: (count) => _tx(
+          'labels.types_selected',
+          '{count} tipos',
+        ).replaceAll('{count}', '$count'),
+        onTypesChanged: (values) => setState(() => _selectedTypes = values),
+        selectorKey: const Key('labelsTypeDropdown'),
+        actions: [
+          AppIconButton.outlined(
+            onPressed: _loadBase,
+            icon: const Icon(Icons.refresh),
+            tooltip: _tx('common.update', 'Actualizar'),
           ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            sliver: SliverToBoxAdapter(
-              child: Text(
-                '${_tx('labels.resources', 'Recursos')}: ${filtered.length}',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ),
+          FilterButton(
+            activeCount: _activeFilterCount,
+            tooltip: _tx('common.filters', 'Filtros'),
+            onPressed: _openFiltersDialog,
           ),
-          if (_loading)
-            const SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else if (filtered.isEmpty)
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              sliver: SliverToBoxAdapter(
-                child: AsyncStatePanel.empty(
-                  padding: EdgeInsets.zero,
-                  icon: Icons.search_off,
-                  title: _tx('labels.empty_title', 'Sin resultados'),
-                  message: _tx(
-                    'labels.empty_resources',
-                    'No hay recursos para esta búsqueda o estos filtros.',
-                  ),
-                ),
-              ),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              sliver: ResponsiveSliverMasonryGrid(
-                itemCount: filtered.length,
-                itemBuilder: (context, index) {
-                  final item = filtered[index];
-                  return LabeledItemCard(
-                    item: item,
-                    typeLabel: _itemTypeLabel(item.type),
-                    ownerLabel: _tx('common.owner', 'Propietario'),
-                    linkedLabel: _tx('common.linked', 'Enlace'),
-                    forkLabel: _tx('common.fork', 'Fork'),
-                    labelText: (label) => _tx('labels.$label', label),
-                    onTap: () => showMessage(
-                      item.description.isEmpty
-                          ? _tx('labels.no_description', 'Sin descripción')
-                          : item.description,
-                    ),
-                  );
-                },
-              ),
-            ),
         ],
       ),
+      leadingSlivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          sliver: SliverToBoxAdapter(
+            child: Text(
+              '${_tx('labels.resources', 'Recursos')}: ${filtered.length}',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+        ),
+      ],
+      // Mientras carga, la rejilla se vacía y el hueco lo ocupa el indicador,
+      // igual que antes de compartir el esqueleto.
+      emptyFillsViewport: _loading,
+      empty: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : AsyncStatePanel.empty(
+              padding: EdgeInsets.zero,
+              icon: Icons.search_off,
+              title: _tx('labels.empty_title', 'Sin resultados'),
+              message: _tx(
+                'labels.empty_resources',
+                'No hay recursos para esta búsqueda o estos filtros.',
+              ),
+            ),
+      itemCount: _loading ? 0 : filtered.length,
+      itemBuilder: (context, index) {
+        final item = filtered[index];
+        return LabeledItemCard(
+          item: item,
+          typeLabel: _itemTypeLabel(item.type),
+          ownerLabel: _tx('common.owner', 'Propietario'),
+          linkedLabel: _tx('common.linked', 'Enlace'),
+          forkLabel: _tx('common.fork', 'Fork'),
+          labelText: (label) => _tx('labels.$label', label),
+          onTap: () => showMessage(
+            item.description.isEmpty
+                ? _tx('labels.no_description', 'Sin descripción')
+                : item.description,
+          ),
+        );
+      },
     );
   }
 

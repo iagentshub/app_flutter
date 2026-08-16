@@ -37,55 +37,48 @@ extension _ExploreCollectionViews on _ExplorePageState {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return RefreshIndicator(
-      onRefresh: _controller.load,
-      child: _buildScrollView(),
-    );
+    return _buildScrollView();
   }
 
   Widget _buildScrollView() {
     final items = _controller.items;
     final packs = _controller.officialPacks;
-    return CustomScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      slivers: [
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-          sliver: SliverToBoxAdapter(
-            child: ExploreSearchToolbar(
-              searchController: _controller.queryController,
-              searchHint: _tx(
-                'explore.search_hint',
-                'Buscar recursos por nombre, autor o descripción',
-              ),
-              onSearchSubmitted: (_) => _controller.load(),
-              typeOptions: _publicExploreTypeOptions,
-              selectedTypes: _controller.type == 'all'
-                  ? const <String>{}
-                  : {_controller.type},
-              allTypesLabel: _tx('explore.type_all', 'Todos'),
-              typeFilterTooltip: _tx(
-                'explore.type_filter_tooltip',
-                'Filtrar recursos por tipo',
-              ),
-              multipleTypesLabel: (count) => '$count',
-              allowMultipleTypes: false,
-              selectorKey: const Key('publicExploreTypeDropdown'),
-              onTypesChanged: (values) =>
-                  _controller.setType(values.firstOrNull ?? 'all'),
-              actions: [
-                FilterButton(
-                  activeCount: _controller.secondaryActiveFilterCount,
-                  tooltip: _tx(
-                    'explore.more_filters_tooltip',
-                    'Filtrar por categoría, idioma y labels',
-                  ),
-                  onPressed: _openFiltersDialog,
-                ),
-              ],
-            ),
-          ),
+    return ResourceCollectionView(
+      onRefresh: _controller.load,
+      gridPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      header: ExploreSearchToolbar(
+        searchController: _controller.queryController,
+        searchHint: _tx(
+          'explore.search_hint',
+          'Buscar recursos por nombre, autor o descripción',
         ),
+        onSearchSubmitted: (_) => _controller.load(),
+        typeOptions: _publicExploreTypeOptions,
+        selectedTypes: _controller.type == 'all'
+            ? const <String>{}
+            : {_controller.type},
+        allTypesLabel: _tx('explore.type_all', 'Todos'),
+        typeFilterTooltip: _tx(
+          'explore.type_filter_tooltip',
+          'Filtrar recursos por tipo',
+        ),
+        multipleTypesLabel: (count) => '$count',
+        allowMultipleTypes: false,
+        selectorKey: const Key('publicExploreTypeDropdown'),
+        onTypesChanged: (values) =>
+            _controller.setType(values.firstOrNull ?? 'all'),
+        actions: [
+          FilterButton(
+            activeCount: _controller.secondaryActiveFilterCount,
+            tooltip: _tx(
+              'explore.more_filters_tooltip',
+              'Filtrar por categoría, idioma y labels',
+            ),
+            onPressed: _openFiltersDialog,
+          ),
+        ],
+      ),
+      leadingSlivers: [
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
           sliver: SliverToBoxAdapter(
@@ -95,30 +88,20 @@ extension _ExploreCollectionViews on _ExplorePageState {
             ),
           ),
         ),
-        if (items.isEmpty && packs.isEmpty)
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            sliver: SliverToBoxAdapter(
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    _tx('explore.empty', 'No hay resultados para ese filtro.'),
-                  ),
-                ),
-              ),
-            ),
-          )
-        else
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            sliver: ResponsiveSliverMasonryGrid(
-              itemCount: packs.length + items.length,
-              itemBuilder: (context, index) => index < packs.length
-                  ? _buildOfficialPackCard(packs[index])
-                  : _buildItemCard(items[index - packs.length]),
-            ),
+      ],
+      empty: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            _tx('explore.empty', 'No hay resultados para ese filtro.'),
           ),
+        ),
+      ),
+      itemCount: packs.length + items.length,
+      itemBuilder: (context, index) => index < packs.length
+          ? _buildOfficialPackCard(packs[index])
+          : _buildItemCard(items[index - packs.length]),
+      trailingSlivers: [
         if (_controller.resourcesHasMore)
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -144,32 +127,11 @@ extension _ExploreCollectionViews on _ExplorePageState {
   Widget _buildUsersTab() {
     final error = _controller.usersError;
     if (error != null) {
-      return ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _tx('explore.users_error_title', 'No se pudo cargar'),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(error),
-                  const SizedBox(height: 12),
-                  PrimaryButton.icon(
-                    onPressed: _controller.loadUsers,
-                    icon: const Icon(Icons.refresh),
-                    label: Text(_tx('common.retry', 'Reintentar')),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+      return AsyncStatePanel.error(
+        title: _tx('explore.users_error_title', 'No se pudo cargar'),
+        message: error,
+        retryLabel: _tx('common.retry', 'Reintentar'),
+        onRetry: _controller.loadUsers,
       );
     }
 
@@ -177,74 +139,54 @@ extension _ExploreCollectionViews on _ExplorePageState {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return RefreshIndicator(
-      onRefresh: _controller.loadUsers,
-      child: _buildUsersScrollView(),
-    );
+    return _buildUsersScrollView();
   }
 
   Widget _buildUsersScrollView() {
     final users = _controller.users;
-    return CustomScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      slivers: [
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-          sliver: SliverToBoxAdapter(
-            child: TextField(
-              controller: _controller.userQueryController,
-              decoration: InputDecoration(
-                labelText: _tx('explore.users_search_hint', 'Buscar usuarios'),
-                prefixIcon: const Icon(Icons.search, size: 20),
-              ),
-              onChanged: (_) => _controller.onUserSearchChanged(),
-            ),
+    return ResourceCollectionView(
+      onRefresh: _controller.loadUsers,
+      gridPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      density: ResponsiveCardDensity.compact,
+      header: TextField(
+        controller: _controller.userQueryController,
+        decoration: InputDecoration(
+          labelText: _tx('explore.users_search_hint', 'Buscar usuarios'),
+          prefixIcon: const Icon(Icons.search, size: 20),
+        ),
+        onChanged: (_) => _controller.onUserSearchChanged(),
+      ),
+      empty: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            _tx('explore.users_empty', 'No se encontraron usuarios.'),
           ),
         ),
-        if (users.isEmpty)
+      ),
+      itemCount: users.length,
+      itemBuilder: (context, index) => _buildUserCard(users[index]),
+      trailingSlivers: [
+        if (users.isNotEmpty && _controller.usersHasMore)
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             sliver: SliverToBoxAdapter(
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    _tx('explore.users_empty', 'No se encontraron usuarios.'),
-                  ),
-                ),
+              child: Center(
+                child: _controller.usersLoadingMore
+                    ? const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : SecondaryButton(
+                        onPressed: () =>
+                            _runAction(_controller.loadMoreUsers()),
+                        child: Text(
+                          _tx('explore.users_load_more', 'Cargar más'),
+                        ),
+                      ),
               ),
-            ),
-          )
-        else ...[
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            sliver: ResponsiveSliverMasonryGrid(
-              density: ResponsiveCardDensity.compact,
-              itemCount: users.length,
-              itemBuilder: (context, index) => _buildUserCard(users[index]),
             ),
           ),
-          if (_controller.usersHasMore)
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              sliver: SliverToBoxAdapter(
-                child: Center(
-                  child: _controller.usersLoadingMore
-                      ? const Padding(
-                          padding: EdgeInsets.all(12),
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : SecondaryButton(
-                          onPressed: () =>
-                              _runAction(_controller.loadMoreUsers()),
-                          child: Text(
-                            _tx('explore.users_load_more', 'Cargar más'),
-                          ),
-                        ),
-                ),
-              ),
-            ),
-        ],
       ],
     );
   }

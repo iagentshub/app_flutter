@@ -12,8 +12,8 @@ import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
+import '../../../shared/widgets/resource_collection_view.dart';
 import '../../../shared/widgets/resource_toolbar.dart';
-import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../cards/workflow_card.dart';
 import '../controllers/workflow_runs_controller.dart';
@@ -426,99 +426,79 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
       ),
     );
 
-    return RefreshIndicator(
+    return ResourceCollectionView(
+      header: toolbar,
       onRefresh: _load,
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            sliver: SliverToBoxAdapter(child: toolbar),
+      itemCount: filteredWorkflows.length,
+      itemBuilder: (context, index) {
+        final item = filteredWorkflows[index];
+        return WorkflowCard(
+          item: item,
+          agentsById: _agentsById,
+          stepsLabel: _tx('workflows.steps_suffix', 'pasos'),
+          connectionsLabel: _tx('workflows.connections_suffix', 'conexiones'),
+          ownerLabel: _tx('common.owner', 'Propietario'),
+          linkedLabel: _tx('common.linked', 'Enlace'),
+          forkLabel: _tx('common.fork', 'Fork'),
+          labelText: (label) => _tx('labels.$label', label),
+          runLabel: _tx('workflows.run_btn', 'Ejecutar'),
+          editTooltip: _tx('common.edit', 'Editar'),
+          deleteTooltip: _tx('common.delete', 'Eliminar'),
+          graphTooltip: _tx(
+            'workflows.graph_tooltip',
+            'Ver grafo de contenido',
           ),
-          if (filteredWorkflows.isNotEmpty)
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              sliver: ResponsiveSliverMasonryGrid(
-                itemCount: filteredWorkflows.length,
-                itemBuilder: (context, index) {
-                  final item = filteredWorkflows[index];
-                  return WorkflowCard(
-                    item: item,
-                    agentsById: _agentsById,
-                    stepsLabel: _tx('workflows.steps_suffix', 'pasos'),
-                    connectionsLabel: _tx(
-                      'workflows.connections_suffix',
-                      'conexiones',
-                    ),
-                    ownerLabel: _tx('common.owner', 'Propietario'),
-                    linkedLabel: _tx('common.linked', 'Enlace'),
-                    forkLabel: _tx('common.fork', 'Fork'),
-                    labelText: (label) => _tx('labels.$label', label),
-                    runLabel: _tx('workflows.run_btn', 'Ejecutar'),
-                    editTooltip: _tx('common.edit', 'Editar'),
-                    deleteTooltip: _tx('common.delete', 'Eliminar'),
-                    graphTooltip: _tx(
-                      'workflows.graph_tooltip',
-                      'Ver grafo de contenido',
-                    ),
-                    graphCloseLabel: _tx('common.close', 'Cerrar'),
-                    graphEmptyLabel: _tx(
-                      'workflows.graph_empty',
-                      'Esta orquestación todavía no tiene pasos.',
-                    ),
-                    graphSearchHint: _tx(
-                      'graph.search_hint',
-                      'Buscar en el grafo...',
-                    ),
-                    graphSortTooltip: _tx('graph.sort_tooltip', 'Ordenar'),
-                    graphSortHierarchyVerticalLabel: _tx(
-                      'graph.sort_hierarchy_vertical',
-                      'Jerárquico (arriba-abajo)',
-                    ),
-                    graphSortHierarchyHorizontalLabel: _tx(
-                      'graph.sort_hierarchy_horizontal',
-                      'Jerárquico (izquierda-derecha)',
-                    ),
-                    graphSortGalaxyLabel: _tx('graph.sort_galaxy', 'Galaxia'),
-                    graphShowLabelsTooltip: _tx(
-                      'graph.show_labels_tooltip',
-                      'Mostrar nombres',
-                    ),
-                    graphHideLabelsTooltip: _tx(
-                      'graph.hide_labels_tooltip',
-                      'Ocultar nombres',
-                    ),
-                    graphQuickViewDescriptionLabel: _tx(
-                      'graph.quick_view_description',
-                      'Descripción',
-                    ),
-                    graphQuickViewNoDescriptionLabel: _tx(
-                      'graph.quick_view_no_description',
-                      'Sin descripción',
-                    ),
-                    graphQuickViewConnectionsLabel: _tx(
-                      'graph.quick_view_connections',
-                      'Conexiones',
-                    ),
-                    graphQuickViewNoConnectionsLabel: _tx(
-                      'graph.quick_view_no_connections',
-                      'Sin conexiones',
-                    ),
-                    inactiveLabel: _tx('common.inactive', 'Inactivo'),
-                    activateTooltip: _tx('common.activate', 'Activar'),
-                    deactivateTooltip: _tx('common.deactivate', 'Desactivar'),
-                    onRun: () => _runWorkflow(item),
-                    onEdit: () => _openEditDialog(item),
-                    onDelete: () => _deleteWorkflow(item),
-                    onToggleActive: item.readOnly
-                        ? null
-                        : () => _toggleWorkflowActive(item),
-                  );
-                },
-              ),
-            ),
-        ],
-      ),
+          graphCloseLabel: _tx('common.close', 'Cerrar'),
+          graphEmptyLabel: _tx(
+            'workflows.graph_empty',
+            'Esta orquestación todavía no tiene pasos.',
+          ),
+          graphSearchHint: _tx('graph.search_hint', 'Buscar en el grafo...'),
+          graphSortTooltip: _tx('graph.sort_tooltip', 'Ordenar'),
+          graphSortHierarchyVerticalLabel: _tx(
+            'graph.sort_hierarchy_vertical',
+            'Jerárquico (arriba-abajo)',
+          ),
+          graphSortHierarchyHorizontalLabel: _tx(
+            'graph.sort_hierarchy_horizontal',
+            'Jerárquico (izquierda-derecha)',
+          ),
+          graphSortGalaxyLabel: _tx('graph.sort_galaxy', 'Galaxia'),
+          graphShowLabelsTooltip: _tx(
+            'graph.show_labels_tooltip',
+            'Mostrar nombres',
+          ),
+          graphHideLabelsTooltip: _tx(
+            'graph.hide_labels_tooltip',
+            'Ocultar nombres',
+          ),
+          graphQuickViewDescriptionLabel: _tx(
+            'graph.quick_view_description',
+            'Descripción',
+          ),
+          graphQuickViewNoDescriptionLabel: _tx(
+            'graph.quick_view_no_description',
+            'Sin descripción',
+          ),
+          graphQuickViewConnectionsLabel: _tx(
+            'graph.quick_view_connections',
+            'Conexiones',
+          ),
+          graphQuickViewNoConnectionsLabel: _tx(
+            'graph.quick_view_no_connections',
+            'Sin conexiones',
+          ),
+          inactiveLabel: _tx('common.inactive', 'Inactivo'),
+          activateTooltip: _tx('common.activate', 'Activar'),
+          deactivateTooltip: _tx('common.deactivate', 'Desactivar'),
+          onRun: () => _runWorkflow(item),
+          onEdit: () => _openEditDialog(item),
+          onDelete: () => _deleteWorkflow(item),
+          onToggleActive: item.readOnly
+              ? null
+              : () => _toggleWorkflowActive(item),
+        );
+      },
     );
   }
 

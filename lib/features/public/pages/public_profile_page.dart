@@ -12,8 +12,8 @@ import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/explore_search_toolbar.dart';
+import '../../../shared/widgets/resource_collection_view.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
-import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../explore/repositories/explore_repository.dart';
 import '../cards/public_resource_card.dart';
@@ -423,50 +423,30 @@ class _PublicProfilePageState extends State<PublicProfilePage>
       ],
     );
 
-    return RefreshIndicator(
+    return ResourceCollectionView(
+      header: header,
       onRefresh: _load,
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            sliver: SliverToBoxAdapter(child: header),
-          ),
-          if (filteredResources.isEmpty)
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              sliver: SliverToBoxAdapter(
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      _tx(
-                        'public_profile.empty_resources',
-                        'No hay recursos públicos que coincidan con la búsqueda.',
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              sliver: ResponsiveSliverMasonryGrid(
-                itemCount: filteredResources.length,
-                itemBuilder: (context, index) {
-                  final item = filteredResources[index];
-                  return PublicResourceCard(
-                    item: item,
-                    typeLabel: _typeLabel(item.resourceType),
-                    previewTooltip: _tx('explore.preview', 'Vista previa'),
-                    onPreview: () => _preview(item),
-                  );
-                },
-              ),
+      empty: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            _tx(
+              'public_profile.empty_resources',
+              'No hay recursos públicos que coincidan con la búsqueda.',
             ),
-        ],
+          ),
+        ),
       ),
+      itemCount: filteredResources.length,
+      itemBuilder: (context, index) {
+        final item = filteredResources[index];
+        return PublicResourceCard(
+          item: item,
+          typeLabel: _typeLabel(item.resourceType),
+          previewTooltip: _tx('explore.preview', 'Vista previa'),
+          onPreview: () => _preview(item),
+        );
+      },
     );
   }
 }

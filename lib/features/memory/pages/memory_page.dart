@@ -9,9 +9,9 @@ import '../../../shared/widgets/async_section_builder.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
+import '../../../shared/widgets/resource_collection_view.dart';
 import '../../../shared/widgets/resource_toolbar.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
-import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../cards/memory_file_card.dart';
 import '../repositories/memory_repository.dart';
@@ -209,53 +209,33 @@ class _MemoryPageState extends State<MemoryPage> with StateMessaging {
       ),
     );
 
-    return RefreshIndicator(
+    return ResourceCollectionView(
+      header: toolbar,
       onRefresh: _load,
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            sliver: SliverToBoxAdapter(child: toolbar),
-          ),
-          if (_files.isEmpty)
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              sliver: SliverToBoxAdapter(
-                child: AsyncStatePanel.empty(
-                  padding: EdgeInsets.zero,
-                  icon: Icons.description_outlined,
-                  title: _tx('memory.empty_title', 'Sin archivos de memoria'),
-                  message: _tx(
-                    'memory.empty_files',
-                    'La memoria guarda lo que tus agentes deben recordar entre '
-                        'conversaciones.',
-                  ),
-                  actionLabel: _tx('memory.empty_action', 'Crear el primero'),
-                  onAction: _createFile,
-                ),
-              ),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              sliver: ResponsiveSliverMasonryGrid(
-                itemCount: _files.length,
-                itemBuilder: (context, index) {
-                  final file = _files[index];
-                  return MemoryFileCard(
-                    file: file,
-                    sizeLabel: _tx('memory.size_label', 'Tamaño'),
-                    editTooltip: _tx('common.edit', 'Editar'),
-                    deleteTooltip: _tx('common.delete', 'Eliminar'),
-                    onEdit: () => _editFile(file),
-                    onDelete: () => _deleteFile(file),
-                  );
-                },
-              ),
-            ),
-        ],
+      itemCount: _files.length,
+      empty: AsyncStatePanel.empty(
+        padding: EdgeInsets.zero,
+        icon: Icons.description_outlined,
+        title: _tx('memory.empty_title', 'Sin archivos de memoria'),
+        message: _tx(
+          'memory.empty_files',
+          'La memoria guarda lo que tus agentes deben recordar entre '
+              'conversaciones.',
+        ),
+        actionLabel: _tx('memory.empty_action', 'Crear el primero'),
+        onAction: _createFile,
       ),
+      itemBuilder: (context, index) {
+        final file = _files[index];
+        return MemoryFileCard(
+          file: file,
+          sizeLabel: _tx('memory.size_label', 'Tamaño'),
+          editTooltip: _tx('common.edit', 'Editar'),
+          deleteTooltip: _tx('common.delete', 'Eliminar'),
+          onEdit: () => _editFile(file),
+          onDelete: () => _deleteFile(file),
+        );
+      },
     );
   }
 }

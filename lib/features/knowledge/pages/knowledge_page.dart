@@ -20,6 +20,7 @@ import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/tools/tool_language.dart';
 import '../../../shared/utils/memoized.dart';
+import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
@@ -29,10 +30,10 @@ import '../../../shared/widgets/grouped_label_picker.dart';
 import '../../../shared/widgets/inactive_badge.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/origin_badge.dart';
+import '../../../shared/widgets/resource_collection_view.dart';
 import '../../../shared/widgets/resource_graph_button.dart';
 import '../../../shared/widgets/resource_history_dialog.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
-import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../agents/repositories/agents_repository.dart';
@@ -54,6 +55,7 @@ part '../cards/prompt_sections.dart';
 part '../cards/tool_sections.dart';
 part '../controllers/document_actions.dart';
 part '../controllers/knowledge_actions.dart';
+part '../controllers/knowledge_filters.dart';
 part '../controllers/knowledge_pack_actions.dart';
 part '../controllers/prompt_actions.dart';
 part '../controllers/tool_actions.dart';
@@ -188,84 +190,9 @@ class _KnowledgePageState extends State<KnowledgePage>
   final _urlItemsMemo = Memoized<List<KnowledgeItem>>();
   final _documentItemsMemo = Memoized<List<KnowledgeItem>>();
 
-  List<KnowledgeItem> get _urlItems =>
-      _urlItemsMemo.of([_items, _knowledgeOrigin], () {
-        return _items
-            .where((item) => item.type == 'url')
-            .where(_matchesKnowledgeOrigin)
-            .toList();
-      });
-
-  List<KnowledgeItem> get _documentItems =>
-      _documentItemsMemo.of([_items, _knowledgeOrigin], () {
-        return _items
-            .where((item) => item.type != 'url')
-            .where(_matchesKnowledgeOrigin)
-            .toList();
-      });
-
-  bool _matchesKnowledgeOrigin(KnowledgeItem item) {
-    if (_knowledgeOrigin == 'owner') return item.propertyType == 'owner';
-    if (_knowledgeOrigin == 'linked') return item.propertyType == 'linked';
-    if (_knowledgeOrigin == 'fork') return item.propertyType == 'fork';
-    return true;
-  }
-
-  int get _knowledgeFilterCount =>
-      (_knowledgeOrigin != 'all' ? 1 : 0) + (_knowledgePacksMode ? 0 : 1);
-
-  List<String> get _skillCategoryOptions =>
-      _skills.map((s) => s.category).where((c) => c.isNotEmpty).toSet().toList()
-        ..sort();
-
-  int get _skillFilterCount =>
-      (_skillScope != 'all' ? 1 : 0) + (_skillCategory != 'all' ? 1 : 0);
-
   final _filteredSkillsMemo = Memoized<List<SkillItem>>();
-
-  List<SkillItem> get _filteredSkills =>
-      _filteredSkillsMemo.of([_skills, _skillScope, _skillCategory], () {
-        return _skills.where((item) {
-          if (_skillScope != 'all' && item.scope != _skillScope) return false;
-          if (_skillCategory != 'all' && item.category != _skillCategory) {
-            return false;
-          }
-          return true;
-        }).toList();
-      });
-
-  int get _promptFilterCount => _promptScope != 'all' ? 1 : 0;
-
   final _filteredPromptsMemo = Memoized<List<PromptItem>>();
-
-  List<PromptItem> get _filteredPrompts => _filteredPromptsMemo.of(
-    [_prompts, _promptScope],
-    () {
-      return _prompts
-          .where((item) => _promptScope == 'all' || item.scope == _promptScope)
-          .toList();
-    },
-  );
-
-  List<String> get _toolLanguageOptions =>
-      _tools.map((t) => t.language).where((l) => l.isNotEmpty).toSet().toList()
-        ..sort();
-
-  int get _toolFilterCount =>
-      (_toolScope != 'all' ? 1 : 0) + (_toolLanguage != 'all' ? 1 : 0);
-
   final _filteredToolsMemo = Memoized<List<ToolItem>>();
-
-  List<ToolItem> get _filteredTools =>
-      _filteredToolsMemo.of([_tools, _toolScope, _toolLanguage], () {
-        return _tools.where((item) {
-          if (_toolScope != 'all' && item.scope != _toolScope) return false;
-          if (_toolLanguage != 'all' && item.language != _toolLanguage) {
-            return false;
-          }
-          return true;
-        }).toList();
-      });
 
   String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
 
@@ -283,10 +210,13 @@ class _KnowledgePageState extends State<KnowledgePage>
       title: _tx('common.filters', 'Filtros'),
       clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
       closeLabel: _tx('common.close', 'Cerrar'),
-      onClear: () => refresh(() {
-        _knowledgeOrigin = 'all';
-        _knowledgePacksMode = true;
-      }),
+      onClear: () {
+        refresh(() {
+          _knowledgeOrigin = 'all';
+          _knowledgePacksMode = true;
+        });
+        _ensureKnowledgeCollectionFilled();
+      },
       buildFields: (setDialogState) => [
         Text(
           _tx('knowledge.pack_display_label', 'Visualización'),
@@ -315,6 +245,7 @@ class _KnowledgePageState extends State<KnowledgePage>
             onSelectionChanged: (values) {
               refresh(() => _knowledgePacksMode = values.first);
               setDialogState(() {});
+              _ensureKnowledgeCollectionFilled();
             },
           ),
         ),
@@ -326,6 +257,7 @@ class _KnowledgePageState extends State<KnowledgePage>
           onChanged: (v) {
             refresh(() => _knowledgeOrigin = v);
             setDialogState(() {});
+            _ensureKnowledgeCollectionFilled();
           },
         ),
       ],

@@ -179,12 +179,10 @@ extension _ConnectionsPageView on _ConnectionsPageState {
           ),
         ),
       ),
-      SliverPadding(
+      ResourceGridSliver(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-        sliver: ResponsiveSliverMasonryGrid(
-          itemCount: items.length,
-          itemBuilder: (context, index) => _buildConnectionCard(items[index]),
-        ),
+        itemCount: items.length,
+        itemBuilder: (context, index) => _buildConnectionCard(items[index]),
       ),
     ];
   }

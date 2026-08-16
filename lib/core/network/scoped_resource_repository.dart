@@ -33,6 +33,15 @@ class ScopedResourceRepository<T> extends ApiRepository {
     if (id != null) Uri.encodeComponent(id),
   ].join('/');
 
+  /// Recorre todas las páginas hasta agotarlas.
+  ///
+  /// Es lo correcto para quien necesita el conjunto completo —los selectores
+  /// de skills, prompts y tools de un agente, las sugerencias de `@` del chat,
+  /// el catálogo de etiquetas— y para las pestañas de Knowledge, que filtran
+  /// por categoría o lenguaje **en cliente**: pedir una página suelta les
+  /// dejaría resultados incompletos sin manera de saberlo. Para un listado con
+  /// scroll que solo enseña lo visible, usa [listPage] y carga bajo demanda,
+  /// como hace la pestaña de Documentos.
   Future<List<T>> list(
     String token, {
     String scope = 'all',

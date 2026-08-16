@@ -5,35 +5,11 @@ part of '../pages/knowledge_page.dart';
 /// `knowledge_sections.dart` (ver `feature_architecture_test.dart`).
 extension _PromptSections on _KnowledgePageState {
   Widget _buildPromptsErrorState() {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _tx(
-                    'knowledge.prompts_error_title',
-                    'Error cargando Prompts',
-                  ),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text(_promptsError!),
-                const SizedBox(height: 12),
-                PrimaryButton.icon(
-                  onPressed: _loadPrompts,
-                  icon: const Icon(Icons.refresh),
-                  label: Text(_tx('common.retry', 'Reintentar')),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
+    return AsyncStatePanel.error(
+      title: _tx('knowledge.prompts_error_title', 'Error cargando Prompts'),
+      message: _promptsError!,
+      retryLabel: _tx('common.retry', 'Reintentar'),
+      onRetry: _loadPrompts,
     );
   }
 

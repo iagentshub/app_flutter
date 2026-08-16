@@ -374,37 +374,54 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
     if (error != null) return Center(child: Text(error!));
     return RefreshIndicator(
       onRefresh: load,
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: PrimaryButton.icon(
-              onPressed: busy.contains('import') ? null : openImport,
-              icon: const Icon(Icons.add_link),
-              label: Text(
-                widget.tx('official.admin_add_source', 'Añadir fuente oficial'),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          for (final source in sources)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _sourceCard(source),
-            ),
-          if (sources.isEmpty)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  widget.tx(
-                    'official.admin_empty',
-                    'No hay fuentes configuradas.',
+      // Cada fuente pinta su lista de recursos sincronizados, así que la
+      // pantalla crece con el contenido del hub y no solo con el número de
+      // fuentes: las tarjetas se construyen según entran en pantalla.
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            sliver: SliverToBoxAdapter(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: PrimaryButton.icon(
+                  onPressed: busy.contains('import') ? null : openImport,
+                  icon: const Icon(Icons.add_link),
+                  label: Text(
+                    widget.tx(
+                      'official.admin_add_source',
+                      'Añadir fuente oficial',
+                    ),
                   ),
                 ),
               ),
             ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            sliver: sources.isEmpty
+                ? SliverToBoxAdapter(
+                    child: Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          widget.tx(
+                            'official.admin_empty',
+                            'No hay fuentes configuradas.',
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                : SliverList.builder(
+                    itemCount: sources.length,
+                    itemBuilder: (context, index) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _sourceCard(sources[index]),
+                    ),
+                  ),
+          ),
         ],
       ),
     );

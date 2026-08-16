@@ -5,6 +5,7 @@ import 'package:app_flutter/core/network/api_client.dart';
 import 'package:app_flutter/features/admin/models/official_import_models.dart';
 import 'package:app_flutter/features/admin/pages/official_import_review_page.dart';
 import 'package:app_flutter/features/admin/repositories/admin_official_sources_repository.dart';
+import 'package:app_flutter/features/admin/widgets/official_import_component_tile.dart';
 import 'package:app_flutter/features/admin/widgets/official_import_progress_dialog.dart';
 import 'package:app_flutter/shared/graph/animated_resource_graph.dart';
 import 'package:app_flutter/shared/state/backend_controller.dart';
@@ -399,6 +400,43 @@ void main() {
           .value,
       isTrue,
     );
+  });
+
+  testWidgets('un grupo colapsado no construye sus componentes', (
+    tester,
+  ) async {
+    // Distinto de «no se ven»: ExpansionTile ya los ocultaba, pero los
+    // construía igual. Con un repositorio oficial de cientos de componentes,
+    // eso es toda la pantalla montada para no enseñar nada.
+    tester.view.physicalSize = const Size(900, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    SharedPreferences.setMockInitialValues({});
+    final backend = await BackendController.bootstrap();
+    final repository = AdminOfficialSourcesRepository(
+      apiClient: ApiClient(backend, client: MockClient((_) async => _json({}))),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OfficialImportReviewPage(
+          draft: ImportDraft.fromJson(_draftJson()),
+          repository: repository,
+          token: 'token',
+          tx: (_, fallback) => fallback,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final tile = find.byType(OfficialImportComponentTile, skipOffstage: false);
+    expect(tile, findsNothing);
+
+    await tester.tap(find.text('skills (1)'));
+    await tester.pumpAndSettle();
+
+    expect(tile, findsOneWidget);
   });
 
   testWidgets('el log técnico está oculto y se alterna desde su botón', (

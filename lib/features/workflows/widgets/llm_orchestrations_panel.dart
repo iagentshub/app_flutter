@@ -9,8 +9,8 @@ import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
+import '../../../shared/widgets/resource_collection_view.dart';
 import '../../../shared/widgets/resource_toolbar.dart';
-import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 import '../../connections/repositories/connections_repository.dart';
 import '../cards/llm_orchestration_card.dart';
@@ -197,70 +197,51 @@ class _LlmOrchestrationsPanelState extends State<LlmOrchestrationsPanel> {
       );
     }
     final connectionsById = {for (final item in _connections) item.id: item};
-    return RefreshIndicator(
+    return ResourceCollectionView(
       onRefresh: _load,
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            sliver: SliverToBoxAdapter(
-              child: ResourceToolbar(
-                actions: [
-                  AppIconButton.filled(
-                    onPressed: () => _edit(),
-                    icon: const Icon(Icons.add),
-                    tooltip: widget.tx(
-                      'llm_orchestrations.create',
-                      'Nueva orquestación LLM',
-                    ),
-                  ),
-                  AppIconButton.outlined(
-                    onPressed: _load,
-                    icon: const Icon(Icons.refresh),
-                    tooltip: widget.tx('common.refresh', 'Actualizar'),
-                  ),
-                ],
-                summary: Text(
-                  '${widget.tx('llm_orchestrations.count', 'Orquestaciones LLM')}: ${_items.length}',
-                ),
-              ),
+      header: ResourceToolbar(
+        actions: [
+          AppIconButton.filled(
+            onPressed: () => _edit(),
+            icon: const Icon(Icons.add),
+            tooltip: widget.tx(
+              'llm_orchestrations.create',
+              'Nueva orquestación LLM',
             ),
           ),
-          if (_items.isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(
-                child: Text(
-                  widget.tx(
-                    'llm_orchestrations.empty',
-                    'Crea una pila o un balanceador de conexiones LLM.',
-                  ),
-                ),
-              ),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              sliver: ResponsiveSliverMasonryGrid(
-                itemCount: _items.length,
-                itemBuilder: (context, index) {
-                  final item = _items[index];
-                  return LlmOrchestrationCard(
-                    item: item,
-                    connectionsById: connectionsById,
-                    tx: widget.tx,
-                    onToggleActive: () => _toggle(item),
-                    onEdit: () => _edit(item),
-                    onConfigure: () => _edit(item),
-                    onShare: () => _share(item),
-                    onDelete: () => _delete(item),
-                  );
-                },
-              ),
-            ),
+          AppIconButton.outlined(
+            onPressed: _load,
+            icon: const Icon(Icons.refresh),
+            tooltip: widget.tx('common.refresh', 'Actualizar'),
+          ),
         ],
+        summary: Text(
+          '${widget.tx('llm_orchestrations.count', 'Orquestaciones LLM')}: ${_items.length}',
+        ),
       ),
+      emptyFillsViewport: true,
+      empty: Center(
+        child: Text(
+          widget.tx(
+            'llm_orchestrations.empty',
+            'Crea una pila o un balanceador de conexiones LLM.',
+          ),
+        ),
+      ),
+      itemCount: _items.length,
+      itemBuilder: (context, index) {
+        final item = _items[index];
+        return LlmOrchestrationCard(
+          item: item,
+          connectionsById: connectionsById,
+          tx: widget.tx,
+          onToggleActive: () => _toggle(item),
+          onEdit: () => _edit(item),
+          onConfigure: () => _edit(item),
+          onShare: () => _share(item),
+          onDelete: () => _delete(item),
+        );
+      },
     );
   }
 }

@@ -302,6 +302,7 @@ extension _KnowledgeActions on _KnowledgePageState {
         _packs = results[1] as List<KnowledgePack>;
         _loading = false;
       });
+      await _ensureKnowledgeCollectionFilled();
     } on ApiError catch (error) {
       if (!mounted) return;
       refresh(() {
@@ -341,6 +342,25 @@ extension _KnowledgeActions on _KnowledgePageState {
       });
     } catch (_) {
       if (mounted) refresh(() => _loadingMoreKnowledge = false);
+    }
+  }
+
+  /// Sigue pidiendo páginas mientras la vista se quede corta.
+  ///
+  /// El origen y el modo packs se filtran en cliente sobre una lista paginada,
+  /// así que una página entera puede no dejar ni un elemento visible. Y sin
+  /// elementos no hay scroll, sin scroll no hay `ScrollNotification` y sin ella
+  /// nadie pide la página siguiente: el usuario veía «no hay documentos» con
+  /// sus documentos esperando en la página dos.
+  Future<void> _ensureKnowledgeCollectionFilled() async {
+    // Cota dura: si el servidor devolviese siempre páginas sin nada visible,
+    // esto no puede convertirse en un bucle que se coma la sesión.
+    for (var intento = 0; intento < 20; intento++) {
+      if (!mounted || !_hasMoreKnowledge) return;
+      if (_knowledgeCollection.length >= _minVisibleKnowledgeItems) return;
+      final antes = _items.length;
+      await _loadMoreKnowledge();
+      if (!mounted || _items.length == antes) return;
     }
   }
 

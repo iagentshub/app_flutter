@@ -10,7 +10,7 @@ import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
-import '../../../shared/widgets/responsive_masonry_grid.dart';
+import '../../../shared/widgets/resource_collection_view.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../controllers/manager_controller.dart';
 import '../repositories/manager_repository.dart';
@@ -200,77 +200,55 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
 
     final groups = _controller.groups;
 
-    return RefreshIndicator(
+    return ResourceCollectionView(
       onRefresh: _controller.load,
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            sliver: SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: [
-                      AppIconButton.filled(
-                        onPressed: _createGroup,
-                        icon: const Icon(Icons.add),
-                        tooltip: _tx(
-                          'manager.new_group_tooltip',
-                          'Nuevo grupo',
-                        ),
-                      ),
-                      AppIconButton.outlined(
-                        onPressed: _controller.load,
-                        icon: const Icon(Icons.refresh),
-                        tooltip: _tx('manager.refresh_tooltip', 'Actualizar'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    '${_tx('manager.groups_count', 'Grupos')}: ${groups.length}',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ],
+      gridPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      header: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              AppIconButton.filled(
+                onPressed: _createGroup,
+                icon: const Icon(Icons.add),
+                tooltip: _tx('manager.new_group_tooltip', 'Nuevo grupo'),
               ),
-            ),
+              AppIconButton.outlined(
+                onPressed: _controller.load,
+                icon: const Icon(Icons.refresh),
+                tooltip: _tx('manager.refresh_tooltip', 'Actualizar'),
+              ),
+            ],
           ),
-          if (groups.isEmpty)
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              sliver: SliverToBoxAdapter(
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      _tx('manager.empty_groups', 'No hay grupos disponibles.'),
-                    ),
-                  ),
-                ),
-              ),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              sliver: ResponsiveSliverMasonryGrid(
-                itemCount: groups.length,
-                itemBuilder: (context, index) => _buildGroupCard(groups[index]),
-              ),
-            ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 2, 16, 14),
-            sliver: SliverToBoxAdapter(child: _buildMembersCard()),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            sliver: SliverToBoxAdapter(child: _buildInvitationsCard()),
+          const SizedBox(height: 12),
+          Text(
+            '${_tx('manager.groups_count', 'Grupos')}: ${groups.length}',
+            style: Theme.of(context).textTheme.bodyMedium,
           ),
         ],
       ),
+      empty: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            _tx('manager.empty_groups', 'No hay grupos disponibles.'),
+          ),
+        ),
+      ),
+      itemCount: groups.length,
+      itemBuilder: (context, index) => _buildGroupCard(groups[index]),
+      trailingSlivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 2, 16, 14),
+          sliver: SliverToBoxAdapter(child: _buildMembersCard()),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          sliver: SliverToBoxAdapter(child: _buildInvitationsCard()),
+        ),
+      ],
     );
   }
 }

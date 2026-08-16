@@ -412,7 +412,7 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
       builder: (context, constraints) {
         final mobile = constraints.maxWidth < 700;
         final padding = constraints.maxWidth >= 1024 ? 28.0 : 12.0;
-        final groupWidgets = OfficialImportGroups(
+        final groupsSliver = OfficialImportGroupsSliver(
           groups: groups,
           busy: busy,
           tx: widget.tx,
@@ -453,15 +453,21 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
               : null,
           body: SafeArea(
             child: mobile
-                ? ListView(
-                    padding: EdgeInsets.fromLTRB(padding, 12, padding, 24),
-                    children: [
-                      _toolbar(
-                        availableWidth: constraints.maxWidth - (padding * 2),
-                        mobile: true,
+                ? CustomScrollView(
+                    slivers: [
+                      SliverPadding(
+                        padding: EdgeInsets.fromLTRB(padding, 12, padding, 8),
+                        sliver: SliverToBoxAdapter(
+                          child: _toolbar(
+                            availableWidth: constraints.maxWidth - (padding * 2),
+                            mobile: true,
+                          ),
+                        ),
                       ),
-                      const SizedBox(height: 8),
-                      groupWidgets,
+                      SliverPadding(
+                        padding: EdgeInsets.fromLTRB(padding, 0, padding, 24),
+                        sliver: groupsSliver,
+                      ),
                     ],
                   )
                 : Column(
@@ -474,9 +480,18 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
                         ),
                       ),
                       Expanded(
-                        child: ListView(
-                          padding: EdgeInsets.fromLTRB(padding, 0, padding, 24),
-                          children: [groupWidgets],
+                        child: CustomScrollView(
+                          slivers: [
+                            SliverPadding(
+                              padding: EdgeInsets.fromLTRB(
+                                padding,
+                                0,
+                                padding,
+                                24,
+                              ),
+                              sliver: groupsSliver,
+                            ),
+                          ],
                         ),
                       ),
                     ],

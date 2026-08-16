@@ -139,48 +139,62 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
     }
 
     final q = _treeSearchController.text.trim().toLowerCase();
-    return ListView(
-      children: dirs.map((raw) {
-        final dir = raw as Map;
-        final files = (dir['files'] as List? ?? const []).cast<Map>().where((
-          f,
-        ) {
-          if (q.isEmpty) return true;
-          return f['file'].toString().toLowerCase().contains(q);
-        }).toList();
-        if (files.isEmpty) return const SizedBox.shrink();
-        return ExpansionTile(
+    // El filtro se aplica antes de construir: un directorio sin coincidencias
+    // no debe ocupar una fila vacía en la lista, que es lo que hacía el
+    // `SizedBox.shrink()` que devolvía el map.
+    final visibleDirs = <(String, String, List<Map>)>[];
+    for (final raw in dirs) {
+      final dir = raw as Map;
+      final files = (dir['files'] as List? ?? const [])
+          .cast<Map>()
+          .where(
+            (f) => q.isEmpty || f['file'].toString().toLowerCase().contains(q),
+          )
+          .toList();
+      if (files.isEmpty) continue;
+      visibleDirs.add((
+        dir['dir'].toString(),
+        '${dir['count']}',
+        files,
+      ));
+    }
+
+    return ListView.builder(
+      itemCount: visibleDirs.length,
+      itemBuilder: (context, index) {
+        final (name, count, files) = visibleDirs[index];
+        return LazyExpansionTile(
+          // La búsqueda forma parte de la clave: al cambiarla, un grupo que
+          // estaba abierto por coincidir debe reevaluar si sigue abierto.
+          key: ValueKey('$name|$q'),
           title: Text(
-            dir['dir'].toString(),
+            name,
             style: const TextStyle(fontSize: FncFonts.size13),
           ),
-          trailing: Text(
-            '${dir['count']}',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+          trailing: Text(count, style: Theme.of(context).textTheme.bodySmall),
           initiallyExpanded: q.isNotEmpty,
-          children: files.map((f) {
-            final file = f['file'].toString();
-            final checked =
-                _selectedFiles == null || _selectedFiles!.contains(file);
-            return CheckboxListTile(
-              dense: true,
-              controlAffinity: ListTileControlAffinity.leading,
-              value: checked,
-              title: Text(
-                file.split('/').last,
-                style: FncFonts.code,
-                overflow: TextOverflow.ellipsis,
-              ),
-              secondary: Text(
-                '${f['count']}',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              onChanged: (value) => _onFileCheck(file, value ?? true),
-            );
-          }).toList(),
+          childrenBuilder: () => [
+            for (final f in files)
+              _buildFileCheckbox(context, f['file'].toString(), '${f['count']}'),
+          ],
         );
-      }).toList(),
+      },
+    );
+  }
+
+  Widget _buildFileCheckbox(BuildContext context, String file, String count) {
+    final checked = _selectedFiles == null || _selectedFiles!.contains(file);
+    return CheckboxListTile(
+      dense: true,
+      controlAffinity: ListTileControlAffinity.leading,
+      value: checked,
+      title: Text(
+        file.split('/').last,
+        style: FncFonts.code,
+        overflow: TextOverflow.ellipsis,
+      ),
+      secondary: Text(count, style: Theme.of(context).textTheme.bodySmall),
+      onChanged: (value) => _onFileCheck(file, value ?? true),
     );
   }
 

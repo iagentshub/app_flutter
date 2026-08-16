@@ -1017,6 +1017,8 @@
     "category_label": "Category",
     "new_prompt": "New prompt",
     "no_prompts": "No prompts yet.",
+    "documents_error_title": "Error loading Knowledge",
+    "skills_error_title": "Error loading Skills",
     "prompts_error_title": "Error loading Prompts",
     "load_error_prompts": "Couldn't load prompts",
     "new_prompt_title": "New prompt",

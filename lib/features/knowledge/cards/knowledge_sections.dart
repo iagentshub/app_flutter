@@ -2,32 +2,11 @@ part of '../pages/knowledge_page.dart';
 
 extension _KnowledgeSections on _KnowledgePageState {
   Widget _buildKnowledgeErrorState() {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Error cargando Knowledge',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text(_error!),
-                const SizedBox(height: 12),
-                PrimaryButton.icon(
-                  onPressed: _load,
-                  icon: const Icon(Icons.refresh),
-                  label: Text(_tx('common.retry', 'Reintentar')),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
+    return AsyncStatePanel.error(
+      title: _tx('knowledge.documents_error_title', 'Error cargando Knowledge'),
+      message: _error!,
+      retryLabel: _tx('common.retry', 'Reintentar'),
+      onRetry: _load,
     );
   }
 
@@ -35,13 +14,7 @@ extension _KnowledgeSections on _KnowledgePageState {
     if (_loading) return const Center(child: CircularProgressIndicator());
     if (_error != null) return _buildKnowledgeErrorState();
 
-    final allKnowledgeItems = [..._urlItems, ..._documentItems];
-    final items = _knowledgePacksMode
-        ? allKnowledgeItems.where((item) => item.packId == null).toList()
-        : allKnowledgeItems;
-    final collection = _knowledgePacksMode
-        ? <Object>[..._packs, ...items]
-        : <Object>[...items];
+    final collection = _knowledgeCollection;
     return DropTarget(
       enable: !_uploading,
       onDragEntered: (_) => refresh(() => _draggingDirectory = true),
@@ -249,6 +222,8 @@ extension _KnowledgeSections on _KnowledgePageState {
     );
   }
 
+  /// Las cuatro pestañas comparten forma; lo único propio de Knowledge es qué
+  /// tarjeta se pinta y de dónde salen las páginas.
   Widget _buildLazySection<T>({
     required Widget toolbar,
     required List<T> items,
@@ -259,50 +234,18 @@ extension _KnowledgeSections on _KnowledgePageState {
     bool hasMore = false,
     bool loadingMore = false,
   }) {
-    return RefreshIndicator(
+    return ResourceCollectionView(
+      header: toolbar,
       onRefresh: onRefresh,
-      child: NotificationListener<ScrollNotification>(
-        onNotification: (notification) {
-          if (hasMore && notification.metrics.extentAfter < 500) {
-            onLoadMore?.call();
-          }
-          return false;
-        },
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-              sliver: SliverToBoxAdapter(child: toolbar),
-            ),
-            if (items.isEmpty)
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                sliver: SliverToBoxAdapter(
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Text(emptyText),
-                    ),
-                  ),
-                ),
-              )
-            else
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                sliver: ResponsiveSliverMasonryGrid(
-                  itemCount: items.length,
-                  itemBuilder: (context, index) => itemBuilder(items[index]),
-                ),
-              ),
-            if (loadingMore)
-              const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-              ),
-          ],
+      onLoadMore: onLoadMore,
+      hasMore: hasMore,
+      loadingMore: loadingMore,
+      itemCount: items.length,
+      itemBuilder: (context, index) => itemBuilder(items[index]),
+      empty: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(emptyText),
         ),
       ),
     );
@@ -312,32 +255,13 @@ extension _KnowledgeSections on _KnowledgePageState {
     if (_skillsLoading) return const Center(child: CircularProgressIndicator());
 
     if (_skillsError != null) {
-      return ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Error cargando Skills',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(_skillsError!),
-                  const SizedBox(height: 12),
-                  PrimaryButton.icon(
-                    onPressed: _loadSkills,
-                    icon: const Icon(Icons.refresh),
-                    label: Text(_tx('common.retry', 'Reintentar')),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+      // El título estaba escrito a mano en español, sin pasar por el
+      // diccionario, en la única pestaña que no lo traducía.
+      return AsyncStatePanel.error(
+        title: _tx('knowledge.skills_error_title', 'Error cargando Skills'),
+        message: _skillsError!,
+        retryLabel: _tx('common.retry', 'Reintentar'),
+        onRetry: _loadSkills,
       );
     }
 
