@@ -33,6 +33,17 @@ class AdminPlatformRepository extends ApiRepository {
     return response.json;
   }
 
+  /// Auditoría de configuración del arranque: qué funciones quedan
+  /// desactivadas y por qué variable. El backend devuelve solo **nombres** de
+  /// variable, nunca sus valores.
+  Future<Map<String, dynamic>> getConfigAudit(String token) async {
+    final response = await apiClient.get(
+      '/api/admin/config-audit',
+      gaToken: token,
+    );
+    return response.json;
+  }
+
   Future<Map<String, dynamic>> checkUpdate(String token) async {
     final response = await apiClient.get(
       '/api/admin/check-update',

@@ -307,6 +307,11 @@ class _AdminConfigTabState extends State<_AdminConfigTab> with StateMessaging {
           onChanged: (v) => setState(() => _oauthGithub = v),
         ),
       ]),
+      _AdminConfigAuditCard(
+        repository: widget.repository,
+        token: widget.token,
+        tx: _tx,
+      ),
       _AdminBannersCard(
         repository: widget.repository,
         token: widget.token,

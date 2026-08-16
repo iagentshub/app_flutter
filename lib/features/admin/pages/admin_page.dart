@@ -42,6 +42,7 @@ part '../dialogs/admin_filter_dialogs.dart';
 part '../dialogs/admin_user_dialogs.dart';
 part '../dialogs/notification_banner_form_dialog.dart';
 part '../widgets/admin_actions.dart';
+part '../widgets/admin_config_audit_card.dart';
 part '../widgets/admin_config_banners_card.dart';
 part '../widgets/admin_config_tab.dart';
 part '../widgets/admin_config_updates_card.dart';
