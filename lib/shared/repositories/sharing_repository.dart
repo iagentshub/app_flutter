@@ -34,15 +34,41 @@ class SharingRepository extends ApiRepository {
     );
   }
 
-  Future<void> unshare(
+  /// Retira el acceso del grupo y devuelve qué dependencias se conservaron.
+  ///
+  /// Al descompartir un agente, el servidor retira también lo que ese agente
+  /// arrastró al compartirse, salvo lo que otro recurso compartido del grupo
+  /// siga necesitando. Esa lista es lo único que el usuario no puede deducir
+  /// de la pantalla, así que sube hasta la interfaz.
+  Future<UnshareResult> unshare(
     String token, {
     required String resourceType,
     required String resourceId,
     required String groupId,
   }) async {
-    await apiClient.delete(
+    final response = await apiClient.delete(
       '/api/sharing/$resourceType/${Uri.encodeComponent(resourceId)}?group_id=${Uri.encodeQueryComponent(groupId)}',
       gaToken: token,
     );
+    final payload = response.json;
+    return UnshareResult(
+      uncascaded: _ids(payload['uncascaded']),
+      kept: _ids(payload['kept']),
+    );
   }
+
+  List<String> _ids(Object? raw) => raw is List
+      ? raw.map((e) => e.toString()).toList(growable: false)
+      : const [];
+}
+
+/// Resultado de retirar un recurso de un grupo.
+class UnshareResult {
+  const UnshareResult({required this.uncascaded, required this.kept});
+
+  /// Dependencias que han dejado de estar compartidas con el grupo.
+  final List<String> uncascaded;
+
+  /// Dependencias que siguen compartidas porque otro recurso las necesita.
+  final List<String> kept;
 }

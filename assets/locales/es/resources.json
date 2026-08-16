@@ -49,6 +49,7 @@
     "dialog_name_label": "Nombre del grupo",
     "share_dialog_title": "Compartir con grupo",
     "share_empty": "No perteneces a ningún grupo todavía.",
+    "unshare_kept": "{count} recursos siguen compartidos porque otro recurso del grupo los usa.",
     "share_error": "No se pudo compartir el recurso",
     "share_pending": "Actualizando",
     "shared": "Compartido",

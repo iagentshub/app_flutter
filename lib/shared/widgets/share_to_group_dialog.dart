@@ -118,12 +118,27 @@ class _ShareToGroupDialogState extends State<_ShareToGroupDialog> {
     setState(() => _pending.add(group.id));
     try {
       if (wasShared) {
-        await _sharingRepository.unshare(
+        final result = await _sharingRepository.unshare(
           widget.token,
           resourceType: widget.resourceType,
           resourceId: widget.resourceId,
           groupId: group.id,
         );
+        // Lo retirado no hace falta contarlo: es lo que el usuario esperaba.
+        // Lo que se queda sí, porque contradice lo que acaba de pedir.
+        if (mounted && result.kept.isNotEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                _tx(
+                  'groups.unshare_kept',
+                  '{count} recursos siguen compartidos porque otro recurso del '
+                      'grupo los usa.',
+                ).replaceAll('{count}', '${result.kept.length}'),
+              ),
+            ),
+          );
+        }
       } else {
         await _sharingRepository.share(
           widget.token,

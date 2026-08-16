@@ -1,0 +1,22 @@
+# Ningún Dockerfile copia hoy este directorio: la imagen unificada recibe el
+# build/web ya preparado (`gaia.py push` lo compila y lo deja en flutter-web/).
+# Esto es para el día en que alguien añada un COPY app_flutter/ — build/ son
+# 5 GB de artefactos de todas las plataformas y .dart_tool/ otro giga.
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+coverage/
+
+.git/
+.github/
+.idea/
+.vscode/
+*.iml
+
+**/__pycache__/
+.DS_Store
+*.log
