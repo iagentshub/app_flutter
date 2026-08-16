@@ -11,6 +11,7 @@ import '../../../models/skills/skill_models.dart';
 import '../../../models/tools/tool_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/app_services_scope.dart';
+import '../../../shared/state/watches_resource_changes.dart';
 import '../../../shared/utils/debouncer.dart';
 import '../../../shared/utils/memoized.dart';
 import '../../../shared/widgets/async_state_panel.dart';
@@ -46,7 +47,8 @@ class AgentsPage extends StatefulWidget {
   State<AgentsPage> createState() => _AgentsPageState();
 }
 
-class _AgentsPageState extends State<AgentsPage> with StateMessaging {
+class _AgentsPageState extends State<AgentsPage>
+    with StateMessaging, WatchesResourceChanges {
   /// Servicios globales (cliente HTTP, sesión, idioma): los aporta el
   /// AppServicesScope montado en App, no el router.
   late final _services = AppServicesScope.of(context);
@@ -189,6 +191,14 @@ class _AgentsPageState extends State<AgentsPage> with StateMessaging {
     )..addListener(_onTextsChanged);
     _load();
   }
+
+  /// Compartir o dejar de compartir cambia lo que el listado marca como
+  /// compartido, así que también cuenta como un cambio de agentes.
+  @override
+  Set<String> get watchedResources => const {'agents', 'sharing'};
+
+  @override
+  Future<void> onResourcesChanged(Set<String> changed) => _load();
 
   void _onTextsChanged() {
     if (mounted) setState(() {});

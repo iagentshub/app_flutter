@@ -7,6 +7,7 @@ import 'package:flutter/painting.dart' show ImageProvider, NetworkImage;
 import 'package:http/http.dart' as http;
 
 import '../../shared/state/backend_controller.dart';
+import '../../shared/state/resource_events.dart';
 import '../config/backend_defaults.dart';
 import 'api_error.dart';
 import 'api_response.dart';
@@ -49,7 +50,9 @@ class ApiClient {
     int maxStreamLineChars = 1024 * 1024,
     this.onUnauthorized,
     this.sessionIdentity = _anonymousSession,
-  }) : _client = client ?? createHttpClient(),
+    ResourceEvents? resourceEvents,
+  }) : resourceEvents = resourceEvents ?? ResourceEvents(),
+       _client = client ?? createHttpClient(),
        _requestTimeout = requestTimeout,
        _maxResponseBytes = maxResponseBytes,
        _maxDownloadBytes = maxDownloadBytes,
@@ -81,7 +84,19 @@ class ApiClient {
 
   static String _anonymousSession() => 'anon';
 
+  /// Avisa a las pantallas montadas de que un recurso cambió.
+  ///
+  /// Se emite aquí y no en cada controlador porque aquí ya se sabe qué se ha
+  /// tocado —es el mismo dato con el que se invalida la caché— y así nadie
+  /// tiene que acordarse de avisar después de mutar.
+  final ResourceEvents resourceEvents;
+
   final ApiResponseCache _cache = ApiResponseCache();
+
+  void _afterMutation(String path) {
+    _cache.invalidateForMutation(path);
+    resourceEvents.changed(ResourceEvents.typeFromPath(path));
+  }
 
   @visibleForTesting
   int get debugCacheEntryCount => _cache.entryCount;
@@ -175,7 +190,7 @@ class ApiClient {
     String? gaToken,
   }) async {
     final response = await _request('POST', path, body: body, gaToken: gaToken);
-    _cache.invalidateForMutation(path);
+    _afterMutation(path);
     return response;
   }
 
@@ -185,7 +200,7 @@ class ApiClient {
     String? gaToken,
   }) async {
     final response = await _request('PUT', path, body: body, gaToken: gaToken);
-    _cache.invalidateForMutation(path);
+    _afterMutation(path);
     return response;
   }
 
@@ -200,7 +215,7 @@ class ApiClient {
       body: body,
       gaToken: gaToken,
     );
-    _cache.invalidateForMutation(path);
+    _afterMutation(path);
     return response;
   }
 
@@ -215,7 +230,7 @@ class ApiClient {
       body: body,
       gaToken: gaToken,
     );
-    _cache.invalidateForMutation(path);
+    _afterMutation(path);
     return response;
   }
 
@@ -400,7 +415,7 @@ class ApiClient {
       throw _toApiError(apiResponse);
     }
 
-    _cache.invalidateForMutation(path);
+    _afterMutation(path);
     return apiResponse;
   }
 
@@ -437,7 +452,7 @@ class ApiClient {
       body: _parseBody(response.body),
     );
     if (!apiResponse.isOk) throw _toApiError(apiResponse);
-    _cache.invalidateForMutation(path);
+    _afterMutation(path);
     onProgress(1);
     return apiResponse;
   }
@@ -475,7 +490,7 @@ class ApiClient {
       body: parsed,
     );
     if (!apiResponse.isOk) throw _toApiError(apiResponse);
-    _cache.invalidateForMutation(path);
+    _afterMutation(path);
     return apiResponse;
   }
 

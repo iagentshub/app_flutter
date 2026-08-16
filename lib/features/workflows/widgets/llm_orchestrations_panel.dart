@@ -6,6 +6,7 @@ import '../../../models/connections/connection_models.dart';
 import '../../../models/workflows/llm_orchestration_models.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/state/watches_resource_changes.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
@@ -35,7 +36,15 @@ class LlmOrchestrationsPanel extends StatefulWidget {
   State<LlmOrchestrationsPanel> createState() => _LlmOrchestrationsPanelState();
 }
 
-class _LlmOrchestrationsPanelState extends State<LlmOrchestrationsPanel> {
+class _LlmOrchestrationsPanelState extends State<LlmOrchestrationsPanel>
+    with WatchesResourceChanges {
+  @override
+  Set<String> get watchedResources =>
+      const {'llm-orchestrations', 'connections'};
+
+  @override
+  Future<void> onResourcesChanged(Set<String> changed) => _load();
+
   late final LlmOrchestrationsRepository _repository;
   late final ConnectionsRepository _connectionsRepository;
   List<LlmOrchestrationItem> _items = const [];
@@ -157,7 +166,6 @@ class _LlmOrchestrationsPanelState extends State<LlmOrchestrationsPanel> {
     if (!confirmed) return;
     try {
       await _repository.delete(_token, item.id);
-      await _load();
     } on ApiError catch (error) {
       _message(error.message, error: true);
     }
@@ -166,7 +174,6 @@ class _LlmOrchestrationsPanelState extends State<LlmOrchestrationsPanel> {
   Future<void> _toggle(LlmOrchestrationItem item) async {
     try {
       await _repository.setOrchestrationActive(_token, item.id, !item.isActive);
-      await _load();
     } on ApiError catch (error) {
       _message(error.message, error: true);
     }

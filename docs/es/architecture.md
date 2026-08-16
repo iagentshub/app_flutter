@@ -45,6 +45,14 @@ apertura, porque el `ExpansionTile` de Material lo construye siempre y solo lo
 oculta. Lo usan la revisión de importación oficial y el árbol de tests de
 Centinel, donde cada grupo trae decenas de filas con desplegables.
 
+El estado sigue una convención única en vez de un gestor de estado: `setState` solo para
+lo local del widget, un controlador por feature para lo compartido, y **nadie recarga a
+mano después de mutar**. `ApiClient` invalida su caché y emite `ResourceEvents` con el
+recurso tocado —derivado de la ruta—; las páginas declaran qué miran con el mixin
+`WatchesResourceChanges` y recargan solas, también cuando el cambio lo hizo otra
+pantalla. `test/feature_architecture_test.dart` rechaza volver a recargar a mano tras una
+mutación, y `CLAUDE.md` recoge la convención.
+
 ## Las cuatro capas
 
 **Pantallas** (`lib/features/*/pages/`) — lo que el usuario ve y toca. No hablan con la red directamente.

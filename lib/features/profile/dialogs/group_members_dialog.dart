@@ -21,7 +21,14 @@ class _MembersDialog extends StatefulWidget {
   State<_MembersDialog> createState() => _MembersDialogState();
 }
 
-class _MembersDialogState extends State<_MembersDialog> with StateMessaging {
+class _MembersDialogState extends State<_MembersDialog>
+    with StateMessaging, WatchesResourceChanges {
+  @override
+  Set<String> get watchedResources => const {'groups'};
+
+  @override
+  Future<void> onResourcesChanged(Set<String> changed) => _load();
+
   late final ManagerRepository _repository;
   List<Map<String, dynamic>> _members = const [];
   List<Map<String, dynamic>> _invitations = const [];
@@ -60,7 +67,6 @@ class _MembersDialogState extends State<_MembersDialog> with StateMessaging {
     try {
       await _repository.removeMember(widget.token, widget.group.id, username);
       showMessage(widget.tx('groups.member_removed', 'Miembro eliminado'));
-      await _load();
     } catch (_) {
       showMessage(
         widget.tx('groups.create_error', 'No se pudo crear el grupo'),
@@ -72,7 +78,6 @@ class _MembersDialogState extends State<_MembersDialog> with StateMessaging {
   Future<void> _cancelInvitation(String id) async {
     try {
       await _repository.cancelInvitation(widget.token, widget.group.id, id);
-      await _load();
     } catch (_) {}
   }
 

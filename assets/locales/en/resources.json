@@ -339,6 +339,8 @@
     "done_action": "Done"
   },
   "connections": {
+    "credential_unreadable_badge": "Needs attention",
+    "credential_unreadable_hint": "The stored credential cannot be read. Edit it and enter it again.",
     "tokens_tooltip": "Tokens consumed",
     "new": "New connection",
     "name_label": "Name",
@@ -1029,8 +1031,6 @@
     "alias_required": "The alias is required",
     "alias_invalid": "Use lowercase letters, digits, \"-\" or \"_\" (3-30 characters)",
     "field_prompt_content": "Prompt content",
-    "content_required": "The content is required",
-    "scope_temp_session": "private · temporary for this session",
     "add_text_title": "Add text",
     "import_url_title": "Import URL",
     "document_language_title": "Document language",

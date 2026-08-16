@@ -62,6 +62,31 @@ void main() {
     );
   });
 
+  test('ningún fichero de locales repite una clave dentro del mismo objeto', () {
+    final repetidas = <String>[];
+
+    for (final idioma in ['es', 'en']) {
+      for (final fichero in Directory(
+        'assets/locales/$idioma',
+      ).listSync().whereType<File>()) {
+        if (!fichero.path.endsWith('.json')) continue;
+        final nombre = fichero.uri.pathSegments.last;
+        for (final duplicada in _clavesRepetidas(fichero.readAsStringSync())) {
+          repetidas.add('$idioma/$nombre:${duplicada.linea} → ${duplicada.ruta}');
+        }
+      }
+    }
+
+    expect(
+      repetidas,
+      isEmpty,
+      reason:
+          'jsonDecode se queda con la última y descarta la anterior sin avisar,\n'
+          'así que la primera traducción nunca llega a la pantalla.\n'
+          'Borra la que sobre:\n${repetidas.join('\n')}',
+    );
+  });
+
   test('las pantallas auditadas no introducen literales directos en UI', () {
     const auditedFiles = [
       'lib/features/public/pages/checkout_page.dart',
@@ -134,6 +159,101 @@ class _UiLiteralVisitor extends RecursiveAstVisitor<void> {
         '\n'.allMatches(source.substring(0, expression.offset)).length + 1;
     violations.add('$path:$line → ${expression.value}');
   }
+}
+
+class _ClaveRepetida {
+  const _ClaveRepetida(this.ruta, this.linea);
+
+  final String ruta;
+  final int linea;
+}
+
+/// Ámbito abierto mientras se recorre el JSON: un objeto lleva la cuenta de las
+/// claves ya vistas en él; los arrays solo sirven para no confundir sus cadenas
+/// con claves.
+class _Ambito {
+  _Ambito({required this.esObjeto, required this.prefijo});
+
+  final bool esObjeto;
+  final String prefijo;
+  final Set<String> vistas = {};
+  String? ultimaClave;
+}
+
+/// Busca claves repetidas dentro de un mismo objeto recorriendo el texto en
+/// crudo: `jsonDecode` las colapsa en silencio, así que hay que mirar antes de
+/// parsear. Una cadena es clave cuando el ámbito abierto es un objeto y tras
+/// ella viene `:` —un valor siempre va seguido de `,`, `}` o `]`—.
+List<_ClaveRepetida> _clavesRepetidas(String fuente) {
+  final repetidas = <_ClaveRepetida>[];
+  final pila = <_Ambito>[];
+  var i = 0;
+
+  while (i < fuente.length) {
+    final caracter = fuente[i];
+    if (caracter == '{' || caracter == '[') {
+      final padre = pila.isEmpty ? null : pila.last;
+      final clave = padre?.ultimaClave;
+      pila.add(
+        _Ambito(
+          esObjeto: caracter == '{',
+          prefijo: clave == null
+              ? (padre?.prefijo ?? '')
+              : '${padre!.prefijo}$clave.',
+        ),
+      );
+      i++;
+    } else if (caracter == '}' || caracter == ']') {
+      if (pila.isNotEmpty) pila.removeLast();
+      i++;
+    } else if (caracter == '"') {
+      final fin = _finDeCadena(fuente, i);
+      final ambito = pila.isEmpty ? null : pila.last;
+      var siguiente = fin;
+      while (siguiente < fuente.length &&
+          fuente[siguiente].trim().isEmpty) {
+        siguiente++;
+      }
+      final esClave =
+          ambito != null &&
+          ambito.esObjeto &&
+          siguiente < fuente.length &&
+          fuente[siguiente] == ':';
+      if (esClave) {
+        final clave = fuente.substring(i + 1, fin - 1);
+        if (!ambito.vistas.add(clave)) {
+          repetidas.add(
+            _ClaveRepetida(
+              '${ambito.prefijo}$clave',
+              '\n'.allMatches(fuente.substring(0, i)).length + 1,
+            ),
+          );
+        }
+        ambito.ultimaClave = clave;
+      }
+      i = fin;
+    } else {
+      i++;
+    }
+  }
+
+  return repetidas;
+}
+
+/// Índice justo después de la comilla de cierre de la cadena que empieza en
+/// [inicio], saltándose los caracteres escapados (`\"`, `\\`).
+int _finDeCadena(String fuente, int inicio) {
+  var i = inicio + 1;
+  while (i < fuente.length) {
+    final caracter = fuente[i];
+    if (caracter == r'\') {
+      i += 2;
+      continue;
+    }
+    if (caracter == '"') return i + 1;
+    i++;
+  }
+  return fuente.length;
 }
 
 /// Recorre el árbol de claves de [es] comprobando que [en] tiene las mismas.

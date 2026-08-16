@@ -339,6 +339,8 @@
     "done_action": "Terminar"
   },
   "connections": {
+    "credential_unreadable_badge": "Requiere atención",
+    "credential_unreadable_hint": "La credencial guardada no se puede leer. Edítala e introdúcela de nuevo.",
     "tokens_tooltip": "Tokens consumidos",
     "new": "Nueva conexión",
     "name_label": "Nombre",
@@ -1029,8 +1031,6 @@
     "alias_required": "El alias es obligatorio",
     "alias_invalid": "Usa minúsculas, números, \"-\" o \"_\" (3-30 caracteres)",
     "field_prompt_content": "Contenido del prompt",
-    "content_required": "El contenido es obligatorio",
-    "scope_temp_session": "private · temporal durante esta sesión",
     "add_text_title": "Añadir texto",
     "import_url_title": "Importar URL",
     "document_language_title": "Idioma del documento",

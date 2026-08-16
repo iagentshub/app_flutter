@@ -119,4 +119,49 @@ void main() {
       );
     },
   );
+
+  test('toda mutación del cliente HTTP avisa del recurso que tocó', () {
+    // La invalidación vive en un solo sitio a propósito: si un método nuevo
+    // llama a la caché por su cuenta, las pantallas montadas no se enteran del
+    // cambio y vuelve la desincronización que el mixin resuelve.
+    final fuente = File('lib/core/network/api_client.dart').readAsStringSync();
+    final sueltas = RegExp(
+      r'_cache\.invalidateForMutation\(',
+    ).allMatches(fuente).length;
+
+    expect(
+      sueltas,
+      1,
+      reason:
+          'Usa _afterMutation(path), que invalida la caché y emite el evento, '
+          'en vez de llamar a la caché directamente.',
+    );
+  });
+
+  test('quien muta no recarga por su cuenta', () {
+    // Un `await _load()` justo detrás de una mutación es la señal de que la
+    // pantalla no está escuchando el recurso: recarga lo suyo y deja a las
+    // demás vistas con datos viejos.
+    final infractores = <String>[];
+    final recargaTrasMutar = RegExp(
+      r'await _(repository|repositorio)\.\w+\([^;]*\);\s*\n\s*await _load\w*\(\)',
+      multiLine: true,
+    );
+    for (final file in featureFiles) {
+      final fuente = file.readAsStringSync();
+      for (final match in recargaTrasMutar.allMatches(fuente)) {
+        final linea =
+            '\n'.allMatches(fuente.substring(0, match.start)).length + 1;
+        infractores.add('${file.path}:$linea');
+      }
+    }
+
+    expect(
+      infractores,
+      isEmpty,
+      reason:
+          'Usa el mixin WatchesResourceChanges en vez de recargar a mano tras '
+          'mutar (ver CLAUDE.md):\n${infractores.join('\n')}',
+    );
+  });
 }

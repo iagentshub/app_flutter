@@ -44,6 +44,14 @@ because Material's `ExpansionTile` always builds children and merely hides
 them. It backs the official import review and Centinel's test tree, where each
 group holds dozens of rows with dropdowns.
 
+State follows one convention instead of a state-management library: `setState` only for
+widget-local state, one controller per feature for shared state, and **nobody reloads by
+hand after mutating**. `ApiClient` invalidates its cache and emits a `ResourceEvents`
+change for the touched resource — derived from the path — while pages declare what they
+watch through the `WatchesResourceChanges` mixin and reload on their own, including when
+another screen made the change. `test/feature_architecture_test.dart` rejects reloading by
+hand after a mutation, and `CLAUDE.md` carries the convention.
+
 ## The four layers
 
 **Screens** (`lib/features/*/pages/`) — what the user sees and touches. They never talk to the network directly.

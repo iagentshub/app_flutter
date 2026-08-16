@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../models/connections/connection_models.dart';
+import '../../../shared/widgets/attention_badge.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/overflow_menu_button.dart';
@@ -140,6 +141,20 @@ class ConnectionCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (item.credentialsUnreadable) ...[
+                  const SizedBox(width: 8),
+                  AttentionBadge(
+                    label: tx(
+                      'connections.credential_unreadable_badge',
+                      'Requiere atención',
+                    ),
+                    tooltip: tx(
+                      'connections.credential_unreadable_hint',
+                      'La credencial guardada no se puede leer. Edítala e '
+                          'introdúcela de nuevo.',
+                    ),
+                  ),
+                ],
                 if (!item.isActive) ...[
                   const SizedBox(width: 8),
                   InactiveBadge(label: tx('common.inactive', 'Inactivo')),

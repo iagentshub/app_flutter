@@ -130,7 +130,9 @@ extension _KnowledgeActions on _KnowledgePageState {
   }
 
   Future<void> _openSkillBuilder() async {
-    final created = await Navigator.of(context).push<bool>(
+    // La lista se refresca sola: crear la skill pasa por la API y eso avisa
+    // a las vistas que miran «skills».
+    await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (context) => SkillBuilderPage(
           apiClient: _services.apiClient,
@@ -140,7 +142,6 @@ extension _KnowledgeActions on _KnowledgePageState {
         ),
       ),
     );
-    if (created == true) await _loadSkills();
   }
 
   Future<bool> _reviewAndSaveSkillDraft(Map<String, dynamic> draft) async {
@@ -197,7 +198,6 @@ extension _KnowledgeActions on _KnowledgePageState {
     try {
       await _skillsRepository.saveSkill(token, scope, payload);
       showMessage(_tx('knowledge.msg_skill_saved', 'Skill guardada'));
-      await _loadSkills();
       return true;
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
@@ -217,7 +217,6 @@ extension _KnowledgeActions on _KnowledgePageState {
     try {
       await _skillsRepository.setSkillActive(token, item.id, activate);
       showMessage(activate ? 'Skill activada' : 'Skill desactivada');
-      await _loadSkills();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
@@ -259,7 +258,6 @@ extension _KnowledgeActions on _KnowledgePageState {
     try {
       await _skillsRepository.deleteSkill(token, item.scope, item.id);
       showMessage(_tx('knowledge.msg_skill_deleted', 'Skill eliminada'));
-      await _loadSkills();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
@@ -387,7 +385,6 @@ extension _KnowledgeActions on _KnowledgePageState {
             const ['private'],
       );
       showMessage(_tx('knowledge.msg_text_added', 'Texto añadido a Knowledge'));
-      await _load();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
@@ -422,7 +419,6 @@ extension _KnowledgeActions on _KnowledgePageState {
       showMessage(
         _tx('knowledge.msg_url_imported', 'URL importada a Knowledge'),
       );
-      await _load();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
@@ -453,7 +449,6 @@ extension _KnowledgeActions on _KnowledgePageState {
     try {
       await _repository.deleteItem(token, item.id);
       showMessage(_tx('knowledge.msg_item_deleted', 'Item eliminado'));
-      await _load();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
@@ -483,7 +478,6 @@ extension _KnowledgeActions on _KnowledgePageState {
         labels: result.labels.toList(),
       );
       showMessage(_tx('knowledge.edit_saved', 'Cambios guardados'));
-      await _load();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {

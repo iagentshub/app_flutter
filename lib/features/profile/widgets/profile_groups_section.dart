@@ -7,6 +7,7 @@ import '../../../core/network/api_error.dart';
 import '../../../models/manager/group_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
+import '../../../shared/state/watches_resource_changes.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';

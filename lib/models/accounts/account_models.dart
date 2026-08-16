@@ -162,6 +162,11 @@ class AccountItem {
   String get username => raw['username'] as String? ?? '';
   String get lastSyncedAt => raw['last_synced_at'] as String? ?? '';
 
+  /// El backend no pudo descifrar la clave guardada (el secreto de cifrado
+  /// cambió): la cuenta sigue ahí pero no sirve para sincronizar hasta que se
+  /// vuelva a introducir.
+  bool get credentialsUnreadable => raw['credentials_unreadable'] == true;
+
   List<String> get models {
     final value = raw['models'];
     if (value is List) return value.map((item) => item.toString()).toList();

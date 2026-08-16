@@ -107,7 +107,6 @@ extension _DocumentActions on _KnowledgePageState {
           'Documento subido: {{nombre}}',
         ).replaceAll('{{nombre}}', file.name),
       );
-      await _load();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {

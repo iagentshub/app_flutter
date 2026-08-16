@@ -97,7 +97,6 @@ extension _PromptActions on _KnowledgePageState {
     try {
       await _promptsRepository.savePrompt(token, scope, payload);
       showMessage(_tx('knowledge.prompt_saved', 'Prompt guardado'));
-      await _loadPrompts();
       return true;
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
@@ -121,7 +120,6 @@ extension _PromptActions on _KnowledgePageState {
             ? _tx('knowledge.prompt_activated', 'Prompt activado')
             : _tx('knowledge.prompt_deactivated', 'Prompt desactivado'),
       );
-      await _loadPrompts();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
@@ -163,7 +161,6 @@ extension _PromptActions on _KnowledgePageState {
     try {
       await _promptsRepository.deletePrompt(token, item.scope, item.id);
       showMessage(_tx('knowledge.prompt_deleted', 'Prompt eliminado'));
-      await _loadPrompts();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {

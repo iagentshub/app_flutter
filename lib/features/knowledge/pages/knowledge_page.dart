@@ -18,6 +18,7 @@ import '../../../shared/graph/graph_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/app_services_scope.dart';
+import '../../../shared/state/watches_resource_changes.dart';
 import '../../../shared/tools/tool_language.dart';
 import '../../../shared/utils/memoized.dart';
 import '../../../shared/widgets/async_state_panel.dart';
@@ -131,7 +132,7 @@ class KnowledgePage extends StatefulWidget {
 }
 
 class _KnowledgePageState extends State<KnowledgePage>
-    with SingleTickerProviderStateMixin, StateMessaging {
+    with SingleTickerProviderStateMixin, StateMessaging, WatchesResourceChanges {
   /// Servicios globales (cliente HTTP, sesión, idioma): los aporta el
   /// AppServicesScope montado en App, no el router.
   late final _services = AppServicesScope.of(context);
@@ -398,6 +399,37 @@ class _KnowledgePageState extends State<KnowledgePage>
     )..addListener(_onTextsChanged);
     _loadGraphRelations();
     _ensureSectionLoaded(_sectionIds.first);
+  }
+
+  /// Compartir arrastra skills, prompts y knowledge de un agente, así que un
+  /// cambio en «sharing» puede alterar cualquiera de las cuatro pestañas.
+  @override
+  Set<String> get watchedResources =>
+      const {'knowledge', 'skills', 'prompts', 'tools', 'sharing'};
+
+  @override
+  Future<void> onResourcesChanged(Set<String> changed) async {
+    // Solo se refresca lo que el usuario ha llegado a abrir: recargar una
+    // pestaña que nunca ha visto desharía la carga perezosa por sección.
+    final todas = changed.contains('sharing');
+    if (todas || changed.contains('skills')) _recargarSeccion('skills');
+    if (todas || changed.contains('prompts')) _recargarSeccion('prompts');
+    if (todas || changed.contains('tools')) _recargarSeccion('tools');
+    if (todas || changed.contains('knowledge')) _recargarSeccion('documents');
+  }
+
+  void _recargarSeccion(String seccion) {
+    if (!_loadedSections.contains(seccion)) return;
+    switch (seccion) {
+      case 'skills':
+        _loadSkills();
+      case 'prompts':
+        _loadPrompts();
+      case 'tools':
+        _loadTools();
+      case 'documents':
+        _load();
+    }
   }
 
   void _onTextsChanged() {

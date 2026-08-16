@@ -8,6 +8,7 @@
   "license_required": "An active license is required to use this feature",
   "payload_too_large": "The file exceeds the maximum allowed size",
   "agent_no_connection": "The agent has no connection configured",
+  "credential_unreadable": "The stored credential cannot be read (the encryption secret changed). Please enter it again.",
   "check_update_failed": "Could not reach GitHub Container Registry",
   "auto_update_proxy_unavailable": "This installation doesn't have the Docker proxy configured. Update docker-compose.hub.yml (docker compose pull && docker compose up -d) to control auto-updates from here.",
   "auto_update_apply_failed": "Could not apply the auto-update change",

@@ -209,7 +209,6 @@ extension _KnowledgePackActions on _KnowledgePageState {
             .replaceAll('{{included}}', '${pack.fileCount}')
             .replaceAll('{{ignored}}', '$ignored'),
       );
-      await _load();
     }
   }
 
@@ -272,7 +271,6 @@ extension _KnowledgePackActions on _KnowledgePageState {
             .replaceAll('{{updated}}', '${sync['updated'] ?? 0}')
             .replaceAll('{{removed}}', '${sync['removed'] ?? 0}'),
       );
-      await _load();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
@@ -328,7 +326,6 @@ extension _KnowledgePackActions on _KnowledgePageState {
         labels: result.labels.toList(),
       );
       showMessage(_tx('knowledge.edit_saved', 'Cambios guardados'));
-      await _load();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
@@ -356,7 +353,6 @@ extension _KnowledgePackActions on _KnowledgePageState {
     if (token == null || token.isEmpty) return;
     try {
       await _repository.deletePack(token, pack.id);
-      await _load();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     }

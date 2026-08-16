@@ -14,6 +14,11 @@ class ConnectionItem extends ResourceItem {
       id.contains('::');
   int get tokensIn => (raw['tokens_in'] as num?)?.toInt() ?? 0;
   int get tokensOut => (raw['tokens_out'] as num?)?.toInt() ?? 0;
+
+  /// El backend no pudo descifrar la credencial guardada (el secreto de
+  /// cifrado cambió). La conexión existe pero no sirve hasta que el usuario
+  /// vuelva a introducir la clave.
+  bool get credentialsUnreadable => raw['credentials_unreadable'] == true;
 }
 
 class ProviderFieldOption {

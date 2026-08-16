@@ -270,7 +270,6 @@ extension _AgentsPageActions on _AgentsPageState {
     try {
       await _repository.saveAgent(token, payload);
       showMessage(_tx('agents.msg_saved', 'Agente guardado'));
-      await _load();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
@@ -310,7 +309,6 @@ extension _AgentsPageActions on _AgentsPageState {
     try {
       await _repository.deleteAgent(token, item.id);
       showMessage(_tx('agents.msg_deleted', 'Agente eliminado'));
-      await _load();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
@@ -328,7 +326,6 @@ extension _AgentsPageActions on _AgentsPageState {
     try {
       await _repository.setAgentActive(token, item.id, activate);
       showMessage(activate ? 'Agente activado' : 'Agente desactivado');
-      await _load();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
@@ -382,7 +379,9 @@ extension _AgentsPageActions on _AgentsPageState {
   }
 
   Future<void> _openAgentBuilder() async {
-    final created = await Navigator.of(context).push<bool>(
+    // El listado se refresca solo: crear el agente pasa por la API y eso
+    // avisa a las vistas que miran «agents».
+    await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (context) => AgentBuilderPage(
           apiClient: _services.apiClient,
@@ -391,6 +390,5 @@ extension _AgentsPageActions on _AgentsPageState {
         ),
       ),
     );
-    if (created == true) await _load();
   }
 }

@@ -108,7 +108,6 @@ extension _ToolActions on _KnowledgePageState {
         }
       }
       showMessage(_tx('knowledge.tool_saved', 'Herramienta guardada'));
-      await _loadTools();
       return true;
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
@@ -132,7 +131,6 @@ extension _ToolActions on _KnowledgePageState {
             ? _tx('knowledge.tool_activated', 'Herramienta activada')
             : _tx('knowledge.tool_deactivated', 'Herramienta desactivada'),
       );
-      await _loadTools();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
@@ -174,7 +172,6 @@ extension _ToolActions on _KnowledgePageState {
     try {
       await _toolsRepository.deleteTool(token, item.scope, item.id);
       showMessage(_tx('knowledge.tool_deleted', 'Herramienta eliminada'));
-      await _loadTools();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {

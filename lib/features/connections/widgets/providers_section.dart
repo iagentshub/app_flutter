@@ -13,6 +13,7 @@ import '../../../models/github/github_device_flow.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/widgets/async_state_panel.dart';
+import '../../../shared/widgets/attention_badge.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
@@ -362,6 +363,20 @@ class _ProvidersSectionState extends State<ProvidersSection>
                 if (hasCustomName) ...[
                   const SizedBox(width: 8),
                   _accountSummaryChip(meta.label),
+                ],
+                if (account.credentialsUnreadable) ...[
+                  const SizedBox(width: 8),
+                  AttentionBadge(
+                    label: _tx(
+                      'connections.credential_unreadable_badge',
+                      'Requiere atención',
+                    ),
+                    tooltip: _tx(
+                      'connections.credential_unreadable_hint',
+                      'La credencial guardada no se puede leer. Edítala e '
+                          'introdúcela de nuevo.',
+                    ),
+                  ),
                 ],
               ],
             ),
