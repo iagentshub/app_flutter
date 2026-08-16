@@ -41,6 +41,7 @@ extension ExploreResourceLoading on ExploreController {
         languages: _languages.toList(),
         includeOfficial: !_officialPacksMode,
         packMode: _officialPacksMode,
+        relation: _relation,
         limit: ExploreController.resourcesPageSize,
         offset: 0,
       );
@@ -52,15 +53,22 @@ extension ExploreResourceLoading on ExploreController {
               category: _category,
               labels: _labels.toList(),
               languages: _languages.toList(),
+              relation: _relation,
             )
           : Future<List<ExploreOfficialPack>>.value(const []);
       final results = await Future.wait([resourcesFuture, packsFuture]);
       if (generation != _resourceLoadGeneration || _disposed) return;
-      final resourcePage = results[0] as ({List<ExploreItem> items, int total});
+      final resourcePage =
+          results[0]
+              as ({List<ExploreItem> items, int total, int linkedMatches});
       _items = resourcePage.items;
       _resourcesOffset = _items.length;
       _resourcesHasMore = _resourcesOffset < resourcePage.total;
       _officialPacks = results[1] as List<ExploreOfficialPack>;
+      // Solo la envía el backend cuando el filtro dejó la página vacía; con
+      // packs en pantalla no hay vacío que explicar, y los packs son de la
+      // carga que acaba de llegar, no de la anterior.
+      _linkedMatches = _officialPacks.isEmpty ? resourcePage.linkedMatches : 0;
       if (_type == 'all') {
         _typeCounts.clear();
         for (final item in _items) {
@@ -117,6 +125,7 @@ extension ExploreResourceLoading on ExploreController {
         languages: _languages.toList(),
         includeOfficial: !_officialPacksMode,
         packMode: _officialPacksMode,
+        relation: _relation,
         limit: ExploreController.resourcesPageSize,
         offset: _resourcesOffset,
       );

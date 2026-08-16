@@ -57,6 +57,8 @@ class ExploreController extends ChangeNotifier {
   int _resourcesOffset = 0;
   String? _error;
   String _type = 'all';
+  String _relation = ExploreRelation.nuevo;
+  int _linkedMatches = 0;
   String _category = '';
   final Set<String> _labels = <String>{};
   final Set<String> _languages = <String>{};
@@ -81,7 +83,13 @@ class ExploreController extends ChangeNotifier {
   bool get resourcesHasMore => _resourcesHasMore;
   String? get error => _error;
   String get type => _type;
+  String get relation => _relation;
   String get category => _category;
+
+  /// Cuántos resultados de la búsqueda actual quedaron fuera por estar ya
+  /// enlazados. Solo se calcula cuando «Nuevos» no devuelve nada: sin este
+  /// dato el vacío parece un buscador roto.
+  int get linkedMatches => _linkedMatches;
   Set<String> get selectedLabels => Set.unmodifiable(_labels);
   Set<String> get selectedLanguages => Set.unmodifiable(_languages);
   int typeCount(String type) => _typeCounts[type] ?? 0;
@@ -89,7 +97,12 @@ class ExploreController extends ChangeNotifier {
   bool hasLabel(String label) => _labels.contains(label);
   bool hasLanguage(String language) => _languages.contains(language);
   bool isBusy(ExploreItem item) => _busyKeys.contains(itemKey(item));
-  bool isLinked(ExploreItem item) => _linkedKeys.contains(itemKey(item));
+
+  /// El catálogo ya trae el estado (`linked_by_me`); `_linkedKeys` solo cubre
+  /// lo enlazado en esta pantalla, para que la tarjeta cambie sin esperar a
+  /// la siguiente carga.
+  bool isLinked(ExploreItem item) =>
+      item.linkedByMe || _linkedKeys.contains(itemKey(item));
   bool isStarred(ExploreItem item) => _starredKeys.contains(itemKey(item));
   bool isPackBusy(ExploreOfficialPack pack) =>
       _busyPackIds.contains(pack.sourceId);
@@ -105,8 +118,14 @@ class ExploreController extends ChangeNotifier {
     return set.toList()..sort();
   }
 
+  // La relación cuenta como filtro activo cuando no es el valor por defecto:
+  // si no, «Todos» y «Enlazados» esconderían o añadirían resultados sin que
+  // nada en la barra lo indique.
   int get secondaryActiveFilterCount =>
-      (_category.isNotEmpty ? 1 : 0) + _labels.length + _languages.length;
+      (_category.isNotEmpty ? 1 : 0) +
+      _labels.length +
+      _languages.length +
+      (_relation == ExploreRelation.nuevo ? 0 : 1);
 
   // ── Pestaña Usuarios ──────────────────────────────────────────────────
 
@@ -137,6 +156,13 @@ class ExploreController extends ChangeNotifier {
   Future<void> setOfficialPacksMode(bool value) {
     if (_officialPacksMode == value) return Future.value();
     _officialPacksMode = value;
+    _notify();
+    return _scheduleResourceLoad();
+  }
+
+  Future<void> setRelation(String value) {
+    if (_relation == value) return Future.value();
+    _relation = value;
     _notify();
     return _scheduleResourceLoad();
   }
@@ -188,6 +214,7 @@ class ExploreController extends ChangeNotifier {
     _category = '';
     _labels.clear();
     _languages.clear();
+    _relation = ExploreRelation.nuevo;
     _notify();
     return _scheduleResourceLoad();
   }
@@ -196,6 +223,7 @@ class ExploreController extends ChangeNotifier {
     _category = '';
     _labels.clear();
     _languages.clear();
+    _relation = ExploreRelation.nuevo;
     _notify();
     return _scheduleResourceLoad();
   }
@@ -205,6 +233,7 @@ class ExploreController extends ChangeNotifier {
     _labels.clear();
     _languages.clear();
     _officialPacksMode = true;
+    _relation = ExploreRelation.nuevo;
     _notify();
     return _scheduleResourceLoad();
   }

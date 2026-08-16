@@ -282,6 +282,43 @@ class _ExplorePageState extends State<ExplorePage>
       onClear: _controller.clearExploreFilters,
       buildFields: (setDialogState) => [
         Text(
+          _tx('explore.relation_label', 'Relación'),
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: SegmentedButton<String>(
+            key: const Key('exploreRelationSelector'),
+            // Sin iconos y con etiquetas cortas: son tres segmentos y en móvil
+            // el texto es lo primero que se recorta.
+            segments: [
+              ButtonSegment(
+                value: ExploreRelation.nuevo,
+                label: Text(_tx('explore.relation_new', 'Nuevos')),
+              ),
+              ButtonSegment(
+                value: ExploreRelation.enlazado,
+                label: Text(_tx('explore.relation_linked', 'Enlazados')),
+              ),
+              ButtonSegment(
+                value: ExploreRelation.todo,
+                label: Text(_tx('explore.relation_all', 'Todos')),
+              ),
+            ],
+            selected: {_controller.relation},
+            showSelectedIcon: false,
+            expandedInsets: EdgeInsets.zero,
+            onSelectionChanged: (values) {
+              _controller.setRelation(values.first);
+              setDialogState(() {});
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Divider(height: 1),
+        const SizedBox(height: 16),
+        Text(
           _tx('explore.official_display_label', 'Recursos oficiales'),
           style: Theme.of(context).textTheme.labelLarge,
         ),

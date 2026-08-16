@@ -89,14 +89,7 @@ extension _ExploreCollectionViews on _ExplorePageState {
           ),
         ),
       ],
-      empty: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(
-            _tx('explore.empty', 'No hay resultados para ese filtro.'),
-          ),
-        ),
-      ),
+      empty: _buildResourcesEmpty(),
       itemCount: packs.length + items.length,
       itemBuilder: (context, index) => index < packs.length
           ? _buildOfficialPackCard(packs[index])
@@ -121,6 +114,42 @@ extension _ExploreCollectionViews on _ExplorePageState {
             ),
           ),
       ],
+    );
+  }
+
+  /// El vacío tiene que explicarse cuando lo ha causado el propio filtro: si
+  /// «Nuevos» se queda sin resultados pero la búsqueda sí encuentra cosas que
+  /// ya tienes, un «no hay resultados» a secas parece un buscador roto.
+  Widget _buildResourcesEmpty() {
+    final linkedMatches = _controller.linkedMatches;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              linkedMatches > 0
+                  ? _tx(
+                      'explore.empty_all_linked',
+                      'Ya tienes los {count} resultados de esta búsqueda.',
+                    ).replaceAll('{count}', '$linkedMatches')
+                  : _tx('explore.empty', 'No hay resultados para ese filtro.'),
+            ),
+            if (linkedMatches > 0) ...[
+              const SizedBox(height: 12),
+              SecondaryButton(
+                onPressed: () =>
+                    _controller.setRelation(ExploreRelation.enlazado),
+                child: Text(
+                  _tx('explore.empty_show_linked', 'Ver los enlazados'),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 

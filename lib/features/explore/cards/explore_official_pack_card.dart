@@ -65,6 +65,9 @@ extension _ExploreOfficialPackCard on _ExplorePageState {
                   type: 'official_pack',
                   label: _tx('explore.pack_badge', 'Pack'),
                 ),
+                // Solo cuando está entero: un pack a medias ya se cuenta
+                // arriba con «enlazados/total» y decir «Enlazado» mentiría.
+                if (pack.fullyLinked) _linkedChip(),
               ],
             ),
             const SizedBox(height: 6),

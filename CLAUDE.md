@@ -46,6 +46,13 @@ para selectores que necesitan el catálogo completo. Si un filtro se resuelve en
 sobre una lista paginada, hay que asegurar que la página se llene — sin elementos no hay
 scroll, y sin scroll nadie pide la página siguiente.
 
+Cuando el filtro **quita** elementos —no solo los ordena—, va en la petición, no en el
+cliente: el total de la cabecera se calcula en el servidor y filtrar después lo deja
+mintiendo. Y si el filtro puede vaciar la lista, el estado vacío tiene que decir que ha
+sido él; un «no hay resultados» tras una búsqueda que sí encontraba algo parece un
+buscador roto. Explorar es el ejemplo montado: `relation` viaja en la URL y el backend
+devuelve `X-Linked-Count` para explicar el vacío.
+
 ## Reglas que ya vigila la suite
 
 - **i18n**: todo texto de interfaz pasa por `_tx(clave, fallback)` y vive en

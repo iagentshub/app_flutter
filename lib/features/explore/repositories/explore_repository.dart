@@ -2,6 +2,21 @@ import '../../../core/network/api_error.dart';
 import '../../../core/network/api_repository.dart';
 import '../../../models/explore/explore_models.dart';
 
+/// Relación entre el catálogo y lo que el usuario ya tiene enlazado.
+///
+/// Los valores son los que acepta el backend (`app/api/routes/explore.py`);
+/// enviar otro devuelve 422.
+abstract final class ExploreRelation {
+  /// Lo que todavía no está en la biblioteca del usuario. Es lo que Explorar
+  /// pide por defecto: descubrir es ver lo que no tienes.
+  static const nuevo = 'new';
+
+  /// De otros usuarios y ya enlazado.
+  static const enlazado = 'linked';
+
+  static const todo = 'all';
+}
+
 class ExploreRepository extends ApiRepository {
   ExploreRepository({required super.apiClient});
 
@@ -14,6 +29,7 @@ class ExploreRepository extends ApiRepository {
     List<String> languages = const [],
     bool includeOfficial = true,
     bool? packMode,
+    String relation = ExploreRelation.todo,
     int limit = 40,
     int offset = 0,
   }) async {
@@ -26,13 +42,18 @@ class ExploreRepository extends ApiRepository {
       languages: languages,
       includeOfficial: includeOfficial,
       packMode: packMode,
+      relation: relation,
       limit: limit,
       offset: offset,
     );
     return page.items;
   }
 
-  Future<({List<ExploreItem> items, int total})> listResourcePage(
+  /// Una página del catálogo. `linkedMatches` solo llega cuando `relation` es
+  /// `new` y la página sale vacía: es lo que el filtro dejó fuera por estar ya
+  /// enlazado, y sirve para explicar el vacío sin una segunda petición.
+  Future<({List<ExploreItem> items, int total, int linkedMatches})>
+  listResourcePage(
     String token, {
     required String type,
     String query = '',
@@ -41,6 +62,7 @@ class ExploreRepository extends ApiRepository {
     List<String> languages = const [],
     bool includeOfficial = true,
     bool? packMode,
+    String relation = ExploreRelation.todo,
     int limit = 40,
     int offset = 0,
   }) async {
@@ -52,6 +74,7 @@ class ExploreRepository extends ApiRepository {
       if (languages.isNotEmpty) 'language': languages,
       if (!includeOfficial) 'include_official': 'false',
       if (packMode != null) 'pack_mode': '$packMode',
+      if (relation != ExploreRelation.todo) 'relation': relation,
       'limit': '$limit',
       'offset': '$offset',
     };
@@ -65,14 +88,18 @@ class ExploreRepository extends ApiRepository {
     );
     final payload = response.body;
     if (payload is! List) {
-      return (items: const <ExploreItem>[], total: 0);
+      return (items: const <ExploreItem>[], total: 0, linkedMatches: 0);
     }
     final items = payload
         .whereType<Map<String, dynamic>>()
         .map((item) => ExploreItem(raw: item))
         .toList();
     final total = int.tryParse(response.headers['x-total-count'] ?? '');
-    return (items: items, total: total ?? offset + items.length);
+    return (
+      items: items,
+      total: total ?? offset + items.length,
+      linkedMatches: int.tryParse(response.headers['x-linked-count'] ?? '') ?? 0,
+    );
   }
 
   Future<List<ExploreOfficialPack>> listOfficialPacks(
@@ -82,6 +109,7 @@ class ExploreRepository extends ApiRepository {
     String category = '',
     List<String> labels = const [],
     List<String> languages = const [],
+    String relation = ExploreRelation.todo,
   }) async {
     final params = <String, dynamic>{
       'type': type,
@@ -89,6 +117,7 @@ class ExploreRepository extends ApiRepository {
       if (category.trim().isNotEmpty) 'category': category.trim(),
       if (labels.isNotEmpty) 'label': labels,
       if (languages.isNotEmpty) 'language': languages,
+      if (relation != ExploreRelation.todo) 'relation': relation,
     };
     try {
       final response = await apiClient.get(

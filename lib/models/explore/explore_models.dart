@@ -12,6 +12,11 @@ class ExploreItem {
   String get name => raw['name'] as String? ?? '(sin nombre)';
   String get description => raw['description'] as String? ?? '';
   String get category => raw['category'] as String? ?? '';
+
+  /// El catálogo dice si ya existe una copia enlazada de esta fila. Antes esto
+  /// solo se sabía dentro de la sesión, así que al recargar un recurso ya
+  /// enlazado volvía a ofrecerse como nuevo.
+  bool get linkedByMe => raw['linked_by_me'] == true;
   List<ExploreDependency> get dependencies {
     final value = raw['dependencies'];
     if (value is! List) return const [];

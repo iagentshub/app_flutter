@@ -85,6 +85,10 @@ extension _ExploreResourceCard on _ExplorePageState {
                   type: item.resourceType,
                   label: _typeChipLabel(item.resourceType),
                 ),
+                // Se lee sin pasar por encima del botón: en «Todos» conviven
+                // los dos estados y el icono de acción solo lo cuenta en su
+                // tooltip.
+                if (linked) _linkedChip(),
                 if (item.category.trim().isNotEmpty)
                   _chip(_categoryChipLabel(item.category)),
               ],
@@ -143,6 +147,28 @@ extension _ExploreResourceCard on _ExplorePageState {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _linkedChip() {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: scheme.primary.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.link, size: 12, color: scheme.primary),
+          const SizedBox(width: 4),
+          Text(
+            _tx('explore.linked_badge', 'Enlazado'),
+            style: TextStyle(fontSize: FncFonts.size12, color: scheme.primary),
+          ),
+        ],
       ),
     );
   }
