@@ -1,5 +1,6 @@
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
+import '../../../core/network/csrf_token.dart';
 import '../../../models/auth/auth_result.dart';
 import '../../../models/auth/session_user.dart';
 import '../../../models/github/github_device_flow.dart';
@@ -110,6 +111,10 @@ class AuthRepository {
     } catch (_) {
       // Aunque el backend falle en logout, limpiamos sesión local igualmente.
     }
+    // El token anti-CSRF acompaña a la sesión: si sobrevive, la siguiente
+    // cuenta que entre en este dispositivo arrastra el de la anterior y sus
+    // mutaciones salen con un token que ya no cuadra.
+    forgetCsrfToken();
   }
 
   Future<bool> register({

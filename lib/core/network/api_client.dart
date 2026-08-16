@@ -14,6 +14,7 @@ import 'api_response.dart';
 import 'api_response_cache.dart';
 import 'api_uri.dart';
 import 'bounded_line_transformer.dart';
+import 'csrf_token.dart';
 import 'http_client_factory.dart';
 
 export 'api_response.dart';
@@ -130,6 +131,13 @@ class ApiClient {
           .send(request)
           .timeout(timeout ?? _requestTimeout);
       backendController.reportConnectionOk();
+      // Punto único de captura del token anti-CSRF fuera de web. No basta con
+      // leerlo al iniciar sesión: el backend reemite `ga_csrf` en cualquier
+      // respuesta cuando falta o no cuadra —así se curan las sesiones abiertas
+      // antes del despliegue— y también al cambiar de grupo o impersonar.
+      if (!kIsWeb) {
+        rememberCsrfToken(_csrfFromSetCookie(streamed.headers));
+      }
       return streamed;
     } catch (error) {
       backendController.reportConnectionError(error.toString());
@@ -247,10 +255,7 @@ class ApiClient {
     String path, {
     String? gaToken,
   }) async {
-    final headers = <String, String>{'Accept': '*/*'};
-    if (gaToken != null && gaToken.isNotEmpty) {
-      headers['Cookie'] = 'ga_token=$gaToken';
-    }
+    final headers = _sessionHeaders(accept: '*/*', gaToken: gaToken);
     final request = http.Request('GET', _uri(path));
     request.followRedirects = false;
     request.headers.addAll(headers);
@@ -290,11 +295,12 @@ class ApiClient {
     Map<String, dynamic>? body,
     String? gaToken,
   }) async {
-    final headers = <String, String>{'Accept': 'application/zip'};
-    if (!kIsWeb && gaToken != null && gaToken.isNotEmpty) {
-      headers['Cookie'] = 'ga_token=$gaToken';
-    }
-    if (body != null) headers['Content-Type'] = 'application/json';
+    final headers = _sessionHeaders(
+      accept: 'application/zip',
+      gaToken: gaToken,
+      mutation: true,
+      jsonBody: body != null,
+    );
     final request = http.Request('POST', _uri(path));
     request.followRedirects = false;
     request.headers.addAll(headers);
@@ -349,11 +355,12 @@ class ApiClient {
     Map<String, dynamic>? body,
     String? gaToken,
   }) async* {
-    final headers = <String, String>{'Accept': 'text/event-stream'};
-    if (!kIsWeb && gaToken != null && gaToken.isNotEmpty) {
-      headers['Cookie'] = 'ga_token=$gaToken';
-    }
-    if (body != null) headers['Content-Type'] = 'application/json';
+    final headers = _sessionHeaders(
+      accept: 'text/event-stream',
+      gaToken: gaToken,
+      mutation: method != 'GET',
+      jsonBody: body != null,
+    );
 
     final request = http.Request(method, _uri(path));
     request.followRedirects = false;
@@ -389,10 +396,13 @@ class ApiClient {
   }) async {
     final request = http.MultipartRequest('POST', _uri(path));
     request.followRedirects = false;
-    request.headers['Accept'] = 'application/json';
-    if (!kIsWeb && gaToken != null && gaToken.isNotEmpty) {
-      request.headers['Cookie'] = 'ga_token=$gaToken';
-    }
+    request.headers.addAll(
+      _sessionHeaders(
+        accept: 'application/json',
+        gaToken: gaToken,
+        mutation: true,
+      ),
+    );
 
     if (fields != null && fields.isNotEmpty) {
       request.fields.addAll(fields);
@@ -436,10 +446,13 @@ class ApiClient {
       onProgress(total <= 0 ? 0 : (sent / total).clamp(0, 1));
     });
     request.followRedirects = false;
-    request.headers['Accept'] = 'application/json';
-    if (!kIsWeb && gaToken != null && gaToken.isNotEmpty) {
-      request.headers['Cookie'] = 'ga_token=$gaToken';
-    }
+    request.headers.addAll(
+      _sessionHeaders(
+        accept: 'application/json',
+        gaToken: gaToken,
+        mutation: true,
+      ),
+    );
     if (fields != null) request.fields.addAll(fields);
     request.files.add(
       http.MultipartFile.fromBytes(fieldName, fileBytes, filename: fileName),
@@ -467,10 +480,13 @@ class ApiClient {
   }) async {
     final request = http.MultipartRequest('POST', _uri(path));
     request.followRedirects = false;
-    request.headers['Accept'] = 'application/json';
-    if (!kIsWeb && gaToken != null && gaToken.isNotEmpty) {
-      request.headers['Cookie'] = 'ga_token=$gaToken';
-    }
+    request.headers.addAll(
+      _sessionHeaders(
+        accept: 'application/json',
+        gaToken: gaToken,
+        mutation: true,
+      ),
+    );
     if (fields != null && fields.isNotEmpty) request.fields.addAll(fields);
     for (final file in files) {
       request.files.add(
@@ -501,14 +517,12 @@ class ApiClient {
     String? gaToken,
     Duration? timeout,
   }) async {
-    final headers = <String, String>{'Accept': 'application/json'};
-    if (!kIsWeb && gaToken != null && gaToken.isNotEmpty) {
-      headers['Cookie'] = 'ga_token=$gaToken';
-    }
-
-    if (body != null) {
-      headers['Content-Type'] = 'application/json';
-    }
+    final headers = _sessionHeaders(
+      accept: 'application/json',
+      gaToken: gaToken,
+      mutation: method != 'GET',
+      jsonBody: body != null,
+    );
 
     final request = http.Request(method, _uri(path));
     request.followRedirects = false;
@@ -626,6 +640,36 @@ class ApiClient {
       _uri(path).toString(),
       headers: sendCookie ? {'Cookie': 'ga_token=$gaToken'} : null,
     );
+  }
+
+  static String? _csrfFromSetCookie(Map<String, String> headers) {
+    final setCookie = headers['set-cookie'];
+    if (setCookie == null || setCookie.isEmpty) return null;
+    return RegExp(r'ga_csrf=([^;]+)').firstMatch(setCookie)?.group(1);
+  }
+
+  /// Cabeceras comunes a todas las peticiones.
+  ///
+  /// Existe porque el bloque `Cookie: ga_token=…` estaba copiado en siete
+  /// métodos: con una sola cabecera era duplicación tolerable, pero en cuanto
+  /// hay que añadir `X-CSRF-Token` a los métodos con efectos, olvidarse de uno
+  /// no rompe nada visible —solo devuelve 403 en esa ruta concreta—.
+  Map<String, String> _sessionHeaders({
+    required String accept,
+    String? gaToken,
+    bool mutation = false,
+    bool jsonBody = false,
+  }) {
+    final headers = <String, String>{'Accept': accept};
+    if (!kIsWeb && gaToken != null && gaToken.isNotEmpty) {
+      headers['Cookie'] = 'ga_token=$gaToken';
+    }
+    if (jsonBody) headers['Content-Type'] = 'application/json';
+    if (mutation) {
+      final csrf = readCsrfToken();
+      if (csrf != null) headers['X-CSRF-Token'] = csrf;
+    }
+    return headers;
   }
 
   String? extractGaToken(Map<String, String> headers) {
