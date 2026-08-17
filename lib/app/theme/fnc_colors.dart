@@ -240,4 +240,18 @@ abstract final class FncColors {
   static const overlayRedAccent40 = Color(0x66D90429);
   static const overlayMaroon40 = Color(0x667A0C1C);
   static const overlayRedAccent20 = Color(0x33D90429);
+
+  // Observatorio tecnológico · modo galaxia del grafo de recursos.
+  // Es una superficie deliberadamente oscura en ambos temas para mantener
+  // contraste y continuidad visual al cambiar de layout.
+  static const galaxyDeep = gray050505;
+  static const galaxyNavy = black;
+  static const galaxySurface = Color(0xEB141414);
+  static const galaxySurfaceStrong = Color(0xF20E0E0E);
+  static const galaxyBorder = Color(0x40D90429);
+  static const galaxyEdge = Color(0x426B7280);
+  static const galaxyEdgeActive = Color(0xE6FFFFFF);
+  static const galaxyLabel = Color(0xED111111);
+  static const galaxyTextMuted = grayD0D0D0;
+  static const galaxyStar = white;
 }

@@ -1,6 +1,7 @@
 import 'package:app_flutter/shared/graph/animated_resource_graph.dart';
 import 'package:app_flutter/shared/graph/graph_models.dart';
 import 'package:app_flutter/shared/graph/graph_sort_controller.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -262,5 +263,80 @@ void main() {
     }
     expect(state.debugGalaxyLayoutPending, isFalse);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Galaxia realza el nodo bajo el puntero', (tester) async {
+    const nodes = [
+      GraphNode(id: 'root', label: 'Raíz', type: 'agent'),
+      GraphNode(id: 'skill:a', label: 'Skill A', type: 'skill'),
+    ];
+    final controller = GraphSortController(GraphSortMode.galaxy);
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      wrap(
+        AnimatedResourceGraph(
+          nodes: nodes,
+          edges: const [GraphEdge(sourceId: 'root', targetId: 'skill:a')],
+          rootId: 'root',
+          sortController: controller,
+          quickViewDescriptionLabel: 'Descripción',
+          quickViewNoDescriptionLabel: 'Sin descripción',
+          quickViewConnectionsLabel: 'Conexiones',
+          quickViewNoConnectionsLabel: 'Sin conexiones',
+          quickViewCloseTooltip: 'Cerrar',
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 1200));
+
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    addTearDown(mouse.removePointer);
+    await mouse.addPointer();
+    await mouse.moveTo(tester.getCenter(find.text('Skill A')));
+    await tester.pump();
+
+    final dynamic state = tester.state(find.byType(AnimatedResourceGraph));
+    expect(state.debugHighlightedNodeId, 'skill:a');
+  });
+
+  testWidgets('un nodo arrastrado permanece fijado en Galaxia', (tester) async {
+    const nodes = [
+      GraphNode(id: 'root', label: 'Raíz', type: 'agent'),
+      GraphNode(id: 'skill:a', label: 'Skill A', type: 'skill'),
+      GraphNode(id: 'skill:b', label: 'Skill B', type: 'skill'),
+    ];
+    final controller = GraphSortController(GraphSortMode.galaxy);
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      wrap(
+        AnimatedResourceGraph(
+          nodes: nodes,
+          edges: const [
+            GraphEdge(sourceId: 'root', targetId: 'skill:a'),
+            GraphEdge(sourceId: 'root', targetId: 'skill:b'),
+          ],
+          rootId: 'root',
+          sortController: controller,
+          quickViewDescriptionLabel: 'Descripción',
+          quickViewNoDescriptionLabel: 'Sin descripción',
+          quickViewConnectionsLabel: 'Conexiones',
+          quickViewNoConnectionsLabel: 'Sin conexiones',
+          quickViewCloseTooltip: 'Cerrar',
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 1200));
+
+    dynamic state = tester.state(find.byType(AnimatedResourceGraph));
+    final before = state.debugPositionFor('skill:a') as Offset;
+    await tester.drag(find.text('Skill A'), const Offset(35, 20));
+    await tester.pump();
+    state = tester.state(find.byType(AnimatedResourceGraph));
+    final dragged = state.debugPositionFor('skill:a') as Offset;
+    expect(dragged, isNot(before));
+
+    await tester.pump(const Duration(milliseconds: 500));
+    state = tester.state(find.byType(AnimatedResourceGraph));
+    expect(state.debugPositionFor('skill:a'), dragged);
   });
 }

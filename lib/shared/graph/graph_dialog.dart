@@ -156,13 +156,19 @@ class _ResourceGraphDialogContentState
     IconData icon,
   ) {
     final selected = _sortController.mode == mode;
+    final isGalaxy = _sortController.mode == GraphSortMode.galaxy;
     return PopupMenuItem<GraphSortMode>(
       value: mode,
       child: Row(
         children: [
-          Icon(icon, size: 18),
+          Icon(icon, size: 18, color: isGalaxy ? FncColors.galaxyStar : null),
           const SizedBox(width: 10),
-          Expanded(child: Text(label)),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(color: isGalaxy ? FncColors.white : null),
+            ),
+          ),
           if (selected)
             const Icon(
               Icons.check_circle,
@@ -181,73 +187,16 @@ class _ResourceGraphDialogContentState
     // modo galaxia, el fondo del diálogo entero (incluido el margen
     // alrededor del lienzo) usa el mismo negro que el resto de la app,
     // para que no quede un marco de un tono distinto rodeando el grafo.
+    final isGalaxy = _sortController.mode == GraphSortMode.galaxy;
     return Dialog.fullscreen(
-      backgroundColor: _sortController.mode == GraphSortMode.galaxy
-          ? Theme.of(context).scaffoldBackgroundColor
-          : null,
+      backgroundColor: isGalaxy ? FncColors.galaxyDeep : null,
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(isGalaxy ? 14 : 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    widget.title,
-                    style: const TextStyle(
-                      fontSize: FncFonts.size20,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  tooltip: widget.closeLabel,
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    style: const TextStyle(fontSize: FncFonts.size13),
-                    decoration: InputDecoration(
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 8,
-                      ),
-                      prefixIcon: const Icon(Icons.search, size: 18),
-                      hintText: widget.searchHint,
-                      border: const OutlineInputBorder(),
-                    ),
-                    onChanged: (value) => setState(() => _query = value.trim()),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  tooltip: _showLabels
-                      ? widget.hideLabelsTooltip
-                      : widget.showLabelsTooltip,
-                  icon: Icon(
-                    _showLabels ? Icons.label : Icons.label_off_outlined,
-                  ),
-                  onPressed: () => setState(() => _showLabels = !_showLabels),
-                ),
-                const SizedBox(width: 8),
-                PopupMenuButton<GraphSortMode>(
-                  tooltip: widget.sortTooltip,
-                  icon: const Icon(Icons.sort),
-                  onSelected: _sortController.setMode,
-                  itemBuilder: (context) => _sortMenuItems(),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
+            _buildHeader(context, isGalaxy: isGalaxy),
+            SizedBox(height: isGalaxy ? 12 : 8),
             Expanded(
               child: AnimatedResourceGraph(
                 nodes: widget.nodes,
@@ -262,6 +211,183 @@ class _ResourceGraphDialogContentState
                 quickViewConnectionsLabel: widget.quickViewConnectionsLabel,
                 quickViewNoConnectionsLabel: widget.quickViewNoConnectionsLabel,
                 quickViewCloseTooltip: widget.closeLabel,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, {required bool isGalaxy}) {
+    final title = Row(
+      children: [
+        if (isGalaxy) ...[
+          const Icon(Icons.blur_on, color: FncColors.galaxyStar, size: 20),
+          const SizedBox(width: 10),
+        ],
+        Expanded(
+          child: Text(
+            widget.title,
+            style: TextStyle(
+              fontSize: FncFonts.size20,
+              fontWeight: FontWeight.w700,
+              color: isGalaxy ? FncColors.white : null,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        if (isGalaxy) ...[
+          _galaxyMetric(
+            icon: Icons.circle_outlined,
+            value: widget.nodes.length,
+            semanticLabel: '${widget.title}: ${widget.nodes.length}',
+          ),
+          const SizedBox(width: 6),
+          _galaxyMetric(
+            icon: Icons.timeline,
+            value: widget.edges.length,
+            semanticLabel:
+                '${widget.quickViewConnectionsLabel}: ${widget.edges.length}',
+          ),
+          const SizedBox(width: 4),
+        ],
+        IconButton(
+          icon: const Icon(Icons.close),
+          color: isGalaxy ? FncColors.galaxyStar : null,
+          tooltip: widget.closeLabel,
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
+    );
+
+    final controls = Row(
+      children: [
+        Expanded(
+          child: TextField(
+            style: TextStyle(
+              fontSize: FncFonts.size13,
+              color: isGalaxy ? FncColors.white : null,
+            ),
+            decoration: InputDecoration(
+              isDense: true,
+              filled: isGalaxy,
+              fillColor: isGalaxy ? FncColors.galaxySurfaceStrong : null,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 11,
+              ),
+              prefixIcon: Icon(
+                Icons.search,
+                size: 18,
+                color: isGalaxy ? FncColors.galaxyTextMuted : null,
+              ),
+              hintText: widget.searchHint,
+              hintStyle: isGalaxy
+                  ? const TextStyle(color: FncColors.galaxyTextMuted)
+                  : null,
+              enabledBorder: isGalaxy
+                  ? OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(
+                        color: FncColors.galaxyBorder,
+                      ),
+                    )
+                  : const OutlineInputBorder(),
+              focusedBorder: isGalaxy
+                  ? OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: FncColors.blue),
+                    )
+                  : const OutlineInputBorder(),
+            ),
+            onChanged: (value) => setState(() => _query = value.trim()),
+          ),
+        ),
+        const SizedBox(width: 8),
+        IconButton.filledTonal(
+          tooltip: _showLabels
+              ? widget.hideLabelsTooltip
+              : widget.showLabelsTooltip,
+          color: isGalaxy ? FncColors.galaxyStar : null,
+          style: isGalaxy
+              ? IconButton.styleFrom(
+                  backgroundColor: FncColors.galaxySurfaceStrong,
+                  side: const BorderSide(color: FncColors.galaxyBorder),
+                )
+              : null,
+          icon: Icon(_showLabels ? Icons.label : Icons.label_off_outlined),
+          onPressed: () => setState(() => _showLabels = !_showLabels),
+        ),
+        const SizedBox(width: 8),
+        PopupMenuButton<GraphSortMode>(
+          tooltip: widget.sortTooltip,
+          color: isGalaxy ? FncColors.galaxySurfaceStrong : null,
+          iconColor: isGalaxy ? FncColors.galaxyStar : null,
+          style: isGalaxy
+              ? IconButton.styleFrom(
+                  backgroundColor: FncColors.galaxySurfaceStrong,
+                  side: const BorderSide(color: FncColors.galaxyBorder),
+                )
+              : null,
+          icon: const Icon(Icons.tune),
+          onSelected: _sortController.setMode,
+          itemBuilder: (context) => _sortMenuItems(),
+        ),
+      ],
+    );
+
+    if (!isGalaxy) {
+      return Column(children: [title, const SizedBox(height: 8), controls]);
+    }
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 8, 10, 12),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [FncColors.galaxySurface, FncColors.galaxySurfaceStrong],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: FncColors.galaxyBorder),
+        boxShadow: [
+          BoxShadow(
+            color: FncColors.materialBlack.withValues(alpha: 0.28),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(children: [title, const SizedBox(height: 6), controls]),
+    );
+  }
+
+  Widget _galaxyMetric({
+    required IconData icon,
+    required int value,
+    required String semanticLabel,
+  }) {
+    return Semantics(
+      label: semanticLabel,
+      excludeSemantics: true,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        decoration: BoxDecoration(
+          color: FncColors.galaxyDeep.withValues(alpha: 0.58),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: FncColors.galaxyBorder),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 13, color: FncColors.galaxyTextMuted),
+            const SizedBox(width: 5),
+            Text(
+              '$value',
+              style: const TextStyle(
+                color: FncColors.galaxyStar,
+                fontSize: FncFonts.size11,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],

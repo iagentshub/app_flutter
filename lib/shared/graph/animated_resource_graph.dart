@@ -10,6 +10,9 @@ import 'package:flutter/services.dart';
 import '../../app/theme/fnc_colors.dart';
 import '../../app/theme/fnc_fonts.dart';
 import '../labels/label_catalog.dart';
+import 'galaxy_background_painter.dart';
+import 'galaxy_constellation_painter.dart';
+import 'galaxy_layout.dart';
 import 'graph_edge_painter.dart';
 import 'graph_models.dart';
 import 'graph_sort_controller.dart';
@@ -136,6 +139,7 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
   // con fuerza suficiente, los nodos acaban empujados hasta el borde del
   // lienzo (donde el clamp los deja alineados en fila, nada orgánico).
   static const _galaxyGravity = 0.06;
+  static const _galaxyClusterGravity = 0.14;
   // Semilla fija: reabrir el mismo recurso reproduce el mismo layout.
   static const _galaxySeed = 20260804;
 
@@ -166,6 +170,7 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
   String? _galaxyLayoutFingerprint;
   final Map<String, FocusNode> _nodeFocusNodes = {};
   String? _focusedNodeId;
+  String? _hoveredNodeId;
 
   /// Desplazamiento del lienzo dentro del visor del diálogo: arrastrando el
   /// fondo (fuera de cualquier nodo) se exploran grafos más grandes que el
@@ -257,6 +262,12 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
 
   @visibleForTesting
   bool get debugGalaxyLayoutPending => _galaxyLayoutPending;
+
+  @visibleForTesting
+  String? get debugHighlightedNodeId => _focusedNodeId ?? _hoveredNodeId;
+
+  @visibleForTesting
+  Offset? debugPositionFor(String nodeId) => _positions[nodeId];
 
   /// Cambiar de modo reordena desde cero: se descartan las posiciones
   /// (incluidas las arrastradas a mano) y se recentra el lienzo, ya que
@@ -369,9 +380,14 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
       final aspect = viewport.width / viewport.height;
       final height = math.sqrt(targetArea / aspect);
       final width = height * aspect;
+      final minCanvasFactor = widget.nodes.length <= 20
+          ? 1.6
+          : widget.nodes.length <= 60
+          ? 2.2
+          : _galaxyMinCanvasFactor;
       return Size(
-        math.max(viewport.width * _galaxyMinCanvasFactor, width),
-        math.max(viewport.height * _galaxyMinCanvasFactor, height),
+        math.max(viewport.width * minCanvasFactor, width),
+        math.max(viewport.height * minCanvasFactor, height),
       );
     }
     final perLevelCount = <int, int>{};
@@ -443,22 +459,31 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     final ids = [for (final node in widget.nodes) node.id];
     final rootIndex = ids.indexOf(widget.rootId);
     final center = Offset(canvasSize.width / 2, canvasSize.height / 2);
+    final constellationCenters = GalaxyLayout.centersFor(
+      nodes: widget.nodes,
+      rootId: widget.rootId,
+      canvasSize: canvasSize,
+    );
     final random = math.Random(_galaxySeed);
     final existingIds = _galaxyLayoutFingerprint == fingerprint
         ? <String>{..._draggedNodeIds}
         : <String>{..._positions.keys, ..._draggedNodeIds};
-    final seedRadius = math.min(canvasSize.width, canvasSize.height) * 0.35;
+    final seedRadius = math.min(canvasSize.width, canvasSize.height) * 0.11;
     for (var i = 0; i < n; i++) {
       if (_positions.containsKey(ids[i])) continue;
       if (i == rootIndex) {
         _positions[ids[i]] = center;
         continue;
       }
+      final node = widget.nodes[i];
+      final clusterCenter =
+          constellationCenters[GalaxyLayout.constellationKey(node.type)] ??
+          center;
       final angle = random.nextDouble() * 2 * math.pi;
       final radius = seedRadius * math.sqrt(random.nextDouble());
       _positions[ids[i]] = Offset(
-        center.dx + radius * math.cos(angle),
-        center.dy + radius * math.sin(angle),
+        clusterCenter.dx + radius * math.cos(angle),
+        clusterCenter.dy + radius * math.sin(angle),
       );
     }
 
@@ -480,6 +505,7 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
           canvasSize: canvasSize,
           initialPositions: initialPositions,
           pinnedIds: existingIds,
+          constellationCenters: constellationCenters,
           generation: generation,
         ),
       );
@@ -493,6 +519,7 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     required Size canvasSize,
     required Map<String, Offset> initialPositions,
     required Set<String> pinnedIds,
+    required Map<String, Offset> constellationCenters,
     required int generation,
   }) async {
     final n = nodes.length;
@@ -515,7 +542,10 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     ];
 
     final area = canvasSize.width * canvasSize.height;
-    final k = _galaxyIdealLengthFactor * math.sqrt(area / n);
+    final k = (_galaxyIdealLengthFactor * math.sqrt(area / n)).clamp(
+      72.0,
+      180.0,
+    );
     final iterations = _galaxyIterationsFor(n);
     final t0 = math.max(canvasSize.width, canvasSize.height) * 0.05;
     final dispX = List<double>.filled(n, 0);
@@ -569,10 +599,20 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
         dispY[b] += uy;
       }
 
-      // Gravedad uniforme hacia el centro.
+      // La gravedad global mantiene el conjunto dentro del observatorio. Una
+      // atracción adicional hacia el centro virtual de cada tipo forma
+      // constelaciones legibles sin alterar las aristas reales.
       for (var i = 0; i < n; i++) {
-        dispX[i] += (center.dx - px[i]) * _galaxyGravity;
-        dispY[i] += (center.dy - py[i]) * _galaxyGravity;
+        final clusterCenter = i == rootIndex
+            ? center
+            : constellationCenters[GalaxyLayout.constellationKey(
+                    nodes[i].type,
+                  )] ??
+                  center;
+        dispX[i] += (center.dx - px[i]) * (_galaxyGravity * 0.35);
+        dispY[i] += (center.dy - py[i]) * (_galaxyGravity * 0.35);
+        dispX[i] += (clusterCenter.dx - px[i]) * _galaxyClusterGravity;
+        dispY[i] += (clusterCenter.dy - py[i]) * _galaxyClusterGravity;
       }
 
       // Aplica el desplazamiento, acotado por la "temperatura" (cooling
@@ -760,12 +800,9 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
         ),
       );
     }
-    // Fondo del modo galaxia: el mismo negro del tema oscuro de la app
-    // (no un color propio), cubriendo todo el visor y no solo el lienzo
-    // (que puede ser más pequeño tras un zoom-out).
-    final galaxyBackground = Theme.of(context).scaffoldBackgroundColor;
-    return Container(
-      color: _sortMode == GraphSortMode.galaxy ? galaxyBackground : null,
+    final isGalaxy = _sortMode == GraphSortMode.galaxy;
+    return ColoredBox(
+      color: isGalaxy ? FncColors.galaxyDeep : FncColors.transparent,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final viewport = Size(constraints.maxWidth, constraints.maxHeight);
@@ -803,6 +840,41 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
           final positions = [
             for (final node in widget.nodes) _positions[node.id]!,
           ];
+          final constellationCenters = isGalaxy
+              ? GalaxyLayout.centersFor(
+                  nodes: widget.nodes,
+                  rootId: widget.rootId,
+                  canvasSize: canvasSize,
+                )
+              : const <String, Offset>{};
+          final nodeDegrees = <String, int>{
+            for (final node in widget.nodes) node.id: 0,
+          };
+          for (final edge in widget.edges) {
+            nodeDegrees.update(
+              edge.sourceId,
+              (value) => value + 1,
+              ifAbsent: () => 1,
+            );
+            nodeDegrees.update(
+              edge.targetId,
+              (value) => value + 1,
+              ifAbsent: () => 1,
+            );
+          }
+          final highlightedNodeId = _focusedNodeId ?? _hoveredNodeId;
+          final emphasizedNodeIds = <String>{};
+          if (highlightedNodeId != null) {
+            emphasizedNodeIds.add(highlightedNodeId);
+            for (final edge in widget.edges) {
+              if (edge.sourceId == highlightedNodeId) {
+                emphasizedNodeIds.add(edge.targetId);
+              }
+              if (edge.targetId == highlightedNodeId) {
+                emphasizedNodeIds.add(edge.sourceId);
+              }
+            }
+          }
           final scaledWidth = canvasSize.width * _scale;
           final scaledHeight = canvasSize.height * _scale;
           return Listener(
@@ -826,6 +898,12 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
+                  if (isGalaxy)
+                    const Positioned.fill(
+                      child: IgnorePointer(
+                        child: CustomPaint(painter: GalaxyBackgroundPainter()),
+                      ),
+                    ),
                   // Fondo: arrastrar aquí (fuera de los nodos) desplaza el
                   // lienzo (pan) y pellizcar con dos dedos hace zoom, siempre
                   // centrado en el punto del gesto. Cubre todo el visor, no
@@ -871,6 +949,17 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
                             child: Stack(
                               clipBehavior: Clip.none,
                               children: [
+                                if (isGalaxy)
+                                  IgnorePointer(
+                                    child: CustomPaint(
+                                      size: canvasSize,
+                                      painter: GalaxyConstellationPainter(
+                                        nodes: widget.nodes,
+                                        rootId: widget.rootId,
+                                        centers: constellationCenters,
+                                      ),
+                                    ),
+                                  ),
                                 IgnorePointer(
                                   child: CustomPaint(
                                     size: canvasSize,
@@ -881,22 +970,33 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
                                       progress: Curves.easeOutCubic.transform(
                                         _entrance.value,
                                       ),
-                                      lineColor:
-                                          _sortMode == GraphSortMode.galaxy
-                                          ? FncColors.white.withValues(
-                                              alpha: 0.22,
-                                            )
+                                      lineColor: isGalaxy
+                                          ? FncColors.galaxyEdge
                                           : FncColors.materialGrey,
-                                      dashedColor:
-                                          _sortMode == GraphSortMode.galaxy
+                                      dashedColor: isGalaxy
                                           ? FncColors.materialOrangeAccent
                                                 .withValues(alpha: 0.35)
                                           : FncColors.materialOrange,
+                                      activeLineColor:
+                                          FncColors.galaxyEdgeActive,
+                                      galaxy: isGalaxy,
+                                      rootId: widget.rootId,
+                                      highlightedNodeId: highlightedNodeId,
+                                      constellationCenters:
+                                          constellationCenters,
                                     ),
                                   ),
                                 ),
                                 for (var i = 0; i < widget.nodes.length; i++)
-                                  _buildNode(context, i, positions, canvasSize),
+                                  _buildNode(
+                                    context,
+                                    i,
+                                    positions,
+                                    canvasSize,
+                                    nodeDegrees,
+                                    highlightedNodeId,
+                                    emphasizedNodeIds,
+                                  ),
                               ],
                             ),
                           ),
@@ -918,6 +1018,9 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     int index,
     List<Offset> positions,
     Size canvasSize,
+    Map<String, int> nodeDegrees,
+    String? highlightedNodeId,
+    Set<String> emphasizedNodeIds,
   ) {
     final node = widget.nodes[index];
     final isRoot = node.id == widget.rootId;
@@ -932,6 +1035,7 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     final color = labelColor(node.type);
     final isMatch = _matches(node);
     final isFocused = _focusedNodeId == node.id;
+    final isHovered = _hoveredNodeId == node.id;
     final blinkOpacity = isMatch ? (0.35 + 0.65 * _blink.value) : 1.0;
     final focusColor =
         ThemeData.estimateBrightnessForColor(color) == Brightness.dark
@@ -941,14 +1045,22 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     void openQuickView() => _showQuickView(context, node);
 
     final isGalaxy = _sortMode == GraphSortMode.galaxy;
-    final showLabel = widget.showLabels || isMatch;
+    final showLabel =
+        widget.showLabels || isMatch || (isGalaxy && (isHovered || isFocused));
+    final isContextNode =
+        highlightedNodeId == null || emphasizedNodeIds.contains(node.id);
     // El círculo/punto es el primer hijo del Column de abajo, así que su
     // centro debe coincidir exactamente con `pos` (donde termina la
     // arista dibujada por `GraphEdgePainter`): un offset fijo pensado
     // para el nodo grande del modo jerárquico (72/54px) deja la línea
     // notoriamente corta contra los puntos pequeños de la galaxia
     // (8-26px), así que se calcula según el diámetro real de cada nodo.
-    final diameter = _nodeDiameter(node, isRoot: isRoot, isGalaxy: isGalaxy);
+    final diameter = _nodeDiameter(
+      node,
+      isRoot: isRoot,
+      isGalaxy: isGalaxy,
+      degree: nodeDegrees[node.id] ?? 0,
+    );
     // El área táctil (invisible) de cada nodo: 92px de ancho tiene sentido
     // para los círculos grandes del modo jerárquico (72/54px) con su
     // etiqueta siempre visible debajo, pero con los puntos diminutos de
@@ -968,6 +1080,12 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
       width: hitboxWidth,
       child: MouseRegion(
         cursor: SystemMouseCursors.grab,
+        onEnter: (_) => setState(() => _hoveredNodeId = node.id),
+        onExit: (_) {
+          if (_hoveredNodeId == node.id) {
+            setState(() => _hoveredNodeId = null);
+          }
+        },
         child: Semantics(
           button: true,
           label: node.label,
@@ -1015,17 +1133,25 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
                   );
                 });
               },
-              child: Opacity(
-                opacity: t,
+              child: AnimatedOpacity(
+                duration: _reduceMotion
+                    ? Duration.zero
+                    : const Duration(milliseconds: 180),
+                curve: Curves.easeOutCubic,
+                opacity:
+                    t * (isGalaxy && !isContextNode && !isMatch ? 0.24 : 1),
                 child: Transform.scale(
-                  scale: (0.4 + 0.6 * t) * pulse,
+                  scale:
+                      (0.4 + 0.6 * t) *
+                      pulse *
+                      (isGalaxy && (isHovered || isFocused) ? 1.14 : 1),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Opacity(
                         opacity: blinkOpacity,
                         child: Container(
-                          decoration: isFocused
+                          decoration: isFocused && !isGalaxy
                               ? BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
@@ -1041,6 +1167,8 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
                                   isRoot,
                                   isMatch,
                                   diameter,
+                                  isFocused: isFocused,
+                                  isHovered: isHovered,
                                 )
                               : _buildIconNode(
                                   node,
@@ -1053,17 +1181,36 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
                       ),
                       if (showLabel) ...[
                         const SizedBox(height: 4),
-                        Text(
-                          node.label,
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: FncFonts.size11,
-                            fontWeight: isRoot
-                                ? FontWeight.w700
-                                : FontWeight.w500,
-                            color: isGalaxy ? FncColors.white : null,
+                        DecoratedBox(
+                          decoration: isGalaxy
+                              ? BoxDecoration(
+                                  color: FncColors.galaxyLabel,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: color.withValues(alpha: 0.32),
+                                  ),
+                                )
+                              : const BoxDecoration(),
+                          child: Padding(
+                            padding: isGalaxy
+                                ? const EdgeInsets.symmetric(
+                                    horizontal: 7,
+                                    vertical: 3,
+                                  )
+                                : EdgeInsets.zero,
+                            child: Text(
+                              node.label,
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: FncFonts.size11,
+                                fontWeight: isRoot
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                                color: isGalaxy ? FncColors.white : null,
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -1085,9 +1232,10 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     GraphNode node, {
     required bool isRoot,
     required bool isGalaxy,
+    required int degree,
   }) {
     if (isGalaxy) {
-      return isRoot ? 26.0 : 8.0 + (node.id.hashCode.abs() % 5);
+      return isRoot ? 46.0 : 12.0 + math.min(6.0, degree * 1.4);
     }
     return isRoot ? 72.0 : 54.0;
   }
@@ -1138,31 +1286,56 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     Color color,
     bool isRoot,
     bool isMatch,
-    double diameter,
-  ) {
-    return Container(
+    double diameter, {
+    required bool isFocused,
+    required bool isHovered,
+  }) {
+    final emphasized = isFocused || isHovered || isMatch;
+    return AnimatedContainer(
+      duration: _reduceMotion
+          ? Duration.zero
+          : const Duration(milliseconds: 180),
+      curve: Curves.easeOutCubic,
       width: diameter,
       height: diameter,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: RadialGradient(
-          colors: [FncColors.white, color],
-          stops: const [0.15, 1.0],
+          colors: isRoot
+              ? [FncColors.white, color, color.withValues(alpha: 0.55)]
+              : [FncColors.white, color],
+          stops: isRoot ? const [0, 0.38, 1] : const [0.1, 1],
+        ),
+        border: Border.all(
+          color: emphasized
+              ? FncColors.white.withValues(alpha: 0.92)
+              : color.withValues(alpha: isRoot ? 0.9 : 0.55),
+          width: isRoot ? 2 : 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: 0.6),
-            blurRadius: diameter * 1.6,
-            spreadRadius: diameter * 0.15,
+            color: color.withValues(alpha: emphasized ? 0.82 : 0.48),
+            blurRadius: diameter * (emphasized ? 2.1 : 1.35),
+            spreadRadius: emphasized ? diameter * 0.22 : 0,
           ),
+          if (isRoot)
+            BoxShadow(
+              color: FncColors.blue.withValues(alpha: 0.25),
+              blurRadius: 34,
+              spreadRadius: 10,
+            ),
           if (isMatch)
             BoxShadow(
-              color: FncColors.materialAmber.withValues(alpha: 0.7),
-              blurRadius: 20,
-              spreadRadius: 3,
+              color: FncColors.materialAmber.withValues(alpha: 0.8),
+              blurRadius: 24,
+              spreadRadius: 4,
             ),
         ],
       ),
+      alignment: Alignment.center,
+      child: isRoot
+          ? Icon(iconForType(node.type), color: FncColors.white, size: 20)
+          : null,
     );
   }
 
