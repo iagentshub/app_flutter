@@ -144,3 +144,37 @@ class ProfileBundle {
   final SocialProfile social;
   final LicenseInfo license;
 }
+
+/// Una sesión abierta del usuario, tal y como la lista `GET /api/auth/sessions`.
+///
+/// La API no devuelve el refresh ni sus hashes: son credenciales vivas, no
+/// datos que mostrar. Lo que llega es lo que permite reconocer un acceso
+/// —cuándo empezó, desde dónde y con qué cliente— y decidir si cerrarlo.
+class ActiveSession {
+  const ActiveSession({
+    required this.id,
+    required this.current,
+    this.createdAt,
+    this.lastSeenAt,
+    this.ip,
+    this.userAgent,
+  });
+
+  final String id;
+  final bool current;
+  final String? createdAt;
+  final String? lastSeenAt;
+  final String? ip;
+  final String? userAgent;
+
+  factory ActiveSession.fromJson(Map<String, dynamic> json) {
+    return ActiveSession(
+      id: json['id'] as String? ?? '',
+      current: json['current'] as bool? ?? false,
+      createdAt: json['created_at'] as String?,
+      lastSeenAt: json['last_seen_at'] as String?,
+      ip: json['ip'] as String?,
+      userAgent: json['user_agent'] as String?,
+    );
+  }
+}

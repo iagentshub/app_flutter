@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
@@ -69,6 +71,11 @@ class _AppState extends State<App> {
       client: widget.httpClient,
       requestTimeout: widget.requestTimeout,
       onUnauthorized: _handleUnauthorized,
+      onSessionRenewed: (token) =>
+          unawaited(widget.sessionController.renewAccessToken(token)),
+      onRefreshTokenSeen: (token) =>
+          unawaited(widget.sessionController.rememberRefreshToken(token)),
+      refreshTokenProvider: () => widget.sessionController.refreshToken,
       sessionIdentity: () => widget.sessionController.cacheIdentity,
     );
     _authRepository = AuthRepository(_apiClient);

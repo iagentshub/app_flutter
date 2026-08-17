@@ -177,17 +177,41 @@ extension _ProfileAccountSection on _ProfilePageState {
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Row(
+            child: Column(
               children: [
-                Expanded(
-                  child: Text(_tx('profile.security_hint', 'Contraseña')),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(_tx('profile.security_hint', 'Contraseña')),
+                    ),
+                    SecondaryButton.icon(
+                      onPressed: _openChangePasswordDialog,
+                      icon: const Icon(Icons.lock_reset_outlined),
+                      label: Text(
+                        _tx('profile.change_password', 'Cambiar contraseña'),
+                      ),
+                    ),
+                  ],
                 ),
-                SecondaryButton.icon(
-                  onPressed: _openChangePasswordDialog,
-                  icon: const Icon(Icons.lock_reset_outlined),
-                  label: Text(
-                    _tx('profile.change_password', 'Cambiar contraseña'),
-                  ),
+                const Divider(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _tx(
+                          'profile.sessions_hint',
+                          'Dispositivos con la sesión abierta',
+                        ),
+                      ),
+                    ),
+                    SecondaryButton.icon(
+                      onPressed: _openActiveSessionsDialog,
+                      icon: const Icon(Icons.devices_other),
+                      label: Text(
+                        _tx('profile.sessions_open', 'Ver sesiones activas'),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

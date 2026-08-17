@@ -11,12 +11,14 @@ class SessionController extends ChangeNotifier {
   SessionController._(this._secureStore);
 
   static const _tokenKey = 'ga_token';
+  static const _refreshKey = 'ga_refresh';
   static const _usernameKey = 'session_username';
   static const _roleKey = 'session_role';
 
   final SecureStore _secureStore;
   SessionStatus _status = SessionStatus.signedOut;
   String? _gaToken;
+  String? _refreshToken;
   SessionUser? _user;
 
   static Future<SessionController> bootstrap({
@@ -41,6 +43,14 @@ class SessionController extends ChangeNotifier {
 
     if (token != null && token.isNotEmpty && username != null && role != null) {
       controller._gaToken = token;
+      // Fuera de web las cookies las guarda la app, no el navegador: sin el
+      // refresh persistido, una sesión restaurada duraría lo que el access que
+      // se guardó con ella —30 minutos— por muy larga que sea la sesión real.
+      try {
+        controller._refreshToken = await secureStore.read(_refreshKey);
+      } on Object {
+        // Sin refresh la sesión sigue siendo usable hasta que caduque el access.
+      }
       // El rol persistido es solo una ayuda de arranque, no una fuente de
       // autorización: puede ser manipulado fuera de la app. Hasta que
       // /api/auth/me lo revalide, la sesión arranca con privilegios mínimos.
@@ -68,6 +78,7 @@ class SessionController extends ChangeNotifier {
       await prefs.remove(_roleKey);
       try {
         await secureStore.delete(_tokenKey);
+        await secureStore.delete(_refreshKey);
       } on Object {
         // La limpieza local debe continuar aunque el almacén nativo falle.
       }
@@ -80,7 +91,43 @@ class SessionController extends ChangeNotifier {
   bool get hasRestorableSession =>
       _gaToken != null && _gaToken!.isNotEmpty && _user != null;
   String? get gaToken => _gaToken;
+
+  /// El `ga_refresh` guardado. Solo se usa fuera de web: en el navegador la
+  /// cookie es HttpOnly y viaja sola.
+  String? get refreshToken => _refreshToken;
   SessionUser? get user => _user;
+
+  /// Recuerda el `ga_refresh` que llegó en un `Set-Cookie`, venga del login o
+  /// de una renovación.
+  ///
+  /// Se guarda en memoria siempre y en el almacén seguro solo si ya hay una
+  /// sesión persistida: durante el login todavía no la hay, y de persistirlo
+  /// aquí se colaría la credencial de una sesión que el usuario pidió no
+  /// recordar. Ese caso lo resuelve `login()`, que escribe lo que haya en
+  /// memoria justo cuando ya sabe si hay que recordarla.
+  Future<void> rememberRefreshToken(String token) async {
+    if (token.isEmpty || token == _refreshToken) return;
+    _refreshToken = token;
+    if (!hasRestorableSession) return;
+    try {
+      await _secureStore.write(_refreshKey, token);
+    } on Object {
+      // Sesión renovada en memoria; sin persistir solo se pierde al reiniciar.
+    }
+  }
+
+  /// Sustituye el access token tras una renovación, sin tocar el estado de la
+  /// sesión: renovar no es entrar, y `login()` incrementa la época, lo que
+  /// invalidaría toda la caché de la app en cada renovación.
+  Future<void> renewAccessToken(String token) async {
+    if (!hasRestorableSession || token.isEmpty) return;
+    _gaToken = token;
+    try {
+      await _secureStore.write(_tokenKey, token);
+    } on Object {
+      // Igual que arriba: en memoria ya está renovado.
+    }
+  }
 
   /// Cambia con cada login y cada logout, además de con la cuenta.
   int _epoch = 0;
@@ -132,6 +179,10 @@ class SessionController extends ChangeNotifier {
     if (remember) {
       try {
         await _secureStore.write(_tokenKey, token);
+        // `_refreshToken` ya lo puso `rememberRefreshToken` con el Set-Cookie
+        // de esta misma respuesta de login.
+        final refresh = _refreshToken;
+        if (refresh != null) await _secureStore.write(_refreshKey, refresh);
         await prefs.remove(_tokenKey);
         await prefs.setString(_usernameKey, user.username);
         await prefs.setString(_roleKey, user.role);
@@ -155,6 +206,7 @@ class SessionController extends ChangeNotifier {
     if (_status == SessionStatus.signedOut && !hasRestorableSession) return;
     _status = SessionStatus.signedOut;
     _gaToken = null;
+    _refreshToken = null;
     _user = null;
     _epoch += 1;
 
@@ -168,6 +220,7 @@ class SessionController extends ChangeNotifier {
   Future<void> _deleteSecureToken() async {
     try {
       await _secureStore.delete(_tokenKey);
+      await _secureStore.delete(_refreshKey);
     } on Object {
       // El estado en memoria y el almacenamiento local sí deben limpiarse.
     }

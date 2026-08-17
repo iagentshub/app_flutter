@@ -128,6 +128,10 @@ class ProfileController extends ChangeNotifier {
 
   String? get token => _sessionController.gaToken;
 
+  /// Para las vistas que hablan con la API sin pasar por el controller —el
+  /// diálogo de sesiones activas, que tiene su propio ciclo de carga.
+  ProfileRepository get repository => _repository;
+
   // ── Borrador ──────────────────────────────────────────────────────────
 
   void setTheme(String value) {

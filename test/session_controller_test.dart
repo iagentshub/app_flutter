@@ -208,4 +208,80 @@ void main() {
     );
     expect(controller.cacheIdentity, isNot(deAna));
   });
+
+  // ── Refresh token (punto 06: sesiones revocables) ─────────────────────────
+  // Fuera de web las cookies las guarda la app. Sin persistir el refresh, una
+  // sesión restaurada duraría lo que el access que se guardó con ella —30
+  // minutos— por muy larga que sea la sesión real en el backend.
+
+  test('el refresh se persiste solo cuando la sesión se recuerda', () async {
+    SharedPreferences.setMockInitialValues({});
+    final secrets = MemorySecureStore();
+    final controller = await SessionController.bootstrap(secureStore: secrets);
+
+    // Llega con el Set-Cookie del login, antes de que haya sesión.
+    await controller.rememberRefreshToken('iar_uno');
+    expect(controller.refreshToken, 'iar_uno');
+    expect(secrets.values['ga_refresh'], isNull);
+
+    await controller.login(
+      token: 'token',
+      user: const SessionUser(username: 'alice', role: 'user'),
+    );
+    expect(secrets.values['ga_refresh'], 'iar_uno');
+  });
+
+  test('una sesión que no se recuerda no deja el refresh en disco', () async {
+    SharedPreferences.setMockInitialValues({});
+    final secrets = MemorySecureStore();
+    final controller = await SessionController.bootstrap(secureStore: secrets);
+
+    await controller.rememberRefreshToken('iar_invitado');
+    await controller.login(
+      token: 'token',
+      user: const SessionUser(username: 'guest', role: 'guest'),
+      remember: false,
+    );
+
+    expect(controller.refreshToken, 'iar_invitado', reason: 'vale en memoria');
+    expect(secrets.values['ga_refresh'], isNull);
+  });
+
+  test('renovar no cambia la identidad de caché ni el estado', () async {
+    SharedPreferences.setMockInitialValues({});
+    final secrets = MemorySecureStore();
+    final controller = await SessionController.bootstrap(secureStore: secrets);
+    await controller.login(
+      token: 'viejo',
+      user: const SessionUser(username: 'alice', role: 'user'),
+    );
+    final identidad = controller.cacheIdentity;
+
+    await controller.renewAccessToken('nuevo');
+
+    expect(controller.gaToken, 'nuevo');
+    expect(secrets.values['ga_token'], 'nuevo');
+    expect(controller.status, SessionStatus.authenticated);
+    expect(
+      controller.cacheIdentity,
+      identidad,
+      reason: 'renovar no es entrar: invalidaría toda la caché cada 30 min',
+    );
+  });
+
+  test('cerrar sesión borra también el refresh', () async {
+    SharedPreferences.setMockInitialValues({});
+    final secrets = MemorySecureStore();
+    final controller = await SessionController.bootstrap(secureStore: secrets);
+    await controller.rememberRefreshToken('iar_uno');
+    await controller.login(
+      token: 'token',
+      user: const SessionUser(username: 'alice', role: 'user'),
+    );
+
+    await controller.logout();
+
+    expect(controller.refreshToken, isNull);
+    expect(secrets.values['ga_refresh'], isNull);
+  });
 }

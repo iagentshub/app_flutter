@@ -18,6 +18,7 @@ import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../controllers/profile_controller.dart';
+import '../dialogs/active_sessions_dialog.dart';
 import '../repositories/profile_repository.dart';
 import '../widgets/profile_groups_section.dart';
 
@@ -171,6 +172,17 @@ class _ProfilePageState extends State<ProfilePage>
       ),
     );
     if (result != null) _controller.setLanguages(result);
+  }
+
+  Future<void> _openActiveSessionsDialog() async {
+    final token = _controller.token;
+    if (token == null || token.isEmpty) return;
+    await showActiveSessionsDialog(
+      context: context,
+      repository: _controller.repository,
+      token: token,
+      tx: _tx,
+    );
   }
 
   Future<void> _openChangePasswordDialog() async {

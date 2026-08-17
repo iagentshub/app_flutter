@@ -72,6 +72,30 @@ Lo que hay que saber al tocarlas:
 El porqué completo, con las alternativas descartadas, está en
 `docs/adr/005-carga-diferida-en-flutter-web.md` del repo `backend_fastapi`.
 
+## La sesión se renueva sola
+
+El access token del backend dura 30 minutos y la sesión, horas. `ApiClient`
+renueva ante un 401 y reintenta la petición **una vez**, con un cerrojo
+(`_refreshSession`): el refresh **rota** en cada canje, así que dos renovaciones
+en paralelo mandarían la segunda con un token ya rotado, que el backend lee
+—correctamente— como robo y revoca la sesión entera.
+
+Lo que hay que saber al tocar `api_client.dart`:
+
+- **`_send` recibe una función que construye la petición**, no la petición
+  hecha: un `BaseRequest` finalizado no se puede reenviar, y el reintento tiene
+  que ir con el token nuevo.
+- El `ga_refresh` se captura **en un solo sitio**, junto al del CSRF: llega en
+  el login, el registro, el alta de invitado, la verificación de email, el login
+  con GitHub y cada renovación. Recogerlo en cada uno es la forma de que al
+  séptimo se le olvide.
+- Fuera de web las cookies las guarda la app: `SessionController` persiste el
+  refresh en el almacén seguro, y `renewAccessToken` **no** toca `_epoch` —
+  renovar no es entrar, y hacerlo invalidaría toda la caché cada 30 minutos.
+
+El porqué completo está en `docs/adr/008-sesiones-revocables.md` del repo
+`backend_fastapi`.
+
 ## Reglas que ya vigila la suite
 
 - **i18n**: todo texto de interfaz pasa por `_tx(clave, fallback)` y vive en

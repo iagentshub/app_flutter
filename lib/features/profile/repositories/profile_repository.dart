@@ -126,6 +126,29 @@ class ProfileRepository extends ApiRepository {
     );
   }
 
+  /// Sesiones abiertas del usuario, la actual marcada con `current`.
+  Future<List<ActiveSession>> listSessions(String token) async {
+    final response = await apiClient.get('/api/auth/sessions', gaToken: token);
+    final raw = response.json['sessions'];
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map<String, dynamic>>()
+        .map(ActiveSession.fromJson)
+        .toList();
+  }
+
+  Future<void> revokeSession(String token, String sessionId) async {
+    await apiClient.delete(
+      '/api/auth/sessions/${Uri.encodeComponent(sessionId)}',
+      gaToken: token,
+    );
+  }
+
+  /// Cierra todas las sesiones menos la actual.
+  Future<void> revokeOtherSessions(String token) async {
+    await apiClient.delete('/api/auth/sessions', gaToken: token);
+  }
+
   Future<String> requestDeletion(String token) async {
     final response = await apiClient.post(
       '/api/auth/me/request-deletion',

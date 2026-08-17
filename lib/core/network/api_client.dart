@@ -50,6 +50,9 @@ class ApiClient {
     int maxDownloadBytes = 200 * 1024 * 1024,
     int maxStreamLineChars = 1024 * 1024,
     this.onUnauthorized,
+    this.onSessionRenewed,
+    this.onRefreshTokenSeen,
+    this.refreshTokenProvider,
     this.sessionIdentity = _anonymousSession,
     ResourceEvents? resourceEvents,
   }) : resourceEvents = resourceEvents ?? ResourceEvents(),
@@ -77,6 +80,20 @@ class ApiClient {
   /// para que la app pueda cerrar la sesión y volver a login de forma
   /// centralizada en vez de depender de que cada pantalla lo compruebe.
   final VoidCallback? onUnauthorized;
+
+  /// Se invoca con el `ga_token` nuevo cuando una renovación sale bien, para
+  /// que la sesión en curso siga usándolo. Fuera de web la app guarda las
+  /// cookies a mano, así que sin esto la renovación valdría solo para la
+  /// petición que la disparó.
+  final void Function(String gaToken)? onSessionRenewed;
+
+  /// Se invoca con cada `ga_refresh` que llega en un `Set-Cookie`. Fuera de
+  /// web es lo único que hace persistente la sesión más allá del access.
+  final void Function(String refreshToken)? onRefreshTokenSeen;
+
+  /// El `ga_refresh` guardado, que fuera de web hay que enviar a mano. En web
+  /// devuelve null: la cookie es HttpOnly y la manda el navegador.
+  final String? Function()? refreshTokenProvider;
 
   /// Identidad de la sesión activa, usada para separar la caché por usuario.
   /// La aporta el [SessionController]; sin sesión (splash, login) basta el
@@ -117,12 +134,37 @@ class ApiClient {
     );
   }
 
+  /// Envía la petición, renovando la sesión y reintentando una vez si el
+  /// backend contesta 401.
+  ///
+  /// [build] recibe el token de sesión vigente y construye la petición. Es una
+  /// función y no una petición ya hecha porque puede enviarse dos veces: si la
+  /// primera devuelve 401 y la sesión se renueva, la segunda tiene que llevar
+  /// el token nuevo y un cuerpo sin consumir — un `BaseRequest` ya finalizado
+  /// no se puede reenviar.
+  Future<http.StreamedResponse> _send(
+    http.BaseRequest Function(String? gaToken) build, {
+    String? gaToken,
+    Duration? timeout,
+  }) async {
+    final streamed = await _sendOnce(build(gaToken), timeout: timeout);
+    if (streamed.statusCode != 401) return streamed;
+
+    final renovado = await _refreshSession(gaToken);
+    if (renovado == null) return streamed;
+
+    // El 401 anterior queda sin consumir; el stream de una respuesta que no se
+    // lee mantiene la conexión abierta hasta el timeout.
+    await streamed.stream.drain<void>();
+    return _sendOnce(build(renovado), timeout: timeout);
+  }
+
   /// Envía la petición y reporta al [BackendController] si el backend
   /// seleccionado es alcanzable o no — una respuesta HTTP (incluso 4xx/5xx)
   /// cuenta como "alcanzable"; solo un fallo de red real (sin respuesta)
   /// cuenta como problema de conexión, para no confundirlo con errores de
   /// API normales y así no fallar en silencio en el resto de la app.
-  Future<http.StreamedResponse> _send(
+  Future<http.StreamedResponse> _sendOnce(
     http.BaseRequest request, {
     Duration? timeout,
   }) async {
@@ -137,12 +179,76 @@ class ApiClient {
       // antes del despliegue— y también al cambiar de grupo o impersonar.
       if (!kIsWeb) {
         rememberCsrfToken(_csrfFromSetCookie(streamed.headers));
+        // Mismo criterio que la línea de arriba: un punto único de captura.
+        // El `ga_refresh` llega en el login, en el registro, en el alta de
+        // invitado, al verificar el email, al entrar con GitHub y en cada
+        // renovación; recogerlo en cada uno de esos seis sitios es la forma
+        // de que al séptimo se le olvide.
+        final refresh = _refreshFromSetCookie(streamed.headers);
+        if (refresh != null) onRefreshTokenSeen?.call(refresh);
       }
       return streamed;
     } catch (error) {
       backendController.reportConnectionError(error.toString());
       rethrow;
     }
+  }
+
+  /// Renueva la sesión tras un 401 y devuelve el token nuevo, o null si no se
+  /// pudo (no hay refresh, caducó, o la sesión estaba revocada).
+  ///
+  /// El cerrojo no es opcional. El access dura 30 minutos y una pantalla puede
+  /// disparar seis peticiones a la vez: sin él, las seis reciben 401 casi
+  /// simultáneamente y lanzan seis renovaciones. Como el backend **rota** el
+  /// refresh en cada canje, la segunda llegaría con uno ya rotado — que es
+  /// exactamente la señal de robo que tumba la sesión entera. El cerrojo hace
+  /// que las seis esperen a la misma renovación.
+  Future<String?> _refreshSession(String? gaToken) {
+    return _refreshInFlight ??= _doRefresh(gaToken).whenComplete(() {
+      _refreshInFlight = null;
+    });
+  }
+
+  Future<String?>? _refreshInFlight;
+
+  Future<String?> _doRefresh(String? gaToken) async {
+    // Sin sesión no hay nada que renovar: el 401 de la pantalla de login o del
+    // splash es la respuesta correcta, no una credencial caducada.
+    if (gaToken == null || gaToken.isEmpty) return null;
+    if (!kIsWeb && (refreshTokenProvider?.call() ?? '').isEmpty) return null;
+    final http.StreamedResponse streamed;
+    try {
+      streamed = await _sendOnce(_refreshRequest(gaToken));
+    } on Object {
+      // Un fallo de red al renovar no es una sesión cerrada: el 401 original
+      // sigue su curso y lo trata quien lo recibió.
+      return null;
+    }
+    final response = await _readBoundedResponse(streamed);
+    if (response.statusCode != 200) return null;
+
+    // En web las cookies las guarda el navegador y la app nunca ve el valor:
+    // el token efectivo sigue siendo el marcador de sesión de navegador.
+    if (kIsWeb) return browserCookieSessionToken;
+
+    final nuevo = extractGaToken(response.headers);
+    if (nuevo == null) return null;
+    onSessionRenewed?.call(nuevo);
+    return nuevo;
+  }
+
+  http.Request _refreshRequest(String? gaToken) {
+    final request = http.Request('POST', _uri('/api/auth/refresh'));
+    request.followRedirects = false;
+    request.headers.addAll(
+      _sessionHeaders(
+        accept: 'application/json',
+        gaToken: gaToken,
+        mutation: true,
+        refreshToken: refreshTokenProvider?.call(),
+      ),
+    );
+    return request;
   }
 
   /// [cache]: si es true, sirve una respuesta reciente (< [ttl]) desde
@@ -255,12 +361,14 @@ class ApiClient {
     String path, {
     String? gaToken,
   }) async {
-    final headers = _sessionHeaders(accept: '*/*', gaToken: gaToken);
-    final request = http.Request('GET', _uri(path));
-    request.followRedirects = false;
-    request.headers.addAll(headers);
+    http.Request build(String? token) {
+      final request = http.Request('GET', _uri(path));
+      request.followRedirects = false;
+      request.headers.addAll(_sessionHeaders(accept: '*/*', gaToken: token));
+      return request;
+    }
 
-    final streamed = await _send(request);
+    final streamed = await _send(build, gaToken: gaToken);
     final response = await _readBoundedResponse(
       streamed,
       maxBytes: _maxDownloadBytes,
@@ -295,18 +403,22 @@ class ApiClient {
     Map<String, dynamic>? body,
     String? gaToken,
   }) async {
-    final headers = _sessionHeaders(
-      accept: 'application/zip',
-      gaToken: gaToken,
-      mutation: true,
-      jsonBody: body != null,
-    );
-    final request = http.Request('POST', _uri(path));
-    request.followRedirects = false;
-    request.headers.addAll(headers);
-    if (body != null) request.body = jsonEncode(body);
+    http.Request build(String? token) {
+      final request = http.Request('POST', _uri(path));
+      request.followRedirects = false;
+      request.headers.addAll(
+        _sessionHeaders(
+          accept: 'application/zip',
+          gaToken: token,
+          mutation: true,
+          jsonBody: body != null,
+        ),
+      );
+      if (body != null) request.body = jsonEncode(body);
+      return request;
+    }
 
-    final streamed = await _send(request);
+    final streamed = await _send(build, gaToken: gaToken);
     final response = await _readBoundedResponse(
       streamed,
       maxBytes: _maxDownloadBytes,
@@ -355,19 +467,22 @@ class ApiClient {
     Map<String, dynamic>? body,
     String? gaToken,
   }) async* {
-    final headers = _sessionHeaders(
-      accept: 'text/event-stream',
-      gaToken: gaToken,
-      mutation: method != 'GET',
-      jsonBody: body != null,
-    );
+    http.Request build(String? token) {
+      final request = http.Request(method, _uri(path));
+      request.followRedirects = false;
+      request.headers.addAll(
+        _sessionHeaders(
+          accept: 'text/event-stream',
+          gaToken: token,
+          mutation: method != 'GET',
+          jsonBody: body != null,
+        ),
+      );
+      if (body != null) request.body = jsonEncode(body);
+      return request;
+    }
 
-    final request = http.Request(method, _uri(path));
-    request.followRedirects = false;
-    request.headers.addAll(headers);
-    if (body != null) request.body = jsonEncode(body);
-
-    final streamed = await _send(request);
+    final streamed = await _send(build, gaToken: gaToken);
     if (streamed.statusCode < 200 || streamed.statusCode >= 300) {
       final response = await _readBoundedResponse(streamed);
       final parsed = _parseBody(response.body);
@@ -394,25 +509,26 @@ class ApiClient {
     String? gaToken,
     Duration? timeout,
   }) async {
-    final request = http.MultipartRequest('POST', _uri(path));
-    request.followRedirects = false;
-    request.headers.addAll(
-      _sessionHeaders(
-        accept: 'application/json',
-        gaToken: gaToken,
-        mutation: true,
-      ),
-    );
-
-    if (fields != null && fields.isNotEmpty) {
-      request.fields.addAll(fields);
+    http.MultipartRequest build(String? token) {
+      final request = http.MultipartRequest('POST', _uri(path));
+      request.followRedirects = false;
+      request.headers.addAll(
+        _sessionHeaders(
+          accept: 'application/json',
+          gaToken: token,
+          mutation: true,
+        ),
+      );
+      if (fields != null && fields.isNotEmpty) {
+        request.fields.addAll(fields);
+      }
+      request.files.add(
+        http.MultipartFile.fromBytes(fieldName, fileBytes, filename: fileName),
+      );
+      return request;
     }
 
-    request.files.add(
-      http.MultipartFile.fromBytes(fieldName, fileBytes, filename: fileName),
-    );
-
-    final streamed = await _send(request, timeout: timeout);
+    final streamed = await _send(build, gaToken: gaToken, timeout: timeout);
     final response = await _readBoundedResponse(streamed);
     final parsed = _parseBody(response.body);
     final apiResponse = ApiResponse(
@@ -439,25 +555,29 @@ class ApiClient {
     String? gaToken,
     Duration? timeout,
   }) async {
-    final request = _ProgressMultipartRequest('POST', _uri(path), (
-      sent,
-      total,
-    ) {
-      onProgress(total <= 0 ? 0 : (sent / total).clamp(0, 1));
-    });
-    request.followRedirects = false;
-    request.headers.addAll(
-      _sessionHeaders(
-        accept: 'application/json',
-        gaToken: gaToken,
-        mutation: true,
-      ),
-    );
-    if (fields != null) request.fields.addAll(fields);
-    request.files.add(
-      http.MultipartFile.fromBytes(fieldName, fileBytes, filename: fileName),
-    );
-    final streamed = await _send(request, timeout: timeout);
+    _ProgressMultipartRequest build(String? token) {
+      final request = _ProgressMultipartRequest('POST', _uri(path), (
+        sent,
+        total,
+      ) {
+        onProgress(total <= 0 ? 0 : (sent / total).clamp(0, 1));
+      });
+      request.followRedirects = false;
+      request.headers.addAll(
+        _sessionHeaders(
+          accept: 'application/json',
+          gaToken: token,
+          mutation: true,
+        ),
+      );
+      if (fields != null) request.fields.addAll(fields);
+      request.files.add(
+        http.MultipartFile.fromBytes(fieldName, fileBytes, filename: fileName),
+      );
+      return request;
+    }
+
+    final streamed = await _send(build, gaToken: gaToken, timeout: timeout);
     final response = await _readBoundedResponse(streamed);
     final apiResponse = ApiResponse(
       statusCode: response.statusCode,
@@ -478,26 +598,30 @@ class ApiClient {
     String? gaToken,
     Duration? timeout,
   }) async {
-    final request = http.MultipartRequest('POST', _uri(path));
-    request.followRedirects = false;
-    request.headers.addAll(
-      _sessionHeaders(
-        accept: 'application/json',
-        gaToken: gaToken,
-        mutation: true,
-      ),
-    );
-    if (fields != null && fields.isNotEmpty) request.fields.addAll(fields);
-    for (final file in files) {
-      request.files.add(
-        http.MultipartFile.fromBytes(
-          fieldName,
-          file.bytes,
-          filename: file.fileName,
+    http.MultipartRequest build(String? token) {
+      final request = http.MultipartRequest('POST', _uri(path));
+      request.followRedirects = false;
+      request.headers.addAll(
+        _sessionHeaders(
+          accept: 'application/json',
+          gaToken: token,
+          mutation: true,
         ),
       );
+      if (fields != null && fields.isNotEmpty) request.fields.addAll(fields);
+      for (final file in files) {
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            fieldName,
+            file.bytes,
+            filename: file.fileName,
+          ),
+        );
+      }
+      return request;
     }
-    final streamed = await _send(request, timeout: timeout);
+
+    final streamed = await _send(build, gaToken: gaToken, timeout: timeout);
     final response = await _readBoundedResponse(streamed);
     final parsed = _parseBody(response.body);
     final apiResponse = ApiResponse(
@@ -517,19 +641,22 @@ class ApiClient {
     String? gaToken,
     Duration? timeout,
   }) async {
-    final headers = _sessionHeaders(
-      accept: 'application/json',
-      gaToken: gaToken,
-      mutation: method != 'GET',
-      jsonBody: body != null,
-    );
+    http.Request build(String? token) {
+      final request = http.Request(method, _uri(path));
+      request.followRedirects = false;
+      request.headers.addAll(
+        _sessionHeaders(
+          accept: 'application/json',
+          gaToken: token,
+          mutation: method != 'GET',
+          jsonBody: body != null,
+        ),
+      );
+      if (body != null) request.body = jsonEncode(body);
+      return request;
+    }
 
-    final request = http.Request(method, _uri(path));
-    request.followRedirects = false;
-    request.headers.addAll(headers);
-    if (body != null) request.body = jsonEncode(body);
-
-    final streamed = await _send(request, timeout: timeout);
+    final streamed = await _send(build, gaToken: gaToken, timeout: timeout);
     final response = await _readBoundedResponse(streamed);
     final parsed = _parseBody(response.body);
     final apiResponse = ApiResponse(
@@ -659,10 +786,18 @@ class ApiClient {
     String? gaToken,
     bool mutation = false,
     bool jsonBody = false,
+    String? refreshToken,
   }) {
     final headers = <String, String>{'Accept': accept};
     if (!kIsWeb && gaToken != null && gaToken.isNotEmpty) {
-      headers['Cookie'] = 'ga_token=$gaToken';
+      final cookies = <String>['ga_token=$gaToken'];
+      // Solo en la petición que lo canjea: el backend acota su cookie a
+      // `path=/api/auth` por lo mismo — es la credencial de largo recorrido y
+      // no tiene por qué viajar en el resto de rutas.
+      if (refreshToken != null && refreshToken.isNotEmpty) {
+        cookies.add('ga_refresh=$refreshToken');
+      }
+      headers['Cookie'] = cookies.join('; ');
     }
     if (jsonBody) headers['Content-Type'] = 'application/json';
     if (mutation) {
@@ -670,6 +805,13 @@ class ApiClient {
       if (csrf != null) headers['X-CSRF-Token'] = csrf;
     }
     return headers;
+  }
+
+  /// El `ga_refresh` de un `Set-Cookie`, para persistirlo fuera de web.
+  String? _refreshFromSetCookie(Map<String, String> headers) {
+    final setCookie = headers['set-cookie'];
+    if (setCookie == null || setCookie.isEmpty) return null;
+    return RegExp(r'ga_refresh=([^;]+)').firstMatch(setCookie)?.group(1);
   }
 
   String? extractGaToken(Map<String, String> headers) {
