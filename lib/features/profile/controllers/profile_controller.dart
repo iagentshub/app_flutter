@@ -8,6 +8,7 @@ import '../../../models/profile/profile_models.dart';
 import '../../../shared/state/action_result.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/state/upload_limits.dart';
 import '../repositories/profile_repository.dart';
 import '../utils/avatar_compressor.dart';
 
@@ -55,8 +56,9 @@ class ProfileController extends ChangeNotifier {
        _syncTheme = syncTheme,
        _tx = tx;
 
-  /// Tope de la imagen ya comprimida (JPEG) que acepta el backend.
-  static const maxAvatarBytes = 10 * 1024 * 1024;
+  /// Tope de la imagen ya comprimida (JPEG) que acepta el backend: el mismo
+  /// que cualquier otra petición, el que fija el administrador. Aquí había un
+  /// 10 MB propio que el backend no compartía —cortaba en 2, y nginx en 1—.
 
   /// Tope del archivo original antes de comprimir: evita que el dispositivo
   /// procese un fichero de entrada absurdamente grande.
@@ -294,9 +296,12 @@ class ProfileController extends ChangeNotifier {
         compressAvatarBytes,
         AvatarCompressionInput(Uint8List.fromList(fileBytes)),
       );
-      if (compressed.bytes.length > maxAvatarBytes) {
+      if (UploadLimits.exceeds(compressed.bytes.length)) {
         return ActionResult.error(
-          _tx('profile.avatar_too_large', 'La imagen no puede superar 10 MB'),
+          _tx(
+            'profile.avatar_too_large',
+            'La imagen no puede superar {limit}',
+          ).replaceAll('{limit}', UploadLimits.formatted),
         );
       }
 

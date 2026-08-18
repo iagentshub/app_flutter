@@ -34,8 +34,8 @@ Future<KnowledgeDirectorySelection?> pickKnowledgeDirectory({
       relative = relative.isEmpty ? file.name : relative;
       final size = file.size;
       if (!isSupportedKnowledgePackPath(relative) ||
-          size > knowledgePackMaxFileBytes ||
-          totalBytes + size > knowledgePackMaxTotalBytes) {
+          excedeElLimiteDeSubida(size) ||
+          excedeElLimiteDeSubida(totalBytes + size)) {
         ignored++;
       } else {
         final buffer = await file.arrayBuffer().toDart;

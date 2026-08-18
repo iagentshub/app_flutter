@@ -148,8 +148,8 @@ extension _KnowledgePackActions on _KnowledgePageState {
           counters[1]++;
         } else {
           final bytes = await entry.readAsBytes();
-          if (bytes.length > knowledgePackMaxFileBytes ||
-              counters[2] + bytes.length > knowledgePackMaxTotalBytes) {
+          if (excedeElLimiteDeSubida(bytes.length) ||
+              excedeElLimiteDeSubida(counters[2] + bytes.length)) {
             counters[1]++;
           } else {
             output.add(

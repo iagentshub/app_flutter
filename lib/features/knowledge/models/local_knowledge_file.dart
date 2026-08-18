@@ -2,6 +2,8 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mime/mime.dart';
 
+import '../../../shared/state/upload_limits.dart';
+
 String _sha256ForBytes(Uint8List bytes) => sha256.convert(bytes).toString();
 
 class LocalKnowledgeFile {
@@ -74,8 +76,15 @@ class KnowledgeDirectoryProgress {
 typedef KnowledgeDirectoryProgressCallback =
     void Function(KnowledgeDirectoryProgress progress);
 
-const knowledgePackMaxFileBytes = 10 * 1024 * 1024;
-const knowledgePackMaxTotalBytes = 50 * 1024 * 1024;
+/// Si un fichero de un pack no cabe en el límite que fija el administrador.
+///
+/// Antes eran dos constantes de aquí —10 MB por fichero, 50 MB por tanda— que
+/// no las conocía nadie más: el backend cortaba en 2 MB y nginx en 1 MB, así
+/// que un fichero que este filtro aceptaba se rechazaba después con un error
+/// que no hablaba de tamaño. El número es ahora uno solo y viene del servidor
+/// (ver [UploadLimits]). La tanda entera se sube en una petición, así que el
+/// mismo techo la limita a ella y a cada fichero suelto.
+bool excedeElLimiteDeSubida(int bytes) => UploadLimits.exceeds(bytes);
 
 const knowledgePackIgnoredDirectoryNames = {
   '.git',

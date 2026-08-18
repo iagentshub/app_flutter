@@ -18,6 +18,7 @@ import '../../../shared/graph/resource_graph_builder.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/app_services_scope.dart';
+import '../../../shared/state/upload_limits.dart';
 import '../../../shared/state/watches_resource_changes.dart';
 import '../../../shared/tools/tool_language.dart';
 import '../../../shared/utils/memoized.dart';

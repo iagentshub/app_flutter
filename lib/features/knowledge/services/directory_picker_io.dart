@@ -45,8 +45,8 @@ Future<KnowledgeDirectorySelection?> pickKnowledgeDirectory({
       } else {
         try {
           final size = await entity.length();
-          if (size > knowledgePackMaxFileBytes ||
-              totalBytes + size > knowledgePackMaxTotalBytes) {
+          if (excedeElLimiteDeSubida(size) ||
+              excedeElLimiteDeSubida(totalBytes + size)) {
             ignored++;
           } else {
             final stat = await entity.stat();

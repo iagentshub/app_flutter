@@ -182,7 +182,7 @@
     "identity_title": "Identidad",
     "avatar_updated": "Foto de perfil actualizada",
     "avatar_error": "No se pudo actualizar la foto",
-    "avatar_too_large": "La imagen no puede superar 10 MB",
+    "avatar_too_large": "La imagen no puede superar {limit}",
     "avatar_input_too_large": "La imagen original es demasiado grande"
   },
   "agents": {
@@ -1153,7 +1153,7 @@
     "document_preparing": "Preparando el documento…",
     "document_uploading": "Subiendo e indexando el documento…",
     "document_pick_failed": "No se pudo abrir o leer el documento seleccionado",
-    "document_too_large": "El documento supera el límite de 10 MB",
+    "document_too_large": "El documento supera el límite de {limit}",
     "msg_item_toggle_failed": "No se pudo cambiar el estado del item",
     "msg_item_deleted": "Item eliminado",
     "msg_item_delete_failed": "No se pudo eliminar el item",
@@ -1380,6 +1380,10 @@
     "config_section_centinel": "Centinel · Stress Test",
     "config_stress_concurrency": "Concurrencia máx.",
     "config_unlimited_500_hint": "(0=∞, máx 500)",
+    "config_section_uploads": "Subidas",
+    "config_max_upload": "Tamaño máximo de petición",
+    "config_mb_unlimited_hint": "(MB, 0=∞)",
+    "config_max_upload_hint": "Se aplica a cualquier petición, no solo a los ficheros. Sin límite, una subida puede ocupar tanta memoria como quiera quien la envía.",
     "config_section_logs": "Logs",
     "config_retention": "Retención",
     "config_days_hint": "(días)",

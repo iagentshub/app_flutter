@@ -72,10 +72,10 @@ extension _ProfileViewHelpers on _ProfilePageState {
             child: url == null
                 ? _avatarFallback(initial)
                 : Image(
-                    // El avatar subido puede pesar hasta 2MB a resolución
-                    // completa; decodificar solo a 128px (2x el tamaño en
-                    // pantalla) evita mantener un bitmap gigante en memoria
-                    // para mostrarlo en un círculo de 64x64.
+                    // El avatar subido puede pesar lo que el administrador
+                    // permita —por defecto, lo que sea—; decodificar solo a
+                    // 128px (2x el tamaño en pantalla) evita mantener un
+                    // bitmap gigante en memoria para un círculo de 64x64.
                     image: ResizeImage(
                       _services.apiClient.authenticatedImage(
                         url,

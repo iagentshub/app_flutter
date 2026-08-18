@@ -148,6 +148,10 @@ El porqué completo está en `docs/adr/008-sesiones-revocables.md` del repo
 - **Tamaños** (`test/feature_architecture_test.dart`): páginas ≤ 700 líneas, componentes
   de presentación ≤ 600. Diálogos y cards fuera de `pages/`.
 - **Botones**: los de `shared/widgets/buttons/`, no los de Material directamente.
+- **Tamaño de subida**: nunca una constante propia. El límite lo pone el administrador
+  y llega en `/api/settings/platform/public`; se lee con `UploadLimits.exceeds(bytes)`,
+  que con 0 —sin límite, el default— no rechaza nada. Había tres copias del número en
+  Dart y ninguna coincidía con la del backend.
 
 ## Antes de dar algo por terminado
 

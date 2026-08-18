@@ -24,6 +24,7 @@ class _AdminConfigTabState extends State<_AdminConfigTab> with StateMessaging {
   late bool _registrationOpen;
   late final TextEditingController _maxUsersController;
   late final TextEditingController _maxSessionsController;
+  late final TextEditingController _maxUploadMbController;
   late final TextEditingController _logRetentionController;
   late final TextEditingController _stressConcurrencyController;
   late bool _emailVerify;
@@ -53,6 +54,11 @@ class _AdminConfigTabState extends State<_AdminConfigTab> with StateMessaging {
     _maxSessionsController = TextEditingController(
       text: (cfg['max_concurrent_sessions'] ?? 0).toString(),
     );
+    // Se edita en MB porque es la unidad en la que se piensa un fichero; el
+    // contrato con el backend sigue siendo en bytes.
+    _maxUploadMbController = TextEditingController(
+      text: _bytesToMb(cfg['max_request_bytes']),
+    );
     _logRetentionController = TextEditingController(
       text: (cfg['log_retention_days'] ?? 30).toString(),
     );
@@ -76,6 +82,7 @@ class _AdminConfigTabState extends State<_AdminConfigTab> with StateMessaging {
   void dispose() {
     _maxUsersController.dispose();
     _maxSessionsController.dispose();
+    _maxUploadMbController.dispose();
     _logRetentionController.dispose();
     _stressConcurrencyController.dispose();
     super.dispose();
@@ -99,6 +106,7 @@ class _AdminConfigTabState extends State<_AdminConfigTab> with StateMessaging {
         'billing_enabled': _billingEnabled,
         'log_retention_days':
             int.tryParse(_logRetentionController.text.trim()) ?? 30,
+        'max_request_bytes': _mbToBytes(_maxUploadMbController.text),
         'stress_max_concurrency':
             int.tryParse(_stressConcurrencyController.text.trim()) ?? 0,
         'oauth_google_enabled': _oauthGoogle,
@@ -250,6 +258,25 @@ class _AdminConfigTabState extends State<_AdminConfigTab> with StateMessaging {
           ),
         ],
       ),
+      _sectionCard(_tx('admin.config_section_uploads', 'Subidas'), [
+        TextField(
+          controller: _maxUploadMbController,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            labelText:
+                '${_tx('admin.config_max_upload', 'Tamaño máximo de petición')} ${_tx('admin.config_mb_unlimited_hint', '(MB, 0=∞)')}',
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          _tx(
+            'admin.config_max_upload_hint',
+            'Se aplica a cualquier petición, no solo a los ficheros. Sin límite, '
+            'una subida puede ocupar tanta memoria como quiera quien la envía.',
+          ),
+          style: const TextStyle(fontSize: FncFonts.size12),
+        ),
+      ]),
       _sectionCard(_tx('admin.config_section_logs', 'Logs'), [
         TextField(
           controller: _logRetentionController,
@@ -364,6 +391,20 @@ class _AdminConfigTabState extends State<_AdminConfigTab> with StateMessaging {
       ],
     );
   }
+}
+
+/// Bytes → MB para el campo del formulario. 0 (sin límite) se escribe 0, y un
+/// valor que no cae en MB exactos se redondea hacia arriba: quedarse corto
+/// bajaría el límite al guardar sin que el administrador lo haya pedido.
+String _bytesToMb(Object? bytes) {
+  final valor = bytes is num ? bytes.toInt() : 0;
+  if (valor <= 0) return '0';
+  return ((valor + 1024 * 1024 - 1) ~/ (1024 * 1024)).toString();
+}
+
+int _mbToBytes(String texto) {
+  final mb = int.tryParse(texto.trim()) ?? 0;
+  return mb <= 0 ? 0 : mb * 1024 * 1024;
 }
 
 // Colores de estado compartidos por _AdminConfigTab y _AdminUpdatesCard

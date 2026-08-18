@@ -182,7 +182,7 @@
     "identity_title": "Identity",
     "avatar_updated": "Profile photo updated",
     "avatar_error": "Couldn't update the photo",
-    "avatar_too_large": "The image can't be larger than 10 MB",
+    "avatar_too_large": "The image can't be larger than {limit}",
     "avatar_input_too_large": "The original image is too large"
   },
   "agents": {
@@ -1153,7 +1153,7 @@
     "document_preparing": "Preparing the document…",
     "document_uploading": "Uploading and indexing the document…",
     "document_pick_failed": "The selected document could not be opened or read",
-    "document_too_large": "The document exceeds the 10 MB limit",
+    "document_too_large": "The document exceeds the {limit} limit",
     "msg_item_toggle_failed": "Could not change the item state",
     "msg_item_deleted": "Item deleted",
     "msg_item_delete_failed": "Could not delete the item",
@@ -1380,6 +1380,10 @@
     "config_section_centinel": "Centinel · Stress Test",
     "config_stress_concurrency": "Max. concurrency",
     "config_unlimited_500_hint": "(0=∞, max 500)",
+    "config_section_uploads": "Uploads",
+    "config_max_upload": "Maximum request size",
+    "config_mb_unlimited_hint": "(MB, 0=∞)",
+    "config_max_upload_hint": "Applies to every request, not just files. With no limit, an upload can take as much memory as the sender wants.",
     "config_section_logs": "Logs",
     "config_retention": "Retention",
     "config_days_hint": "(days)",

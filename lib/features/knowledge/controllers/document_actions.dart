@@ -73,12 +73,12 @@ extension _DocumentActions on _KnowledgePageState {
       );
       return;
     }
-    if (bytes.length > knowledgePackMaxFileBytes) {
+    if (excedeElLimiteDeSubida(bytes.length)) {
       showMessage(
         _tx(
           'knowledge.document_too_large',
-          'El documento supera el límite de 10 MB',
-        ),
+          'El documento supera el límite de {limit}',
+        ).replaceAll('{limit}', UploadLimits.formatted),
         isError: true,
       );
       return;

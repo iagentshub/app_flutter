@@ -4,6 +4,7 @@ import '../../../core/network/csrf_token.dart';
 import '../../../models/auth/auth_result.dart';
 import '../../../models/auth/session_user.dart';
 import '../../../models/github/github_device_flow.dart';
+import '../../../shared/state/upload_limits.dart';
 
 /// Resultado de sondear el login con GitHub: si [isReady] es true, [gaToken]
 /// y [authResult] ya están listos para pasar a `SessionController.login`
@@ -162,6 +163,10 @@ class AuthRepository {
 
   Future<Map<String, dynamic>> platformPublic() async {
     final response = await _apiClient.get('/api/settings/platform/public');
+    // El límite de tamaño se recoge aquí y en ningún otro sitio: esta llamada
+    // se hace desde el splash, el login, el registro y el shell, y repartir la
+    // captura entre los cuatro es la forma de que al cuarto se le olvide.
+    UploadLimits.updateFromPlatform(response.json);
     return response.json;
   }
 
