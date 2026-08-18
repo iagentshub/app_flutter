@@ -1,4 +1,5 @@
 import 'package:app_flutter/models/admin/admin_explore_models.dart';
+import 'package:app_flutter/shared/graph/resource_graph_builder.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -29,27 +30,21 @@ void main() {
     );
   });
 
-  test('decodes admin relationship graphs', () {
-    final graph = AdminResourceGraph.fromJson({
-      'root_id': 'agent:agent-1',
-      'nodes': [
+  test('arma el grafo de admin desde las relaciones del backend', () {
+    final graph = fromRelations({
+      'root': {
+        'type': 'agent',
+        'id': 'agent-1',
+        'label': 'Researcher',
+        'description': 'Root',
+      },
+      'items': [
         {
-          'id': 'agent:agent-1',
-          'label': 'Researcher',
-          'type': 'agent',
-          'description': 'Root',
-        },
-        {
-          'id': 'connection:connection-1',
-          'label': 'OpenAI',
           'type': 'connection',
-        },
-      ],
-      'edges': [
-        {
-          'source_id': 'agent:agent-1',
-          'target_id': 'connection:connection-1',
-          'dashed': false,
+          'id': 'connection-1',
+          'label': 'OpenAI',
+          'relation': 'uses',
+          'via': null,
         },
       ],
     });

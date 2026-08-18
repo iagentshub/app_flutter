@@ -14,7 +14,7 @@ import '../../../models/knowledge/knowledge_models.dart';
 import '../../../models/prompts/prompt_models.dart';
 import '../../../models/skills/skill_models.dart';
 import '../../../models/tools/tool_models.dart';
-import '../../../shared/graph/graph_models.dart';
+import '../../../shared/graph/resource_graph_builder.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/app_services_scope.dart';
@@ -159,8 +159,7 @@ class _KnowledgePageState extends State<KnowledgePage>
   bool _hasMoreKnowledge = false;
   bool _loadingMoreKnowledge = false;
   List<KnowledgePack> _packs = const [];
-  List<AgentItem> _relatedAgents = const [];
-  int _graphRelationsGeneration = 0;
+  Future<List<AgentItem>>? _graphRelations;
   bool _loading = true;
   bool _uploading = false;
   String? _packOperationMessage;
@@ -397,7 +396,6 @@ class _KnowledgePageState extends State<KnowledgePage>
       localeController: _services.localeController,
       namespace: 'resources',
     )..addListener(_onTextsChanged);
-    _loadGraphRelations();
     _ensureSectionLoaded(_sectionIds.first);
   }
 

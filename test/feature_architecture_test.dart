@@ -164,4 +164,37 @@ void main() {
           'mutar (ver CLAUDE.md):\n${infractores.join('\n')}',
     );
   });
+
+  test('solo shared/graph arma nodos y aristas de un grafo', () {
+    // El grafo se dibujaba en un único sitio, pero *armarlo* estaba escrito
+    // ocho veces —cuatro en Dart y cuatro en el backend—, y las copias habían
+    // divergido: el mismo agente enseñaba cosas distintas según desde qué
+    // pantalla se abriera. Todo constructor vive en
+    // shared/graph/resource_graph_builder.dart.
+    final infractores = <String>[];
+    final construccion = RegExp(r'\b(GraphNode|GraphEdge)\(');
+    final permitidos = Directory('lib/shared/graph');
+    for (final file in Directory('lib')
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((file) => file.path.endsWith('.dart'))) {
+      final ruta = file.path.replaceAll(r'\', '/');
+      if (ruta.startsWith(permitidos.path.replaceAll(r'\', '/'))) continue;
+      final lineas = file.readAsLinesSync();
+      for (var index = 0; index < lineas.length; index++) {
+        if (construccion.hasMatch(lineas[index])) {
+          infractores.add('$ruta:${index + 1}');
+        }
+      }
+    }
+
+    expect(
+      infractores,
+      isEmpty,
+      reason:
+          'Arma el grafo con resource_graph_builder.dart (agentGraph, '
+          'workflowGraph, knowledgePackGraph, fromRelations...) en vez de '
+          'crear nodos a mano:\n${infractores.join('\n')}',
+    );
+  });
 }

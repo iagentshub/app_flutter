@@ -4,8 +4,19 @@ import 'package:flutter/material.dart';
 
 import '../../../core/network/api_error.dart';
 import '../../../features/agents/repositories/agents_repository.dart';
+import '../../../features/connections/repositories/connections_repository.dart';
+import '../../../features/knowledge/repositories/knowledge_repository.dart';
+import '../../../features/knowledge/repositories/prompts_repository.dart';
+import '../../../features/knowledge/repositories/skills_repository.dart';
+import '../../../features/knowledge/repositories/tools_repository.dart';
 import '../../../models/agents/agent_models.dart';
+import '../../../models/connections/connection_models.dart';
+import '../../../models/knowledge/knowledge_models.dart';
+import '../../../models/prompts/prompt_models.dart';
+import '../../../models/skills/skill_models.dart';
+import '../../../models/tools/tool_models.dart';
 import '../../../models/workflows/workflow_models.dart';
+import '../../../shared/graph/resource_graph_builder.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/widgets/async_state_panel.dart';
@@ -41,6 +52,11 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
 
   late final WorkflowsRepository _repository;
   late final AgentsRepository _agentsRepository;
+
+  /// Catálogo de nombres del grafo, cargado la primera vez que alguien abre
+  /// uno y reutilizado después. Cargarlo al entrar en la pantalla serían seis
+  /// llamadas al backend por un grafo que la mayoría de las visitas no abre.
+  Future<ResourceNames>? _graphNames;
   late final TranslatedTexts _t;
   late final WorkflowRunsController _workflowRuns;
   late final bool _ownsWorkflowRuns;
@@ -119,6 +135,37 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
   }
 
   String? get _token => _services.sessionController.gaToken;
+
+  Future<ResourceNames> _loadGraphNames() {
+    return _graphNames ??= () async {
+      final token = _token;
+      if (token == null || token.isEmpty) return const ResourceNames();
+      final apiClient = _services.apiClient;
+      try {
+        final results = await Future.wait([
+          SkillsRepository(apiClient: apiClient).listSkills(token),
+          PromptsRepository(apiClient: apiClient).listPrompts(token),
+          ToolsRepository(apiClient: apiClient).listTools(token),
+          KnowledgeRepository(apiClient: apiClient).listItems(token),
+          KnowledgeRepository(apiClient: apiClient).listPacks(token),
+          ConnectionsRepository(apiClient: apiClient).listConnections(token),
+        ]);
+        return ResourceNames.fromCatalogs(
+          skills: results[0] as List<SkillItem>,
+          prompts: results[1] as List<PromptItem>,
+          tools: results[2] as List<ToolItem>,
+          knowledge: results[3] as List<KnowledgeItem>,
+          packs: results[4] as List<KnowledgePack>,
+          connections: results[5] as List<ConnectionItem>,
+        );
+      } on ApiError {
+        // Un catálogo que no llega degrada a ids crudos, que es lo que se
+        // veía antes: no es motivo para dejar sin grafo al usuario.
+        _graphNames = null;
+        return const ResourceNames();
+      }
+    }();
+  }
 
   Future<void> _load() async {
     final token = _token;
@@ -435,6 +482,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
         return WorkflowCard(
           item: item,
           agentsById: _agentsById,
+          graphNamesLoader: _loadGraphNames,
           stepsLabel: _tx('workflows.steps_suffix', 'pasos'),
           connectionsLabel: _tx('workflows.connections_suffix', 'conexiones'),
           ownerLabel: _tx('common.owner', 'Propietario'),

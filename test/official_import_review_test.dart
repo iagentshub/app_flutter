@@ -493,25 +493,23 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final backend = await BackendController.bootstrap();
     final client = MockClient((request) async {
-      if (request.method == 'GET' && request.url.path.endsWith('/graph')) {
+      if (request.method == 'GET' && request.url.path.endsWith('/relations')) {
         return _json({
-          'root_id': 'source',
-          'nodes': [
+          'root': {
+            'type': 'official_source',
+            'id': 'draft-1',
+            'label': 'Demo',
+            'description': 'Repositorio',
+          },
+          'items': [
             {
-              'id': 'source',
-              'label': 'Demo',
-              'type': 'official_source',
-              'description': 'Repositorio',
-            },
-            {
+              'type': 'skill',
               'id': 'demo-skill',
               'label': 'Demo skill',
-              'type': 'skill',
               'description': 'new · no seleccionado',
+              'relation': 'origin',
+              'via': null,
             },
-          ],
-          'edges': [
-            {'source_id': 'source', 'target_id': 'demo-skill', 'dashed': false},
           ],
         });
       }

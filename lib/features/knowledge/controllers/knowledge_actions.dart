@@ -490,7 +490,7 @@ extension _KnowledgeActions on _KnowledgePageState {
 
   void _onGroupSelect(String? groupId) {
     refresh(() => _activeGroupId = groupId);
-    _loadGraphRelations();
+    _invalidateGraphRelations();
     _load();
     _loadSkills();
     _loadPrompts();

@@ -197,7 +197,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 1200));
 
     expect(find.text('Scripts de producción'), findsOneWidget);
-    expect(find.text('ops/deploy.sh'), findsOneWidget);
+    // El pack enseña su jerarquía real —carpeta y fichero— igual que ya hacía
+    // el grafo servido por el backend. Antes esta card pintaba la ruta
+    // relativa entera como etiqueta de un nodo plano.
+    expect(find.text('ops'), findsOneWidget);
+    expect(find.text('deploy.sh'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

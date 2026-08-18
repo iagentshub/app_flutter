@@ -360,16 +360,18 @@ void main() {
 
   test('carga y presenta el grafo público de un recurso', () async {
     final controller = await build((request) async {
-      if (request.url.path.endsWith('/graph')) {
+      if (request.url.path.endsWith('/relations')) {
         return http.Response(
           jsonEncode({
-            'root_id': 'agent:a1',
-            'nodes': [
-              {'id': 'agent:a1', 'label': 'Agente A', 'type': 'agent'},
-              {'id': 'skill:s1', 'label': 'Skill A', 'type': 'skill'},
-            ],
-            'edges': [
-              {'source_id': 'agent:a1', 'target_id': 'skill:s1'},
+            'root': {'type': 'agent', 'id': 'a1', 'label': 'Agente A'},
+            'items': [
+              {
+                'type': 'skill',
+                'id': 's1',
+                'label': 'Skill A',
+                'relation': 'uses',
+                'via': null,
+              },
             ],
           }),
           200,
@@ -398,18 +400,15 @@ void main() {
 
   test('carga y presenta el grafo de un pack oficial', () async {
     final controller = await build((request) async {
-      if (request.url.path.endsWith('/graph')) {
+      if (request.url.path.endsWith('/relations')) {
         return http.Response(
           jsonEncode({
-            'root_id': 'official_source:source-1',
-            'nodes': [
-              {
-                'id': 'official_source:source-1',
-                'label': 'Pack',
-                'type': 'official_source',
-              },
-            ],
-            'edges': <Map<String, dynamic>>[],
+            'root': {
+              'type': 'official_source',
+              'id': 'source-1',
+              'label': 'Pack',
+            },
+            'items': <Map<String, dynamic>>[],
           }),
           200,
         );

@@ -1,4 +1,3 @@
-import '../../shared/graph/graph_models.dart';
 
 enum AdminResourceType {
   user('user'),
@@ -81,47 +80,3 @@ class AdminExploreResult {
   }
 }
 
-class AdminResourceGraph {
-  const AdminResourceGraph({
-    required this.rootId,
-    required this.nodes,
-    required this.edges,
-  });
-
-  final String rootId;
-  final List<GraphNode> nodes;
-  final List<GraphEdge> edges;
-
-  factory AdminResourceGraph.fromJson(Map<String, dynamic> json) {
-    final rawNodes = json['nodes'];
-    final rawEdges = json['edges'];
-    return AdminResourceGraph(
-      rootId: (json['root_id'] ?? '').toString(),
-      nodes: rawNodes is List
-          ? rawNodes
-                .whereType<Map<String, dynamic>>()
-                .map((node) {
-                  return GraphNode(
-                    id: (node['id'] ?? '').toString(),
-                    label: (node['label'] ?? '').toString(),
-                    type: (node['type'] ?? '').toString(),
-                    description: (node['description'] ?? '').toString(),
-                  );
-                })
-                .toList(growable: false)
-          : const [],
-      edges: rawEdges is List
-          ? rawEdges
-                .whereType<Map<String, dynamic>>()
-                .map((edge) {
-                  return GraphEdge(
-                    sourceId: (edge['source_id'] ?? '').toString(),
-                    targetId: (edge['target_id'] ?? '').toString(),
-                    dashed: edge['dashed'] == true,
-                  );
-                })
-                .toList(growable: false)
-          : const [],
-    );
-  }
-}

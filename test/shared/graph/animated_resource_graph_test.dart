@@ -217,9 +217,12 @@ void main() {
     expect(state.debugBlinkAnimating, isFalse);
   });
 
-  testWidgets('el layout Galaxia grande se reparte entre varios frames', (
+  testWidgets('el layout Galaxia grande sale en el mismo frame', (
     tester,
   ) async {
+    // Fue una simulación de fuerzas troceada entre frames. Ahora el reparto
+    // es geométrico —anillo por profundidad, sector por rama— y se resuelve
+    // en un recorrido del árbol, así que no hay nada que esperar.
     final nodes = [
       const GraphNode(id: 'root', label: 'Raíz', type: 'agent'),
       for (var i = 0; i < 64; i++)
@@ -250,19 +253,127 @@ void main() {
     controller.setMode(GraphSortMode.galaxy);
     await tester.pump();
 
-    dynamic state = tester.state(find.byType(AnimatedResourceGraph));
-    expect(state.debugGalaxyLayoutPending, isTrue);
-
-    for (
-      var frame = 0;
-      frame < 80 && state.debugGalaxyLayoutPending == true;
-      frame++
-    ) {
-      await tester.pump(const Duration(milliseconds: 16));
-      state = tester.state(find.byType(AnimatedResourceGraph));
+    final dynamic state = tester.state(find.byType(AnimatedResourceGraph));
+    for (var i = 0; i < 64; i++) {
+      expect(state.debugPositionFor('node-$i'), isNotNull);
     }
-    expect(state.debugGalaxyLayoutPending, isFalse);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Galaxia agrupa por dependencia, no por tipo', (tester) async {
+    // Dos agentes con una skill cada uno. Lo que tiene que quedar junto es
+    // cada agente con SU skill; hubo un agrupamiento por familia de tipo que
+    // llevaba las dos skills al mismo sitio y separaba a cada agente de
+    // aquello que usa.
+    const nodes = [
+      GraphNode(id: 'root', label: 'Orquestación', type: 'workflow'),
+      GraphNode(id: 'agente-a', label: 'Agente A', type: 'agent'),
+      GraphNode(id: 'agente-b', label: 'Agente B', type: 'agent'),
+      GraphNode(id: 'skill-a', label: 'Skill A', type: 'skill'),
+      GraphNode(id: 'skill-b', label: 'Skill B', type: 'skill'),
+    ];
+    const edges = [
+      GraphEdge(sourceId: 'root', targetId: 'agente-a'),
+      GraphEdge(sourceId: 'root', targetId: 'agente-b'),
+      GraphEdge(sourceId: 'agente-a', targetId: 'skill-a'),
+      GraphEdge(sourceId: 'agente-b', targetId: 'skill-b'),
+    ];
+    final controller = GraphSortController(GraphSortMode.galaxy);
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      wrap(
+        AnimatedResourceGraph(
+          nodes: nodes,
+          edges: edges,
+          rootId: 'root',
+          sortController: controller,
+          quickViewDescriptionLabel: 'Descripción',
+          quickViewNoDescriptionLabel: 'Sin descripción',
+          quickViewConnectionsLabel: 'Conexiones',
+          quickViewNoConnectionsLabel: 'Sin conexiones',
+          quickViewCloseTooltip: 'Cerrar',
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final dynamic state = tester.state(find.byType(AnimatedResourceGraph));
+    Offset posicion(String id) => state.debugPositionFor(id) as Offset;
+    final aSuDependencia = (posicion('agente-a') - posicion('skill-a')).distance;
+    final alMismoTipo = (posicion('skill-a') - posicion('skill-b')).distance;
+
+    expect(
+      aSuDependencia,
+      lessThan(alMismoTipo),
+      reason:
+          'una skill debe quedar más cerca del agente que la usa que de otra '
+          'skill con la que no tiene ninguna relación',
+    );
+  });
+
+  testWidgets('un nodo lejos del centro del lienzo sigue respondiendo', (
+    tester,
+  ) async {
+    // El lienzo de Galaxia es varias veces el visor, pero el `Positioned` que
+    // lo aloja mide lo que ocupa en pantalla. Sin un `OverflowBox`, el `Stack`
+    // interior heredaba ese tamaño menor y descartaba el hit test de todo lo
+    // que cayera más allá: los nodos alejados se veían y no respondían ni al
+    // ratón ni al clic.
+    final nodes = [
+      const GraphNode(id: 'root', label: 'Raíz', type: 'agent'),
+      for (var i = 0; i < 24; i++)
+        GraphNode(id: 'skill-$i', label: 'Skill $i', type: 'skill'),
+    ];
+    final edges = [
+      for (var i = 0; i < 24; i++)
+        GraphEdge(sourceId: 'root', targetId: 'skill-$i'),
+    ];
+    final controller = GraphSortController(GraphSortMode.galaxy);
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      wrap(
+        AnimatedResourceGraph(
+          nodes: nodes,
+          edges: edges,
+          rootId: 'root',
+          sortController: controller,
+          quickViewDescriptionLabel: 'Descripción',
+          quickViewNoDescriptionLabel: 'Sin descripción',
+          quickViewConnectionsLabel: 'Conexiones',
+          quickViewNoConnectionsLabel: 'Sin conexiones',
+          quickViewCloseTooltip: 'Cerrar',
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 1200));
+
+    dynamic state = tester.state(find.byType(AnimatedResourceGraph));
+    // El más alejado del centro: el que el hit test perdía.
+    final centro = state.debugPositionFor('root') as Offset;
+    var lejano = 'skill-0';
+    var maxDistancia = 0.0;
+    for (var i = 0; i < 24; i++) {
+      final posicion = state.debugPositionFor('skill-$i') as Offset?;
+      if (posicion == null) continue;
+      final distancia = (posicion - centro).distance;
+      if (distancia > maxDistancia) {
+        maxDistancia = distancia;
+        lejano = 'skill-$i';
+      }
+    }
+
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    addTearDown(mouse.removePointer);
+    await mouse.addPointer();
+    await mouse.moveTo(
+      tester.getCenter(find.text(lejano.replaceFirst('skill-', 'Skill '))),
+    );
+    await tester.pump();
+
+    state = tester.state(find.byType(AnimatedResourceGraph));
+    expect(state.debugHighlightedNodeId, lejano);
   });
 
   testWidgets('Galaxia realza el nodo bajo el puntero', (tester) async {

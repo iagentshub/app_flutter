@@ -121,18 +121,16 @@ void main() {
         });
       }
       if (path == '/api/settings/platform') return _json({});
-      if (path.endsWith('/graph')) {
+      if (path.endsWith('/relations')) {
         return _json({
-          'root_id': 'user:user-1',
-          'nodes': [
-            {'id': 'user:user-1', 'label': 'admin', 'type': 'user'},
-            {'id': 'agent:agent-1', 'label': 'Researcher', 'type': 'agent'},
-          ],
-          'edges': [
+          'root': {'type': 'user', 'id': 'user-1', 'label': 'admin'},
+          'items': [
             {
-              'source_id': 'user:user-1',
-              'target_id': 'agent:agent-1',
+              'type': 'agent',
+              'id': 'agent-1',
+              'label': 'Researcher',
               'relation': 'owns',
+              'via': null,
             },
           ],
         });

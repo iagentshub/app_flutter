@@ -1,6 +1,7 @@
 import '../../../core/network/api_error.dart';
 import '../../../core/network/api_repository.dart';
 import '../../../models/explore/explore_models.dart';
+import '../../../shared/graph/resource_graph_builder.dart';
 
 /// Relación entre el catálogo y lo que el usuario ya tiene enlazado.
 ///
@@ -156,28 +157,28 @@ class ExploreRepository extends ApiRepository {
     return ExploreOfficialPackDetail.fromJson(response.json);
   }
 
-  Future<ExploreOfficialPackGraph> getOfficialPackGraph(
+  Future<GraphBuild> getOfficialPackGraph(
     String token,
     String sourceId,
   ) async {
     final response = await apiClient.get(
-      '/api/explore/official-packs/${Uri.encodeComponent(sourceId)}/graph',
+      '/api/explore/official_source/${Uri.encodeComponent(sourceId)}/relations',
       gaToken: token,
     );
-    return ExploreOfficialPackGraph.fromJson(response.json);
+    return fromRelations(response.json);
   }
 
-  Future<ExploreResourceGraph> getResourceGraph(
+  Future<GraphBuild> getResourceGraph(
     String token, {
     required String resourceType,
     required String resourceId,
   }) async {
     final response = await apiClient.get(
-      '/api/explore/${Uri.encodeComponent(resourceType)}/${Uri.encodeComponent(resourceId)}/graph',
+      '/api/explore/${Uri.encodeComponent(resourceType)}/${Uri.encodeComponent(resourceId)}/relations',
       gaToken: token,
       cache: false,
     );
-    return ExploreResourceGraph.fromJson(response.json);
+    return fromRelations(response.json);
   }
 
   Future<ExploreOfficialPackLinkResult> linkOfficialPack(

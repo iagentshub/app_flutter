@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../models/agents/agent_models.dart';
 import '../../../models/knowledge/knowledge_models.dart';
-import '../../../shared/graph/graph_models.dart';
+import '../../../shared/graph/resource_graph_builder.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/overflow_menu_button.dart';
@@ -66,114 +66,16 @@ class AgentCard extends StatelessWidget {
   /// (p. ej. en recursos compartidos de solo lectura).
   final VoidCallback? onToggleActive;
 
-  /// Nodos del grafo de contenido: el agente en el centro y sus skills,
-  /// knowledge, conexión y memoria alrededor.
-  ({List<GraphNode> nodes, List<GraphEdge> edges}) _graphData() {
-    final nodes = <String, GraphNode>{
-      'root': GraphNode(
-        id: 'root',
-        label: item.name,
-        type: 'agent',
-        description: item.description,
-      ),
-    };
-    final edges = <String, GraphEdge>{};
-
-    void addNode(GraphNode node) => nodes[node.id] = node;
-    void addEdge(String sourceId, String targetId) {
-      edges['$sourceId->$targetId'] = GraphEdge(
-        sourceId: sourceId,
-        targetId: targetId,
-      );
-    }
-
-    if (item.connectionId.isNotEmpty) {
-      addNode(
-        GraphNode(
-          id: 'connection',
-          label: connectionNames[item.connectionId] ?? item.connectionId,
-          type: 'connection',
-        ),
-      );
-      addEdge('root', 'connection');
-    }
-    for (final skill in item.skills) {
-      addNode(
-        GraphNode(
-          id: 'skill-$skill',
-          label: skillNames[skill] ?? skill,
-          type: 'skill',
-        ),
-      );
-      addEdge('root', 'skill-$skill');
-    }
-    for (final knowledge in item.knowledge) {
-      addNode(
-        GraphNode(
-          id: 'knowledge-$knowledge',
-          label: knowledgeNames[knowledge] ?? knowledge,
-          type: 'knowledge',
-        ),
-      );
-      addEdge('root', 'knowledge-$knowledge');
-    }
-    for (final pack in item.knowledgePacks) {
-      final packNodeId = 'knowledge-pack-$pack';
-      addNode(
-        GraphNode(
-          id: packNodeId,
-          label: knowledgePackNames[pack] ?? pack,
-          type: 'knowledge_pack',
-        ),
-      );
-      addEdge('root', packNodeId);
-      for (final knowledge in knowledgePackItems[pack] ?? const []) {
-        final knowledgeNodeId = 'knowledge-${knowledge.id}';
-        addNode(
-          GraphNode(
-            id: knowledgeNodeId,
-            label: knowledge.packRelativePath.isEmpty
-                ? knowledge.name
-                : knowledge.packRelativePath,
-            type: 'knowledge',
-            description: knowledge.preview,
-          ),
-        );
-        addEdge(packNodeId, knowledgeNodeId);
-      }
-    }
-    for (final prompt in item.prompts) {
-      addNode(
-        GraphNode(
-          id: 'prompt-$prompt',
-          label: promptNames[prompt] ?? prompt,
-          type: 'prompt',
-        ),
-      );
-      addEdge('root', 'prompt-$prompt');
-    }
-    for (final tool in item.tools) {
-      addNode(
-        GraphNode(
-          id: 'tool-$tool',
-          label: toolNames[tool] ?? tool,
-          type: 'tool',
-        ),
-      );
-      addEdge('root', 'tool-$tool');
-    }
-    if (item.useMemory) {
-      addNode(
-        GraphNode(
-          id: 'memory',
-          label: item.memoryFile.isEmpty ? 'memory' : item.memoryFile,
-          type: 'memory',
-        ),
-      );
-      addEdge('root', 'memory');
-    }
-    return (nodes: nodes.values.toList(), edges: edges.values.toList());
-  }
+  /// Catálogo de nombres que el grafo necesita para no enseñar ids crudos.
+  ResourceNames get _graphNames => ResourceNames(
+    skills: skillNames,
+    prompts: promptNames,
+    tools: toolNames,
+    knowledge: knowledgeNames,
+    packs: knowledgePackNames,
+    connections: connectionNames,
+    packItems: knowledgePackItems,
+  );
 
   /// Ocho acciones no caben en la fila de una tarjeta a ancho de móvil (328 px
   /// en la rejilla de un teléfono de 360): el `Row` desbordaba 70 px y las
@@ -248,8 +150,6 @@ class AgentCard extends StatelessWidget {
         connectionNames[item.connectionId] ?? item.connectionId,
       );
     }
-    final graph = _graphData();
-
     final card = Card(
       margin: EdgeInsets.zero,
       child: Padding(
@@ -329,9 +229,8 @@ class AgentCard extends StatelessWidget {
                 ResourceGraphButton(
                   tooltip: tx('agents.graph_tooltip', 'Ver grafo de contenido'),
                   dialogTitle: item.name,
-                  nodes: graph.nodes,
-                  edges: graph.edges,
-                  rootId: 'root',
+                  buildGraph: () =>
+                      agentGraph(agent: item, names: _graphNames),
                   closeLabel: tx('common.close', 'Cerrar'),
                   searchHint: tx('graph.search_hint', 'Buscar en el grafo...'),
                   sortTooltip: tx('graph.sort_tooltip', 'Ordenar'),

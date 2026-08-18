@@ -1,23 +1,34 @@
 part of '../pages/knowledge_page.dart';
 
 extension _KnowledgeResourceGraph on _KnowledgePageState {
-  Future<void> _loadGraphRelations() async {
-    final token = _token;
-    if (token == null || token.isEmpty) return;
-    final generation = ++_graphRelationsGeneration;
-    try {
-      final agents = await _agentsRepository.listAgents(
-        token,
-        groupId: _activeGroupId,
-        includeInactive: true,
-      );
-      if (!mounted || generation != _graphRelationsGeneration) return;
-      refresh(() => _relatedAgents = agents);
-    } catch (_) {
-      if (!mounted || generation != _graphRelationsGeneration) return;
-      refresh(() => _relatedAgents = const []);
-    }
+  /// Agentes que pueden aparecer en un grafo de esta pantalla, cargados la
+  /// primera vez que se abre uno.
+  ///
+  /// Antes se pedían en `initState`: una llamada al backend, con todos los
+  /// agentes del grupo incluidos los inactivos, para decidir qué relaciones
+  /// dibujaría un grafo que la mayoría de las visitas a Knowledge no abre.
+  Future<List<AgentItem>> _loadGraphRelations() {
+    return _graphRelations ??= () async {
+      final token = _token;
+      if (token == null || token.isEmpty) return const <AgentItem>[];
+      try {
+        return await _agentsRepository.listAgents(
+          token,
+          groupId: _activeGroupId,
+          includeInactive: true,
+        );
+      } catch (_) {
+        // Sin agentes el grafo sigue teniendo sentido: enseña el recurso y su
+        // pack. Se olvida el fallo para reintentar al siguiente grafo.
+        _graphRelations = null;
+        return const <AgentItem>[];
+      }
+    }();
   }
+
+  /// Descarta el catálogo cacheado: al cambiar de grupo los agentes visibles
+  /// son otros.
+  void _invalidateGraphRelations() => _graphRelations = null;
 
   bool _agentUsesResource(AgentItem agent, String type, String id) {
     return switch (type) {
@@ -30,126 +41,62 @@ extension _KnowledgeResourceGraph on _KnowledgePageState {
     };
   }
 
-  GraphNode _agentGraphNode(AgentItem agent) => GraphNode(
-    id: 'agent-${agent.id}',
-    label: agent.name,
-    type: 'agent',
-    description: agent.description,
-  );
-
   Widget _buildResourceGraphButton({
     required String resourceId,
     required String resourceName,
     required String resourceType,
     String resourceDescription = '',
   }) {
-    final agents = _relatedAgents
-        .where((agent) => _agentUsesResource(agent, resourceType, resourceId))
-        .toList();
-    final nodes = <GraphNode>[
-      GraphNode(
-        id: 'root',
-        label: resourceName,
-        type: resourceType,
-        description: resourceDescription,
+    return _graphButton(
+      resourceName,
+      () async => resourceUsageGraph(
+        resourceId: resourceId,
+        resourceName: resourceName,
+        resourceType: resourceType,
+        resourceDescription: resourceDescription,
+        usedBy: (await _loadGraphRelations())
+            .where(
+              (agent) => _agentUsesResource(agent, resourceType, resourceId),
+            )
+            .toList(),
       ),
-      ...agents.map(_agentGraphNode),
-    ];
-    final edges = [
-      for (final agent in agents)
-        GraphEdge(sourceId: 'root', targetId: 'agent-${agent.id}'),
-    ];
-    return _graphButton(resourceName, nodes, edges);
+    );
   }
 
   Widget _buildKnowledgeItemGraphButton(KnowledgeItem item) {
-    final nodes = <GraphNode>[
-      GraphNode(
-        id: 'root',
-        label: item.name,
-        type: 'knowledge',
-        description: item.preview,
-      ),
-    ];
-    final edges = <GraphEdge>[];
     final packId = item.packId;
-    if (packId != null && packId.isNotEmpty) {
-      final pack = _packs
-          .where((candidate) => candidate.id == packId)
-          .firstOrNull;
-      nodes.add(
-        GraphNode(
-          id: 'pack-$packId',
-          label: pack?.name ?? item.packRelativePath,
-          type: 'knowledge_pack',
-          description: pack?.description ?? '',
-        ),
-      );
-      edges.add(GraphEdge(sourceId: 'pack-$packId', targetId: 'root'));
-    }
-    for (final agent in _relatedAgents.where(
-      (agent) =>
-          agent.knowledge.contains(item.id) ||
-          (packId != null && agent.knowledgePacks.contains(packId)),
-    )) {
-      nodes.add(_agentGraphNode(agent));
-      edges.add(GraphEdge(sourceId: 'root', targetId: 'agent-${agent.id}'));
-    }
-    return _graphButton(item.name, nodes, edges);
+    return _graphButton(
+      item.name,
+      () async => knowledgeItemGraph(
+        item: item,
+        pack: packId == null || packId.isEmpty
+            ? null
+            : _packs.where((candidate) => candidate.id == packId).firstOrNull,
+        usedBy: (await _loadGraphRelations())
+            .where(
+              (agent) =>
+                  agent.knowledge.contains(item.id) ||
+                  (packId != null && agent.knowledgePacks.contains(packId)),
+            )
+            .toList(),
+      ),
+    );
   }
 
   Widget _buildKnowledgePackGraphButton(KnowledgePack pack) {
-    final items = _items.where((item) => item.packId == pack.id).toList();
-    final nodesById = <String, GraphNode>{
-      'root': GraphNode(
-        id: 'root',
-        label: pack.name,
-        type: 'knowledge_pack',
-        description: pack.description,
+    return _graphButton(
+      pack.name,
+      () async => knowledgePackGraph(
+        pack: pack,
+        items: _items.where((item) => item.packId == pack.id).toList(),
+        usedBy: await _loadGraphRelations(),
       ),
-    };
-    final edges = <GraphEdge>[];
-    final edgeKeys = <String>{};
-
-    void addEdge(String sourceId, String targetId) {
-      if (edgeKeys.add('$sourceId->$targetId')) {
-        edges.add(GraphEdge(sourceId: sourceId, targetId: targetId));
-      }
-    }
-
-    for (final item in items) {
-      final itemNodeId = 'knowledge-${item.id}';
-      nodesById[itemNodeId] = GraphNode(
-        id: itemNodeId,
-        label: item.packRelativePath.isEmpty
-            ? item.name
-            : item.packRelativePath,
-        type: 'knowledge',
-        description: item.preview,
-      );
-      addEdge('root', itemNodeId);
-    }
-
-    for (final agent in _relatedAgents) {
-      final agentNodeId = 'agent-${agent.id}';
-      if (agent.knowledgePacks.contains(pack.id)) {
-        nodesById[agentNodeId] = _agentGraphNode(agent);
-        addEdge('root', agentNodeId);
-      }
-      for (final item in items.where(
-        (candidate) => agent.knowledge.contains(candidate.id),
-      )) {
-        nodesById[agentNodeId] = _agentGraphNode(agent);
-        addEdge('knowledge-${item.id}', agentNodeId);
-      }
-    }
-    return _graphButton(pack.name, nodesById.values.toList(), edges);
+    );
   }
 
   Widget _graphButton(
     String resourceName,
-    List<GraphNode> nodes,
-    List<GraphEdge> edges,
+    Future<GraphBuild> Function() buildGraph,
   ) {
     return ResourceGraphButton(
       tooltip: _tx('knowledge.graph_tooltip', 'Ver relaciones'),
@@ -157,9 +104,7 @@ extension _KnowledgeResourceGraph on _KnowledgePageState {
         'knowledge.graph_title',
         'Relaciones de {{name}}',
       ).replaceAll('{{name}}', resourceName),
-      nodes: nodes,
-      edges: edges,
-      rootId: 'root',
+      buildGraph: buildGraph,
       closeLabel: _tx('common.close', 'Cerrar'),
       searchHint: _tx('graph.search_hint', 'Buscar en el grafo...'),
       sortTooltip: _tx('graph.sort_tooltip', 'Ordenar'),

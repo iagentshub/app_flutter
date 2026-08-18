@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/explore/explore_models.dart';
 import '../../../shared/graph/graph_dialog.dart';
-import '../../../shared/graph/graph_models.dart';
+import '../../../shared/graph/resource_graph_builder.dart';
 import '../../../shared/utils/debouncer.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/resource_type_badge.dart';
@@ -152,46 +152,18 @@ class _OfficialPackPageState extends State<OfficialPackPage> {
   Future<void> _showGraph() async {
     final detail = _detail;
     if (detail == null) return;
-    final rootId = 'official_source:${detail.pack.sourceId}';
-    final nodes = <GraphNode>[
-      GraphNode(
-        id: rootId,
-        label: detail.pack.name,
-        type: 'official_source',
-        description: detail.pack.repositoryUrl,
-      ),
-    ];
-    final edges = <GraphEdge>[];
-    final nodeIds = <String, String>{};
-    for (final component in detail.components) {
-      final nodeId = '${component.resourceType}:${component.resourceId}';
-      nodeIds[component.componentKey] = nodeId;
-      nodes.add(
-        GraphNode(
-          id: nodeId,
-          label: component.name,
-          type: component.resourceType,
-          description: component.description,
-        ),
-      );
-      edges.add(GraphEdge(sourceId: rootId, targetId: nodeId));
-    }
-    for (final component in detail.components) {
-      final sourceId = nodeIds[component.componentKey];
-      if (sourceId == null) continue;
-      for (final dependency in component.dependencies) {
-        final targetId = nodeIds[dependency];
-        if (targetId != null) {
-          edges.add(GraphEdge(sourceId: sourceId, targetId: targetId));
-        }
-      }
-    }
+    final graph = officialPackGraph(
+      sourceId: detail.pack.sourceId,
+      sourceName: detail.pack.name,
+      sourceDescription: detail.pack.repositoryUrl,
+      components: detail.components,
+    );
     await showResourceGraphDialog(
       context: context,
       title: _tx('explore.pack_graph', 'Grafo del pack'),
-      nodes: nodes,
-      edges: edges,
-      rootId: rootId,
+      nodes: graph.nodes,
+      edges: graph.edges,
+      rootId: graph.rootId,
       closeLabel: _tx('common.close', 'Cerrar'),
       searchHint: _tx('graph.search_hint', 'Buscar en el grafo...'),
       sortTooltip: _tx('graph.sort_tooltip', 'Ordenar'),

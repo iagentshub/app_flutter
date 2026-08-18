@@ -1,5 +1,6 @@
 import '../../../core/network/api_repository.dart';
 import '../../../models/admin/admin_explore_models.dart';
+import '../../../shared/graph/resource_graph_builder.dart';
 
 /// Operaciones genéricas por tipo de recurso (grafo de contenido,
 /// reasignación de dueño) más el borrado administrativo de los tipos que no
@@ -9,16 +10,16 @@ import '../../../models/admin/admin_explore_models.dart';
 class AdminResourcesRepository extends ApiRepository {
   AdminResourcesRepository({required super.apiClient});
 
-  Future<AdminResourceGraph> getResourceGraph(
+  Future<GraphBuild> getResourceGraph(
     String token,
     AdminResourceType type,
     String resourceId,
   ) async {
     final response = await apiClient.get(
-      '/api/admin/resources/${Uri.encodeComponent(type.wireName)}/${Uri.encodeComponent(resourceId)}/graph',
+      '/api/admin/resources/${Uri.encodeComponent(type.wireName)}/${Uri.encodeComponent(resourceId)}/relations',
       gaToken: token,
     );
-    return AdminResourceGraph.fromJson(response.json);
+    return fromRelations(response.json);
   }
 
   /// Reasigna el propietario de un recurso (agente, skill, conexión,

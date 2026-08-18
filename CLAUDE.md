@@ -53,6 +53,49 @@ sido él; un «no hay resultados» tras una búsqueda que sí encontraba algo pa
 buscador roto. Explorar es el ejemplo montado: `relation` viaja en la URL y el backend
 devuelve `X-Linked-Count` para explicar el vacío.
 
+## El grafo se arma en un solo sitio
+
+`shared/graph/resource_graph_builder.dart` es el **único** fichero que puede
+crear un `GraphNode` o un `GraphEdge`; `test/feature_architecture_test.dart` lo
+rechaza en cualquier otro sitio. Armar un grafo llegó a estar escrito ocho veces
+—cuatro aquí y cuatro en el backend— y las copias divergieron: el mismo agente
+enseñaba conexión, skills, prompts, tools, knowledge y packs desde Agentes, pero
+solo conexión, skills, knowledge y memoria, con el id crudo por etiqueta, desde
+Workflows.
+
+- Lo que la pantalla ya tiene cargado se arma aquí: `agentGraph`,
+  `workflowGraph`, `knowledgePackGraph`, `officialPackGraph`…
+- Lo que llega del backend entra por `fromRelations`. Los endpoints
+  (`/api/…/relations`) devuelven **hechos planos** —qué cuelga de qué, con qué
+  relación— y no un grafo montado: las carpetas de un pack, por ejemplo, se
+  construyen aquí a partir del `path` de cada fichero.
+- El backend solo interviene donde el cliente no puede: el filtro de
+  dependencias públicas de un recurso publicado y los recursos de otros
+  usuarios en Admin. El porqué completo está en
+  `docs/adr/010-el-grafo-se-arma-en-el-cliente.md` del repo `backend_fastapi`.
+- `ResourceGraphButton` recibe una función que arma el grafo, no el grafo hecho:
+  la tarjeta vive en una rejilla que se reconstruye al desplazarse.
+- **El modo Galaxia agrupa por dependencia, no por tipo**, y su reparto es
+  geométrico, no una simulación de fuerzas: anillo por profundidad desde la
+  raíz, un sector angular por rama proporcional a su tamaño, hermanos
+  escalonados en zigzag a lo largo del brazo y un giro por nivel que curva los
+  radios en espiral. Sale en O(n), en el mismo frame y siempre igual para el
+  mismo grafo.
+
+  Lo que había antes era un layout de fuerzas, y con él nunca salía una
+  galaxia: repartía por área, así que la densidad crecía hacia fuera, y la suma
+  de repulsiones —una por cada otro nodo— acababa venciendo a la gravedad y
+  aplastando el grafo contra los bordes. En un móvil, 109 de 121 nodos
+  terminaban pegados al borde. También hubo un agrupamiento por familia de tipo,
+  con halos de color detrás, que mezclaba recursos sin relación entre sí.
+
+  Dos cosas que parecen detalle y no lo son: **el lienzo es cuadrado** (heredar
+  el aspecto del visor estira la galaxia hasta volverla un pasillo en pantallas
+  estrechas) y **se dimensiona por el anillo más poblado**, no por área media —
+  si cuarenta recursos cuelgan del mismo sitio, lo que necesitan es perímetro.
+  `test/shared/graph/galaxy_layout_reparto_test.dart` mide las cuatro cosas
+  sobre un móvil de 360x700.
+
 ## Carga diferida en web
 
 `internal_router.dart` importa cinco páginas con `deferred as` —admin, Centinel,

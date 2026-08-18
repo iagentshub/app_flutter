@@ -1,4 +1,3 @@
-import '../../shared/graph/graph_models.dart';
 
 class ExploreItem {
   const ExploreItem({required this.raw});
@@ -198,65 +197,6 @@ class ExploreOfficialPackDetail {
 
   final ExploreOfficialPack pack;
   final List<ExploreOfficialPackComponent> components;
-}
-
-class ExploreOfficialPackGraph {
-  const ExploreOfficialPackGraph({
-    required this.rootId,
-    required this.nodes,
-    required this.edges,
-  });
-
-  factory ExploreOfficialPackGraph.fromJson(Map<String, dynamic> json) =>
-      ExploreOfficialPackGraph(
-        rootId: json['root_id']?.toString() ?? '',
-        nodes: (json['nodes'] as List? ?? const [])
-            .whereType<Map>()
-            .map(
-              (item) => GraphNode(
-                id: item['id']?.toString() ?? '',
-                label: item['label']?.toString() ?? '',
-                type: item['type']?.toString() ?? 'unknown',
-                description: item['description']?.toString() ?? '',
-              ),
-            )
-            .toList(),
-        edges: (json['edges'] as List? ?? const [])
-            .whereType<Map>()
-            .map(
-              (item) => GraphEdge(
-                sourceId: item['source_id']?.toString() ?? '',
-                targetId: item['target_id']?.toString() ?? '',
-                dashed: item['dashed'] == true,
-              ),
-            )
-            .toList(),
-      );
-
-  final String rootId;
-  final List<GraphNode> nodes;
-  final List<GraphEdge> edges;
-}
-
-class ExploreResourceGraph {
-  const ExploreResourceGraph({
-    required this.rootId,
-    required this.nodes,
-    required this.edges,
-  });
-
-  factory ExploreResourceGraph.fromJson(Map<String, dynamic> json) {
-    final graph = ExploreOfficialPackGraph.fromJson(json);
-    return ExploreResourceGraph(
-      rootId: graph.rootId,
-      nodes: graph.nodes,
-      edges: graph.edges,
-    );
-  }
-
-  final String rootId;
-  final List<GraphNode> nodes;
-  final List<GraphEdge> edges;
 }
 
 class ExploreOfficialPackLinkResult {

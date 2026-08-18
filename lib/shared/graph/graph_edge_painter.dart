@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../app/theme/fnc_colors.dart';
-import 'galaxy_layout.dart';
 import 'graph_models.dart';
 
 /// Pinta las aristas del grafo animado: líneas rectas (con progreso de
@@ -19,9 +18,7 @@ class GraphEdgePainter extends CustomPainter {
     this.dashedColor = FncColors.materialOrange,
     this.activeLineColor = FncColors.galaxyEdgeActive,
     this.galaxy = false,
-    this.rootId,
     this.highlightedNodeId,
-    this.constellationCenters = const {},
   });
 
   final List<GraphNode> nodes;
@@ -36,9 +33,7 @@ class GraphEdgePainter extends CustomPainter {
   final Color dashedColor;
   final Color activeLineColor;
   final bool galaxy;
-  final String? rootId;
   final String? highlightedNodeId;
-  final Map<String, Offset> constellationCenters;
 
   Offset? _posFor(String id) {
     final index = nodes.indexWhere((n) => n.id == id);
@@ -87,29 +82,12 @@ class GraphEdgePainter extends CustomPainter {
     ..moveTo(start.dx, start.dy)
     ..lineTo(end.dx, end.dy);
 
+  /// Curva suave y consistente para todas las aristas. La que salía de la
+  /// raíz pasaba antes por el centro de la constelación del otro extremo —el
+  /// agrupamiento por tipo—, que ya no existe: ahora lo que agrupa es la
+  /// dependencia, y la arista une los dos nodos y nada más.
   Path _galaxyPath(GraphEdge edge, Offset start, Offset end) {
     final path = Path()..moveTo(start.dx, start.dy);
-    final root = rootId;
-    if (root != null && (edge.sourceId == root || edge.targetId == root)) {
-      final otherId = edge.sourceId == root ? edge.targetId : edge.sourceId;
-      final otherIndex = nodes.indexWhere((node) => node.id == otherId);
-      final other = otherIndex == -1 ? null : nodes[otherIndex];
-      final anchor = other == null
-          ? null
-          : constellationCenters[GalaxyLayout.constellationKey(other.type)];
-      final rootPosition = edge.sourceId == root ? start : end;
-      final outerPosition = edge.sourceId == root ? end : start;
-      final hub = anchor == null
-          ? Offset.lerp(rootPosition, outerPosition, 0.5)!
-          : Offset.lerp(rootPosition, anchor, 0.52)!;
-      if (edge.sourceId == root) {
-        path.cubicTo(hub.dx, hub.dy, hub.dx, hub.dy, end.dx, end.dy);
-      } else {
-        path.cubicTo(hub.dx, hub.dy, hub.dx, hub.dy, end.dx, end.dy);
-      }
-      return path;
-    }
-
     final delta = end - start;
     final midpoint = Offset.lerp(start, end, 0.5)!;
     final length = math.max(delta.distance, 1);
@@ -156,7 +134,5 @@ class GraphEdgePainter extends CustomPainter {
       oldDelegate.dashedColor != dashedColor ||
       oldDelegate.activeLineColor != activeLineColor ||
       oldDelegate.galaxy != galaxy ||
-      oldDelegate.rootId != rootId ||
-      oldDelegate.highlightedNodeId != highlightedNodeId ||
-      oldDelegate.constellationCenters != constellationCenters;
+      oldDelegate.highlightedNodeId != highlightedNodeId;
 }

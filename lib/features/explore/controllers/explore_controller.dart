@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/explore/explore_models.dart';
 import '../../../models/manager/group_models.dart';
+import '../../../shared/graph/resource_graph_builder.dart';
 import '../../../shared/state/action_result.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/debouncer.dart';
@@ -314,7 +315,7 @@ class ExploreController extends ChangeNotifier {
 
   Future<ActionResult?> showResourceGraph(
     ExploreItem item, {
-    required Future<void> Function(ExploreResourceGraph graph) present,
+    required Future<void> Function(GraphBuild graph) present,
   }) async {
     final token = _token;
     if (token == null || token.isEmpty) return null;
@@ -343,7 +344,7 @@ class ExploreController extends ChangeNotifier {
 
   Future<ActionResult?> showOfficialPackGraph(
     ExploreOfficialPack pack, {
-    required Future<void> Function(ExploreOfficialPackGraph graph) present,
+    required Future<void> Function(GraphBuild graph) present,
   }) async {
     final token = _token;
     if (token == null || token.isEmpty) return null;

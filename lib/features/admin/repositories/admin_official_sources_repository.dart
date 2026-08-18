@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import '../../../core/network/api_repository.dart';
-import '../../../models/admin/admin_explore_models.dart';
+import '../../../shared/graph/resource_graph_builder.dart';
 import '../models/official_import_models.dart';
 
 /// Fuentes oficiales del panel de administración.
@@ -177,12 +177,12 @@ class AdminOfficialSourcesRepository extends ApiRepository {
     return ImportDiff.fromJson(response.json);
   }
 
-  Future<AdminResourceGraph> getDraftGraph(String token, String draftId) async {
+  Future<GraphBuild> getDraftGraph(String token, String draftId) async {
     final response = await apiClient.get(
-      '/api/admin/official-source-drafts/${Uri.encodeComponent(draftId)}/graph',
+      '/api/admin/official-source-drafts/${Uri.encodeComponent(draftId)}/relations',
       gaToken: token,
     );
-    return AdminResourceGraph.fromJson(response.json);
+    return fromRelations(response.json);
   }
 
   Future<Map<String, dynamic>> applyDraft(String token, String draftId) async {

@@ -1,18 +1,14 @@
-import 'dart:async';
 import 'dart:collection';
 import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 import '../../app/theme/fnc_colors.dart';
 import '../../app/theme/fnc_fonts.dart';
 import '../labels/label_catalog.dart';
 import 'galaxy_background_painter.dart';
-import 'galaxy_constellation_painter.dart';
-import 'galaxy_layout.dart';
 import 'graph_edge_painter.dart';
 import 'graph_models.dart';
 import 'graph_sort_controller.dart';
@@ -119,9 +115,29 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
   static const _initialFitFloor = 0.55;
 
   // --- Modo galaxia (layout de fuerzas) ---
-  // Área objetivo (px²) por nodo: controla la densidad de puntos del
-  // lienzo a medida que crece el grafo.
-  static const _galaxyPerNodeArea = 8000.0;
+  /// Separación buscada entre dos nodos vecinos del mismo anillo.
+  static const _galaxySpacing = 46.0;
+
+  /// Cuánto perímetro ahorra el escalonado radial de los hermanos: al
+  /// repartirlos también hacia fuera, en un anillo caben más de los que
+  /// dictaría su circunferencia.
+  static const _galaxyStaggerGain = 1.3;
+
+  /// Ancho radial, en niveles, sobre el que se escalonan los hermanos de un
+  /// mismo padre. Lo usan por igual el reparto y el cálculo del lienzo: si
+  /// dejaran de coincidir, el lienzo se dimensionaría para un dibujo que no
+  /// es el que se pinta.
+  static const _galaxySpread = 0.9;
+
+  /// Radio de un nodo según su profundidad. El exponente reparte más espacio
+  /// a los primeros niveles: núcleo suelto y periferia apretada, que es la
+  /// densidad de una galaxia y no la de un anillo.
+  static double _galaxyRadius(
+    double profundidad,
+    int maxLevel,
+    double discRadius,
+  ) => discRadius *
+      math.pow(profundidad / (maxLevel + _galaxySpread), 0.72).toDouble();
   // El lienzo del modo galaxia siempre es al menos esto de grande respecto
   // al visor, aunque el grafo tenga pocos nodos: sin este mínimo, un
   // grafo que ya "cabe" deja el lienzo del mismo tamaño que la pantalla y
@@ -129,19 +145,16 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
   // un "fit to view" — sencillamente no hay hacia dónde desplazarse. Un
   // factor bajo también deja los nodos apretados contra el borde del
   // visor, dando sensación de "límite" en vez de espacio para moverse.
-  static const _galaxyMinCanvasFactor = 3.2;
-  // Factor sobre la distancia ideal k = factor * sqrt(área / n).
-  static const _galaxyIdealLengthFactor = 1.0;
-  // Atracción uniforme de todos los nodos hacia el centro: con cientos de
-  // nodos, la suma de repulsiones que recibe cada uno (una por cada otro
-  // nodo del grafo) casi nunca se cancela del todo, y esa resultante neta
-  // crece con el tamaño del grafo. Sin una gravedad que la contrarreste
-  // con fuerza suficiente, los nodos acaban empujados hasta el borde del
-  // lienzo (donde el clamp los deja alineados en fila, nada orgánico).
-  static const _galaxyGravity = 0.06;
-  static const _galaxyClusterGravity = 0.14;
-  // Semilla fija: reabrir el mismo recurso reproduce el mismo layout.
-  static const _galaxySeed = 20260804;
+  static const _galaxyMinCanvasFactor = 2.0;
+
+  /// Radio del disco donde vive la galaxia, en fracción del lado del lienzo.
+  /// Lo que queda fuera es el margen por el que se puede desplazar sin que
+  /// los nodos toquen el borde.
+  static const _galaxyDiscRadius = 0.42;
+
+  /// Cuánto gira cada anillo respecto al anterior. Es lo que convierte los
+  /// radios rectos en brazos: a 0 el grafo se ve como una rueda de radios.
+  static const _galaxyTwist = 0.38;
 
   // Se crean en `initState`, no como inicializadores `late` perezosos: con
   // un grafo de un solo nodo (raíz sin hijos) `build()` corta antes de
@@ -164,8 +177,6 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
   // tienen una posición manual asignada.
   final Map<String, Offset> _positions = {};
   final Set<String> _draggedNodeIds = {};
-  bool _galaxyLayoutPending = false;
-  int _galaxyLayoutGeneration = 0;
   Size? _galaxyLayoutSize;
   String? _galaxyLayoutFingerprint;
   final Map<String, FocusNode> _nodeFocusNodes = {};
@@ -261,21 +272,19 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
   bool get debugEntranceCompleted => _entrance.value == 1;
 
   @visibleForTesting
-  bool get debugGalaxyLayoutPending => _galaxyLayoutPending;
-
-  @visibleForTesting
   String? get debugHighlightedNodeId => _focusedNodeId ?? _hoveredNodeId;
 
   @visibleForTesting
   Offset? debugPositionFor(String nodeId) => _positions[nodeId];
+
+  @visibleForTesting
+  Size? get debugCanvasSize => _galaxyLayoutSize;
 
   /// Cambiar de modo reordena desde cero: se descartan las posiciones
   /// (incluidas las arrastradas a mano) y se recentra el lienzo, ya que
   /// cada modo tiene una forma y un tamaño de lienzo muy distintos.
   void _handleSortModeChanged() {
     setState(() {
-      _galaxyLayoutGeneration++;
-      _galaxyLayoutPending = false;
       _galaxyLayoutSize = null;
       _galaxyLayoutFingerprint = null;
       _positions.clear();
@@ -317,8 +326,6 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
       widget.rootId,
     );
     if (oldFingerprint != currentFingerprint) {
-      _galaxyLayoutGeneration++;
-      _galaxyLayoutPending = false;
       _galaxyLayoutSize = null;
       _galaxyLayoutFingerprint = null;
       _positions.removeWhere((id, _) => !currentIds.contains(id));
@@ -372,23 +379,50 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
 
   Size _canvasSizeFor(Size viewport, Map<String, int> levels) {
     if (_sortMode == GraphSortMode.galaxy) {
-      // Área objetivo proporcional al número de nodos, con el mismo
-      // aspecto que el viewport (un layout de fuerzas no tiene un eje
-      // principal como los modos jerárquicos), para mantener una densidad
-      // de puntos razonable tanto con 60 como con 500+ nodos.
-      final targetArea = widget.nodes.length * _galaxyPerNodeArea;
-      final aspect = viewport.width / viewport.height;
-      final height = math.sqrt(targetArea / aspect);
-      final width = height * aspect;
+      // Lienzo **cuadrado**: la galaxia se reparte en un disco centrado, y
+      // heredar el aspecto del visor la estiraba hasta volverla un óvalo
+      // aplastado — en un móvil, con el visor casi al doble de alto que de
+      // ancho, el resultado era un pasillo con todo pegado a los lados.
+      //
+      // El lado sale del área que piden los nodos, con un mínimo relativo al
+      // lado mayor del visor para que siempre quede lienzo por el que
+      // desplazarse.
       final minCanvasFactor = widget.nodes.length <= 20
-          ? 1.6
+          ? 1.5
           : widget.nodes.length <= 60
-          ? 2.2
+          ? 1.8
           : _galaxyMinCanvasFactor;
-      return Size(
-        math.max(viewport.width * minCanvasFactor, width),
-        math.max(viewport.height * minCanvasFactor, height),
+
+      // Lo que decide el tamaño no es el número total de nodos sino el nivel
+      // más poblado: si cuarenta recursos cuelgan del mismo sitio, comparten
+      // un anillo y necesitan perímetro donde caber. Dimensionar por área
+      // media dejaba justo ese caso —el habitual: un agente con muchas
+      // dependencias— con los nodos pegados unos a otros.
+      final porNivel = <int, int>{};
+      for (final nivel in levels.values) {
+        porNivel[nivel] = (porNivel[nivel] ?? 0) + 1;
+      }
+      var radioNecesario = 0.0;
+      final maxLevel = math.max(1, levels.values.fold(0, math.max));
+      for (final entry in porNivel.entries) {
+        if (entry.key == 0) continue;
+        // Perímetro que piden los nodos de ese anillo, dividido entre lo que
+        // gana el escalonado radial de los hermanos.
+        final perimetro = entry.value * _galaxySpacing / _galaxyStaggerGain;
+        final radioDelNivel = perimetro / (2 * math.pi);
+        // De ese radio al del disco completo, con la misma fórmula con la
+        // que después se coloca cada nodo.
+        final fraccion = _galaxyRadius(entry.key.toDouble(), maxLevel, 1.0);
+        radioNecesario = math.max(
+          radioNecesario,
+          radioDelNivel / math.max(fraccion, 0.25),
+        );
+      }
+      final side = math.max(
+        math.max(viewport.width, viewport.height) * minCanvasFactor,
+        radioNecesario / _galaxyDiscRadius,
       );
+      return Size(side, side);
     }
     final perLevelCount = <int, int>{};
     for (final level in levels.values) {
@@ -418,16 +452,6 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     }
   }
 
-  /// Cuántas iteraciones de la simulación de fuerzas correr según el
-  /// tamaño del grafo: menos nodos permiten más iteraciones (layout más
-  /// asentado) sin arriesgar un frame lento con grafos de cientos de nodos.
-  int _galaxyIterationsFor(int n) {
-    if (n <= 60) return 300;
-    if (n <= 150) return 220;
-    if (n <= 300) return 150;
-    return 90;
-  }
-
   String _fingerprintFor(
     List<GraphNode> nodes,
     List<GraphEdge> edges,
@@ -436,10 +460,29 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
       '$rootId|${nodes.map((node) => node.id).join('|')}|'
       '${edges.map((edge) => '${edge.sourceId}>${edge.targetId}').join('|')}';
 
-  /// Prepara posiciones iniciales baratas durante el build y difiere la
-  /// simulación de fuerzas hasta después del frame. La simulación cede el
-  /// isolate entre lotes en grafos grandes: funciona tanto en web como en
-  /// nativo y evita un único bloqueo de millones de pares en el build.
+  /// Reparte la galaxia: núcleo en el centro y un brazo por rama.
+  ///
+  /// Antes esto era una simulación de fuerzas, y con ella nunca salía una
+  /// galaxia. Un layout de fuerzas reparte los nodos de forma uniforme por el
+  /// área disponible, así que la densidad crecía hacia fuera —el área de cada
+  /// anillo crece con el radio— y la suma de repulsiones acababa aplastando el
+  /// conjunto contra los bordes: en un móvil, 109 de 121 nodos terminaban
+  /// pegados al borde del lienzo.
+  ///
+  /// El reparto es ahora geométrico y determinista:
+  ///
+  /// - **Anillo por profundidad de dependencia.** La raíz en el centro; cada
+  ///   nivel, un anillo más afuera. Lo que depende de algo está siempre un
+  ///   paso más lejos del núcleo que aquello de lo que depende.
+  /// - **Un sector angular por rama, proporcional a su tamaño.** Cada
+  ///   subárbol recibe una porción del círculo según cuántos descendientes
+  ///   tiene, y sus hijos se reparten dentro de esa porción. Así una rama no
+  ///   invade a la de al lado y cada una se lee como un brazo.
+  /// - **Giro por nivel.** Cada anillo gira un poco respecto al anterior, que
+  ///   es lo que convierte los radios rectos en brazos espirales.
+  ///
+  /// Sale en O(n), sin iteraciones ni frames diferidos, y es estable: el mismo
+  /// grafo da siempre el mismo dibujo.
   void _ensureGalaxyPositions(Size canvasSize) {
     final n = widget.nodes.length;
     if (n == 0) return;
@@ -449,213 +492,125 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
       widget.edges,
       widget.rootId,
     );
-    if (_galaxyLayoutPending) return;
     if (_positions.length == n &&
         _galaxyLayoutFingerprint == fingerprint &&
         _galaxyLayoutSize == canvasSize) {
       return;
     }
-
-    final ids = [for (final node in widget.nodes) node.id];
-    final rootIndex = ids.indexOf(widget.rootId);
-    final center = Offset(canvasSize.width / 2, canvasSize.height / 2);
-    final constellationCenters = GalaxyLayout.centersFor(
-      nodes: widget.nodes,
-      rootId: widget.rootId,
-      canvasSize: canvasSize,
-    );
-    final random = math.Random(_galaxySeed);
-    final existingIds = _galaxyLayoutFingerprint == fingerprint
-        ? <String>{..._draggedNodeIds}
-        : <String>{..._positions.keys, ..._draggedNodeIds};
-    final seedRadius = math.min(canvasSize.width, canvasSize.height) * 0.11;
-    for (var i = 0; i < n; i++) {
-      if (_positions.containsKey(ids[i])) continue;
-      if (i == rootIndex) {
-        _positions[ids[i]] = center;
-        continue;
-      }
-      final node = widget.nodes[i];
-      final clusterCenter =
-          constellationCenters[GalaxyLayout.constellationKey(node.type)] ??
-          center;
-      final angle = random.nextDouble() * 2 * math.pi;
-      final radius = seedRadius * math.sqrt(random.nextDouble());
-      _positions[ids[i]] = Offset(
-        clusterCenter.dx + radius * math.cos(angle),
-        clusterCenter.dy + radius * math.sin(angle),
-      );
+    if (_galaxyLayoutFingerprint != fingerprint) {
+      _positions.removeWhere((id, _) => !_draggedNodeIds.contains(id));
     }
-
-    final generation = ++_galaxyLayoutGeneration;
-    _galaxyLayoutPending = true;
-    _galaxyLayoutSize = canvasSize;
     _galaxyLayoutFingerprint = fingerprint;
-    final initialPositions = Map<String, Offset>.of(_positions);
-    final nodes = List<GraphNode>.of(widget.nodes);
-    final edges = List<GraphEdge>.of(widget.edges);
-    final rootId = widget.rootId;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || generation != _galaxyLayoutGeneration) return;
-      unawaited(
-        _calculateGalaxyPositions(
-          nodes: nodes,
-          edges: edges,
-          rootId: rootId,
-          canvasSize: canvasSize,
-          initialPositions: initialPositions,
-          pinnedIds: existingIds,
-          constellationCenters: constellationCenters,
-          generation: generation,
-        ),
-      );
-    });
-  }
+    _galaxyLayoutSize = canvasSize;
 
-  Future<void> _calculateGalaxyPositions({
-    required List<GraphNode> nodes,
-    required List<GraphEdge> edges,
-    required String rootId,
-    required Size canvasSize,
-    required Map<String, Offset> initialPositions,
-    required Set<String> pinnedIds,
-    required Map<String, Offset> constellationCenters,
-    required int generation,
-  }) async {
-    final n = nodes.length;
-    final ids = [for (final node in nodes) node.id];
-    final rootIndex = ids.indexOf(rootId);
     final center = Offset(canvasSize.width / 2, canvasSize.height / 2);
-    final random = math.Random(_galaxySeed);
-    final px = [for (final id in ids) initialPositions[id]!.dx];
-    final py = [for (final id in ids) initialPositions[id]!.dy];
-    final pinned = [
-      for (var i = 0; i < n; i++) i == rootIndex || pinnedIds.contains(ids[i]),
+    final discRadius =
+        math.min(canvasSize.width, canvasSize.height) * _galaxyDiscRadius;
+
+    // Árbol de dependencias: cada nodo cuelga del primero que lo alcanza
+    // desde la raíz, y lo que no es alcanzable cuelga del núcleo.
+    final children = <String, List<String>>{};
+    for (final edge in widget.edges) {
+      (children[edge.sourceId] ??= []).add(edge.targetId);
+    }
+    final orderedChildren = <String, List<String>>{};
+    final level = <String, int>{widget.rootId: 0};
+    final queue = Queue<String>()..add(widget.rootId);
+    while (queue.isNotEmpty) {
+      final current = queue.removeFirst();
+      for (final next in children[current] ?? const <String>[]) {
+        if (level.containsKey(next)) continue;
+        level[next] = level[current]! + 1;
+        (orderedChildren[current] ??= []).add(next);
+        queue.add(next);
+      }
+    }
+    final huerfanos = [
+      for (final node in widget.nodes)
+        if (!level.containsKey(node.id)) node.id,
     ];
+    for (final id in huerfanos) {
+      level[id] = 1;
+      (orderedChildren[widget.rootId] ??= []).add(id);
+    }
 
-    final idIndex = {for (var i = 0; i < n; i++) ids[i]: i};
-    final edgesIdx = [
-      for (final edge in edges)
-        if (idIndex.containsKey(edge.sourceId) &&
-            idIndex.containsKey(edge.targetId))
-          (idIndex[edge.sourceId]!, idIndex[edge.targetId]!),
-    ];
+    // Peso de cada subárbol: cuántas hojas cuelgan de él. Es lo que decide
+    // cuánto círculo se lleva cada brazo.
+    final weight = <String, int>{};
+    int computeWeight(String id) {
+      final cached = weight[id];
+      if (cached != null) return cached;
+      weight[id] = 1;
+      final hijos = orderedChildren[id];
+      if (hijos == null || hijos.isEmpty) return weight[id] = 1;
+      var total = 0;
+      for (final child in hijos) {
+        total += computeWeight(child);
+      }
+      return weight[id] = math.max(1, total);
+    }
 
-    final area = canvasSize.width * canvasSize.height;
-    final k = (_galaxyIdealLengthFactor * math.sqrt(area / n)).clamp(
-      72.0,
-      180.0,
-    );
-    final iterations = _galaxyIterationsFor(n);
-    final t0 = math.max(canvasSize.width, canvasSize.height) * 0.05;
-    final dispX = List<double>.filled(n, 0);
-    final dispY = List<double>.filled(n, 0);
-    final yieldEvery = n > 300
-        ? 1
-        : n > 150
-        ? 2
-        : n > 60
-        ? 4
-        : iterations;
+    computeWeight(widget.rootId);
 
-    for (var iter = 0; iter < iterations; iter++) {
-      dispX.fillRange(0, n, 0);
-      dispY.fillRange(0, n, 0);
+    final maxLevel = level.values.fold(1, math.max);
+    // Los hermanos no comparten anillo: se escalonan hacia fuera dentro de su
+    // nivel. Sin esto, una rama con cuarenta hojas las apilaba todas sobre la
+    // misma circunferencia — un anillo apretado en el borde, que es justo lo
+    // que no parece una galaxia.
+    const spread = _galaxySpread;
 
-      // Repulsión entre todos los pares.
-      for (var i = 0; i < n; i++) {
-        for (var j = i + 1; j < n; j++) {
-          var dx = px[i] - px[j];
-          var dy = py[i] - py[j];
-          var dist = math.sqrt(dx * dx + dy * dy);
-          if (dist < 0.01) {
-            final angle = random.nextDouble() * 2 * math.pi;
-            dx = math.cos(angle) * 0.01;
-            dy = math.sin(angle) * 0.01;
-            dist = 0.01;
-          }
-          final force = (k * k) / dist;
-          final ux = dx / dist * force;
-          final uy = dy / dist * force;
-          dispX[i] += ux;
-          dispY[i] += uy;
-          dispX[j] -= ux;
-          dispY[j] -= uy;
+    void place(String id, double from, double to, double profundidad) {
+      final middle = (from + to) / 2;
+      if (!_draggedNodeIds.contains(id)) {
+        if (id == widget.rootId) {
+          _positions[id] = center;
+        } else {
+          // Una pizca de desorden, estable para el mismo id: sin ella los
+          // brazos se leen como radios dibujados con compás.
+          final jitter = ((id.hashCode & 0xFF) / 255.0 - 0.5) * 0.12;
+          final angle = middle + _galaxyTwist * profundidad;
+          final radius =
+              _galaxyRadius(profundidad, maxLevel, discRadius) * (1 + jitter);
+          _positions[id] = Offset(
+            center.dx + radius * math.cos(angle),
+            center.dy + radius * math.sin(angle),
+          );
         }
       }
-
-      // Atracción a lo largo de cada arista.
-      for (final (a, b) in edgesIdx) {
-        final dx = px[a] - px[b];
-        final dy = py[a] - py[b];
-        final dist = math.sqrt(dx * dx + dy * dy);
-        if (dist < 0.01) continue;
-        final force = (dist * dist) / k;
-        final ux = dx / dist * force;
-        final uy = dy / dist * force;
-        dispX[a] -= ux;
-        dispY[a] -= uy;
-        dispX[b] += ux;
-        dispY[b] += uy;
-      }
-
-      // La gravedad global mantiene el conjunto dentro del observatorio. Una
-      // atracción adicional hacia el centro virtual de cada tipo forma
-      // constelaciones legibles sin alterar las aristas reales.
-      for (var i = 0; i < n; i++) {
-        final clusterCenter = i == rootIndex
-            ? center
-            : constellationCenters[GalaxyLayout.constellationKey(
-                    nodes[i].type,
-                  )] ??
-                  center;
-        dispX[i] += (center.dx - px[i]) * (_galaxyGravity * 0.35);
-        dispY[i] += (center.dy - py[i]) * (_galaxyGravity * 0.35);
-        dispX[i] += (clusterCenter.dx - px[i]) * _galaxyClusterGravity;
-        dispY[i] += (clusterCenter.dy - py[i]) * _galaxyClusterGravity;
-      }
-
-      // Aplica el desplazamiento, acotado por la "temperatura" (cooling
-      // lineal) y por los bordes del lienzo.
-      final temperature = t0 * (1 - iter / iterations);
-      for (var i = 0; i < n; i++) {
-        if (pinned[i]) continue;
-        final len = math.sqrt(dispX[i] * dispX[i] + dispY[i] * dispY[i]);
-        if (len < 0.001) continue;
-        final capped = math.min(len, temperature) / len;
-        px[i] = (px[i] + dispX[i] * capped).clamp(
-          30.0,
-          math.max(30.0, canvasSize.width - 30.0),
-        );
-        py[i] = (py[i] + dispY[i] * capped).clamp(
-          30.0,
-          math.max(30.0, canvasSize.height - 30.0),
-        );
-      }
-
-      if ((iter + 1) % yieldEvery == 0 && iter + 1 < iterations) {
-        await SchedulerBinding.instance.endOfFrame;
-        if (!mounted ||
-            generation != _galaxyLayoutGeneration ||
-            _sortMode != GraphSortMode.galaxy) {
-          return;
-        }
+      final hijos = orderedChildren[id];
+      if (hijos == null || hijos.isEmpty) return;
+      // El sector de un nodo se reparte entre sus hijos en proporción a lo
+      // que cada uno arrastra, así que las ramas grandes no aplastan a las
+      // pequeñas ni al revés.
+      final total = hijos.fold<int>(0, (sum, c) => sum + computeWeight(c));
+      var cursor = from;
+      for (var i = 0; i < hijos.length; i++) {
+        final child = hijos[i];
+        final share = (to - from) * computeWeight(child) / total;
+        // Escalonado en zigzag: los hermanos pares se reparten por la mitad
+        // interior del brazo y los impares por la exterior. En rampa continua
+        // dos hermanos consecutivos quedaban juntos en ángulo *y* en radio, y
+        // era ahí donde aparecían los nodos pegados.
+        final t = hijos.length == 1 ? 0.5 : i / (hijos.length - 1);
+        final avance = spread * (i.isEven ? t * 0.5 : 0.5 + t * 0.5);
+        place(child, cursor, cursor + share, profundidad + 1 - spread + avance);
+        cursor += share;
       }
     }
 
-    if (!mounted ||
-        generation != _galaxyLayoutGeneration ||
-        _sortMode != GraphSortMode.galaxy) {
-      return;
+    place(widget.rootId, 0, 2 * math.pi, 0);
+
+    // Un nodo puede haber quedado sin sitio si el grafo trae aristas hacia
+    // atrás: se coloca en el anillo exterior antes que dejarlo sin posición.
+    for (final node in widget.nodes) {
+      _positions.putIfAbsent(node.id, () {
+        final angle = (node.id.hashCode % 360) * math.pi / 180;
+        return Offset(
+          center.dx + discRadius * math.cos(angle),
+          center.dy + discRadius * math.sin(angle),
+        );
+      });
     }
-    setState(() {
-      for (var i = 0; i < n; i++) {
-        if (!_draggedNodeIds.contains(ids[i])) {
-          _positions[ids[i]] = Offset(px[i], py[i]);
-        }
-      }
-      _galaxyLayoutPending = false;
-    });
   }
 
   /// Layout jerárquico: la raíz queda en el extremo superior (o izquierdo,
@@ -840,13 +795,6 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
           final positions = [
             for (final node in widget.nodes) _positions[node.id]!,
           ];
-          final constellationCenters = isGalaxy
-              ? GalaxyLayout.centersFor(
-                  nodes: widget.nodes,
-                  rootId: widget.rootId,
-                  canvasSize: canvasSize,
-                )
-              : const <String, Offset>{};
           final nodeDegrees = <String, int>{
             for (final node in widget.nodes) node.id: 0,
           };
@@ -940,64 +888,65 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
                         top: _panOffset.dy,
                         width: scaledWidth,
                         height: scaledHeight,
-                        child: Transform.scale(
-                          scale: _scale,
+                        // El lienzo mide `canvasSize` aunque el hueco que
+                        // ocupa en el visor sea el escalado: sin este
+                        // OverflowBox, el `Positioned` de arriba impone su
+                        // tamaño al hijo y el `Stack` interior acaba midiendo
+                        // menos que el lienzo. Los nodos que caían fuera se
+                        // seguían pintando —`Clip.none`— pero el hit test del
+                        // Stack los descartaba antes de llegar a ellos: se
+                        // veían y no respondían al ratón ni al clic.
+                        child: OverflowBox(
                           alignment: Alignment.topLeft,
-                          child: SizedBox(
-                            width: canvasSize.width,
-                            height: canvasSize.height,
-                            child: Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                if (isGalaxy)
+                          minWidth: 0,
+                          maxWidth: canvasSize.width,
+                          minHeight: 0,
+                          maxHeight: canvasSize.height,
+                          child: Transform.scale(
+                            scale: _scale,
+                            alignment: Alignment.topLeft,
+                            child: SizedBox(
+                              width: canvasSize.width,
+                              height: canvasSize.height,
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
                                   IgnorePointer(
                                     child: CustomPaint(
                                       size: canvasSize,
-                                      painter: GalaxyConstellationPainter(
+                                      painter: GraphEdgePainter(
                                         nodes: widget.nodes,
-                                        rootId: widget.rootId,
-                                        centers: constellationCenters,
+                                        edges: widget.edges,
+                                        positions: positions,
+                                        progress: Curves.easeOutCubic.transform(
+                                          _entrance.value,
+                                        ),
+                                        lineColor: isGalaxy
+                                            ? FncColors.galaxyEdge
+                                            : FncColors.materialGrey,
+                                        dashedColor: isGalaxy
+                                            ? FncColors.materialOrangeAccent
+                                                  .withValues(alpha: 0.35)
+                                            : FncColors.materialOrange,
+                                        activeLineColor:
+                                            FncColors.galaxyEdgeActive,
+                                        galaxy: isGalaxy,
+                                        highlightedNodeId: highlightedNodeId,
                                       ),
                                     ),
                                   ),
-                                IgnorePointer(
-                                  child: CustomPaint(
-                                    size: canvasSize,
-                                    painter: GraphEdgePainter(
-                                      nodes: widget.nodes,
-                                      edges: widget.edges,
-                                      positions: positions,
-                                      progress: Curves.easeOutCubic.transform(
-                                        _entrance.value,
-                                      ),
-                                      lineColor: isGalaxy
-                                          ? FncColors.galaxyEdge
-                                          : FncColors.materialGrey,
-                                      dashedColor: isGalaxy
-                                          ? FncColors.materialOrangeAccent
-                                                .withValues(alpha: 0.35)
-                                          : FncColors.materialOrange,
-                                      activeLineColor:
-                                          FncColors.galaxyEdgeActive,
-                                      galaxy: isGalaxy,
-                                      rootId: widget.rootId,
-                                      highlightedNodeId: highlightedNodeId,
-                                      constellationCenters:
-                                          constellationCenters,
+                                  for (var i = 0; i < widget.nodes.length; i++)
+                                    _buildNode(
+                                      context,
+                                      i,
+                                      positions,
+                                      canvasSize,
+                                      nodeDegrees,
+                                      highlightedNodeId,
+                                      emphasizedNodeIds,
                                     ),
-                                  ),
-                                ),
-                                for (var i = 0; i < widget.nodes.length; i++)
-                                  _buildNode(
-                                    context,
-                                    i,
-                                    positions,
-                                    canvasSize,
-                                    nodeDegrees,
-                                    highlightedNodeId,
-                                    emphasizedNodeIds,
-                                  ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
