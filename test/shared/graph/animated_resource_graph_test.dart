@@ -185,6 +185,61 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('con el grafo quieto solo se reconstruye el nodo que late', (
+    tester,
+  ) async {
+    // Las tres animaciones colgaban de un `AnimatedBuilder` único que
+    // envolvía el lienzo entero, así que el 6 % de escala de la raíz
+    // reconstruía los N nodos 60 veces por segundo. No se ve en pantalla:
+    // esta cuenta es la única forma de que no vuelva.
+    const nodes = [
+      GraphNode(id: 'root', label: 'Agente raíz', type: 'agent'),
+      GraphNode(id: 'skill:a', label: 'Skill A', type: 'skill'),
+      GraphNode(id: 'skill:b', label: 'Skill B', type: 'skill'),
+      GraphNode(id: 'skill:c', label: 'Skill C', type: 'skill'),
+      GraphNode(id: 'skill:d', label: 'Skill D', type: 'skill'),
+      GraphNode(id: 'skill:e', label: 'Skill E', type: 'skill'),
+    ];
+    const edges = [
+      GraphEdge(sourceId: 'root', targetId: 'skill:a'),
+      GraphEdge(sourceId: 'root', targetId: 'skill:b'),
+      GraphEdge(sourceId: 'root', targetId: 'skill:c'),
+      GraphEdge(sourceId: 'root', targetId: 'skill:d'),
+      GraphEdge(sourceId: 'root', targetId: 'skill:e'),
+    ];
+
+    dynamic estado() => tester.state(find.byType(AnimatedResourceGraph));
+
+    await tester.pumpWidget(
+      wrap(
+        const AnimatedResourceGraph(
+          nodes: nodes,
+          edges: edges,
+          rootId: 'root',
+          quickViewDescriptionLabel: 'Descripción',
+          quickViewNoDescriptionLabel: 'Sin descripción',
+          quickViewConnectionsLabel: 'Conexiones',
+          quickViewNoConnectionsLabel: 'Sin conexiones',
+          quickViewCloseTooltip: 'Cerrar',
+        ),
+      ),
+    );
+    // La entrada sí es una animación de conjunto, pero dura 1,1 s.
+    await tester.pump(const Duration(milliseconds: 1200));
+    expect(estado().debugEntranceCompleted, isTrue);
+
+    estado().debugNodeBuilds = 0;
+    const frames = 20;
+    for (var i = 0; i < frames; i++) {
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+
+    // Late un solo nodo: como mucho una reconstrucción por fotograma. Con el
+    // envoltorio común eran seis, y con un grafo de verdad, cientos.
+    expect(estado().debugNodeBuilds, lessThanOrEqualTo(frames));
+    expect(estado().debugNodeBuilds, greaterThan(0), reason: 'la raíz late');
+  });
+
   testWidgets('respeta la preferencia de movimiento reducido', (tester) async {
     tester.platformDispatcher.accessibilityFeaturesTestValue =
         const FakeAccessibilityFeatures(disableAnimations: true);
@@ -300,7 +355,8 @@ void main() {
 
     final dynamic state = tester.state(find.byType(AnimatedResourceGraph));
     Offset posicion(String id) => state.debugPositionFor(id) as Offset;
-    final aSuDependencia = (posicion('agente-a') - posicion('skill-a')).distance;
+    final aSuDependencia =
+        (posicion('agente-a') - posicion('skill-a')).distance;
     final alMismoTipo = (posicion('skill-a') - posicion('skill-b')).distance;
 
     expect(

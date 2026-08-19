@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../app/theme/fnc_colors.dart';
@@ -105,6 +107,13 @@ class _ResourceGraphDialogContentState
   static const _autoGalaxyThreshold = 60;
 
   String _query = '';
+
+  /// Cada pulsación reconstruía el grafo entero: `didUpdateWidget` compara
+  /// el grafo nuevo con el viejo y `_matches` se evalúa nodo a nodo, así que
+  /// escribir «memoria» costaba siete rondas completas. Con la espera, una.
+  static const _queryDebounce = Duration(milliseconds: 180);
+  Timer? _queryTimer;
+
   late final GraphSortController _sortController;
   late bool _showLabels;
 
@@ -125,6 +134,7 @@ class _ResourceGraphDialogContentState
 
   @override
   void dispose() {
+    _queryTimer?.cancel();
     _sortController.removeListener(_handleSortModeChanged);
     _sortController.dispose();
     super.dispose();
@@ -301,7 +311,20 @@ class _ResourceGraphDialogContentState
                     )
                   : const OutlineInputBorder(),
             ),
-            onChanged: (value) => setState(() => _query = value.trim()),
+            onChanged: (value) {
+              final query = value.trim();
+              if (query == _query) return;
+              _queryTimer?.cancel();
+              // Borrar del todo se aplica ya: el usuario espera ver el grafo
+              // entero de vuelta en cuanto vacía el campo.
+              if (query.isEmpty) {
+                setState(() => _query = '');
+                return;
+              }
+              _queryTimer = Timer(_queryDebounce, () {
+                if (mounted) setState(() => _query = query);
+              });
+            },
           ),
         ),
         const SizedBox(width: 8),

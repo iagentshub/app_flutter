@@ -136,7 +136,8 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     double profundidad,
     int maxLevel,
     double discRadius,
-  ) => discRadius *
+  ) =>
+      discRadius *
       math.pow(profundidad / (maxLevel + _galaxySpread), 0.72).toDouble();
   // El lienzo del modo galaxia siempre es al menos esto de grande respecto
   // al visor, aunque el grafo tenga pocos nodos: sin este mínimo, un
@@ -177,8 +178,20 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
   // tienen una posición manual asignada.
   final Map<String, Offset> _positions = {};
   final Set<String> _draggedNodeIds = {};
+
+  /// Los caminos de las aristas, para no volver a trazarlos cuando lo único
+  /// que ha cambiado es el color (el nodo bajo el puntero). Vive aquí y no
+  /// en el pintor porque el pintor se rehace en cada fotograma.
+  final GraphEdgePathCache _edgePathCache = GraphEdgePathCache();
   Size? _galaxyLayoutSize;
-  String? _galaxyLayoutFingerprint;
+
+  // El grafo con el que se repartió la galaxia. Era una cadena con todos
+  // los ids concatenados —decenas de KB con 500 nodos, construida solo para
+  // compararla y tirarla—; guardar las listas cuesta una referencia y deja
+  // la comparación en un recorrido con salida temprana.
+  List<GraphNode>? _galaxyLayoutNodes;
+  List<GraphEdge>? _galaxyLayoutEdges;
+  String? _galaxyLayoutRootId;
   final Map<String, FocusNode> _nodeFocusNodes = {};
   String? _focusedNodeId;
   String? _hoveredNodeId;
@@ -271,6 +284,13 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
   @visibleForTesting
   bool get debugEntranceCompleted => _entrance.value == 1;
 
+  /// Cuántas veces se ha reconstruido el subárbol animado de un nodo. Lo lee
+  /// la prueba que vigila que el latido de la raíz no arrastre a los demás:
+  /// es lo único que nota si las animaciones vuelven a colgar todas de un
+  /// envoltorio común, porque en pantalla no se ve ninguna diferencia.
+  @visibleForTesting
+  int debugNodeBuilds = 0;
+
   @visibleForTesting
   String? get debugHighlightedNodeId => _focusedNodeId ?? _hoveredNodeId;
 
@@ -286,7 +306,7 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
   void _handleSortModeChanged() {
     setState(() {
       _galaxyLayoutSize = null;
-      _galaxyLayoutFingerprint = null;
+      _forgetGalaxyLayout();
       _positions.clear();
       _draggedNodeIds.clear();
       _panInitialized = false;
@@ -315,19 +335,16 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
       _syncRepeatingAnimations();
     }
     final currentIds = widget.nodes.map((node) => node.id).toSet();
-    final oldFingerprint = _fingerprintFor(
+    if (!_sameGraph(
       oldWidget.nodes,
       oldWidget.edges,
       oldWidget.rootId,
-    );
-    final currentFingerprint = _fingerprintFor(
       widget.nodes,
       widget.edges,
       widget.rootId,
-    );
-    if (oldFingerprint != currentFingerprint) {
+    )) {
       _galaxyLayoutSize = null;
-      _galaxyLayoutFingerprint = null;
+      _forgetGalaxyLayout();
       _positions.removeWhere((id, _) => !currentIds.contains(id));
       _draggedNodeIds.removeWhere((id) => !currentIds.contains(id));
     }
@@ -452,13 +469,49 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     }
   }
 
-  String _fingerprintFor(
-    List<GraphNode> nodes,
-    List<GraphEdge> edges,
-    String rootId,
-  ) =>
-      '$rootId|${nodes.map((node) => node.id).join('|')}|'
-      '${edges.map((edge) => '${edge.sourceId}>${edge.targetId}').join('|')}';
+  /// ¿Son el mismo grafo? Se resolvía serializando ambos a una cadena con
+  /// todos los ids —54 KB con 500 nodos, y tres veces por actualización del
+  /// widget: dos aquí y una en el reparto de la galaxia— para acabar
+  /// comparándolas. Recorrerlos en paralelo sale en la primera diferencia y
+  /// no reserva nada; cuando las listas son la misma instancia, ni eso.
+  ///
+  /// Compara lo mismo que comparaba la huella: la raíz, los ids de los nodos
+  /// en orden y los extremos de las aristas en orden. La etiqueta o el tipo
+  /// de un nodo no cambian dónde va, así que no cuentan.
+  static bool _sameGraph(
+    List<GraphNode> aNodes,
+    List<GraphEdge> aEdges,
+    String aRootId,
+    List<GraphNode> bNodes,
+    List<GraphEdge> bEdges,
+    String bRootId,
+  ) {
+    if (aRootId != bRootId) return false;
+    if (aNodes.length != bNodes.length) return false;
+    if (aEdges.length != bEdges.length) return false;
+    if (!identical(aNodes, bNodes)) {
+      for (var i = 0; i < aNodes.length; i++) {
+        if (aNodes[i].id != bNodes[i].id) return false;
+      }
+    }
+    if (!identical(aEdges, bEdges)) {
+      for (var i = 0; i < aEdges.length; i++) {
+        if (aEdges[i].sourceId != bEdges[i].sourceId ||
+            aEdges[i].targetId != bEdges[i].targetId) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  /// Olvida con qué grafo se repartió la galaxia, para que el siguiente
+  /// reparto no se dé por bueno.
+  void _forgetGalaxyLayout() {
+    _galaxyLayoutNodes = null;
+    _galaxyLayoutEdges = null;
+    _galaxyLayoutRootId = null;
+  }
 
   /// Reparte la galaxia: núcleo en el centro y un brazo por rama.
   ///
@@ -487,20 +540,27 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     final n = widget.nodes.length;
     if (n == 0) return;
 
-    final fingerprint = _fingerprintFor(
-      widget.nodes,
-      widget.edges,
-      widget.rootId,
-    );
+    final mismoGrafo =
+        _galaxyLayoutNodes != null &&
+        _sameGraph(
+          _galaxyLayoutNodes!,
+          _galaxyLayoutEdges!,
+          _galaxyLayoutRootId!,
+          widget.nodes,
+          widget.edges,
+          widget.rootId,
+        );
     if (_positions.length == n &&
-        _galaxyLayoutFingerprint == fingerprint &&
+        mismoGrafo &&
         _galaxyLayoutSize == canvasSize) {
       return;
     }
-    if (_galaxyLayoutFingerprint != fingerprint) {
+    if (!mismoGrafo) {
       _positions.removeWhere((id, _) => !_draggedNodeIds.contains(id));
     }
-    _galaxyLayoutFingerprint = fingerprint;
+    _galaxyLayoutNodes = widget.nodes;
+    _galaxyLayoutEdges = widget.edges;
+    _galaxyLayoutRootId = widget.rootId;
     _galaxyLayoutSize = canvasSize;
 
     final center = Offset(canvasSize.width / 2, canvasSize.height / 2);
@@ -631,6 +691,16 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     for (final edge in widget.edges) {
       parentsOf.putIfAbsent(edge.targetId, () => []).add(edge.sourceId);
     }
+    // Orden original de cada nodo, que es el desempate de `_barycenterOf`
+    // cuando aún no tiene ningún padre ubicado. Resolverlo con un
+    // `indexWhere` desde dentro del comparador costaba un recorrido
+    // completo de la lista por comparación.
+    final orderById = <String, int>{};
+    for (var i = 0; i < widget.nodes.length; i++) {
+      // `putIfAbsent` y no asignación directa: `indexWhere` devolvía el
+      // primero, y un id repetido dejaría aquí el último.
+      orderById.putIfAbsent(widget.nodes[i].id, () => i);
+    }
     final crossPosition = <String, double>{};
     final crossCenter = horizontal
         ? canvasSize.height / 2
@@ -639,10 +709,20 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
       var nodesInLevel = byLevel[level]!;
       if (level > 0) {
         final indexed = nodesInLevel.asMap().entries.toList();
+        // `crossPosition` no cambia mientras se ordena el nivel, así que el
+        // baricentro de un nodo es el mismo en todas sus comparaciones:
+        // calcularlo dentro del comparador lo repetía O(log n) veces.
+        final barycenters = <int, double>{
+          for (final entry in indexed)
+            entry.key: _barycenterOf(
+              entry.value,
+              parentsOf,
+              crossPosition,
+              orderById,
+            ),
+        };
         indexed.sort((a, b) {
-          final barycenterA = _barycenterOf(a.value, parentsOf, crossPosition);
-          final barycenterB = _barycenterOf(b.value, parentsOf, crossPosition);
-          final cmp = barycenterA.compareTo(barycenterB);
+          final cmp = barycenters[a.key]!.compareTo(barycenters[b.key]!);
           return cmp != 0 ? cmp : a.key.compareTo(b.key);
         });
         nodesInLevel = [for (final entry in indexed) entry.value];
@@ -669,13 +749,14 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     GraphNode node,
     Map<String, List<String>> parentsOf,
     Map<String, double> crossPosition,
+    Map<String, int> orderById,
   ) {
     final parentPositions = [
       for (final parentId in parentsOf[node.id] ?? const <String>[])
         ?crossPosition[parentId],
     ];
     if (parentPositions.isEmpty) {
-      return widget.nodes.indexWhere((n) => n.id == node.id).toDouble();
+      return (orderById[node.id] ?? -1).toDouble();
     }
     return parentPositions.reduce((a, b) => a + b) / parentPositions.length;
   }
@@ -792,9 +873,13 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
             );
           }
           _panOffset = _clampPan(_panOffset, viewport, canvasSize, _scale);
-          final positions = [
-            for (final node in widget.nodes) _positions[node.id]!,
-          ];
+          // Copia por valor, no el mapa vivo: `_positions` se muta en el
+          // sitio al arrastrar un nodo, así que compartir la instancia
+          // dejaría a `shouldRepaint` del pintor sin forma de notar el
+          // cambio y la arista se quedaría clavada donde estaba.
+          final positionsById = <String, Offset>{
+            for (final node in widget.nodes) node.id: _positions[node.id]!,
+          };
           final nodeDegrees = <String, int>{
             for (final node in widget.nodes) node.id: 0,
           };
@@ -880,78 +965,81 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
                       },
                     ),
                   ),
-                  AnimatedBuilder(
-                    animation: Listenable.merge([_entrance, _pulse, _blink]),
-                    builder: (context, _) {
-                      return Positioned(
-                        left: _panOffset.dx,
-                        top: _panOffset.dy,
-                        width: scaledWidth,
-                        height: scaledHeight,
-                        // El lienzo mide `canvasSize` aunque el hueco que
-                        // ocupa en el visor sea el escalado: sin este
-                        // OverflowBox, el `Positioned` de arriba impone su
-                        // tamaño al hijo y el `Stack` interior acaba midiendo
-                        // menos que el lienzo. Los nodos que caían fuera se
-                        // seguían pintando —`Clip.none`— pero el hit test del
-                        // Stack los descartaba antes de llegar a ellos: se
-                        // veían y no respondían al ratón ni al clic.
-                        child: OverflowBox(
-                          alignment: Alignment.topLeft,
-                          minWidth: 0,
-                          maxWidth: canvasSize.width,
-                          minHeight: 0,
-                          maxHeight: canvasSize.height,
-                          child: Transform.scale(
-                            scale: _scale,
-                            alignment: Alignment.topLeft,
-                            child: SizedBox(
-                              width: canvasSize.width,
-                              height: canvasSize.height,
-                              child: Stack(
-                                clipBehavior: Clip.none,
-                                children: [
-                                  IgnorePointer(
-                                    child: CustomPaint(
-                                      size: canvasSize,
-                                      painter: GraphEdgePainter(
-                                        nodes: widget.nodes,
-                                        edges: widget.edges,
-                                        positions: positions,
-                                        progress: Curves.easeOutCubic.transform(
-                                          _entrance.value,
-                                        ),
-                                        lineColor: isGalaxy
-                                            ? FncColors.galaxyEdge
-                                            : FncColors.materialGrey,
-                                        dashedColor: isGalaxy
-                                            ? FncColors.materialOrangeAccent
-                                                  .withValues(alpha: 0.35)
-                                            : FncColors.materialOrange,
-                                        activeLineColor:
-                                            FncColors.galaxyEdgeActive,
-                                        galaxy: isGalaxy,
-                                        highlightedNodeId: highlightedNodeId,
+                  Positioned(
+                    left: _panOffset.dx,
+                    top: _panOffset.dy,
+                    width: scaledWidth,
+                    height: scaledHeight,
+                    // El lienzo mide `canvasSize` aunque el hueco que ocupa
+                    // en el visor sea el escalado: sin este OverflowBox, el
+                    // `Positioned` de arriba impone su tamaño al hijo y el
+                    // `Stack` interior acaba midiendo menos que el lienzo.
+                    // Los nodos que caían fuera se seguían pintando
+                    // —`Clip.none`— pero el hit test del Stack los
+                    // descartaba antes de llegar a ellos: se veían y no
+                    // respondían al ratón ni al clic.
+                    child: OverflowBox(
+                      alignment: Alignment.topLeft,
+                      minWidth: 0,
+                      maxWidth: canvasSize.width,
+                      minHeight: 0,
+                      maxHeight: canvasSize.height,
+                      child: Transform.scale(
+                        scale: _scale,
+                        alignment: Alignment.topLeft,
+                        child: SizedBox(
+                          width: canvasSize.width,
+                          height: canvasSize.height,
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              // De las tres animaciones, las aristas solo
+                              // dependen de la entrada. Cuando termina, el
+                              // controlador deja de notificar y este
+                              // envoltorio queda inerte: no cuesta nada
+                              // dejarlo montado.
+                              IgnorePointer(
+                                child: AnimatedBuilder(
+                                  animation: _entrance,
+                                  builder: (context, _) => CustomPaint(
+                                    size: canvasSize,
+                                    painter: GraphEdgePainter(
+                                      edges: widget.edges,
+                                      positions: positionsById,
+                                      cache: _edgePathCache,
+                                      progress: Curves.easeOutCubic.transform(
+                                        _entrance.value,
                                       ),
+                                      lineColor: isGalaxy
+                                          ? FncColors.galaxyEdge
+                                          : FncColors.materialGrey,
+                                      dashedColor: isGalaxy
+                                          ? FncColors.materialOrangeAccent
+                                                .withValues(alpha: 0.35)
+                                          : FncColors.materialOrange,
+                                      activeLineColor:
+                                          FncColors.galaxyEdgeActive,
+                                      galaxy: isGalaxy,
+                                      highlightedNodeId: highlightedNodeId,
                                     ),
                                   ),
-                                  for (var i = 0; i < widget.nodes.length; i++)
-                                    _buildNode(
-                                      context,
-                                      i,
-                                      positions,
-                                      canvasSize,
-                                      nodeDegrees,
-                                      highlightedNodeId,
-                                      emphasizedNodeIds,
-                                    ),
-                                ],
+                                ),
                               ),
-                            ),
+                              for (var i = 0; i < widget.nodes.length; i++)
+                                _buildNode(
+                                  context,
+                                  i,
+                                  positionsById,
+                                  canvasSize,
+                                  nodeDegrees,
+                                  highlightedNodeId,
+                                  emphasizedNodeIds,
+                                ),
+                            ],
                           ),
                         ),
-                      );
-                    },
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -965,7 +1053,7 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
   Widget _buildNode(
     BuildContext context,
     int index,
-    List<Offset> positions,
+    Map<String, Offset> positionsById,
     Size canvasSize,
     Map<String, int> nodeDegrees,
     String? highlightedNodeId,
@@ -973,19 +1061,16 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
   ) {
     final node = widget.nodes[index];
     final isRoot = node.id == widget.rootId;
-    final pos = positions[index];
+    final pos = positionsById[node.id]!;
     final stagger = Interval(
       (index / widget.nodes.length) * 0.5,
       ((index / widget.nodes.length) * 0.5) + 0.5,
       curve: Curves.easeOutBack,
     );
-    final t = stagger.transform(_entrance.value).clamp(0.0, 1.0);
-    final pulse = isRoot ? (1 + _pulse.value * 0.06) : 1.0;
     final color = labelColor(node.type);
     final isMatch = _matches(node);
     final isFocused = _focusedNodeId == node.id;
     final isHovered = _hoveredNodeId == node.id;
-    final blinkOpacity = isMatch ? (0.35 + 0.65 * _blink.value) : 1.0;
     final focusColor =
         ThemeData.estimateBrightnessForColor(color) == Brightness.dark
         ? FncColors.white
@@ -1022,6 +1107,96 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
     final hitboxWidth = (isGalaxy && !showLabel)
         ? math.max(diameter + 18, 34.0)
         : 92.0;
+
+    // El latido es de la raíz y el parpadeo, de los nodos que casan con
+    // la búsqueda; la entrada sí es del conjunto, pero dura 1,1 s. Las
+    // tres colgaban del `AnimatedBuilder` único del lienzo, así que
+    // animar un 6 % de escala en un nodo reconstruía el subárbol de
+    // todos los demás 60 veces por segundo, con la pantalla quieta.
+    // Cada nodo escucha ahora solo lo que usa; el que no usa ninguna
+    // animación viva no se reconstruye.
+    final animations = <Listenable>[
+      if (!_entrance.isCompleted) _entrance,
+      if (isRoot) _pulse,
+      if (isMatch) _blink,
+    ];
+
+    Widget buildAnimatedNode() {
+      debugNodeBuilds++;
+      final t = stagger.transform(_entrance.value).clamp(0.0, 1.0);
+      final pulse = isRoot ? (1 + _pulse.value * 0.06) : 1.0;
+      final blinkOpacity = isMatch ? (0.35 + 0.65 * _blink.value) : 1.0;
+      return AnimatedOpacity(
+        duration: _reduceMotion
+            ? Duration.zero
+            : const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        opacity: t * (isGalaxy && !isContextNode && !isMatch ? 0.24 : 1),
+        child: Transform.scale(
+          scale:
+              (0.4 + 0.6 * t) *
+              pulse *
+              (isGalaxy && (isHovered || isFocused) ? 1.14 : 1),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Opacity(
+                opacity: blinkOpacity,
+                child: Container(
+                  decoration: isFocused && !isGalaxy
+                      ? BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: focusColor, width: 3),
+                        )
+                      : null,
+                  child: isGalaxy
+                      ? _buildStarDot(
+                          node,
+                          color,
+                          isRoot,
+                          isMatch,
+                          diameter,
+                          isFocused: isFocused,
+                          isHovered: isHovered,
+                        )
+                      : _buildIconNode(node, color, isRoot, isMatch, diameter),
+                ),
+              ),
+              if (showLabel) ...[
+                const SizedBox(height: 4),
+                DecoratedBox(
+                  decoration: isGalaxy
+                      ? BoxDecoration(
+                          color: FncColors.galaxyLabel,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: color.withValues(alpha: 0.32),
+                          ),
+                        )
+                      : const BoxDecoration(),
+                  child: Padding(
+                    padding: isGalaxy
+                        ? const EdgeInsets.symmetric(horizontal: 7, vertical: 3)
+                        : EdgeInsets.zero,
+                    child: Text(
+                      node.label,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: FncFonts.size11,
+                        fontWeight: isRoot ? FontWeight.w700 : FontWeight.w500,
+                        color: isGalaxy ? FncColors.white : null,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
 
     return Positioned(
       left: pos.dx - hitboxWidth / 2,
@@ -1082,91 +1257,12 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
                   );
                 });
               },
-              child: AnimatedOpacity(
-                duration: _reduceMotion
-                    ? Duration.zero
-                    : const Duration(milliseconds: 180),
-                curve: Curves.easeOutCubic,
-                opacity:
-                    t * (isGalaxy && !isContextNode && !isMatch ? 0.24 : 1),
-                child: Transform.scale(
-                  scale:
-                      (0.4 + 0.6 * t) *
-                      pulse *
-                      (isGalaxy && (isHovered || isFocused) ? 1.14 : 1),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Opacity(
-                        opacity: blinkOpacity,
-                        child: Container(
-                          decoration: isFocused && !isGalaxy
-                              ? BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: focusColor,
-                                    width: 3,
-                                  ),
-                                )
-                              : null,
-                          child: isGalaxy
-                              ? _buildStarDot(
-                                  node,
-                                  color,
-                                  isRoot,
-                                  isMatch,
-                                  diameter,
-                                  isFocused: isFocused,
-                                  isHovered: isHovered,
-                                )
-                              : _buildIconNode(
-                                  node,
-                                  color,
-                                  isRoot,
-                                  isMatch,
-                                  diameter,
-                                ),
-                        ),
-                      ),
-                      if (showLabel) ...[
-                        const SizedBox(height: 4),
-                        DecoratedBox(
-                          decoration: isGalaxy
-                              ? BoxDecoration(
-                                  color: FncColors.galaxyLabel,
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: color.withValues(alpha: 0.32),
-                                  ),
-                                )
-                              : const BoxDecoration(),
-                          child: Padding(
-                            padding: isGalaxy
-                                ? const EdgeInsets.symmetric(
-                                    horizontal: 7,
-                                    vertical: 3,
-                                  )
-                                : EdgeInsets.zero,
-                            child: Text(
-                              node.label,
-                              textAlign: TextAlign.center,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: FncFonts.size11,
-                                fontWeight: isRoot
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
-                                color: isGalaxy ? FncColors.white : null,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
+              child: animations.isEmpty
+                  ? buildAnimatedNode()
+                  : AnimatedBuilder(
+                      animation: Listenable.merge(animations),
+                      builder: (context, _) => buildAnimatedNode(),
+                    ),
             ),
           ),
         ),
