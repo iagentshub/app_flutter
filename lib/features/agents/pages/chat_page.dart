@@ -108,6 +108,7 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
   String? _error;
   String? _routingNotice;
   StreamSubscription<ChatStreamEvent>? _subscription;
+  Completer<void>? _streamCompleter;
 
   /// Mensaje al que se está respondiendo (estilo Telegram/WhatsApp): se
   /// muestra como vista previa sobre el composer y se antepone como cita al
@@ -146,6 +147,9 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
   @override
   void dispose() {
     _subscription?.cancel();
+    if (!(_streamCompleter?.isCompleted ?? true)) {
+      _streamCompleter!.complete();
+    }
     _textController.removeListener(_onComposerTextChanged);
     _scrollController.removeListener(_onScroll);
     _hideMentionOverlay();
@@ -307,6 +311,8 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
     final replyActionLabel = _tx('agents.chat.reply_action');
     final copyActionLabel = _tx('agents.chat.copy_action');
     final messageCopiedLabel = _tx('agents.chat.message_copied');
+    final interruptedLabel = _tx('agents.chat.interrupted');
+    final estimatedUsageLabel = _tx('agents.chat.estimated_usage');
 
     return Column(
       children: [
@@ -326,6 +332,8 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
                       replyActionLabel: replyActionLabel,
                       copyActionLabel: copyActionLabel,
                       messageCopiedLabel: messageCopiedLabel,
+                      interruptedLabel: interruptedLabel,
+                      estimatedUsageLabel: estimatedUsageLabel,
                       loadingOlder: _loadingOlderMessages,
                     ),
                     _buildJumpToEndChip(),

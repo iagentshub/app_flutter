@@ -103,6 +103,8 @@ void main() {
             replyActionLabel: 'Responder',
             copyActionLabel: 'Copiar',
             messageCopiedLabel: 'Mensaje copiado',
+            interruptedLabel: 'Respuesta interrumpida',
+            estimatedUsageLabel: 'Uso estimado',
           ),
         ),
       ),

@@ -42,6 +42,7 @@ extension _ChatStreaming on _ChatPageState {
 
     final history = _messages.where((m) => m.role != 'system').toList();
     final completer = Completer<void>();
+    _streamCompleter = completer;
     _subscription = _repository
         .streamChat(
           token,
@@ -94,6 +95,7 @@ extension _ChatStreaming on _ChatPageState {
           onError: (error) {
             if (!mounted) return;
             refresh(() => _error = tr('agents.chat_connection_error'));
+            if (!completer.isCompleted) completer.complete();
           },
           onDone: () {
             if (!mounted) return;
@@ -106,15 +108,34 @@ extension _ChatStreaming on _ChatPageState {
           cancelOnError: true,
         );
     await completer.future;
+    if (identical(_streamCompleter, completer)) _streamCompleter = null;
   }
 
   void _stop() {
-    _subscription?.cancel();
+    final partialReply = _replyBuffer.toString();
+    final cancellation = _subscription?.cancel();
+    if (cancellation != null) unawaited(cancellation);
     _subscription = null;
     refresh(() {
+      if (partialReply.isNotEmpty) {
+        _messages = [
+          ..._messages,
+          ChatMessage(
+            role: 'assistant',
+            content: partialReply,
+            interrupted: true,
+            createdAt: DateTime.now(),
+          ),
+        ];
+      }
       _streaming = false;
       _thinking = false;
     });
+    _replyBuffer.clear();
+    _streamingReply.value = '';
+    if (!(_streamCompleter?.isCompleted ?? true)) {
+      _streamCompleter!.complete();
+    }
   }
 
   void _setReply(ChatMessage message) => refresh(() => _replyTo = message);

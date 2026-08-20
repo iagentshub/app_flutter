@@ -18,6 +18,8 @@ class ChatMessageList extends StatelessWidget {
     required this.replyActionLabel,
     required this.copyActionLabel,
     required this.messageCopiedLabel,
+    required this.interruptedLabel,
+    required this.estimatedUsageLabel,
     this.loadingOlder = false,
     super.key,
   });
@@ -36,6 +38,8 @@ class ChatMessageList extends StatelessWidget {
   final String replyActionLabel;
   final String copyActionLabel;
   final String messageCopiedLabel;
+  final String interruptedLabel;
+  final String estimatedUsageLabel;
   final bool loadingOlder;
 
   @override
@@ -75,6 +79,8 @@ class ChatMessageList extends StatelessWidget {
       replyActionLabel: replyActionLabel,
       copyActionLabel: copyActionLabel,
       messageCopiedLabel: messageCopiedLabel,
+      interruptedLabel: interruptedLabel,
+      estimatedUsageLabel: estimatedUsageLabel,
     );
   }
 }

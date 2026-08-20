@@ -46,6 +46,8 @@ void main() {
             replyActionLabel: 'Responder',
             copyActionLabel: 'Copiar',
             messageCopiedLabel: 'Mensaje copiado',
+            interruptedLabel: 'Respuesta interrumpida',
+            estimatedUsageLabel: 'Uso estimado',
           ),
         ),
       );
@@ -85,6 +87,8 @@ void main() {
               replyActionLabel: 'Responder',
               copyActionLabel: 'Copiar',
               messageCopiedLabel: 'Mensaje copiado',
+              interruptedLabel: 'Respuesta interrumpida',
+              estimatedUsageLabel: 'Uso estimado',
             ),
           ),
         );
@@ -117,6 +121,8 @@ void main() {
             replyActionLabel: 'Responder',
             copyActionLabel: 'Copiar',
             messageCopiedLabel: 'Mensaje copiado',
+            interruptedLabel: 'Respuesta interrumpida',
+            estimatedUsageLabel: 'Uso estimado',
           ),
         ),
       );
@@ -147,6 +153,8 @@ void main() {
               replyActionLabel: 'Responder',
               copyActionLabel: 'Copiar',
               messageCopiedLabel: 'Mensaje copiado',
+              interruptedLabel: 'Respuesta interrumpida',
+              estimatedUsageLabel: 'Uso estimado',
             ),
           ),
         );
@@ -155,5 +163,38 @@ void main() {
         expect(find.text('Esta es mi respuesta'), findsOneWidget);
       },
     );
+
+    testWidgets('una respuesta detenida conserva contenido y marca el corte', (
+      tester,
+    ) async {
+      const message = ChatMessage(
+        role: 'assistant',
+        content: 'Respuesta parcial',
+        interrupted: true,
+        tokensIn: 8,
+        tokensOut: 4,
+        usageEstimated: true,
+      );
+
+      await tester.pumpWidget(
+        _host(
+          ChatMessageBubble(
+            message: message,
+            onReply: (_) {},
+            copyCodeTooltip: 'Copiar código',
+            replyActionLabel: 'Responder',
+            copyActionLabel: 'Copiar',
+            messageCopiedLabel: 'Mensaje copiado',
+            interruptedLabel: 'Respuesta interrumpida',
+            estimatedUsageLabel: 'Uso estimado',
+          ),
+        ),
+      );
+
+      expect(find.text('Respuesta parcial'), findsOneWidget);
+      expect(find.text('Respuesta interrumpida'), findsOneWidget);
+      expect(find.text('Uso estimado'), findsOneWidget);
+      expect(find.byIcon(Icons.stop_circle_outlined), findsOneWidget);
+    });
   });
 }

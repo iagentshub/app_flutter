@@ -329,6 +329,8 @@
       "reply_action": "Responder",
       "copy_action": "Copiar",
       "message_copied": "Mensaje copiado",
+      "interrupted": "Respuesta interrumpida",
+      "estimated_usage": "Uso estimado",
       "copy_code_tooltip": "Copiar código",
       "code_copied_tooltip": "Copiado",
       "reply_you": "Tú",

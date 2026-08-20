@@ -25,6 +25,8 @@ class ChatMessageBubble extends StatelessWidget {
     required this.replyActionLabel,
     required this.copyActionLabel,
     required this.messageCopiedLabel,
+    required this.interruptedLabel,
+    required this.estimatedUsageLabel,
     this.thinking = false,
     super.key,
   });
@@ -36,6 +38,8 @@ class ChatMessageBubble extends StatelessWidget {
   final String replyActionLabel;
   final String copyActionLabel;
   final String messageCopiedLabel;
+  final String interruptedLabel;
+  final String estimatedUsageLabel;
 
   bool get _actionsEnabled => !thinking && message.content.trim().isNotEmpty;
 
@@ -102,6 +106,20 @@ class ChatMessageBubble extends StatelessWidget {
               text: message.content,
               copyCodeTooltip: copyCodeTooltip,
             ),
+          if (!thinking && !isUser && message.interrupted) ...[
+            const SizedBox(height: 6),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.stop_circle_outlined, size: 14),
+                const SizedBox(width: 4),
+                Text(
+                  interruptedLabel,
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+              ],
+            ),
+          ],
           if (!isUser &&
               (message.tokensIn != null || message.tokensOut != null)) ...[
             const SizedBox(height: 4),
@@ -109,6 +127,11 @@ class ChatMessageBubble extends StatelessWidget {
               '↑ ${message.tokensIn ?? 0} ↓ ${message.tokensOut ?? 0} tokens',
               style: Theme.of(context).textTheme.labelSmall,
             ),
+            if (message.usageEstimated)
+              Text(
+                estimatedUsageLabel,
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
           ],
           if (!thinking && message.createdAt != null) ...[
             const SizedBox(height: 2),

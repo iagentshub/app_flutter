@@ -31,6 +31,8 @@ class ChatMessage {
     this.tokensIn,
     this.tokensOut,
     this.createdAt,
+    this.interrupted = false,
+    this.usageEstimated = false,
   });
 
   final String role;
@@ -39,6 +41,8 @@ class ChatMessage {
   final int? tokensIn;
   final int? tokensOut;
   final DateTime? createdAt;
+  final bool interrupted;
+  final bool usageEstimated;
 
   bool get isUser => role == 'user';
 
@@ -55,6 +59,9 @@ class ChatMessage {
       tokensIn: (tokensIn ?? 0) > 0 ? tokensIn : null,
       tokensOut: (tokensOut ?? 0) > 0 ? tokensOut : null,
       createdAt: DateTime.tryParse(json['created_at']?.toString() ?? ''),
+      interrupted: json['interrupted'] == true || json['interrupted'] == 1,
+      usageEstimated:
+          json['usage_estimated'] == true || json['usage_estimated'] == 1,
     );
   }
 
@@ -65,6 +72,8 @@ class ChatMessage {
     int? tokensIn,
     int? tokensOut,
     DateTime? createdAt,
+    bool? interrupted,
+    bool? usageEstimated,
   }) {
     return ChatMessage(
       id: id,
@@ -73,6 +82,8 @@ class ChatMessage {
       tokensIn: tokensIn ?? this.tokensIn,
       tokensOut: tokensOut ?? this.tokensOut,
       createdAt: createdAt ?? this.createdAt,
+      interrupted: interrupted ?? this.interrupted,
+      usageEstimated: usageEstimated ?? this.usageEstimated,
     );
   }
 }
