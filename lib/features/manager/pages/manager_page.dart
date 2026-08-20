@@ -34,7 +34,7 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
   late final ManagerController _controller;
   late final TranslatedTexts _t;
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   @override
   void initState() {
@@ -93,16 +93,14 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
           key: formKey,
           child: TextFormField(
             controller: controller,
-            decoration: InputDecoration(
-              labelText: _tx('manager.name_label', 'Nombre'),
-            ),
+            decoration: InputDecoration(labelText: _tx('manager.name_label')),
             validator: (text) {
               final v = text?.trim() ?? '';
               if (v.isEmpty) {
-                return _tx('manager.name_required', 'Nombre obligatorio');
+                return _tx('manager.name_required');
               }
               if (v.length > 80) {
-                return _tx('manager.name_max_length', 'Máximo 80 caracteres');
+                return _tx('manager.name_max_length');
               }
               return null;
             },
@@ -111,14 +109,14 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
         actions: [
           TertiaryButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(_tx('common.cancel', 'Cancelar')),
+            child: Text(_tx('common.cancel')),
           ),
           PrimaryButton(
             onPressed: () {
               if (!(formKey.currentState?.validate() ?? false)) return;
               Navigator.of(context).pop(controller.text.trim());
             },
-            child: Text(_tx('common.save', 'Guardar')),
+            child: Text(_tx('common.save')),
           ),
         ],
       ),
@@ -130,20 +128,16 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
 
   Future<void> _createGroup() => _runAction(
     _controller.createGroup(
-      askName: () => _askName(
-        title: _tx('manager.create_group_title', 'Crear grupo'),
-        initial: '',
-      ),
+      askName: () =>
+          _askName(title: _tx('manager.create_group_title'), initial: ''),
     ),
   );
 
   Future<void> _renameGroup(GroupItem item) => _runAction(
     _controller.renameGroup(
       item,
-      askName: (initial) => _askName(
-        title: _tx('manager.rename_title', 'Renombrar grupo'),
-        initial: initial,
-      ),
+      askName: (initial) =>
+          _askName(title: _tx('manager.rename_title'), initial: initial),
     ),
   );
 
@@ -152,32 +146,26 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
       item,
       confirm: () => showConfirmActionDialog(
         context,
-        title: _tx('manager.delete_dialog_title', 'Eliminar grupo'),
+        title: _tx('manager.delete_dialog_title'),
         message: _tx(
           'manager.delete_dialog_body',
-          '¿Seguro que quieres eliminar "{{name}}"?',
         ).replaceAll('{{name}}', item.name),
-        cancelLabel: _tx('common.cancel', 'Cancelar'),
-        confirmLabel: _tx('common.delete', 'Eliminar'),
+        cancelLabel: _tx('common.cancel'),
+        confirmLabel: _tx('common.delete'),
       ),
     ),
   );
 
   Future<void> _inviteMember() => _runAction(
     _controller.inviteMember(
-      askName: () => _askName(
-        title: _tx('manager.invite_title', 'Invitar miembro'),
-        initial: '',
-      ),
+      askName: () => _askName(title: _tx('manager.invite_title'), initial: ''),
     ),
   );
 
   Future<void> _addMemberDirect() => _runAction(
     _controller.addMemberDirect(
-      askName: () => _askName(
-        title: _tx('manager.add_member_title', 'Añadir miembro directo'),
-        initial: '',
-      ),
+      askName: () =>
+          _askName(title: _tx('manager.add_member_title'), initial: ''),
     ),
   );
 
@@ -189,9 +177,9 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
       return ListView(
         children: [
           AsyncStatePanel.error(
-            title: _tx('manager.error_loading_title', 'Error cargando Manager'),
+            title: _tx('manager.error_loading_title'),
             message: error,
-            retryLabel: _tx('common.retry', 'Reintentar'),
+            retryLabel: _tx('common.retry'),
             onRetry: _controller.load,
           ),
         ],
@@ -213,18 +201,18 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
               AppIconButton.filled(
                 onPressed: _createGroup,
                 icon: const Icon(Icons.add),
-                tooltip: _tx('manager.new_group_tooltip', 'Nuevo grupo'),
+                tooltip: _tx('manager.new_group_tooltip'),
               ),
               AppIconButton.outlined(
                 onPressed: _controller.load,
                 icon: const Icon(Icons.refresh),
-                tooltip: _tx('manager.refresh_tooltip', 'Actualizar'),
+                tooltip: _tx('manager.refresh_tooltip'),
               ),
             ],
           ),
           const SizedBox(height: 12),
           Text(
-            '${_tx('manager.groups_count', 'Grupos')}: ${groups.length}',
+            '${_tx('manager.groups_count')}: ${groups.length}',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
         ],
@@ -232,9 +220,7 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
       empty: Card(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Text(
-            _tx('manager.empty_groups', 'No hay grupos disponibles.'),
-          ),
+          child: Text(_tx('manager.empty_groups')),
         ),
       ),
       itemCount: groups.length,

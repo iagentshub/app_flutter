@@ -13,7 +13,7 @@ class _AdminBannersCard extends StatefulWidget {
 
   final AdminPlatformRepository repository;
   final String token;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<_AdminBannersCard> createState() => _AdminBannersCardState();
@@ -25,7 +25,7 @@ class _AdminBannersCardState extends State<_AdminBannersCard>
   bool _loading = true;
   String? _error;
 
-  String _tx(String path, String fallback) => widget.tx(path, fallback);
+  String _tx(String path) => widget.tx(path);
 
   @override
   void initState() {
@@ -59,7 +59,7 @@ class _AdminBannersCardState extends State<_AdminBannersCard>
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = _tx('admin.error_generic', 'No se pudo completar la acción');
+        _error = _tx('admin.error_generic');
         _loading = false;
       });
     }
@@ -104,10 +104,7 @@ class _AdminBannersCardState extends State<_AdminBannersCard>
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('admin.error_generic', 'No se pudo completar la acción'),
-        isError: true,
-      );
+      showMessage(_tx('admin.error_generic'), isError: true);
     }
   }
 
@@ -119,13 +116,10 @@ class _AdminBannersCardState extends State<_AdminBannersCard>
     }
     final confirmed = await showConfirmActionDialog(
       context,
-      title: _tx('admin.config_banners_delete_title', 'Eliminar banner'),
-      message: _tx(
-        'admin.config_banners_delete_confirm',
-        '¿Seguro que quieres eliminar este banner?',
-      ),
-      cancelLabel: _tx('common.cancel', 'Cancelar'),
-      confirmLabel: _tx('common.delete', 'Eliminar'),
+      title: _tx('admin.config_banners_delete_title'),
+      message: _tx('admin.config_banners_delete_confirm'),
+      cancelLabel: _tx('common.cancel'),
+      confirmLabel: _tx('common.delete'),
       destructive: true,
     );
     if (!confirmed) return;
@@ -135,10 +129,7 @@ class _AdminBannersCardState extends State<_AdminBannersCard>
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('admin.error_generic', 'No se pudo completar la acción'),
-        isError: true,
-      );
+      showMessage(_tx('admin.error_generic'), isError: true);
     }
   }
 
@@ -149,13 +140,7 @@ class _AdminBannersCardState extends State<_AdminBannersCard>
   }
 
   void _showInvalidBannerId() {
-    showMessage(
-      _tx(
-        'admin.config_banners_invalid_id',
-        'El banner no tiene un identificador válido.',
-      ),
-      isError: true,
-    );
+    showMessage(_tx('admin.config_banners_invalid_id'), isError: true);
   }
 
   String _fmt(String? iso) {
@@ -167,48 +152,35 @@ class _AdminBannersCardState extends State<_AdminBannersCard>
 
   @override
   Widget build(BuildContext context) {
-    return _sectionCard(
-      _tx('admin.config_section_banners', 'Banners de notificación'),
-      [
+    return _sectionCard(_tx('admin.config_section_banners'), [
+      Text(
+        _tx('admin.config_banners_hint'),
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
+      const SizedBox(height: 10),
+      if (_loading)
+        const Center(
+          child: Padding(
+            padding: EdgeInsets.all(12),
+            child: CircularProgressIndicator(),
+          ),
+        )
+      else if (_error != null)
+        Text(_error!, style: const TextStyle(color: FncColors.materialRed))
+      else if (_banners.isEmpty)
         Text(
-          _tx(
-            'admin.config_banners_hint',
-            'Se muestran como card en el Dashboard mientras dure su rango de fechas, en el idioma de cada usuario.',
-          ),
+          _tx('admin.config_banners_empty'),
           style: Theme.of(context).textTheme.bodySmall,
-        ),
-        const SizedBox(height: 10),
-        if (_loading)
-          const Center(
-            child: Padding(
-              padding: EdgeInsets.all(12),
-              child: CircularProgressIndicator(),
-            ),
-          )
-        else if (_error != null)
-          Text(_error!, style: const TextStyle(color: FncColors.materialRed))
-        else if (_banners.isEmpty)
-          Text(
-            _tx('admin.config_banners_empty', 'No hay banners creados.'),
-            style: Theme.of(context).textTheme.bodySmall,
-          )
-        else
-          Column(
-            children: [for (final banner in _banners) _bannerTile(banner)],
-          ),
-        const SizedBox(height: 10),
-        PrimaryButton.icon(
-          onPressed: _openCreateDialog,
-          icon: const Icon(Icons.campaign_outlined),
-          label: Text(
-            _tx(
-              'admin.config_banners_create_btn',
-              'Crear banner de notificación',
-            ),
-          ),
-        ),
-      ],
-    );
+        )
+      else
+        Column(children: [for (final banner in _banners) _bannerTile(banner)]),
+      const SizedBox(height: 10),
+      PrimaryButton.icon(
+        onPressed: _openCreateDialog,
+        icon: const Icon(Icons.campaign_outlined),
+        label: Text(_tx('admin.config_banners_create_btn')),
+      ),
+    ]);
   }
 
   Widget _bannerTile(Map<String, dynamic> banner) {
@@ -241,12 +213,12 @@ class _AdminBannersCardState extends State<_AdminBannersCard>
                 const Spacer(),
                 ActionIconButton(
                   icon: Icons.edit_outlined,
-                  tooltip: _tx('common.edit', 'Editar'),
+                  tooltip: _tx('common.edit'),
                   onPressed: () => _openEditDialog(banner),
                 ),
                 ActionIconButton(
                   icon: Icons.delete_outline,
-                  tooltip: _tx('common.delete', 'Eliminar'),
+                  tooltip: _tx('common.delete'),
                   danger: true,
                   onPressed: () => _delete(banner),
                 ),

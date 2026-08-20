@@ -13,7 +13,7 @@ class _AdminConfigTab extends StatefulWidget {
   final AdminPlatformRepository repository;
   final String token;
   final Map<String, dynamic> initialSettings;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
   final ValueChanged<Map<String, dynamic>> onSaved;
 
   @override
@@ -41,7 +41,7 @@ class _AdminConfigTabState extends State<_AdminConfigTab> with StateMessaging {
   bool _saving = false;
   String? _saveMsg;
 
-  String _tx(String path, String fallback) => widget.tx(path, fallback);
+  String _tx(String path) => widget.tx(path);
 
   @override
   void initState() {
@@ -130,17 +130,12 @@ class _AdminConfigTabState extends State<_AdminConfigTab> with StateMessaging {
         }
       }
       if (!mounted) return;
-      setState(
-        () => _saveMsg = _tx('admin.config_saved', 'Configuración guardada'),
-      );
-      showMessage(_tx('admin.config_saved', 'Configuración guardada'));
+      setState(() => _saveMsg = _tx('admin.config_saved'));
+      showMessage(_tx('admin.config_saved'));
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('admin.error_generic', 'No se pudo completar la acción'),
-        isError: true,
-      );
+      showMessage(_tx('admin.error_generic'), isError: true);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -149,10 +144,10 @@ class _AdminConfigTabState extends State<_AdminConfigTab> with StateMessaging {
   @override
   Widget build(BuildContext context) {
     final sections = <Widget>[
-      _sectionCard(_tx('admin.config_section_registration', 'Registro'), [
+      _sectionCard(_tx('admin.config_section_registration'), [
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: Text(_tx('admin.config_registration_open', 'Abrir registro')),
+          title: Text(_tx('admin.config_registration_open')),
           value: _registrationOpen,
           onChanged: (v) => setState(() => _registrationOpen = v),
         ),
@@ -162,69 +157,45 @@ class _AdminConfigTabState extends State<_AdminConfigTab> with StateMessaging {
           keyboardType: TextInputType.number,
           decoration: InputDecoration(
             labelText:
-                '${_tx('admin.config_max_users', 'Máx. usuarios')} ${_tx('admin.config_unlimited_hint', '(0=∞)')}',
+                '${_tx('admin.config_max_users')} ${_tx('admin.config_unlimited_hint')}',
           ),
         ),
         const SizedBox(height: 6),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: Text(
-            _tx('admin.config_email_verify', 'Verificar email al registrarse'),
-          ),
+          title: Text(_tx('admin.config_email_verify')),
           value: _emailVerify,
           onChanged: (v) => setState(() => _emailVerify = v),
         ),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: Text(
-            _tx('admin.config_guest_enabled', 'Acceso como invitado'),
-          ),
+          title: Text(_tx('admin.config_guest_enabled')),
           value: _guestEnabled,
           onChanged: (v) => setState(() => _guestEnabled = v),
         ),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: Text(
-            _tx(
-              'admin.config_landing_enabled',
-              'Landing de presentación en "/"',
-            ),
-          ),
-          subtitle: Text(
-            _tx(
-              'admin.config_landing_hint',
-              'Si está desactivado, "/" redirige directo a /login/',
-            ),
-          ),
+          title: Text(_tx('admin.config_landing_enabled')),
+          subtitle: Text(_tx('admin.config_landing_hint')),
           value: _landingEnabled,
           onChanged: (v) => setState(() => _landingEnabled = v),
         ),
       ]),
-      _sectionCard(_tx('admin.config_section_sessions', 'Sesiones'), [
+      _sectionCard(_tx('admin.config_section_sessions'), [
         TextField(
           controller: _maxSessionsController,
           keyboardType: TextInputType.number,
           decoration: InputDecoration(
             labelText:
-                '${_tx('admin.config_max_sessions', 'Máx. sesiones simultáneas')} ${_tx('admin.config_unlimited_hint', '(0=∞)')}',
+                '${_tx('admin.config_max_sessions')} ${_tx('admin.config_unlimited_hint')}',
           ),
         ),
       ]),
-      _sectionCard(_tx('admin.config_section_appearance', 'Apariencia'), [
+      _sectionCard(_tx('admin.config_section_appearance'), [
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: Text(
-            _tx(
-              'admin.config_user_theme_enabled',
-              'Permitir que los usuarios elijan el tema',
-            ),
-          ),
-          subtitle: Text(
-            _tx(
-              'admin.config_user_theme_hint',
-              'Si se desactiva, toda la aplicación usará el tema definido aquí.',
-            ),
-          ),
+          title: Text(_tx('admin.config_user_theme_enabled')),
+          subtitle: Text(_tx('admin.config_user_theme_hint')),
           value: _usersCanConfigureTheme,
           onChanged: (value) => setState(() => _usersCanConfigureTheme = value),
         ),
@@ -232,7 +203,7 @@ class _AdminConfigTabState extends State<_AdminConfigTab> with StateMessaging {
         DropdownButtonFormField<String>(
           initialValue: _defaultTheme,
           decoration: InputDecoration(
-            labelText: _tx('admin.config_default_theme', 'Tema predeterminado'),
+            labelText: _tx('admin.config_default_theme'),
           ),
           items: kThemeIds
               .map(
@@ -245,91 +216,71 @@ class _AdminConfigTabState extends State<_AdminConfigTab> with StateMessaging {
           },
         ),
       ]),
-      _sectionCard(
-        _tx('admin.config_section_centinel', 'Centinel · Stress Test'),
-        [
-          TextField(
-            controller: _stressConcurrencyController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText:
-                  '${_tx('admin.config_stress_concurrency', 'Concurrencia máx.')} ${_tx('admin.config_unlimited_500_hint', '(0=∞, máx 500)')}',
-            ),
+      _sectionCard(_tx('admin.config_section_centinel'), [
+        TextField(
+          controller: _stressConcurrencyController,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            labelText:
+                '${_tx('admin.config_stress_concurrency')} ${_tx('admin.config_unlimited_500_hint')}',
           ),
-        ],
-      ),
-      _sectionCard(_tx('admin.config_section_uploads', 'Subidas'), [
+        ),
+      ]),
+      _sectionCard(_tx('admin.config_section_uploads'), [
         TextField(
           controller: _maxUploadMbController,
           keyboardType: TextInputType.number,
           decoration: InputDecoration(
             labelText:
-                '${_tx('admin.config_max_upload', 'Tamaño máximo de petición')} ${_tx('admin.config_mb_unlimited_hint', '(MB, 0=∞)')}',
+                '${_tx('admin.config_max_upload')} ${_tx('admin.config_mb_unlimited_hint')}',
           ),
         ),
         const SizedBox(height: 6),
         Text(
-          _tx(
-            'admin.config_max_upload_hint',
-            'Se aplica a cualquier petición, no solo a los ficheros. Sin límite, '
-            'una subida puede ocupar tanta memoria como quiera quien la envía.',
-          ),
+          _tx('admin.config_max_upload_hint'),
           style: const TextStyle(fontSize: FncFonts.size12),
         ),
       ]),
-      _sectionCard(_tx('admin.config_section_logs', 'Logs'), [
+      _sectionCard(_tx('admin.config_section_logs'), [
         TextField(
           controller: _logRetentionController,
           keyboardType: TextInputType.number,
           decoration: InputDecoration(
             labelText:
-                '${_tx('admin.config_retention', 'Retención')} ${_tx('admin.config_days_hint', '(días)')}',
+                '${_tx('admin.config_retention')} ${_tx('admin.config_days_hint')}',
           ),
         ),
       ]),
-      _sectionCard(_tx('admin.config_section_billing', 'Facturación'), [
+      _sectionCard(_tx('admin.config_section_billing'), [
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: Text(
-            _tx(
-              'admin.config_billing_enabled',
-              'Activar planes de suscripción',
-            ),
-          ),
+          title: Text(_tx('admin.config_billing_enabled')),
           value: _billingEnabled,
           onChanged: (v) => setState(() => _billingEnabled = v),
         ),
       ]),
-      _sectionCard(_tx('admin.config_section_oauth', 'Login social'), [
+      _sectionCard(_tx('admin.config_section_oauth'), [
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: Text(
-            _tx('admin.config_oauth_google', 'Mostrar botón de Google'),
-          ),
+          title: Text(_tx('admin.config_oauth_google')),
           value: _oauthGoogle,
           onChanged: (v) => setState(() => _oauthGoogle = v),
         ),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: Text(
-            _tx('admin.config_oauth_apple', 'Mostrar botón de Apple'),
-          ),
+          title: Text(_tx('admin.config_oauth_apple')),
           value: _oauthApple,
           onChanged: (v) => setState(() => _oauthApple = v),
         ),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: Text(
-            _tx('admin.config_oauth_microsoft', 'Mostrar botón de Microsoft'),
-          ),
+          title: Text(_tx('admin.config_oauth_microsoft')),
           value: _oauthMicrosoft,
           onChanged: (v) => setState(() => _oauthMicrosoft = v),
         ),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: Text(
-            _tx('admin.config_oauth_github', 'Mostrar botón de GitHub'),
-          ),
+          title: Text(_tx('admin.config_oauth_github')),
           value: _oauthGithub,
           onChanged: (v) => setState(() => _oauthGithub = v),
         ),
@@ -375,8 +326,8 @@ class _AdminConfigTabState extends State<_AdminConfigTab> with StateMessaging {
                   onPressed: _saving ? null : _save,
                   child: Text(
                     _saving
-                        ? _tx('admin.config_save_loading', 'Guardando...')
-                        : _tx('admin.config_save_btn', 'Guardar configuración'),
+                        ? _tx('admin.config_save_loading')
+                        : _tx('admin.config_save_btn'),
                   ),
                 ),
                 if (_saveMsg != null)

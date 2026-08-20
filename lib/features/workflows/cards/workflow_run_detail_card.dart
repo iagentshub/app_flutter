@@ -42,7 +42,7 @@ class WorkflowRunDetailCard extends StatelessWidget {
   final List<WorkflowStepDraft> steps;
   final String? selectedStepId;
   final String Function(String agentId) agentNameFor;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   WorkflowStepDraft? get _step => steps.byId(selectedStepId ?? '');
 
@@ -50,10 +50,10 @@ class WorkflowRunDetailCard extends StatelessWidget {
       step.label.trim().isEmpty ? agentNameFor(step.agentId) : step.label;
 
   String _statusLabel(RunNodeStatus status) => switch (status) {
-    RunNodeStatus.waiting => tx('workflows.node_waiting', 'Pendiente'),
-    RunNodeStatus.running => tx('workflows.node_running', 'En curso'),
-    RunNodeStatus.done => tx('workflows.node_done', 'Completado'),
-    RunNodeStatus.error => tx('workflows.run_status_error', 'Error'),
+    RunNodeStatus.waiting => tx('workflows.node_waiting'),
+    RunNodeStatus.running => tx('workflows.node_running'),
+    RunNodeStatus.done => tx('workflows.node_done'),
+    RunNodeStatus.error => tx('workflows.run_status_error'),
   };
 
   @override
@@ -91,14 +91,8 @@ class WorkflowRunDetailCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 24),
                     child: Text(
                       state.running
-                          ? tx(
-                              'workflows.node_output_waiting',
-                              'Aquí aparecerá el resultado de este paso.',
-                            )
-                          : tx(
-                              'workflows.no_output',
-                              'Sin resultado disponible',
-                            ),
+                          ? tx('workflows.node_output_waiting')
+                          : tx('workflows.no_output'),
                       textAlign: TextAlign.center,
                       style: TextStyle(color: colors.onSurfaceVariant),
                     ),
@@ -132,11 +126,8 @@ class WorkflowRunDetailCard extends StatelessWidget {
     final isError = state.error != null && step == null;
     final title = step == null
         ? (state.running
-              ? tx(
-                  'workflows.run_waiting_first_event',
-                  'Preparando la orquestación…',
-                )
-              : tx('workflows.final_output_title', 'Resultado final'))
+              ? tx('workflows.run_waiting_first_event')
+              : tx('workflows.final_output_title'))
         : _stepTitle(step);
 
     return Row(
@@ -164,13 +155,13 @@ class WorkflowRunDetailCard extends StatelessWidget {
         if (body != null && body.trim().isNotEmpty)
           AppIconButton(
             icon: const Icon(Icons.copy_rounded, size: 18),
-            tooltip: tx('workflows.copy_output', 'Copiar resultado'),
+            tooltip: tx('workflows.copy_output'),
             onPressed: () async {
               await Clipboard.setData(ClipboardData(text: body));
               if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(tx('workflows.copied', 'Copiado')),
+                  content: Text(tx('workflows.copied')),
                   duration: const Duration(seconds: 2),
                 ),
               );
@@ -200,10 +191,7 @@ class WorkflowRunDetailCard extends StatelessWidget {
           ),
         if (iteration > 1)
           _Chip(
-            label: tx(
-              'workflows.loop_round',
-              'Vuelta {{n}}',
-            ).replaceAll('{{n}}', '$iteration'),
+            label: tx('workflows.loop_round').replaceAll('{{n}}', '$iteration'),
             color: Theme.of(context).colorScheme.tertiary,
             icon: Icons.refresh_rounded,
           ),
@@ -243,14 +231,8 @@ class WorkflowRunDetailCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     approved
-                        ? tx(
-                            'workflows.evaluator_approved',
-                            'Condición cumplida',
-                          )
-                        : tx(
-                            'workflows.evaluator_rejected',
-                            'Rechazado: repite el ciclo',
-                          ),
+                        ? tx('workflows.evaluator_approved')
+                        : tx('workflows.evaluator_rejected'),
                     style: TextStyle(
                       color: accent,
                       fontWeight: FontWeight.w700,
@@ -277,30 +259,18 @@ class WorkflowRunDetailCard extends StatelessWidget {
 
   /// Reaprovecha las claves `workflows.event_*` que ya existen en el bundle.
   String _eventLabel(RunTimelineEntry entry) => switch (entry.type) {
-    'stage_started' => tx('workflows.event_stage_started', 'Paso iniciado'),
-    'stage_done' => tx('workflows.event_stage_done', 'Paso completado'),
-    'evaluation_started' => tx(
-      'workflows.event_evaluation_started',
-      'Evaluando',
-    ),
+    'stage_started' => tx('workflows.event_stage_started'),
+    'stage_done' => tx('workflows.event_stage_done'),
+    'evaluation_started' => tx('workflows.event_evaluation_started'),
     'evaluation_done' =>
       entry.approved == true
-          ? tx('workflows.event_evaluation_approved', 'Evaluación aprobada')
-          : tx('workflows.event_evaluation_rejected', 'Evaluación rechazada'),
-    'loop_iteration_started' => tx(
-      'workflows.event_loop_iteration',
-      'Nueva vuelta del ciclo',
-    ),
-    'loop_limit_reached' => tx(
-      'workflows.event_loop_limit',
-      'Límite de vueltas alcanzado',
-    ),
-    'workflow_done' => tx(
-      'workflows.event_workflow_done',
-      'Orquestación lista',
-    ),
-    'cancelled' => tx('workflows.run_cancelled', 'Cancelada'),
-    'error' => tx('workflows.run_status_error', 'Error'),
+          ? tx('workflows.event_evaluation_approved')
+          : tx('workflows.event_evaluation_rejected'),
+    'loop_iteration_started' => tx('workflows.event_loop_iteration'),
+    'loop_limit_reached' => tx('workflows.event_loop_limit'),
+    'workflow_done' => tx('workflows.event_workflow_done'),
+    'cancelled' => tx('workflows.run_cancelled'),
+    'error' => tx('workflows.run_status_error'),
     _ => entry.type,
   };
 
@@ -317,7 +287,7 @@ class WorkflowRunDetailCard extends StatelessWidget {
           childrenPadding: const EdgeInsets.only(bottom: 4),
           dense: true,
           title: Text(
-            '${tx('workflows.timeline_title', 'Registro de eventos')} '
+            '${tx('workflows.timeline_title')} '
             '(${state.timeline.length})',
             style: Theme.of(
               context,

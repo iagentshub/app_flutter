@@ -40,14 +40,18 @@ class _RegisterPageState extends State<RegisterPage> {
   late final TranslatedTexts _t;
 
   String get _languageCode => widget.localeController.languageCode;
-  bool get _isEnglish => _languageCode == 'en';
 
   /// Las páginas legales las sirve React en la raíz del mismo origen, fuera de
   /// /app/, así que son navegación del navegador y no una ruta de GoRouter.
   /// Se abren en pestaña nueva a propósito: llevarse el formulario por delante
   /// a medio rellenar por leer los términos es la forma de que nadie los lea.
   Future<void> _openLegalDocument(String basePath) async {
-    final path = _isEnglish ? '/en$basePath' : basePath;
+    // El sitio público sirve el idioma base en la raíz y los demás bajo su
+    // código (`/en/privacy`). Derivarlo del código en vez de preguntar «¿es
+    // inglés?» es lo que hace que un tercer idioma funcione sin volver aquí.
+    final path = _languageCode == LocaleController.fallbackLanguageCode
+        ? basePath
+        : '/$_languageCode$basePath';
     await launchUrl(
       resolvePublicSiteUri(path: path, useSameOrigin: kIsWeb),
       mode: LaunchMode.externalApplication,
@@ -78,16 +82,11 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   Future<void> _submit() async {
     if (!_registrationEnabled) {
-      setState(
-        () => _message = _tx(
-          'register.disabled_message',
-          'Registro deshabilitado en este backend. Contacta con el administrador.',
-        ),
-      );
+      setState(() => _message = _tx('register.disabled_message'));
       return;
     }
     if (!(_formKey.currentState?.validate() ?? false)) return;
@@ -104,12 +103,7 @@ class _RegisterPageState extends State<RegisterPage> {
       );
       if (!mounted) return;
       if (ok) {
-        setState(
-          () => _message = _tx(
-            'register.success_message',
-            'Registro correcto. Ya puedes iniciar sesión.',
-          ),
-        );
+        setState(() => _message = _tx('register.success_message'));
       }
     } on ApiError catch (error) {
       if (!mounted) return;
@@ -157,7 +151,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _tx('register.title', 'Crear cuenta'),
+                          _tx('register.title'),
                           style: const TextStyle(
                             fontSize: FncFonts.size24,
                             fontWeight: FontWeight.w700,
@@ -175,12 +169,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 color: FncColors.overlayRedAccent40,
                               ),
                             ),
-                            child: Text(
-                              _tx(
-                                'register.disabled_message',
-                                'Registro deshabilitado en este backend. Contacta con el administrador.',
-                              ),
-                            ),
+                            child: Text(_tx('register.disabled_message')),
                           ),
                           const SizedBox(height: 12),
                         ],
@@ -191,14 +180,8 @@ class _RegisterPageState extends State<RegisterPage> {
                           autocorrect: false,
                           textCapitalization: TextCapitalization.none,
                           decoration: InputDecoration(
-                            labelText: _tx(
-                              'register.username_label',
-                              'Usuario público *',
-                            ),
-                            helperText: _tx(
-                              'register.username_hint',
-                              '5–32 caracteres. No se podrá cambiar.',
-                            ),
+                            labelText: _tx('register.username_label'),
+                            helperText: _tx('register.username_hint'),
                             border: const OutlineInputBorder(),
                           ),
                         ),
@@ -208,7 +191,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           validator: Validators.email,
                           enabled: _registrationEnabled,
                           decoration: InputDecoration(
-                            labelText: _tx('register.email_label', 'Email'),
+                            labelText: _tx('register.email_label'),
                             border: const OutlineInputBorder(),
                           ),
                         ),
@@ -220,25 +203,16 @@ class _RegisterPageState extends State<RegisterPage> {
                           validator: (value) {
                             final requiredError = Validators.requiredField(
                               value,
-                              message: _tx(
-                                'register.error_password_required',
-                                'La contraseña es obligatoria',
-                              ),
+                              message: _tx('register.error_password_required'),
                             );
                             if (requiredError != null) return requiredError;
                             if ((value ?? '').trim().length < 8) {
-                              return _tx(
-                                'register.error_short_password',
-                                'La contraseña debe tener al menos 8 caracteres',
-                              );
+                              return _tx('register.error_short_password');
                             }
                             return null;
                           },
                           decoration: InputDecoration(
-                            labelText: _tx(
-                              'register.password_label',
-                              'Contraseña',
-                            ),
+                            labelText: _tx('register.password_label'),
                             border: const OutlineInputBorder(),
                           ),
                         ),
@@ -253,33 +227,18 @@ class _RegisterPageState extends State<RegisterPage> {
                           controlAffinity: ListTileControlAffinity.leading,
                           contentPadding: EdgeInsets.zero,
                           dense: true,
-                          title: Text(
-                            _tx(
-                              'register.accept_legal',
-                              'He leído y acepto los términos y la política de privacidad',
-                            ),
-                          ),
+                          title: Text(_tx('register.accept_legal')),
                         ),
                         Wrap(
                           spacing: 12,
                           children: [
                             TertiaryButton(
                               onPressed: () => _openLegalDocument('/terms'),
-                              child: Text(
-                                _tx(
-                                  'register.terms_link',
-                                  'Términos y condiciones',
-                                ),
-                              ),
+                              child: Text(_tx('register.terms_link')),
                             ),
                             TertiaryButton(
                               onPressed: () => _openLegalDocument('/privacy'),
-                              child: Text(
-                                _tx(
-                                  'register.privacy_link',
-                                  'Política de privacidad',
-                                ),
-                              ),
+                              child: Text(_tx('register.privacy_link')),
                             ),
                           ],
                         ),
@@ -295,20 +254,15 @@ class _RegisterPageState extends State<RegisterPage> {
                                 : _submit,
                             child: Text(
                               _loading
-                                  ? _tx(
-                                      'register.submit_btn_loading',
-                                      'Registrando...',
-                                    )
-                                  : _tx('register.submit_btn', 'Registrarme'),
+                                  ? _tx('register.submit_btn_loading')
+                                  : _tx('register.submit_btn'),
                             ),
                           ),
                         ),
                         const SizedBox(height: 8),
                         TertiaryButton(
                           onPressed: () => AppRouter.toLogin(context),
-                          child: Text(
-                            _tx('register.back_to_login', 'Volver al login'),
-                          ),
+                          child: Text(_tx('register.back_to_login')),
                         ),
                         if (_message != null) ...[
                           const SizedBox(height: 8),

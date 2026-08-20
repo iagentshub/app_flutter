@@ -10,7 +10,7 @@ class _ConnectionFormDialog extends StatefulWidget {
 
   final List<ConnectionProvider> providers;
   final Map<String, dynamic>? initial;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   /// Modelos instalados en el host Ollama indicado (lista vacía si falla).
   final Future<List<String>> Function(String host) onDiscoverOllamaModels;
@@ -29,7 +29,7 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
 
   String? _requiredField(String? value, ProviderField field) {
     if (field.required && (value == null || value.trim().isEmpty)) {
-      return widget.tx('connections.field_required', 'Campo obligatorio');
+      return widget.tx('connections.field_required');
     }
     return null;
   }
@@ -144,18 +144,13 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
     return AlertDialog(
       title: Text(
         widget.initial == null
-            ? widget.tx('connections.new', 'Nueva conexión')
-            : widget.tx('connections.edit_title', 'Editar conexión'),
+            ? widget.tx('connections.new')
+            : widget.tx('connections.edit_title'),
       ),
       content: SizedBox(
         width: dialogContentWidth(context, 560),
         child: provider == null
-            ? Text(
-                widget.tx(
-                  'connections.no_providers',
-                  'No hay proveedores disponibles',
-                ),
-              )
+            ? Text(widget.tx('connections.no_providers'))
             : Form(
                 key: _formKey,
                 child: ListView(
@@ -164,17 +159,11 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
                     TextFormField(
                       controller: _nameController,
                       decoration: InputDecoration(
-                        labelText: widget.tx(
-                          'connections.name_label',
-                          'Nombre',
-                        ),
+                        labelText: widget.tx('connections.name_label'),
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return widget.tx(
-                            'connections.name_required',
-                            'El nombre es obligatorio',
-                          );
+                          return widget.tx('connections.name_required');
                         }
                         return null;
                       },
@@ -198,10 +187,7 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
                         });
                       },
                       decoration: InputDecoration(
-                        labelText: widget.tx(
-                          'connections.provider_label',
-                          'Proveedor',
-                        ),
+                        labelText: widget.tx('connections.provider_label'),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -218,11 +204,11 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
       actions: [
         TertiaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(widget.tx('common.cancel', 'Cancelar')),
+          child: Text(widget.tx('common.cancel')),
         ),
         PrimaryButton(
           onPressed: _submit,
-          child: Text(widget.tx('common.save', 'Guardar')),
+          child: Text(widget.tx('common.save')),
         ),
       ],
     );
@@ -237,12 +223,7 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
       if (models.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              widget.tx(
-                'connections.discover_models_empty',
-                'No se encontraron modelos en ese host',
-              ),
-            ),
+            content: Text(widget.tx('connections.discover_models_empty')),
           ),
         );
         return;
@@ -268,14 +249,7 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            widget.tx(
-              'connections.discover_models_error',
-              'No se pudo conectar con Ollama en ese host',
-            ),
-          ),
-        ),
+        SnackBar(content: Text(widget.tx('connections.discover_models_error'))),
       );
     } finally {
       if (mounted) setState(() => _discoveringModels = false);
@@ -293,10 +267,7 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
           labelText: field.label,
           hintText: field.placeholder.isEmpty ? null : field.placeholder,
           suffixIcon: AppIconButton(
-            tooltip: widget.tx(
-              'connections.discover_models',
-              'Descubrir modelos',
-            ),
+            tooltip: widget.tx('connections.discover_models'),
             icon: _discoveringModels
                 ? const SizedBox(
                     width: 16,

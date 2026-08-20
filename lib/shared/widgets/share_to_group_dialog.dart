@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/network/api_client.dart';
 import '../../features/manager/repositories/manager_repository.dart';
 import '../../models/manager/group_models.dart';
+import '../../utils/i18n.dart';
 import '../i18n/locale_loader.dart';
 import '../repositories/sharing_repository.dart';
 import '../state/locale_controller.dart';
@@ -67,8 +68,7 @@ class _ShareToGroupDialogState extends State<_ShareToGroupDialog> {
   bool _loading = true;
   String? _error;
 
-  String _tx(String path, String fallback) =>
-      LocaleLoader.text(_texts, path, fallback: fallback);
+  String _tx(String path) => LocaleLoader.text(_texts, path);
 
   @override
   void initState() {
@@ -106,7 +106,7 @@ class _ShareToGroupDialogState extends State<_ShareToGroupDialog> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'No se pudo cargar la lista de grupos';
+        _error = tr('manager.groups_load_error');
         _loading = false;
       });
     }
@@ -132,8 +132,6 @@ class _ShareToGroupDialogState extends State<_ShareToGroupDialog> {
               content: Text(
                 _tx(
                   'groups.unshare_kept',
-                  '{count} recursos siguen compartidos porque otro recurso del '
-                      'grupo los usa.',
                 ).replaceAll('{count}', '${result.kept.length}'),
               ),
             ),
@@ -160,20 +158,16 @@ class _ShareToGroupDialogState extends State<_ShareToGroupDialog> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _pending.remove(group.id));
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _tx('groups.share_error', 'No se pudo compartir el recurso'),
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_tx('groups.share_error'))));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(_tx('groups.share_dialog_title', 'Compartir con grupo')),
+      title: Text(_tx('groups.share_dialog_title')),
       content: SizedBox(
         width: dialogContentWidth(context, 380),
         child: _loading
@@ -184,12 +178,7 @@ class _ShareToGroupDialogState extends State<_ShareToGroupDialog> {
             : _error != null
             ? Text(_error!)
             : _groups.isEmpty
-            ? Text(
-                _tx(
-                  'groups.share_empty',
-                  'No perteneces a ningún grupo todavía.',
-                ),
-              )
+            ? Text(_tx('groups.share_empty'))
             : SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -205,10 +194,10 @@ class _ShareToGroupDialogState extends State<_ShareToGroupDialog> {
                             ? StatusDotState.ok
                             : StatusDotState.error,
                         semanticLabel: pending
-                            ? _tx('groups.share_pending', 'Actualizando')
+                            ? _tx('groups.share_pending')
                             : shared
-                            ? _tx('groups.shared', 'Compartido')
-                            : _tx('groups.not_shared', 'No compartido'),
+                            ? _tx('groups.shared')
+                            : _tx('groups.not_shared'),
                       ),
                       title: Text(group.name),
                       onTap: pending ? null : () => _toggle(group),
@@ -220,7 +209,7 @@ class _ShareToGroupDialogState extends State<_ShareToGroupDialog> {
       actions: [
         FilledButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(_tx('common.close', 'Cerrar')),
+          child: Text(_tx('common.close')),
         ),
       ],
     );

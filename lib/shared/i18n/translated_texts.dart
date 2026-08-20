@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../utils/i18n.dart';
 import '../state/locale_controller.dart';
 import 'locale_loader.dart';
 
@@ -41,11 +42,14 @@ class TranslatedTexts extends ChangeNotifier {
     );
     if (_disposed || generation != _generation) return;
     _bundle = bundle;
+    // Lo comparte con `tr()`: a partir de aquí cualquier widget puede traducir
+    // una clave de este namespace sin que se le pase el bundle.
+    I18n.registrar(namespace, bundle);
     notifyListeners();
   }
 
-  String text(String path, {String fallback = ''}) =>
-      LocaleLoader.text(_bundle, path, fallback: fallback);
+  /// Traducción de [path] en el idioma activo, o el identificador si falta.
+  String text(String path) => LocaleLoader.text(_bundle, path);
 
   @override
   void dispose() {

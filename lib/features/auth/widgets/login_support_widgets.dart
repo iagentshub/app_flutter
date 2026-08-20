@@ -48,7 +48,7 @@ class _OauthButton extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: onPressed == null
-          ? Tooltip(message: 'Próximamente', child: button)
+          ? Tooltip(message: tr('common.coming_soon'), child: button)
           : button,
     );
   }

@@ -37,7 +37,7 @@ class AgentBuilderController extends ChangeNotifier {
     required SkillsRepository skillsRepository,
     required KnowledgeRepository knowledgeRepository,
     required SessionController sessionController,
-    required String Function(String path, String fallback) tx,
+    required String Function(String path) tx,
   }) : _builderRepository = builderRepository,
        _agentsRepository = agentsRepository,
        _connectionsRepository = connectionsRepository,
@@ -52,7 +52,7 @@ class AgentBuilderController extends ChangeNotifier {
   final SkillsRepository _skillsRepository;
   final KnowledgeRepository _knowledgeRepository;
   final SessionController _sessionController;
-  final String Function(String path, String fallback) _tx;
+  final String Function(String path) _tx;
 
   final TextEditingController textController = TextEditingController();
 
@@ -99,7 +99,7 @@ class AgentBuilderController extends ChangeNotifier {
     final token = _token;
     if (token == null || token.isEmpty) {
       _loadingConnections = false;
-      _error = _tx('common.no_session', 'No hay sesión activa');
+      _error = _tx('common.no_session');
       _notify();
       return;
     }
@@ -124,17 +124,17 @@ class AgentBuilderController extends ChangeNotifier {
 
     final results = await Future.wait([
       loadResource(
-        _tx('agents.builder_resource_connections', 'conexiones'),
+        _tx('agents.builder_resource_connections'),
         _connectionsRepository.listConnections(token),
         const <ConnectionItem>[],
       ),
       loadResource(
-        _tx('agents.builder_resource_skills', 'skills'),
+        _tx('agents.builder_resource_skills'),
         _skillsRepository.listSkills(token, scope: 'all'),
         const <SkillItem>[],
       ),
       loadResource(
-        _tx('agents.builder_resource_knowledge', 'conocimiento'),
+        _tx('agents.builder_resource_knowledge'),
         _knowledgeRepository.listItems(token),
         const <KnowledgeItem>[],
       ),
@@ -153,7 +153,7 @@ class AgentBuilderController extends ChangeNotifier {
     _loadingConnections = false;
     if (failures.isNotEmpty) {
       _error =
-          '${_tx('agents.builder_load_failed', 'No se pudieron cargar')}: '
+          '${_tx('agents.builder_load_failed')}: '
           '${failures.join(', ')}';
     }
     _notify();
@@ -172,9 +172,7 @@ class AgentBuilderController extends ChangeNotifier {
     final selectedConnectionId = _connectionId;
     final text = textController.text.trim();
     if (selectedConnectionId == null) {
-      return ActionResult.error(
-        _tx('agents.builder_no_connection', 'Elige una conexión primero'),
-      );
+      return ActionResult.error(_tx('agents.builder_no_connection'));
     }
     if (token == null || token.isEmpty || text.isEmpty || _streaming) {
       return null;
@@ -243,12 +241,7 @@ class AgentBuilderController extends ChangeNotifier {
       _stage = event.stage;
       if (visible.isNotEmpty) _partialReply = visible;
     } else if (event.type == 'error') {
-      _error =
-          event.message ??
-          _tx(
-            'agents.builder_generic_error',
-            'Error del constructor de agentes',
-          );
+      _error = event.message ?? _tx('agents.builder_generic_error');
     } else if (event.type == 'builder_done') {
       final assistantMessage = event.assistantMessage ?? '';
       // Cerrar el turno aquí y no en onDone evita una burbuja de espera vacía
@@ -282,12 +275,7 @@ class AgentBuilderController extends ChangeNotifier {
     _thinking = false;
     _partialReply = '';
     _stage = null;
-    _error =
-        apiError?.message ??
-        _tx(
-          'agents.builder_connection_error',
-          'Error de conexión con el constructor de agentes',
-        );
+    _error = apiError?.message ?? _tx('agents.builder_connection_error');
     if (_messages.isNotEmpty &&
         _messages.last.role == 'user' &&
         _messages.last.content == failedText) {
@@ -351,13 +339,11 @@ class AgentBuilderController extends ChangeNotifier {
       _agentSaved = true;
       _pendingDraft = null;
       _notify();
-      return ActionResult(_tx('agents.builder_agent_created', 'Agente creado'));
+      return ActionResult(_tx('agents.builder_agent_created'));
     } on ApiError catch (error) {
       return ActionResult.error(error.message);
     } catch (_) {
-      return ActionResult.error(
-        _tx('agents.error_generic_save', 'No se pudo guardar el agente'),
-      );
+      return ActionResult.error(_tx('agents.error_generic_save'));
     }
   }
 
@@ -379,19 +365,13 @@ class AgentBuilderController extends ChangeNotifier {
   String get thinkingLabel {
     switch (_stage) {
       case 'replying':
-        return _tx('agents.builder_stage_replying', 'Redactando respuesta…');
+        return _tx('agents.builder_stage_replying');
       case 'drafting':
-        return _tx('agents.builder_stage_drafting', 'Preparando el borrador…');
+        return _tx('agents.builder_stage_drafting');
       case 'writing_instructions':
-        return _tx(
-          'agents.builder_stage_writing',
-          'Escribiendo las instrucciones del agente…',
-        );
+        return _tx('agents.builder_stage_writing');
       default:
-        return _tx(
-          'agents.builder_stage_analyzing',
-          'Analizando tu solicitud…',
-        );
+        return _tx('agents.builder_stage_analyzing');
     }
   }
 

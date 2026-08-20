@@ -174,10 +174,11 @@ void main() {
     final infractores = <String>[];
     final construccion = RegExp(r'\b(GraphNode|GraphEdge)\(');
     final permitidos = Directory('lib/shared/graph');
-    for (final file in Directory('lib')
-        .listSync(recursive: true)
-        .whereType<File>()
-        .where((file) => file.path.endsWith('.dart'))) {
+    for (final file
+        in Directory('lib')
+            .listSync(recursive: true)
+            .whereType<File>()
+            .where((file) => file.path.endsWith('.dart'))) {
       final ruta = file.path.replaceAll(r'\', '/');
       if (ruta.startsWith(permitidos.path.replaceAll(r'\', '/'))) continue;
       final lineas = file.readAsLinesSync();

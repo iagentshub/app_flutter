@@ -6,9 +6,9 @@ part of '../pages/knowledge_page.dart';
 extension _ToolSections on _KnowledgePageState {
   Widget _buildToolsErrorState() {
     return AsyncStatePanel.error(
-      title: _tx('knowledge.tools_error_title', 'Error cargando Herramientas'),
+      title: _tx('knowledge.tools_error_title'),
       message: _toolsError!,
-      retryLabel: _tx('common.retry', 'Reintentar'),
+      retryLabel: _tx('common.retry'),
       onRetry: _loadTools,
     );
   }
@@ -22,7 +22,7 @@ extension _ToolSections on _KnowledgePageState {
       onRefresh: _loadTools,
       items: filteredTools,
       itemBuilder: _buildToolCard,
-      emptyText: _tx('knowledge.no_tools', 'No hay herramientas todavía.'),
+      emptyText: _tx('knowledge.no_tools'),
       toolbar: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -33,16 +33,16 @@ extension _ToolSections on _KnowledgePageState {
               AppIconButton.filled(
                 onPressed: _openCreateToolDialog,
                 icon: const Icon(Icons.add),
-                tooltip: _tx('knowledge.new_tool', 'Nueva herramienta'),
+                tooltip: _tx('knowledge.new_tool'),
               ),
               AppIconButton.outlined(
                 onPressed: _loadTools,
                 icon: const Icon(Icons.refresh),
-                tooltip: _tx('common.update', 'Actualizar'),
+                tooltip: _tx('common.update'),
               ),
               FilterButton(
                 activeCount: _toolFilterCount,
-                tooltip: _tx('common.filters', 'Filtros'),
+                tooltip: _tx('common.filters'),
                 onPressed: _openToolFiltersDialog,
               ),
               ..._groupsButtons(),
@@ -50,7 +50,7 @@ extension _ToolSections on _KnowledgePageState {
           ),
           const SizedBox(height: 12),
           Text(
-            '${_tx('knowledge.tab_tools', 'Herramientas')}: ${filteredTools.length}',
+            '${_tx('knowledge.tab_tools')}: ${filteredTools.length}',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
         ],
@@ -74,7 +74,7 @@ extension _ToolSections on _KnowledgePageState {
           const Icon(Icons.schedule, size: 12),
           const SizedBox(width: 4),
           Text(
-            _tx('knowledge.execution_coming_soon', 'Ejecución próximamente'),
+            _tx('knowledge.execution_coming_soon'),
             style: const TextStyle(fontSize: FncFonts.size10),
           ),
         ],
@@ -110,7 +110,7 @@ extension _ToolSections on _KnowledgePageState {
                 ),
                 if (!item.isActive) ...[
                   const SizedBox(width: 8),
-                  InactiveBadge(label: _tx('common.inactive', 'Inactivo')),
+                  InactiveBadge(label: _tx('common.inactive')),
                 ],
               ],
             ),
@@ -139,17 +139,14 @@ extension _ToolSections on _KnowledgePageState {
                     child: Text(
                       item.hasBinary
                           ? '${item.binaryFilename} · ${formatToolBinarySize(item.binarySize ?? 0)}'
-                          : _tx('knowledge.no_binary', 'Sin binario todavía'),
+                          : _tx('knowledge.no_binary'),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   if (item.hasBinary)
                     ActionIconButton(
                       icon: Icons.download_outlined,
-                      tooltip: _tx(
-                        'knowledge.download_binary',
-                        'Descargar binario',
-                      ),
+                      tooltip: _tx('knowledge.download_binary'),
                       onPressed: () => _downloadToolBinary(item),
                     ),
                 ],
@@ -161,9 +158,9 @@ extension _ToolSections on _KnowledgePageState {
               leading: [
                 OriginBadge(
                   propertyType: item.propertyType,
-                  ownerLabel: _tx('common.owner', 'Propietario'),
-                  linkedLabel: _tx('common.linked', 'Enlace'),
-                  forkLabel: _tx('common.fork', 'Fork'),
+                  ownerLabel: _tx('common.owner'),
+                  linkedLabel: _tx('common.linked'),
+                  forkLabel: _tx('common.fork'),
                 ),
                 _executionComingSoonBadge(),
               ],
@@ -181,21 +178,18 @@ extension _ToolSections on _KnowledgePageState {
                 if (!item.readOnly)
                   ActionIconButton(
                     icon: Icons.group_add_outlined,
-                    tooltip: _tx('common.share_group', 'Compartir con grupo'),
+                    tooltip: _tx('common.share_group'),
                     onPressed: () => _shareTool(item),
                   ),
                 ActionIconButton(
                   icon: Icons.history,
-                  tooltip: _tx(
-                    'history.dialog_title',
-                    'Historial de versiones',
-                  ),
+                  tooltip: _tx('history.dialog_title'),
                   onPressed: () => _showToolHistory(item),
                 ),
                 if (!item.readOnly)
                   ActionIconButton(
                     icon: Icons.edit_outlined,
-                    tooltip: _tx('common.edit', 'Editar'),
+                    tooltip: _tx('common.edit'),
                     onPressed: () => _openEditToolDialog(item),
                   ),
                 if (!item.readOnly)
@@ -204,14 +198,14 @@ extension _ToolSections on _KnowledgePageState {
                         ? Icons.toggle_on_outlined
                         : Icons.toggle_off_outlined,
                     tooltip: item.isActive
-                        ? _tx('common.deactivate', 'Desactivar')
-                        : _tx('common.activate', 'Activar'),
+                        ? _tx('common.deactivate')
+                        : _tx('common.activate'),
                     onPressed: () => _toggleToolActive(item),
                   ),
                 if (!item.readOnly)
                   ActionIconButton(
                     icon: Icons.delete_outline,
-                    tooltip: _tx('common.delete', 'Eliminar'),
+                    tooltip: _tx('common.delete'),
                     danger: true,
                     onPressed: () => _deleteTool(item),
                   ),

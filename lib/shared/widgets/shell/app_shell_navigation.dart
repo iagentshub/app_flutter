@@ -38,7 +38,7 @@ class AppSidebarNavigation extends StatelessWidget {
   final String role;
   final String languageCode;
   final bool billingEnabled;
-  final String Function(String key, String fallback) tx;
+  final String Function(String key) tx;
   final bool showCloseButton;
   final VoidCallback? onCollapse;
   final ValueChanged<String> onNavigate;
@@ -51,8 +51,8 @@ class AppSidebarNavigation extends StatelessWidget {
     final accountDetail = email?.trim().isNotEmpty == true
         ? email!.trim()
         : role == 'admin'
-        ? tx('role_admin', 'Administrador')
-        : tx('role_user', 'Usuario');
+        ? tx('role_admin')
+        : tx('role_user');
     final initial = sidebarAvatarInitial(visibleName);
 
     return Column(
@@ -60,22 +60,26 @@ class AppSidebarNavigation extends StatelessWidget {
         _SidebarBrand(
           showCloseButton: showCloseButton,
           onCollapse: onCollapse,
-          collapseTooltip: tx('sidebar_hide', 'Ocultar menú'),
+          collapseTooltip: tx('sidebar_hide'),
         ),
         Expanded(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(10, 10, 10, 16),
             children: [
               _NavigationSection(
-                label: tx('workspace', 'Espacio de trabajo'),
-                items: _visibleMainItems(role),
+                label: tx('workspace'),
+                // Sin filtrar por rol: aquí se ocultaba workflows al
+                // invitado, porque su sesión vivía en memoria del backend y
+                // cualquier llamada respondía 403. Hoy el invitado es un
+                // usuario efímero y esa sección es suya como el resto.
+                items: _mainItems,
                 location: location,
                 tx: tx,
                 onNavigate: onNavigate,
               ),
               const SizedBox(height: 24),
               _NavigationSection(
-                label: tx('organization', 'Organización'),
+                label: tx('organization'),
                 items: _secondaryItems,
                 location: location,
                 tx: tx,
@@ -84,7 +88,7 @@ class AppSidebarNavigation extends StatelessWidget {
               if (isAdmin) ...[
                 const SizedBox(height: 24),
                 _NavigationSection(
-                  label: tx('administration', 'Administración'),
+                  label: tx('administration'),
                   items: _adminItems,
                   location: location,
                   tx: tx,
@@ -173,7 +177,7 @@ class _NavigationSection extends StatelessWidget {
   final String label;
   final List<_NavItem> items;
   final String location;
-  final String Function(String key, String fallback) tx;
+  final String Function(String key) tx;
   final ValueChanged<String> onNavigate;
 
   @override
@@ -199,7 +203,7 @@ class _NavigationSection extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 2),
             child: _NavItemTile(
               icon: item.icon,
-              label: tx(item.labelKey, item.labelKey),
+              label: trOr(item.labelKey, item.labelKey),
               selected: location == item.route,
               onTap: () => onNavigate(item.route),
             ),
@@ -258,7 +262,7 @@ class _ConnectionIssueBanner extends StatelessWidget {
   const _ConnectionIssueBanner({required this.apiClient, required this.tx});
 
   final ApiClient apiClient;
-  final String Function(String key, String fallback) tx;
+  final String Function(String key) tx;
 
   @override
   Widget build(BuildContext context) {
@@ -278,10 +282,7 @@ class _ConnectionIssueBanner extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  tx(
-                        'backend_connection_issue',
-                        'No se pudo conectar con {backend}: {error}',
-                      )
+                  tx('backend_connection_issue')
                       .replaceAll(
                         '{backend}',
                         backendController.selectedOption.label,
@@ -297,7 +298,7 @@ class _ConnectionIssueBanner extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                tx('backend_connection_action', 'Cambiar backend'),
+                tx('backend_connection_action'),
                 style: const TextStyle(
                   color: FncColors.white,
                   fontWeight: FontWeight.w700,
@@ -388,12 +389,6 @@ class _NavItem {
 
 /// Workflows queda cerrado al invitado en el backend (`require_auth`, sin
 /// rama `is_guest`): se oculta aquí para no llevarlo a un 403.
-List<_NavItem> _visibleMainItems(String role) => role == 'guest'
-    ? _mainItems
-          .where((item) => item.route != InternalRoutes.orchestrations)
-          .toList()
-    : _mainItems;
-
 const _mainItems = [
   _NavItem(InternalRoutes.dashboard, 'dashboard', Icons.dashboard_outlined),
   _NavItem(InternalRoutes.explore, 'explore', Icons.travel_explore_outlined),
@@ -422,15 +417,12 @@ const _adminItems = [
   ),
 ];
 
-String _titleForLocation(
-  String location,
-  String Function(String key, String fallback) tx,
-) {
+String _titleForLocation(String location, String Function(String key) tx) {
   for (final item in [..._mainItems, ..._secondaryItems, ..._adminItems]) {
-    if (location == item.route) return tx(item.labelKey, item.labelKey);
+    if (location == item.route) return trOr(item.labelKey, item.labelKey);
   }
   if (location.startsWith(InternalRoutes.publicProfilePrefix)) {
-    return tx('public_profile', 'Public Profile');
+    return tx('public_profile');
   }
-  return tx('app_title', 'iAgents');
+  return tx('app_title');
 }

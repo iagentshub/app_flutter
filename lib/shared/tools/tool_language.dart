@@ -21,14 +21,11 @@ IconData toolLanguageIcon(String language) {
 /// Etiqueta legible del lenguaje de una tool, siempre vía `tx` — a
 /// diferencia de `skillCategoryLabel` (deuda técnica preexistente con texto
 /// hardcodeado), este helper nunca fija un texto de UI en el código.
-String toolLanguageLabel(
-  String Function(String path, String fallback) tx,
-  String language,
-) {
+String toolLanguageLabel(String Function(String path) tx, String language) {
   return switch (language) {
-    'python' => tx('knowledge.language_python', 'Python'),
-    'shell' => tx('knowledge.language_shell', 'Shell'),
-    'cpp' => tx('knowledge.language_cpp', 'C++'),
+    'python' => tx('knowledge.language_python'),
+    'shell' => tx('knowledge.language_shell'),
+    'cpp' => tx('knowledge.language_cpp'),
     _ => language,
   };
 }

@@ -26,10 +26,7 @@ void main() {
   group('ResourceEvents', () {
     test('deriva el tipo de recurso de la ruta', () {
       expect(ResourceEvents.typeFromPath('/api/agents'), 'agents');
-      expect(
-        ResourceEvents.typeFromPath('/api/agents/private/ag-1'),
-        'agents',
-      );
+      expect(ResourceEvents.typeFromPath('/api/agents/private/ag-1'), 'agents');
       expect(
         ResourceEvents.typeFromPath('/api/knowledge?limit=50'),
         'knowledge',
@@ -116,9 +113,11 @@ void main() {
     final client = ApiClient(
       backend,
       client: MockClient((_) async {
-        return http.Response(jsonEncode(const []), 200, headers: {
-          'content-type': 'application/json',
-        });
+        return http.Response(
+          jsonEncode(const []),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
       }),
     );
 

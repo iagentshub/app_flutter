@@ -53,7 +53,7 @@ class _VerifyPageState extends State<VerifyPage> {
     super.dispose();
   }
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   Future<void> _verify() async {
     final themeController = ThemeControllerScope.of(context, listen: false);
@@ -63,10 +63,7 @@ class _VerifyPageState extends State<VerifyPage> {
     if (token.isEmpty) {
       setState(() {
         _loading = false;
-        _message = _tx(
-          'verify.error_sub',
-          'El enlace de verificación es inválido o ha expirado.',
-        );
+        _message = _tx('verify.error_sub');
       });
       return;
     }
@@ -76,10 +73,7 @@ class _VerifyPageState extends State<VerifyPage> {
       if (!ok) {
         setState(() {
           _loading = false;
-          _message = _tx(
-            'verify.error_sub',
-            'El enlace de verificación es inválido o ha expirado.',
-          );
+          _message = _tx('verify.error_sub');
         });
         return;
       }
@@ -87,10 +81,7 @@ class _VerifyPageState extends State<VerifyPage> {
       if (gaToken == null || gaToken.isEmpty) {
         setState(() {
           _loading = false;
-          _message = _tx(
-            'verify.manual_login_required',
-            'Cuenta verificada. Inicia sesión manualmente para continuar.',
-          );
+          _message = _tx('verify.manual_login_required');
         });
         return;
       }
@@ -116,7 +107,7 @@ class _VerifyPageState extends State<VerifyPage> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _message = _tx('verify.error_generic', 'Error verificando la cuenta');
+        _message = _tx('verify.error_generic');
       });
     }
   }
@@ -136,15 +127,12 @@ class _VerifyPageState extends State<VerifyPage> {
                   children: [
                     if (_loading) const CircularProgressIndicator(),
                     const SizedBox(height: 12),
-                    Text(
-                      _message ??
-                          _tx('verify.loading_title', 'Verificando cuenta…'),
-                    ),
+                    Text(_message ?? _tx('verify.loading_title')),
                     const SizedBox(height: 10),
                     if (!_loading)
                       TertiaryButton(
                         onPressed: () => AppRouter.toLogin(context),
-                        child: Text(_tx('verify.go_login', 'Volver al login')),
+                        child: Text(_tx('verify.go_login')),
                       ),
                   ],
                 ),

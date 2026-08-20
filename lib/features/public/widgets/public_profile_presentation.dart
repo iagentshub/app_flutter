@@ -30,7 +30,7 @@ class PublicProfilePresentation extends StatelessWidget {
   final bool following;
   final bool followBusy;
   final VoidCallback onToggleFollow;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   bool get _hasContact =>
       (profile.emailPublic?.isNotEmpty ?? false) ||
@@ -104,22 +104,22 @@ class PublicProfilePresentation extends StatelessWidget {
                 _Metric(
                   icon: Icons.people_outline,
                   value: followersCount,
-                  label: tx('public_profile.followers', 'Seguidores'),
+                  label: tx('public_profile.followers'),
                 ),
                 _Metric(
                   icon: Icons.person_outline,
                   value: followingCount,
-                  label: tx('public_profile.following', 'Siguiendo'),
+                  label: tx('public_profile.following'),
                 ),
                 _Metric(
                   icon: Icons.widgets_outlined,
                   value: resourcesCount,
-                  label: tx('public_profile.resources_count', 'Recursos'),
+                  label: tx('public_profile.resources_count'),
                 ),
                 _Metric(
                   icon: Icons.star_outline,
                   value: starsCount,
-                  label: tx('public_profile.stars', 'Estrellas'),
+                  label: tx('public_profile.stars'),
                   highlighted: true,
                 ),
               ],
@@ -149,7 +149,7 @@ class _Identity extends StatelessWidget {
   final bool following;
   final bool followBusy;
   final VoidCallback onToggleFollow;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
   final bool compact;
 
   @override
@@ -159,7 +159,7 @@ class _Identity extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          tx('public_profile.eyebrow', 'PERFIL PÚBLICO'),
+          tx('public_profile.eyebrow'),
           style: theme.textTheme.labelSmall?.copyWith(
             color: theme.colorScheme.primary,
             fontWeight: FontWeight.w800,
@@ -193,10 +193,10 @@ class _Identity extends StatelessWidget {
             ),
             label: Text(
               followBusy
-                  ? tx('profile.updating', 'Actualizando...')
+                  ? tx('profile.updating')
                   : following
-                  ? tx('public_profile.unfollow_btn', 'Dejar de seguir')
-                  : tx('public_profile.follow_btn', 'Seguir'),
+                  ? tx('public_profile.unfollow_btn')
+                  : tx('public_profile.follow_btn'),
             ),
           ),
         ],
@@ -224,7 +224,7 @@ class _ProfileDetails extends StatelessWidget {
   const _ProfileDetails({required this.profile, required this.tx});
 
   final SocialProfile profile;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   Widget build(BuildContext context) {
@@ -234,7 +234,7 @@ class _ProfileDetails extends StatelessWidget {
         if (profile.languages.isNotEmpty) ...[
           _SectionLabel(
             icon: Icons.translate,
-            label: tx('public_profile.languages', 'Idiomas'),
+            label: tx('public_profile.languages'),
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -254,7 +254,7 @@ class _ProfileDetails extends StatelessWidget {
             (profile.github?.isNotEmpty ?? false)) ...[
           _SectionLabel(
             icon: Icons.contact_page_outlined,
-            label: tx('public_profile.contact', 'Contacto'),
+            label: tx('public_profile.contact'),
           ),
           const SizedBox(height: 8),
           if (profile.emailPublic?.isNotEmpty ?? false)

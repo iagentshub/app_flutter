@@ -13,7 +13,7 @@ class _PromptFormDialog extends StatefulWidget {
     this.allowPublic = true,
   });
 
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
   final Map<String, dynamic>? initial;
   final bool allowPublic;
 
@@ -30,7 +30,7 @@ class _PromptFormDialogState extends State<_PromptFormDialog> {
   String _scope = 'private';
   Set<String> _selectedLanguageLabels = {};
 
-  String _tx(String path, String fallback) => widget.tx(path, fallback);
+  String _tx(String path) => widget.tx(path);
 
   @override
   void initState() {
@@ -89,8 +89,8 @@ class _PromptFormDialogState extends State<_PromptFormDialog> {
     return AlertDialog(
       title: Text(
         widget.initial == null
-            ? _tx('knowledge.new_prompt_title', 'Nuevo prompt')
-            : _tx('knowledge.edit_prompt_title', 'Editar prompt'),
+            ? _tx('knowledge.new_prompt_title')
+            : _tx('knowledge.edit_prompt_title'),
       ),
       content: SizedBox(
         width: dialogContentWidth(context, 620),
@@ -102,10 +102,10 @@ class _PromptFormDialogState extends State<_PromptFormDialog> {
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(
-                  labelText: _tx('agents.field_name', 'Nombre'),
+                  labelText: _tx('agents.field_name'),
                 ),
                 validator: (value) => (value == null || value.trim().isEmpty)
-                    ? _tx('agents.name_required', 'El nombre es obligatorio')
+                    ? _tx('agents.name_required')
                     : null,
               ),
               const SizedBox(height: 10),
@@ -119,13 +119,9 @@ class _PromptFormDialogState extends State<_PromptFormDialog> {
               TextFormField(
                 controller: _aliasController,
                 decoration: InputDecoration(
-                  labelText: _tx('knowledge.field_alias', 'Alias'),
+                  labelText: _tx('knowledge.field_alias'),
                   prefixText: '@',
-                  helperText: _tx(
-                    'knowledge.alias_hint',
-                    'Minúsculas, números, "-" o "_" (3-30 caracteres). '
-                        'Se usa como @alias para invocarlo en el chat.',
-                  ),
+                  helperText: _tx('knowledge.alias_hint'),
                   helperMaxLines: 2,
                 ),
                 onChanged: (value) {
@@ -139,16 +135,10 @@ class _PromptFormDialogState extends State<_PromptFormDialog> {
                 validator: (value) {
                   final normalized = (value ?? '').trim().toLowerCase();
                   if (normalized.isEmpty) {
-                    return _tx(
-                      'knowledge.alias_required',
-                      'El alias es obligatorio',
-                    );
+                    return _tx('knowledge.alias_required');
                   }
                   if (!_promptAliasPattern.hasMatch(normalized)) {
-                    return _tx(
-                      'knowledge.alias_invalid',
-                      'Usa minúsculas, números, "-" o "_" (3-30 caracteres)',
-                    );
+                    return _tx('knowledge.alias_invalid');
                   }
                   return null;
                 },
@@ -158,16 +148,16 @@ class _PromptFormDialogState extends State<_PromptFormDialog> {
                 DropdownButtonFormField<String>(
                   initialValue: _scope,
                   decoration: InputDecoration(
-                    labelText: _tx('agents.scope_label', 'Visibilidad'),
+                    labelText: _tx('agents.scope_label'),
                   ),
                   items: [
                     DropdownMenuItem(
                       value: 'private',
-                      child: Text(_tx('agents.scope_private', 'Privado')),
+                      child: Text(_tx('agents.scope_private')),
                     ),
                     DropdownMenuItem(
                       value: 'public',
-                      child: Text(_tx('agents.scope_public', 'Público')),
+                      child: Text(_tx('agents.scope_public')),
                     ),
                   ],
                   onChanged: (value) {
@@ -178,14 +168,9 @@ class _PromptFormDialogState extends State<_PromptFormDialog> {
               else
                 InputDecorator(
                   decoration: InputDecoration(
-                    labelText: _tx('agents.scope_label', 'Visibilidad'),
+                    labelText: _tx('agents.scope_label'),
                   ),
-                  child: Text(
-                    _tx(
-                      'knowledge.scope_temp_session',
-                      'private · temporal durante esta sesión',
-                    ),
-                  ),
+                  child: Text(_tx('knowledge.scope_temp_session')),
                 ),
               const SizedBox(height: 10),
               TextFormField(
@@ -193,7 +178,7 @@ class _PromptFormDialogState extends State<_PromptFormDialog> {
                 minLines: 2,
                 maxLines: 4,
                 decoration: InputDecoration(
-                  labelText: _tx('agents.field_description', 'Descripción'),
+                  labelText: _tx('agents.field_description'),
                 ),
               ),
               const SizedBox(height: 10),
@@ -202,16 +187,10 @@ class _PromptFormDialogState extends State<_PromptFormDialog> {
                 minLines: 8,
                 maxLines: 16,
                 decoration: InputDecoration(
-                  labelText: _tx(
-                    'knowledge.field_prompt_content',
-                    'Contenido del prompt',
-                  ),
+                  labelText: _tx('knowledge.field_prompt_content'),
                 ),
                 validator: (value) => (value == null || value.trim().isEmpty)
-                    ? _tx(
-                        'knowledge.content_required',
-                        'El contenido es obligatorio',
-                      )
+                    ? _tx('knowledge.content_required')
                     : null,
               ),
             ],
@@ -221,12 +200,9 @@ class _PromptFormDialogState extends State<_PromptFormDialog> {
       actions: [
         TertiaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(_tx('common.cancel', 'Cancelar')),
+          child: Text(_tx('common.cancel')),
         ),
-        PrimaryButton(
-          onPressed: _submit,
-          child: Text(_tx('common.save', 'Guardar')),
-        ),
+        PrimaryButton(onPressed: _submit, child: Text(_tx('common.save'))),
       ],
     );
   }

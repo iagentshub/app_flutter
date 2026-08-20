@@ -21,22 +21,22 @@ class DashboardQuickActionsBody extends StatelessWidget {
     final definitions = <String, ({IconData icon, String label, String route})>{
       'agent': (
         icon: Icons.smart_toy_outlined,
-        label: tx('action_agent', 'Nuevo agente'),
+        label: tx('action_agent'),
         route: InternalRoutes.agents,
       ),
       'connection': (
         icon: Icons.cable_outlined,
-        label: tx('action_connection', 'Nueva conexión'),
+        label: tx('action_connection'),
         route: InternalRoutes.connections,
       ),
       'workflow': (
         icon: Icons.account_tree_outlined,
-        label: tx('action_workflow', 'Nuevo workflow'),
+        label: tx('action_workflow'),
         route: InternalRoutes.orchestrations,
       ),
       'knowledge': (
         icon: Icons.note_add_outlined,
-        label: tx('action_knowledge', 'Añadir conocimiento'),
+        label: tx('action_knowledge'),
         route: InternalRoutes.knowledge,
       ),
     };
@@ -105,9 +105,9 @@ class DashboardTokenKpiBody extends StatelessWidget {
         : ((current - previous) / previous * 100);
     final positive = (delta ?? 0) >= 0;
     final periodLabel = switch (period) {
-      'today' => tx('period_today', 'Hoy'),
-      '30d' => tx('period_30d', 'Últimos 30 días'),
-      _ => tx('period_7d', 'Últimos 7 días'),
+      'today' => tx('period_today'),
+      '30d' => tx('period_30d'),
+      _ => tx('period_7d'),
     };
 
     return Column(

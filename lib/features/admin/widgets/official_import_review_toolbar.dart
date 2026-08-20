@@ -38,7 +38,7 @@ class OfficialImportReviewToolbar extends StatelessWidget {
   final double availableWidth;
   final bool mobile;
   final String? error;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
   final ValueChanged<String> onSearchChanged;
   final ValueChanged<String?> onTypeChanged;
   final ValueChanged<String?> onStateChanged;
@@ -111,20 +111,20 @@ class OfficialImportReviewToolbar extends StatelessWidget {
               onChanged: onSearchChanged,
               decoration: InputDecoration(
                 prefixIcon: const Icon(Icons.search),
-                labelText: tx('common.search', 'Buscar'),
+                labelText: tx('common.search'),
               ),
             ),
           ),
           _ReviewFilter(
             width: mobile ? availableWidth : 180,
             value: selectedType,
-            label: tx('common.type', 'Tipo'),
+            label: tx('common.type'),
             values: _types,
             onChanged: onTypeChanged,
           ),
           FilterChip(
             selected: showOmitted,
-            label: Text(tx('official.show_omitted', 'Mostrar omitidos')),
+            label: Text(tx('official.show_omitted')),
             onSelected: busy ? null : onShowOmittedChanged,
           ),
           if (draft.warnings.isNotEmpty || draft.logs.isNotEmpty)
@@ -132,7 +132,7 @@ class OfficialImportReviewToolbar extends StatelessWidget {
               selected: showLogs,
               avatar: const Icon(Icons.receipt_long_outlined, size: 18),
               label: Text(
-                '${tx('official.log', 'Log')} '
+                '${tx('official.log')} '
                 '(${draft.warnings.length + draft.logs.length})',
               ),
               onSelected: onShowLogsChanged,
@@ -140,24 +140,24 @@ class OfficialImportReviewToolbar extends StatelessWidget {
           _ReviewFilter(
             width: mobile ? availableWidth : 180,
             value: selectedState,
-            label: tx('common.status', 'Estado'),
+            label: tx('common.status'),
             values: _states,
             onChanged: onStateChanged,
           ),
           TertiaryButton.icon(
             onPressed: busy ? null : onSelectVisible,
             icon: const Icon(Icons.select_all),
-            label: Text(tx('official.select_visible', 'Seleccionar visibles')),
+            label: Text(tx('official.select_visible')),
           ),
           TertiaryButton.icon(
             onPressed: busy ? null : onDeselectVisible,
             icon: const Icon(Icons.deselect),
-            label: Text(tx('official.deselect_visible', 'Desmarcar visibles')),
+            label: Text(tx('official.deselect_visible')),
           ),
           TertiaryButton.icon(
             onPressed: busy ? null : onShowGraph,
             icon: const Icon(Icons.account_tree_outlined),
-            label: Text(tx('official.preview_graph', 'Grafo previo')),
+            label: Text(tx('official.preview_graph')),
           ),
         ],
       ),

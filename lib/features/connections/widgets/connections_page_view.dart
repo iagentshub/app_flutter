@@ -10,9 +10,9 @@ extension _ConnectionsPageView on _ConnectionsPageState {
       return ListView(
         children: [
           AsyncStatePanel.error(
-            title: _tx('connections.error_title', 'Error cargando conexiones'),
+            title: _tx('connections.error_title'),
             message: _controller.error!,
-            retryLabel: _tx('common.retry', 'Reintentar'),
+            retryLabel: _tx('common.retry'),
             onRetry: _controller.load,
           ),
         ],
@@ -20,9 +20,9 @@ extension _ConnectionsPageView on _ConnectionsPageState {
     }
 
     final tabLabels = [
-      _tx('connections.tab_llm', 'APIs LLM'),
-      _tx('connections.tab_machine', 'Máquinas'),
-      _tx('connections.tab_database', 'Bases de datos'),
+      _tx('connections.tab_llm'),
+      _tx('connections.tab_machine'),
+      _tx('connections.tab_database'),
     ];
 
     return Column(
@@ -55,10 +55,7 @@ extension _ConnectionsPageView on _ConnectionsPageState {
                           search: TextField(
                             controller: _controller.queryController,
                             decoration: InputDecoration(
-                              labelText: _tx(
-                                'connections.search_hint',
-                                'Buscar conexión',
-                              ),
+                              labelText: _tx('connections.search_hint'),
                               prefixIcon: const Icon(Icons.search, size: 20),
                             ),
                             onChanged: _controller.setQuery,
@@ -69,20 +66,20 @@ extension _ConnectionsPageView on _ConnectionsPageState {
                                   ? null
                                   : _openCreateDialog,
                               icon: const Icon(Icons.add),
-                              tooltip: _tx('connections.new', 'Nueva conexión'),
+                              tooltip: _tx('connections.new'),
                             ),
                             AppIconButton.outlined(
                               onPressed: _controller.load,
                               icon: const Icon(Icons.refresh),
-                              tooltip: _tx('common.update', 'Actualizar'),
+                              tooltip: _tx('common.update'),
                             ),
                             AppIconButton.outlined(
                               onPressed: _controller.testingAll
                                   ? null
                                   : _testAll,
                               tooltip: _controller.testingAll
-                                  ? _tx('connections.testing', 'Probando...')
-                                  : _tx('connections.mass_test', 'Test masivo'),
+                                  ? _tx('connections.testing')
+                                  : _tx('connections.mass_test'),
                               icon: _controller.testingAll
                                   ? const SizedBox(
                                       width: 16,
@@ -95,7 +92,7 @@ extension _ConnectionsPageView on _ConnectionsPageState {
                             ),
                             FilterButton(
                               activeCount: _controller.activeFilterCount,
-                              tooltip: _tx('common.filters', 'Filtros'),
+                              tooltip: _tx('common.filters'),
                               onPressed: _openFiltersDialog,
                             ),
                             AppIconButton.outlined(
@@ -109,20 +106,18 @@ extension _ConnectionsPageView on _ConnectionsPageState {
                                 localeController: _services.localeController,
                               ),
                               icon: const Icon(Icons.groups_outlined),
-                              tooltip: _tx('groups.toggle_tooltip', 'Grupos'),
+                              tooltip: _tx('groups.toggle_tooltip'),
                               isSelected: _controller.activeGroupId != null,
                             ),
                             if (_controller.activeGroupId != null)
                               ActionChip(
-                                label: Text(
-                                  _tx('groups.active_clear', 'Grupo activo ✕'),
-                                ),
+                                label: Text(_tx('groups.active_clear')),
                                 onPressed: () =>
                                     unawaited(_controller.selectGroup(null)),
                               ),
                           ],
                           summary: Text(
-                            '${_tx('connections.count_label', 'Conexiones')}: ${filteredConnections.length} | ${_tx('connections.providers_label', 'Proveedores')}: ${_controller.providers.length}',
+                            '${_tx('connections.count_label')}: ${filteredConnections.length} | ${_tx('connections.providers_label')}: ${_controller.providers.length}',
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                         ),
@@ -137,14 +132,8 @@ extension _ConnectionsPageView on _ConnectionsPageState {
                               padding: const EdgeInsets.all(16),
                               child: Text(
                                 _controller.connections.isEmpty
-                                    ? _tx(
-                                        'connections.empty',
-                                        'No hay conexiones todavía. Crea la primera.',
-                                      )
-                                    : _tx(
-                                        'connections.empty_search',
-                                        'Sin resultados para esa búsqueda.',
-                                      ),
+                                    ? _tx('connections.empty')
+                                    : _tx('connections.empty_search'),
                               ),
                             ),
                           ),

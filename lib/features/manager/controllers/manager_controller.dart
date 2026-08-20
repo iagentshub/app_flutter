@@ -4,6 +4,7 @@ import '../../../core/network/api_error.dart';
 import '../../../models/manager/group_models.dart';
 import '../../../shared/state/action_result.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../utils/i18n.dart';
 import '../repositories/manager_repository.dart';
 
 /// Orquesta la pantalla de grupos: listado, grupo activo, miembros e
@@ -21,14 +22,14 @@ class ManagerController extends ChangeNotifier {
   ManagerController({
     required ManagerRepository repository,
     required SessionController sessionController,
-    required String Function(String path, String fallback) tx,
+    required String Function(String path) tx,
   }) : _repository = repository,
        _sessionController = sessionController,
        _tx = tx;
 
   final ManagerRepository _repository;
   final SessionController _sessionController;
-  final String Function(String path, String fallback) _tx;
+  final String Function(String path) _tx;
 
   bool _disposed = false;
 
@@ -63,7 +64,7 @@ class ManagerController extends ChangeNotifier {
   Future<void> load() async {
     final token = _token;
     if (token == null || token.isEmpty) {
-      _error = _tx('common.no_session', 'No hay sesión activa');
+      _error = _tx('common.no_session');
       _loading = false;
       _notify();
       return;
@@ -106,7 +107,7 @@ class ManagerController extends ChangeNotifier {
       _error = error.message;
       _loading = false;
     } catch (_) {
-      _error = _tx('manager.error_generic', 'No se pudo cargar Manager');
+      _error = _tx('manager.error_generic');
       _loading = false;
     }
     _notify();
@@ -123,9 +124,7 @@ class ManagerController extends ChangeNotifier {
     return _run(
       () => _repository.createGroup(token, name),
       okKey: 'manager.create_success',
-      okFallback: 'Grupo creado',
       errorKey: 'manager.create_error',
-      errorFallback: 'No se pudo crear el grupo',
     );
   }
 
@@ -134,12 +133,7 @@ class ManagerController extends ChangeNotifier {
     required Future<String?> Function(String initial) askName,
   }) async {
     if (item.isPersonal) {
-      return ActionResult(
-        _tx(
-          'manager.personal_no_rename',
-          'El grupo Personal no se puede renombrar',
-        ),
-      );
+      return ActionResult(_tx('manager.personal_no_rename'));
     }
     final name = await askName(item.name);
     if (name == null) return null;
@@ -149,9 +143,7 @@ class ManagerController extends ChangeNotifier {
     return _run(
       () => _repository.renameGroup(token, item.id, name),
       okKey: 'manager.rename_success',
-      okFallback: 'Grupo actualizado',
       errorKey: 'manager.rename_error',
-      errorFallback: 'No se pudo renombrar el grupo',
     );
   }
 
@@ -160,12 +152,7 @@ class ManagerController extends ChangeNotifier {
     required Future<bool> Function() confirm,
   }) async {
     if (item.isPersonal) {
-      return ActionResult(
-        _tx(
-          'manager.personal_no_delete',
-          'El grupo Personal no se puede eliminar',
-        ),
-      );
+      return ActionResult(_tx('manager.personal_no_delete'));
     }
     if (!await confirm()) return null;
     final token = _token;
@@ -174,9 +161,7 @@ class ManagerController extends ChangeNotifier {
     return _run(
       () => _repository.deleteGroup(token, item.id),
       okKey: 'manager.delete_success',
-      okFallback: 'Grupo eliminado',
       errorKey: 'manager.delete_error',
-      errorFallback: 'No se pudo eliminar el grupo',
     );
   }
 
@@ -197,17 +182,12 @@ class ManagerController extends ChangeNotifier {
       }
       await load();
       return ActionResult(
-        _tx(
-          'manager.switch_success',
-          'Grupo activo cambiado a {{name}}',
-        ).replaceAll('{{name}}', item.name),
+        _tx('manager.switch_success').replaceAll('{{name}}', item.name),
       );
     } on ApiError catch (error) {
       return ActionResult.error(error.message);
     } catch (_) {
-      return ActionResult.error(
-        _tx('manager.switch_error', 'No se pudo cambiar el grupo activo'),
-      );
+      return ActionResult.error(_tx('manager.switch_error'));
     } finally {
       _switchingGroupId = null;
       _notify();
@@ -218,12 +198,7 @@ class ManagerController extends ChangeNotifier {
     required Future<String?> Function() askName,
   }) async {
     if (!canManageMembers) {
-      return ActionResult.error(
-        _tx(
-          'manager.invite_need_team',
-          'Activa un grupo compartido para invitar miembros',
-        ),
-      );
+      return ActionResult.error(_tx('manager.invite_need_team'));
     }
     final username = await askName();
     if (username == null) return null;
@@ -237,9 +212,7 @@ class ManagerController extends ChangeNotifier {
         _normalizeUsername(username),
       ),
       okKey: 'manager.invite_success',
-      okFallback: 'Invitación enviada',
       errorKey: 'manager.invite_error',
-      errorFallback: 'No se pudo enviar la invitación',
     );
   }
 
@@ -247,12 +220,7 @@ class ManagerController extends ChangeNotifier {
     required Future<String?> Function() askName,
   }) async {
     if (!canManageMembers) {
-      return ActionResult.error(
-        _tx(
-          'manager.add_member_need_team',
-          'Activa un grupo compartido para añadir miembros',
-        ),
-      );
+      return ActionResult.error(_tx('manager.add_member_need_team'));
     }
     final username = await askName();
     if (username == null) return null;
@@ -267,9 +235,7 @@ class ManagerController extends ChangeNotifier {
         role: 'member',
       ),
       okKey: 'manager.add_member_success',
-      okFallback: 'Miembro añadido',
       errorKey: 'manager.add_member_error',
-      errorFallback: 'No se pudo añadir el miembro',
     );
   }
 
@@ -281,9 +247,7 @@ class ManagerController extends ChangeNotifier {
     return _run(
       () => _repository.removeMember(token, _activeGroup!.id, username),
       okKey: 'manager.remove_member_success',
-      okFallback: 'Miembro eliminado',
       errorKey: 'manager.remove_member_error',
-      errorFallback: 'No se pudo eliminar miembro',
     );
   }
 
@@ -295,9 +259,7 @@ class ManagerController extends ChangeNotifier {
     return _run(
       () => _repository.cancelInvitation(token, _activeGroup!.id, invitationId),
       okKey: 'manager.cancel_invitation_success',
-      okFallback: 'Invitación cancelada',
       errorKey: 'manager.cancel_invitation_error',
-      errorFallback: 'No se pudo cancelar invitación',
     );
   }
 
@@ -306,18 +268,16 @@ class ManagerController extends ChangeNotifier {
   Future<ActionResult> _run(
     Future<void> Function() action, {
     required String okKey,
-    required String okFallback,
     required String errorKey,
-    required String errorFallback,
   }) async {
     try {
       await action();
       await load();
-      return ActionResult(_tx(okKey, okFallback));
+      return ActionResult(tr(okKey));
     } on ApiError catch (error) {
       return ActionResult.error(error.message);
     } catch (_) {
-      return ActionResult.error(_tx(errorKey, errorFallback));
+      return ActionResult.error(tr(errorKey));
     }
   }
 

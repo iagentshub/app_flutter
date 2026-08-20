@@ -25,7 +25,7 @@ extension _ManagerGroupCard on _ManagerPageState {
               children: [
                 _chip(item.type),
                 _chip(item.role),
-                if (item.active) _chip(_tx('manager.active_chip', 'activo')),
+                if (item.active) _chip(_tx('manager.active_chip')),
               ],
             ),
             const SizedBox(height: 8),
@@ -40,19 +40,19 @@ extension _ManagerGroupCard on _ManagerPageState {
                   icon: const Icon(Icons.swap_horiz_outlined),
                   label: Text(
                     switching
-                        ? _tx('manager.switching_label', 'Cambiando...')
-                        : _tx('manager.activate_btn', 'Activar'),
+                        ? _tx('manager.switching_label')
+                        : _tx('manager.activate_btn'),
                   ),
                 ),
                 const Spacer(),
                 ActionIconButton(
                   icon: Icons.edit_outlined,
-                  tooltip: _tx('manager.rename_tooltip', 'Renombrar'),
+                  tooltip: _tx('manager.rename_tooltip'),
                   onPressed: item.isPersonal ? null : () => _renameGroup(item),
                 ),
                 ActionIconButton(
                   icon: Icons.delete_outline,
-                  tooltip: _tx('common.delete', 'Eliminar'),
+                  tooltip: _tx('common.delete'),
                   danger: true,
                   onPressed: item.isPersonal ? null : () => _deleteGroup(item),
                 ),

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/connections/connection_models.dart';
+import '../../../utils/i18n.dart';
 
-typedef AgentBuilderText = String Function(String path, String fallback);
+typedef AgentBuilderText = String Function(String path);
 
 /// Selector de la conexión LLM que usan los constructores por IA de agentes y
 /// de skills. Una sola línea, sin tarjeta: es un ajuste, no una sección.
@@ -43,7 +44,7 @@ class BuilderConnectionBar extends StatelessWidget {
                     initialValue: connectionId,
                     isExpanded: true,
                     decoration: InputDecoration(
-                      labelText: tx('agents.field_connection', 'Conexión LLM'),
+                      labelText: tx('agents.field_connection'),
                       isDense: true,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 12,
@@ -80,7 +81,7 @@ class BuilderConnectionBar extends StatelessWidget {
                 : Row(
                     children: [
                       Text(
-                        tx('agents.field_connection', 'Conexión LLM'),
+                        tx('agents.field_connection'),
                         style: Theme.of(context).textTheme.labelMedium
                             ?.copyWith(color: colors.onSurfaceVariant),
                       ),
@@ -126,10 +127,7 @@ class BuilderConnectionBar extends StatelessWidget {
           Padding(
             padding: EdgeInsets.fromLTRB(compact ? 12 : 0, 0, 0, 8),
             child: Text(
-              tx(
-                emptyMessagePath,
-                'Necesitas una conexión LLM para usar el asistente.',
-              ),
+              trOr(emptyMessagePath, tr('agents.builder_needs_connection')),
               style: Theme.of(
                 context,
               ).textTheme.bodySmall?.copyWith(color: colors.error),

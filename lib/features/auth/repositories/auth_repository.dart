@@ -5,6 +5,7 @@ import '../../../models/auth/auth_result.dart';
 import '../../../models/auth/session_user.dart';
 import '../../../models/github/github_device_flow.dart';
 import '../../../shared/state/upload_limits.dart';
+import '../../../utils/i18n.dart';
 
 /// Resultado de sondear el login con GitHub: si [isReady] es true, [gaToken]
 /// y [authResult] ya están listos para pasar a `SessionController.login`
@@ -43,7 +44,7 @@ class AuthRepository {
     if (token == null || token.isEmpty) {
       throw ApiError(
         statusCode: 500,
-        message: 'El backend no devolvio cookie de sesion ga_token',
+        message: tr('auth.session_cookie_missing'),
       );
     }
 
@@ -57,7 +58,7 @@ class AuthRepository {
     if (token == null || token.isEmpty) {
       throw ApiError(
         statusCode: 500,
-        message: 'El backend no devolvio cookie de sesion ga_token',
+        message: tr('auth.session_cookie_missing'),
       );
     }
 
@@ -87,7 +88,7 @@ class AuthRepository {
     if (gaToken == null || gaToken.isEmpty) {
       throw ApiError(
         statusCode: 500,
-        message: 'El backend no devolvio cookie de sesion ga_token',
+        message: tr('auth.session_cookie_missing'),
       );
     }
     return GithubLoginPollResult(

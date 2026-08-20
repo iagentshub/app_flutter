@@ -13,7 +13,7 @@ class _AccountSyncDialog extends StatefulWidget {
 
   final List<String> models;
   final Set<String> alreadySynced;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<_AccountSyncDialog> createState() => _AccountSyncDialogState();
@@ -61,9 +61,7 @@ class _AccountSyncDialogState extends State<_AccountSyncDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(
-        widget.tx('providers.sync_dialog_title', '¿Qué modelos quieres traer?'),
-      ),
+      title: Text(widget.tx('providers.sync_dialog_title')),
       content: SizedBox(
         width: dialogContentWidth(context, 420),
         height: dialogContentHeight(context, 420),
@@ -77,17 +75,13 @@ class _AccountSyncDialogState extends State<_AccountSyncDialog> {
                 decoration: InputDecoration(
                   isDense: true,
                   prefixIcon: const Icon(Icons.search, size: 20),
-                  hintText: widget.tx(
-                    'providers.sync_dialog_search_hint',
-                    'Buscar modelo...',
-                  ),
+                  hintText: widget.tx('providers.sync_dialog_search_hint'),
                   suffixIcon: _query.isEmpty
                       ? null
                       : AppIconButton(
                           icon: const Icon(Icons.clear, size: 18),
                           tooltip: widget.tx(
                             'providers.sync_dialog_clear_search',
-                            'Limpiar búsqueda',
                           ),
                           onPressed: _searchController.clear,
                         ),
@@ -99,18 +93,11 @@ class _AccountSyncDialogState extends State<_AccountSyncDialog> {
               children: [
                 TertiaryButton(
                   onPressed: () => _selectAll(true),
-                  child: Text(
-                    widget.tx(
-                      'providers.sync_dialog_select_all',
-                      'Seleccionar todo',
-                    ),
-                  ),
+                  child: Text(widget.tx('providers.sync_dialog_select_all')),
                 ),
                 TertiaryButton(
                   onPressed: () => _selectAll(false),
-                  child: Text(
-                    widget.tx('providers.sync_dialog_select_none', 'Ninguno'),
-                  ),
+                  child: Text(widget.tx('providers.sync_dialog_select_none')),
                 ),
                 const Spacer(),
                 Text(
@@ -127,10 +114,7 @@ class _AccountSyncDialogState extends State<_AccountSyncDialog> {
                   ? Padding(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       child: Text(
-                        widget.tx(
-                          'providers.sync_dialog_no_matches',
-                          'Ningún modelo coincide con la búsqueda',
-                        ),
+                        widget.tx('providers.sync_dialog_no_matches'),
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
@@ -148,7 +132,6 @@ class _AccountSyncDialogState extends State<_AccountSyncDialog> {
                                 ? Text(
                                     widget.tx(
                                       'providers.sync_dialog_already_synced_hint',
-                                      'Ya sincronizado',
                                     ),
                                     style: const TextStyle(
                                       fontSize: FncFonts.size11,
@@ -174,16 +157,11 @@ class _AccountSyncDialogState extends State<_AccountSyncDialog> {
       actions: [
         TertiaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(widget.tx('common.cancel', 'Cancelar')),
+          child: Text(widget.tx('common.cancel')),
         ),
         PrimaryButton(
           onPressed: () => Navigator.of(context).pop(_selected.toList()),
-          child: Text(
-            widget.tx(
-              'providers.sync_dialog_confirm',
-              'Sincronizar seleccionados',
-            ),
-          ),
+          child: Text(widget.tx('providers.sync_dialog_confirm')),
         ),
       ],
     );

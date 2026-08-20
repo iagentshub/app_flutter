@@ -45,7 +45,7 @@ class _AgentBuilderPageState extends State<AgentBuilderPage>
   late final TranslatedTexts _t;
   final _scrollController = ScrollController();
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   @override
   void initState() {
@@ -124,19 +124,19 @@ class _AgentBuilderPageState extends State<AgentBuilderPage>
     return Scaffold(
       backgroundColor: colors.surfaceContainerLowest,
       appBar: AppBar(
-        title: Text(_tx('agents.builder_title', 'Constructor de agentes IA')),
+        title: Text(_tx('agents.builder_title')),
         actions: [
           if (_controller.agentSaved)
             compact
                 ? AppIconButton(
                     onPressed: () => Navigator.of(context).pop(true),
                     icon: const Icon(Icons.check),
-                    tooltip: _tx('agents.builder_done_action', 'Terminar'),
+                    tooltip: _tx('agents.builder_done_action'),
                   )
                 : TertiaryButton.icon(
                     onPressed: () => Navigator.of(context).pop(true),
                     icon: const Icon(Icons.check),
-                    label: Text(_tx('agents.builder_done_action', 'Terminar')),
+                    label: Text(_tx('agents.builder_done_action')),
                   ),
         ],
       ),
@@ -153,46 +153,24 @@ class _AgentBuilderPageState extends State<AgentBuilderPage>
             onSend: _send,
             onStop: _controller.stop,
             onSuggestion: _sendSuggestion,
-            title: _tx('agents.builder_assistant_title', 'Asistente de diseño'),
-            subtitle: _tx(
-              'agents.builder_assistant_subtitle',
-              'Define el agente y revisa el borrador antes de crearlo',
-            ),
+            title: _tx('agents.builder_assistant_title'),
+            subtitle: _tx('agents.builder_assistant_subtitle'),
             partialReply: _controller.partialReply,
             thinkingLabel: _controller.thinkingLabel,
             draft: _controller.pendingDraft,
-            draftTitle: _tx('agents.builder_draft_ready', 'Borrador propuesto'),
-            draftActionLabel: _tx(
-              'agents.builder_draft_review',
-              'Revisar y crear',
-            ),
+            draftTitle: _tx('agents.builder_draft_ready'),
+            draftActionLabel: _tx('agents.builder_draft_review'),
             onReviewDraft: _controller.pendingDraft == null
                 ? null
                 : _openDraftReview,
-            intro: _tx(
-              'agents.builder_intro',
-              'Describe el objetivo del agente. Incluye sus tareas, límites y '
-                  'tono si ya los tienes claros.',
-            ),
-            inputHint: _tx(
-              'agents.builder_input_hint',
-              'Describe el agente que quieres crear...',
-            ),
-            sendTooltip: _tx('agents.builder_send', 'Enviar mensaje'),
-            stopTooltip: _tx('agents.builder_stop', 'Detener respuesta'),
+            intro: _tx('agents.builder_intro'),
+            inputHint: _tx('agents.builder_input_hint'),
+            sendTooltip: _tx('agents.builder_send'),
+            stopTooltip: _tx('agents.builder_stop'),
             suggestions: [
-              _tx(
-                'agents.builder_suggestion_support',
-                'Un agente para atender clientes',
-              ),
-              _tx(
-                'agents.builder_suggestion_sales',
-                'Un asistente para cualificar leads',
-              ),
-              _tx(
-                'agents.builder_suggestion_content',
-                'Un experto en crear contenido',
-              ),
+              _tx('agents.builder_suggestion_support'),
+              _tx('agents.builder_suggestion_sales'),
+              _tx('agents.builder_suggestion_content'),
             ],
             error: _controller.error,
           );

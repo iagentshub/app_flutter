@@ -9,13 +9,18 @@ import 'package:app_flutter/features/admin/widgets/official_import_component_til
 import 'package:app_flutter/features/admin/widgets/official_import_progress_dialog.dart';
 import 'package:app_flutter/shared/graph/animated_resource_graph.dart';
 import 'package:app_flutter/shared/state/backend_controller.dart';
+import 'package:app_flutter/utils/i18n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'support/i18n_de_prueba.dart';
+
 void main() {
+  setUp(cargarTraduccionesDePrueba);
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('parsea borrador, componentes, diff y procedencia tipados', () {
@@ -228,7 +233,7 @@ void main() {
               draft: ImportDraft.fromJson(_draftJson()),
               repository: repository,
               token: 'token',
-              tx: (_, fallback) => fallback,
+              tx: tr,
             ),
           ),
         );
@@ -267,10 +272,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: OfficialImportProgressDialog(
-          events: events.stream,
-          tx: (_, fallback) => fallback,
-        ),
+        home: OfficialImportProgressDialog(events: events.stream, tx: tr),
       ),
     );
     events.add(
@@ -379,7 +381,7 @@ void main() {
           draft: ImportDraft.fromJson(_draftJson()),
           repository: repository,
           token: 'token',
-          tx: (_, fallback) => fallback,
+          tx: tr,
         ),
       ),
     );
@@ -424,7 +426,7 @@ void main() {
           draft: ImportDraft.fromJson(_draftJson()),
           repository: repository,
           token: 'token',
-          tx: (_, fallback) => fallback,
+          tx: tr,
         ),
       ),
     );
@@ -463,7 +465,7 @@ void main() {
           draft: ImportDraft.fromJson(json),
           repository: repository,
           token: 'token',
-          tx: (_, fallback) => fallback,
+          tx: tr,
         ),
       ),
     );
@@ -524,7 +526,7 @@ void main() {
           draft: ImportDraft.fromJson(_draftJson()),
           repository: repository,
           token: 'token',
-          tx: (_, fallback) => fallback,
+          tx: tr,
         ),
       ),
     );

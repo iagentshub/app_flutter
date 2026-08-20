@@ -33,8 +33,8 @@ extension _AdminContentCards on _AdminPageState {
                 _resourceTypeBadge(AdminResourceType.llmOrchestration),
                 _badge(
                   mode == 'balanced'
-                      ? _tx('llm_orchestrations.balanced', 'Balanceo')
-                      : _tx('llm_orchestrations.stack', 'Pila'),
+                      ? _tx('llm_orchestrations.balanced')
+                      : _tx('llm_orchestrations.stack'),
                   FncColors.purple,
                 ),
                 _badge('$candidates APIs', FncColors.info),
@@ -46,7 +46,7 @@ extension _AdminContentCards on _AdminPageState {
                 _resourceGraphAction(AdminResourceType.llmOrchestration, item),
                 ActionIconButton(
                   icon: Icons.delete_outline,
-                  tooltip: _tx('common.delete', 'Eliminar'),
+                  tooltip: _tx('common.delete'),
                   danger: true,
                   onPressed: () => _deleteLlmOrchestration(item),
                 ),
@@ -91,15 +91,10 @@ extension _AdminContentCards on _AdminPageState {
               children: [
                 _resourceTypeBadge(AdminResourceType.knowledge),
                 _badge(
-                  type == 'url'
-                      ? 'URL'
-                      : _tx('admin.type_document', 'Documento'),
+                  type == 'url' ? 'URL' : _tx('admin.type_document'),
                   type == 'url' ? FncColors.success : FncColors.slate,
                 ),
-                _badge(
-                  '${_tx('admin.table_chars', 'Caracteres')}: $chars',
-                  FncColors.info,
-                ),
+                _badge('${_tx('admin.table_chars')}: $chars', FncColors.info),
                 ..._labelBadges(item),
               ],
             ),
@@ -111,15 +106,12 @@ extension _AdminContentCards on _AdminPageState {
                 _officialAction(item, 'knowledge'),
                 ActionIconButton(
                   icon: Icons.swap_horiz,
-                  tooltip: _tx(
-                    'admin.action_change_owner',
-                    'Cambiar propietario',
-                  ),
+                  tooltip: _tx('admin.action_change_owner'),
                   onPressed: () => _changeOwner(item, 'knowledge'),
                 ),
                 ActionIconButton(
                   icon: Icons.delete_outline,
-                  tooltip: _tx('common.delete', 'Eliminar'),
+                  tooltip: _tx('common.delete'),
                   danger: true,
                   onPressed: () => _deleteKnowledge(item),
                 ),
@@ -162,10 +154,7 @@ extension _AdminContentCards on _AdminPageState {
               runSpacing: 6,
               children: [
                 _resourceTypeBadge(AdminResourceType.workflow),
-                _badge(
-                  '${_tx('admin.table_steps', 'Pasos')}: $steps',
-                  FncColors.slate,
-                ),
+                _badge('${_tx('admin.table_steps')}: $steps', FncColors.slate),
                 ..._labelBadges(item),
               ],
             ),
@@ -177,15 +166,12 @@ extension _AdminContentCards on _AdminPageState {
                 _officialAction(item, 'workflow'),
                 ActionIconButton(
                   icon: Icons.swap_horiz,
-                  tooltip: _tx(
-                    'admin.action_change_owner',
-                    'Cambiar propietario',
-                  ),
+                  tooltip: _tx('admin.action_change_owner'),
                   onPressed: () => _changeOwner(item, 'workflow'),
                 ),
                 ActionIconButton(
                   icon: Icons.delete_outline,
-                  tooltip: _tx('common.delete', 'Eliminar'),
+                  tooltip: _tx('common.delete'),
                   danger: true,
                   onPressed: () => _deleteWorkflow(item),
                 ),
@@ -240,15 +226,12 @@ extension _AdminContentCards on _AdminPageState {
                 _officialAction(item, 'skill'),
                 ActionIconButton(
                   icon: Icons.swap_horiz,
-                  tooltip: _tx(
-                    'admin.action_change_owner',
-                    'Cambiar propietario',
-                  ),
+                  tooltip: _tx('admin.action_change_owner'),
                   onPressed: () => _changeOwner(item, 'skill'),
                 ),
                 ActionIconButton(
                   icon: Icons.delete_outline,
-                  tooltip: _tx('common.delete', 'Eliminar'),
+                  tooltip: _tx('common.delete'),
                   danger: true,
                   onPressed: () => _deleteSkill(item),
                 ),
@@ -303,15 +286,12 @@ extension _AdminContentCards on _AdminPageState {
                 _officialAction(item, 'prompt'),
                 ActionIconButton(
                   icon: Icons.swap_horiz,
-                  tooltip: _tx(
-                    'admin.action_change_owner',
-                    'Cambiar propietario',
-                  ),
+                  tooltip: _tx('admin.action_change_owner'),
                   onPressed: () => _changeOwner(item, 'prompt'),
                 ),
                 ActionIconButton(
                   icon: Icons.delete_outline,
-                  tooltip: _tx('common.delete', 'Eliminar'),
+                  tooltip: _tx('common.delete'),
                   danger: true,
                   onPressed: () => _deletePrompt(item),
                 ),
@@ -359,7 +339,7 @@ extension _AdminContentCards on _AdminPageState {
                 if (language == 'cpp')
                   _badge(
                     binaryFilename.isEmpty
-                        ? _tx('admin.tool_no_binary', 'Sin binario')
+                        ? _tx('admin.tool_no_binary')
                         : binaryFilename,
                     binaryFilename.isEmpty ? FncColors.danger : FncColors.info,
                   ),
@@ -374,15 +354,12 @@ extension _AdminContentCards on _AdminPageState {
                 _officialAction(item, 'tool'),
                 ActionIconButton(
                   icon: Icons.swap_horiz,
-                  tooltip: _tx(
-                    'admin.action_change_owner',
-                    'Cambiar propietario',
-                  ),
+                  tooltip: _tx('admin.action_change_owner'),
                   onPressed: () => _changeOwner(item, 'tool'),
                 ),
                 ActionIconButton(
                   icon: Icons.delete_outline,
-                  tooltip: _tx('common.delete', 'Eliminar'),
+                  tooltip: _tx('common.delete'),
                   danger: true,
                   onPressed: () => _deleteTool(item),
                 ),
@@ -430,10 +407,7 @@ extension _AdminContentCards on _AdminPageState {
               runSpacing: 6,
               children: [
                 _resourceTypeBadge(AdminResourceType.memory),
-                _badge(
-                  '${_tx('admin.table_chars', 'Caracteres')}: $size',
-                  FncColors.info,
-                ),
+                _badge('${_tx('admin.table_chars')}: $size', FncColors.info),
               ],
             ),
             const SizedBox(height: 4),
@@ -443,7 +417,7 @@ extension _AdminContentCards on _AdminPageState {
                 _resourceGraphAction(AdminResourceType.memory, item),
                 ActionIconButton(
                   icon: Icons.delete_outline,
-                  tooltip: _tx('common.delete', 'Eliminar'),
+                  tooltip: _tx('common.delete'),
                   danger: true,
                   onPressed: () => _deleteMemory(item),
                 ),

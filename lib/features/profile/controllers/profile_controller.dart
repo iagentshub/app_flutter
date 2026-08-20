@@ -49,7 +49,7 @@ class ProfileController extends ChangeNotifier {
     required SessionController sessionController,
     required LocaleController localeController,
     required Future<void> Function(String theme) syncTheme,
-    required String Function(String path, String fallback) tx,
+    required String Function(String path) tx,
   }) : _repository = repository,
        _sessionController = sessionController,
        _localeController = localeController,
@@ -71,7 +71,7 @@ class ProfileController extends ChangeNotifier {
   final SessionController _sessionController;
   final LocaleController _localeController;
   final Future<void> Function(String theme) _syncTheme;
-  final String Function(String path, String fallback) _tx;
+  final String Function(String path) _tx;
 
   final TextEditingController bioController = TextEditingController();
   final TextEditingController githubController = TextEditingController();
@@ -161,7 +161,7 @@ class ProfileController extends ChangeNotifier {
   Future<void> load() async {
     final token = this.token;
     if (token == null || token.isEmpty) {
-      _error = _tx('common.no_session', 'No hay sesión activa');
+      _error = _tx('common.no_session');
       _loading = false;
       _notify();
       return;
@@ -191,7 +191,7 @@ class ProfileController extends ChangeNotifier {
       _error = error.message;
       _loading = false;
     } catch (_) {
-      _error = _tx('profile.load_error', 'No se pudo cargar el perfil');
+      _error = _tx('profile.load_error');
       _loading = false;
     }
     _notify();
@@ -214,18 +214,11 @@ class ProfileController extends ChangeNotifier {
       _themeConfigurable = updated.themeConfigurable;
       _language = updated.language;
       await _syncPreferences(updated.language, updated.theme);
-      return ActionResult(
-        _tx('profile.preferences_saved', 'Preferencias guardadas'),
-      );
+      return ActionResult(_tx('profile.preferences_saved'));
     } on ApiError catch (error) {
       return ActionResult.error(error.message);
     } catch (_) {
-      return ActionResult.error(
-        _tx(
-          'profile.preferences_error',
-          'No se pudieron guardar las preferencias',
-        ),
-      );
+      return ActionResult.error(_tx('profile.preferences_error'));
     } finally {
       _savingSettings = false;
       _notify();
@@ -250,15 +243,11 @@ class ProfileController extends ChangeNotifier {
       // Recarga para quedarse con lo que el backend normalizó, no con el
       // borrador local.
       await load();
-      return ActionResult(
-        _tx('profile.social_saved', 'Perfil público actualizado'),
-      );
+      return ActionResult(_tx('profile.social_saved'));
     } on ApiError catch (error) {
       return ActionResult.error(error.message);
     } catch (_) {
-      return ActionResult.error(
-        _tx('profile.social_error', 'No se pudo actualizar el perfil público'),
-      );
+      return ActionResult.error(_tx('profile.social_error'));
     } finally {
       _savingProfile = false;
       _notify();
@@ -276,17 +265,10 @@ class ProfileController extends ChangeNotifier {
     if (token == null || token.isEmpty) return null;
 
     if (fileBytes == null || fileBytes.isEmpty) {
-      return ActionResult.error(
-        _tx('profile.avatar_error', 'No se pudo actualizar la foto'),
-      );
+      return ActionResult.error(_tx('profile.avatar_error'));
     }
     if (fileBytes.length > maxAvatarInputBytes) {
-      return ActionResult.error(
-        _tx(
-          'profile.avatar_input_too_large',
-          'La imagen original es demasiado grande',
-        ),
-      );
+      return ActionResult.error(_tx('profile.avatar_input_too_large'));
     }
 
     _uploadingAvatar = true;
@@ -300,7 +282,6 @@ class ProfileController extends ChangeNotifier {
         return ActionResult.error(
           _tx(
             'profile.avatar_too_large',
-            'La imagen no puede superar {limit}',
           ).replaceAll('{limit}', UploadLimits.formatted),
         );
       }
@@ -311,19 +292,13 @@ class ProfileController extends ChangeNotifier {
         fileBytes: compressed.bytes,
       );
       _avatarVersion++;
-      return ActionResult(
-        _tx('profile.avatar_updated', 'Foto de perfil actualizada'),
-      );
+      return ActionResult(_tx('profile.avatar_updated'));
     } on AvatarCompressionException {
-      return ActionResult.error(
-        _tx('profile.avatar_error', 'No se pudo actualizar la foto'),
-      );
+      return ActionResult.error(_tx('profile.avatar_error'));
     } on ApiError catch (error) {
       return ActionResult.error(error.message);
     } catch (_) {
-      return ActionResult.error(
-        _tx('profile.avatar_error', 'No se pudo actualizar la foto'),
-      );
+      return ActionResult.error(_tx('profile.avatar_error'));
     } finally {
       _uploadingAvatar = false;
       _notify();
@@ -335,25 +310,16 @@ class ProfileController extends ChangeNotifier {
   Future<ActionResult> changePassword() async {
     final token = this.token;
     if (token == null || token.isEmpty) {
-      return ActionResult.error(
-        _tx('common.no_session', 'No hay sesión activa'),
-      );
+      return ActionResult.error(_tx('common.no_session'));
     }
 
     final current = currentPasswordController.text;
     final next = newPasswordController.text;
     if (current.isEmpty || next.isEmpty) {
-      return ActionResult.error(
-        _tx('profile.password_required', 'Completa contraseña actual y nueva'),
-      );
+      return ActionResult.error(_tx('profile.password_required'));
     }
     if (next.trim().length < minPasswordLength) {
-      return ActionResult.error(
-        _tx(
-          'profile.password_too_short',
-          'La nueva contraseña debe tener al menos 8 caracteres',
-        ),
-      );
+      return ActionResult.error(_tx('profile.password_too_short'));
     }
 
     try {
@@ -364,15 +330,11 @@ class ProfileController extends ChangeNotifier {
       );
       currentPasswordController.clear();
       newPasswordController.clear();
-      return ActionResult(
-        _tx('profile.password_updated', 'Contraseña actualizada'),
-      );
+      return ActionResult(_tx('profile.password_updated'));
     } on ApiError catch (error) {
       return ActionResult.error(error.message);
     } catch (_) {
-      return ActionResult.error(
-        _tx('profile.password_error', 'No se pudo actualizar la contraseña'),
-      );
+      return ActionResult.error(_tx('profile.password_error'));
     }
   }
 
@@ -386,12 +348,8 @@ class ProfileController extends ChangeNotifier {
 
   /// Mensaje para cuando la eliminación ya estaba pedida. La página lo muestra
   /// sin abrir el diálogo de confirmación.
-  ActionResult get deletionAlreadyScheduled => ActionResult(
-    _tx(
-      'profile.deletion_already_scheduled',
-      'La cuenta ya está programada para eliminación',
-    ),
-  );
+  ActionResult get deletionAlreadyScheduled =>
+      ActionResult(_tx('profile.deletion_already_scheduled'));
 
   Future<ActionResult?> requestDeletion() async {
     final token = this.token;
@@ -406,12 +364,7 @@ class ProfileController extends ChangeNotifier {
     } on ApiError catch (error) {
       return ActionResult.error(error.message);
     } catch (_) {
-      return ActionResult.error(
-        _tx(
-          'profile.deletion_error',
-          'No se pudo programar la eliminación de cuenta',
-        ),
-      );
+      return ActionResult.error(_tx('profile.deletion_error'));
     } finally {
       _requestingDeletion = false;
       _notify();

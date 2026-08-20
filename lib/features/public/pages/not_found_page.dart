@@ -15,7 +15,7 @@ class NotFoundPage extends StatefulWidget {
 class _NotFoundPageState extends State<NotFoundPage> {
   late final TranslatedTexts _t;
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   @override
   void initState() {
@@ -46,11 +46,11 @@ class _NotFoundPageState extends State<NotFoundPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(_tx('common.not_found', 'Página no encontrada')),
+              Text(_tx('common.not_found')),
               const SizedBox(height: 8),
               PrimaryButton(
                 onPressed: () => AppRouter.toLogin(context),
-                child: Text(_tx('common.go_home', 'Ir al inicio')),
+                child: Text(_tx('common.go_home')),
               ),
             ],
           ),

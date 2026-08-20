@@ -67,9 +67,9 @@ extension _AdminFilterDialogs on _AdminPageState {
   void _openUsersFiltersDialog() {
     showFilterDialog(
       context,
-      title: _tx('common.filters', 'Filtros'),
-      clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
-      closeLabel: _tx('common.close', 'Cerrar'),
+      title: _tx('common.filters'),
+      clearLabel: _tx('common.clear_filters'),
+      closeLabel: _tx('common.close'),
       onClear: () => refresh(() {
         _userRole = '';
         _userActive = '';
@@ -77,12 +77,12 @@ extension _AdminFilterDialogs on _AdminPageState {
       }),
       buildFields: (setDialogState) => [
         _dropdown(
-          label: _tx('admin.filter_role', 'Rol'),
+          label: _tx('admin.filter_role'),
           value: _userRole,
           options: [
-            ('', _tx('admin.all_roles', 'Todos los roles')),
-            ('admin', _tx('admin.role_admin', 'Admin')),
-            ('standard', _tx('admin.role_standard', 'Estándar')),
+            ('', _tx('admin.all_roles')),
+            ('admin', _tx('admin.role_admin')),
+            ('standard', _tx('admin.role_standard')),
           ],
           onChanged: (v) {
             refresh(() => _userRole = v);
@@ -91,12 +91,12 @@ extension _AdminFilterDialogs on _AdminPageState {
         ),
         const SizedBox(height: 12),
         _dropdown(
-          label: _tx('admin.filter_status', 'Estado'),
+          label: _tx('admin.filter_status'),
           value: _userActive,
           options: [
-            ('', _tx('admin.all_status', 'Cualquier estado')),
-            ('true', _tx('admin.status_active', 'Activos')),
-            ('false', _tx('admin.status_blocked', 'Bloqueados')),
+            ('', _tx('admin.all_status')),
+            ('true', _tx('admin.status_active')),
+            ('false', _tx('admin.status_blocked')),
           ],
           onChanged: (v) {
             refresh(() => _userActive = v);
@@ -105,12 +105,12 @@ extension _AdminFilterDialogs on _AdminPageState {
         ),
         const SizedBox(height: 12),
         _dropdown(
-          label: _tx('admin.filter_verified', 'Verificación'),
+          label: _tx('admin.filter_verified'),
           value: _userVerified,
           options: [
-            ('', _tx('admin.all_verification', 'Cualquier verificación')),
-            ('true', _tx('admin.verified_yes', 'Verificados')),
-            ('false', _tx('admin.verified_no', 'Sin verificar')),
+            ('', _tx('admin.all_verification')),
+            ('true', _tx('admin.verified_yes')),
+            ('false', _tx('admin.verified_no')),
           ],
           onChanged: (v) {
             refresh(() => _userVerified = v);

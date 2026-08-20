@@ -1,3 +1,4 @@
+import '../../utils/i18n.dart';
 import '../common/resource_item.dart';
 
 class KnowledgeItem extends ResourceItem {
@@ -9,7 +10,9 @@ class KnowledgeItem extends ResourceItem {
   /// y caemos a `title` para respuestas antiguas.
   @override
   String get name =>
-      raw['name'] as String? ?? raw['title'] as String? ?? '(sin título)';
+      raw['name'] as String? ??
+      raw['title'] as String? ??
+      tr('common.untitled');
 
   /// Alias histórico usado por la UI de conocimiento.
   String get title => name;
@@ -50,7 +53,7 @@ class KnowledgePack extends ResourceItem {
   const KnowledgePack({required super.raw});
 
   @override
-  String get name => raw['name'] as String? ?? '(sin nombre)';
+  String get name => raw['name'] as String? ?? tr('common.unnamed');
   @override
   String get description => raw['description'] as String? ?? '';
   int get fileCount => (raw['file_count'] as num?)?.toInt() ?? 0;

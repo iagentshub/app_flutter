@@ -68,15 +68,10 @@ class _ConnectionStatusBodyState extends State<_ConnectionStatusBody> {
     final pageSize = widget.config.pageSize ?? 4;
     final resultsById = {for (final r in _results) r.id: r};
     final okCount = _results.where((r) => r.ok).length;
-    final defaultConnectionName = widget.tx(
-      'default_connection_name',
-      'Conexión',
-    );
+    final defaultConnectionName = widget.tx('default_connection_name');
 
     if (connections.isEmpty) {
-      return Text(
-        widget.tx('no_connections', 'No hay conexiones configuradas'),
-      );
+      return Text(widget.tx('no_connections'));
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,13 +82,10 @@ class _ConnectionStatusBodyState extends State<_ConnectionStatusBody> {
             Text(
               _tested
                   ? widget
-                        .tx(
-                          'operational_count',
-                          '{{ok}} / {{total}} operativas',
-                        )
+                        .tx('operational_count')
                         .replaceAll('{{ok}}', '$okCount')
                         .replaceAll('{{total}}', '${connections.length}')
-                  : widget.tx('checking', 'Comprobando…'),
+                  : widget.tx('checking'),
             ),
             AppIconButton(
               icon: _testing
@@ -103,10 +95,7 @@ class _ConnectionStatusBodyState extends State<_ConnectionStatusBody> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.refresh, size: 20),
-              tooltip: widget.tx(
-                'test_connections',
-                'Probar todas las conexiones',
-              ),
+              tooltip: widget.tx('test_connections'),
               onPressed: _testing ? null : _runTest,
             ),
           ],
@@ -155,9 +144,9 @@ class _RecentAgentsBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final pageSize = config.pageSize ?? 4;
     final recent = data.agents.reversed.take(pageSize).toList();
-    final defaultAgentName = tx('default_agent_name', 'Agente');
+    final defaultAgentName = tx('default_agent_name');
     if (recent.isEmpty) {
-      return Text(tx('no_recent_agents', 'Todavía no hay agentes'));
+      return Text(tx('no_recent_agents'));
     }
     return Column(
       children: recent.map((agent) {
@@ -194,14 +183,12 @@ class _RecentConversationsBody extends StatelessWidget {
       for (final agent in data.agents)
         if (agent['id'] != null)
           agent['id'].toString():
-              agent['name']?.toString() ?? tx('default_agent_name', 'Agente'),
+              agent['name']?.toString() ?? tx('default_agent_name'),
     };
     final conversations = data.conversations.take(limit).toList();
 
     if (conversations.isEmpty) {
-      return Text(
-        tx('no_recent_conversations', 'Todavía no hay conversaciones'),
-      );
+      return Text(tx('no_recent_conversations'));
     }
     return Column(
       children: [
@@ -213,13 +200,13 @@ class _RecentConversationsBody extends StatelessWidget {
             title: Text(
               (conversation['title']?.toString().trim().isNotEmpty ?? false)
                   ? conversation['title'].toString()
-                  : tx('untitled_conversation', 'Conversación sin título'),
+                  : tx('untitled_conversation'),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
             subtitle: Text(
               agentNames[conversation['agent_id']?.toString()] ??
-                  tx('default_agent_name', 'Agente'),
+                  tx('default_agent_name'),
             ),
             onTap: () => AppRouter.toAgents(context),
           ),
@@ -259,7 +246,7 @@ class _CompositionBody extends StatelessWidget {
       ..sort((a, b) => b.value.compareTo(a.value));
     final top = rows.take(6).toList();
     if (top.isEmpty) {
-      return Text(tx('no_composition_data', 'Sin datos suficientes todavía'));
+      return Text(tx('no_composition_data'));
     }
     final max = top.first.value;
 

@@ -3,7 +3,7 @@ part of '../pages/knowledge_page.dart';
 class _AddUrlDialog extends StatefulWidget {
   const _AddUrlDialog({required this.tx});
 
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<_AddUrlDialog> createState() => _AddUrlDialogState();
@@ -34,7 +34,7 @@ class _AddUrlDialogState extends State<_AddUrlDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.tx('knowledge.import_url_title', 'Importar URL')),
+      title: Text(widget.tx('knowledge.import_url_title')),
       content: SizedBox(
         width: dialogContentWidth(context, 620),
         child: Form(
@@ -45,19 +45,16 @@ class _AddUrlDialogState extends State<_AddUrlDialog> {
               TextFormField(
                 controller: _urlController,
                 decoration: InputDecoration(
-                  labelText: widget.tx('knowledge.url_label', 'URL'),
+                  labelText: widget.tx('knowledge.url_label'),
                 ),
                 validator: (value) {
                   final raw = value?.trim() ?? '';
                   if (raw.isEmpty) {
-                    return widget.tx(
-                      'knowledge.url_required',
-                      'URL obligatoria',
-                    );
+                    return widget.tx('knowledge.url_required');
                   }
                   final uri = Uri.tryParse(raw);
                   if (uri == null || !uri.hasScheme || !uri.hasAuthority) {
-                    return widget.tx('knowledge.url_invalid', 'URL no válida');
+                    return widget.tx('knowledge.url_invalid');
                   }
                   return null;
                 },
@@ -71,10 +68,7 @@ class _AddUrlDialogState extends State<_AddUrlDialog> {
               TextFormField(
                 controller: _titleController,
                 decoration: InputDecoration(
-                  labelText: widget.tx(
-                    'knowledge.optional_title',
-                    'Título (opcional)',
-                  ),
+                  labelText: widget.tx('knowledge.optional_title'),
                 ),
               ),
             ],
@@ -84,11 +78,11 @@ class _AddUrlDialogState extends State<_AddUrlDialog> {
       actions: [
         TertiaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(widget.tx('common.cancel', 'Cancelar')),
+          child: Text(widget.tx('common.cancel')),
         ),
         PrimaryButton(
           onPressed: _submit,
-          child: Text(widget.tx('knowledge.import_action', 'Importar')),
+          child: Text(widget.tx('knowledge.import_action')),
         ),
       ],
     );

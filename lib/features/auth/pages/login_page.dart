@@ -20,6 +20,7 @@ import '../../../shared/state/theme_controller.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../../../utils/i18n.dart';
 import '../../../utils/safe_redirect.dart';
 import '../../../utils/validators.dart';
 import '../repositories/auth_repository.dart';
@@ -70,7 +71,17 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
   static const _rememberedAccountKey = 'remembered_account';
 
   String get _languageCode => widget.localeController.languageCode;
-  bool get _isEnglish => _languageCode == 'en';
+
+  /// El idioma al que lleva el botón: el siguiente del catálogo, en círculo.
+  ///
+  /// Antes esto era un `bool _isEnglish` y el botón alternaba entre dos valores
+  /// escritos a mano. Con un tercer idioma en `supportedLanguageCodes` eso no
+  /// se rompe de forma visible: simplemente nunca se llega a él.
+  String get _siguienteIdioma {
+    const idiomas = LocaleController.supportedLanguageCodes;
+    final actual = idiomas.indexOf(_languageCode);
+    return idiomas[(actual + 1) % idiomas.length];
+  }
 
   @override
   void initState() {
@@ -203,11 +214,11 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
   }
 
   void _toggleLanguage() {
-    widget.localeController.setLanguage(_isEnglish ? 'es' : 'en');
+    widget.localeController.setLanguage(_siguienteIdioma);
   }
 
-  String _txt(Map<String, dynamic> bundle, String path, String fallback) {
-    return LocaleLoader.text(bundle, path, fallback: fallback);
+  String _txt(Map<String, dynamic> bundle, String path) {
+    return LocaleLoader.text(bundle, path);
   }
 
   Future<void> _openBackendConfig() async {
@@ -256,10 +267,7 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
         password: _passwordController.text,
       );
       if (!result.ok) {
-        throw ApiError(
-          statusCode: 401,
-          message: _txt(texts, 'error_invalid', 'Credenciales incorrectas'),
-        );
+        throw ApiError(statusCode: 401, message: _txt(texts, 'error_invalid'));
       }
 
       final me = await widget.authRepository.me(token);
@@ -280,13 +288,7 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
       setState(() => _errorMessage = error.message);
     } catch (_) {
       if (!mounted) return;
-      setState(
-        () => _errorMessage = _txt(
-          texts,
-          'error_connection',
-          'Error de conexión',
-        ),
-      );
+      setState(() => _errorMessage = _txt(texts, 'error_connection'));
     } finally {
       if (mounted) {
         setState(() => _loading = false);
@@ -301,7 +303,7 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
   Future<void> _loginWithGithub() async {
     final themeController = ThemeControllerScope.of(context, listen: false);
     final texts = await _authTextsFuture;
-    String tx(String path, String fallback) => _txt(texts, path, fallback);
+    String tx(String path) => _txt(texts, path);
 
     if (!mounted) return;
     final result = await showDialog<GithubLoginPollResult>(
@@ -333,9 +335,7 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
       setState(() => _errorMessage = error.message);
     } catch (_) {
       if (!mounted) return;
-      setState(
-        () => _errorMessage = tx('error_connection', 'Error de conexión'),
-      );
+      setState(() => _errorMessage = tx('error_connection'));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -353,14 +353,7 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
     try {
       final (result, token) = await widget.authRepository.guestLogin();
       if (!result.ok) {
-        throw ApiError(
-          statusCode: 401,
-          message: _txt(
-            texts,
-            'guest_error',
-            'No fue posible iniciar como invitado',
-          ),
-        );
+        throw ApiError(statusCode: 401, message: _txt(texts, 'guest_error'));
       }
 
       final me = await widget.authRepository.me(token);
@@ -378,13 +371,7 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
       setState(() => _errorMessage = error.message);
     } catch (_) {
       if (!mounted) return;
-      setState(
-        () => _errorMessage = _txt(
-          texts,
-          'guest_error',
-          'No se pudo iniciar como invitado',
-        ),
-      );
+      setState(() => _errorMessage = _txt(texts, 'guest_error'));
     } finally {
       if (mounted) {
         setState(() => _loading = false);
@@ -423,7 +410,7 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
                           alignment: Alignment.centerRight,
                           child: TertiaryButton(
                             onPressed: _toggleLanguage,
-                            child: Text(_isEnglish ? 'ES' : 'EN'),
+                            child: Text(_siguienteIdioma.toUpperCase()),
                           ),
                         ),
                         _buildHeroPanel(context, compact: true),
@@ -458,7 +445,7 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
                   right: 16,
                   child: TertiaryButton(
                     onPressed: _toggleLanguage,
-                    child: Text(_isEnglish ? 'ES' : 'EN'),
+                    child: Text(_siguienteIdioma.toUpperCase()),
                   ),
                 ),
               ],

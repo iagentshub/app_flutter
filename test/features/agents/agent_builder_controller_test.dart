@@ -10,14 +10,14 @@ import 'package:app_flutter/features/knowledge/repositories/knowledge_repository
 import 'package:app_flutter/features/knowledge/repositories/skills_repository.dart';
 import 'package:app_flutter/shared/state/backend_controller.dart';
 import 'package:app_flutter/shared/state/session_controller.dart';
+import 'package:app_flutter/utils/i18n.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../support/i18n_de_prueba.dart';
 import '../../support/memory_secure_store.dart';
-
-String _tx(String path, String fallback) => fallback;
 
 Map<String, dynamic> _connection({
   String id = 'connection-1',
@@ -37,6 +37,8 @@ http.Response _sse(List<Map<String, dynamic>> events) => http.Response.bytes(
 );
 
 void main() {
+  setUp(cargarTraduccionesDePrueba);
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late BackendController backendController;
@@ -92,7 +94,7 @@ void main() {
       skillsRepository: SkillsRepository(apiClient: client),
       knowledgeRepository: KnowledgeRepository(apiClient: client),
       sessionController: await session(token: token),
-      tx: _tx,
+      tx: tr,
     );
     addTearDown(controller.dispose);
     return controller;

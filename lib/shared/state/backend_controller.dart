@@ -8,6 +8,7 @@ import '../../core/config/backend_option.dart';
 import '../../core/config/backend_url.dart';
 import '../../core/storage/local_store.dart';
 import '../../models/backend/backend_models.dart';
+import '../../utils/i18n.dart';
 
 export '../../models/backend/backend_models.dart';
 
@@ -195,14 +196,14 @@ class BackendController extends ChangeNotifier {
           return BackendPingResult(
             ok: false,
             statusCode: response.statusCode,
-            error: 'La respuesta no es JSON válido de iAgents Hub',
+            error: tr('auth.backend_not_json'),
           );
         }
         if (!_isCompatibleBackend(payload)) {
           return BackendPingResult(
             ok: false,
             statusCode: response.statusCode,
-            error: 'El servidor no expone una API compatible de iAgents Hub',
+            error: tr('auth.backend_incompatible'),
           );
         }
         return BackendPingResult(ok: true, statusCode: response.statusCode);

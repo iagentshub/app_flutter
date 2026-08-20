@@ -36,30 +36,23 @@ extension _KnowledgePackCard on _KnowledgePageState {
             Text(
               _tx(
                 'knowledge.pack_file_count',
-                '{{count}} archivos',
               ).replaceAll('{{count}}', '${pack.fileCount}'),
             ),
             const SizedBox(height: 4),
             Text(switch (pack.sourceMode) {
-              'reference' => _tx(
-                'knowledge.pack_source_reference_badge',
-                'Sólo referencias',
-              ),
-              _ => _tx(
-                'knowledge.pack_source_upload_badge',
-                'Contenido subido · sincronizable',
-              ),
+              'reference' => _tx('knowledge.pack_source_reference_badge'),
+              _ => _tx('knowledge.pack_source_upload_badge'),
             }, style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: 8),
             LabelChipsRow(
               labels: pack.displayLabels,
-              labelText: (label) => _tx('labels.$label', label),
+              labelText: (label) => trOr('labels.$label', label),
               leading: [
                 OriginBadge(
                   propertyType: pack.propertyType,
-                  ownerLabel: _tx('common.owner', 'Propietario'),
-                  linkedLabel: _tx('common.linked', 'Enlace'),
-                  forkLabel: _tx('common.fork', 'Fork'),
+                  ownerLabel: _tx('common.owner'),
+                  linkedLabel: _tx('common.linked'),
+                  forkLabel: _tx('common.fork'),
                 ),
               ],
             ),
@@ -71,28 +64,25 @@ extension _KnowledgePackCard on _KnowledgePageState {
                 if (!pack.readOnly && pack.canSynchronize)
                   ActionIconButton(
                     icon: Icons.sync_outlined,
-                    tooltip: _tx(
-                      'knowledge.pack_sync_action',
-                      'Volver a sincronizar directorio',
-                    ),
+                    tooltip: _tx('knowledge.pack_sync_action'),
                     onPressed: () => _synchronizePack(pack),
                   ),
                 if (!pack.readOnly)
                   ActionIconButton(
                     icon: Icons.edit_outlined,
-                    tooltip: _tx('common.edit', 'Editar'),
+                    tooltip: _tx('common.edit'),
                     onPressed: () => _editPack(pack),
                   ),
                 if (!pack.readOnly)
                   ActionIconButton(
                     icon: Icons.group_add_outlined,
-                    tooltip: _tx('common.share_group', 'Compartir con grupo'),
+                    tooltip: _tx('common.share_group'),
                     onPressed: () => _sharePack(pack),
                   ),
                 if (!pack.readOnly)
                   ActionIconButton(
                     icon: Icons.delete_outline,
-                    tooltip: _tx('common.delete', 'Eliminar'),
+                    tooltip: _tx('common.delete'),
                     danger: true,
                     onPressed: () => _deletePack(pack),
                   ),

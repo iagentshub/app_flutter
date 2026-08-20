@@ -14,7 +14,7 @@ class OfficialImportProgressDialog extends StatefulWidget {
   });
 
   final Stream<OfficialImportEvent> events;
-  final String Function(String, String) tx;
+  final String Function(String) tx;
 
   @override
   State<OfficialImportProgressDialog> createState() =>
@@ -75,12 +75,7 @@ class _OfficialImportProgressDialogState
       },
       onDone: () {
         if (mounted && error == null && !receivedResult) {
-          _setError(
-            widget.tx(
-              'official.progress_interrupted',
-              'El análisis terminó sin devolver un borrador.',
-            ),
-          );
+          _setError(widget.tx('official.progress_interrupted'));
         }
       },
     );
@@ -106,10 +101,7 @@ class _OfficialImportProgressDialogState
       final paths = value.paths.isEmpty ? '' : ': ${value.paths.join(', ')}';
       return [
         widget
-            .tx(
-              'official.progress_log_analyzing',
-              'Fragmento {current}/{total}: revisando {files} archivos{paths}',
-            )
+            .tx('official.progress_log_analyzing')
             .replaceAll('{current}', '${value.current}')
             .replaceAll('{total}', '${value.total}')
             .replaceAll('{files}', '${value.files}')
@@ -119,20 +111,14 @@ class _OfficialImportProgressDialogState
     if (value.stage == 'llm_chunk_complete') {
       return [
         widget
-            .tx(
-              'official.progress_log_complete',
-              'Fragmento {current}/{total}: {components} candidatos y {relations} relaciones',
-            )
+            .tx('official.progress_log_complete')
             .replaceAll('{current}', '${value.current}')
             .replaceAll('{total}', '${value.total}')
             .replaceAll('{components}', '${value.chunkComponents}')
             .replaceAll('{relations}', '${value.chunkRelations}'),
         for (final finding in value.findings)
           widget
-              .tx(
-                'official.progress_log_finding',
-                'Detectado {type}: {name} · {path}',
-              )
+              .tx('official.progress_log_finding')
               .replaceAll('{type}', finding.resourceType)
               .replaceAll('{name}', finding.name)
               .replaceAll('{path}', finding.sourcePath),
@@ -151,43 +137,16 @@ class _OfficialImportProgressDialogState
   }
 
   String _stageLabel(String stage) => switch (stage) {
-    'downloading' => widget.tx(
-      'official.progress_downloading',
-      'Descargando el repositorio fijado a commit',
-    ),
-    'detecting' => widget.tx(
-      'official.progress_detecting',
-      'Reconociendo archivos y candidatos',
-    ),
-    'llm_preparing' => widget.tx(
-      'official.progress_preparing',
-      'Preparando el análisis semántico',
-    ),
-    'llm_analyzing' => widget.tx(
-      'official.progress_analyzing',
-      'El LLM está analizando el repositorio',
-    ),
-    'llm_chunk_complete' => widget.tx(
-      'official.progress_chunk_complete',
-      'Fragmento analizado',
-    ),
-    'llm_retrying' => widget.tx(
-      'official.progress_retrying',
-      'Corrigiendo el formato de respuesta del LLM',
-    ),
-    'llm_chunk_failed' => widget.tx(
-      'official.progress_chunk_failed',
-      'Fragmento omitido; el análisis continúa',
-    ),
-    'validating' => widget.tx(
-      'official.progress_validating',
-      'Validando rutas, relaciones y seguridad',
-    ),
-    'saving_draft' => widget.tx(
-      'official.progress_saving',
-      'Preparando el borrador de revisión',
-    ),
-    _ => widget.tx('official.progress_starting', 'Iniciando análisis'),
+    'downloading' => widget.tx('official.progress_downloading'),
+    'detecting' => widget.tx('official.progress_detecting'),
+    'llm_preparing' => widget.tx('official.progress_preparing'),
+    'llm_analyzing' => widget.tx('official.progress_analyzing'),
+    'llm_chunk_complete' => widget.tx('official.progress_chunk_complete'),
+    'llm_retrying' => widget.tx('official.progress_retrying'),
+    'llm_chunk_failed' => widget.tx('official.progress_chunk_failed'),
+    'validating' => widget.tx('official.progress_validating'),
+    'saving_draft' => widget.tx('official.progress_saving'),
+    _ => widget.tx('official.progress_starting'),
   };
 
   @override
@@ -195,9 +154,7 @@ class _OfficialImportProgressDialogState
     final fraction = progress.fraction;
     return AlertDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      title: Text(
-        widget.tx('official.progress_title', 'Analizando repositorio'),
-      ),
+      title: Text(widget.tx('official.progress_title')),
       content: SizedBox(
         width: dialogContentWidth(context, 520, margin: 32),
         child: SingleChildScrollView(
@@ -227,7 +184,7 @@ class _OfficialImportProgressDialogState
                   ),
                   const SizedBox(width: 12),
                   Semantics(
-                    label: widget.tx('official.progress_elapsed', 'Tiempo'),
+                    label: widget.tx('official.progress_elapsed'),
                     child: Text(
                       elapsedLabel,
                       style: Theme.of(context).textTheme.titleSmall,
@@ -239,10 +196,7 @@ class _OfficialImportProgressDialogState
                 const SizedBox(height: 6),
                 Text(
                   widget
-                      .tx(
-                        'official.progress_chunk',
-                        'Fragmento {current} de {total}',
-                      )
+                      .tx('official.progress_chunk')
                       .replaceAll('{current}', '${progress.current}')
                       .replaceAll('{total}', '${progress.total}'),
                 ),
@@ -252,10 +206,7 @@ class _OfficialImportProgressDialogState
                 const SizedBox(height: 6),
                 Text(
                   widget
-                      .tx(
-                        'official.progress_counts',
-                        '{files} archivos · {components} candidatos encontrados',
-                      )
+                      .tx('official.progress_counts')
                       .replaceAll('{files}', '${progress.files}')
                       .replaceAll('{components}', '${progress.components}'),
                 ),
@@ -280,7 +231,7 @@ class _OfficialImportProgressDialogState
                   tilePadding: EdgeInsets.zero,
                   childrenPadding: EdgeInsets.zero,
                   title: Text(
-                    '${widget.tx('official.progress_activity', 'Actividad')} '
+                    '${widget.tx('official.progress_activity')} '
                     '(${activity.length})',
                   ),
                   children: [
@@ -309,12 +260,12 @@ class _OfficialImportProgressDialogState
         if (error == null)
           TertiaryButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(widget.tx('common.cancel', 'Cancelar')),
+            child: Text(widget.tx('common.cancel')),
           )
         else
           PrimaryButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(widget.tx('common.close', 'Cerrar')),
+            child: Text(widget.tx('common.close')),
           ),
       ],
     );

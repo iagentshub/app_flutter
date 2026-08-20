@@ -46,8 +46,9 @@ void main() {
   test('nadie más importa una librería diferida sin diferir', () {
     final infractores = <String>[];
 
-    for (final fichero
-        in Directory('lib').listSync(recursive: true).whereType<File>()) {
+    for (final fichero in Directory(
+      'lib',
+    ).listSync(recursive: true).whereType<File>()) {
       if (!fichero.path.endsWith('.dart')) continue;
       final normalizada = fichero.path.replaceAll(r'\', '/');
       // El propio router es quien las importa, y una librería diferida puede

@@ -27,7 +27,7 @@ class ExploreController extends ChangeNotifier {
     required ExploreRepository repository,
     required ManagerRepository managerRepository,
     required SessionController sessionController,
-    required String Function(String path, String fallback) tx,
+    required String Function(String path) tx,
   }) : _repository = repository,
        _managerRepository = managerRepository,
        _sessionController = sessionController,
@@ -39,7 +39,7 @@ class ExploreController extends ChangeNotifier {
   final ExploreRepository _repository;
   final ManagerRepository _managerRepository;
   final SessionController _sessionController;
-  final String Function(String path, String fallback) _tx;
+  final String Function(String path) _tx;
 
   final TextEditingController queryController = TextEditingController();
   final TextEditingController userQueryController = TextEditingController();
@@ -266,15 +266,12 @@ class ExploreController extends ChangeNotifier {
       return ActionResult(
         _tx(
           'explore.pack_link_ok',
-          '{{count}} recursos vinculados',
         ).replaceAll('{{count}}', '${result.createdCount}'),
       );
     } on ApiError catch (error) {
       return ActionResult.error(error.message);
     } catch (_) {
-      return ActionResult.error(
-        _tx('explore.pack_link_error', 'No se pudo vincular el pack'),
-      );
+      return ActionResult.error(_tx('explore.pack_link_error'));
     } finally {
       _busyPackIds.remove(pack.sourceId);
       _notify();
@@ -304,9 +301,7 @@ class ExploreController extends ChangeNotifier {
     } on ApiError catch (error) {
       return ActionResult.error(error.message);
     } catch (_) {
-      return ActionResult.error(
-        _tx('explore.preview_error', 'No se pudo cargar la vista previa'),
-      );
+      return ActionResult.error(_tx('explore.preview_error'));
     } finally {
       _busyKeys.remove(key);
       _notify();
@@ -333,9 +328,7 @@ class ExploreController extends ChangeNotifier {
     } on ApiError catch (error) {
       return ActionResult.error(error.message);
     } catch (_) {
-      return ActionResult.error(
-        _tx('explore.graph_error', 'No se pudo cargar el grafo'),
-      );
+      return ActionResult.error(_tx('explore.graph_error'));
     } finally {
       _busyKeys.remove(key);
       _notify();
@@ -361,9 +354,7 @@ class ExploreController extends ChangeNotifier {
     } on ApiError catch (error) {
       return ActionResult.error(error.message);
     } catch (_) {
-      return ActionResult.error(
-        _tx('explore.graph_error', 'No se pudo cargar el grafo'),
-      );
+      return ActionResult.error(_tx('explore.graph_error'));
     } finally {
       _busyPackIds.remove(pack.sourceId);
       _notify();
@@ -387,15 +378,12 @@ class ExploreController extends ChangeNotifier {
       return ActionResult(
         _tx(
           'explore.link_ok',
-          'Recurso enlazado: {{name}}',
         ).replaceAll('{{name}}', '${result['name'] ?? item.name}'),
       );
     } on ApiError catch (error) {
       return ActionResult.error(error.message);
     } catch (_) {
-      return ActionResult.error(
-        _tx('explore.link_error', 'No se pudo enlazar el recurso'),
-      );
+      return ActionResult.error(_tx('explore.link_error'));
     } finally {
       _busyKeys.remove(key);
       _notify();
@@ -434,16 +422,12 @@ class ExploreController extends ChangeNotifier {
         _starredKeys.add(key);
       }
       return ActionResult(
-        remove
-            ? _tx('explore.star_removed', 'Quitado de favoritos')
-            : _tx('explore.star_added', 'Añadido a favoritos'),
+        remove ? _tx('explore.star_removed') : _tx('explore.star_added'),
       );
     } on ApiError catch (error) {
       return ActionResult.error(error.message);
     } catch (_) {
-      return ActionResult.error(
-        _tx('explore.star_error', 'No se pudo actualizar el favorito'),
-      );
+      return ActionResult.error(_tx('explore.star_error'));
     } finally {
       _busyKeys.remove(key);
       _notify();
@@ -458,7 +442,7 @@ class ExploreController extends ChangeNotifier {
   Future<void> loadUsers() async {
     final token = _token;
     if (token == null || token.isEmpty) {
-      _usersError = _tx('common.no_session', 'No hay sesión activa');
+      _usersError = _tx('common.no_session');
       _usersLoading = false;
       _notify();
       return;
@@ -483,7 +467,7 @@ class ExploreController extends ChangeNotifier {
       _usersError = error.message;
       _usersLoading = false;
     } catch (_) {
-      _usersError = _tx('explore.users_error_title', 'No se pudo cargar');
+      _usersError = _tx('explore.users_error_title');
       _usersLoading = false;
     }
     _notify();
@@ -533,23 +517,14 @@ class ExploreController extends ChangeNotifier {
         }
       }
       if (active == null || active.isPersonal) {
-        return ActionResult.error(
-          _tx(
-            'explore.users_invite_no_group',
-            'Activa un grupo de equipo para invitar usuarios',
-          ),
-        );
+        return ActionResult.error(_tx('explore.users_invite_no_group'));
       }
       await _managerRepository.inviteMember(token, active.id, username);
-      return ActionResult(
-        '${_tx('explore.users_invite_sent', 'Invitación enviada a')} $username',
-      );
+      return ActionResult('${_tx('explore.users_invite_sent')} $username');
     } on ApiError catch (error) {
       return ActionResult.error(error.message);
     } catch (_) {
-      return ActionResult.error(
-        _tx('explore.users_invite_error', 'No se pudo enviar la invitación'),
-      );
+      return ActionResult.error(_tx('explore.users_invite_error'));
     } finally {
       _invitingUsernames.remove(username);
       _notify();

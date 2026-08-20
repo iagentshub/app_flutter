@@ -58,7 +58,7 @@ class _GroupFilterDialogState extends State<_GroupFilterDialog> {
   bool _loading = true;
   String? _activeGroupId;
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   @override
   void initState() {
@@ -103,22 +103,22 @@ class _GroupFilterDialogState extends State<_GroupFilterDialog> {
     final name = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(_tx('groups.dialog_title', 'Nuevo grupo')),
+        title: Text(_tx('groups.dialog_title')),
         content: TextField(
           controller: controller,
           autofocus: true,
           decoration: InputDecoration(
-            labelText: _tx('groups.dialog_name_label', 'Nombre del grupo'),
+            labelText: _tx('groups.dialog_name_label'),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(_tx('common.cancel', 'Cancelar')),
+            child: Text(_tx('common.cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-            child: Text(_tx('common.create', 'Crear')),
+            child: Text(_tx('common.create')),
           ),
         ],
       ),
@@ -132,13 +132,9 @@ class _GroupFilterDialogState extends State<_GroupFilterDialog> {
       await _load();
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _tx('groups.create_error', 'No se pudo crear el grupo'),
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_tx('groups.create_error'))));
     }
   }
 
@@ -153,10 +149,10 @@ class _GroupFilterDialogState extends State<_GroupFilterDialog> {
     return AlertDialog(
       title: Row(
         children: [
-          Expanded(child: Text(_tx('groups.toggle_tooltip', 'Grupos'))),
+          Expanded(child: Text(_tx('groups.toggle_tooltip'))),
           IconButton(
             icon: const Icon(Icons.add, size: 20),
-            tooltip: _tx('groups.new_group', 'Nuevo grupo'),
+            tooltip: _tx('groups.new_group'),
             onPressed: _createGroup,
           ),
         ],
@@ -168,12 +164,12 @@ class _GroupFilterDialogState extends State<_GroupFilterDialog> {
             ? const Center(child: CircularProgressIndicator())
             : ListView(
                 children: [
-                  _item(context, null, _tx('groups.all', 'Todos')),
+                  _item(context, null, _tx('groups.all')),
                   if (_groups.isEmpty)
                     Padding(
                       padding: const EdgeInsets.all(10),
                       child: Text(
-                        _tx('groups.empty', 'No perteneces a ningún grupo.'),
+                        _tx('groups.empty'),
                         style: TextStyle(
                           fontSize: FncFonts.size12,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -187,7 +183,7 @@ class _GroupFilterDialogState extends State<_GroupFilterDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(_tx('common.close', 'Cerrar')),
+          child: Text(_tx('common.close')),
         ),
       ],
     );

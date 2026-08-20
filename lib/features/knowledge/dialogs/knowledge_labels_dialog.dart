@@ -16,7 +16,7 @@ Future<_KnowledgeEditResult?> _showKnowledgeEditDialog(
   BuildContext context, {
   required String initialName,
   required Set<String> initialLabels,
-  required String Function(String path, String fallback) tx,
+  required String Function(String path) tx,
   required bool isPack,
   String initialDescription = '',
   List<LabelGroupDef> groups = kLabelGroups,
@@ -48,7 +48,7 @@ class _KnowledgeEditDialog extends StatefulWidget {
   final String initialDescription;
   final Set<String> initialLabels;
   final bool isPack;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
   final List<LabelGroupDef> groups;
 
   @override
@@ -97,8 +97,8 @@ class _KnowledgeEditDialogState extends State<_KnowledgeEditDialog> {
     return AlertDialog(
       title: Text(
         widget.isPack
-            ? widget.tx('knowledge.edit_pack_title', 'Editar pack')
-            : widget.tx('knowledge.edit_item_title', 'Editar archivo'),
+            ? widget.tx('knowledge.edit_pack_title')
+            : widget.tx('knowledge.edit_item_title'),
       ),
       content: SizedBox(
         width: dialogContentWidth(context, 520),
@@ -112,13 +112,10 @@ class _KnowledgeEditDialogState extends State<_KnowledgeEditDialog> {
                 maxLength: 160,
                 autofocus: true,
                 decoration: InputDecoration(
-                  labelText: widget.tx('knowledge.name_label', 'Nombre'),
+                  labelText: widget.tx('knowledge.name_label'),
                 ),
                 validator: (value) => value == null || value.trim().isEmpty
-                    ? widget.tx(
-                        'knowledge.name_required',
-                        'El nombre es obligatorio',
-                      )
+                    ? widget.tx('knowledge.name_required')
                     : null,
               ),
               if (widget.isPack) ...[
@@ -128,10 +125,7 @@ class _KnowledgeEditDialogState extends State<_KnowledgeEditDialog> {
                   maxLength: 2000,
                   maxLines: 3,
                   decoration: InputDecoration(
-                    labelText: widget.tx(
-                      'knowledge.description_label',
-                      'Descripción',
-                    ),
+                    labelText: widget.tx('knowledge.description_label'),
                   ),
                 ),
               ],
@@ -149,12 +143,9 @@ class _KnowledgeEditDialogState extends State<_KnowledgeEditDialog> {
       actions: [
         TertiaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(widget.tx('common.cancel', 'Cancelar')),
+          child: Text(widget.tx('common.cancel')),
         ),
-        PrimaryButton(
-          onPressed: _save,
-          child: Text(widget.tx('common.save', 'Guardar')),
-        ),
+        PrimaryButton(onPressed: _save, child: Text(widget.tx('common.save'))),
       ],
     );
   }

@@ -14,7 +14,7 @@ class _GithubDeviceFlowDialog extends StatefulWidget {
 
   final ApiClient apiClient;
   final String token;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<_GithubDeviceFlowDialog> createState() =>
@@ -66,10 +66,7 @@ class _GithubDeviceFlowDialogState extends State<_GithubDeviceFlowDialog> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = widget.tx(
-          'providers.github_start_error',
-          'No se pudo iniciar la conexión con GitHub',
-        );
+        _error = widget.tx('providers.github_start_error');
       });
     }
   }
@@ -84,12 +81,7 @@ class _GithubDeviceFlowDialogState extends State<_GithubDeviceFlowDialog> {
     if (code == null || !mounted) return;
     final expiresAt = _expiresAt;
     if (expiresAt != null && DateTime.now().isAfter(expiresAt)) {
-      setState(
-        () => _error = widget.tx(
-          'providers.github_code_expired',
-          'El código expiró — inténtalo de nuevo',
-        ),
-      );
+      setState(() => _error = widget.tx('providers.github_code_expired'));
       return;
     }
     try {
@@ -116,20 +108,11 @@ class _GithubDeviceFlowDialogState extends State<_GithubDeviceFlowDialog> {
   String _githubErrorMessage(String? error) {
     switch (error) {
       case 'expired_token':
-        return widget.tx(
-          'providers.github_code_expired',
-          'El código expiró — inténtalo de nuevo',
-        );
+        return widget.tx('providers.github_code_expired');
       case 'access_denied':
-        return widget.tx(
-          'providers.github_access_denied',
-          'Autorización rechazada en GitHub',
-        );
+        return widget.tx('providers.github_access_denied');
       default:
-        return widget.tx(
-          'providers.github_start_error',
-          'No se pudo iniciar la conexión con GitHub',
-        );
+        return widget.tx('providers.github_start_error');
     }
   }
 
@@ -144,20 +127,14 @@ class _GithubDeviceFlowDialogState extends State<_GithubDeviceFlowDialog> {
     if (code == null || code.isEmpty) return;
     Clipboard.setData(ClipboardData(text: code));
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          widget.tx('providers.github_code_copied', 'Código copiado'),
-        ),
-      ),
+      SnackBar(content: Text(widget.tx('providers.github_code_copied'))),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(
-        widget.tx('providers.github_connect_title', 'Conectar con GitHub'),
-      ),
+      title: Text(widget.tx('providers.github_connect_title')),
       content: SizedBox(
         width: dialogContentWidth(context, 380),
         child: _buildBody(),
@@ -165,12 +142,12 @@ class _GithubDeviceFlowDialogState extends State<_GithubDeviceFlowDialog> {
       actions: [
         TertiaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(widget.tx('common.cancel', 'Cancelar')),
+          child: Text(widget.tx('common.cancel')),
         ),
         if (_error != null)
           PrimaryButton(
             onPressed: _start,
-            child: Text(widget.tx('common.retry', 'Reintentar')),
+            child: Text(widget.tx('common.retry')),
           ),
       ],
     );
@@ -195,12 +172,7 @@ class _GithubDeviceFlowDialogState extends State<_GithubDeviceFlowDialog> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          widget.tx(
-            'providers.github_device_hint',
-            'Visita esta URL e introduce el código para autorizar el acceso:',
-          ),
-        ),
+        Text(widget.tx('providers.github_device_hint')),
         const SizedBox(height: 12),
         InkWell(
           onTap: _copyCode,
@@ -227,9 +199,7 @@ class _GithubDeviceFlowDialogState extends State<_GithubDeviceFlowDialog> {
         SecondaryButton.icon(
           onPressed: _openGithub,
           icon: const Icon(Icons.open_in_new),
-          label: Text(
-            widget.tx('providers.github_open_action', 'Abrir GitHub'),
-          ),
+          label: Text(widget.tx('providers.github_open_action')),
         ),
         const SizedBox(height: 16),
         Row(
@@ -242,10 +212,7 @@ class _GithubDeviceFlowDialogState extends State<_GithubDeviceFlowDialog> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                widget.tx(
-                  'providers.github_waiting',
-                  'Esperando autorización...',
-                ),
+                widget.tx('providers.github_waiting'),
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),

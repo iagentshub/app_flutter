@@ -59,11 +59,11 @@ extension _ExploreOfficialPackCard on _ExplorePageState {
             const SizedBox(height: 8),
             LabelChipsRow(
               labels: const ['official'],
-              labelText: (label) => _tx('labels.$label', label),
+              labelText: (label) => trOr('labels.$label', label),
               leading: [
                 ResourceTypeBadge(
                   type: 'official_pack',
-                  label: _tx('explore.pack_badge', 'Pack'),
+                  label: _tx('explore.pack_badge'),
                 ),
                 // Solo cuando está entero: un pack a medias ya se cuenta
                 // arriba con «enlazados/total» y decir «Enlazado» mentiría.
@@ -84,10 +84,7 @@ extension _ExploreOfficialPackCard on _ExplorePageState {
             if (pack.matchingCount != pack.totalCount) ...[
               const SizedBox(height: 6),
               Text(
-                _tx(
-                      'explore.pack_matches',
-                      '{{matching}} coincidencias · {{total}} recursos',
-                    )
+                _tx('explore.pack_matches')
                     .replaceAll('{{matching}}', '${pack.matchingCount}')
                     .replaceAll('{{total}}', '${pack.totalCount}'),
                 style: Theme.of(context).textTheme.bodySmall,
@@ -98,22 +95,22 @@ extension _ExploreOfficialPackCard on _ExplorePageState {
               children: [
                 ActionIconButton(
                   icon: Icons.visibility_outlined,
-                  tooltip: _tx('explore.pack_open', 'Ver contenido'),
+                  tooltip: _tx('explore.pack_open'),
                   onPressed: busy ? null : () => _openOfficialPack(pack),
                 ),
                 ActionIconButton(
                   key: ValueKey('explore-pack-graph-${pack.sourceId}'),
                   icon: Icons.hub_outlined,
-                  tooltip: _tx('explore.pack_graph', 'Grafo del pack'),
+                  tooltip: _tx('explore.pack_graph'),
                   onPressed: busy ? null : () => _showOfficialPackGraph(pack),
                 ),
                 ActionIconButton(
                   icon: pack.fullyLinked ? Icons.link : Icons.link_outlined,
                   tooltip: pack.fullyLinked
-                      ? _tx('explore.pack_complete', 'Pack completo')
+                      ? _tx('explore.pack_complete')
                       : pack.linkState == 'partial'
-                      ? _tx('explore.pack_complete_action', 'Completar pack')
-                      : _tx('explore.pack_link_all', 'Vincular pack'),
+                      ? _tx('explore.pack_complete_action')
+                      : _tx('explore.pack_link_all'),
                   onPressed: busy || pack.fullyLinked || pack.ownedByRequester
                       ? null
                       : () => _confirmLinkOfficialPack(pack),
@@ -152,21 +149,20 @@ extension _ExploreOfficialPackCard on _ExplorePageState {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(_tx('explore.pack_link_all', 'Vincular pack')),
+        title: Text(_tx('explore.pack_link_all')),
         content: Text(
           _tx(
             'explore.pack_link_confirm',
-            'Se vincularán los {{count}} recursos públicos del pack y sus dependencias.',
           ).replaceAll('{{count}}', '${pack.totalCount}'),
         ),
         actions: [
           SecondaryButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(_tx('common.cancel', 'Cancelar')),
+            child: Text(_tx('common.cancel')),
           ),
           PrimaryButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(_tx('common.confirm', 'Confirmar')),
+            child: Text(_tx('common.confirm')),
           ),
         ],
       ),

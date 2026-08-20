@@ -38,7 +38,7 @@ class CentinelStressTab extends StatefulWidget {
 
   final CentinelRepository repository;
   final String token;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<CentinelStressTab> createState() => _CentinelStressTabState();
@@ -68,7 +68,7 @@ class _CentinelStressTabState extends State<CentinelStressTab>
   int? _requestedUsers;
   int? _effectiveUsers;
 
-  String _tx(String path, String fallback) => widget.tx(path, fallback);
+  String _tx(String path) => widget.tx(path);
 
   @override
   void dispose() {
@@ -128,10 +128,7 @@ class _CentinelStressTabState extends State<CentinelStressTab>
       showMessage(error.message, isError: true);
       if (mounted) setState(() => _starting = false);
     } catch (_) {
-      showMessage(
-        _tx('centinel.stress_start_error', 'No se pudo iniciar la prueba'),
-        isError: true,
-      );
+      showMessage(_tx('centinel.stress_start_error'), isError: true);
       if (mounted) setState(() => _starting = false);
     }
   }
@@ -209,7 +206,7 @@ class _CentinelStressTabState extends State<CentinelStressTab>
         .replaceAll(RegExp(r'[^0-9]'), '')
         .substring(0, 14);
     await FilePicker.saveFile(
-      dialogTitle: _tx('centinel.summary_export_csv', 'Exportar CSV'),
+      dialogTitle: _tx('centinel.summary_export_csv'),
       fileName: 'stress_$stamp.csv',
       bytes: bytes,
       type: FileType.custom,
@@ -253,13 +250,13 @@ class _CentinelStressTabState extends State<CentinelStressTab>
           PrimaryButton.icon(
             onPressed: _starting ? null : _start,
             icon: const Icon(Icons.play_arrow),
-            label: Text(_tx('centinel.actions_stress_start', 'Iniciar prueba')),
+            label: Text(_tx('centinel.actions_stress_start')),
           )
         else
           PrimaryButton.tonalIcon(
             onPressed: _abort,
             icon: const Icon(Icons.stop_circle_outlined),
-            label: Text(_tx('centinel.actions_stress_stop', 'Detener')),
+            label: Text(_tx('centinel.actions_stress_stop')),
           ),
       ],
     );
@@ -285,12 +282,9 @@ class _CentinelStressTabState extends State<CentinelStressTab>
 
   Widget _buildConfigCard() {
     final endpointOptions = [
-      (
-        'RANDOM',
-        _tx('centinel.stress_endpoint_random', 'Random (endpoints mixtos)'),
-      ),
+      ('RANDOM', _tx('centinel.stress_endpoint_random')),
       ..._predefinedEndpoints.map((e) => (e, e)),
-      ('custom', _tx('centinel.stress_endpoint_custom', 'Personalizado…')),
+      ('custom', _tx('centinel.stress_endpoint_custom')),
     ];
     final disabled = _status == 'running';
     return Card(
@@ -300,7 +294,7 @@ class _CentinelStressTabState extends State<CentinelStressTab>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _tx('centinel.stress_endpoint_label', 'Endpoint'),
+              _tx('centinel.stress_endpoint_label'),
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 6),
@@ -351,7 +345,7 @@ class _CentinelStressTabState extends State<CentinelStressTab>
             ],
             const SizedBox(height: 16),
             Text(
-              _tx('centinel.stress_users_label', 'Usuarios concurrentes'),
+              _tx('centinel.stress_users_label'),
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
             Row(
@@ -385,10 +379,7 @@ class _CentinelStressTabState extends State<CentinelStressTab>
                   enabled: !disabled,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: _tx(
-                      'centinel.stress_custom_value_label',
-                      'Valor personalizado (>1000)',
-                    ),
+                    labelText: _tx('centinel.stress_custom_value_label'),
                   ),
                 ),
               ),
@@ -399,20 +390,15 @@ class _CentinelStressTabState extends State<CentinelStressTab>
               onChanged: disabled
                   ? null
                   : (v) => setState(() => _fluctuate = v ?? false),
-              title: Text(
-                _tx('centinel.stress_fluctuate_label', 'Fluctuar carga'),
-              ),
+              title: Text(_tx('centinel.stress_fluctuate_label')),
               subtitle: Text(
-                _tx(
-                  'centinel.stress_fluctuate_hint',
-                  'Introduce pausas aleatorias entre requests para simular usuarios reales',
-                ),
+                _tx('centinel.stress_fluctuate_hint'),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
             const SizedBox(height: 12),
             Text(
-              _tx('centinel.stress_duration_label', 'Duración'),
+              _tx('centinel.stress_duration_label'),
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 6),
@@ -432,16 +418,13 @@ class _CentinelStressTabState extends State<CentinelStressTab>
             Row(
               children: [
                 Text(
-                  _tx('centinel.stress_rampup_label', 'Ramp-up'),
+                  _tx('centinel.stress_rampup_label'),
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 AppIconButton(
                   onPressed: () =>
                       setState(() => _showRampupInfo = !_showRampupInfo),
-                  tooltip: _tx(
-                    'centinel.stress_rampup_info',
-                    'Qué es el ramp-up',
-                  ),
+                  tooltip: _tx('centinel.stress_rampup_info'),
                   icon: const Icon(Icons.info_outline, size: 16),
                   visualDensity: VisualDensity.compact,
                 ),
@@ -453,10 +436,7 @@ class _CentinelStressTabState extends State<CentinelStressTab>
                 child: Padding(
                   padding: const EdgeInsets.all(10),
                   child: Text(
-                    _tx(
-                      'centinel.rampup_tooltip_body',
-                      'El ramp-up es el tiempo que tarda en alcanzarse la carga máxima de usuarios: en vez de lanzarlos todos a la vez, los arranca de forma progresiva. P. ej. 100 usuarios con ramp-up de 10s arrancan uno cada 0,1s.',
-                    ),
+                    _tx('centinel.rampup_tooltip_body'),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ),
@@ -465,7 +445,7 @@ class _CentinelStressTabState extends State<CentinelStressTab>
             _pillGroup<int>(
               value: _rampUp,
               options: [
-                (0, _tx('centinel.stress_rampup_none', 'Ninguno')),
+                (0, _tx('centinel.stress_rampup_none')),
                 (5, '5s'),
                 (10, '10s'),
                 (30, '30s'),
@@ -474,7 +454,7 @@ class _CentinelStressTabState extends State<CentinelStressTab>
             ),
             const SizedBox(height: 12),
             Text(
-              _tx('centinel.stress_timeout_label', 'Timeout / req'),
+              _tx('centinel.stress_timeout_label'),
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 6),
@@ -492,7 +472,7 @@ class _CentinelStressTabState extends State<CentinelStressTab>
             ),
             const SizedBox(height: 12),
             Text(
-              _tx('centinel.stress_concurrency_label', 'Concurrencia máx'),
+              _tx('centinel.stress_concurrency_label'),
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
             Row(
@@ -528,10 +508,7 @@ class _CentinelStressTabState extends State<CentinelStressTab>
                   enabled: !disabled,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: _tx(
-                      'centinel.stress_concurrency_custom_label',
-                      'Valor personalizado (0 = sin límite)',
-                    ),
+                    labelText: _tx('centinel.stress_concurrency_custom_label'),
                   ),
                 ),
               ),
@@ -554,10 +531,7 @@ class _CentinelStressTabState extends State<CentinelStressTab>
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                _tx(
-                      'centinel.stress_cap_notice',
-                      'Se pidieron {requested} usuarios pero el servidor limitó a {effective} por seguridad de hilos.',
-                    )
+                _tx('centinel.stress_cap_notice')
                     .replaceAll('{requested}', '$_requestedUsers')
                     .replaceAll('{effective}', '$_effectiveUsers'),
               ),

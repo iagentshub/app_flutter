@@ -4,7 +4,7 @@ class _AgentEditDialog extends StatefulWidget {
   const _AgentEditDialog({required this.agent, required this.tx});
 
   final Map<String, dynamic> agent;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<_AgentEditDialog> createState() => _AgentEditDialogState();
@@ -59,7 +59,7 @@ class _AgentEditDialogState extends State<_AgentEditDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.tx('admin.edit_agent_title', 'Editar agente')),
+      title: Text(widget.tx('admin.edit_agent_title')),
       content: SizedBox(
         width: dialogContentWidth(context, 540),
         child: ListView(
@@ -68,14 +68,14 @@ class _AgentEditDialogState extends State<_AgentEditDialog> {
             TextField(
               controller: _nameController,
               decoration: InputDecoration(
-                labelText: widget.tx('admin.field_name', 'Nombre'),
+                labelText: widget.tx('admin.field_name'),
               ),
             ),
             const SizedBox(height: 10),
             DropdownButtonFormField<String>(
               initialValue: _agentType,
               decoration: InputDecoration(
-                labelText: widget.tx('admin.field_type', 'Tipo'),
+                labelText: widget.tx('admin.field_type'),
               ),
               items: const [
                 DropdownMenuItem(value: 'claude', child: Text('claude')),
@@ -90,14 +90,14 @@ class _AgentEditDialogState extends State<_AgentEditDialog> {
             TextField(
               controller: _modelController,
               decoration: InputDecoration(
-                labelText: widget.tx('admin.field_model', 'Modelo'),
+                labelText: widget.tx('admin.field_model'),
               ),
             ),
             const SizedBox(height: 10),
             TextField(
               controller: _connectionController,
               decoration: InputDecoration(
-                labelText: widget.tx('admin.field_connection', 'Conexión'),
+                labelText: widget.tx('admin.field_connection'),
               ),
             ),
             const SizedBox(height: 10),
@@ -107,7 +107,7 @@ class _AgentEditDialogState extends State<_AgentEditDialog> {
                 decimal: true,
               ),
               decoration: InputDecoration(
-                labelText: widget.tx('admin.field_temperature', 'Temperatura'),
+                labelText: widget.tx('admin.field_temperature'),
               ),
             ),
             const SizedBox(height: 10),
@@ -117,10 +117,7 @@ class _AgentEditDialogState extends State<_AgentEditDialog> {
               maxLines: 10,
               style: FncFonts.code,
               decoration: InputDecoration(
-                labelText: widget.tx(
-                  'admin.field_system_prompt',
-                  'Prompt de sistema',
-                ),
+                labelText: widget.tx('admin.field_system_prompt'),
               ),
             ),
           ],
@@ -129,11 +126,11 @@ class _AgentEditDialogState extends State<_AgentEditDialog> {
       actions: [
         TertiaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(widget.tx('common.cancel', 'Cancelar')),
+          child: Text(widget.tx('common.cancel')),
         ),
         PrimaryButton(
           onPressed: _submit,
-          child: Text(widget.tx('common.save', 'Guardar')),
+          child: Text(widget.tx('common.save')),
         ),
       ],
     );

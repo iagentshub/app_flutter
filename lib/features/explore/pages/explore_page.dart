@@ -24,6 +24,7 @@ import '../../../shared/widgets/resource_type_badge.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../../../utils/i18n.dart';
 import '../../manager/repositories/manager_repository.dart';
 import '../controllers/explore_controller.dart';
 import '../repositories/explore_repository.dart';
@@ -52,7 +53,7 @@ class _ExplorePageState extends State<ExplorePage>
   late final TranslatedTexts _t;
   late final TabController _tabController;
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   @override
   void initState() {
@@ -150,37 +151,19 @@ class _ExplorePageState extends State<ExplorePage>
       nodes: nodes,
       edges: edges,
       rootId: rootId,
-      closeLabel: _tx('common.close', 'Cerrar'),
-      searchHint: _tx('graph.search_hint', 'Buscar en el grafo...'),
-      sortTooltip: _tx('graph.sort_tooltip', 'Ordenar'),
-      sortHierarchyVerticalLabel: _tx(
-        'graph.sort_hierarchy_vertical',
-        'Jerárquico (arriba-abajo)',
-      ),
-      sortHierarchyHorizontalLabel: _tx(
-        'graph.sort_hierarchy_horizontal',
-        'Jerárquico (izquierda-derecha)',
-      ),
-      sortGalaxyLabel: _tx('graph.sort_galaxy', 'Galaxia'),
-      showLabelsTooltip: _tx('graph.show_labels_tooltip', 'Mostrar nombres'),
-      hideLabelsTooltip: _tx('graph.hide_labels_tooltip', 'Ocultar nombres'),
-      quickViewDescriptionLabel: _tx(
-        'graph.quick_view_description',
-        'Descripción',
-      ),
-      quickViewNoDescriptionLabel: _tx(
-        'graph.quick_view_no_description',
-        'Sin descripción',
-      ),
-      quickViewConnectionsLabel: _tx(
-        'graph.quick_view_connections',
-        'Conexiones',
-      ),
-      quickViewNoConnectionsLabel: _tx(
-        'graph.quick_view_no_connections',
-        'Sin conexiones',
-      ),
-      emptyLabel: _tx('explore.graph_empty', 'El recurso no tiene relaciones'),
+      closeLabel: _tx('common.close'),
+      searchHint: _tx('graph.search_hint'),
+      sortTooltip: _tx('graph.sort_tooltip'),
+      sortHierarchyVerticalLabel: _tx('graph.sort_hierarchy_vertical'),
+      sortHierarchyHorizontalLabel: _tx('graph.sort_hierarchy_horizontal'),
+      sortGalaxyLabel: _tx('graph.sort_galaxy'),
+      showLabelsTooltip: _tx('graph.show_labels_tooltip'),
+      hideLabelsTooltip: _tx('graph.hide_labels_tooltip'),
+      quickViewDescriptionLabel: _tx('graph.quick_view_description'),
+      quickViewNoDescriptionLabel: _tx('graph.quick_view_no_description'),
+      quickViewConnectionsLabel: _tx('graph.quick_view_connections'),
+      quickViewNoConnectionsLabel: _tx('graph.quick_view_no_connections'),
+      emptyLabel: _tx('explore.graph_empty'),
     );
   }
 
@@ -191,17 +174,14 @@ class _ExplorePageState extends State<ExplorePage>
   // ── Traducción de las etiquetas de filtro y de las chips ──────────────
 
   List<(String, String)> get _typeOptions => [
-    ('all', _tx('explore.type_all', 'Todos')),
-    ('agent', _tx('explore.type_agents', 'Agentes')),
-    ('skill', _tx('explore.type_skills', 'Skills')),
-    ('prompt', _tx('explore.type_prompts', 'Prompts')),
-    ('tool', _tx('explore.type_tools', 'Herramientas')),
-    ('knowledge', _tx('explore.type_knowledge', 'Knowledge')),
-    (
-      'knowledge_pack',
-      _tx('explore.type_knowledge_pack', 'Packs de conocimiento'),
-    ),
-    ('workflow', _tx('explore.type_workflows', 'Workflows')),
+    ('all', _tx('explore.type_all')),
+    ('agent', _tx('explore.type_agents')),
+    ('skill', _tx('explore.type_skills')),
+    ('prompt', _tx('explore.type_prompts')),
+    ('tool', _tx('explore.type_tools')),
+    ('knowledge', _tx('explore.type_knowledge')),
+    ('knowledge_pack', _tx('explore.type_knowledge_pack')),
+    ('workflow', _tx('explore.type_workflows')),
   ];
 
   static const _categoryKeys = {
@@ -221,8 +201,8 @@ class _ExplorePageState extends State<ExplorePage>
   /// Traduce el tipo de recurso ("agent", "skill"...) al idioma del sistema,
   /// reutilizando las mismas etiquetas que el filtro de tipo.
   String _typeChipLabel(String type) {
-    if (type == 'memory') return _tx('explore.type_memory', 'Memoria');
-    if (type == 'official_pack') return _tx('explore.pack_badge', 'Pack');
+    if (type == 'memory') return _tx('explore.type_memory');
+    if (type == 'official_pack') return _tx('explore.pack_badge');
     for (final option in _typeOptions) {
       if (option.$1 == type) return option.$2;
     }
@@ -233,7 +213,7 @@ class _ExplorePageState extends State<ExplorePage>
   String _categoryChipLabel(String category) {
     final key = _categoryKeys[category];
     if (key == null) return category;
-    return _tx('explore.$key', category);
+    return trOr('explore.$key', category);
   }
 
   // En Explore todo lo listado es público (el backend solo devuelve
@@ -243,7 +223,7 @@ class _ExplorePageState extends State<ExplorePage>
       .toList();
 
   /// Traduce el nombre de una label ("favorite", "draft"...) al idioma del sistema.
-  String _labelChipLabel(String label) => _tx('labels.$label', label);
+  String _labelChipLabel(String label) => trOr('labels.$label', label);
 
   List<ExploreTypeOption> get _publicExploreTypeOptions => [
     for (final option in _typeOptions.skip(1))
@@ -268,7 +248,7 @@ class _ExplorePageState extends State<ExplorePage>
   };
 
   void _openFiltersDialog() {
-    final optionAll = _tx('explore.option_all', 'Todas');
+    final optionAll = _tx('explore.option_all');
     final categoryOptions = [
       ('', optionAll),
       ..._controller.categoryOptions.map((c) => (c, _categoryChipLabel(c))),
@@ -276,13 +256,13 @@ class _ExplorePageState extends State<ExplorePage>
 
     showFilterDialog(
       context,
-      title: _tx('common.filters', 'Filtros'),
-      clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
-      closeLabel: _tx('common.close', 'Cerrar'),
+      title: _tx('common.filters'),
+      clearLabel: _tx('common.clear_filters'),
+      closeLabel: _tx('common.close'),
       onClear: _controller.clearExploreFilters,
       buildFields: (setDialogState) => [
         Text(
-          _tx('explore.relation_label', 'Relación'),
+          _tx('explore.relation_label'),
           style: Theme.of(context).textTheme.labelLarge,
         ),
         const SizedBox(height: 8),
@@ -295,15 +275,15 @@ class _ExplorePageState extends State<ExplorePage>
             segments: [
               ButtonSegment(
                 value: ExploreRelation.nuevo,
-                label: Text(_tx('explore.relation_new', 'Nuevos')),
+                label: Text(_tx('explore.relation_new')),
               ),
               ButtonSegment(
                 value: ExploreRelation.enlazado,
-                label: Text(_tx('explore.relation_linked', 'Enlazados')),
+                label: Text(_tx('explore.relation_linked')),
               ),
               ButtonSegment(
                 value: ExploreRelation.todo,
-                label: Text(_tx('explore.relation_all', 'Todos')),
+                label: Text(_tx('explore.relation_all')),
               ),
             ],
             selected: {_controller.relation},
@@ -319,7 +299,7 @@ class _ExplorePageState extends State<ExplorePage>
         const Divider(height: 1),
         const SizedBox(height: 16),
         Text(
-          _tx('explore.official_display_label', 'Recursos oficiales'),
+          _tx('explore.official_display_label'),
           style: Theme.of(context).textTheme.labelLarge,
         ),
         const SizedBox(height: 8),
@@ -331,12 +311,12 @@ class _ExplorePageState extends State<ExplorePage>
               ButtonSegment(
                 value: true,
                 icon: const Icon(Icons.inventory_2_outlined, size: 16),
-                label: Text(_tx('explore.pack_mode', 'Packs')),
+                label: Text(_tx('explore.pack_mode')),
               ),
               ButtonSegment(
                 value: false,
                 icon: const Icon(Icons.view_module_outlined, size: 16),
-                label: Text(_tx('explore.individual_mode', 'Individuales')),
+                label: Text(_tx('explore.individual_mode')),
               ),
             ],
             selected: {_controller.officialPacksMode},
@@ -352,7 +332,7 @@ class _ExplorePageState extends State<ExplorePage>
         const Divider(height: 1),
         const SizedBox(height: 16),
         _dropdown(
-          label: _tx('explore.category_label', 'Categoría'),
+          label: _tx('explore.category_label'),
           value: _controller.category,
           options: categoryOptions,
           onChanged: (v) {
@@ -363,13 +343,11 @@ class _ExplorePageState extends State<ExplorePage>
         const SizedBox(height: 12),
         MultiSelectDropdown<String>(
           key: const Key('exploreLanguageDropdown'),
-          labelText: _tx('explore.language_label', 'Idioma'),
-          tooltip: _tx('explore.language_filter_tooltip', 'Filtrar por idioma'),
+          labelText: _tx('explore.language_label'),
+          tooltip: _tx('explore.language_filter_tooltip'),
           emptyLabel: optionAll,
-          multipleSelectedLabel: (count) => _tx(
-            'explore.languages_selected',
-            '{count} idiomas',
-          ).replaceAll('{count}', '$count'),
+          multipleSelectedLabel: (count) =>
+              _tx('explore.languages_selected').replaceAll('{count}', '$count'),
           options: [
             for (final language in kContentLanguageCodes)
               MultiSelectDropdownOption(
@@ -387,13 +365,11 @@ class _ExplorePageState extends State<ExplorePage>
         const SizedBox(height: 12),
         MultiSelectDropdown<String>(
           key: const Key('exploreLabelsDropdown'),
-          labelText: _tx('explore.label_label', 'Etiqueta'),
-          tooltip: _tx('explore.label_filter_tooltip', 'Filtrar por etiquetas'),
+          labelText: _tx('explore.label_label'),
+          tooltip: _tx('explore.label_filter_tooltip'),
           emptyLabel: optionAll,
-          multipleSelectedLabel: (count) => _tx(
-            'explore.labels_selected',
-            '{count} etiquetas',
-          ).replaceAll('{count}', '$count'),
+          multipleSelectedLabel: (count) =>
+              _tx('explore.labels_selected').replaceAll('{count}', '$count'),
           options: [
             for (final label in _explorableLabelKeys)
               MultiSelectDropdownOption(
@@ -446,8 +422,8 @@ class _ExplorePageState extends State<ExplorePage>
           child: TabBar(
             controller: _tabController,
             tabs: [
-              Tab(text: _tx('explore.tab_resources', 'Recursos')),
-              Tab(text: _tx('explore.tab_users', 'Usuarios')),
+              Tab(text: _tx('explore.tab_resources')),
+              Tab(text: _tx('explore.tab_users')),
             ],
           ),
         ),

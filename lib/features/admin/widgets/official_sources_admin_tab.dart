@@ -6,6 +6,7 @@ import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
+import '../../../utils/i18n.dart';
 import '../dialogs/official_source_dialogs.dart';
 import '../models/official_import_models.dart';
 import '../pages/official_import_review_page.dart';
@@ -26,7 +27,7 @@ class OfficialSourcesAdminTab extends StatefulWidget {
 
   final ApiClient apiClient;
   final String token;
-  final String Function(String, String) tx;
+  final String Function(String) tx;
 
   @override
   State<OfficialSourcesAdminTab> createState() =>
@@ -115,12 +116,7 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
             horizontal: 16,
             vertical: 24,
           ),
-          title: Text(
-            widget.tx(
-              'official.admin_import',
-              'Importar desde GitHub o GitLab',
-            ),
-          ),
+          title: Text(widget.tx('official.admin_import')),
           content: SizedBox(
             width: dialogContentWidth(context, 560),
             child: SingleChildScrollView(
@@ -138,19 +134,16 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
                     initialValue: importMode,
                     isExpanded: true,
                     decoration: InputDecoration(
-                      labelText: widget.tx(
-                        'official.analysis_mode',
-                        'Modo de análisis',
-                      ),
+                      labelText: widget.tx('official.analysis_mode'),
                     ),
-                    items: const [
+                    items: [
                       DropdownMenuItem(
                         value: 'deterministic',
-                        child: Text('Manual · reglas deterministas'),
+                        child: Text(tr('admin.deterministic_rules')),
                       ),
                       DropdownMenuItem(
                         value: 'llm',
-                        child: Text('LLM · análisis semántico'),
+                        child: Text(tr('admin.llm_semantic_analysis')),
                       ),
                     ],
                     onChanged: (value) => setDialogState(() {
@@ -164,10 +157,7 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
                       initialValue: llmConnectionId,
                       isExpanded: true,
                       decoration: InputDecoration(
-                        labelText: widget.tx(
-                          'official.llm_connection',
-                          'Conexión LLM de Admin',
-                        ),
+                        labelText: widget.tx('official.llm_connection'),
                         helperText: llmConnections.isEmpty
                             ? 'No hay conexiones LLM activas compatibles.'
                             : 'Puede realizar varias llamadas y consumir tokens.',
@@ -188,16 +178,16 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
                     initialValue: trackingMode,
                     isExpanded: true,
                     decoration: InputDecoration(
-                      labelText: widget.tx('official.tracking', 'Seguimiento'),
+                      labelText: widget.tx('official.tracking'),
                     ),
-                    items: const [
+                    items: [
                       DropdownMenuItem(
                         value: 'release',
-                        child: Text('Última release'),
+                        child: Text(tr('admin.last_release')),
                       ),
                       DropdownMenuItem(
                         value: 'branch',
-                        child: Text('Rama main'),
+                        child: Text(tr('admin.main_branch')),
                       ),
                     ],
                     onChanged: (value) => setDialogState(
@@ -211,13 +201,13 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
           actions: [
             TertiaryButton(
               onPressed: () => Navigator.pop(context, false),
-              child: Text(widget.tx('common.cancel', 'Cancelar')),
+              child: Text(widget.tx('common.cancel')),
             ),
             PrimaryButton(
               onPressed: importMode == 'llm' && llmConnectionId == null
                   ? null
                   : () => Navigator.pop(context, true),
-              child: Text(widget.tx('common.import', 'Importar')),
+              child: Text(widget.tx('common.import')),
             ),
           ],
         ),
@@ -266,10 +256,7 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
       final removed = applied['removed'] ?? 0;
       notify(
         widget
-            .tx(
-              'official.sync_applied',
-              '{kept} objetos disponibles, {removed} eliminados',
-            )
+            .tx('official.sync_applied')
             .replaceAll('{kept}', '$kept')
             .replaceAll('{removed}', '$removed'),
       );
@@ -310,10 +297,7 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
     final removed = result['removed'] ?? 0;
     notify(
       widget
-          .tx(
-            'official.sync_applied',
-            '{kept} objetos disponibles, {removed} eliminados',
-          )
+          .tx('official.sync_applied')
           .replaceAll('{kept}', '$kept')
           .replaceAll('{removed}', '$removed'),
     );
@@ -342,19 +326,13 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
     final id = source.id;
     final name = source.name.trim().isNotEmpty
         ? source.name
-        : widget.tx('official.unnamed_package', 'Fuente sin nombre');
+        : widget.tx('official.unnamed_package');
     final confirmed = await showConfirmActionDialog(
       context,
-      title: widget.tx('official.delete_title', 'Eliminar fuente oficial'),
-      message: widget
-          .tx(
-            'official.delete_confirm',
-            'Se eliminarán {name} y todos los objetos que trajo. Los enlaces '
-                'y copias que hayan hecho los usuarios seguirán su curso normal.',
-          )
-          .replaceAll('{name}', name),
-      cancelLabel: widget.tx('common.cancel', 'Cancelar'),
-      confirmLabel: widget.tx('common.delete', 'Eliminar'),
+      title: widget.tx('official.delete_title'),
+      message: widget.tx('official.delete_confirm').replaceAll('{name}', name),
+      cancelLabel: widget.tx('common.cancel'),
+      confirmLabel: widget.tx('common.delete'),
       destructive: true,
     );
     if (!confirmed || !mounted) return;
@@ -362,7 +340,7 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
       final result = await repository.deleteSource(widget.token, id);
       notify(
         widget
-            .tx('official.deleted', '{count} objetos eliminados')
+            .tx('official.deleted')
             .replaceAll('{count}', '${result['removed_resources'] ?? 0}'),
       );
     });
@@ -388,12 +366,7 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
                 child: PrimaryButton.icon(
                   onPressed: busy.contains('import') ? null : openImport,
                   icon: const Icon(Icons.add_link),
-                  label: Text(
-                    widget.tx(
-                      'official.admin_add_source',
-                      'Añadir fuente oficial',
-                    ),
-                  ),
+                  label: Text(widget.tx('official.admin_add_source')),
                 ),
               ),
             ),
@@ -405,12 +378,7 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
                     child: Card(
                       child: Padding(
                         padding: const EdgeInsets.all(16),
-                        child: Text(
-                          widget.tx(
-                            'official.admin_empty',
-                            'No hay fuentes configuradas.',
-                          ),
-                        ),
+                        child: Text(widget.tx('official.admin_empty')),
                       ),
                     ),
                   )
@@ -443,9 +411,7 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              name.isNotEmpty
-                  ? name
-                  : widget.tx('official.unnamed_package', 'Fuente sin nombre'),
+              name.isNotEmpty ? name : widget.tx('official.unnamed_package'),
               style: const TextStyle(
                 fontSize: FncFonts.size16,
                 fontWeight: FontWeight.w700,
@@ -459,15 +425,15 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
             const SizedBox(height: 4),
             Text(
               widget
-                  .tx('official.source_resources', '{count} objetos en el hub')
+                  .tx('official.source_resources')
                   .replaceAll('{count}', '$resources'),
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 4),
             Text(
               source.importMode == 'llm'
-                  ? widget.tx('official.mode_llm', 'Análisis LLM')
-                  : widget.tx('official.mode_deterministic', 'Análisis manual'),
+                  ? widget.tx('official.mode_llm')
+                  : widget.tx('official.mode_deterministic'),
               style: Theme.of(context).textTheme.bodySmall,
             ),
             if (syncError.isNotEmpty) ...[
@@ -484,27 +450,21 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
               children: [
                 const Spacer(),
                 ActionIconButton(
-                  tooltip: widget.tx(
-                    'official.sync_source',
-                    'Sincronizar y elegir contenido',
-                  ),
+                  tooltip: widget.tx('official.sync_source'),
                   onPressed: busy.contains(id)
                       ? null
                       : () => syncSource(source),
                   icon: Icons.sync,
                 ),
                 ActionIconButton(
-                  tooltip: widget.tx('common.edit', 'Editar'),
+                  tooltip: widget.tx('common.edit'),
                   onPressed: busy.contains(id)
                       ? null
                       : () => editSource(source),
                   icon: Icons.edit_outlined,
                 ),
                 ActionIconButton(
-                  tooltip: widget.tx(
-                    'official.delete_source',
-                    'Eliminar fuente',
-                  ),
+                  tooltip: widget.tx('official.delete_source'),
                   onPressed: busy.contains(id)
                       ? null
                       : () => deleteSource(source),

@@ -21,7 +21,7 @@ class OfficialPackPage extends StatefulWidget {
   final ExploreOfficialPack pack;
   final ExploreRepository repository;
   final String token;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<OfficialPackPage> createState() => _OfficialPackPageState();
@@ -40,7 +40,7 @@ class _OfficialPackPageState extends State<OfficialPackPage> {
   bool _linking = false;
   final Set<String> _selected = {};
 
-  String _tx(String path, String fallback) => widget.tx(path, fallback);
+  String _tx(String path) => widget.tx(path);
 
   @override
   void initState() {
@@ -112,7 +112,7 @@ class _OfficialPackPageState extends State<OfficialPackPage> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = _tx('explore.pack_load_error', 'No se pudo cargar el pack');
+        _error = _tx('explore.pack_load_error');
         _loading = false;
       });
     }
@@ -160,41 +160,23 @@ class _OfficialPackPageState extends State<OfficialPackPage> {
     );
     await showResourceGraphDialog(
       context: context,
-      title: _tx('explore.pack_graph', 'Grafo del pack'),
+      title: _tx('explore.pack_graph'),
       nodes: graph.nodes,
       edges: graph.edges,
       rootId: graph.rootId,
-      closeLabel: _tx('common.close', 'Cerrar'),
-      searchHint: _tx('graph.search_hint', 'Buscar en el grafo...'),
-      sortTooltip: _tx('graph.sort_tooltip', 'Ordenar'),
-      sortHierarchyVerticalLabel: _tx(
-        'graph.sort_hierarchy_vertical',
-        'Jerárquico (arriba-abajo)',
-      ),
-      sortHierarchyHorizontalLabel: _tx(
-        'graph.sort_hierarchy_horizontal',
-        'Jerárquico (izquierda-derecha)',
-      ),
-      sortGalaxyLabel: _tx('graph.sort_galaxy', 'Galaxia'),
-      showLabelsTooltip: _tx('graph.show_labels_tooltip', 'Mostrar nombres'),
-      hideLabelsTooltip: _tx('graph.hide_labels_tooltip', 'Ocultar nombres'),
-      quickViewDescriptionLabel: _tx(
-        'graph.quick_view_description',
-        'Descripción',
-      ),
-      quickViewNoDescriptionLabel: _tx(
-        'graph.quick_view_no_description',
-        'Sin descripción',
-      ),
-      quickViewConnectionsLabel: _tx(
-        'graph.quick_view_connections',
-        'Conexiones',
-      ),
-      quickViewNoConnectionsLabel: _tx(
-        'graph.quick_view_no_connections',
-        'Sin conexiones',
-      ),
-      emptyLabel: _tx('explore.pack_empty', 'El pack no tiene recursos'),
+      closeLabel: _tx('common.close'),
+      searchHint: _tx('graph.search_hint'),
+      sortTooltip: _tx('graph.sort_tooltip'),
+      sortHierarchyVerticalLabel: _tx('graph.sort_hierarchy_vertical'),
+      sortHierarchyHorizontalLabel: _tx('graph.sort_hierarchy_horizontal'),
+      sortGalaxyLabel: _tx('graph.sort_galaxy'),
+      showLabelsTooltip: _tx('graph.show_labels_tooltip'),
+      hideLabelsTooltip: _tx('graph.hide_labels_tooltip'),
+      quickViewDescriptionLabel: _tx('graph.quick_view_description'),
+      quickViewNoDescriptionLabel: _tx('graph.quick_view_no_description'),
+      quickViewConnectionsLabel: _tx('graph.quick_view_connections'),
+      quickViewNoConnectionsLabel: _tx('graph.quick_view_no_connections'),
+      emptyLabel: _tx('explore.pack_empty'),
     );
   }
 
@@ -214,7 +196,6 @@ class _OfficialPackPageState extends State<OfficialPackPage> {
           content: Text(
             _tx(
               'explore.pack_link_ok',
-              '{{count}} recursos vinculados',
             ).replaceAll('{{count}}', '${result.createdCount}'),
           ),
         ),
@@ -228,13 +209,9 @@ class _OfficialPackPageState extends State<OfficialPackPage> {
       setState(() => _linking = false);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _tx('explore.pack_link_error', 'No se pudo vincular el pack'),
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_tx('explore.pack_link_error'))));
       setState(() => _linking = false);
     }
   }
@@ -247,7 +224,7 @@ class _OfficialPackPageState extends State<OfficialPackPage> {
         actions: [
           AppIconButton(
             onPressed: _loading ? null : _showGraph,
-            tooltip: _tx('explore.pack_graph', 'Grafo del pack'),
+            tooltip: _tx('explore.pack_graph'),
             icon: const Icon(Icons.account_tree_outlined),
           ),
         ],
@@ -262,7 +239,6 @@ class _OfficialPackPageState extends State<OfficialPackPage> {
                   final count = Text(
                     _tx(
                       'explore.pack_selected',
-                      '{{count}} seleccionados',
                     ).replaceAll('{{count}}', '${_selected.length}'),
                   );
                   final action = PrimaryButton.icon(
@@ -275,9 +251,7 @@ class _OfficialPackPageState extends State<OfficialPackPage> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.link),
-                    label: Text(
-                      _tx('explore.pack_link_selection', 'Vincular selección'),
-                    ),
+                    label: Text(_tx('explore.pack_link_selection')),
                   );
                   if (constraints.maxWidth < 480) {
                     return Column(
@@ -334,10 +308,7 @@ class _OfficialPackPageState extends State<OfficialPackPage> {
                     TextField(
                       controller: _searchController,
                       decoration: InputDecoration(
-                        labelText: _tx(
-                          'explore.pack_search',
-                          'Buscar dentro del pack',
-                        ),
+                        labelText: _tx('explore.pack_search'),
                         prefixIcon: const Icon(Icons.search),
                       ),
                       onChanged: (_) => _searchDebouncer.run(() {
@@ -352,7 +323,7 @@ class _OfficialPackPageState extends State<OfficialPackPage> {
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         ChoiceChip(
-                          label: Text(_tx('explore.type_all', 'Todos')),
+                          label: Text(_tx('explore.type_all')),
                           selected: _type == 'all',
                           onSelected: (_) => setState(() {
                             _type = 'all';
@@ -380,15 +351,11 @@ class _OfficialPackPageState extends State<OfficialPackPage> {
                                     .map((item) => item.componentKey),
                               );
                           }),
-                          child: Text(
-                            _tx('explore.pack_select_all', 'Seleccionar todo'),
-                          ),
+                          child: Text(_tx('explore.pack_select_all')),
                         ),
                         SecondaryButton(
                           onPressed: () => setState(_selected.clear),
-                          child: Text(
-                            _tx('explore.pack_clear', 'Limpiar selección'),
-                          ),
+                          child: Text(_tx('explore.pack_clear')),
                         ),
                       ],
                     ),
@@ -400,7 +367,7 @@ class _OfficialPackPageState extends State<OfficialPackPage> {
                   padding: const EdgeInsets.all(24),
                   sliver: SliverToBoxAdapter(
                     child: Text(
-                      _tx('explore.pack_empty_filter', 'No hay coincidencias'),
+                      _tx('explore.pack_empty_filter'),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -488,7 +455,7 @@ class _OfficialPackPageState extends State<OfficialPackPage> {
                     ),
                   if (component.linked)
                     Text(
-                      _tx('explore.pack_already_linked', 'Ya vinculado'),
+                      _tx('explore.pack_already_linked'),
                       style: Theme.of(context).textTheme.labelSmall,
                     ),
                 ],
@@ -498,13 +465,13 @@ class _OfficialPackPageState extends State<OfficialPackPage> {
   }
 
   String _typeLabel(String type) => switch (type) {
-    'agent' => _tx('explore.type_agents', 'Agentes'),
-    'skill' => _tx('explore.type_skills', 'Skills'),
-    'prompt' => _tx('explore.type_prompts', 'Prompts'),
-    'tool' => _tx('explore.type_tools', 'Herramientas'),
-    'knowledge' => _tx('explore.type_knowledge', 'Knowledge'),
-    'workflow' => _tx('explore.type_workflows', 'Workflows'),
-    'memory' => _tx('explore.type_memory', 'Memoria'),
+    'agent' => _tx('explore.type_agents'),
+    'skill' => _tx('explore.type_skills'),
+    'prompt' => _tx('explore.type_prompts'),
+    'tool' => _tx('explore.type_tools'),
+    'knowledge' => _tx('explore.type_knowledge'),
+    'workflow' => _tx('explore.type_workflows'),
+    'memory' => _tx('explore.type_memory'),
     _ => type,
   };
 }

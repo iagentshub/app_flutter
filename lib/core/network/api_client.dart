@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 
 import '../../shared/state/backend_controller.dart';
 import '../../shared/state/resource_events.dart';
+import '../../utils/i18n.dart';
 import '../config/backend_defaults.dart';
 import 'api_error.dart';
 import 'api_response.dart';
@@ -682,7 +683,7 @@ class ApiClient {
       throw ApiError(
         statusCode: 502,
         code: 'response_too_large',
-        message: 'La respuesta del servidor supera el límite permitido',
+        message: tr('common.response_too_large'),
       );
     }
 
@@ -694,7 +695,7 @@ class ApiClient {
         throw ApiError(
           statusCode: 502,
           code: 'response_too_large',
-          message: 'La respuesta del servidor supera el límite permitido',
+          message: tr('common.response_too_large'),
         );
       }
       bytes.add(chunk);

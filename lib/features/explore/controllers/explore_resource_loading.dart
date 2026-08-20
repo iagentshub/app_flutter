@@ -21,7 +21,7 @@ extension ExploreResourceLoading on ExploreController {
     final generation = ++_resourceLoadGeneration;
     final token = _token;
     if (token == null || token.isEmpty) {
-      _error = _tx('common.no_session', 'No hay sesión activa');
+      _error = _tx('common.no_session');
       _loading = false;
       _notify();
       return;
@@ -98,7 +98,7 @@ extension ExploreResourceLoading on ExploreController {
       _loading = false;
     } catch (_) {
       if (generation != _resourceLoadGeneration || _disposed) return;
-      _error = _tx('explore.error_title', 'No se pudo cargar Explore');
+      _error = _tx('explore.error_title');
       _loading = false;
     }
     _notify();
@@ -141,9 +141,7 @@ extension ExploreResourceLoading on ExploreController {
     } on ApiError catch (error) {
       return ActionResult.error(error.message);
     } catch (_) {
-      return ActionResult.error(
-        _tx('explore.error_title', 'No se pudo cargar Explore'),
-      );
+      return ActionResult.error(_tx('explore.error_title'));
     } finally {
       _resourcesLoadingMore = false;
       _notify();

@@ -18,7 +18,7 @@ class _AdminConfigAuditCard extends StatefulWidget {
 
   final AdminPlatformRepository repository;
   final String token;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<_AdminConfigAuditCard> createState() => _AdminConfigAuditCardState();
@@ -35,7 +35,7 @@ class _AdminConfigAuditCardState extends State<_AdminConfigAuditCard> {
   // para que una instalación sana ocupe tres líneas, no veinte.
   bool _showOk = false;
 
-  String _tx(String path, String fallback) => widget.tx(path, fallback);
+  String _tx(String path) => widget.tx(path);
 
   @override
   void initState() {
@@ -67,7 +67,7 @@ class _AdminConfigAuditCardState extends State<_AdminConfigAuditCard> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = _tx('admin.error_generic', 'No se pudo completar la acción');
+        _error = _tx('admin.error_generic');
         _loading = false;
       });
     }
@@ -131,10 +131,7 @@ class _AdminConfigAuditCardState extends State<_AdminConfigAuditCard> {
   Widget _summary() {
     if (_errors == 0 && _warnings == 0) {
       return Text(
-        _tx(
-          'admin.config_audit_all_ok',
-          'Configuración completa: ninguna función degradada.',
-        ),
+        _tx('admin.config_audit_all_ok'),
         style: const TextStyle(color: _statusOkColor),
       );
     }
@@ -142,7 +139,7 @@ class _AdminConfigAuditCardState extends State<_AdminConfigAuditCard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          _tx('admin.config_audit_summary', '{errors} errores, {warnings} avisos')
+          _tx('admin.config_audit_summary')
               .replaceAll('{errors}', '$_errors')
               .replaceAll('{warnings}', '$_warnings'),
           style: TextStyle(
@@ -153,11 +150,7 @@ class _AdminConfigAuditCardState extends State<_AdminConfigAuditCard> {
         if (_errors > 0 && !_strict) ...[
           const SizedBox(height: 4),
           Text(
-            _tx(
-              'admin.config_audit_strict_hint',
-              'Estos errores no impiden arrancar. Define GAIA_STRICT_CONFIG=true '
-                  'en producción para que sí lo hagan.',
-            ),
+            _tx('admin.config_audit_strict_hint'),
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
@@ -168,16 +161,14 @@ class _AdminConfigAuditCardState extends State<_AdminConfigAuditCard> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return _sectionCard(
-        _tx('admin.config_section_audit', 'Diagnóstico de configuración'),
-        const [Center(child: CircularProgressIndicator())],
-      );
+      return _sectionCard(_tx('admin.config_section_audit'), const [
+        Center(child: CircularProgressIndicator()),
+      ]);
     }
     if (_error != null) {
-      return _sectionCard(
-        _tx('admin.config_section_audit', 'Diagnóstico de configuración'),
-        [Text(_error!, style: const TextStyle(color: FncColors.danger))],
-      );
+      return _sectionCard(_tx('admin.config_section_audit'), [
+        Text(_error!, style: const TextStyle(color: FncColors.danger)),
+      ]);
     }
 
     final problems = _checks
@@ -187,30 +178,26 @@ class _AdminConfigAuditCardState extends State<_AdminConfigAuditCard> {
         .where((c) => (c['severity'] ?? 'ok').toString() == 'ok')
         .toList();
 
-    return _sectionCard(
-      _tx('admin.config_section_audit', 'Diagnóstico de configuración'),
-      [
-        _summary(),
-        const SizedBox(height: 12),
-        ...problems.map(_checkTile),
-        if (okChecks.isNotEmpty) ...[
-          if (_showOk) ...okChecks.map(_checkTile),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: SecondaryButton(
-              onPressed: () => setState(() => _showOk = !_showOk),
-              child: Text(
-                _showOk
-                    ? _tx('admin.config_audit_hide_ok', 'Ocultar las correctas')
-                    : _tx(
-                        'admin.config_audit_show_ok',
-                        'Ver las {count} correctas',
-                      ).replaceAll('{count}', '${okChecks.length}'),
-              ),
+    return _sectionCard(_tx('admin.config_section_audit'), [
+      _summary(),
+      const SizedBox(height: 12),
+      ...problems.map(_checkTile),
+      if (okChecks.isNotEmpty) ...[
+        if (_showOk) ...okChecks.map(_checkTile),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: SecondaryButton(
+            onPressed: () => setState(() => _showOk = !_showOk),
+            child: Text(
+              _showOk
+                  ? _tx('admin.config_audit_hide_ok')
+                  : _tx(
+                      'admin.config_audit_show_ok',
+                    ).replaceAll('{count}', '${okChecks.length}'),
             ),
           ),
-        ],
+        ),
       ],
-    );
+    ]);
   }
 }

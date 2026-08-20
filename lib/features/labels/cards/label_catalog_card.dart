@@ -4,8 +4,9 @@ import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../utils/i18n.dart';
 
-typedef LabelText = String Function(String path, String fallback);
+typedef LabelText = String Function(String path);
 
 const _blockingLabels = {'draft', 'quarantine', 'archived', 'delete'};
 
@@ -25,7 +26,7 @@ class LabelCatalogIntro extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              text('labels.catalog_title', 'Catálogo de etiquetas'),
+              text('labels.catalog_title'),
               style: const TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: FncFonts.size16,
@@ -33,11 +34,7 @@ class LabelCatalogIntro extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              text(
-                'labels.catalog_intro',
-                'Las etiquetas definen el estado y comportamiento de tus recursos. '
-                    'Cada recurso tiene siempre al menos una etiqueta de visibilidad.',
-              ),
+              text('labels.catalog_intro'),
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
@@ -76,7 +73,7 @@ class _LabelGroupCardState extends State<LabelGroupCard> {
               children: [
                 Expanded(
                   child: Text(
-                    text(group.titleKey, group.fallbackTitle),
+                    trOr(group.titleKey, group.fallbackTitle),
                     style: const TextStyle(
                       fontSize: FncFonts.size15,
                       fontWeight: FontWeight.w700,
@@ -87,8 +84,8 @@ class _LabelGroupCardState extends State<LabelGroupCard> {
                   key: ValueKey('label-group-toggle-${group.titleKey}'),
                   onPressed: () => setState(() => _expanded = !_expanded),
                   tooltip: _expanded
-                      ? text('labels.collapse_group', 'Ocultar descripciones')
-                      : text('labels.expand_group', 'Mostrar descripciones'),
+                      ? text('labels.collapse_group')
+                      : text('labels.expand_group'),
                   icon: AnimatedRotation(
                     turns: _expanded ? 0.5 : 0,
                     duration: const Duration(milliseconds: 180),
@@ -99,11 +96,8 @@ class _LabelGroupCardState extends State<LabelGroupCard> {
             ),
             Text(
               group.exclusive
-                  ? text(
-                      'labels.exclusive_hint',
-                      'Exclusivas (solo una activa)',
-                    )
-                  : text('labels.multi_hint', 'Multi-selección'),
+                  ? text('labels.exclusive_hint')
+                  : text('labels.multi_hint'),
               style: Theme.of(context).textTheme.labelSmall,
             ),
             AnimatedSize(
@@ -162,12 +156,12 @@ class _LabelEntryCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  text('labels.$labelKey', labelKey),
+                  trOr('labels.$labelKey', labelKey),
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  text('labels.desc_$labelKey', ''),
+                  trOr('labels.desc_$labelKey', ''),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 if (showsBehavior) ...[
@@ -194,10 +188,10 @@ class _LabelBehaviorChip extends StatelessWidget {
     late final String label;
     late final Color color;
     if (_blockingLabels.contains(labelKey)) {
-      label = text('labels.behavior_blocks', 'Bloquea el recurso');
+      label = text('labels.behavior_blocks');
       color = FncColors.materialRed.shade700;
     } else {
-      label = text('labels.behavior_warns', 'Aviso visual');
+      label = text('labels.behavior_warns');
       color = FncColors.materialAmber.shade800;
     }
     return Container(

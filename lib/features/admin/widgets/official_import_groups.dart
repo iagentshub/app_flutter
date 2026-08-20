@@ -28,7 +28,7 @@ class OfficialImportGroupsSliver extends StatelessWidget {
 
   final Map<String, List<ImportComponent>> groups;
   final bool busy;
-  final String Function(String, String) tx;
+  final String Function(String) tx;
   final void Function(ImportComponent, bool) onToggle;
   final void Function(ImportComponent, String?) onClassify;
   final void Function(ImportComponent, String?) onLanguage;
@@ -42,7 +42,7 @@ class OfficialImportGroupsSliver extends StatelessWidget {
       return SliverToBoxAdapter(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Center(child: Text(tx('common.no_results', 'Sin resultados'))),
+          child: Center(child: Text(tx('common.no_results'))),
         ),
       );
     }

@@ -1,15 +1,16 @@
 import 'package:app_flutter/features/connections/cards/connection_card.dart';
 import 'package:app_flutter/models/connections/connection_models.dart';
+import 'package:app_flutter/utils/i18n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-String _tx(String path, String fallback) => fallback;
+import 'support/i18n_de_prueba.dart';
 
 Widget _card(ConnectionItem item) => MaterialApp(
   home: Scaffold(
     body: ConnectionCard(
       item: item,
-      tx: _tx,
+      tx: tr,
       providerLabel: 'OpenAI',
       onTest: () {},
       onShare: () {},
@@ -20,6 +21,8 @@ Widget _card(ConnectionItem item) => MaterialApp(
 );
 
 void main() {
+  setUp(cargarTraduccionesDePrueba);
+
   testWidgets('una credencial ilegible se avisa en la tarjeta', (tester) async {
     await tester.pumpWidget(
       _card(

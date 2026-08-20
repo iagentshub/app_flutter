@@ -8,7 +8,7 @@ part of '../pages/admin_page.dart';
 class _NotificationBannerFormDialog extends StatefulWidget {
   const _NotificationBannerFormDialog({required this.tx, this.initial});
 
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
   final Map<String, dynamic>? initial;
 
   @override
@@ -25,7 +25,7 @@ class _NotificationBannerFormDialogState
   DateTime? _endAt;
   String? _rangeError;
 
-  String _tx(String path, String fallback) => widget.tx(path, fallback);
+  String _tx(String path) => widget.tx(path);
 
   @override
   void initState() {
@@ -90,21 +90,11 @@ class _NotificationBannerFormDialogState
     final form = _formKey.currentState;
     if (form == null || !form.validate()) return;
     if (_startAt == null || _endAt == null) {
-      setState(
-        () => _rangeError = _tx(
-          'admin.config_banners_missing_dates',
-          'Elige fecha de inicio y fin',
-        ),
-      );
+      setState(() => _rangeError = _tx('admin.config_banners_missing_dates'));
       return;
     }
     if (!_endAt!.isAfter(_startAt!)) {
-      setState(
-        () => _rangeError = _tx(
-          'admin.config_banners_range_error',
-          'La fecha de fin debe ser posterior a la de inicio',
-        ),
-      );
+      setState(() => _rangeError = _tx('admin.config_banners_range_error'));
       return;
     }
     Navigator.of(context).pop({
@@ -119,7 +109,7 @@ class _NotificationBannerFormDialogState
 
   String _fmt(DateTime? dt) {
     if (dt == null) {
-      return _tx('admin.config_banners_no_date', 'Sin fecha');
+      return _tx('admin.config_banners_no_date');
     }
     String two(int v) => v.toString().padLeft(2, '0');
     return '${two(dt.day)}/${two(dt.month)}/${dt.year} ${two(dt.hour)}:${two(dt.minute)}';
@@ -127,10 +117,7 @@ class _NotificationBannerFormDialogState
 
   String? _requiredMessage(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return _tx(
-        'admin.config_banners_message_required',
-        'El mensaje es obligatorio',
-      );
+      return _tx('admin.config_banners_message_required');
     }
     return null;
   }
@@ -140,14 +127,8 @@ class _NotificationBannerFormDialogState
     return AlertDialog(
       title: Text(
         widget.initial == null
-            ? _tx(
-                'admin.config_banners_create_title',
-                'Crear banner de notificación',
-              )
-            : _tx(
-                'admin.config_banners_edit_title',
-                'Editar banner de notificación',
-              ),
+            ? _tx('admin.config_banners_create_title')
+            : _tx('admin.config_banners_edit_title'),
       ),
       content: SizedBox(
         width: dialogContentWidth(context, 480),
@@ -160,14 +141,12 @@ class _NotificationBannerFormDialogState
                 children: [
                   Expanded(
                     child: Text(
-                      '${_tx('admin.config_banners_start', 'Inicio')}: ${_fmt(_startAt)}',
+                      '${_tx('admin.config_banners_start')}: ${_fmt(_startAt)}',
                     ),
                   ),
                   TertiaryButton(
                     onPressed: () => _pickDateTime(true),
-                    child: Text(
-                      _tx('admin.config_banners_pick_date', 'Elegir fecha'),
-                    ),
+                    child: Text(_tx('admin.config_banners_pick_date')),
                   ),
                 ],
               ),
@@ -175,14 +154,12 @@ class _NotificationBannerFormDialogState
                 children: [
                   Expanded(
                     child: Text(
-                      '${_tx('admin.config_banners_end', 'Fin')}: ${_fmt(_endAt)}',
+                      '${_tx('admin.config_banners_end')}: ${_fmt(_endAt)}',
                     ),
                   ),
                   TertiaryButton(
                     onPressed: () => _pickDateTime(false),
-                    child: Text(
-                      _tx('admin.config_banners_pick_date', 'Elegir fecha'),
-                    ),
+                    child: Text(_tx('admin.config_banners_pick_date')),
                   ),
                 ],
               ),
@@ -200,10 +177,7 @@ class _NotificationBannerFormDialogState
                 maxLength: 500,
                 maxLines: 3,
                 decoration: InputDecoration(
-                  labelText: _tx(
-                    'admin.config_banners_message_es',
-                    'Mensaje (Español)',
-                  ),
+                  labelText: _tx('admin.config_banners_message_es'),
                 ),
                 validator: _requiredMessage,
               ),
@@ -213,10 +187,7 @@ class _NotificationBannerFormDialogState
                 maxLength: 500,
                 maxLines: 3,
                 decoration: InputDecoration(
-                  labelText: _tx(
-                    'admin.config_banners_message_en',
-                    'Mensaje (English)',
-                  ),
+                  labelText: _tx('admin.config_banners_message_en'),
                 ),
                 validator: _requiredMessage,
               ),
@@ -227,12 +198,9 @@ class _NotificationBannerFormDialogState
       actions: [
         TertiaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(_tx('common.cancel', 'Cancelar')),
+          child: Text(_tx('common.cancel')),
         ),
-        PrimaryButton(
-          onPressed: _submit,
-          child: Text(_tx('common.save', 'Guardar')),
-        ),
+        PrimaryButton(onPressed: _submit, child: Text(_tx('common.save'))),
       ],
     );
   }

@@ -117,11 +117,8 @@ class _DeferredPageState extends State<DeferredPage> {
       return ListenableBuilder(
         listenable: _t,
         builder: (context, _) => AsyncStatePanel.error(
-          message: _t.text(
-            'deferred.error',
-            fallback: 'No se pudo cargar esta sección.',
-          ),
-          retryLabel: _t.text('deferred.retry', fallback: 'Reintentar'),
+          message: _t.text('deferred.error'),
+          retryLabel: _t.text('deferred.retry'),
           onRetry: _retry,
         ),
       );

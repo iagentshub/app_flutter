@@ -3,7 +3,7 @@ part of '../pages/profile_page.dart';
 class _BrandIconSelector extends StatelessWidget {
   const _BrandIconSelector({required this.tx});
 
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +39,7 @@ class _BrandIconSelector extends StatelessWidget {
       BrandIconVariant.iaInterBlackOnRed => 'iA Inter negra sobre rojo',
       BrandIconVariant.iaInterRedOnWhite => 'iA Inter roja sobre blanco',
     };
-    return tx('profile.app_icon_${variant.name}', fallback);
+    return trOr('profile.app_icon_${variant.name}', fallback);
   }
 }
 

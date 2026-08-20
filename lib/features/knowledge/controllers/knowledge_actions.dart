@@ -7,7 +7,7 @@ extension _KnowledgeActions on _KnowledgePageState {
     final token = _token;
     if (token == null || token.isEmpty) {
       refresh(() {
-        _skillsError = 'No hay sesión activa';
+        _skillsError = tr('common.no_session');
         _skillsLoading = false;
       });
       return;
@@ -36,7 +36,7 @@ extension _KnowledgeActions on _KnowledgePageState {
     } catch (_) {
       if (!mounted) return;
       refresh(() {
-        _skillsError = 'No se pudieron cargar las skills';
+        _skillsError = tr('knowledge.skills_load_error');
         _skillsLoading = false;
       });
     }
@@ -56,31 +56,20 @@ extension _KnowledgeActions on _KnowledgePageState {
     final choice = await showDialog<String>(
       context: context,
       builder: (context) => SimpleDialog(
-        title: Text(
-          _tx(
-            'skill_builder.create_choice_title',
-            '¿Cómo quieres crear la skill?',
-          ),
-        ),
+        title: Text(_tx('skill_builder.create_choice_title')),
         children: [
           _skillCreateChoiceOption(
             context,
             icon: Icons.edit_note_outlined,
-            title: _tx('skill_builder.create_choice_scratch', 'Desde cero'),
-            subtitle: _tx(
-              'skill_builder.create_choice_scratch_desc',
-              'Un formulario en blanco para definir cada campo.',
-            ),
+            title: _tx('skill_builder.create_choice_scratch'),
+            subtitle: _tx('skill_builder.create_choice_scratch_desc'),
             value: 'scratch',
           ),
           _skillCreateChoiceOption(
             context,
             icon: Icons.auto_awesome_outlined,
-            title: _tx('skill_builder.create_choice_ai', 'Con ayuda de IA'),
-            subtitle: _tx(
-              'skill_builder.create_choice_ai_desc',
-              'Descríbela en una conversación y revisa el borrador.',
-            ),
+            title: _tx('skill_builder.create_choice_ai'),
+            subtitle: _tx('skill_builder.create_choice_ai_desc'),
             value: 'ai',
           ),
         ],
@@ -163,12 +152,7 @@ extension _KnowledgeActions on _KnowledgePageState {
 
   Future<void> _openEditSkillDialog(SkillItem item) async {
     if (item.readOnly) {
-      showMessage(
-        _tx(
-          'knowledge.msg_skill_not_editable',
-          'Esta skill no es editable (del sistema o compartida)',
-        ),
-      );
+      showMessage(_tx('knowledge.msg_skill_not_editable'));
       return;
     }
     final token = _token;
@@ -197,15 +181,12 @@ extension _KnowledgeActions on _KnowledgePageState {
     final scope = (payload.remove('scope') as String?) ?? 'private';
     try {
       await _skillsRepository.saveSkill(token, scope, payload);
-      showMessage(_tx('knowledge.msg_skill_saved', 'Skill guardada'));
+      showMessage(_tx('knowledge.msg_skill_saved'));
       return true;
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('knowledge.msg_skill_save_failed', 'No se pudo guardar la skill'),
-        isError: true,
-      );
+      showMessage(_tx('knowledge.msg_skill_save_failed'), isError: true);
     }
     return false;
   }
@@ -220,35 +201,23 @@ extension _KnowledgeActions on _KnowledgePageState {
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx(
-          'knowledge.msg_skill_toggle_failed',
-          'No se pudo cambiar el estado de la skill',
-        ),
-        isError: true,
-      );
+      showMessage(_tx('knowledge.msg_skill_toggle_failed'), isError: true);
     }
   }
 
   Future<void> _deleteSkill(SkillItem item) async {
     if (item.readOnly) {
-      showMessage(
-        _tx(
-          'knowledge.msg_skill_not_deletable',
-          'Esta skill no se puede eliminar (del sistema o compartida)',
-        ),
-      );
+      showMessage(_tx('knowledge.msg_skill_not_deletable'));
       return;
     }
     final confirm = await showConfirmActionDialog(
       context,
-      title: _tx('knowledge.delete_skill_dialog_title', 'Eliminar skill'),
+      title: _tx('knowledge.delete_skill_dialog_title'),
       message: _tx(
         'common.delete_confirm_body',
-        '¿Seguro que quieres eliminar "{{nombre}}"?',
       ).replaceAll('{{nombre}}', item.name),
       cancelLabel: 'Cancelar',
-      confirmLabel: _tx('common.delete', 'Eliminar'),
+      confirmLabel: _tx('common.delete'),
       destructive: true,
     );
     if (!confirm) return;
@@ -257,17 +226,11 @@ extension _KnowledgeActions on _KnowledgePageState {
     if (token == null || token.isEmpty) return;
     try {
       await _skillsRepository.deleteSkill(token, item.scope, item.id);
-      showMessage(_tx('knowledge.msg_skill_deleted', 'Skill eliminada'));
+      showMessage(_tx('knowledge.msg_skill_deleted'));
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx(
-          'knowledge.msg_skill_delete_failed',
-          'No se pudo eliminar la skill',
-        ),
-        isError: true,
-      );
+      showMessage(_tx('knowledge.msg_skill_delete_failed'), isError: true);
     }
   }
 
@@ -275,7 +238,7 @@ extension _KnowledgeActions on _KnowledgePageState {
     final token = _token;
     if (token == null || token.isEmpty) {
       refresh(() {
-        _error = 'No hay sesión activa';
+        _error = tr('common.no_session');
         _loading = false;
       });
       return;
@@ -384,14 +347,11 @@ extension _KnowledgeActions on _KnowledgePageState {
                 .toList() ??
             const ['private'],
       );
-      showMessage(_tx('knowledge.msg_text_added', 'Texto añadido a Knowledge'));
+      showMessage(_tx('knowledge.msg_text_added'));
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('knowledge.msg_text_failed', 'No se pudo guardar el texto'),
-        isError: true,
-      );
+      showMessage(_tx('knowledge.msg_text_failed'), isError: true);
     }
   }
 
@@ -416,29 +376,23 @@ extension _KnowledgeActions on _KnowledgePageState {
                 .toList() ??
             const ['private'],
       );
-      showMessage(
-        _tx('knowledge.msg_url_imported', 'URL importada a Knowledge'),
-      );
+      showMessage(_tx('knowledge.msg_url_imported'));
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('knowledge.msg_url_failed', 'No se pudo importar la URL'),
-        isError: true,
-      );
+      showMessage(_tx('knowledge.msg_url_failed'), isError: true);
     }
   }
 
   Future<void> _deleteItem(KnowledgeItem item) async {
     final confirm = await showConfirmActionDialog(
       context,
-      title: _tx('knowledge.delete_item_dialog_title', 'Eliminar item'),
+      title: _tx('knowledge.delete_item_dialog_title'),
       message: _tx(
         'common.delete_confirm_body',
-        '¿Seguro que quieres eliminar "{{nombre}}"?',
       ).replaceAll('{{nombre}}', item.title),
       cancelLabel: 'Cancelar',
-      confirmLabel: _tx('common.delete', 'Eliminar'),
+      confirmLabel: _tx('common.delete'),
       destructive: true,
     );
     if (!confirm) return;
@@ -448,14 +402,11 @@ extension _KnowledgeActions on _KnowledgePageState {
 
     try {
       await _repository.deleteItem(token, item.id);
-      showMessage(_tx('knowledge.msg_item_deleted', 'Item eliminado'));
+      showMessage(_tx('knowledge.msg_item_deleted'));
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('knowledge.msg_item_delete_failed', 'No se pudo eliminar el item'),
-        isError: true,
-      );
+      showMessage(_tx('knowledge.msg_item_delete_failed'), isError: true);
     }
   }
 
@@ -477,14 +428,11 @@ extension _KnowledgeActions on _KnowledgePageState {
         name: result.name,
         labels: result.labels.toList(),
       );
-      showMessage(_tx('knowledge.edit_saved', 'Cambios guardados'));
+      showMessage(_tx('knowledge.edit_saved'));
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('knowledge.edit_failed', 'No se pudieron guardar los cambios'),
-        isError: true,
-      );
+      showMessage(_tx('knowledge.edit_failed'), isError: true);
     }
   }
 

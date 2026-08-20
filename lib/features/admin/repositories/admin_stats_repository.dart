@@ -15,6 +15,15 @@ class AdminStats {
   int get usersTotal => _asInt(raw['users_total']);
   int get usersActive => _asInt(raw['users_active']);
   int get usersVerified => _asInt(raw['users_verified']);
+
+  /// Invitados con sesión abierta ahora mismo, y el tope del clúster.
+  ///
+  /// Van aparte de `usersTotal` a propósito: son cuentas efímeras que se borran
+  /// solas, y mezclarlas haría subir y bajar el total sin que nadie se dé de
+  /// alta. Pero son las que consumen el cupo del demo, y cuando se llena el
+  /// alta responde 503 sin que nada más lo explique.
+  int get guestsActive => _asInt(raw['guests_active']);
+  int get guestsMax => _asInt(raw['guests_max']);
   int get connectionsTotal => _asInt(raw['connections_total']);
   int get workflowsTotal => _asInt(raw['workflows_total']);
   int get knowledgeTotal => _asInt(raw['knowledge_total']);

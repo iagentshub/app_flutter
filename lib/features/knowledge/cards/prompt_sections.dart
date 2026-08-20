@@ -6,9 +6,9 @@ part of '../pages/knowledge_page.dart';
 extension _PromptSections on _KnowledgePageState {
   Widget _buildPromptsErrorState() {
     return AsyncStatePanel.error(
-      title: _tx('knowledge.prompts_error_title', 'Error cargando Prompts'),
+      title: _tx('knowledge.prompts_error_title'),
       message: _promptsError!,
-      retryLabel: _tx('common.retry', 'Reintentar'),
+      retryLabel: _tx('common.retry'),
       onRetry: _loadPrompts,
     );
   }
@@ -24,7 +24,7 @@ extension _PromptSections on _KnowledgePageState {
       onRefresh: _loadPrompts,
       items: filteredPrompts,
       itemBuilder: _buildPromptCard,
-      emptyText: _tx('knowledge.no_prompts', 'No hay prompts todavía.'),
+      emptyText: _tx('knowledge.no_prompts'),
       toolbar: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -35,16 +35,16 @@ extension _PromptSections on _KnowledgePageState {
               AppIconButton.filled(
                 onPressed: _openCreatePromptDialog,
                 icon: const Icon(Icons.add),
-                tooltip: _tx('knowledge.new_prompt', 'Nuevo prompt'),
+                tooltip: _tx('knowledge.new_prompt'),
               ),
               AppIconButton.outlined(
                 onPressed: _loadPrompts,
                 icon: const Icon(Icons.refresh),
-                tooltip: _tx('common.update', 'Actualizar'),
+                tooltip: _tx('common.update'),
               ),
               FilterButton(
                 activeCount: _promptFilterCount,
-                tooltip: _tx('common.filters', 'Filtros'),
+                tooltip: _tx('common.filters'),
                 onPressed: _openPromptFiltersDialog,
               ),
               ..._groupsButtons(),
@@ -83,7 +83,7 @@ extension _PromptSections on _KnowledgePageState {
                 ),
                 if (!item.isActive) ...[
                   const SizedBox(width: 8),
-                  InactiveBadge(label: _tx('common.inactive', 'Inactivo')),
+                  InactiveBadge(label: _tx('common.inactive')),
                 ],
               ],
             ),
@@ -100,13 +100,13 @@ extension _PromptSections on _KnowledgePageState {
             const SizedBox(height: 8),
             LabelChipsRow(
               labels: item.displayLabels,
-              labelText: (label) => _tx('labels.$label', label),
+              labelText: (label) => trOr('labels.$label', label),
               leading: [
                 OriginBadge(
                   propertyType: item.propertyType,
-                  ownerLabel: _tx('common.owner', 'Propietario'),
-                  linkedLabel: _tx('common.linked', 'Enlace'),
-                  forkLabel: _tx('common.fork', 'Fork'),
+                  ownerLabel: _tx('common.owner'),
+                  linkedLabel: _tx('common.linked'),
+                  forkLabel: _tx('common.fork'),
                 ),
                 _aliasChip('@${item.alias}'),
               ],
@@ -124,21 +124,18 @@ extension _PromptSections on _KnowledgePageState {
                 if (!item.readOnly)
                   ActionIconButton(
                     icon: Icons.group_add_outlined,
-                    tooltip: _tx('common.share_group', 'Compartir con grupo'),
+                    tooltip: _tx('common.share_group'),
                     onPressed: () => _sharePrompt(item),
                   ),
                 ActionIconButton(
                   icon: Icons.history,
-                  tooltip: _tx(
-                    'history.dialog_title',
-                    'Historial de versiones',
-                  ),
+                  tooltip: _tx('history.dialog_title'),
                   onPressed: () => _showPromptHistory(item),
                 ),
                 if (!item.readOnly)
                   ActionIconButton(
                     icon: Icons.edit_outlined,
-                    tooltip: _tx('common.edit', 'Editar'),
+                    tooltip: _tx('common.edit'),
                     onPressed: () => _openEditPromptDialog(item),
                   ),
                 // activate/deactivate no tiene rama is_guest en el backend:
@@ -150,14 +147,14 @@ extension _PromptSections on _KnowledgePageState {
                         ? Icons.toggle_on_outlined
                         : Icons.toggle_off_outlined,
                     tooltip: item.isActive
-                        ? _tx('common.deactivate', 'Desactivar')
-                        : _tx('common.activate', 'Activar'),
+                        ? _tx('common.deactivate')
+                        : _tx('common.activate'),
                     onPressed: () => _togglePromptActive(item),
                   ),
                 if (!item.readOnly)
                   ActionIconButton(
                     icon: Icons.delete_outline,
-                    tooltip: _tx('common.delete', 'Eliminar'),
+                    tooltip: _tx('common.delete'),
                     danger: true,
                     onPressed: () => _deletePrompt(item),
                   ),

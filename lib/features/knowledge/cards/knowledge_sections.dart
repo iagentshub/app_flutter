@@ -3,9 +3,9 @@ part of '../pages/knowledge_page.dart';
 extension _KnowledgeSections on _KnowledgePageState {
   Widget _buildKnowledgeErrorState() {
     return AsyncStatePanel.error(
-      title: _tx('knowledge.documents_error_title', 'Error cargando Knowledge'),
+      title: _tx('knowledge.documents_error_title'),
       message: _error!,
-      retryLabel: _tx('common.retry', 'Reintentar'),
+      retryLabel: _tx('common.retry'),
       onRetry: _load,
     );
   }
@@ -31,10 +31,7 @@ extension _KnowledgeSections on _KnowledgePageState {
             itemBuilder: (entry) => entry is KnowledgePack
                 ? _buildPackCard(entry)
                 : _buildItemCard(entry as KnowledgeItem),
-            emptyText: _tx(
-              'knowledge.documents_empty',
-              'No hay documentos todavía.',
-            ),
+            emptyText: _tx('knowledge.documents_empty'),
             toolbar: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -62,43 +59,27 @@ extension _KnowledgeSections on _KnowledgePageState {
                                   PopupMenuItem(
                                     value: 'text',
                                     child: Text(
-                                      _tx(
-                                        'knowledge.add_text_title',
-                                        'Añadir texto',
-                                      ),
+                                      _tx('knowledge.add_text_title'),
                                     ),
                                   ),
                                   PopupMenuItem(
                                     value: 'document',
                                     child: Text(
-                                      _tx(
-                                        'knowledge.upload_document',
-                                        'Subir documento',
-                                      ),
+                                      _tx('knowledge.upload_document'),
                                     ),
                                   ),
                                   PopupMenuItem(
                                     value: 'image',
-                                    child: Text(
-                                      _tx(
-                                        'knowledge.upload_image',
-                                        'Subir imagen',
-                                      ),
-                                    ),
+                                    child: Text(_tx('knowledge.upload_image')),
                                   ),
                                   PopupMenuItem(
                                     value: 'url',
-                                    child: Text(
-                                      _tx('knowledge.import_url', 'Añadir URL'),
-                                    ),
+                                    child: Text(_tx('knowledge.import_url')),
                                   ),
                                   PopupMenuItem(
                                     value: 'directory',
                                     child: Text(
-                                      _tx(
-                                        'knowledge.include_directory',
-                                        'Incluir directorio de conocimiento',
-                                      ),
+                                      _tx('knowledge.include_directory'),
                                     ),
                                   ),
                                 ],
@@ -126,10 +107,7 @@ extension _KnowledgeSections on _KnowledgePageState {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.add),
-                      tooltip: _tx(
-                        'knowledge.add_content',
-                        'Añadir conocimiento',
-                      ),
+                      tooltip: _tx('knowledge.add_content'),
                     ),
                     AppIconButton.outlined(
                       onPressed: _load,
@@ -138,7 +116,7 @@ extension _KnowledgeSections on _KnowledgePageState {
                     ),
                     FilterButton(
                       activeCount: _knowledgeFilterCount,
-                      tooltip: _tx('common.filters', 'Filtros'),
+                      tooltip: _tx('common.filters'),
                       onPressed: _openKnowledgeFiltersDialog,
                     ),
                     ..._groupsButtons(),
@@ -166,10 +144,7 @@ extension _KnowledgeSections on _KnowledgePageState {
                       child: Padding(
                         padding: const EdgeInsets.all(24),
                         child: Text(
-                          _tx(
-                            'knowledge.drop_directory_here',
-                            'Suelta el directorio para crear un pack de conocimiento',
-                          ),
+                          _tx('knowledge.drop_directory_here'),
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
@@ -258,9 +233,9 @@ extension _KnowledgeSections on _KnowledgePageState {
       // El título estaba escrito a mano en español, sin pasar por el
       // diccionario, en la única pestaña que no lo traducía.
       return AsyncStatePanel.error(
-        title: _tx('knowledge.skills_error_title', 'Error cargando Skills'),
+        title: _tx('knowledge.skills_error_title'),
         message: _skillsError!,
-        retryLabel: _tx('common.retry', 'Reintentar'),
+        retryLabel: _tx('common.retry'),
         onRetry: _loadSkills,
       );
     }
@@ -270,7 +245,7 @@ extension _KnowledgeSections on _KnowledgePageState {
       onRefresh: _loadSkills,
       items: filteredSkills,
       itemBuilder: _buildSkillCard,
-      emptyText: 'No hay skills todavía.',
+      emptyText: tr('knowledge.no_skills'),
       toolbar: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -290,7 +265,7 @@ extension _KnowledgeSections on _KnowledgePageState {
               ),
               FilterButton(
                 activeCount: _skillFilterCount,
-                tooltip: _tx('common.filters', 'Filtros'),
+                tooltip: _tx('common.filters'),
                 onPressed: _openSkillFiltersDialog,
               ),
               ..._groupsButtons(),
@@ -332,7 +307,7 @@ extension _KnowledgeSections on _KnowledgePageState {
                 ),
                 if (!item.isActive) ...[
                   const SizedBox(width: 8),
-                  InactiveBadge(label: _tx('common.inactive', 'Inactivo')),
+                  InactiveBadge(label: _tx('common.inactive')),
                 ],
               ],
             ),
@@ -349,13 +324,13 @@ extension _KnowledgeSections on _KnowledgePageState {
             const SizedBox(height: 8),
             LabelChipsRow(
               labels: item.displayLabels,
-              labelText: (label) => _tx('labels.$label', label),
+              labelText: (label) => trOr('labels.$label', label),
               leading: [
                 OriginBadge(
                   propertyType: item.propertyType,
-                  ownerLabel: _tx('common.owner', 'Propietario'),
-                  linkedLabel: _tx('common.linked', 'Enlace'),
-                  forkLabel: _tx('common.fork', 'Fork'),
+                  ownerLabel: _tx('common.owner'),
+                  linkedLabel: _tx('common.linked'),
+                  forkLabel: _tx('common.fork'),
                 ),
               ],
             ),
@@ -372,21 +347,18 @@ extension _KnowledgeSections on _KnowledgePageState {
                 if (!item.readOnly)
                   ActionIconButton(
                     icon: Icons.group_add_outlined,
-                    tooltip: _tx('common.share_group', 'Compartir con grupo'),
+                    tooltip: _tx('common.share_group'),
                     onPressed: () => _shareSkill(item),
                   ),
                 ActionIconButton(
                   icon: Icons.history,
-                  tooltip: _tx(
-                    'history.dialog_title',
-                    'Historial de versiones',
-                  ),
+                  tooltip: _tx('history.dialog_title'),
                   onPressed: () => _showSkillHistory(item),
                 ),
                 if (!item.readOnly)
                   ActionIconButton(
                     icon: Icons.edit_outlined,
-                    tooltip: _tx('common.edit', 'Editar'),
+                    tooltip: _tx('common.edit'),
                     onPressed: () => _openEditSkillDialog(item),
                   ),
                 if (!item.readOnly)
@@ -395,14 +367,14 @@ extension _KnowledgeSections on _KnowledgePageState {
                         ? Icons.toggle_on_outlined
                         : Icons.toggle_off_outlined,
                     tooltip: item.isActive
-                        ? _tx('common.deactivate', 'Desactivar')
-                        : _tx('common.activate', 'Activar'),
+                        ? _tx('common.deactivate')
+                        : _tx('common.activate'),
                     onPressed: () => _toggleSkillActive(item),
                   ),
                 if (!item.readOnly)
                   ActionIconButton(
                     icon: Icons.delete_outline,
-                    tooltip: _tx('common.delete', 'Eliminar'),
+                    tooltip: _tx('common.delete'),
                     danger: true,
                     onPressed: () => _deleteSkill(item),
                   ),
@@ -463,13 +435,13 @@ extension _KnowledgeSections on _KnowledgePageState {
             const SizedBox(height: 8),
             LabelChipsRow(
               labels: item.displayLabels,
-              labelText: (label) => _tx('labels.$label', label),
+              labelText: (label) => trOr('labels.$label', label),
               leading: [
                 OriginBadge(
                   propertyType: item.propertyType,
-                  ownerLabel: _tx('common.owner', 'Propietario'),
-                  linkedLabel: _tx('common.linked', 'Enlace'),
-                  forkLabel: _tx('common.fork', 'Fork'),
+                  ownerLabel: _tx('common.owner'),
+                  linkedLabel: _tx('common.linked'),
+                  forkLabel: _tx('common.fork'),
                 ),
               ],
             ),
@@ -481,19 +453,19 @@ extension _KnowledgeSections on _KnowledgePageState {
                 if (!item.readOnly)
                   ActionIconButton(
                     icon: Icons.edit_outlined,
-                    tooltip: _tx('common.edit', 'Editar'),
+                    tooltip: _tx('common.edit'),
                     onPressed: () => _editItem(item),
                   ),
                 if (!item.readOnly)
                   ActionIconButton(
                     icon: Icons.group_add_outlined,
-                    tooltip: _tx('common.share_group', 'Compartir con grupo'),
+                    tooltip: _tx('common.share_group'),
                     onPressed: () => _shareItem(item),
                   ),
                 if (!item.readOnly)
                   ActionIconButton(
                     icon: Icons.delete_outline,
-                    tooltip: _tx('common.delete', 'Eliminar'),
+                    tooltip: _tx('common.delete'),
                     danger: true,
                     onPressed: () => _deleteItem(item),
                   ),

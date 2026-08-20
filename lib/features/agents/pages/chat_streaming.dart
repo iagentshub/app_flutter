@@ -83,7 +83,7 @@ extension _ChatStreaming on _ChatPageState {
               maybeScrollToEnd(_scrollController);
             } else if (event.type == 'error') {
               refresh(
-                () => _error = event.message ?? 'Error de respuesta del agente',
+                () => _error = event.message ?? tr('agents.chat_reply_error'),
               );
             } else if (event.type == 'routing_selected' ||
                 event.type == 'routing_warning' ||
@@ -93,7 +93,7 @@ extension _ChatStreaming on _ChatPageState {
           },
           onError: (error) {
             if (!mounted) return;
-            refresh(() => _error = 'Error de conexión con el agente');
+            refresh(() => _error = tr('agents.chat_connection_error'));
           },
           onDone: () {
             if (!mounted) return;
@@ -122,7 +122,7 @@ extension _ChatStreaming on _ChatPageState {
   void _cancelReply() => refresh(() => _replyTo = null);
 
   String _replyLabelFor(ChatMessage message) =>
-      message.isUser ? _tx('agents.chat.reply_you', 'Tú') : widget.agent.name;
+      message.isUser ? _tx('agents.chat.reply_you') : widget.agent.name;
 
   /// Aplana y recorta el mensaje citado a una sola línea, como hacen
   /// Telegram/WhatsApp al previsualizar una respuesta.

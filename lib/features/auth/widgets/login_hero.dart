@@ -27,28 +27,10 @@ extension _LoginHero on _LoginPageState {
             future: _authTextsFuture,
             builder: (context, snapshot) {
               final t = snapshot.data ?? const {};
-              final headlinePre = _txt(
-                t,
-                'headline_pre',
-                _isEnglish ? 'in' : 'en',
-              );
-              final headline1 = _txt(
-                t,
-                'headline_1',
-                _isEnglish ? 'All your AI' : 'Toda tu IA',
-              );
-              final headlineAccent = _txt(
-                t,
-                'headline_accent',
-                _isEnglish ? 'one place' : 'un solo lugar',
-              );
-              final heroSub = _txt(
-                t,
-                'hero_sub',
-                _isEnglish
-                    ? 'Agents, knowledge, workflows and connections — from your phone, your desktop, or the web.'
-                    : 'Agentes, conocimiento, workflows y conexiones — desde tu móvil, tu escritorio o la web.',
-              );
+              final headlinePre = _txt(t, 'headline_pre');
+              final headline1 = _txt(t, 'headline_1');
+              final headlineAccent = _txt(t, 'headline_accent');
+              final heroSub = _txt(t, 'hero_sub');
 
               return Column(
                 mainAxisSize: compact ? MainAxisSize.min : MainAxisSize.max,

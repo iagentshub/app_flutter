@@ -41,20 +41,20 @@ class WorkflowRunsPanel extends StatelessWidget {
 
   final WorkflowRunsController controller;
   final ValueChanged<WorkflowRun> onOpen;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   String _status(WorkflowRun run) => switch (run.status) {
-    'queued' => tx('workflows.run_status_queued', 'En cola'),
-    'running' => tx('workflows.run_status_running', 'En curso'),
-    'cancelling' => tx('workflows.run_cancelling', 'Cancelando…'),
-    'cancelled' => tx('workflows.run_cancelled', 'Cancelada'),
-    'completed' => tx('workflows.run_status_done', 'Completada'),
-    _ => tx('workflows.run_status_error', 'Error'),
+    'queued' => tx('workflows.run_status_queued'),
+    'running' => tx('workflows.run_status_running'),
+    'cancelling' => tx('workflows.run_cancelling'),
+    'cancelled' => tx('workflows.run_cancelled'),
+    'completed' => tx('workflows.run_status_done'),
+    _ => tx('workflows.run_status_error'),
   };
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: Text(tx('workflows.run_history_title', 'Ejecuciones')),
+    title: Text(tx('workflows.run_history_title')),
     content: SizedBox(
       width: 620,
       height: 520,
@@ -63,14 +63,7 @@ class WorkflowRunsPanel extends StatelessWidget {
         builder: (context, _) {
           final runs = controller.runs;
           if (runs.isEmpty) {
-            return Center(
-              child: Text(
-                tx(
-                  'workflows.run_history_empty',
-                  'Todavía no hay ejecuciones.',
-                ),
-              ),
-            );
+            return Center(child: Text(tx('workflows.run_history_empty')));
           }
           return RefreshIndicator(
             onRefresh: controller.refresh,
@@ -106,7 +99,7 @@ class WorkflowRunsPanel extends StatelessWidget {
     actions: [
       TertiaryButton(
         onPressed: () => Navigator.of(context).pop(),
-        child: Text(tx('common.close', 'Cerrar')),
+        child: Text(tx('common.close')),
       ),
     ],
   );

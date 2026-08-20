@@ -1,24 +1,22 @@
 import 'package:app_flutter/shared/labels/label_catalog.dart';
 import 'package:app_flutter/shared/widgets/grouped_label_picker.dart';
 import 'package:app_flutter/shared/widgets/multi_select_dropdown.dart';
+import 'package:app_flutter/utils/i18n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-String _tx(String path, String fallback) => switch (path) {
-  'labels.group_language' => 'Idioma del contenido',
-  'labels.lang_es' => 'Español',
-  'labels.lang_en' => 'Inglés',
-  _ => fallback,
-};
+import 'support/i18n_de_prueba.dart';
 
 void main() {
+  setUp(cargarTraduccionesDePrueba);
+
   test('el catálogo expone idiomas como labels opcionales y múltiples', () {
     expect(kContentLanguageCodes, containsAll(['es', 'en', 'fr', 'de']));
     expect(kLanguageLabelGroup.exclusive, isFalse);
     expect(kLanguageLabelGroup.required, isFalse);
     expect(kLabelKeys, containsAll(['lang_es', 'lang_en']));
     expect(languageCodeFromLabel('lang_es'), 'es');
-    expect(contentLanguageLabel(_tx, 'en'), 'Inglés');
+    expect(contentLanguageLabel(tr, 'en'), 'Inglés');
     expect(contentLabelsForScope('private', ['lang_en', 'basura', 'lang_es']), [
       'private',
       'lang_es',
@@ -43,7 +41,7 @@ void main() {
             builder: (context, setState) => GroupedLabelPicker(
               selected: selected,
               onChanged: (next) => setState(() => selected = next),
-              tx: _tx,
+              tx: tr,
               groups: const [kLanguageLabelGroup],
             ),
           ),
@@ -73,7 +71,7 @@ void main() {
             builder: (context, setState) => GroupedLabelPicker(
               selected: selected,
               onChanged: (next) => setState(() => selected = next),
-              tx: _tx,
+              tx: tr,
               groups: kOperationalLabelGroups,
             ),
           ),
@@ -84,7 +82,7 @@ void main() {
     expect(find.byType(MultiSelectDropdown<String>), findsOneWidget);
     await tester.tap(find.byType(MultiSelectDropdown<String>));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(CheckboxListTile, 'public'));
+    await tester.tap(find.widgetWithText(CheckboxListTile, 'Público'));
     await tester.pump();
 
     expect(selected, contains('public'));

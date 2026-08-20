@@ -11,7 +11,7 @@ class PublicAgentPickerPage extends StatefulWidget {
   });
 
   final List<ExploreItem> agents;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<PublicAgentPickerPage> createState() => _PublicAgentPickerPageState();
@@ -40,11 +40,7 @@ class _PublicAgentPickerPageState extends State<PublicAgentPickerPage> {
     final colors = Theme.of(context).colorScheme;
     return Scaffold(
       backgroundColor: colors.surfaceContainerLowest,
-      appBar: AppBar(
-        title: Text(
-          tx('agents.create_public_picker_title', 'Elige un agente público'),
-        ),
-      ),
+      appBar: AppBar(title: Text(tx('agents.create_public_picker_title'))),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -58,7 +54,7 @@ class _PublicAgentPickerPageState extends State<PublicAgentPickerPage> {
                     controller: _queryController,
                     autofocus: false,
                     decoration: InputDecoration(
-                      labelText: tx('agents.search_hint', 'Buscar agente'),
+                      labelText: tx('agents.search_hint'),
                       prefixIcon: const Icon(Icons.search, size: 20),
                       suffixIcon: _query.isEmpty
                           ? null
@@ -68,10 +64,7 @@ class _PublicAgentPickerPageState extends State<PublicAgentPickerPage> {
                                 setState(() => _query = '');
                               },
                               icon: const Icon(Icons.close),
-                              tooltip: tx(
-                                'agents.resources_clear_search',
-                                'Limpiar búsqueda',
-                              ),
+                              tooltip: tx('agents.resources_clear_search'),
                             ),
                     ),
                     onChanged: (value) => setState(() => _query = value),
@@ -82,10 +75,7 @@ class _PublicAgentPickerPageState extends State<PublicAgentPickerPage> {
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      tx(
-                        'agents.create_public_picker_hint',
-                        'Selecciona una base para revisarla antes de crear tu copia.',
-                      ),
+                      tx('agents.create_public_picker_hint'),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: colors.onSurfaceVariant,
                       ),
@@ -96,10 +86,7 @@ class _PublicAgentPickerPageState extends State<PublicAgentPickerPage> {
                   child: filtered.isEmpty
                       ? Center(
                           child: Text(
-                            tx(
-                              'agents.create_public_no_match',
-                              'Sin coincidencias',
-                            ),
+                            tx('agents.create_public_no_match'),
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         )

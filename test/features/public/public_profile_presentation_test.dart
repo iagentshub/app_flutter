@@ -1,9 +1,10 @@
 import 'package:app_flutter/features/public/widgets/public_profile_presentation.dart';
 import 'package:app_flutter/models/profile/profile_models.dart';
+import 'package:app_flutter/utils/i18n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-String _tx(String path, String fallback) => fallback;
+import '../../support/i18n_de_prueba.dart';
 
 const _profile = SocialProfile(
   username: 'alice',
@@ -15,6 +16,8 @@ const _profile = SocialProfile(
 );
 
 void main() {
+  setUp(cargarTraduccionesDePrueba);
+
   for (final width in [360.0, 1200.0]) {
     testWidgets('presentación profesional sin overflow a ${width.toInt()} px', (
       tester,
@@ -37,7 +40,7 @@ void main() {
                 following: false,
                 followBusy: false,
                 onToggleFollow: () {},
-                tx: _tx,
+                tx: tr,
               ),
             ),
           ),
@@ -69,7 +72,7 @@ void main() {
             following: false,
             followBusy: false,
             onToggleFollow: () {},
-            tx: _tx,
+            tx: tr,
           ),
         ),
       ),

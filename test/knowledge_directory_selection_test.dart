@@ -3,10 +3,15 @@ import 'dart:typed_data';
 import 'package:app_flutter/features/knowledge/dialogs/knowledge_pack_dialog.dart';
 import 'package:app_flutter/features/knowledge/models/local_knowledge_file.dart';
 import 'package:app_flutter/shared/widgets/multi_select_dropdown.dart';
+import 'package:app_flutter/utils/i18n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/i18n_de_prueba.dart';
+
 void main() {
+  setUp(cargarTraduccionesDePrueba);
+
   test('clasifica documentos, código e imágenes sin incluir secretos', () {
     expect(isSupportedKnowledgePackPath('docs/README.md'), isTrue);
     expect(isSupportedKnowledgePackPath('scripts/deploy.py'), isTrue);
@@ -37,7 +42,7 @@ void main() {
             ),
           ],
           ignoredCount: 3,
-          tx: (_, fallback) => fallback,
+          tx: tr,
         ),
       ),
     );
@@ -66,19 +71,19 @@ void main() {
               bytes: Uint8List.fromList([101, 99, 104, 111]),
             ),
           ],
-          tx: (_, fallback) => fallback,
+          tx: tr,
         ),
       ),
     );
 
     await tester.tap(find.byType(MultiSelectDropdown<String>));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(CheckboxListTile, 'public'));
+    await tester.tap(find.widgetWithText(CheckboxListTile, 'Público'));
     await tester.pump();
     await tester.tapAt(const Offset(4, 4));
     await tester.pumpAndSettle();
 
-    expect(find.text('public'), findsOneWidget);
+    expect(find.text('Público'), findsOneWidget);
     expect(find.byIcon(Icons.public_outlined), findsNothing);
   });
 
@@ -94,7 +99,7 @@ void main() {
               bytes: Uint8List.fromList([101, 99, 104, 111]),
             ),
           ],
-          tx: (_, fallback) => fallback,
+          tx: tr,
         ),
       ),
     );

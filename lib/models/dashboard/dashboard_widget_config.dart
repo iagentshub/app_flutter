@@ -41,36 +41,36 @@ const kRecentResourceTypes = [
   'tool',
 ];
 
-typedef DashboardTx = String Function(String key, String fallback);
+typedef DashboardTx = String Function(String key);
 
 String dashboardWidgetTitle(String id, DashboardTx tx) {
   switch (id) {
     case 'summary':
-      return tx('title_summary', 'Resumen');
+      return tx('title_summary');
     case 'token-usage':
-      return tx('title_token_usage', 'Uso de tokens');
+      return tx('title_token_usage');
     case 'conn-status':
-      return tx('title_conn_status', 'Estado de conexiones');
+      return tx('title_conn_status');
     case 'recent':
-      return tx('title_recent', 'Agentes recientes');
+      return tx('title_recent');
     case 'recent-conversations':
-      return tx('title_recent_conversations', 'Conversaciones recientes');
+      return tx('title_recent_conversations');
     case 'activity':
-      return tx('title_activity', 'Actividad');
+      return tx('title_activity');
     case 'composition':
-      return tx('title_composition', 'Composición');
+      return tx('title_composition');
     case 'feed':
-      return tx('title_feed', 'Actividad social');
+      return tx('title_feed');
     case 'quick-actions':
-      return tx('title_quick_actions', 'Acciones rápidas');
+      return tx('title_quick_actions');
     case 'token-kpi':
-      return tx('title_token_kpi', 'Consumo de tokens');
+      return tx('title_token_kpi');
     case 'recent-resources':
-      return tx('title_recent_resources', 'Recursos recientes');
+      return tx('title_recent_resources');
     case 'agent-health':
-      return tx('title_agent_health', 'Estado de agentes');
+      return tx('title_agent_health');
     case 'group':
-      return tx('title_group', 'Grupo activo');
+      return tx('title_group');
     default:
       return id;
   }
@@ -79,17 +79,17 @@ String dashboardWidgetTitle(String id, DashboardTx tx) {
 String summaryItemLabel(String item, DashboardTx tx) {
   switch (item) {
     case 'agents':
-      return tx('summary_agents', 'Agentes');
+      return tx('summary_agents');
     case 'connections':
-      return tx('summary_connections', 'Conexiones');
+      return tx('summary_connections');
     case 'skills':
-      return tx('summary_skills', 'Skills');
+      return tx('summary_skills');
     case 'memory':
-      return tx('summary_memory', 'Memoria');
+      return tx('summary_memory');
     case 'knowledge':
-      return tx('summary_knowledge', 'Knowledge');
+      return tx('summary_knowledge');
     case 'workflows':
-      return tx('summary_workflows', 'Workflows');
+      return tx('summary_workflows');
     default:
       return item;
   }
@@ -99,11 +99,11 @@ String dashboardWidgetSizeLabel(String id, DashboardTx tx) {
   switch (id) {
     case 'token-kpi':
     case 'composition':
-      return tx('size_compact', 'Compacto');
+      return tx('size_compact');
     case 'activity':
-      return tx('size_wide', 'Ancho');
+      return tx('size_wide');
     case 'summary':
-      return tx('size_full', 'Completo');
+      return tx('size_full');
     case 'token-usage':
     case 'feed':
     case 'quick-actions':
@@ -111,22 +111,22 @@ String dashboardWidgetSizeLabel(String id, DashboardTx tx) {
     case 'recent-conversations':
     case 'agent-health':
     case 'group':
-      return tx('size_medium', 'Mediano');
+      return tx('size_medium');
     default:
-      return tx('size_medium', 'Mediano');
+      return tx('size_medium');
   }
 }
 
 String feedTypeLabel(String type, DashboardTx tx) {
   switch (type) {
     case 'agent':
-      return tx('feed_agent', 'Agentes');
+      return tx('feed_agent');
     case 'skill':
-      return tx('feed_skill', 'Skills');
+      return tx('feed_skill');
     case 'knowledge':
-      return tx('feed_knowledge', 'Knowledge');
+      return tx('feed_knowledge');
     case 'tool':
-      return tx('feed_tool', 'Herramientas');
+      return tx('feed_tool');
     default:
       return type;
   }

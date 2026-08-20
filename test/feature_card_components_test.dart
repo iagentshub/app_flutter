@@ -3,10 +3,11 @@ import 'package:app_flutter/features/connections/cards/connection_card.dart';
 import 'package:app_flutter/models/agents/agent_models.dart';
 import 'package:app_flutter/models/connections/connection_models.dart';
 import 'package:app_flutter/models/knowledge/knowledge_models.dart';
+import 'package:app_flutter/utils/i18n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-String _tx(String path, String fallback) => fallback;
+import 'support/i18n_de_prueba.dart';
 
 Widget _host(Widget child) {
   return MaterialApp(
@@ -17,6 +18,8 @@ Widget _host(Widget child) {
 }
 
 void main() {
+  setUp(cargarTraduccionesDePrueba);
+
   testWidgets('AgentCard renders data and delegates its edit action', (
     tester,
   ) async {
@@ -37,7 +40,7 @@ void main() {
       _host(
         AgentCard(
           item: item,
-          tx: _tx,
+          tx: tr,
           onChat: () {},
           onExport: (_) {},
           onShare: () {},
@@ -72,7 +75,7 @@ void main() {
       _host(
         ConnectionCard(
           item: item,
-          tx: _tx,
+          tx: tr,
           providerLabel: 'Test provider',
           onTest: () => tested = true,
           onShare: () {},
@@ -105,7 +108,7 @@ void main() {
       _host(
         AgentCard(
           item: item,
-          tx: _tx,
+          tx: tr,
           onChat: () {},
           onExport: (_) {},
           onShare: () {},
@@ -138,7 +141,7 @@ void main() {
       _host(
         AgentCard(
           item: item,
-          tx: _tx,
+          tx: tr,
           onChat: () {},
           onExport: (_) {},
           onShare: () {},
@@ -181,7 +184,7 @@ void main() {
               ),
             ],
           },
-          tx: _tx,
+          tx: tr,
           onChat: () {},
           onExport: (_) {},
           onShare: () {},

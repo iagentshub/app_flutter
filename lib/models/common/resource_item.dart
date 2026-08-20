@@ -1,3 +1,5 @@
+import '../../utils/i18n.dart';
+
 /// Base común de todos los recursos que el usuario crea y gestiona
 /// (agentes, skills, conexiones, conocimientos, workflows).
 ///
@@ -10,7 +12,7 @@ abstract class ResourceItem {
   final Map<String, dynamic> raw;
 
   String get id => raw['id'] as String? ?? '';
-  String get name => raw['name'] as String? ?? '(sin nombre)';
+  String get name => raw['name'] as String? ?? tr('common.unnamed');
   String get description => raw['description'] as String? ?? '';
   String get scope => raw['scope'] as String? ?? 'private';
   String get ownerId => raw['owner_id'] as String? ?? '';

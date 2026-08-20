@@ -8,7 +8,7 @@ class _MemoryEditorDialog extends StatefulWidget {
     this.lockFilename = false,
   });
 
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
   final String? initialFilename;
   final String? initialContent;
   final bool lockFilename;
@@ -53,8 +53,8 @@ class _MemoryEditorDialogState extends State<_MemoryEditorDialog> {
     return AlertDialog(
       title: Text(
         widget.initialFilename == null
-            ? widget.tx('memory.new_dialog_title', 'Nuevo archivo de memoria')
-            : widget.tx('memory.edit_dialog_title', 'Editar archivo'),
+            ? widget.tx('memory.new_dialog_title')
+            : widget.tx('memory.edit_dialog_title'),
       ),
       content: SizedBox(
         width: dialogContentWidth(context, 760),
@@ -67,18 +67,12 @@ class _MemoryEditorDialogState extends State<_MemoryEditorDialog> {
                 controller: _filenameController,
                 readOnly: widget.lockFilename,
                 decoration: InputDecoration(
-                  labelText: widget.tx(
-                    'memory.filename_label',
-                    'Nombre de archivo (.md)',
-                  ),
+                  labelText: widget.tx('memory.filename_label'),
                 ),
                 validator: (value) {
                   final v = value?.trim() ?? '';
                   if (v.isEmpty) {
-                    return widget.tx(
-                      'memory.filename_validator',
-                      'Nombre obligatorio',
-                    );
+                    return widget.tx('memory.filename_validator');
                   }
                   return null;
                 },
@@ -89,7 +83,7 @@ class _MemoryEditorDialogState extends State<_MemoryEditorDialog> {
                 minLines: 10,
                 maxLines: 18,
                 decoration: InputDecoration(
-                  labelText: widget.tx('memory.content_label', 'Contenido'),
+                  labelText: widget.tx('memory.content_label'),
                 ),
               ),
             ],
@@ -99,11 +93,11 @@ class _MemoryEditorDialogState extends State<_MemoryEditorDialog> {
       actions: [
         TertiaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(widget.tx('common.cancel', 'Cancelar')),
+          child: Text(widget.tx('common.cancel')),
         ),
         PrimaryButton(
           onPressed: _submit,
-          child: Text(widget.tx('common.save', 'Guardar')),
+          child: Text(widget.tx('common.save')),
         ),
       ],
     );

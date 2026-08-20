@@ -10,6 +10,7 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/lazy_expansion_tile.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../../../utils/i18n.dart';
 import '../repositories/centinel_repository.dart';
 
 part '../centinel/functional_results.dart';
@@ -43,7 +44,7 @@ class CentinelFunctionalTab extends StatefulWidget {
 
   final CentinelRepository repository;
   final String token;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<CentinelFunctionalTab> createState() => _CentinelFunctionalTabState();
@@ -80,7 +81,7 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab>
   /// está en true y _status == 'running' el mismo botón hace de Abortar.
   bool _showingResults = false;
 
-  String _tx(String path, String fallback) => widget.tx(path, fallback);
+  String _tx(String path) => widget.tx(path);
 
   @override
   void initState() {
@@ -126,10 +127,7 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab>
     } catch (_) {
       if (!mounted) return;
       refresh(() {
-        _treeError = _tx(
-          'centinel.errors_discover',
-          'No se pudo descubrir la suite de tests',
-        );
+        _treeError = _tx('centinel.errors_discover');
         _treeLoading = false;
       });
     }
@@ -205,10 +203,7 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab>
       showMessage(error.message, isError: true);
       if (mounted) refresh(() => _starting = false);
     } catch (_) {
-      showMessage(
-        _tx('centinel.errors_run_start', 'No se pudo iniciar el run'),
-        isError: true,
-      );
+      showMessage(_tx('centinel.errors_run_start'), isError: true);
       if (mounted) refresh(() => _starting = false);
     }
   }
@@ -216,14 +211,11 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab>
   Future<void> _abort() async {
     try {
       await widget.repository.abort(widget.token);
-      showMessage(_tx('centinel.toast_run_aborted', 'Run abortado'));
+      showMessage(_tx('centinel.toast_run_aborted'));
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('centinel.toast_abort_failed', 'No se pudo abortar el run'),
-        isError: true,
-      );
+      showMessage(_tx('centinel.toast_abort_failed'), isError: true);
     }
   }
 
@@ -262,13 +254,7 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab>
   void _handleStreamDropped() {
     if (!mounted || _status != 'running') return;
     refresh(() => _status = 'error');
-    showMessage(
-      _tx(
-        'centinel.toast_stream_dropped',
-        'Se perdió la conexión en vivo con el run. Actualiza para ver su estado.',
-      ),
-      isError: true,
-    );
+    showMessage(_tx('centinel.toast_stream_dropped'), isError: true);
   }
 
   void _handleEvent(Map<String, dynamic> event) {
@@ -321,7 +307,7 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab>
       case 'error':
         refresh(() => _status = 'error');
         showMessage(
-          (event['message'] ?? 'Error en el run').toString(),
+          (event['message'] ?? tr('admin.centinel_run_error')).toString(),
           isError: true,
         );
     }
@@ -329,7 +315,7 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab>
 
   Future<void> _copyLog() async {
     await Clipboard.setData(ClipboardData(text: _logLines.join('\n')));
-    showMessage(_tx('centinel.toast_log_copied', 'Log copiado'));
+    showMessage(_tx('centinel.toast_log_copied'));
   }
 
   List<_TestEvent> get _filteredEvents {
@@ -404,19 +390,19 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab>
       primaryAction = PrimaryButton.icon(
         onPressed: (nothingSelected || _starting) ? null : () => _startRun(),
         icon: const Icon(Icons.play_arrow),
-        label: Text(_tx('centinel.actions_run', 'Ejecutar')),
+        label: Text(_tx('centinel.actions_run')),
       );
     } else if (_status == 'running') {
       primaryAction = PrimaryButton.tonalIcon(
         onPressed: _abort,
         icon: const Icon(Icons.stop_circle_outlined),
-        label: Text(_tx('centinel.actions_abort', 'Abortar')),
+        label: Text(_tx('centinel.actions_abort')),
       );
     } else {
       primaryAction = PrimaryButton.icon(
         onPressed: _resetToSelecting,
         icon: const Icon(Icons.restart_alt),
-        label: Text(_tx('centinel.actions_restart', 'Reiniciar')),
+        label: Text(_tx('centinel.actions_restart')),
       );
     }
 
@@ -430,14 +416,12 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab>
           SecondaryButton.icon(
             onPressed: _starting ? null : () => _startRun(rerunFailed: true),
             icon: const Icon(Icons.replay),
-            label: Text(
-              _tx('centinel.actions_rerun_failed', 'Re-run fallidos'),
-            ),
+            label: Text(_tx('centinel.actions_rerun_failed')),
           ),
         SecondaryButton.icon(
           onPressed: _showHistoryDialog,
           icon: const Icon(Icons.history),
-          label: Text(_tx('centinel.history_title', 'Historial reciente')),
+          label: Text(_tx('centinel.history_title')),
         ),
       ],
     );

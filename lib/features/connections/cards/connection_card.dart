@@ -12,7 +12,7 @@ import '../../../shared/widgets/origin_badge.dart';
 import '../../../shared/widgets/status_dot.dart';
 import '../../../shared/widgets/token_usage_badge.dart';
 
-typedef ConnectionCardText = String Function(String path, String fallback);
+typedef ConnectionCardText = String Function(String path);
 
 class ConnectionCard extends StatelessWidget {
   const ConnectionCard({
@@ -66,13 +66,13 @@ class ConnectionCard extends StatelessWidget {
       if (onSyncHub != null && !item.readOnly)
         OverflowMenuAction(
           icon: Icons.sync,
-          label: tx('connections.sync_hub', 'Sincronizar'),
+          label: tx('connections.sync_hub'),
           onSelected: onSyncHub!,
         ),
       if (!item.readOnly)
         OverflowMenuAction(
           icon: Icons.group_add_outlined,
-          label: tx('common.share_group', 'Compartir con grupo'),
+          label: tx('common.share_group'),
           onSelected: onShare,
           enabled: !item.isVirtual,
         ),
@@ -82,14 +82,14 @@ class ConnectionCard extends StatelessWidget {
               ? Icons.toggle_on_outlined
               : Icons.toggle_off_outlined,
           label: item.isActive
-              ? tx('common.deactivate', 'Desactivar')
-              : tx('common.activate', 'Activar'),
+              ? tx('common.deactivate')
+              : tx('common.activate'),
           onSelected: onToggleActive!,
         ),
       if (!item.readOnly)
         OverflowMenuAction(
           icon: Icons.delete_outline,
-          label: tx('common.delete', 'Eliminar'),
+          label: tx('common.delete'),
           onSelected: onDelete,
           danger: true,
           separatedBefore: true,
@@ -120,12 +120,12 @@ class ConnectionCard extends StatelessWidget {
                     child: Tooltip(
                       message: testMessage?.isNotEmpty == true
                           ? testMessage!
-                          : tx('connections.test', 'Test'),
+                          : tx('connections.test'),
                       child: StatusDot(
                         state: testState!,
                         semanticLabel: testMessage?.isNotEmpty == true
                             ? testMessage!
-                            : tx('connections.test', 'Test'),
+                            : tx('connections.test'),
                         size: 9,
                       ),
                     ),
@@ -144,20 +144,13 @@ class ConnectionCard extends StatelessWidget {
                 if (item.credentialsUnreadable) ...[
                   const SizedBox(width: 8),
                   AttentionBadge(
-                    label: tx(
-                      'connections.credential_unreadable_badge',
-                      'Requiere atención',
-                    ),
-                    tooltip: tx(
-                      'connections.credential_unreadable_hint',
-                      'La credencial guardada no se puede leer. Edítala e '
-                          'introdúcela de nuevo.',
-                    ),
+                    label: tx('connections.credential_unreadable_badge'),
+                    tooltip: tx('connections.credential_unreadable_hint'),
                   ),
                 ],
                 if (!item.isActive) ...[
                   const SizedBox(width: 8),
-                  InactiveBadge(label: tx('common.inactive', 'Inactivo')),
+                  InactiveBadge(label: tx('common.inactive')),
                 ],
               ],
             ),
@@ -189,17 +182,14 @@ class ConnectionCard extends StatelessWidget {
               leading: [
                 OriginBadge(
                   propertyType: item.propertyType,
-                  ownerLabel: tx('common.owner', 'Propietario'),
-                  linkedLabel: tx('common.linked', 'Enlace'),
-                  forkLabel: tx('common.fork', 'Fork'),
+                  ownerLabel: tx('common.owner'),
+                  linkedLabel: tx('common.linked'),
+                  forkLabel: tx('common.fork'),
                 ),
                 TokenUsageBadge(
                   tokensIn: item.tokensIn,
                   tokensOut: item.tokensOut,
-                  tooltip: tx(
-                    'connections.tokens_tooltip',
-                    'Tokens consumidos',
-                  ),
+                  tooltip: tx('connections.tokens_tooltip'),
                 ),
               ],
             ),
@@ -209,18 +199,18 @@ class ConnectionCard extends StatelessWidget {
                 SecondaryButton.icon(
                   onPressed: item.isVirtual ? null : onTest,
                   icon: const Icon(Icons.health_and_safety_outlined),
-                  label: Text(tx('connections.test', 'Test')),
+                  label: Text(tx('connections.test')),
                 ),
                 const Spacer(),
                 if (!item.readOnly)
                   ActionIconButton(
                     icon: Icons.edit_outlined,
-                    tooltip: tx('common.edit', 'Editar'),
+                    tooltip: tx('common.edit'),
                     onPressed: onEdit,
                   ),
                 if (!item.readOnly)
                   OverflowMenuButton(
-                    tooltip: tx('common.more_actions', 'Más acciones'),
+                    tooltip: tx('common.more_actions'),
                     actions: _overflowActions(),
                   ),
               ],

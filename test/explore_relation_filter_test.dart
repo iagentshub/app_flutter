@@ -204,9 +204,6 @@ http.Response _json(Object body, {int statusCode = 200, String? linked}) {
   return http.Response(
     jsonEncode(body),
     statusCode,
-    headers: {
-      'content-type': 'application/json',
-      'x-linked-count': ?linked,
-    },
+    headers: {'content-type': 'application/json', 'x-linked-count': ?linked},
   );
 }

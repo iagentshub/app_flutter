@@ -68,12 +68,12 @@ extension _ExploreUserCard on _ExplorePageState {
               children: [
                 Text(
                   '${user.followersCount} '
-                  '${_tx('explore.users_followers', 'seguidores')}',
+                  '${_tx('explore.users_followers')}',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 Text(
                   '${user.publicResourcesCount} '
-                  '${_tx('explore.users_resources', 'recursos')}',
+                  '${_tx('explore.users_resources')}',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
@@ -83,13 +83,13 @@ extension _ExploreUserCard on _ExplorePageState {
               children: [
                 ActionIconButton(
                   icon: Icons.person_outline,
-                  tooltip: _tx('explore.users_view_profile', 'Ver perfil'),
+                  tooltip: _tx('explore.users_view_profile'),
                   onPressed: () => _openProfile(username),
                 ),
                 const Spacer(),
                 ActionIconButton(
                   icon: Icons.group_add_outlined,
-                  tooltip: _tx('explore.users_invite', 'Invitar'),
+                  tooltip: _tx('explore.users_invite'),
                   onPressed: inviting
                       ? null
                       : () => _runAction(_controller.inviteUser(username)),

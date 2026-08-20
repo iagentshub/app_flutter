@@ -69,8 +69,7 @@ class _ResourceHistoryDialogState extends State<_ResourceHistoryDialog> {
   String? _error;
   int? _restoring;
 
-  String _tx(String path, String fallback) =>
-      LocaleLoader.text(_texts, path, fallback: fallback);
+  String _tx(String path) => LocaleLoader.text(_texts, path);
 
   @override
   void initState() {
@@ -105,10 +104,7 @@ class _ResourceHistoryDialogState extends State<_ResourceHistoryDialog> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = _tx(
-          'history.load_error',
-          'No se pudo cargar el historial de versiones',
-        );
+        _error = _tx('history.load_error');
         _loading = false;
       });
     }
@@ -118,21 +114,20 @@ class _ResourceHistoryDialogState extends State<_ResourceHistoryDialog> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(_tx('history.restore_title', 'Restaurar versión')),
+        title: Text(_tx('history.restore_title')),
         content: Text(
           _tx(
             'history.restore_confirm',
-            '¿Restaurar la versión {version}? Sobrescribirá el contenido actual.',
           ).replaceAll('{version}', '${item.version}'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(_tx('common.cancel', 'Cancelar')),
+            child: Text(_tx('common.cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(_tx('history.restore_action', 'Restaurar')),
+            child: Text(_tx('history.restore_action')),
           ),
         ],
       ),
@@ -153,20 +148,16 @@ class _ResourceHistoryDialogState extends State<_ResourceHistoryDialog> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _restoring = null);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _tx('history.restore_error', 'No se pudo restaurar la versión'),
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_tx('history.restore_error'))));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(_tx('history.dialog_title', 'Historial de versiones')),
+      title: Text(_tx('history.dialog_title')),
       content: SizedBox(
         width: dialogContentWidth(context, 420),
         height: dialogContentHeight(context, 420),
@@ -175,7 +166,7 @@ class _ResourceHistoryDialogState extends State<_ResourceHistoryDialog> {
             : _error != null
             ? Text(_error!)
             : _versions.isEmpty
-            ? Text(_tx('history.empty', 'Todavía no hay versiones guardadas.'))
+            ? Text(_tx('history.empty'))
             : ListView.separated(
                 itemCount: _versions.length,
                 separatorBuilder: (context, index) => const Divider(height: 1),
@@ -187,18 +178,17 @@ class _ResourceHistoryDialogState extends State<_ResourceHistoryDialog> {
                     title: Text(
                       _tx(
                         'history.version_label',
-                        'Versión {version}',
                       ).replaceAll('{version}', '${item.version}'),
                       style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                     subtitle: Text(
                       '${_fmtVersionDate(item.createdAt)}'
                       '${item.createdBy.isNotEmpty ? ' · ${item.createdBy}' : ''}'
-                      '${item.isRestore ? ' · ${_tx('history.reason_restore', 'restaurada')}' : ''}',
+                      '${item.isRestore ? ' · ${_tx('history.reason_restore')}' : ''}',
                     ),
                     trailing: index == 0
                         ? Text(
-                            _tx('history.current', 'Actual'),
+                            _tx('history.current'),
                             style: Theme.of(context).textTheme.bodySmall,
                           )
                         : TextButton(
@@ -213,9 +203,7 @@ class _ResourceHistoryDialogState extends State<_ResourceHistoryDialog> {
                                       strokeWidth: 2,
                                     ),
                                   )
-                                : Text(
-                                    _tx('history.restore_action', 'Restaurar'),
-                                  ),
+                                : Text(_tx('history.restore_action')),
                           ),
                   );
                 },
@@ -224,7 +212,7 @@ class _ResourceHistoryDialogState extends State<_ResourceHistoryDialog> {
       actions: [
         FilledButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(_tx('common.close', 'Cerrar')),
+          child: Text(_tx('common.close')),
         ),
       ],
     );

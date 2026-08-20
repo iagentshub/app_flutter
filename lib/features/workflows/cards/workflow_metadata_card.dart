@@ -35,7 +35,7 @@ class WorkflowMetadataCard extends StatelessWidget {
   final VoidCallback onChanged;
   final Set<String> selectedLanguageLabels;
   final ValueChanged<Set<String>> onLanguageLabelsChanged;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   Widget build(BuildContext context) {
@@ -56,18 +56,18 @@ class WorkflowMetadataCard extends StatelessWidget {
                 (_, {required currentLength, required isFocused, maxLength}) =>
                     null,
             decoration: InputDecoration(
-              labelText: tx('workflow_editor.name_label', 'Nombre'),
+              labelText: tx('workflow_editor.name_label'),
               prefixIcon: const Icon(Icons.badge_outlined, size: 19),
             ),
             onChanged: (_) => onChanged(),
             validator: (value) => (value == null || value.trim().isEmpty)
-                ? tx('workflow_editor.name_required', 'Nombre obligatorio')
+                ? tx('workflow_editor.name_required')
                 : null,
           );
           final description = TextFormField(
             controller: descriptionController,
             decoration: InputDecoration(
-              labelText: tx('workflow_editor.description_label', 'Descripción'),
+              labelText: tx('workflow_editor.description_label'),
               prefixIcon: const Icon(Icons.notes_rounded, size: 19),
             ),
             onChanged: (_) => onChanged(),
@@ -95,24 +95,15 @@ class WorkflowMetadataCard extends StatelessWidget {
                 initialValue: llmOrchestrationConnectionId,
                 isExpanded: true,
                 decoration: InputDecoration(
-                  labelText: tx(
-                    'workflow_editor.llm_orchestration_label',
-                    'Orquestación LLM predeterminada',
-                  ),
-                  helperText: tx(
-                    'workflow_editor.llm_orchestration_help',
-                    'Opcional. Sustituye la conexión de todos los agentes de este workflow.',
-                  ),
+                  labelText: tx('workflow_editor.llm_orchestration_label'),
+                  helperText: tx('workflow_editor.llm_orchestration_help'),
                   prefixIcon: const Icon(Icons.hub_outlined, size: 19),
                 ),
                 items: [
                   DropdownMenuItem<String?>(
                     value: null,
                     child: Text(
-                      tx(
-                        'workflow_editor.llm_orchestration_agent_default',
-                        'Usar la conexión de cada agente',
-                      ),
+                      tx('workflow_editor.llm_orchestration_agent_default'),
                     ),
                   ),
                   ...llmOrchestrations.map(
@@ -142,7 +133,7 @@ class WorkflowMetadataCard extends StatelessWidget {
 
   Widget _visibility(BuildContext context) {
     final label = Text(
-      tx('workflow_editor.labels_label', 'Visibilidad'),
+      tx('workflow_editor.labels_label'),
       style: Theme.of(
         context,
       ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
@@ -153,12 +144,12 @@ class WorkflowMetadataCard extends StatelessWidget {
         ButtonSegment(
           value: false,
           icon: const Icon(Icons.lock_outline, size: 16),
-          label: Text(tx('workflow_editor.visibility_private', 'Privada')),
+          label: Text(tx('workflow_editor.visibility_private')),
         ),
         ButtonSegment(
           value: true,
           icon: const Icon(Icons.public, size: 16),
-          label: Text(tx('workflow_editor.visibility_public', 'Pública')),
+          label: Text(tx('workflow_editor.visibility_public')),
         ),
       ],
       selected: {isPublic},

@@ -5,13 +5,14 @@ import 'package:app_flutter/features/explore/pages/official_pack_page.dart';
 import 'package:app_flutter/features/explore/repositories/explore_repository.dart';
 import 'package:app_flutter/models/explore/explore_models.dart';
 import 'package:app_flutter/shared/state/backend_controller.dart';
+import 'package:app_flutter/utils/i18n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-String _tx(String path, String fallback) => fallback;
+import '../../support/i18n_de_prueba.dart';
 
 const _pack = ExploreOfficialPack(
   sourceId: 'source-1',
@@ -65,6 +66,8 @@ Map<String, dynamic> _detail(int count) => {
 };
 
 void main() {
+  setUp(cargarTraduccionesDePrueba);
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   Future<int Function()> pumpPage(
@@ -95,7 +98,7 @@ void main() {
           pack: _pack,
           repository: ExploreRepository(apiClient: client),
           token: 'token',
-          tx: _tx,
+          tx: tr,
         ),
       ),
     );

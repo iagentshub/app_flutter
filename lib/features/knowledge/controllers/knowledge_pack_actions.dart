@@ -4,10 +4,7 @@ extension _KnowledgePackActions on _KnowledgePageState {
   Future<void> _pickKnowledgeDirectory() async {
     refresh(() {
       _uploading = true;
-      _packOperationMessage = _tx(
-        'knowledge.pack_selecting_directory',
-        'Selecciona el directorio de conocimiento',
-      );
+      _packOperationMessage = _tx('knowledge.pack_selecting_directory');
     });
     KnowledgeDirectorySelection? selection;
     try {
@@ -18,13 +15,7 @@ extension _KnowledgePackActions on _KnowledgePageState {
         _uploading = false;
         _packOperationMessage = null;
       });
-      showMessage(
-        _tx(
-          'knowledge.pack_read_failed',
-          'No se pudo leer el directorio seleccionado',
-        ),
-        isError: true,
-      );
+      showMessage(_tx('knowledge.pack_read_failed'), isError: true);
       return;
     }
     if (!mounted) return;
@@ -34,13 +25,7 @@ extension _KnowledgePackActions on _KnowledgePageState {
     });
     if (selection == null) return;
     if (selection.files.isEmpty) {
-      showMessage(
-        _tx(
-          'knowledge.pack_no_compatible_files',
-          'El directorio no contiene archivos de conocimiento compatibles. Las imágenes no se indexan todavía.',
-        ),
-        isError: true,
-      );
+      showMessage(_tx('knowledge.pack_no_compatible_files'), isError: true);
       return;
     }
     await _reviewAndUploadPack(selection);
@@ -49,13 +34,9 @@ extension _KnowledgePackActions on _KnowledgePageState {
   void _showPackProgress(KnowledgeDirectoryProgress progress) {
     if (!mounted) return;
     refresh(() {
-      _packOperationMessage =
-          _tx(
-                'knowledge.pack_scanning_progress',
-                'Organizando: {{compatible}} compatibles · {{ignored}} omitidos',
-              )
-              .replaceAll('{{compatible}}', '${progress.compatible}')
-              .replaceAll('{{ignored}}', '${progress.ignored}');
+      _packOperationMessage = _tx('knowledge.pack_scanning_progress')
+          .replaceAll('{{compatible}}', '${progress.compatible}')
+          .replaceAll('{{ignored}}', '${progress.ignored}');
     });
   }
 
@@ -63,23 +44,14 @@ extension _KnowledgePackActions on _KnowledgePageState {
     refresh(() => _draggingDirectory = false);
     final directories = details.files.whereType<DropItemDirectory>().toList();
     if (directories.length != 1 || details.files.length != 1) {
-      showMessage(
-        _tx(
-          'knowledge.pack_drop_one_directory',
-          'Arrastra un único directorio para crear un pack',
-        ),
-        isError: true,
-      );
+      showMessage(_tx('knowledge.pack_drop_one_directory'), isError: true);
       return;
     }
     final files = <LocalKnowledgeFile>[];
     final counters = [0, 0, 0];
     refresh(() {
       _uploading = true;
-      _packOperationMessage = _tx(
-        'knowledge.pack_scanning',
-        'Analizando y organizando el directorio…',
-      );
+      _packOperationMessage = _tx('knowledge.pack_scanning');
     });
     try {
       await _collectDroppedFiles(
@@ -94,13 +66,7 @@ extension _KnowledgePackActions on _KnowledgePageState {
         _uploading = false;
         _packOperationMessage = null;
       });
-      showMessage(
-        _tx(
-          'knowledge.pack_read_failed',
-          'No se pudo leer el directorio seleccionado',
-        ),
-        isError: true,
-      );
+      showMessage(_tx('knowledge.pack_read_failed'), isError: true);
       return;
     }
     if (!mounted) return;
@@ -109,13 +75,7 @@ extension _KnowledgePackActions on _KnowledgePageState {
       _packOperationMessage = null;
     });
     if (files.isEmpty) {
-      showMessage(
-        _tx(
-          'knowledge.pack_no_compatible_files',
-          'El directorio no contiene archivos de conocimiento compatibles. Las imágenes no se indexan todavía.',
-        ),
-        isError: true,
-      );
+      showMessage(_tx('knowledge.pack_no_compatible_files'), isError: true);
       return;
     }
     await _reviewAndUploadPack(
@@ -200,11 +160,8 @@ extension _KnowledgePackActions on _KnowledgePageState {
       final ignored = selection.ignoredCount;
       showMessage(
         (ignored > 0
-                ? _tx(
-                    'knowledge.pack_uploaded_with_ignored',
-                    'Pack incluido: {{name}} · {{included}} archivos · {{ignored}} omitidos',
-                  )
-                : _tx('knowledge.pack_uploaded', 'Pack incluido: {{name}}'))
+                ? _tx('knowledge.pack_uploaded_with_ignored')
+                : _tx('knowledge.pack_uploaded'))
             .replaceAll('{{name}}', pack.name)
             .replaceAll('{{included}}', '${pack.fileCount}')
             .replaceAll('{{ignored}}', '$ignored'),
@@ -215,46 +172,30 @@ extension _KnowledgePackActions on _KnowledgePageState {
   Future<void> _synchronizePack(KnowledgePack pack) async {
     refresh(() {
       _uploading = true;
-      _packOperationMessage = _tx(
-        'knowledge.pack_selecting_directory_sync',
-        'Selecciona de nuevo el directorio del pack',
-      );
+      _packOperationMessage = _tx('knowledge.pack_selecting_directory_sync');
     });
     KnowledgeDirectorySelection? selection;
     try {
       selection = await pickKnowledgeDirectory(onProgress: _showPackProgress);
       if (selection == null || !mounted) return;
       if (selection.files.isEmpty) {
-        showMessage(
-          _tx(
-            'knowledge.pack_no_compatible_files',
-            'El directorio no contiene archivos de conocimiento compatibles.',
-          ),
-          isError: true,
-        );
+        showMessage(_tx('knowledge.pack_no_compatible_files'), isError: true);
         return;
       }
       final confirmed = await showConfirmActionDialog(
         context,
-        title: _tx(
-          'knowledge.pack_sync_confirm_title',
-          'Sincronizar directorio',
-        ),
+        title: _tx('knowledge.pack_sync_confirm_title'),
         message: _tx(
           'knowledge.pack_sync_confirm_body',
-          'Se compararán {{count}} archivos con el pack. Los archivos que ya no estén en el directorio se eliminarán del pack.',
         ).replaceAll('{{count}}', '${selection.files.length}'),
-        confirmLabel: _tx('knowledge.pack_sync_action', 'Sincronizar'),
-        cancelLabel: _tx('common.cancel', 'Cancelar'),
+        confirmLabel: _tx('knowledge.pack_sync_action'),
+        cancelLabel: _tx('common.cancel'),
       );
       if (!confirmed || !mounted) return;
       final token = _token;
       if (token == null || token.isEmpty) return;
       refresh(() {
-        _packOperationMessage = _tx(
-          'knowledge.pack_synchronizing',
-          'Sincronizando altas, cambios y eliminaciones…',
-        );
+        _packOperationMessage = _tx('knowledge.pack_synchronizing');
       });
       final updated = await _repository.synchronizePack(
         token,
@@ -263,10 +204,7 @@ extension _KnowledgePackActions on _KnowledgePageState {
       );
       final sync = updated.raw['sync'] as Map<String, dynamic>? ?? const {};
       showMessage(
-        _tx(
-              'knowledge.pack_sync_complete',
-              'Pack sincronizado · {{added}} nuevos · {{updated}} actualizados · {{removed}} eliminados',
-            )
+        _tx('knowledge.pack_sync_complete')
             .replaceAll('{{added}}', '${sync['added'] ?? 0}')
             .replaceAll('{{updated}}', '${sync['updated'] ?? 0}')
             .replaceAll('{{removed}}', '${sync['removed'] ?? 0}'),
@@ -274,13 +212,7 @@ extension _KnowledgePackActions on _KnowledgePageState {
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx(
-          'knowledge.pack_sync_failed',
-          'No se pudo sincronizar el directorio',
-        ),
-        isError: true,
-      );
+      showMessage(_tx('knowledge.pack_sync_failed'), isError: true);
     } finally {
       if (mounted) {
         refresh(() {
@@ -325,27 +257,21 @@ extension _KnowledgePackActions on _KnowledgePageState {
         description: result.description ?? '',
         labels: result.labels.toList(),
       );
-      showMessage(_tx('knowledge.edit_saved', 'Cambios guardados'));
+      showMessage(_tx('knowledge.edit_saved'));
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('knowledge.edit_failed', 'No se pudieron guardar los cambios'),
-        isError: true,
-      );
+      showMessage(_tx('knowledge.edit_failed'), isError: true);
     }
   }
 
   Future<void> _deletePack(KnowledgePack pack) async {
     final confirmed = await showConfirmActionDialog(
       context,
-      title: _tx('knowledge.pack_delete_title', 'Eliminar pack'),
-      message: _tx(
-        'knowledge.pack_delete_confirm',
-        'Se eliminarán el pack y todos sus archivos. ¿Continuar?',
-      ),
-      confirmLabel: _tx('common.delete', 'Eliminar'),
-      cancelLabel: _tx('common.cancel', 'Cancelar'),
+      title: _tx('knowledge.pack_delete_title'),
+      message: _tx('knowledge.pack_delete_confirm'),
+      confirmLabel: _tx('common.delete'),
+      cancelLabel: _tx('common.cancel'),
       destructive: true,
     );
     if (!confirmed) return;

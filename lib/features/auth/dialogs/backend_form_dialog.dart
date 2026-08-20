@@ -8,7 +8,7 @@ class _BackendFormDialog extends StatefulWidget {
   });
 
   final BackendController backendController;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
   final SavedBackend? existing;
 
   @override
@@ -31,7 +31,7 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
 
   bool get _isEditing => widget.existing != null;
 
-  String _tx(String path, String fallback) => widget.tx(path, fallback);
+  String _tx(String path) => widget.tx(path);
 
   @override
   void initState() {
@@ -74,12 +74,7 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
     if (_formKey.currentState?.validate() != true) return;
     final url = _composedUrl();
     if (url == null) {
-      setState(
-        () => _statusMessage = _tx(
-          'backend_config.invalid_host',
-          'Host inválido. Usa un dominio o IP.',
-        ),
-      );
+      setState(() => _statusMessage = _tx('backend_config.invalid_host'));
       return;
     }
 
@@ -97,7 +92,7 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
       setState(() {
         _verified = true;
         _verifiedUrl = url;
-        _statusMessage = _tx('backend_config.test_ok', 'Conexión OK');
+        _statusMessage = _tx('backend_config.test_ok');
         _testing = false;
       });
     } else {
@@ -107,16 +102,13 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
         _statusMessage = result.error != null
             ? _tx(
                 'backend_config.test_connection_error',
-                'No se pudo conectar: {error}',
               ).replaceAll('{error}', result.error!)
             : result.statusCode != null
             ? _tx(
                 'backend_config.test_http_error',
-                'El servidor respondió HTTP {code}',
               ).replaceAll('{code}', '${result.statusCode}')
             : _tx(
                 'backend_config.test_connection_error',
-                'No se pudo conectar: {error}',
               ).replaceAll('{error}', result.error ?? '');
         _testing = false;
       });
@@ -128,10 +120,7 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
     final url = _verifiedUrl!;
     setState(() {
       _testing = true;
-      _statusMessage = _tx(
-        'backend_config.test_button_loading',
-        'Comprobando…',
-      );
+      _statusMessage = _tx('backend_config.test_button_loading');
     });
 
     // La comprobación que habilitó el botón puede haberse quedado obsoleta.
@@ -171,8 +160,8 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
     return AlertDialog(
       title: Text(
         _isEditing
-            ? _tx('backend_config.edit_dialog_title', 'Editar backend')
-            : _tx('backend_config.dialog_title', 'Añadir backend'),
+            ? _tx('backend_config.edit_dialog_title')
+            : _tx('backend_config.dialog_title'),
       ),
       content: SizedBox(
         width: dialogContentWidth(context, 420),
@@ -185,17 +174,11 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(
-                  labelText: _tx('backend_config.field_name', 'Nombre'),
-                  hintText: _tx(
-                    'backend_config.field_name_hint',
-                    'p. ej. Servidor de casa',
-                  ),
+                  labelText: _tx('backend_config.field_name'),
+                  hintText: _tx('backend_config.field_name_hint'),
                 ),
                 validator: (value) => (value == null || value.trim().isEmpty)
-                    ? _tx(
-                        'backend_config.name_required',
-                        'El nombre es obligatorio',
-                      )
+                    ? _tx('backend_config.name_required')
                     : null,
                 onChanged: (_) => _invalidateVerification(),
               ),
@@ -203,17 +186,11 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
               TextFormField(
                 controller: _hostController,
                 decoration: InputDecoration(
-                  labelText: _tx('backend_config.field_host', 'Dominio o IP'),
-                  hintText: _tx(
-                    'backend_config.field_host_hint',
-                    'www.midominio.com o 192.168.1.20',
-                  ),
+                  labelText: _tx('backend_config.field_host'),
+                  hintText: _tx('backend_config.field_host_hint'),
                 ),
                 validator: (value) => (value == null || value.trim().isEmpty)
-                    ? _tx(
-                        'backend_config.invalid_host',
-                        'Host inválido. Usa un dominio o IP.',
-                      )
+                    ? _tx('backend_config.invalid_host')
                     : null,
                 onChanged: (_) => _invalidateVerification(),
               ),
@@ -222,10 +199,7 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
                 controller: _portController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
-                  labelText: _tx(
-                    'backend_config.field_port',
-                    'Puerto (opcional)',
-                  ),
+                  labelText: _tx('backend_config.field_port'),
                 ),
                 onChanged: (_) => _invalidateVerification(),
               ),
@@ -256,18 +230,8 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
                     ),
                     controlAffinity: ListTileControlAffinity.leading,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                    title: Text(
-                      _tx(
-                        'backend_config.http_warning_title',
-                        'Conexión HTTP sin cifrar',
-                      ),
-                    ),
-                    subtitle: Text(
-                      _tx(
-                        'backend_config.http_warning_body',
-                        'La cookie de sesión y las respuestas podrán verse o modificarse en la red local. Confirma que confías en esta red y servidor.',
-                      ),
-                    ),
+                    title: Text(_tx('backend_config.http_warning_title')),
+                    subtitle: Text(_tx('backend_config.http_warning_body')),
                   ),
                 ),
               ],
@@ -278,7 +242,7 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
       actions: [
         TertiaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(_tx('backend_config.cancel', 'Cancelar')),
+          child: Text(_tx('backend_config.cancel')),
         ),
         if (!connectionVerified)
           PrimaryButton.icon(
@@ -292,8 +256,8 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
                 : const Icon(Icons.wifi_find),
             label: Text(
               _testing
-                  ? _tx('backend_config.test_button_loading', 'Comprobando…')
-                  : _tx('backend_config.test_button', 'Comprobar conexión'),
+                  ? _tx('backend_config.test_button_loading')
+                  : _tx('backend_config.test_button'),
             ),
           )
         else
@@ -308,13 +272,10 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
                 : Icon(_isEditing ? Icons.save_outlined : Icons.add),
             label: Text(
               _testing
-                  ? _tx('backend_config.test_button_loading', 'Comprobando…')
+                  ? _tx('backend_config.test_button_loading')
                   : _isEditing
-                  ? _tx('backend_config.save_button', 'Guardar cambios')
-                  : _tx(
-                      'backend_config.add_confirmed_button',
-                      'Añadir a la lista',
-                    ),
+                  ? _tx('backend_config.save_button')
+                  : _tx('backend_config.add_confirmed_button'),
             ),
           ),
       ],

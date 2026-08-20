@@ -15,16 +15,14 @@ extension _LogsViews on _LogsPageViewState {
             PrimaryButton.icon(
               onPressed: _loadSummary,
               icon: const Icon(Icons.refresh),
-              label: Text(_tx('common.retry', 'Reintentar')),
+              label: Text(_tx('common.retry')),
             ),
           ],
         ),
       );
     }
     if (_summary.isEmpty) {
-      return Center(
-        child: Text(_tx('logs.empty', 'Sin datos de logs todavía')),
-      );
+      return Center(child: Text(_tx('logs.empty')));
     }
     return RefreshIndicator(
       onRefresh: _loadSummary,
@@ -57,19 +55,16 @@ extension _LogsViews on _LogsPageViewState {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      _tx(
-                        'logs.lines_count',
-                        'Líneas: {n}',
-                      ).replaceAll('{n}', '${day.lines}'),
+                      _tx('logs.lines_count').replaceAll('{n}', '${day.lines}'),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _tx('logs.be_summary', 'BE: {warn} warn · {err} err')
+                      _tx('logs.be_summary')
                           .replaceAll('{warn}', '${day.beWarnings}')
                           .replaceAll('{err}', '${day.beErrors}'),
                     ),
                     Text(
-                      _tx('logs.fe_summary', 'FE: {warn} warn · {err} err')
+                      _tx('logs.fe_summary')
                           .replaceAll('{warn}', '${day.feWarnings}')
                           .replaceAll('{err}', '${day.feErrors}'),
                     ),
@@ -110,7 +105,7 @@ extension _LogsViews on _LogsPageViewState {
         TextField(
           controller: _queryController,
           decoration: InputDecoration(
-            labelText: _tx('logs.search_message_label', 'Buscar en mensaje'),
+            labelText: _tx('logs.search_message_label'),
             prefixIcon: const Icon(Icons.search, size: 20),
           ),
           onSubmitted: (_) => _loadViewer(),
@@ -123,7 +118,7 @@ extension _LogsViews on _LogsPageViewState {
           children: [
             AppIconButton.outlined(
               onPressed: _exporting ? null : _exportCsv,
-              tooltip: _tx('logs.export_csv', 'Exportar CSV'),
+              tooltip: _tx('logs.export_csv'),
               icon: _exporting
                   ? const SizedBox(
                       width: 16,
@@ -134,7 +129,7 @@ extension _LogsViews on _LogsPageViewState {
             ),
             FilterButton(
               activeCount: _logsActiveFilterCount,
-              tooltip: _tx('common.filters', 'Filtros'),
+              tooltip: _tx('common.filters'),
               onPressed: _openLogsFiltersDialog,
             ),
             if (_dateFilter != null)
@@ -142,7 +137,6 @@ extension _LogsViews on _LogsPageViewState {
                 label: Text(
                   _tx(
                     'logs.day_filter_chip',
-                    'Día: {date} ✕',
                   ).replaceAll('{date}', _dateFilter!),
                 ),
                 onPressed: _clearDateFilter,
@@ -163,12 +157,7 @@ extension _LogsViews on _LogsPageViewState {
             child: Center(child: CircularProgressIndicator()),
           )
         else if (data == null)
-          Text(
-            _tx(
-              'logs.viewer_hint',
-              'Ajusta los filtros y pulsa "Filtrar" para ver logs',
-            ),
-          )
+          Text(_tx('logs.viewer_hint'))
         else ...[
           Expanded(
             child: SingleChildScrollView(
@@ -176,15 +165,13 @@ extension _LogsViews on _LogsPageViewState {
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
                   columns: [
-                    DataColumn(label: Text(_tx('logs.col_date', 'Fecha'))),
-                    DataColumn(label: Text(_tx('logs.col_time', 'Hora'))),
-                    DataColumn(label: Text(_tx('logs.col_level', 'Nivel'))),
-                    DataColumn(label: Text(_tx('logs.col_ip', 'IP'))),
-                    DataColumn(label: Text(_tx('logs.col_user', 'Usuario'))),
-                    DataColumn(
-                      label: Text(_tx('logs.col_service', 'Servicio')),
-                    ),
-                    DataColumn(label: Text(_tx('logs.col_message', 'Mensaje'))),
+                    DataColumn(label: Text(_tx('logs.col_date'))),
+                    DataColumn(label: Text(_tx('logs.col_time'))),
+                    DataColumn(label: Text(_tx('logs.col_level'))),
+                    DataColumn(label: Text(_tx('logs.col_ip'))),
+                    DataColumn(label: Text(_tx('logs.col_user'))),
+                    DataColumn(label: Text(_tx('logs.col_service'))),
+                    DataColumn(label: Text(_tx('logs.col_message'))),
                   ],
                   rows: data.items.map((entry) {
                     return DataRow(
@@ -234,7 +221,7 @@ extension _LogsViews on _LogsPageViewState {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                _tx('logs.page_total', 'Página {page}/{pages} · Total: {total}')
+                _tx('logs.page_total')
                     .replaceAll('{page}', '${data.page}')
                     .replaceAll(
                       '{pages}',
@@ -249,13 +236,13 @@ extension _LogsViews on _LogsPageViewState {
                     onPressed: data.page > 1
                         ? () => _loadViewer(page: data.page - 1)
                         : null,
-                    child: Text(_tx('logs.prev', 'Anterior')),
+                    child: Text(_tx('logs.prev')),
                   ),
                   SecondaryButton(
                     onPressed: data.page < data.pages
                         ? () => _loadViewer(page: data.page + 1)
                         : null,
-                    child: Text(_tx('logs.next', 'Siguiente')),
+                    child: Text(_tx('logs.next')),
                   ),
                 ],
               ),

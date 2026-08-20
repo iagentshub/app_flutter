@@ -54,7 +54,7 @@ void main() {
     'public_about': 'Acerca de',
   };
 
-  String tx(String key, String fallback) => translations[key] ?? fallback;
+  String tx(String key) => translations[key] ?? key;
 
   Widget buildNavigation({
     required bool isAdmin,
@@ -261,14 +261,16 @@ void main() {
     expect(find.text('Centinel'), findsOneWidget);
   });
 
-  testWidgets('oculta Workflows en el sidebar cuando la sesión es invitado', (
+  testWidgets('el invitado ve Workflows en el sidebar como cualquiera', (
     tester,
   ) async {
+    // Estuvo oculto mientras la sesión del invitado vivía en memoria del
+    // backend y la sección respondía 403. Hoy es parte de su espacio personal.
     await tester.pumpWidget(
       buildNavigation(isAdmin: false, role: 'guest', onNavigate: (_) {}),
     );
 
-    expect(find.text('Orquestación'), findsNothing);
+    expect(find.text('Orquestación'), findsOneWidget);
     expect(find.text('Dashboard'), findsOneWidget);
   });
 
@@ -307,7 +309,6 @@ void main() {
   Widget buildRail({
     required bool isAdmin,
     required ValueChanged<String> onNavigate,
-    String role = 'user',
     VoidCallback? onExpand,
     VoidCallback? onLogout,
   }) {
@@ -319,7 +320,6 @@ void main() {
             width: 72,
             child: AppSidebarRail(
               isAdmin: isAdmin,
-              role: role,
               location: InternalRoutes.dashboard,
               initial: 'J',
               tx: tx,
@@ -397,14 +397,12 @@ void main() {
     expect(find.byIcon(Icons.security_outlined), findsOneWidget);
   });
 
-  testWidgets('oculta Workflows en el rail cuando la sesión es invitado', (
+  testWidgets('el invitado ve Workflows en el rail como cualquiera', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      buildRail(isAdmin: false, role: 'guest', onNavigate: (_) {}),
-    );
+    await tester.pumpWidget(buildRail(isAdmin: false, onNavigate: (_) {}));
 
-    expect(find.byIcon(Icons.hub_outlined), findsNothing);
+    expect(find.byIcon(Icons.hub_outlined), findsOneWidget);
     expect(find.byIcon(Icons.dashboard_outlined), findsOneWidget);
   });
 }

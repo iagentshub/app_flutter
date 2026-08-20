@@ -6,16 +6,17 @@ import 'package:app_flutter/features/manager/repositories/manager_repository.dar
 import 'package:app_flutter/models/manager/group_models.dart';
 import 'package:app_flutter/shared/state/backend_controller.dart';
 import 'package:app_flutter/shared/state/session_controller.dart';
+import 'package:app_flutter/utils/i18n.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../support/i18n_de_prueba.dart';
 import '../../support/memory_secure_store.dart';
 
 /// Devuelve el fallback tal cual: el controller no debe depender de que
 /// haya locales cargados para producir sus mensajes.
-String _tx(String path, String fallback) => fallback;
 
 Map<String, dynamic> _group({
   String id = 'g1',
@@ -23,22 +24,20 @@ Map<String, dynamic> _group({
   String type = 'team',
   String role = 'owner',
   bool active = true,
-}) => {
-  'id': id,
-  'name': name,
-  'type': type,
-  'role': role,
-  'active': active,
-};
+}) => {'id': id, 'name': name, 'type': type, 'role': role, 'active': active};
 
 GroupItem _item({
   String id = 'g1',
   String name = 'Equipo',
   String type = 'team',
   bool active = false,
-}) => GroupItem(raw: _group(id: id, name: name, type: type, active: active));
+}) => GroupItem(
+  raw: _group(id: id, name: name, type: type, active: active),
+);
 
 void main() {
+  setUp(cargarTraduccionesDePrueba);
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late BackendController backendController;
@@ -101,14 +100,15 @@ void main() {
     final controller = ManagerController(
       repository: ManagerRepository(apiClient: client),
       sessionController: sessionController ?? await session(token: token),
-      tx: _tx,
+      tx: tr,
     );
     addTearDown(controller.dispose);
     return controller;
   }
 
   /// `askName` que responde siempre lo mismo, sin abrir ningún diálogo.
-  Future<String?> Function() answers(String? value) => () async => value;
+  Future<String?> Function() answers(String? value) =>
+      () async => value;
 
   test('load trae grupos, miembros e invitaciones del grupo activo', () async {
     final controller = await build((request) async => listResponse(request));
@@ -325,7 +325,10 @@ void main() {
     final added = await controller.addMemberDirect(askName: answers('bob'));
 
     expect(invited?.isError, isTrue);
-    expect(invited?.message, 'Activa un grupo compartido para invitar miembros');
+    expect(
+      invited?.message,
+      'Activa un grupo compartido para invitar miembros',
+    );
     expect(added?.isError, isTrue);
     expect(added?.message, 'Activa un grupo compartido para añadir miembros');
     expect(mutations, 0);
@@ -405,7 +408,7 @@ void main() {
     final controller = ManagerController(
       repository: ManagerRepository(apiClient: client),
       sessionController: await session(),
-      tx: _tx,
+      tx: tr,
     );
     var notifications = 0;
     controller.addListener(() => notifications++);

@@ -17,7 +17,7 @@ class LlmOrchestrationEditorPage extends StatefulWidget {
   final List<ConnectionItem> connections;
   final LlmOrchestrationItem? initial;
   final bool configureBinding;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<LlmOrchestrationEditorPage> createState() =>
@@ -102,12 +102,7 @@ class _LlmOrchestrationEditorPageState
     if (_candidates.length < 2) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            widget.tx(
-              'llm_orchestrations.minimum_candidates',
-              'Añade al menos dos conexiones candidatas.',
-            ),
-          ),
+          content: Text(widget.tx('llm_orchestrations.minimum_candidates')),
         ),
       );
       return;
@@ -142,13 +137,10 @@ class _LlmOrchestrationEditorPageState
       appBar: AppBar(
         title: Text(
           widget.configureBinding
-              ? tx(
-                  'llm_orchestrations.configure_connections',
-                  'Configurar mis conexiones',
-                )
+              ? tx('llm_orchestrations.configure_connections')
               : widget.initial == null
-              ? tx('llm_orchestrations.create', 'Nueva orquestación LLM')
-              : tx('llm_orchestrations.edit', 'Editar orquestación LLM'),
+              ? tx('llm_orchestrations.create')
+              : tx('llm_orchestrations.edit'),
         ),
         actions: [
           Padding(
@@ -157,7 +149,7 @@ class _LlmOrchestrationEditorPageState
               key: const ValueKey('llm-orchestration-save'),
               onPressed: _save,
               icon: const Icon(Icons.check, size: 18),
-              label: Text(tx('common.save', 'Guardar')),
+              label: Text(tx('common.save')),
             ),
           ),
         ],
@@ -183,14 +175,11 @@ class _LlmOrchestrationEditorPageState
                       controller: _name,
                       enabled: !widget.configureBinding,
                       decoration: InputDecoration(
-                        labelText: tx('llm_orchestrations.name', 'Nombre'),
+                        labelText: tx('llm_orchestrations.name'),
                       ),
                       validator: (value) =>
                           value == null || value.trim().isEmpty
-                          ? tx(
-                              'llm_orchestrations.name_required',
-                              'El nombre es obligatorio',
-                            )
+                          ? tx('llm_orchestrations.name_required')
                           : null,
                     ),
                     const SizedBox(height: 12),
@@ -199,15 +188,12 @@ class _LlmOrchestrationEditorPageState
                       enabled: !widget.configureBinding,
                       maxLines: 3,
                       decoration: InputDecoration(
-                        labelText: tx(
-                          'llm_orchestrations.description',
-                          'Descripción',
-                        ),
+                        labelText: tx('llm_orchestrations.description'),
                       ),
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      tx('llm_orchestrations.mode', 'Modo'),
+                      tx('llm_orchestrations.mode'),
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -221,13 +207,11 @@ class _LlmOrchestrationEditorPageState
                         segments: [
                           ButtonSegment(
                             value: 'stack',
-                            label: Text(tx('llm_orchestrations.stack', 'Pila')),
+                            label: Text(tx('llm_orchestrations.stack')),
                           ),
                           ButtonSegment(
                             value: 'balanced',
-                            label: Text(
-                              tx('llm_orchestrations.balanced', 'Balanceo'),
-                            ),
+                            label: Text(tx('llm_orchestrations.balanced')),
                           ),
                         ],
                         selected: {_mode},
@@ -240,14 +224,8 @@ class _LlmOrchestrationEditorPageState
                     const SizedBox(height: 6),
                     Text(
                       _mode == 'balanced'
-                          ? tx(
-                              'llm_orchestrations.balanced_help',
-                              'La conexión orquestadora estudia cada tarea y ordena las candidatas.',
-                            )
-                          : tx(
-                              'llm_orchestrations.stack_help',
-                              'Prueba las conexiones en orden hasta obtener una respuesta.',
-                            ),
+                          ? tx('llm_orchestrations.balanced_help')
+                          : tx('llm_orchestrations.stack_help'),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
@@ -258,14 +236,8 @@ class _LlmOrchestrationEditorPageState
                         initialValue: _routerConnectionId,
                         isExpanded: true,
                         decoration: InputDecoration(
-                          labelText: tx(
-                            'llm_orchestrations.router',
-                            'Conexión orquestadora',
-                          ),
-                          helperText: tx(
-                            'llm_orchestrations.router_help',
-                            'Analiza la tarea y ordena las candidatas. Si falla, la orquestación se detiene.',
-                          ),
+                          labelText: tx('llm_orchestrations.router'),
+                          helperText: tx('llm_orchestrations.router_help'),
                         ),
                         items: widget.connections
                             .map(
@@ -279,10 +251,7 @@ class _LlmOrchestrationEditorPageState
                             setState(() => _routerConnectionId = value),
                         validator: (value) =>
                             _mode == 'balanced' && value == null
-                            ? tx(
-                                'llm_orchestrations.router_required',
-                                'Selecciona la conexión orquestadora',
-                              )
+                            ? tx('llm_orchestrations.router_required')
                             : null,
                       ),
                     ],
@@ -291,10 +260,7 @@ class _LlmOrchestrationEditorPageState
                       children: [
                         Expanded(
                           child: Text(
-                            tx(
-                              'llm_orchestrations.candidates',
-                              'Conexiones candidatas',
-                            ),
+                            tx('llm_orchestrations.candidates'),
                             style: Theme.of(context).textTheme.titleSmall,
                           ),
                         ),
@@ -304,10 +270,7 @@ class _LlmOrchestrationEditorPageState
                               ? _addCandidate
                               : null,
                           icon: const Icon(Icons.add),
-                          tooltip: tx(
-                            'llm_orchestrations.add_candidate',
-                            'Añadir conexión',
-                          ),
+                          tooltip: tx('llm_orchestrations.add_candidate'),
                         ),
                       ],
                     ),
@@ -351,7 +314,6 @@ class _LlmOrchestrationEditorPageState
                                       decoration: InputDecoration(
                                         labelText: tx(
                                           'llm_orchestrations.candidate_connection',
-                                          'Conexión',
                                         ),
                                       ),
                                       items: widget.connections
@@ -382,11 +344,9 @@ class _LlmOrchestrationEditorPageState
                                       decoration: InputDecoration(
                                         labelText: tx(
                                           'llm_orchestrations.routing_hint',
-                                          'Instrucción de enrutado',
                                         ),
                                         hintText: tx(
                                           'llm_orchestrations.routing_hint_example',
-                                          'Ej.: mejor para código y tareas complejas',
                                         ),
                                       ),
                                       onChanged: (value) =>
@@ -402,7 +362,7 @@ class _LlmOrchestrationEditorPageState
                                       : null,
                                   icon: Icons.delete_outline,
                                   danger: true,
-                                  tooltip: tx('common.delete', 'Eliminar'),
+                                  tooltip: tx('common.delete'),
                                 );
                                 if (compact) {
                                   return Column(
@@ -415,7 +375,6 @@ class _LlmOrchestrationEditorPageState
                                             child: Text(
                                               tx(
                                                 'llm_orchestrations.candidate_position',
-                                                'Candidata {{position}}',
                                               ).replaceAll(
                                                 '{{position}}',
                                                 '${index + 1}',

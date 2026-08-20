@@ -41,14 +41,14 @@ class ConnectionsController extends ChangeNotifier {
   ConnectionsController({
     required ConnectionsRepository repository,
     required SessionController sessionController,
-    required String Function(String path, String fallback) tx,
+    required String Function(String path) tx,
   }) : _repository = repository,
        _sessionController = sessionController,
        _tx = tx;
 
   final ConnectionsRepository _repository;
   final SessionController _sessionController;
-  final String Function(String path, String fallback) _tx;
+  final String Function(String path) _tx;
   final Debouncer _searchDebouncer = Debouncer();
 
   final TextEditingController queryController = TextEditingController();
@@ -151,7 +151,7 @@ class ConnectionsController extends ChangeNotifier {
   Future<void> load() async {
     final token = this.token;
     if (token == null || token.isEmpty) {
-      _error = _tx('common.no_session', 'No hay sesión activa');
+      _error = _tx('common.no_session');
       _loading = false;
       _notify();
       return;
@@ -179,10 +179,7 @@ class ConnectionsController extends ChangeNotifier {
       _loading = false;
     } catch (_) {
       if (_disposed) return;
-      _error = _tx(
-        'connections.error_generic',
-        'No se pudieron cargar las conexiones',
-      );
+      _error = _tx('connections.error_generic');
       _loading = false;
     }
     _notify();
@@ -206,12 +203,7 @@ class ConnectionsController extends ChangeNotifier {
     required ConnectionFormPresenter present,
   }) async {
     if (item.isVirtual) {
-      return ActionResult(
-        _tx(
-          'connections.virtual_edit',
-          'Esta conexión es derivada de Ollama y no se edita directamente',
-        ),
-      );
+      return ActionResult(_tx('connections.virtual_edit'));
     }
     final token = this.token;
     if (token == null || token.isEmpty) return null;
@@ -244,13 +236,11 @@ class ConnectionsController extends ChangeNotifier {
     try {
       await _repository.saveConnection(token, payload);
       await load();
-      return ActionResult(_tx('connections.saved', 'Conexión guardada'));
+      return ActionResult(_tx('connections.saved'));
     } on ApiError catch (error) {
       return ActionResult.error(error.message);
     } catch (_) {
-      return ActionResult.error(
-        _tx('connections.save_error', 'No se pudo guardar la conexión'),
-      );
+      return ActionResult.error(_tx('connections.save_error'));
     }
   }
 
@@ -263,18 +253,13 @@ class ConnectionsController extends ChangeNotifier {
       await load();
       return ActionResult(
         activate
-            ? _tx('connections.activated', 'Conexión activada')
-            : _tx('connections.deactivated', 'Conexión desactivada'),
+            ? _tx('connections.activated')
+            : _tx('connections.deactivated'),
       );
     } on ApiError catch (error) {
       return ActionResult.error(error.message);
     } catch (_) {
-      return ActionResult.error(
-        _tx(
-          'connections.toggle_error',
-          'No se pudo cambiar el estado de la conexión',
-        ),
-      );
+      return ActionResult.error(_tx('connections.toggle_error'));
     }
   }
 
@@ -285,11 +270,7 @@ class ConnectionsController extends ChangeNotifier {
       final result = await _repository.syncHub(token, item.id);
       await load();
       return ActionResult(
-        _tx(
-              'connections.sync_success',
-              'Sincronizado: {{agents}} agentes · {{skills}} skills · '
-                  '{{knowledge}} conocimiento · {{connections}} conexiones',
-            )
+        _tx('connections.sync_success')
             .replaceAll('{{agents}}', '${result['agents'] ?? 0}')
             .replaceAll('{{skills}}', '${result['skills'] ?? 0}')
             .replaceAll('{{knowledge}}', '${result['knowledge'] ?? 0}')
@@ -298,9 +279,7 @@ class ConnectionsController extends ChangeNotifier {
     } on ApiError catch (error) {
       return ActionResult.error(error.message);
     } catch (_) {
-      return ActionResult.error(
-        _tx('connections.sync_error', 'No se pudo sincronizar con el hub'),
-      );
+      return ActionResult.error(_tx('connections.sync_error'));
     }
   }
 
@@ -309,12 +288,7 @@ class ConnectionsController extends ChangeNotifier {
     required Future<bool> Function() confirm,
   }) async {
     if (item.isVirtual) {
-      return ActionResult(
-        _tx(
-          'connections.virtual_delete',
-          'Esta conexión es derivada de Ollama y no se elimina directamente',
-        ),
-      );
+      return ActionResult(_tx('connections.virtual_delete'));
     }
     if (!await confirm()) return null;
     final token = this.token;
@@ -322,24 +296,17 @@ class ConnectionsController extends ChangeNotifier {
     try {
       await _repository.deleteConnection(token, item.id);
       await load();
-      return ActionResult(_tx('connections.deleted', 'Conexión eliminada'));
+      return ActionResult(_tx('connections.deleted'));
     } on ApiError catch (error) {
       return ActionResult.error(error.message);
     } catch (_) {
-      return ActionResult.error(
-        _tx('connections.delete_error', 'No se pudo eliminar la conexión'),
-      );
+      return ActionResult.error(_tx('connections.delete_error'));
     }
   }
 
   Future<ActionResult?> testConnection(ConnectionItem item) async {
     if (item.isVirtual) {
-      return ActionResult(
-        _tx(
-          'connections.virtual_test',
-          'Esta conexión es derivada de Ollama y no se testea directamente',
-        ),
-      );
+      return ActionResult(_tx('connections.virtual_test'));
     }
     final token = this.token;
     if (token == null || token.isEmpty) return null;
@@ -360,10 +327,7 @@ class ConnectionsController extends ChangeNotifier {
     } catch (_) {
       if (_disposed) return null;
       _testStatus[item.id] = ConnectionTestStatus.error;
-      _testMessages[item.id] = _tx(
-        'connections.test_error',
-        'No se pudo testear la conexión',
-      );
+      _testMessages[item.id] = _tx('connections.test_error');
     }
     _notify();
     return null;
@@ -408,9 +372,7 @@ class ConnectionsController extends ChangeNotifier {
     } catch (_) {
       _resetPendingStatus(ids);
       _notify();
-      return ActionResult.error(
-        _tx('connections.mass_test_error', 'No se pudo ejecutar test masivo'),
-      );
+      return ActionResult.error(_tx('connections.mass_test_error'));
     } finally {
       if (!_disposed) {
         _testingAll = false;

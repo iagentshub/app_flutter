@@ -38,6 +38,7 @@ import '../../../shared/widgets/resource_history_dialog.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../../../utils/i18n.dart';
 import '../../agents/repositories/agents_repository.dart';
 import '../dialogs/knowledge_pack_dialog.dart';
 import '../dialogs/knowledge_pack_upload_progress_dialog.dart';
@@ -107,21 +108,18 @@ IconData skillCategoryIcon(String category) {
 /// Estaba fija en español para todos los idiomas: es la etiqueta que se ve en
 /// el filtro de categorías y en cada tarjeta de skill, así que un usuario con
 /// la app en inglés leía «IA y Agentes» y «Mensajería».
-String skillCategoryLabel(
-  String Function(String path, String fallback) tx,
-  String category,
-) {
+String skillCategoryLabel(String Function(String path) tx, String category) {
   return switch (category) {
-    'ai' => tx('knowledge.category_ai', 'IA y Agentes'),
-    'messaging' => tx('knowledge.category_messaging', 'Mensajería'),
-    'notes' => tx('knowledge.category_notes', 'Notas'),
-    'productivity' => tx('knowledge.category_productivity', 'Productividad'),
-    'dev' => tx('knowledge.category_dev', 'Desarrollo'),
-    'security' => tx('knowledge.category_security', 'Seguridad'),
-    'media' => tx('knowledge.category_media', 'Media'),
-    'data' => tx('knowledge.category_data', 'Datos'),
-    'company' => tx('knowledge.category_company', 'Empresa'),
-    _ => tx('knowledge.category_none', 'Sin categoría'),
+    'ai' => tx('knowledge.category_ai'),
+    'messaging' => tx('knowledge.category_messaging'),
+    'notes' => tx('knowledge.category_notes'),
+    'productivity' => tx('knowledge.category_productivity'),
+    'dev' => tx('knowledge.category_dev'),
+    'security' => tx('knowledge.category_security'),
+    'media' => tx('knowledge.category_media'),
+    'data' => tx('knowledge.category_data'),
+    'company' => tx('knowledge.category_company'),
+    _ => tx('knowledge.category_none'),
   };
 }
 
@@ -133,7 +131,10 @@ class KnowledgePage extends StatefulWidget {
 }
 
 class _KnowledgePageState extends State<KnowledgePage>
-    with SingleTickerProviderStateMixin, StateMessaging, WatchesResourceChanges {
+    with
+        SingleTickerProviderStateMixin,
+        StateMessaging,
+        WatchesResourceChanges {
   /// Servicios globales (cliente HTTP, sesión, idioma): los aporta el
   /// AppServicesScope montado en App, no el router.
   late final _services = AppServicesScope.of(context);
@@ -195,22 +196,22 @@ class _KnowledgePageState extends State<KnowledgePage>
   final _filteredPromptsMemo = Memoized<List<PromptItem>>();
   final _filteredToolsMemo = Memoized<List<ToolItem>>();
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   void _openKnowledgeFiltersDialog() {
-    final optionAll = _tx('explore.option_all', 'Todas');
+    final optionAll = _tx('explore.option_all');
     final originOptions = [
       ('all', optionAll),
-      ('owner', _tx('knowledge.origin_owner', 'Propietario')),
-      ('linked', _tx('knowledge.origin_linked', 'Enlace')),
-      ('fork', _tx('knowledge.origin_fork', 'Fork')),
+      ('owner', _tx('knowledge.origin_owner')),
+      ('linked', _tx('knowledge.origin_linked')),
+      ('fork', _tx('knowledge.origin_fork')),
     ];
 
     showFilterDialog(
       context,
-      title: _tx('common.filters', 'Filtros'),
-      clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
-      closeLabel: _tx('common.close', 'Cerrar'),
+      title: _tx('common.filters'),
+      clearLabel: _tx('common.clear_filters'),
+      closeLabel: _tx('common.close'),
       onClear: () {
         refresh(() {
           _knowledgeOrigin = 'all';
@@ -220,7 +221,7 @@ class _KnowledgePageState extends State<KnowledgePage>
       },
       buildFields: (setDialogState) => [
         Text(
-          _tx('knowledge.pack_display_label', 'Visualización'),
+          _tx('knowledge.pack_display_label'),
           style: Theme.of(context).textTheme.labelLarge,
         ),
         const SizedBox(height: 8),
@@ -232,12 +233,12 @@ class _KnowledgePageState extends State<KnowledgePage>
               ButtonSegment(
                 value: true,
                 icon: const Icon(Icons.inventory_2_outlined, size: 16),
-                label: Text(_tx('knowledge.pack_mode', 'Packs')),
+                label: Text(_tx('knowledge.pack_mode')),
               ),
               ButtonSegment(
                 value: false,
                 icon: const Icon(Icons.view_module_outlined, size: 16),
-                label: Text(_tx('knowledge.individual_mode', 'Individuales')),
+                label: Text(_tx('knowledge.individual_mode')),
               ),
             ],
             selected: {_knowledgePacksMode},
@@ -252,7 +253,7 @@ class _KnowledgePageState extends State<KnowledgePage>
         ),
         const SizedBox(height: 12),
         FilterDropdown(
-          label: _tx('knowledge.origin_label', 'Origen'),
+          label: _tx('knowledge.origin_label'),
           value: _knowledgeOrigin,
           options: originOptions,
           onChanged: (v) {
@@ -266,11 +267,11 @@ class _KnowledgePageState extends State<KnowledgePage>
   }
 
   void _openSkillFiltersDialog() {
-    final optionAll = _tx('explore.option_all', 'Todas');
+    final optionAll = _tx('explore.option_all');
     final scopeOptions = [
       ('all', optionAll),
-      ('private', _tx('agents.scope_private', 'Privado')),
-      ('public', _tx('agents.scope_public', 'Público')),
+      ('private', _tx('agents.scope_private')),
+      ('public', _tx('agents.scope_public')),
     ];
     final categoryOptions = [
       ('all', optionAll),
@@ -279,16 +280,16 @@ class _KnowledgePageState extends State<KnowledgePage>
 
     showFilterDialog(
       context,
-      title: _tx('common.filters', 'Filtros'),
-      clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
-      closeLabel: _tx('common.close', 'Cerrar'),
+      title: _tx('common.filters'),
+      clearLabel: _tx('common.clear_filters'),
+      closeLabel: _tx('common.close'),
       onClear: () => refresh(() {
         _skillScope = 'all';
         _skillCategory = 'all';
       }),
       buildFields: (setDialogState) => [
         FilterDropdown(
-          label: _tx('agents.scope_label', 'Visibilidad'),
+          label: _tx('agents.scope_label'),
           value: _skillScope,
           options: scopeOptions,
           onChanged: (v) {
@@ -298,7 +299,7 @@ class _KnowledgePageState extends State<KnowledgePage>
         ),
         const SizedBox(height: 12),
         FilterDropdown(
-          label: _tx('knowledge.category_label', 'Categoría'),
+          label: _tx('knowledge.category_label'),
           value: _skillCategory,
           options: categoryOptions,
           onChanged: (v) {
@@ -311,22 +312,22 @@ class _KnowledgePageState extends State<KnowledgePage>
   }
 
   void _openPromptFiltersDialog() {
-    final optionAll = _tx('explore.option_all', 'Todas');
+    final optionAll = _tx('explore.option_all');
     final scopeOptions = [
       ('all', optionAll),
-      ('private', _tx('agents.scope_private', 'Privado')),
-      ('public', _tx('agents.scope_public', 'Público')),
+      ('private', _tx('agents.scope_private')),
+      ('public', _tx('agents.scope_public')),
     ];
 
     showFilterDialog(
       context,
-      title: _tx('common.filters', 'Filtros'),
-      clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
-      closeLabel: _tx('common.close', 'Cerrar'),
+      title: _tx('common.filters'),
+      clearLabel: _tx('common.clear_filters'),
+      closeLabel: _tx('common.close'),
       onClear: () => refresh(() => _promptScope = 'all'),
       buildFields: (setDialogState) => [
         FilterDropdown(
-          label: _tx('agents.scope_label', 'Visibilidad'),
+          label: _tx('agents.scope_label'),
           value: _promptScope,
           options: scopeOptions,
           onChanged: (v) {
@@ -339,11 +340,11 @@ class _KnowledgePageState extends State<KnowledgePage>
   }
 
   void _openToolFiltersDialog() {
-    final optionAll = _tx('explore.option_all', 'Todas');
+    final optionAll = _tx('explore.option_all');
     final scopeOptions = [
       ('all', optionAll),
-      ('private', _tx('agents.scope_private', 'Privado')),
-      ('public', _tx('agents.scope_public', 'Público')),
+      ('private', _tx('agents.scope_private')),
+      ('public', _tx('agents.scope_public')),
     ];
     final languageOptions = [
       ('all', optionAll),
@@ -352,16 +353,16 @@ class _KnowledgePageState extends State<KnowledgePage>
 
     showFilterDialog(
       context,
-      title: _tx('common.filters', 'Filtros'),
-      clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
-      closeLabel: _tx('common.close', 'Cerrar'),
+      title: _tx('common.filters'),
+      clearLabel: _tx('common.clear_filters'),
+      closeLabel: _tx('common.close'),
       onClear: () => refresh(() {
         _toolScope = 'all';
         _toolLanguage = 'all';
       }),
       buildFields: (setDialogState) => [
         FilterDropdown(
-          label: _tx('agents.scope_label', 'Visibilidad'),
+          label: _tx('agents.scope_label'),
           value: _toolScope,
           options: scopeOptions,
           onChanged: (v) {
@@ -371,7 +372,7 @@ class _KnowledgePageState extends State<KnowledgePage>
         ),
         const SizedBox(height: 12),
         FilterDropdown(
-          label: _tx('knowledge.field_language', 'Lenguaje'),
+          label: _tx('knowledge.field_language'),
           value: _toolLanguage,
           options: languageOptions,
           onChanged: (v) {
@@ -403,8 +404,13 @@ class _KnowledgePageState extends State<KnowledgePage>
   /// Compartir arrastra skills, prompts y knowledge de un agente, así que un
   /// cambio en «sharing» puede alterar cualquiera de las cuatro pestañas.
   @override
-  Set<String> get watchedResources =>
-      const {'knowledge', 'skills', 'prompts', 'tools', 'sharing'};
+  Set<String> get watchedResources => const {
+    'knowledge',
+    'skills',
+    'prompts',
+    'tools',
+    'sharing',
+  };
 
   @override
   Future<void> onResourcesChanged(Set<String> changed) async {
@@ -479,11 +485,11 @@ class _KnowledgePageState extends State<KnowledgePage>
   Widget build(BuildContext context) {
     final section = _sectionIds[_tabController.index];
     final tabLabels = [
-      _tx('knowledge.tab_skills', 'Skills'),
-      _tx('knowledge.tab_prompts', 'Prompts'),
-      _tx('knowledge.tab_tools', 'Herramientas'),
-      _tx('knowledge.tab_documents', 'Documentos'),
-      _tx('knowledge.tab_memory', 'Memoria'),
+      _tx('knowledge.tab_skills'),
+      _tx('knowledge.tab_prompts'),
+      _tx('knowledge.tab_tools'),
+      _tx('knowledge.tab_documents'),
+      _tx('knowledge.tab_memory'),
     ];
 
     return Column(
@@ -520,12 +526,12 @@ class _KnowledgePageState extends State<KnowledgePage>
           localeController: _services.localeController,
         ),
         icon: const Icon(Icons.groups_outlined),
-        tooltip: _tx('groups.toggle_tooltip', 'Grupos'),
+        tooltip: _tx('groups.toggle_tooltip'),
         isSelected: _activeGroupId != null,
       ),
       if (_activeGroupId != null)
         ActionChip(
-          label: Text(_tx('groups.active_clear', 'Grupo activo ✕')),
+          label: Text(_tx('groups.active_clear')),
           onPressed: () => _onGroupSelect(null),
         ),
     ];

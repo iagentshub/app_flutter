@@ -31,7 +31,7 @@ class KnowledgePackUploadProgressDialog extends StatefulWidget {
   final KnowledgeRepository repository;
   final String token;
   final KnowledgePackDraft draft;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<KnowledgePackUploadProgressDialog> createState() =>
@@ -73,7 +73,7 @@ class _KnowledgePackUploadProgressDialogState
 
   String _message(Object error) => error is ApiError
       ? error.message
-      : widget.tx('knowledge.pack_file_unknown_error', 'Error inesperado');
+      : widget.tx('knowledge.pack_file_unknown_error');
 
   Future<void> _start() async {
     try {
@@ -190,9 +190,7 @@ class _KnowledgePackUploadProgressDialogState
     return PopScope(
       canPop: done || (!_running && !_finishing),
       child: AlertDialog(
-        title: Text(
-          widget.tx('knowledge.pack_upload_progress_title', 'Subiendo pack'),
-        ),
+        title: Text(widget.tx('knowledge.pack_upload_progress_title')),
         content: SizedBox(
           width: dialogContentWidth(context, 680),
           height: MediaQuery.sizeOf(context).height.clamp(360, 660) * 0.72,
@@ -204,14 +202,8 @@ class _KnowledgePackUploadProgressDialogState
                   Expanded(
                     child: Text(
                       done
-                          ? widget.tx(
-                              'knowledge.pack_upload_complete',
-                              'Carga completada',
-                            )
-                          : widget.tx(
-                              'knowledge.pack_upload_processing',
-                              'Procesando archivos',
-                            ),
+                          ? widget.tx('knowledge.pack_upload_complete')
+                          : widget.tx('knowledge.pack_upload_processing'),
                     ),
                   ),
                   Text('$_visibleCounter/$total'),
@@ -222,10 +214,7 @@ class _KnowledgePackUploadProgressDialogState
               const SizedBox(height: 8),
               Text(
                 widget
-                    .tx(
-                      'knowledge.pack_upload_summary',
-                      '{{ok}} correctos · {{failed}} con error · {{pending}} pendientes',
-                    )
+                    .tx('knowledge.pack_upload_summary')
                     .replaceAll('{{ok}}', '$_uploaded')
                     .replaceAll('{{failed}}', '$_failed')
                     .replaceAll(
@@ -257,32 +246,22 @@ class _KnowledgePackUploadProgressDialogState
           if (done)
             PrimaryButton(
               onPressed: () => Navigator.of(context).pop(_completedPack),
-              child: Text(widget.tx('common.close', 'Cerrar')),
+              child: Text(widget.tx('common.close')),
             )
           else if (!_running && !_finishing) ...[
             TertiaryButton(
               onPressed: _cancel,
-              child: Text(widget.tx('common.cancel', 'Cancelar')),
+              child: Text(widget.tx('common.cancel')),
             ),
             if (_failed > 0)
               SecondaryButton(
                 onPressed: _retryFailed,
-                child: Text(
-                  widget.tx(
-                    'knowledge.pack_retry_failed',
-                    'Reintentar fallidos',
-                  ),
-                ),
+                child: Text(widget.tx('knowledge.pack_retry_failed')),
               ),
             if (_uploaded > 0 && _failed > 0)
               PrimaryButton(
                 onPressed: _finish,
-                child: Text(
-                  widget.tx(
-                    'knowledge.pack_finish_without_failed',
-                    'Finalizar sin fallidos',
-                  ),
-                ),
+                child: Text(widget.tx('knowledge.pack_finish_without_failed')),
               ),
           ] else
             const Padding(
@@ -303,7 +282,7 @@ class _FileProgressRow extends StatelessWidget {
   const _FileProgressRow({required this.state, required this.tx});
 
   final _PackFileUploadState state;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   Widget build(BuildContext context) {
@@ -314,10 +293,10 @@ class _FileProgressRow extends StatelessWidget {
       _ => 1.0,
     };
     final status = switch (state.status) {
-      _PackFileUploadStatus.pending => tx('common.pending', 'Pendiente'),
-      _PackFileUploadStatus.uploading => tx('common.uploading', 'Subiendo'),
-      _PackFileUploadStatus.uploaded => tx('common.completed', 'Completado'),
-      _PackFileUploadStatus.failed => tx('common.error', 'Error'),
+      _PackFileUploadStatus.pending => tx('common.pending'),
+      _PackFileUploadStatus.uploading => tx('common.uploading'),
+      _PackFileUploadStatus.uploaded => tx('common.completed'),
+      _PackFileUploadStatus.failed => tx('common.error'),
     };
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 7),

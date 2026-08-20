@@ -69,7 +69,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
   late final WorkflowRunsController _workflowRuns;
   late final bool _ownsWorkflowRuns;
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   void _refresh(VoidCallback update) {
     setState(() {
@@ -221,13 +221,10 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
     }
     final discard = await showConfirmActionDialog(
       context,
-      title: _tx('workflow_editor.unsaved_title', 'Cambios sin guardar'),
-      message: _tx(
-        'workflow_editor.unsaved_body',
-        'Si sales ahora perderás los cambios de esta orquestación.',
-      ),
-      cancelLabel: _tx('workflow_editor.keep_editing', 'Seguir editando'),
-      confirmLabel: _tx('workflow_editor.discard_btn', 'Descartar'),
+      title: _tx('workflow_editor.unsaved_title'),
+      message: _tx('workflow_editor.unsaved_body'),
+      cancelLabel: _tx('workflow_editor.keep_editing'),
+      confirmLabel: _tx('workflow_editor.discard_btn'),
       destructive: true,
     );
     if (discard && mounted) Navigator.of(context).pop();
@@ -270,14 +267,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
   Widget _buildInspector() {
     final index = _steps.indexWhere((step) => step.id == _selectedStepId);
     if (index < 0) {
-      return Center(
-        child: Text(
-          _tx(
-            'workflow_editor.select_node_hint',
-            'Selecciona un nodo para editarlo',
-          ),
-        ),
-      );
+      return Center(child: Text(_tx('workflow_editor.select_node_hint')));
     }
     return ListView(
       padding: EdgeInsets.zero,
@@ -286,10 +276,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
           children: [
             Expanded(
               child: Text(
-                _tx(
-                  'workflow_editor.inspector_title',
-                  'Configuración del paso',
-                ),
+                _tx('workflow_editor.inspector_title'),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             ),
@@ -319,23 +306,17 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
     onConnectionCreated: _createConnection,
     onConnectionDeleted: _deleteConnection,
     canCreateConnection: _canCreateConnection,
-    fitTooltip: _tx('workflow_editor.fit_view', 'Encajar diagrama'),
-    zoomInTooltip: _tx('workflow_editor.zoom_in', 'Acercar'),
-    zoomOutTooltip: _tx('workflow_editor.zoom_out', 'Alejar'),
-    connectionHint: _tx(
-      'workflow_editor.visual_hint',
-      'Arrastra desde la salida de un nodo hasta la entrada de otro',
-    ),
-    inputLabel: _tx('workflow_editor.input_port', 'Entrada'),
-    outputLabel: _tx('workflow_editor.output_port', 'Salida'),
-    missingAgentLabel: _tx('workflow_editor.no_agent', 'Sin agente'),
-    agentKindLabel: _tx('workflow_editor.kind_agent', 'Agente'),
-    evaluatorKindLabel: _tx('workflow_editor.kind_evaluator', 'Evaluador'),
-    loopLabel: _tx('workflow_editor.loop_label', 'Bucle'),
-    invalidConnectionMessage: _tx(
-      'workflow_editor.invalid_connection',
-      'La conexión crearía un ciclo o ya existe',
-    ),
+    fitTooltip: _tx('workflow_editor.fit_view'),
+    zoomInTooltip: _tx('workflow_editor.zoom_in'),
+    zoomOutTooltip: _tx('workflow_editor.zoom_out'),
+    connectionHint: _tx('workflow_editor.visual_hint'),
+    inputLabel: _tx('workflow_editor.input_port'),
+    outputLabel: _tx('workflow_editor.output_port'),
+    missingAgentLabel: _tx('workflow_editor.no_agent'),
+    agentKindLabel: _tx('workflow_editor.kind_agent'),
+    evaluatorKindLabel: _tx('workflow_editor.kind_evaluator'),
+    loopLabel: _tx('workflow_editor.loop_label'),
+    invalidConnectionMessage: _tx('workflow_editor.invalid_connection'),
   );
 
   Widget _buildWorkspace() {
@@ -383,11 +364,8 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
             onPressed: canRun ? _testRun : null,
             icon: const Icon(Icons.play_arrow_rounded),
             tooltip: canRun
-                ? _tx('workflow_editor.test_run_btn', 'Probar')
-                : _tx(
-                    'workflow_editor.test_run_disabled',
-                    'Guarda los cambios para poder probar la orquestación',
-                  ),
+                ? _tx('workflow_editor.test_run_btn')
+                : _tx('workflow_editor.test_run_disabled'),
           ),
         Padding(
           padding: const EdgeInsets.only(right: 8),
@@ -395,7 +373,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
             key: const ValueKey('workflow-save-mobile'),
             onPressed: _issues.isEmpty ? _save : null,
             icon: const Icon(Icons.check_rounded),
-            tooltip: _tx('workflow_editor.save_btn', 'Guardar'),
+            tooltip: _tx('workflow_editor.save_btn'),
           ),
         ),
       ];
@@ -406,22 +384,19 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
           padding: const EdgeInsets.only(right: 8),
           child: Tooltip(
             message: canRun
-                ? _tx('workflow_editor.test_run_btn', 'Probar')
-                : _tx(
-                    'workflow_editor.test_run_disabled',
-                    'Guarda los cambios para poder probar la orquestación',
-                  ),
+                ? _tx('workflow_editor.test_run_btn')
+                : _tx('workflow_editor.test_run_disabled'),
             child: SecondaryButton.icon(
               onPressed: canRun ? _testRun : null,
               icon: const Icon(Icons.play_arrow_rounded, size: 18),
-              label: Text(_tx('workflow_editor.test_run_btn', 'Probar')),
+              label: Text(_tx('workflow_editor.test_run_btn')),
             ),
           ),
         ),
       PrimaryButton.icon(
         onPressed: _issues.isEmpty ? _save : null,
         icon: const Icon(Icons.check_rounded, size: 18),
-        label: Text(_tx('workflow_editor.save_btn', 'Guardar')),
+        label: Text(_tx('workflow_editor.save_btn')),
       ),
     ];
   }
@@ -440,8 +415,8 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
         appBar: AppBar(
           title: Text(
             widget.initial == null
-                ? _tx('workflow_editor.title_new', 'Nuevo workflow')
-                : _tx('workflow_editor.title_edit', 'Editar workflow'),
+                ? _tx('workflow_editor.title_new')
+                : _tx('workflow_editor.title_edit'),
           ),
           actions: _appBarActions(compact: compact),
         ),
@@ -461,7 +436,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
                           actions: [
                             TertiaryButton(
                               onPressed: () => setState(() => _error = null),
-                              child: Text(_tx('common.close', 'Cerrar')),
+                              child: Text(_tx('common.close')),
                             ),
                           ],
                         ),
@@ -502,44 +477,23 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
                       ),
                       const SizedBox(height: 16),
                       WorkflowEditorToolbar(
-                        title: _tx(
-                          'workflow_editor.canvas_title',
-                          'Lienzo de orquestación',
-                        ),
-                        subtitle: _tx(
-                          'workflow_editor.canvas_subtitle',
-                          'Diseña el flujo conectando agentes visualmente',
-                        ),
+                        title: _tx('workflow_editor.canvas_title'),
+                        subtitle: _tx('workflow_editor.canvas_subtitle'),
                         stepCount: _steps.length,
                         connectionCount: _steps.connectionCount,
                         issueCount: _issues.length,
-                        stepsLabel: _tx('workflows.steps_suffix', 'pasos'),
-                        connectionsLabel: _tx(
-                          'workflows.connections_suffix',
-                          'conexiones',
-                        ),
-                        issuesLabel: _tx(
-                          'workflow_editor.issues_suffix',
-                          'problemas',
-                        ),
-                        autoLayoutLabel: _tx(
-                          'workflow_editor.auto_layout',
-                          'Auto-organizar',
-                        ),
+                        stepsLabel: _tx('workflows.steps_suffix'),
+                        connectionsLabel: _tx('workflows.connections_suffix'),
+                        issuesLabel: _tx('workflow_editor.issues_suffix'),
+                        autoLayoutLabel: _tx('workflow_editor.auto_layout'),
                         onAutoLayout: _autoLayout,
-                        addLabel: _tx(
-                          'workflow_editor.add_step_btn',
-                          'Añadir paso',
-                        ),
+                        addLabel: _tx('workflow_editor.add_step_btn'),
                         onAdd: _addStep,
                       ),
                       const SizedBox(height: 14),
                       WorkflowIssuesPanel(
                         issues: _issues,
-                        title: _tx(
-                          'workflow_editor.issues_title',
-                          '{{n}} problemas impiden guardar',
-                        ),
+                        title: _tx('workflow_editor.issues_title'),
                         translate: _tx,
                         onSelectNode: (id) =>
                             _refresh(() => _selectedStepId = id),
@@ -557,15 +511,15 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
                 destinations: [
                   NavigationDestination(
                     icon: const Icon(Icons.tune_outlined),
-                    label: _tx('workflow_editor.mobile_details', 'Detalles'),
+                    label: _tx('workflow_editor.mobile_details'),
                   ),
                   NavigationDestination(
                     icon: const Icon(Icons.account_tree_outlined),
-                    label: _tx('workflow_editor.mobile_canvas', 'Diagrama'),
+                    label: _tx('workflow_editor.mobile_canvas'),
                   ),
                   NavigationDestination(
                     icon: const Icon(Icons.edit_note_outlined),
-                    label: _tx('workflow_editor.mobile_step', 'Paso'),
+                    label: _tx('workflow_editor.mobile_step'),
                   ),
                 ],
               )

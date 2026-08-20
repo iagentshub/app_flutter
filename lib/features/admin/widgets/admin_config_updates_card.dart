@@ -17,7 +17,7 @@ class _AdminUpdatesCard extends StatefulWidget {
   final AdminPlatformRepository repository;
   final String token;
   final bool initialAutoUpdate;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<_AdminUpdatesCard> createState() => _AdminUpdatesCardState();
@@ -33,7 +33,7 @@ class _AdminUpdatesCardState extends State<_AdminUpdatesCard> {
   bool _triggeringUpdate = false;
   String? _triggerResult;
 
-  String _tx(String path, String fallback) => widget.tx(path, fallback);
+  String _tx(String path) => widget.tx(path);
 
   @override
   void initState() {
@@ -56,11 +56,8 @@ class _AdminUpdatesCardState extends State<_AdminUpdatesCard> {
       setState(() {
         _autoUpdate = enabled;
         _autoUpdateResult = enabled
-            ? _tx('admin.config_auto_update_on', 'Auto-actualización activada')
-            : _tx(
-                'admin.config_auto_update_off',
-                'Auto-actualización desactivada',
-              );
+            ? _tx('admin.config_auto_update_on')
+            : _tx('admin.config_auto_update_off');
       });
     } on ApiError catch (error) {
       if (!mounted) return;
@@ -72,10 +69,7 @@ class _AdminUpdatesCardState extends State<_AdminUpdatesCard> {
       if (!mounted) return;
       setState(() {
         _autoUpdate = !desired;
-        _autoUpdateResult = _tx(
-          'admin.error_generic',
-          'No se pudo completar la acción',
-        );
+        _autoUpdateResult = _tx('admin.error_generic');
       });
     }
   }
@@ -98,22 +92,16 @@ class _AdminUpdatesCardState extends State<_AdminUpdatesCard> {
     if (upToDate == true) {
       description = _tx(
         'admin.config_commit_up_to_date',
-        'Up to date ({commit})',
       ).replaceAll('{commit}', commitStr);
       color = _statusOkColor;
     } else if (upToDate == false) {
-      description =
-          _tx(
-                'admin.config_commit_outdated',
-                'Outdated: {commit} (latest {latest})',
-              )
-              .replaceAll('{commit}', commitStr)
-              .replaceAll('{latest}', '${latest ?? '?'}');
+      description = _tx('admin.config_commit_outdated')
+          .replaceAll('{commit}', commitStr)
+          .replaceAll('{latest}', '${latest ?? '?'}');
       color = _statusWarnColor;
     } else {
       description = _tx(
         'admin.config_commit_unchecked',
-        '{commit} (unverified)',
       ).replaceAll('{commit}', commitStr);
       color = null;
     }
@@ -125,19 +113,19 @@ class _AdminUpdatesCardState extends State<_AdminUpdatesCard> {
   ) {
     final lines = <({String text, Color? color})?>[
       _commitLine(
-        _tx('admin.config_backend_commit_label', 'Backend'),
+        _tx('admin.config_backend_commit_label'),
         data['backend_commit'],
         data['backend_commit_latest'],
         data['backend_up_to_date'],
       ),
       _commitLine(
-        _tx('admin.config_frontend_commit_label', 'Web frontend'),
+        _tx('admin.config_frontend_commit_label'),
         data['frontend_commit'],
         data['frontend_commit_latest'],
         data['frontend_up_to_date'],
       ),
       _commitLine(
-        _tx('admin.config_app_commit_label', 'App (Flutter)'),
+        _tx('admin.config_app_commit_label'),
         data['app_commit'],
         data['app_commit_latest'],
         data['app_up_to_date'],
@@ -159,22 +147,15 @@ class _AdminUpdatesCardState extends State<_AdminUpdatesCard> {
       final commitLines = _buildCommitLines(data);
       if (data['checked'] != true) {
         setState(() {
-          _checkResult = _tx(
-            'admin.config_check_error',
-            'No se pudo comprobar actualizaciones',
-          );
+          _checkResult = _tx('admin.config_check_error');
           _checkOk = null;
           _commitLines = commitLines;
         });
       } else if (data['update_available'] == true) {
         setState(() {
-          _checkResult =
-              _tx(
-                    'admin.config_update_available',
-                    'Actualización disponible: {latest} (actual: {current})',
-                  )
-                  .replaceAll('{latest}', '${data['latest_version']}')
-                  .replaceAll('{current}', '${data['current_version']}');
+          _checkResult = _tx('admin.config_update_available')
+              .replaceAll('{latest}', '${data['latest_version']}')
+              .replaceAll('{current}', '${data['current_version']}');
           _checkOk = false;
           _commitLines = commitLines;
         });
@@ -182,7 +163,6 @@ class _AdminUpdatesCardState extends State<_AdminUpdatesCard> {
         setState(() {
           _checkResult = _tx(
             'admin.config_up_to_date',
-            'Al día (versión {version})',
           ).replaceAll('{version}', '${data['current_version']}');
           _checkOk = true;
           _commitLines = commitLines;
@@ -193,12 +173,7 @@ class _AdminUpdatesCardState extends State<_AdminUpdatesCard> {
       setState(() => _checkResult = error.message);
     } catch (_) {
       if (!mounted) return;
-      setState(
-        () => _checkResult = _tx(
-          'admin.config_check_error',
-          'No se pudo comprobar actualizaciones',
-        ),
-      );
+      setState(() => _checkResult = _tx('admin.config_check_error'));
     } finally {
       if (mounted) setState(() => _checkingUpdate = false);
     }
@@ -218,24 +193,14 @@ class _AdminUpdatesCardState extends State<_AdminUpdatesCard> {
       await widget.repository.triggerUpdateNow(widget.token);
       if (!mounted) return;
       setState(() {
-        _triggerResult = _tx(
-          'admin.config_update_now_triggered',
-          'Actualización disparada. Si el contenedor se reinicia para '
-              'aplicarla, la conexión puede cortarse unos segundos — vuelve '
-              'a comprobar en breve.',
-        );
+        _triggerResult = _tx('admin.config_update_now_triggered');
       });
     } on ApiError catch (error) {
       if (!mounted) return;
       setState(() => _triggerResult = error.message);
     } catch (_) {
       if (!mounted) return;
-      setState(
-        () => _triggerResult = _tx(
-          'admin.error_generic',
-          'No se pudo completar la acción',
-        ),
-      );
+      setState(() => _triggerResult = _tx('admin.error_generic'));
     } finally {
       if (mounted) setState(() => _triggeringUpdate = false);
     }
@@ -243,77 +208,63 @@ class _AdminUpdatesCardState extends State<_AdminUpdatesCard> {
 
   @override
   Widget build(BuildContext context) {
-    return _sectionCard(
-      _tx('admin.config_section_updates', 'Actualizaciones'),
-      [
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(
-            _tx(
-              'admin.config_auto_update',
-              'Actualización automática (Watchtower)',
-            ),
-          ),
-          value: _autoUpdate,
-          onChanged: _toggleAutoUpdate,
-        ),
-        if (_autoUpdateResult != null)
-          Text(
-            _autoUpdateResult!,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            SecondaryButton(
-              onPressed: _checkingUpdate ? null : _checkUpdate,
-              child: Text(
-                _checkingUpdate
-                    ? _tx('admin.config_check_update_loading', 'Buscando...')
-                    : _tx(
-                        'admin.config_check_update_btn',
-                        'Buscar actualización',
-                      ),
-              ),
-            ),
-            SecondaryButton(
-              onPressed: _triggeringUpdate ? null : _triggerUpdateNow,
-              child: Text(
-                _triggeringUpdate
-                    ? _tx('admin.config_update_now_loading', 'Actualizando...')
-                    : _tx('admin.config_update_now_btn', 'Actualizar ahora'),
-              ),
-            ),
-          ],
-        ),
-        if (_checkResult != null) ...[
-          const SizedBox(height: 6),
-          Text(
-            _checkResult!,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: _checkOk == null
-                  ? null
-                  : (_checkOk == true ? _statusOkColor : _statusWarnColor),
-            ),
-          ),
-        ],
-        if (_triggerResult != null) ...[
-          const SizedBox(height: 6),
-          Text(_triggerResult!, style: Theme.of(context).textTheme.bodySmall),
-        ],
-        for (final line in _commitLines)
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
+    return _sectionCard(_tx('admin.config_section_updates'), [
+      SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        title: Text(_tx('admin.config_auto_update')),
+        value: _autoUpdate,
+        onChanged: _toggleAutoUpdate,
+      ),
+      if (_autoUpdateResult != null)
+        Text(_autoUpdateResult!, style: Theme.of(context).textTheme.bodySmall),
+      const SizedBox(height: 8),
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          SecondaryButton(
+            onPressed: _checkingUpdate ? null : _checkUpdate,
             child: Text(
-              line.text,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: line.color),
+              _checkingUpdate
+                  ? _tx('admin.config_check_update_loading')
+                  : _tx('admin.config_check_update_btn'),
             ),
           ),
+          SecondaryButton(
+            onPressed: _triggeringUpdate ? null : _triggerUpdateNow,
+            child: Text(
+              _triggeringUpdate
+                  ? _tx('admin.config_update_now_loading')
+                  : _tx('admin.config_update_now_btn'),
+            ),
+          ),
+        ],
+      ),
+      if (_checkResult != null) ...[
+        const SizedBox(height: 6),
+        Text(
+          _checkResult!,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: _checkOk == null
+                ? null
+                : (_checkOk == true ? _statusOkColor : _statusWarnColor),
+          ),
+        ),
       ],
-    );
+      if (_triggerResult != null) ...[
+        const SizedBox(height: 6),
+        Text(_triggerResult!, style: Theme.of(context).textTheme.bodySmall),
+      ],
+      for (final line in _commitLines)
+        Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Text(
+            line.text,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: line.color),
+          ),
+        ),
+    ]);
   }
 }

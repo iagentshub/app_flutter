@@ -17,6 +17,7 @@ import '../../../shared/widgets/multi_select_dropdown.dart';
 import '../../../shared/widgets/resource_collection_view.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../../../utils/i18n.dart';
 import '../../agents/repositories/agents_repository.dart';
 import '../../knowledge/repositories/knowledge_repository.dart';
 import '../../knowledge/repositories/prompts_repository.dart';
@@ -57,7 +58,7 @@ class _LabelsPageState extends State<LabelsPage>
   String _selectedOwnership = '';
   String _query = '';
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   @override
   void initState() {
@@ -96,7 +97,7 @@ class _LabelsPageState extends State<LabelsPage>
     final token = _token;
     if (token == null || token.isEmpty) {
       setState(() {
-        _error = _tx('common.no_session', 'No hay sesión activa');
+        _error = _tx('common.no_session');
         _loading = false;
       });
       return;
@@ -141,7 +142,7 @@ class _LabelsPageState extends State<LabelsPage>
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = _tx('labels.error_generic', 'No se pudieron cargar labels');
+        _error = _tx('labels.error_generic');
         _loading = false;
       });
     }
@@ -165,7 +166,7 @@ class _LabelsPageState extends State<LabelsPage>
           item.name,
           item.description,
           _itemTypeLabel(item.type),
-          for (final label in item.labels) _tx('labels.$label', label),
+          for (final label in item.labels) trOr('labels.$label', label),
         ].join(' ').toLowerCase();
         if (!searchable.contains(query)) return false;
       }
@@ -191,17 +192,17 @@ class _LabelsPageState extends State<LabelsPage>
   String _itemTypeLabel(String type) {
     switch (type) {
       case 'agent':
-        return _tx('labels.item_type_agent', 'Agente');
+        return _tx('labels.item_type_agent');
       case 'skill':
-        return _tx('labels.item_type_skill', 'Skill');
+        return _tx('labels.item_type_skill');
       case 'prompt':
-        return _tx('labels.item_type_prompt', 'Prompt');
+        return _tx('labels.item_type_prompt');
       case 'tool':
-        return _tx('labels.item_type_tool', 'Herramienta');
+        return _tx('labels.item_type_tool');
       case 'workflow':
-        return _tx('labels.item_type_workflow', 'Workflow');
+        return _tx('labels.item_type_workflow');
       case 'knowledge':
-        return _tx('labels.item_type_knowledge', 'Knowledge');
+        return _tx('labels.item_type_knowledge');
       default:
         return type;
     }
@@ -215,37 +216,37 @@ class _LabelsPageState extends State<LabelsPage>
     return [
       _typeOption(
         'agent',
-        _tx('explore.type_agents', 'Agentes'),
+        _tx('explore.type_agents'),
         Icons.smart_toy_outlined,
         counts,
       ),
       _typeOption(
         'skill',
-        _tx('explore.type_skills', 'Skills'),
+        _tx('explore.type_skills'),
         Icons.bolt_outlined,
         counts,
       ),
       _typeOption(
         'prompt',
-        _tx('explore.type_prompts', 'Prompts'),
+        _tx('explore.type_prompts'),
         Icons.chat_bubble_outline,
         counts,
       ),
       _typeOption(
         'tool',
-        _tx('explore.type_tools', 'Herramientas'),
+        _tx('explore.type_tools'),
         Icons.build_outlined,
         counts,
       ),
       _typeOption(
         'knowledge',
-        _tx('explore.type_knowledge', 'Knowledge'),
+        _tx('explore.type_knowledge'),
         Icons.menu_book_outlined,
         counts,
       ),
       _typeOption(
         'workflow',
-        _tx('explore.type_workflows', 'Workflows'),
+        _tx('explore.type_workflows'),
         Icons.account_tree_outlined,
         counts,
       ),
@@ -268,16 +269,10 @@ class _LabelsPageState extends State<LabelsPage>
   List<(String, String)> get _ownershipOptions {
     final counts = _ownershipCounts();
     return [
-      ('', _tx('labels.all_ownership', 'Cualquier propiedad')),
-      (
-        'owner',
-        '${_tx('labels.owner', 'Propietario')} (${counts['owner'] ?? 0})',
-      ),
-      (
-        'linked',
-        '${_tx('labels.linked', 'Enlace')} (${counts['linked'] ?? 0})',
-      ),
-      ('fork', '${_tx('labels.fork', 'Fork')} (${counts['fork'] ?? 0})'),
+      ('', _tx('labels.all_ownership')),
+      ('owner', '${_tx('labels.owner')} (${counts['owner'] ?? 0})'),
+      ('linked', '${_tx('labels.linked')} (${counts['linked'] ?? 0})'),
+      ('fork', '${_tx('labels.fork')} (${counts['fork'] ?? 0})'),
     ];
   }
 
@@ -290,16 +285,16 @@ class _LabelsPageState extends State<LabelsPage>
     }
     final entries = counts.entries.toList()
       ..sort(
-        (a, b) => _tx(
+        (a, b) => trOr(
           'labels.${a.key}',
           a.key,
-        ).compareTo(_tx('labels.${b.key}', b.key)),
+        ).compareTo(trOr('labels.${b.key}', b.key)),
       );
     return [
       for (final entry in entries)
         MultiSelectDropdownOption(
           value: entry.key,
-          label: _tx('labels.${entry.key}', entry.key),
+          label: trOr('labels.${entry.key}', entry.key),
           color: labelColor(entry.key),
           count: entry.value,
         ),
@@ -316,14 +311,14 @@ class _LabelsPageState extends State<LabelsPage>
   void _openFiltersDialog() {
     showFilterDialog(
       context,
-      title: _tx('common.filters', 'Filtros'),
-      clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
-      closeLabel: _tx('common.close', 'Cerrar'),
+      title: _tx('common.filters'),
+      clearLabel: _tx('common.clear_filters'),
+      closeLabel: _tx('common.close'),
       onClear: _clearFilters,
       buildFields: (setDialogState) => [
         FilterDropdown(
           key: ValueKey('labels-ownership-$_selectedOwnership'),
-          label: _tx('labels.ownership_filter', 'Propiedad'),
+          label: _tx('labels.ownership_filter'),
           value: _selectedOwnership,
           options: _ownershipOptions,
           onChanged: (value) {
@@ -334,13 +329,11 @@ class _LabelsPageState extends State<LabelsPage>
         const SizedBox(height: 16),
         MultiSelectDropdown<String>(
           key: const Key('labelsLabelDropdown'),
-          labelText: _tx('labels.label_filter', 'Etiqueta'),
-          tooltip: _tx('labels.selector_tooltip', 'Seleccionar etiquetas'),
-          emptyLabel: _tx('labels.all_labels', 'Todas las etiquetas'),
-          multipleSelectedLabel: (count) => _tx(
-            'labels.selected_count',
-            '{count} etiquetas seleccionadas',
-          ).replaceAll('{count}', '$count'),
+          labelText: _tx('labels.label_filter'),
+          tooltip: _tx('labels.selector_tooltip'),
+          emptyLabel: _tx('labels.all_labels'),
+          multipleSelectedLabel: (count) =>
+              _tx('labels.selected_count').replaceAll('{count}', '$count'),
           options: _labelOptions,
           selectedValues: _selectedLabels,
           onChanged: (values) {
@@ -376,33 +369,25 @@ class _LabelsPageState extends State<LabelsPage>
       onRefresh: _loadBase,
       header: ExploreSearchToolbar(
         searchController: _queryController,
-        searchHint: _tx(
-          'labels.search_hint',
-          'Buscar por nombre, descripción o etiqueta',
-        ),
+        searchHint: _tx('labels.search_hint'),
         onSearchChanged: (value) => setState(() => _query = value),
         typeOptions: _typeOptions,
         selectedTypes: _selectedTypes,
-        allTypesLabel: _tx('explore.type_all', 'Todos'),
-        typeFilterTooltip: _tx(
-          'labels.type_filter_tooltip',
-          'Filtrar por tipo de recurso',
-        ),
-        multipleTypesLabel: (count) => _tx(
-          'labels.types_selected',
-          '{count} tipos',
-        ).replaceAll('{count}', '$count'),
+        allTypesLabel: _tx('explore.type_all'),
+        typeFilterTooltip: _tx('labels.type_filter_tooltip'),
+        multipleTypesLabel: (count) =>
+            _tx('labels.types_selected').replaceAll('{count}', '$count'),
         onTypesChanged: (values) => setState(() => _selectedTypes = values),
         selectorKey: const Key('labelsTypeDropdown'),
         actions: [
           AppIconButton.outlined(
             onPressed: _loadBase,
             icon: const Icon(Icons.refresh),
-            tooltip: _tx('common.update', 'Actualizar'),
+            tooltip: _tx('common.update'),
           ),
           FilterButton(
             activeCount: _activeFilterCount,
-            tooltip: _tx('common.filters', 'Filtros'),
+            tooltip: _tx('common.filters'),
             onPressed: _openFiltersDialog,
           ),
         ],
@@ -412,7 +397,7 @@ class _LabelsPageState extends State<LabelsPage>
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
           sliver: SliverToBoxAdapter(
             child: Text(
-              '${_tx('labels.resources', 'Recursos')}: ${filtered.length}',
+              '${_tx('labels.resources')}: ${filtered.length}',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ),
@@ -426,11 +411,8 @@ class _LabelsPageState extends State<LabelsPage>
           : AsyncStatePanel.empty(
               padding: EdgeInsets.zero,
               icon: Icons.search_off,
-              title: _tx('labels.empty_title', 'Sin resultados'),
-              message: _tx(
-                'labels.empty_resources',
-                'No hay recursos para esta búsqueda o estos filtros.',
-              ),
+              title: _tx('labels.empty_title'),
+              message: _tx('labels.empty_resources'),
             ),
       itemCount: _loading ? 0 : filtered.length,
       itemBuilder: (context, index) {
@@ -438,13 +420,13 @@ class _LabelsPageState extends State<LabelsPage>
         return LabeledItemCard(
           item: item,
           typeLabel: _itemTypeLabel(item.type),
-          ownerLabel: _tx('common.owner', 'Propietario'),
-          linkedLabel: _tx('common.linked', 'Enlace'),
-          forkLabel: _tx('common.fork', 'Fork'),
-          labelText: (label) => _tx('labels.$label', label),
+          ownerLabel: _tx('common.owner'),
+          linkedLabel: _tx('common.linked'),
+          forkLabel: _tx('common.fork'),
+          labelText: (label) => trOr('labels.$label', label),
           onTap: () => showMessage(
             item.description.isEmpty
-                ? _tx('labels.no_description', 'Sin descripción')
+                ? _tx('labels.no_description')
                 : item.description,
           ),
         );
@@ -458,9 +440,9 @@ class _LabelsPageState extends State<LabelsPage>
       return ListView(
         children: [
           AsyncStatePanel.error(
-            title: _tx('labels.error_title', 'Error cargando Labels'),
+            title: _tx('labels.error_title'),
             message: _error!,
-            retryLabel: _tx('common.retry', 'Reintentar'),
+            retryLabel: _tx('common.retry'),
             onRetry: _loadBase,
           ),
         ],
@@ -472,8 +454,8 @@ class _LabelsPageState extends State<LabelsPage>
         TabBar(
           controller: _tabController,
           tabs: [
-            Tab(text: _tx('labels.tab_catalog', 'Catálogo')),
-            Tab(text: _tx('labels.tab_search', 'Buscar por etiqueta')),
+            Tab(text: _tx('labels.tab_catalog')),
+            Tab(text: _tx('labels.tab_search')),
           ],
         ),
         Expanded(

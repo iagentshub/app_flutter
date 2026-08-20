@@ -6,11 +6,14 @@ import 'package:app_flutter/features/knowledge/dialogs/knowledge_pack_upload_pro
 import 'package:app_flutter/features/knowledge/models/local_knowledge_file.dart';
 import 'package:app_flutter/features/knowledge/repositories/knowledge_repository.dart';
 import 'package:app_flutter/shared/state/backend_controller.dart';
+import 'package:app_flutter/utils/i18n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'support/i18n_de_prueba.dart';
 
 Future<void> _pumpUntil(
   WidgetTester tester,
@@ -25,6 +28,8 @@ Future<void> _pumpUntil(
 }
 
 void main() {
+  setUp(cargarTraduccionesDePrueba);
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets(
@@ -93,7 +98,7 @@ void main() {
               labels: const {'private'},
               sourceMode: 'upload',
             ),
-            tx: (_, fallback) => fallback,
+            tx: tr,
           ),
         ),
       );

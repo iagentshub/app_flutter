@@ -77,7 +77,7 @@ class _VsCodeAuthPageState extends State<VsCodeAuthPage> {
     super.dispose();
   }
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   Future<void> _authorize() async {
     final token = _services.sessionController.gaToken;
@@ -109,12 +109,7 @@ class _VsCodeAuthPageState extends State<VsCodeAuthPage> {
       setState(() => _error = error.message);
     } catch (_) {
       if (!mounted) return;
-      setState(
-        () => _error = _tx(
-          'vscode_auth.error_generic',
-          'No se pudo autorizar la conexión',
-        ),
-      );
+      setState(() => _error = _tx('vscode_auth.error_generic'));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -127,19 +122,9 @@ class _VsCodeAuthPageState extends State<VsCodeAuthPage> {
 
     Widget body;
     if (target == null || state == null || state.isEmpty) {
-      body = Text(
-        _tx(
-          'vscode_auth.invalid_link',
-          'Enlace de autorización inválido o incompleto.',
-        ),
-      );
+      body = Text(_tx('vscode_auth.invalid_link'));
     } else if (_done) {
-      body = Text(
-        _tx(
-          'vscode_auth.done_message',
-          'Autorización completada. Puedes volver a tu editor.',
-        ),
-      );
+      body = Text(_tx('vscode_auth.done_message'));
     } else {
       final username = _services.sessionController.user?.username ?? '';
       body = Column(
@@ -149,7 +134,6 @@ class _VsCodeAuthPageState extends State<VsCodeAuthPage> {
           Text(
             _tx(
               'vscode_auth.connect_prompt',
-              'Vas a conectar tu editor con la cuenta de {{username}}.',
             ).replaceAll('{{username}}', username),
           ),
           if (_error != null) ...[
@@ -166,8 +150,8 @@ class _VsCodeAuthPageState extends State<VsCodeAuthPage> {
                 onPressed: _loading ? null : _authorize,
                 child: Text(
                   _loading
-                      ? _tx('vscode_auth.authorize_btn_loading', 'Autorizando…')
-                      : _tx('vscode_auth.authorize_btn', 'Autorizar'),
+                      ? _tx('vscode_auth.authorize_btn_loading')
+                      : _tx('vscode_auth.authorize_btn'),
                 ),
               ),
               const SizedBox(width: 8),
@@ -175,7 +159,7 @@ class _VsCodeAuthPageState extends State<VsCodeAuthPage> {
                 onPressed: _loading
                     ? null
                     : () => Navigator.of(context).maybePop(),
-                child: Text(_tx('vscode_auth.cancel_btn', 'Cancelar')),
+                child: Text(_tx('vscode_auth.cancel_btn')),
               ),
             ],
           ),
@@ -197,7 +181,7 @@ class _VsCodeAuthPageState extends State<VsCodeAuthPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    _tx('vscode_auth.title', 'Autorizar VS Code'),
+                    _tx('vscode_auth.title'),
                     style: const TextStyle(
                       fontSize: FncFonts.size20,
                       fontWeight: FontWeight.w800,

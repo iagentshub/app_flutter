@@ -43,7 +43,7 @@ class _ConnectionsPageState extends State<ConnectionsPage>
   late final TranslatedTexts _t;
   late final TabController _tabController;
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   @override
   void initState() {
@@ -96,7 +96,7 @@ class _ConnectionsPageState extends State<ConnectionsPage>
 
   void _openFiltersDialog() {
     final providerOptions = [
-      ('all', _tx('explore.option_all', 'Todas')),
+      ('all', _tx('explore.option_all')),
       ..._controller
           .providersForCategory(_controller.currentCategory)
           .map(
@@ -109,13 +109,13 @@ class _ConnectionsPageState extends State<ConnectionsPage>
 
     showFilterDialog(
       context,
-      title: _tx('common.filters', 'Filtros'),
-      clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
-      closeLabel: _tx('common.close', 'Cerrar'),
+      title: _tx('common.filters'),
+      clearLabel: _tx('common.clear_filters'),
+      closeLabel: _tx('common.close'),
       onClear: _controller.clearProviderFilter,
       buildFields: (setDialogState) => [
         FilterDropdown(
-          label: _tx('connections.provider_label', 'Proveedor'),
+          label: _tx('connections.provider_label'),
           value: _controller.providerFilter,
           options: providerOptions,
           onChanged: (value) {
@@ -173,13 +173,12 @@ class _ConnectionsPageState extends State<ConnectionsPage>
         item,
         confirm: () => showConfirmActionDialog(
           context,
-          title: _tx('connections.delete_title', 'Eliminar conexión'),
+          title: _tx('connections.delete_title'),
           message: _tx(
             'connections.delete_confirm',
-            '¿Seguro que quieres eliminar "{{name}}"?',
           ).replaceAll('{{name}}', item.name),
-          cancelLabel: _tx('common.cancel', 'Cancelar'),
-          confirmLabel: _tx('common.delete', 'Eliminar'),
+          cancelLabel: _tx('common.cancel'),
+          confirmLabel: _tx('common.delete'),
         ),
       ),
     ),
@@ -204,7 +203,6 @@ class _ConnectionsPageState extends State<ConnectionsPage>
         title: Text(
           _tx(
             'connections.mass_test_title',
-            'Test masivo ({{n}})',
           ).replaceAll('{{n}}', '${summary.results.length}'),
         ),
         content: SizedBox(
@@ -214,10 +212,7 @@ class _ConnectionsPageState extends State<ConnectionsPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _tx(
-                      'connections.mass_test_summary',
-                      'Correctas: {{ok}} | Fallidas: {{fail}}',
-                    )
+                _tx('connections.mass_test_summary')
                     .replaceAll('{{ok}}', '${summary.passed}')
                     .replaceAll('{{fail}}', '${summary.failed}'),
               ),
@@ -252,7 +247,7 @@ class _ConnectionsPageState extends State<ConnectionsPage>
         actions: [
           PrimaryButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(_tx('common.close', 'Cerrar')),
+            child: Text(_tx('common.close')),
           ),
         ],
       ),

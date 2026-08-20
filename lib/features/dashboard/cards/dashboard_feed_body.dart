@@ -57,7 +57,7 @@ class _DashboardFeedBodyState extends State<DashboardFeedBody> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = widget.tx('feed_load_error', 'No se pudo cargar la actividad');
+        _error = widget.tx('feed_load_error');
       });
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -87,14 +87,7 @@ class _DashboardFeedBodyState extends State<DashboardFeedBody> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            widget.tx(
-              'favorite_update_error',
-              'No se pudo actualizar Favoritos',
-            ),
-          ),
-        ),
+        SnackBar(content: Text(widget.tx('favorite_update_error'))),
       );
     } finally {
       if (mounted) setState(() => _pendingStars.remove(item.key));
@@ -121,22 +114,17 @@ class _DashboardFeedBodyState extends State<DashboardFeedBody> {
             SecondaryButton.icon(
               onPressed: _load,
               icon: const Icon(Icons.refresh),
-              label: Text(widget.tx('feed_retry', 'Reintentar')),
+              label: Text(widget.tx('feed_retry')),
             ),
           ],
         ),
       );
     }
     if (_items.isEmpty) {
-      return Text(
-        widget.tx(
-          'no_recent_activity',
-          'No hay actividad reciente de la comunidad',
-        ),
-      );
+      return Text(widget.tx('no_recent_activity'));
     }
 
-    final defaultResourceName = widget.tx('default_resource_name', 'Recurso');
+    final defaultResourceName = widget.tx('default_resource_name');
     return Column(
       children: [
         if (_error != null)
@@ -180,10 +168,7 @@ class _DashboardFeedBodyState extends State<DashboardFeedBody> {
                       color: starred ? FncColors.materialAmber : null,
                       size: 20,
                     ),
-                    tooltip: widget.tx(
-                      'toggle_favorite',
-                      'Marcar o quitar de favoritos',
-                    ),
+                    tooltip: widget.tx('toggle_favorite'),
                     onPressed: item.canToggleFavorite
                         ? () => _toggleStar(item)
                         : null,

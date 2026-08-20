@@ -54,20 +54,17 @@ extension _AdminIntegrationCards on _AdminPageState {
                 _officialAction(agent, 'agent'),
                 ActionIconButton(
                   icon: Icons.edit_outlined,
-                  tooltip: _tx('common.edit', 'Editar'),
+                  tooltip: _tx('common.edit'),
                   onPressed: () => _openEditAgentDialog(agent),
                 ),
                 ActionIconButton(
                   icon: Icons.swap_horiz,
-                  tooltip: _tx(
-                    'admin.action_change_owner',
-                    'Cambiar propietario',
-                  ),
+                  tooltip: _tx('admin.action_change_owner'),
                   onPressed: () => _changeOwner(agent, 'agent'),
                 ),
                 ActionIconButton(
                   icon: Icons.delete_outline,
-                  tooltip: _tx('common.delete', 'Eliminar'),
+                  tooltip: _tx('common.delete'),
                   danger: true,
                   onPressed: () => _deleteAgent(agent),
                 ),
@@ -122,15 +119,12 @@ extension _AdminIntegrationCards on _AdminPageState {
                 _resourceGraphAction(AdminResourceType.connection, conn),
                 ActionIconButton(
                   icon: Icons.swap_horiz,
-                  tooltip: _tx(
-                    'admin.action_change_owner',
-                    'Cambiar propietario',
-                  ),
+                  tooltip: _tx('admin.action_change_owner'),
                   onPressed: () => _changeOwner(conn, 'connection'),
                 ),
                 ActionIconButton(
                   icon: Icons.delete_outline,
-                  tooltip: _tx('common.delete', 'Eliminar'),
+                  tooltip: _tx('common.delete'),
                   danger: true,
                   onPressed: () => _deleteConnection(conn),
                 ),

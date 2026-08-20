@@ -12,15 +12,15 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
       runSpacing: 8,
       children: [
         _summaryChip(
-          '${_tx('centinel.results_filter_passed', 'Pasados')}: $passed',
+          '${_tx('centinel.results_filter_passed')}: $passed',
           FncColors.success,
         ),
         _summaryChip(
-          '${_tx('centinel.results_filter_failed', 'Fallidos')}: $failed',
+          '${_tx('centinel.results_filter_failed')}: $failed',
           FncColors.danger,
         ),
         _summaryChip(
-          '${_tx('centinel.results_filter_skipped', 'Omitidos')}: $skipped',
+          '${_tx('centinel.results_filter_skipped')}: $skipped',
           FncColors.labelDevelopment,
         ),
         if (error is num && error > 0)
@@ -60,7 +60,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _tx('centinel.tree_modules_title', 'Módulos'),
+                  _tx('centinel.tree_modules_title'),
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 6),
@@ -68,10 +68,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
                   controller: _treeSearchController,
                   decoration: InputDecoration(
                     isDense: true,
-                    labelText: _tx(
-                      'centinel.tree_filter_placeholder',
-                      'Filtrar…',
-                    ),
+                    labelText: _tx('centinel.tree_filter_placeholder'),
                     prefixIcon: const Icon(Icons.search, size: 18),
                   ),
                   onChanged: (_) => refresh(() {}),
@@ -88,11 +85,11 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
               children: [
                 TertiaryButton(
                   onPressed: _selectAll,
-                  child: Text(_tx('centinel.tree_select_all', 'Todo')),
+                  child: Text(_tx('centinel.tree_select_all')),
                 ),
                 TertiaryButton(
                   onPressed: _deselectAll,
-                  child: Text(_tx('centinel.tree_deselect_all', 'Ninguno')),
+                  child: Text(_tx('centinel.tree_deselect_all')),
                 ),
                 const Spacer(),
                 Text(
@@ -133,9 +130,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
     }
     final dirs = (_tree?['dirs'] as List?) ?? const [];
     if (dirs.isEmpty) {
-      return Center(
-        child: Text(_tx('centinel.tree_discovering', 'Descubriendo tests…')),
-      );
+      return Center(child: Text(_tx('centinel.tree_discovering')));
     }
 
     final q = _treeSearchController.text.trim().toLowerCase();
@@ -152,11 +147,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
           )
           .toList();
       if (files.isEmpty) continue;
-      visibleDirs.add((
-        dir['dir'].toString(),
-        '${dir['count']}',
-        files,
-      ));
+      visibleDirs.add((dir['dir'].toString(), '${dir['count']}', files));
     }
 
     return ListView.builder(
@@ -167,15 +158,16 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
           // La búsqueda forma parte de la clave: al cambiarla, un grupo que
           // estaba abierto por coincidir debe reevaluar si sigue abierto.
           key: ValueKey('$name|$q'),
-          title: Text(
-            name,
-            style: const TextStyle(fontSize: FncFonts.size13),
-          ),
+          title: Text(name, style: const TextStyle(fontSize: FncFonts.size13)),
           trailing: Text(count, style: Theme.of(context).textTheme.bodySmall),
           initiallyExpanded: q.isNotEmpty,
           childrenBuilder: () => [
             for (final f in files)
-              _buildFileCheckbox(context, f['file'].toString(), '${f['count']}'),
+              _buildFileCheckbox(
+                context,
+                f['file'].toString(),
+                '${f['count']}',
+              ),
           ],
         );
       },
@@ -219,7 +211,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
             child: Row(
               children: [
                 Text(
-                  _tx('centinel.results_title', 'Resultados'),
+                  _tx('centinel.results_title'),
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(width: 12),
@@ -228,31 +220,25 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _filterTab(
-                          'all',
-                          _tx('centinel.results_filter_all', 'Todos'),
-                        ),
+                        _filterTab('all', _tx('centinel.results_filter_all')),
                         _filterTab(
                           'failed',
-                          _tx('centinel.results_filter_failed', 'Fallidos'),
+                          _tx('centinel.results_filter_failed'),
                         ),
                         _filterTab(
                           'passed',
-                          _tx('centinel.results_filter_passed', 'Pasados'),
+                          _tx('centinel.results_filter_passed'),
                         ),
                         _filterTab(
                           'skipped',
-                          _tx('centinel.results_filter_skipped', 'Omitidos'),
+                          _tx('centinel.results_filter_skipped'),
                         ),
                       ],
                     ),
                   ),
                 ),
                 AppIconButton(
-                  tooltip: _tx(
-                    'centinel.results_log_toggle_title',
-                    'Ver log en tiempo real',
-                  ),
+                  tooltip: _tx('centinel.results_log_toggle_title'),
                   onPressed: () => refresh(() => _logView = !_logView),
                   icon: Icon(
                     _logView ? Icons.list_alt : Icons.terminal_outlined,
@@ -261,7 +247,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
                   isSelected: _logView,
                 ),
                 AppIconButton(
-                  tooltip: _tx('centinel.results_copy_log', 'Copiar log'),
+                  tooltip: _tx('centinel.results_copy_log'),
                   onPressed: _logLines.isEmpty ? null : _copyLog,
                   icon: const Icon(Icons.copy_all_outlined, size: 18),
                 ),
@@ -289,14 +275,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
 
   Widget _buildLogPane() {
     if (_logLines.isEmpty) {
-      return Center(
-        child: Text(
-          _tx(
-            'centinel.results_empty_state',
-            'Ejecuta los tests para ver los resultados',
-          ),
-        ),
-      );
+      return Center(child: Text(_tx('centinel.results_empty_state')));
     }
     return ListView.builder(
       padding: const EdgeInsets.all(8),
@@ -309,14 +288,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
   Widget _buildResultsList() {
     final items = _filteredEvents;
     if (items.isEmpty) {
-      return Center(
-        child: Text(
-          _tx(
-            'centinel.results_empty_state',
-            'Ejecuta los tests para ver los resultados',
-          ),
-        ),
-      );
+      return Center(child: Text(_tx('centinel.results_empty_state')));
     }
     final byFile = <String, List<_TestEvent>>{};
     for (final e in items) {
@@ -383,7 +355,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (dialogContext, setDialogState) => AlertDialog(
-          title: Text(_tx('centinel.history_title', 'Historial reciente')),
+          title: Text(_tx('centinel.history_title')),
           content: SizedBox(
             width: 480,
             child: _buildHistoryList(setDialogState),
@@ -391,7 +363,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
           actions: [
             TertiaryButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(_tx('common.close', 'Cerrar')),
+              child: Text(_tx('common.close')),
             ),
           ],
         ),
@@ -401,7 +373,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
 
   Widget _buildHistoryList(StateSetter setDialogState) {
     if (_history.isEmpty) {
-      return Text(_tx('centinel.history_empty', 'Sin ejecuciones previas'));
+      return Text(_tx('centinel.history_empty'));
     }
     return ListView(
       shrinkWrap: true,
@@ -429,7 +401,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
             '$status · $passed passed · $failed failed · $skipped skipped',
           ),
           trailing: AppIconButton(
-            tooltip: _tx('centinel.history_delete_action', 'Borrar'),
+            tooltip: _tx('centinel.history_delete_action'),
             icon: const Icon(Icons.delete_outline, size: 18),
             onPressed: () => _deleteHistoryEntry(runId, setDialogState),
           ),
@@ -444,13 +416,10 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
   ) async {
     final confirmed = await showConfirmActionDialog(
       context,
-      title: _tx('centinel.history_delete_title', 'Borrar ejecución'),
-      message: _tx(
-        'centinel.history_delete_body',
-        '¿Seguro que quieres borrar esta ejecución del historial?',
-      ),
-      cancelLabel: _tx('common.cancel', 'Cancelar'),
-      confirmLabel: _tx('common.delete', 'Eliminar'),
+      title: _tx('centinel.history_delete_title'),
+      message: _tx('centinel.history_delete_body'),
+      cancelLabel: _tx('common.cancel'),
+      confirmLabel: _tx('common.delete'),
       destructive: true,
     );
     if (!confirmed) return;
@@ -461,10 +430,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
           .toList();
       setDialogState(() {});
     } catch (_) {
-      showMessage(
-        _tx('centinel.history_delete_failed', 'No se pudo borrar la ejecución'),
-        isError: true,
-      );
+      showMessage(_tx('centinel.history_delete_failed'), isError: true);
     }
   }
 }

@@ -44,7 +44,7 @@ class _MetadataPageState extends State<MetadataPage>
   int _sortColumnIndex = 1;
   bool _sortAscending = false;
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   String? get _token => _services.sessionController.gaToken;
 
@@ -83,7 +83,7 @@ class _MetadataPageState extends State<MetadataPage>
     final token = _token;
     if (token == null || token.isEmpty) {
       setState(() {
-        _tablesError = _tx('common.no_session', 'No hay sesión activa');
+        _tablesError = _tx('common.no_session');
         _tablesLoading = false;
       });
       return;
@@ -108,10 +108,7 @@ class _MetadataPageState extends State<MetadataPage>
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _tablesError = _tx(
-          'admin.metadata_error_tables',
-          'No se pudieron cargar las tablas',
-        );
+        _tablesError = _tx('admin.metadata_error_tables');
         _tablesLoading = false;
       });
     }
@@ -164,8 +161,8 @@ class _MetadataPageState extends State<MetadataPage>
   @override
   Widget build(BuildContext context) {
     final tabLabels = [
-      _tx('admin.metadata_tab_logs', 'Logs'),
-      _tx('admin.metadata_tab_tables', 'Tablas'),
+      _tx('admin.metadata_tab_logs'),
+      _tx('admin.metadata_tab_tables'),
     ];
     return Column(
       children: [
@@ -217,7 +214,7 @@ class _MetadataPageState extends State<MetadataPage>
                   PrimaryButton.icon(
                     onPressed: _loadTables,
                     icon: const Icon(Icons.refresh),
-                    label: Text(_tx('common.retry', 'Reintentar')),
+                    label: Text(_tx('common.retry')),
                   ),
                 ],
               ),
@@ -244,10 +241,7 @@ class _MetadataPageState extends State<MetadataPage>
                 child: TextField(
                   controller: _tableSearchController,
                   decoration: InputDecoration(
-                    labelText: _tx(
-                      'admin.metadata_search_table',
-                      'Buscar tabla',
-                    ),
+                    labelText: _tx('admin.metadata_search_table'),
                     prefixIcon: const Icon(Icons.search, size: 20),
                   ),
                   onChanged: (_) => setState(() {}),
@@ -268,21 +262,21 @@ class _MetadataPageState extends State<MetadataPage>
                 sortAscending: _sortAscending,
                 columns: [
                   DataColumn(
-                    label: Text(_tx('admin.metadata_col_table', 'Tabla')),
+                    label: Text(_tx('admin.metadata_col_table')),
                     onSort: _onSort,
                   ),
                   DataColumn(
-                    label: Text(_tx('admin.metadata_col_rows', 'Filas')),
+                    label: Text(_tx('admin.metadata_col_rows')),
                     numeric: true,
                     onSort: _onSort,
                   ),
                   DataColumn(
-                    label: Text(_tx('admin.metadata_col_cols', 'Columnas')),
+                    label: Text(_tx('admin.metadata_col_cols')),
                     numeric: true,
                     onSort: _onSort,
                   ),
                   DataColumn(
-                    label: Text(_tx('admin.metadata_col_size', 'Peso')),
+                    label: Text(_tx('admin.metadata_col_size')),
                     numeric: true,
                     onSort: _onSort,
                   ),

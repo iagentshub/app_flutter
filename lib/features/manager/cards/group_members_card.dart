@@ -11,7 +11,7 @@ extension _ManagerMembersCard on _ManagerPageState {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _tx('manager.members_title', 'Miembros'),
+              _tx('manager.members_title'),
               style: const TextStyle(
                 fontSize: FncFonts.size18,
                 fontWeight: FontWeight.bold,
@@ -20,16 +20,10 @@ extension _ManagerMembersCard on _ManagerPageState {
             const SizedBox(height: 8),
             Text(
               active == null
-                  ? _tx(
-                      'manager.no_active_group',
-                      'No hay ningún grupo activo.',
-                    )
+                  ? _tx('manager.no_active_group')
                   : (active.isPersonal
-                        ? _tx(
-                            'manager.active_personal',
-                            'Grupo activo: Personal. Solo tú puedes pertenecer a este grupo.',
-                          )
-                        : '${_tx('manager.active_group_prefix', 'Grupo activo')}: ${active.name}'),
+                        ? _tx('manager.active_personal')
+                        : '${_tx('manager.active_group_prefix')}: ${active.name}'),
             ),
             const SizedBox(height: 10),
             Wrap(
@@ -39,18 +33,18 @@ extension _ManagerMembersCard on _ManagerPageState {
                 AppIconButton.filled(
                   onPressed: canManage ? _inviteMember : null,
                   icon: const Icon(Icons.add),
-                  tooltip: _tx('manager.invite_tooltip', 'Invitar'),
+                  tooltip: _tx('manager.invite_tooltip'),
                 ),
                 AppIconButton.outlined(
                   onPressed: canManage ? _addMemberDirect : null,
                   icon: const Icon(Icons.add),
-                  tooltip: _tx('manager.add_direct_tooltip', 'Añadir directo'),
+                  tooltip: _tx('manager.add_direct_tooltip'),
                 ),
               ],
             ),
             const SizedBox(height: 8),
             if (_controller.members.isEmpty)
-              Text(_tx('manager.empty_members', 'Sin miembros listados'))
+              Text(_tx('manager.empty_members'))
             else
               ..._controller.members.map((member) {
                 final username = (member['username'] ?? '').toString();
@@ -58,10 +52,10 @@ extension _ManagerMembersCard on _ManagerPageState {
                 return ListTile(
                   dense: true,
                   title: Text(username),
-                  subtitle: Text('${_tx('manager.role_label', 'Rol')}: $role'),
+                  subtitle: Text('${_tx('manager.role_label')}: $role'),
                   trailing: ActionIconButton(
                     icon: Icons.person_remove_outlined,
-                    tooltip: _tx('manager.remove_tooltip', 'Quitar'),
+                    tooltip: _tx('manager.remove_tooltip'),
                     danger: true,
                     onPressed: canManage
                         ? () => _runAction(_controller.removeMember(username))

@@ -26,6 +26,7 @@ import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/resource_collection_view.dart';
 import '../../../shared/widgets/resource_toolbar.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../../../utils/i18n.dart';
 import '../cards/workflow_card.dart';
 import '../controllers/workflow_runs_controller.dart';
 import '../dialogs/run_progress_dialog.dart';
@@ -66,7 +67,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
   String? _error;
   String _scope = 'all';
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   int get _activeFilterCount => _scope != 'all' ? 1 : 0;
 
@@ -77,20 +78,20 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
 
   void _openFiltersDialog() {
     final scopeOptions = [
-      ('all', _tx('explore.option_all', 'Todas')),
-      ('private', _tx('agents.scope_private', 'Privado')),
-      ('public', _tx('agents.scope_public', 'Público')),
+      ('all', _tx('explore.option_all')),
+      ('private', _tx('agents.scope_private')),
+      ('public', _tx('agents.scope_public')),
     ];
 
     showFilterDialog(
       context,
-      title: _tx('common.filters', 'Filtros'),
-      clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
-      closeLabel: _tx('common.close', 'Cerrar'),
+      title: _tx('common.filters'),
+      clearLabel: _tx('common.clear_filters'),
+      closeLabel: _tx('common.close'),
       onClear: () => setState(() => _scope = 'all'),
       buildFields: (setDialogState) => [
         FilterDropdown(
-          label: _tx('agents.scope_label', 'Visibilidad'),
+          label: _tx('agents.scope_label'),
           value: _scope,
           options: scopeOptions,
           onChanged: (v) {
@@ -171,7 +172,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
     final token = _token;
     if (token == null || token.isEmpty) {
       setState(() {
-        _error = 'No hay sesión activa';
+        _error = tr('common.no_session');
         _loading = false;
       });
       return;
@@ -228,12 +229,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
 
   Future<void> _openEditDialog(WorkflowItem item) async {
     if (item.shared) {
-      showMessage(
-        _tx(
-          'workflows.readonly_shared',
-          'Este workflow es compartido y es de solo lectura',
-        ),
-      );
+      showMessage(_tx('workflows.readonly_shared'));
       return;
     }
 
@@ -268,15 +264,12 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
 
     try {
       await _repository.saveWorkflow(token, payload);
-      showMessage(_tx('workflows.save_success', 'Workflow guardado'));
+      showMessage(_tx('workflows.save_success'));
       await _load();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('workflows.save_error', 'No se pudo guardar el workflow'),
-        isError: true,
-      );
+      showMessage(_tx('workflows.save_error'), isError: true);
     }
   }
 
@@ -287,41 +280,30 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
     try {
       await _repository.setWorkflowActive(token, item.id, activate);
       showMessage(
-        activate
-            ? _tx('workflows.activated', 'Orquestación activada')
-            : _tx('workflows.deactivated', 'Orquestación desactivada'),
+        activate ? _tx('workflows.activated') : _tx('workflows.deactivated'),
       );
       await _load();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('workflows.toggle_error', 'No se pudo cambiar el estado'),
-        isError: true,
-      );
+      showMessage(_tx('workflows.toggle_error'), isError: true);
     }
   }
 
   Future<void> _deleteWorkflow(WorkflowItem item) async {
     if (item.shared) {
-      showMessage(
-        _tx(
-          'workflows.readonly_shared_delete',
-          'Este workflow es compartido y no se puede eliminar',
-        ),
-      );
+      showMessage(_tx('workflows.readonly_shared_delete'));
       return;
     }
 
     final confirm = await showConfirmActionDialog(
       context,
-      title: _tx('workflows.delete_dialog_title', 'Eliminar workflow'),
+      title: _tx('workflows.delete_dialog_title'),
       message: _tx(
         'workflows.delete_dialog_body',
-        '¿Seguro que quieres eliminar "{{name}}"?',
       ).replaceAll('{{name}}', item.name),
-      cancelLabel: _tx('common.cancel', 'Cancelar'),
-      confirmLabel: _tx('common.delete', 'Eliminar'),
+      cancelLabel: _tx('common.cancel'),
+      confirmLabel: _tx('common.delete'),
       destructive: true,
     );
     if (!confirm) return;
@@ -331,15 +313,12 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
 
     try {
       await _repository.deleteWorkflow(token, item.id);
-      showMessage(_tx('workflows.delete_success', 'Workflow eliminado'));
+      showMessage(_tx('workflows.delete_success'));
       await _load();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('workflows.delete_error', 'No se pudo eliminar el workflow'),
-        isError: true,
-      );
+      showMessage(_tx('workflows.delete_error'), isError: true);
     }
   }
 
@@ -380,19 +359,13 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('workflows.run_start_error', 'No se pudo iniciar la ejecución'),
-        isError: true,
-      );
+      showMessage(_tx('workflows.run_start_error'), isError: true);
     }
   }
 
   String? _workflowRunIssue(WorkflowItem item) {
     if (item.nodes.isEmpty) {
-      return _tx(
-        'workflows.run_error_no_steps',
-        'Añade al menos un paso antes de ejecutar la orquestación.',
-      );
+      return _tx('workflows.run_error_no_steps');
     }
 
     for (final rawNode in item.nodes) {
@@ -404,13 +377,10 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
           : stepLabel;
       final agent = _agentsById[agentId];
       if (agent == null) {
-        return _tx(
-          'workflows.run_error_agent_missing',
-          'El agente del paso “{{step}}” ya no está disponible. Edita el workflow y selecciona otro agente.',
-        ).replaceAll(
+        return _tx('workflows.run_error_agent_missing').replaceAll(
           '{{step}}',
           displayStep.isEmpty
-              ? _tx('workflows.default_agent_label', 'agente')
+              ? _tx('workflows.default_agent_label')
               : displayStep,
         );
       }
@@ -418,7 +388,6 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
           item.llmOrchestrationConnectionId.isEmpty) {
         return _tx(
           'workflows.run_error_agent_connection',
-          'El agente “{{agent}}” no tiene una conexión configurada.',
         ).replaceAll('{{agent}}', agent.name);
       }
     }
@@ -431,12 +400,9 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
       return ListView(
         children: [
           AsyncStatePanel.error(
-            title: _tx(
-              'workflows.error_loading_title',
-              'Error cargando workflows',
-            ),
+            title: _tx('workflows.error_loading_title'),
             message: _error!,
-            retryLabel: _tx('common.retry', 'Reintentar'),
+            retryLabel: _tx('common.retry'),
             onRetry: _load,
           ),
         ],
@@ -449,26 +415,26 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
         AppIconButton.filled(
           onPressed: _openCreateDialog,
           icon: const Icon(Icons.add),
-          tooltip: _tx('workflows.create_action', 'Crear workflow'),
+          tooltip: _tx('workflows.create_action'),
         ),
         WorkflowRunsButton(
           controller: _workflowRuns,
           onPressed: _openRunsPanel,
-          tooltip: _tx('workflows.run_history_title', 'Ejecuciones'),
+          tooltip: _tx('workflows.run_history_title'),
         ),
         AppIconButton.outlined(
           onPressed: _load,
           icon: const Icon(Icons.refresh),
-          tooltip: _tx('workflows.refresh_tooltip', 'Actualizar'),
+          tooltip: _tx('workflows.refresh_tooltip'),
         ),
         FilterButton(
           activeCount: _activeFilterCount,
-          tooltip: _tx('common.filters', 'Filtros'),
+          tooltip: _tx('common.filters'),
           onPressed: _openFiltersDialog,
         ),
       ],
       summary: Text(
-        '${_tx('workflows.count_label', 'Workflows')}: ${filteredWorkflows.length}',
+        '${_tx('workflows.count_label')}: ${filteredWorkflows.length}',
         style: Theme.of(context).textTheme.bodyMedium,
       ),
     );
@@ -483,62 +449,38 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
           item: item,
           agentsById: _agentsById,
           graphNamesLoader: _loadGraphNames,
-          stepsLabel: _tx('workflows.steps_suffix', 'pasos'),
-          connectionsLabel: _tx('workflows.connections_suffix', 'conexiones'),
-          ownerLabel: _tx('common.owner', 'Propietario'),
-          linkedLabel: _tx('common.linked', 'Enlace'),
-          forkLabel: _tx('common.fork', 'Fork'),
-          labelText: (label) => _tx('labels.$label', label),
-          runLabel: _tx('workflows.run_btn', 'Ejecutar'),
-          editTooltip: _tx('common.edit', 'Editar'),
-          deleteTooltip: _tx('common.delete', 'Eliminar'),
-          graphTooltip: _tx(
-            'workflows.graph_tooltip',
-            'Ver grafo de contenido',
-          ),
-          graphCloseLabel: _tx('common.close', 'Cerrar'),
-          graphEmptyLabel: _tx(
-            'workflows.graph_empty',
-            'Esta orquestación todavía no tiene pasos.',
-          ),
-          graphSearchHint: _tx('graph.search_hint', 'Buscar en el grafo...'),
-          graphSortTooltip: _tx('graph.sort_tooltip', 'Ordenar'),
-          graphSortHierarchyVerticalLabel: _tx(
-            'graph.sort_hierarchy_vertical',
-            'Jerárquico (arriba-abajo)',
-          ),
+          stepsLabel: _tx('workflows.steps_suffix'),
+          connectionsLabel: _tx('workflows.connections_suffix'),
+          ownerLabel: _tx('common.owner'),
+          linkedLabel: _tx('common.linked'),
+          forkLabel: _tx('common.fork'),
+          labelText: (label) => trOr('labels.$label', label),
+          runLabel: _tx('workflows.run_btn'),
+          editTooltip: _tx('common.edit'),
+          deleteTooltip: _tx('common.delete'),
+          graphTooltip: _tx('workflows.graph_tooltip'),
+          graphCloseLabel: _tx('common.close'),
+          graphEmptyLabel: _tx('workflows.graph_empty'),
+          graphSearchHint: _tx('graph.search_hint'),
+          graphSortTooltip: _tx('graph.sort_tooltip'),
+          graphSortHierarchyVerticalLabel: _tx('graph.sort_hierarchy_vertical'),
           graphSortHierarchyHorizontalLabel: _tx(
             'graph.sort_hierarchy_horizontal',
-            'Jerárquico (izquierda-derecha)',
           ),
-          graphSortGalaxyLabel: _tx('graph.sort_galaxy', 'Galaxia'),
-          graphShowLabelsTooltip: _tx(
-            'graph.show_labels_tooltip',
-            'Mostrar nombres',
-          ),
-          graphHideLabelsTooltip: _tx(
-            'graph.hide_labels_tooltip',
-            'Ocultar nombres',
-          ),
-          graphQuickViewDescriptionLabel: _tx(
-            'graph.quick_view_description',
-            'Descripción',
-          ),
+          graphSortGalaxyLabel: _tx('graph.sort_galaxy'),
+          graphShowLabelsTooltip: _tx('graph.show_labels_tooltip'),
+          graphHideLabelsTooltip: _tx('graph.hide_labels_tooltip'),
+          graphQuickViewDescriptionLabel: _tx('graph.quick_view_description'),
           graphQuickViewNoDescriptionLabel: _tx(
             'graph.quick_view_no_description',
-            'Sin descripción',
           ),
-          graphQuickViewConnectionsLabel: _tx(
-            'graph.quick_view_connections',
-            'Conexiones',
-          ),
+          graphQuickViewConnectionsLabel: _tx('graph.quick_view_connections'),
           graphQuickViewNoConnectionsLabel: _tx(
             'graph.quick_view_no_connections',
-            'Sin conexiones',
           ),
-          inactiveLabel: _tx('common.inactive', 'Inactivo'),
-          activateTooltip: _tx('common.activate', 'Activar'),
-          deactivateTooltip: _tx('common.deactivate', 'Desactivar'),
+          inactiveLabel: _tx('common.inactive'),
+          activateTooltip: _tx('common.activate'),
+          deactivateTooltip: _tx('common.deactivate'),
           onRun: () => _runWorkflow(item),
           onEdit: () => _openEditDialog(item),
           onDelete: () => _deleteWorkflow(item),
@@ -560,8 +502,8 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
             color: Theme.of(context).colorScheme.surface,
             child: TabBar(
               tabs: [
-                Tab(text: _tx('workflows.tab_agents', 'Agentes')),
-                Tab(text: _tx('workflows.tab_llm_apis', 'APIs LLM')),
+                Tab(text: _tx('workflows.tab_agents')),
+                Tab(text: _tx('workflows.tab_llm_apis')),
               ],
             ),
           ),

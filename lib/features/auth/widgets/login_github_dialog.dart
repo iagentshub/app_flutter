@@ -9,7 +9,7 @@ class _GithubLoginDialog extends StatefulWidget {
   const _GithubLoginDialog({required this.authRepository, required this.tx});
 
   final AuthRepository authRepository;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<_GithubLoginDialog> createState() => _GithubLoginDialogState();
@@ -58,10 +58,7 @@ class _GithubLoginDialogState extends State<_GithubLoginDialog> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = widget.tx(
-          'github_start_error',
-          'No se pudo iniciar la conexión con GitHub',
-        );
+        _error = widget.tx('github_start_error');
       });
     }
   }
@@ -76,12 +73,7 @@ class _GithubLoginDialogState extends State<_GithubLoginDialog> {
     if (code == null || !mounted) return;
     final expiresAt = _expiresAt;
     if (expiresAt != null && DateTime.now().isAfter(expiresAt)) {
-      setState(
-        () => _error = widget.tx(
-          'github_code_expired',
-          'El código expiró — inténtalo de nuevo',
-        ),
-      );
+      setState(() => _error = widget.tx('github_code_expired'));
       return;
     }
     try {
@@ -109,20 +101,11 @@ class _GithubLoginDialogState extends State<_GithubLoginDialog> {
   String _githubErrorMessage(String? error) {
     switch (error) {
       case 'expired_token':
-        return widget.tx(
-          'github_code_expired',
-          'El código expiró — inténtalo de nuevo',
-        );
+        return widget.tx('github_code_expired');
       case 'access_denied':
-        return widget.tx(
-          'github_access_denied',
-          'Autorización rechazada en GitHub',
-        );
+        return widget.tx('github_access_denied');
       default:
-        return widget.tx(
-          'github_start_error',
-          'No se pudo iniciar la conexión con GitHub',
-        );
+        return widget.tx('github_start_error');
     }
   }
 
@@ -136,17 +119,15 @@ class _GithubLoginDialogState extends State<_GithubLoginDialog> {
     final code = _code?.userCode;
     if (code == null || code.isEmpty) return;
     Clipboard.setData(ClipboardData(text: code));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(widget.tx('github_code_copied', 'Código copiado')),
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(widget.tx('github_code_copied'))));
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.tx('github_connect_title', 'Continuar con GitHub')),
+      title: Text(widget.tx('github_connect_title')),
       content: SizedBox(
         width: dialogContentWidth(context, 380),
         child: _buildBody(),
@@ -154,12 +135,12 @@ class _GithubLoginDialogState extends State<_GithubLoginDialog> {
       actions: [
         TertiaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(widget.tx('common_cancel', 'Cancelar')),
+          child: Text(widget.tx('common_cancel')),
         ),
         if (_error != null)
           PrimaryButton(
             onPressed: _start,
-            child: Text(widget.tx('common_retry', 'Reintentar')),
+            child: Text(widget.tx('common_retry')),
           ),
       ],
     );
@@ -184,12 +165,7 @@ class _GithubLoginDialogState extends State<_GithubLoginDialog> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          widget.tx(
-            'github_device_hint',
-            'Visita esta URL e introduce el código para autorizar el acceso:',
-          ),
-        ),
+        Text(widget.tx('github_device_hint')),
         const SizedBox(height: 12),
         InkWell(
           onTap: _copyCode,
@@ -216,7 +192,7 @@ class _GithubLoginDialogState extends State<_GithubLoginDialog> {
         SecondaryButton.icon(
           onPressed: _openGithub,
           icon: const Icon(Icons.open_in_new),
-          label: Text(widget.tx('github_open_action', 'Abrir GitHub')),
+          label: Text(widget.tx('github_open_action')),
         ),
         const SizedBox(height: 16),
         Row(
@@ -229,7 +205,7 @@ class _GithubLoginDialogState extends State<_GithubLoginDialog> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                widget.tx('github_waiting', 'Esperando autorización...'),
+                widget.tx('github_waiting'),
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),

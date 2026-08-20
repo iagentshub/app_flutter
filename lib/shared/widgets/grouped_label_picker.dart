@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../utils/i18n.dart';
 
 import '../labels/label_catalog.dart';
 import 'multi_select_dropdown.dart';
@@ -18,7 +19,7 @@ class GroupedLabelPicker extends StatelessWidget {
 
   final Set<String> selected;
   final ValueChanged<Set<String>> onChanged;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
   final List<LabelGroupDef> groups;
 
   Set<String> _reduce(Set<String> current, String key, bool value) {
@@ -49,27 +50,25 @@ class GroupedLabelPicker extends StatelessWidget {
     final selectedHere = selected.intersection(allowedKeys);
     final outsideSelection = selected.difference(allowedKeys);
     final label = groups.length == 1
-        ? tx(groups.first.titleKey, groups.first.fallbackTitle)
-        : tx('labels.selector_label', 'Etiquetas');
+        ? trOr(groups.first.titleKey, groups.first.fallbackTitle)
+        : tx('labels.selector_label');
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: MultiSelectDropdown<String>(
         labelText: label,
-        tooltip: tx('labels.selector_tooltip', 'Seleccionar etiquetas'),
-        emptyLabel: tx('labels.none', 'Ninguna'),
-        multipleSelectedLabel: (count) => tx(
-          'labels.selected_count',
-          '{count} etiquetas seleccionadas',
-        ).replaceAll('{count}', '$count'),
+        tooltip: tx('labels.selector_tooltip'),
+        emptyLabel: tx('labels.none'),
+        multipleSelectedLabel: (count) =>
+            tx('labels.selected_count').replaceAll('{count}', '$count'),
         options: [
           for (final group in groups)
             for (final key in group.keys)
               MultiSelectDropdownOption(
                 value: key,
-                label: tx('labels.$key', key),
+                label: trOr('labels.$key', key),
                 color: labelColor(key),
                 groupLabel: groups.length > 1
-                    ? tx(group.titleKey, group.fallbackTitle)
+                    ? trOr(group.titleKey, group.fallbackTitle)
                     : null,
               ),
         ],

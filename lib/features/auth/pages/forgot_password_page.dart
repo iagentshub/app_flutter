@@ -51,7 +51,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     super.dispose();
   }
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
@@ -64,10 +64,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       await widget.authRepository.forgotPassword(email: _emailController.text);
       if (!mounted) return;
       setState(() {
-        _message = _tx(
-          'forgot_password_page.sent_body',
-          'Si el correo existe, se enviaron instrucciones de recuperación.',
-        );
+        _message = _tx('forgot_password_page.sent_body');
       });
     } on ApiError catch (error) {
       if (!mounted) return;
@@ -96,10 +93,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _tx(
-                            'forgot_password_page.title',
-                            'Recuperar contraseña',
-                          ),
+                          _tx('forgot_password_page.title'),
                           style: const TextStyle(
                             fontSize: FncFonts.size24,
                             fontWeight: FontWeight.w700,
@@ -110,10 +104,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                           controller: _emailController,
                           validator: Validators.email,
                           decoration: InputDecoration(
-                            labelText: _tx(
-                              'forgot_password_page.email_label',
-                              'Email',
-                            ),
+                            labelText: _tx('forgot_password_page.email_label'),
                             border: const OutlineInputBorder(),
                           ),
                         ),
@@ -124,14 +115,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                             onPressed: _loading ? null : _submit,
                             child: Text(
                               _loading
-                                  ? _tx(
-                                      'forgot_password_page.send_btn_loading',
-                                      'Enviando...',
-                                    )
-                                  : _tx(
-                                      'forgot_password_page.send_btn',
-                                      'Enviar enlace',
-                                    ),
+                                  ? _tx('forgot_password_page.send_btn_loading')
+                                  : _tx('forgot_password_page.send_btn'),
                             ),
                           ),
                         ),
@@ -139,10 +124,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         TertiaryButton(
                           onPressed: () => AppRouter.toLogin(context),
                           child: Text(
-                            _tx(
-                              'forgot_password_page.back_to_login_arrow',
-                              'Volver al login',
-                            ),
+                            _tx('forgot_password_page.back_to_login_arrow'),
                           ),
                         ),
                         if (_message != null) ...[

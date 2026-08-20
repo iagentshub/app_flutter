@@ -53,18 +53,13 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     super.dispose();
   }
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final token = widget.token?.trim() ?? '';
     if (token.isEmpty) {
-      setState(
-        () => _message = _tx(
-          'reset_password.invalid_title',
-          'Token de recuperación inválido',
-        ),
-      );
+      setState(() => _message = _tx('reset_password.invalid_title'));
       return;
     }
 
@@ -81,12 +76,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       if (!mounted) return;
       setState(() {
         _message = ok
-            ? '${_tx('reset_password.ok_title', 'Contraseña actualizada')}. '
-                  '${_tx('reset_password.ok_sub', 'Ya puedes iniciar sesión con tu nueva contraseña.')}'
-            : _tx(
-                'reset_password.update_failed',
-                'No se pudo actualizar la contraseña',
-              );
+            ? '${_tx('reset_password.ok_title')}. '
+                  '${_tx('reset_password.ok_sub')}'
+            : _tx('reset_password.update_failed');
       });
     } on ApiError catch (error) {
       if (!mounted) return;
@@ -118,7 +110,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                _tx('reset_password.title', 'Nueva contraseña'),
+                                _tx('reset_password.title'),
                                 style: const TextStyle(
                                   fontSize: FncFonts.size24,
                                   fontWeight: FontWeight.w700,
@@ -133,7 +125,6 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                                     value,
                                     message: _tx(
                                       'reset_password.error_password_required',
-                                      'La contraseña es obligatoria',
                                     ),
                                   );
                                   if (requiredError != null) {
@@ -142,7 +133,6 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                                   if ((value ?? '').trim().length < 8) {
                                     return _tx(
                                       'reset_password.error_short_password',
-                                      'La contraseña debe tener al menos 8 caracteres',
                                     );
                                   }
                                   return null;
@@ -150,7 +140,6 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                                 decoration: InputDecoration(
                                   labelText: _tx(
                                     'reset_password.new_password_label',
-                                    'Nueva contraseña',
                                   ),
                                   border: const OutlineInputBorder(),
                                 ),
@@ -162,14 +151,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                                   onPressed: _loading ? null : _submit,
                                   child: Text(
                                     _loading
-                                        ? _tx(
-                                            'reset_password.save_btn_loading',
-                                            'Actualizando...',
-                                          )
-                                        : _tx(
-                                            'reset_password.save_btn',
-                                            'Actualizar contraseña',
-                                          ),
+                                        ? _tx('reset_password.save_btn_loading')
+                                        : _tx('reset_password.save_btn'),
                                   ),
                                 ),
                               ),
@@ -177,10 +160,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                               TertiaryButton(
                                 onPressed: () => AppRouter.toLogin(context),
                                 child: Text(
-                                  _tx(
-                                    'reset_password.back_to_login',
-                                    'Volver al login',
-                                  ),
+                                  _tx('reset_password.back_to_login'),
                                 ),
                               ),
                               if (_message != null) ...[
@@ -194,31 +174,20 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              _tx(
-                                'reset_password.invalid_title',
-                                'Enlace inválido',
-                              ),
+                              _tx('reset_password.invalid_title'),
                               style: const TextStyle(
                                 fontSize: FncFonts.size24,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
                             const SizedBox(height: 10),
-                            Text(
-                              _tx(
-                                'reset_password.invalid_sub',
-                                'No se detectó token de recuperación.',
-                              ),
-                            ),
+                            Text(_tx('reset_password.invalid_sub')),
                             const SizedBox(height: 8),
                             TertiaryButton(
                               onPressed: () =>
                                   AppRouter.toForgotPassword(context),
                               child: Text(
-                                _tx(
-                                  'reset_password.request_new_link',
-                                  'Solicitar nuevo enlace',
-                                ),
+                                _tx('reset_password.request_new_link'),
                               ),
                             ),
                           ],

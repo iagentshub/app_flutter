@@ -13,10 +13,12 @@ import '../../core/network/api_client.dart';
 import '../../features/auth/repositories/auth_repository.dart';
 import '../../models/dashboard/dashboard_widget_config.dart';
 import '../../models/dashboard/dashboard_widget_registry.dart';
+import '../../utils/i18n.dart';
 import '../i18n/translated_texts.dart';
 import '../navigation/shell_navigation.dart';
 import '../state/app_services_scope.dart';
 import '../state/dashboard_edit_state.dart';
+import '../state/locale_controller.dart';
 import '../state/theme_controller.dart';
 import 'brand_icon.dart';
 import 'terminal_view_transition.dart';
@@ -110,7 +112,7 @@ class _AppShellState extends State<AppShell> {
     }
   }
 
-  String _tx(String key, String fallback) => _t.text(key, fallback: fallback);
+  String _tx(String key) => _t.text(key);
 
   Future<void> _openPublicRoute(String path) async {
     await launchUrl(
@@ -136,18 +138,16 @@ class _AppShellState extends State<AppShell> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(_tx('logout_confirm_title', 'Cerrar sesión')),
-        content: Text(
-          _tx('logout_confirm_body', '¿Seguro que quieres cerrar sesión?'),
-        ),
+        title: Text(_tx('logout_confirm_title')),
+        content: Text(_tx('logout_confirm_body')),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text(_tx('cancel', 'Cancelar')),
+            child: Text(_tx('cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(_tx('logout', 'Cerrar sesión')),
+            child: Text(_tx('logout')),
           ),
         ],
       ),
@@ -266,12 +266,6 @@ class _AppShellState extends State<AppShell> {
                               child: collapsed
                                   ? AppSidebarRail(
                                       isAdmin: isAdmin,
-                                      role:
-                                          _services
-                                              .sessionController
-                                              .user
-                                              ?.role ??
-                                          'user',
                                       location: location,
                                       initial: sidebarAvatarInitial(
                                         sidebarVisibleName(

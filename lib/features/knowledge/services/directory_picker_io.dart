@@ -1,7 +1,9 @@
 import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
 
+import '../../../utils/i18n.dart';
 import '../models/local_knowledge_file.dart';
 
 Future<KnowledgeDirectorySelection?> pickKnowledgeDirectory({
@@ -12,7 +14,7 @@ Future<KnowledgeDirectorySelection?> pickKnowledgeDirectory({
           'com.iagentshub.app/knowledge_directory',
         ).invokeMethod<String>('pickDirectory')
       : await FilePicker.getDirectoryPath(
-          dialogTitle: 'Incluir directorio de conocimiento',
+          dialogTitle: tr('knowledge.pick_directory'),
         );
   if (selected == null || selected.isEmpty) return null;
   final root = Directory(selected);

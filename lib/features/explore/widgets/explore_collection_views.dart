@@ -14,7 +14,7 @@ extension _ExploreCollectionViews on _ExplorePageState {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _tx('explore.error_title', 'Error cargando Explore'),
+                    _tx('explore.error_title'),
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
@@ -23,7 +23,7 @@ extension _ExploreCollectionViews on _ExplorePageState {
                   PrimaryButton.icon(
                     onPressed: _controller.load,
                     icon: const Icon(Icons.refresh),
-                    label: Text(_tx('common.retry', 'Reintentar')),
+                    label: Text(_tx('common.retry')),
                   ),
                 ],
               ),
@@ -48,20 +48,14 @@ extension _ExploreCollectionViews on _ExplorePageState {
       gridPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       header: ExploreSearchToolbar(
         searchController: _controller.queryController,
-        searchHint: _tx(
-          'explore.search_hint',
-          'Buscar recursos por nombre, autor o descripción',
-        ),
+        searchHint: _tx('explore.search_hint'),
         onSearchSubmitted: (_) => _controller.load(),
         typeOptions: _publicExploreTypeOptions,
         selectedTypes: _controller.type == 'all'
             ? const <String>{}
             : {_controller.type},
-        allTypesLabel: _tx('explore.type_all', 'Todos'),
-        typeFilterTooltip: _tx(
-          'explore.type_filter_tooltip',
-          'Filtrar recursos por tipo',
-        ),
+        allTypesLabel: _tx('explore.type_all'),
+        typeFilterTooltip: _tx('explore.type_filter_tooltip'),
         multipleTypesLabel: (count) => '$count',
         allowMultipleTypes: false,
         selectorKey: const Key('publicExploreTypeDropdown'),
@@ -70,10 +64,7 @@ extension _ExploreCollectionViews on _ExplorePageState {
         actions: [
           FilterButton(
             activeCount: _controller.secondaryActiveFilterCount,
-            tooltip: _tx(
-              'explore.more_filters_tooltip',
-              'Filtrar por categoría, idioma y labels',
-            ),
+            tooltip: _tx('explore.more_filters_tooltip'),
             onPressed: _openFiltersDialog,
           ),
         ],
@@ -83,7 +74,7 @@ extension _ExploreCollectionViews on _ExplorePageState {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
           sliver: SliverToBoxAdapter(
             child: Text(
-              '${_tx('explore.results', 'Resultados')}: ${_controller.resultCount}',
+              '${_tx('explore.results')}: ${_controller.resultCount}',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ),
@@ -108,7 +99,7 @@ extension _ExploreCollectionViews on _ExplorePageState {
                     : SecondaryButton(
                         onPressed: () =>
                             _runAction(_controller.loadMoreResources()),
-                        child: Text(_tx('explore.load_more', 'Cargar más')),
+                        child: Text(_tx('explore.load_more')),
                       ),
               ),
             ),
@@ -133,18 +124,15 @@ extension _ExploreCollectionViews on _ExplorePageState {
               linkedMatches > 0
                   ? _tx(
                       'explore.empty_all_linked',
-                      'Ya tienes los {count} resultados de esta búsqueda.',
                     ).replaceAll('{count}', '$linkedMatches')
-                  : _tx('explore.empty', 'No hay resultados para ese filtro.'),
+                  : _tx('explore.empty'),
             ),
             if (linkedMatches > 0) ...[
               const SizedBox(height: 12),
               SecondaryButton(
                 onPressed: () =>
                     _controller.setRelation(ExploreRelation.enlazado),
-                child: Text(
-                  _tx('explore.empty_show_linked', 'Ver los enlazados'),
-                ),
+                child: Text(_tx('explore.empty_show_linked')),
               ),
             ],
           ],
@@ -157,9 +145,9 @@ extension _ExploreCollectionViews on _ExplorePageState {
     final error = _controller.usersError;
     if (error != null) {
       return AsyncStatePanel.error(
-        title: _tx('explore.users_error_title', 'No se pudo cargar'),
+        title: _tx('explore.users_error_title'),
         message: error,
-        retryLabel: _tx('common.retry', 'Reintentar'),
+        retryLabel: _tx('common.retry'),
         onRetry: _controller.loadUsers,
       );
     }
@@ -180,7 +168,7 @@ extension _ExploreCollectionViews on _ExplorePageState {
       header: TextField(
         controller: _controller.userQueryController,
         decoration: InputDecoration(
-          labelText: _tx('explore.users_search_hint', 'Buscar usuarios'),
+          labelText: _tx('explore.users_search_hint'),
           prefixIcon: const Icon(Icons.search, size: 20),
         ),
         onChanged: (_) => _controller.onUserSearchChanged(),
@@ -188,9 +176,7 @@ extension _ExploreCollectionViews on _ExplorePageState {
       empty: Card(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Text(
-            _tx('explore.users_empty', 'No se encontraron usuarios.'),
-          ),
+          child: Text(_tx('explore.users_empty')),
         ),
       ),
       itemCount: users.length,
@@ -209,9 +195,7 @@ extension _ExploreCollectionViews on _ExplorePageState {
                     : SecondaryButton(
                         onPressed: () =>
                             _runAction(_controller.loadMoreUsers()),
-                        child: Text(
-                          _tx('explore.users_load_more', 'Cargar más'),
-                        ),
+                        child: Text(_tx('explore.users_load_more')),
                       ),
               ),
             ),

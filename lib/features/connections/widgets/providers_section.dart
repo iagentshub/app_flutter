@@ -59,7 +59,7 @@ class _ProvidersSectionState extends State<ProvidersSection>
   bool _accountsLoading = true;
   final Set<String> _syncingAccounts = {};
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   @override
   void initState() {
@@ -146,13 +146,10 @@ class _ProvidersSectionState extends State<ProvidersSection>
   Future<void> _unlinkAccount(AccountItem account) async {
     final confirm = await showConfirmActionDialog(
       context,
-      title: _tx('providers.unlink_confirm_title', 'Desvincular cuenta'),
-      message: _tx(
-        'providers.unlink_confirm_body',
-        '¿Seguro que quieres desvincular esta cuenta? Las conexiones que había sincronizado también se eliminarán.',
-      ),
-      cancelLabel: _tx('common.cancel', 'Cancelar'),
-      confirmLabel: _tx('providers.unlink_action', 'Desvincular'),
+      title: _tx('providers.unlink_confirm_title'),
+      message: _tx('providers.unlink_confirm_body'),
+      cancelLabel: _tx('common.cancel'),
+      confirmLabel: _tx('providers.unlink_action'),
       destructive: true,
     );
     if (!confirm) return;
@@ -167,18 +164,14 @@ class _ProvidersSectionState extends State<ProvidersSection>
         deleted > 0
             ? _tx(
                 'providers.unlinked_with_connections',
-                'Cuenta desvinculada · {count} conexiones eliminadas',
               ).replaceFirst('{count}', '$deleted')
-            : _tx('providers.unlinked', 'Cuenta desvinculada'),
+            : _tx('providers.unlinked'),
       );
       await _loadAccounts();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('providers.error_generic', 'No se pudo desvincular la cuenta'),
-        isError: true,
-      );
+      showMessage(_tx('providers.error_generic'), isError: true);
     }
   }
 
@@ -194,13 +187,7 @@ class _ProvidersSectionState extends State<ProvidersSection>
       final preview = await _accountsRepository.testAccount(token, account.id);
       if (!mounted) return;
       if (preview.models.isEmpty) {
-        showMessage(
-          _tx(
-            'providers.no_models_found',
-            'No se encontraron modelos disponibles',
-          ),
-          isError: true,
-        );
+        showMessage(_tx('providers.no_models_found'), isError: true);
         return;
       }
       final selected = await showDialog<List<String>>(
@@ -224,21 +211,16 @@ class _ProvidersSectionState extends State<ProvidersSection>
       });
       final summary = updated.syncSummary;
       final parts = <String>[
-        '${summary?.connectionsCreated ?? 0} ${_tx('providers.summary_created', 'creadas')}',
-        '${summary?.connectionsUpdated ?? 0} ${_tx('providers.summary_updated', 'actualizadas')}',
+        '${summary?.connectionsCreated ?? 0} ${_tx('providers.summary_created')}',
+        '${summary?.connectionsUpdated ?? 0} ${_tx('providers.summary_updated')}',
         if ((summary?.connectionsDeleted ?? 0) > 0)
-          '${summary!.connectionsDeleted} ${_tx('providers.summary_deleted', 'eliminadas')}',
+          '${summary!.connectionsDeleted} ${_tx('providers.summary_deleted')}',
       ];
-      showMessage(
-        '${_tx('providers.sync_done', 'Sincronización completada')}: ${parts.join(' · ')}',
-      );
+      showMessage('${_tx('providers.sync_done')}: ${parts.join(' · ')}');
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('providers.error_generic', 'No se pudo sincronizar'),
-        isError: true,
-      );
+      showMessage(_tx('providers.error_generic'), isError: true);
     } finally {
       if (mounted) refresh(() => _syncingAccounts.remove(account.id));
     }
@@ -261,28 +243,25 @@ class _ProvidersSectionState extends State<ProvidersSection>
       });
       final summary = updated.hubSyncSummary;
       if (summary == null) {
-        showMessage(_tx('providers.sync_done', 'Sincronización completada'));
+        showMessage(_tx('providers.sync_done'));
         return;
       }
       final parts = <String>[
-        '${summary.agents} ${_tx('providers.summary_agents', 'agentes')}',
-        '${summary.skills} ${_tx('providers.summary_skills', 'skills')}',
-        '${summary.knowledge} ${_tx('providers.summary_knowledge', 'conocimiento')}',
-        '${summary.connections} ${_tx('providers.summary_connections', 'conexiones')}',
+        '${summary.agents} ${_tx('providers.summary_agents')}',
+        '${summary.skills} ${_tx('providers.summary_skills')}',
+        '${summary.knowledge} ${_tx('providers.summary_knowledge')}',
+        '${summary.connections} ${_tx('providers.summary_connections')}',
       ];
       showMessage(
         summary.ok
-            ? '${_tx('providers.sync_done', 'Sincronización completada')}: ${parts.join(' · ')}'
-            : '${_tx('providers.sync_partial', 'Sincronización con errores')}: ${summary.errors.join(', ')}',
+            ? '${_tx('providers.sync_done')}: ${parts.join(' · ')}'
+            : '${_tx('providers.sync_partial')}: ${summary.errors.join(', ')}',
         isError: !summary.ok,
       );
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('providers.error_generic', 'No se pudo sincronizar'),
-        isError: true,
-      );
+      showMessage(_tx('providers.error_generic'), isError: true);
     } finally {
       if (mounted) refresh(() => _syncingAccounts.remove(account.id));
     }
@@ -304,7 +283,7 @@ class _ProvidersSectionState extends State<ProvidersSection>
               AppIconButton.filled(
                 onPressed: _openCreateAccountDialog,
                 icon: const Icon(Icons.add),
-                tooltip: _tx('providers.add_account', 'Añadir cuenta'),
+                tooltip: _tx('providers.add_account'),
               ),
             ],
           ),
@@ -314,10 +293,7 @@ class _ProvidersSectionState extends State<ProvidersSection>
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Center(
                 child: Text(
-                  _tx(
-                    'providers.not_linked',
-                    'Aún no has vinculado ninguna cuenta',
-                  ),
+                  _tx('providers.not_linked'),
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -367,15 +343,8 @@ class _ProvidersSectionState extends State<ProvidersSection>
                 if (account.credentialsUnreadable) ...[
                   const SizedBox(width: 8),
                   AttentionBadge(
-                    label: _tx(
-                      'connections.credential_unreadable_badge',
-                      'Requiere atención',
-                    ),
-                    tooltip: _tx(
-                      'connections.credential_unreadable_hint',
-                      'La credencial guardada no se puede leer. Edítala e '
-                          'introdúcela de nuevo.',
-                    ),
+                    label: _tx('connections.credential_unreadable_badge'),
+                    tooltip: _tx('connections.credential_unreadable_hint'),
                   ),
                 ],
               ],
@@ -391,7 +360,7 @@ class _ProvidersSectionState extends State<ProvidersSection>
                   if (account.host.isNotEmpty) account.host,
                 ],
                 if (account.lastSyncedAt.isNotEmpty)
-                  '${_tx('providers.last_synced', 'Última sincronización')}: ${account.lastSyncedAt}',
+                  '${_tx('providers.last_synced')}: ${account.lastSyncedAt}',
               ].join(' · '),
               style: const TextStyle(fontSize: FncFonts.size12),
             ),
@@ -402,16 +371,16 @@ class _ProvidersSectionState extends State<ProvidersSection>
                 runSpacing: 6,
                 children: [
                   _accountSummaryChip(
-                    '${account.hubSyncSummary!.agents} ${_tx('providers.summary_agents', 'agentes')}',
+                    '${account.hubSyncSummary!.agents} ${_tx('providers.summary_agents')}',
                   ),
                   _accountSummaryChip(
-                    '${account.hubSyncSummary!.skills} ${_tx('providers.summary_skills', 'skills')}',
+                    '${account.hubSyncSummary!.skills} ${_tx('providers.summary_skills')}',
                   ),
                   _accountSummaryChip(
-                    '${account.hubSyncSummary!.knowledge} ${_tx('providers.summary_knowledge', 'conocimiento')}',
+                    '${account.hubSyncSummary!.knowledge} ${_tx('providers.summary_knowledge')}',
                   ),
                   _accountSummaryChip(
-                    '${account.hubSyncSummary!.connections} ${_tx('providers.summary_connections', 'conexiones')}',
+                    '${account.hubSyncSummary!.connections} ${_tx('providers.summary_connections')}',
                   ),
                 ],
               ),
@@ -422,13 +391,13 @@ class _ProvidersSectionState extends State<ProvidersSection>
                 runSpacing: 6,
                 children: [
                   _accountSummaryChip(
-                    '${account.models.length} ${_tx('providers.summary_connections', 'conexiones')}',
+                    '${account.models.length} ${_tx('providers.summary_connections')}',
                   ),
                   _accountSummaryChip(
-                    '${account.syncSummary!.agentsCount} ${_tx('providers.summary_agents', 'agentes')}',
+                    '${account.syncSummary!.agentsCount} ${_tx('providers.summary_agents')}',
                   ),
                   _accountSummaryChip(
-                    '${account.syncSummary!.skillsPrivateCount} ${_tx('providers.summary_skills', 'skills')}',
+                    '${account.syncSummary!.skillsPrivateCount} ${_tx('providers.summary_skills')}',
                   ),
                 ],
               ),
@@ -445,17 +414,17 @@ class _ProvidersSectionState extends State<ProvidersSection>
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.sync),
-                  label: Text(_tx('providers.sync_action', 'Sincronizar')),
+                  label: Text(_tx('providers.sync_action')),
                 ),
                 const Spacer(),
                 ActionIconButton(
                   icon: Icons.edit_outlined,
-                  tooltip: _tx('common.edit', 'Editar'),
+                  tooltip: _tx('common.edit'),
                   onPressed: () => _openEditAccountDialog(account),
                 ),
                 ActionIconButton(
                   icon: Icons.link_off,
-                  tooltip: _tx('providers.unlink_action', 'Desvincular'),
+                  tooltip: _tx('providers.unlink_action'),
                   danger: true,
                   onPressed: () => _unlinkAccount(account),
                 ),

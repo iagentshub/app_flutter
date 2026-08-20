@@ -8,7 +8,7 @@ extension _PromptActions on _KnowledgePageState {
     final token = _token;
     if (token == null || token.isEmpty) {
       refresh(() {
-        _promptsError = _tx('common.no_session', 'No hay sesión activa');
+        _promptsError = _tx('common.no_session');
         _promptsLoading = false;
       });
       return;
@@ -37,10 +37,7 @@ extension _PromptActions on _KnowledgePageState {
     } catch (_) {
       if (!mounted) return;
       refresh(() {
-        _promptsError = _tx(
-          'knowledge.load_error_prompts',
-          'No se pudieron cargar los prompts',
-        );
+        _promptsError = _tx('knowledge.load_error_prompts');
         _promptsLoading = false;
       });
     }
@@ -59,12 +56,7 @@ extension _PromptActions on _KnowledgePageState {
 
   Future<void> _openEditPromptDialog(PromptItem item) async {
     if (item.readOnly) {
-      showMessage(
-        _tx(
-          'knowledge.readonly_prompt',
-          'Este prompt no es editable (del sistema o compartido)',
-        ),
-      );
+      showMessage(_tx('knowledge.readonly_prompt'));
       return;
     }
     final token = _token;
@@ -96,15 +88,12 @@ extension _PromptActions on _KnowledgePageState {
     final scope = (payload.remove('scope') as String?) ?? 'private';
     try {
       await _promptsRepository.savePrompt(token, scope, payload);
-      showMessage(_tx('knowledge.prompt_saved', 'Prompt guardado'));
+      showMessage(_tx('knowledge.prompt_saved'));
       return true;
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('knowledge.prompt_save_error', 'No se pudo guardar el prompt'),
-        isError: true,
-      );
+      showMessage(_tx('knowledge.prompt_save_error'), isError: true);
     }
     return false;
   }
@@ -117,41 +106,29 @@ extension _PromptActions on _KnowledgePageState {
       await _promptsRepository.setPromptActive(token, item.id, activate);
       showMessage(
         activate
-            ? _tx('knowledge.prompt_activated', 'Prompt activado')
-            : _tx('knowledge.prompt_deactivated', 'Prompt desactivado'),
+            ? _tx('knowledge.prompt_activated')
+            : _tx('knowledge.prompt_deactivated'),
       );
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx(
-          'knowledge.prompt_toggle_error',
-          'No se pudo cambiar el estado del prompt',
-        ),
-        isError: true,
-      );
+      showMessage(_tx('knowledge.prompt_toggle_error'), isError: true);
     }
   }
 
   Future<void> _deletePrompt(PromptItem item) async {
     if (item.readOnly) {
-      showMessage(
-        _tx(
-          'knowledge.readonly_prompt_delete',
-          'Este prompt no se puede eliminar (del sistema o compartido)',
-        ),
-      );
+      showMessage(_tx('knowledge.readonly_prompt_delete'));
       return;
     }
     final confirm = await showConfirmActionDialog(
       context,
-      title: _tx('knowledge.delete_prompt_title', 'Eliminar prompt'),
+      title: _tx('knowledge.delete_prompt_title'),
       message: _tx(
         'knowledge.delete_prompt_confirm',
-        '¿Seguro que quieres eliminar "{name}"?',
       ).replaceAll('{name}', item.name),
-      cancelLabel: _tx('common.cancel', 'Cancelar'),
-      confirmLabel: _tx('common.delete', 'Eliminar'),
+      cancelLabel: _tx('common.cancel'),
+      confirmLabel: _tx('common.delete'),
       destructive: true,
     );
     if (!confirm) return;
@@ -160,14 +137,11 @@ extension _PromptActions on _KnowledgePageState {
     if (token == null || token.isEmpty) return;
     try {
       await _promptsRepository.deletePrompt(token, item.scope, item.id);
-      showMessage(_tx('knowledge.prompt_deleted', 'Prompt eliminado'));
+      showMessage(_tx('knowledge.prompt_deleted'));
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('knowledge.prompt_delete_error', 'No se pudo eliminar el prompt'),
-        isError: true,
-      );
+      showMessage(_tx('knowledge.prompt_delete_error'), isError: true);
     }
   }
 

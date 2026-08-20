@@ -1,9 +1,14 @@
 import 'package:app_flutter/features/agents/pages/public_agent_picker_page.dart';
 import 'package:app_flutter/models/explore/explore_models.dart';
+import 'package:app_flutter/utils/i18n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/i18n_de_prueba.dart';
+
 void main() {
+  setUp(cargarTraduccionesDePrueba);
+
   testWidgets('usa una página propia, busca y selecciona a 360 px', (
     tester,
   ) async {
@@ -30,11 +35,8 @@ void main() {
     ];
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: PublicAgentPickerPage(
-          agents: agents,
-          tx: (_, fallback) => fallback,
-        ),
+      const MaterialApp(
+        home: PublicAgentPickerPage(agents: agents, tx: tr),
       ),
     );
 

@@ -35,7 +35,7 @@ class RunProgressDialog extends StatefulWidget {
   final Map<String, dynamic> definition;
   final List<AgentItem> agents;
   final Stream<Map<String, dynamic>> stream;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
   final Future<void> Function()? onCancel;
 
   @override
@@ -97,19 +97,16 @@ class _RunProgressDialogState extends State<RunProgressDialog> {
     final message = error.toString().trim();
     return message.isNotEmpty && message != 'Exception'
         ? message
-        : _tx(
-            'workflows.error_connection',
-            'Error de conexión durante la ejecución',
-          );
+        : _tx('workflows.error_connection');
   }
 
-  String _tx(String path, String fallback) => widget.tx(path, fallback);
+  String _tx(String path) => widget.tx(path);
 
   String _agentName(String agentId) {
     for (final agent in widget.agents) {
       if (agent.id == agentId) return agent.name;
     }
-    return _tx('workflows.default_agent_label', 'Agente');
+    return _tx('workflows.default_agent_label');
   }
 
   /// ponytail: cancelar solo cierra el stream del cliente. El backend no tiene
@@ -151,13 +148,13 @@ class _RunProgressDialogState extends State<RunProgressDialog> {
   }
 
   String _statusLabel() {
-    if (_state.error != null) return _tx('workflows.run_status_error', 'Error');
+    if (_state.error != null) return _tx('workflows.run_status_error');
     if (_state.cancelled) {
-      return _tx('workflows.run_cancelled', 'Cancelada');
+      return _tx('workflows.run_cancelled');
     }
     return _state.running
-        ? _tx('workflows.run_status_running', 'En curso')
-        : _tx('workflows.run_status_done', 'Completada');
+        ? _tx('workflows.run_status_running')
+        : _tx('workflows.run_status_done');
   }
 
   Widget _canvas() {
@@ -172,16 +169,16 @@ class _RunProgressDialogState extends State<RunProgressDialog> {
           entry.key: _visualStatus(entry.value),
       },
       iterations: _state.iterations,
-      fitTooltip: _tx('workflow_editor.fit_view', 'Encajar diagrama'),
-      zoomInTooltip: _tx('workflow_editor.zoom_in', 'Acercar'),
-      zoomOutTooltip: _tx('workflow_editor.zoom_out', 'Alejar'),
+      fitTooltip: _tx('workflow_editor.fit_view'),
+      zoomInTooltip: _tx('workflow_editor.zoom_in'),
+      zoomOutTooltip: _tx('workflow_editor.zoom_out'),
       connectionHint: '',
-      inputLabel: _tx('workflow_editor.input_port', 'Entrada'),
-      outputLabel: _tx('workflow_editor.output_port', 'Salida'),
-      missingAgentLabel: _tx('workflow_editor.no_agent', 'Sin agente'),
-      agentKindLabel: _tx('workflow_editor.kind_agent', 'Agente'),
-      evaluatorKindLabel: _tx('workflow_editor.kind_evaluator', 'Evaluador'),
-      loopLabel: _tx('workflow_editor.loop_label', 'Bucle'),
+      inputLabel: _tx('workflow_editor.input_port'),
+      outputLabel: _tx('workflow_editor.output_port'),
+      missingAgentLabel: _tx('workflow_editor.no_agent'),
+      agentKindLabel: _tx('workflow_editor.kind_agent'),
+      evaluatorKindLabel: _tx('workflow_editor.kind_evaluator'),
+      loopLabel: _tx('workflow_editor.loop_label'),
       invalidConnectionMessage: '',
     );
   }
@@ -213,7 +210,6 @@ class _RunProgressDialogState extends State<RunProgressDialog> {
         Text(
           _tx(
             'workflows.run_progress_steps',
-            '{{done}}/{{total}} pasos',
           ).replaceAll('{{done}}', '$done').replaceAll('{{total}}', '$total'),
           style: Theme.of(
             context,
@@ -224,7 +220,6 @@ class _RunProgressDialogState extends State<RunProgressDialog> {
           Text(
             _tx(
               'workflows.loop_round',
-              'Vuelta {{n}}',
             ).replaceAll('{{n}}', '${_state.maxIteration}'),
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
               color: colors.tertiary,
@@ -235,7 +230,7 @@ class _RunProgressDialogState extends State<RunProgressDialog> {
         if (_state.running && active != null) ...[
           const SizedBox(width: 10),
           Text(
-            _tx('workflows.still_working', 'trabajando {{time}}').replaceAll(
+            _tx('workflows.still_working').replaceAll(
               '{{time}}',
               formatRunDuration(DateTime.now().difference(active)),
             ),
@@ -269,7 +264,7 @@ class _RunProgressDialogState extends State<RunProgressDialog> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_tx('workflows.run_live_title', 'Ejecución en vivo')),
+                Text(_tx('workflows.run_live_title')),
                 const SizedBox(height: 3),
                 Text(
                   widget.workflowName,
@@ -336,18 +331,15 @@ class _RunProgressDialogState extends State<RunProgressDialog> {
             onPressed: _cancelling ? null : _cancel,
             child: Text(
               _cancelling
-                  ? _tx('workflows.run_cancelling', 'Cancelando…')
-                  : _tx('workflows.run_cancel_btn', 'Cancelar ejecución'),
+                  ? _tx('workflows.run_cancelling')
+                  : _tx('workflows.run_cancel_btn'),
             ),
           ),
         if (_state.running)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Text(
-              _tx(
-                'workflows.run_background_hint',
-                'Puedes cerrar: seguirá ejecutándose en segundo plano.',
-              ),
+              _tx('workflows.run_background_hint'),
               style: Theme.of(
                 context,
               ).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
@@ -355,7 +347,7 @@ class _RunProgressDialogState extends State<RunProgressDialog> {
           ),
         PrimaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(_tx('common.close', 'Cerrar')),
+          child: Text(_tx('common.close')),
         ),
       ],
     );

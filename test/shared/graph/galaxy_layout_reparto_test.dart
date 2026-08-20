@@ -139,9 +139,9 @@ void main() {
     final canvas = state.debugCanvasSize as Size;
     final centro = Offset(canvas.width / 2, canvas.height / 2);
     final radioDisco = math.min(canvas.width, canvas.height) * 0.42;
-    final radios = posicionesDe(state)
-        .map((p) => (p - centro).distance)
-        .toList();
+    final radios = posicionesDe(
+      state,
+    ).map((p) => (p - centro).distance).toList();
 
     // Un layout de fuerzas repartía por área y dejaba el tercio exterior
     // como el más poblado: un anillo, no una galaxia.

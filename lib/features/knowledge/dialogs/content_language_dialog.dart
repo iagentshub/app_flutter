@@ -2,7 +2,7 @@ part of '../pages/knowledge_page.dart';
 
 Future<Set<String>?> _showContentLabelsDialog(
   BuildContext context, {
-  required String Function(String path, String fallback) tx,
+  required String Function(String path) tx,
   Set<String> initial = const {'private'},
 }) {
   var selected = Set<String>.of(initial);
@@ -10,9 +10,7 @@ Future<Set<String>?> _showContentLabelsDialog(
     context: context,
     builder: (context) => StatefulBuilder(
       builder: (context, setDialogState) => AlertDialog(
-        title: Text(
-          tx('knowledge.document_labels_title', 'Etiquetas del documento'),
-        ),
+        title: Text(tx('knowledge.document_labels_title')),
         content: SizedBox(
           width: dialogContentWidth(context, 420),
           child: GroupedLabelPicker(
@@ -24,11 +22,11 @@ Future<Set<String>?> _showContentLabelsDialog(
         actions: [
           TertiaryButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(tx('common.cancel', 'Cancelar')),
+            child: Text(tx('common.cancel')),
           ),
           PrimaryButton(
             onPressed: () => Navigator.of(context).pop(selected),
-            child: Text(tx('common.continue', 'Continuar')),
+            child: Text(tx('common.continue')),
           ),
         ],
       ),

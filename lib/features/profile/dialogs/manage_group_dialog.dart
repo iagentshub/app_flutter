@@ -13,7 +13,7 @@ class _ManageGroupDialog extends StatefulWidget {
   final String token;
   final GroupItem group;
   final String currentUsername;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<_ManageGroupDialog> createState() => _ManageGroupDialogState();
@@ -77,42 +77,33 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog>
     if (username == null || username.isEmpty) return;
     try {
       await _repository.inviteMember(widget.token, widget.group.id, username);
-      showMessage(widget.tx('groups.invite_sent', 'Invitación enviada'));
+      showMessage(widget.tx('groups.invite_sent'));
       await _load();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        widget.tx('groups.create_error', 'No se pudo crear el grupo'),
-        isError: true,
-      );
+      showMessage(widget.tx('groups.create_error'), isError: true);
     }
   }
 
   Future<void> _deleteGroup() async {
     final confirm = await showConfirmActionDialog(
       context,
-      title: widget.tx('groups.delete_confirm_title', 'Eliminar grupo'),
-      message: widget.tx(
-        'groups.delete_confirm_body',
-        '¿Seguro que quieres eliminar este grupo? Esta acción no se puede deshacer.',
-      ),
-      cancelLabel: widget.tx('common.cancel', 'Cancelar'),
-      confirmLabel: widget.tx('common.delete', 'Eliminar'),
+      title: widget.tx('groups.delete_confirm_title'),
+      message: widget.tx('groups.delete_confirm_body'),
+      cancelLabel: widget.tx('common.cancel'),
+      confirmLabel: widget.tx('common.delete'),
       destructive: true,
     );
     if (!confirm) return;
     try {
       await _repository.deleteGroup(widget.token, widget.group.id);
       widget.apiClient.invalidateCache('/api/groups');
-      showMessage(widget.tx('groups.group_deleted', 'Grupo eliminado'));
+      showMessage(widget.tx('groups.group_deleted'));
       if (!mounted) return;
       Navigator.of(context).pop();
     } catch (_) {
-      showMessage(
-        widget.tx('groups.create_error', 'No se pudo crear el grupo'),
-        isError: true,
-      );
+      showMessage(widget.tx('groups.create_error'), isError: true);
     }
   }
 
@@ -124,13 +115,10 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog>
     if (!_isOwner) {
       final confirm = await showConfirmActionDialog(
         context,
-        title: widget.tx('groups.leave_confirm_title', 'Abandonar grupo'),
-        message: widget.tx(
-          'groups.leave_confirm_body',
-          '¿Seguro que quieres abandonar este grupo?',
-        ),
-        cancelLabel: widget.tx('common.cancel', 'Cancelar'),
-        confirmLabel: widget.tx('groups.leave', 'Abandonar'),
+        title: widget.tx('groups.leave_confirm_title'),
+        message: widget.tx('groups.leave_confirm_body'),
+        cancelLabel: widget.tx('common.cancel'),
+        confirmLabel: widget.tx('groups.leave'),
         destructive: true,
       );
       if (!confirm) return;
@@ -141,14 +129,11 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog>
           widget.currentUsername,
         );
         widget.apiClient.invalidateCache('/api/groups');
-        showMessage(widget.tx('groups.left_group', 'Has salido del grupo'));
+        showMessage(widget.tx('groups.left_group'));
         if (!mounted) return;
         Navigator.of(context).pop();
       } catch (_) {
-        showMessage(
-          widget.tx('groups.create_error', 'No se pudo crear el grupo'),
-          isError: true,
-        );
+        showMessage(widget.tx('groups.create_error'), isError: true);
       }
       return;
     }
@@ -156,13 +141,10 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog>
     if (otherMembers.isEmpty) {
       final confirm = await showConfirmActionDialog(
         context,
-        title: widget.tx('groups.leave_owner_sole_title', 'Eliminar grupo'),
-        message: widget.tx(
-          'groups.leave_owner_sole_body',
-          'Eres el único miembro. Al salir se eliminará el grupo por completo. ¿Continuar?',
-        ),
-        cancelLabel: widget.tx('common.cancel', 'Cancelar'),
-        confirmLabel: widget.tx('common.delete', 'Eliminar'),
+        title: widget.tx('groups.leave_owner_sole_title'),
+        message: widget.tx('groups.leave_owner_sole_body'),
+        cancelLabel: widget.tx('common.cancel'),
+        confirmLabel: widget.tx('common.delete'),
         destructive: true,
       );
       if (!confirm) return;
@@ -173,18 +155,11 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog>
     final newOwner = await showDialog<String>(
       context: context,
       builder: (context) => SimpleDialog(
-        title: Text(
-          widget.tx('groups.leave_owner_title', 'Transferir propiedad y salir'),
-        ),
+        title: Text(widget.tx('groups.leave_owner_title')),
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-            child: Text(
-              widget.tx(
-                'groups.leave_owner_body',
-                'Eres el propietario. Elige quién será el nuevo propietario antes de salir.',
-              ),
-            ),
+            child: Text(widget.tx('groups.leave_owner_body')),
           ),
           for (final m in otherMembers)
             SimpleDialogOption(
@@ -208,16 +183,11 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog>
         widget.currentUsername,
       );
       widget.apiClient.invalidateCache('/api/groups');
-      showMessage(
-        widget.tx('groups.ownership_transferred', 'Propiedad transferida'),
-      );
+      showMessage(widget.tx('groups.ownership_transferred'));
       if (!mounted) return;
       Navigator.of(context).pop();
     } catch (_) {
-      showMessage(
-        widget.tx('groups.create_error', 'No se pudo crear el grupo'),
-        isError: true,
-      );
+      showMessage(widget.tx('groups.create_error'), isError: true);
     }
   }
 
@@ -290,7 +260,7 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog>
                         onPressed: _openMembersDialog,
                         icon: const Icon(Icons.group_outlined),
                         label: Text(
-                          '${widget.tx('groups.view_members', 'Ver miembros')} (${_members.length})',
+                          '${widget.tx('groups.view_members')} (${_members.length})',
                         ),
                       ),
                     ),
@@ -301,9 +271,7 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog>
                         child: SecondaryButton.icon(
                           onPressed: _openInviteDialog,
                           icon: const Icon(Icons.person_add_alt_outlined),
-                          label: Text(
-                            widget.tx('groups.invite_user', 'Invitar usuario'),
-                          ),
+                          label: Text(widget.tx('groups.invite_user')),
                         ),
                       ),
                     ],
@@ -312,9 +280,7 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog>
                       _sectionLabel(
                         context,
                         Icons.warning_amber_outlined,
-                        widget
-                            .tx('groups.danger_zone', 'Zona de peligro')
-                            .toUpperCase(),
+                        widget.tx('groups.danger_zone').toUpperCase(),
                         color: FncColors.materialRed,
                       ),
                       const SizedBox(height: 8),
@@ -329,10 +295,7 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog>
                           children: [
                             Expanded(
                               child: Text(
-                                widget.tx(
-                                  'groups.delete_confirm_body',
-                                  '¿Seguro que quieres eliminar este grupo? Esta acción no se puede deshacer.',
-                                ),
+                                widget.tx('groups.delete_confirm_body'),
                                 style: const TextStyle(
                                   fontSize: FncFonts.size12,
                                 ),
@@ -347,10 +310,7 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog>
                                 size: 18,
                               ),
                               label: Text(
-                                widget.tx(
-                                  'groups.delete_group',
-                                  'Eliminar grupo',
-                                ),
+                                widget.tx('groups.delete_group'),
                                 style: const TextStyle(
                                   color: FncColors.materialRed,
                                 ),
@@ -372,9 +332,7 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog>
                     _sectionLabel(
                       context,
                       Icons.logout,
-                      widget
-                          .tx('groups.leave_panel_title', 'Abandonar grupo')
-                          .toUpperCase(),
+                      widget.tx('groups.leave_panel_title').toUpperCase(),
                     ),
                     const SizedBox(height: 8),
                     _panel(
@@ -382,17 +340,14 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog>
                         children: [
                           Expanded(
                             child: Text(
-                              widget.tx(
-                                'groups.leave_panel_body',
-                                'Dejarás de tener acceso a los recursos compartidos con este grupo.',
-                              ),
+                              widget.tx('groups.leave_panel_body'),
                               style: const TextStyle(fontSize: FncFonts.size12),
                             ),
                           ),
                           const SizedBox(width: 10),
                           SecondaryButton(
                             onPressed: _leave,
-                            child: Text(widget.tx('groups.leave', 'Abandonar')),
+                            child: Text(widget.tx('groups.leave')),
                           ),
                         ],
                       ),
@@ -406,7 +361,7 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog>
       actions: [
         PrimaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(widget.tx('common.cancel', 'Cancelar')),
+          child: Text(widget.tx('common.cancel')),
         ),
       ],
     );

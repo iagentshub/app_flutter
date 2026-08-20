@@ -20,6 +20,7 @@ import '../../../shared/state/dashboard_edit_state.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/kpi/kpi_row_tile.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
+import '../../../utils/i18n.dart';
 import '../../auth/repositories/auth_repository.dart';
 import '../../explore/repositories/explore_repository.dart';
 import '../cards/dashboard_feed_body.dart';
@@ -67,10 +68,11 @@ class _DashboardPageState extends State<DashboardPage> {
   bool _editing = false;
   String? _error;
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
-  String _widgetTx(String key, String fallback) =>
-      _tx('dashboard.$key', fallback);
+  /// Las claves de los widgets del dashboard se construyen con su tipo, así
+  /// que la traducción puede faltar legítimamente: se cae al nombre del widget.
+  String _widgetTx(String key) => trOr('dashboard.$key', key);
 
   @override
   void initState() {
@@ -101,7 +103,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final token = _token;
     if (token == null || token.isEmpty) {
       setState(() {
-        _error = _tx('common.no_session', 'No hay sesión activa');
+        _error = _tx('common.no_session');
         _loading = false;
       });
       return;
@@ -130,10 +132,7 @@ class _DashboardPageState extends State<DashboardPage> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = _tx(
-          'dashboard.error_generic',
-          'No se pudo cargar el dashboard',
-        );
+        _error = _tx('dashboard.error_generic');
         _loading = false;
       });
     }
@@ -238,12 +237,12 @@ class _DashboardPageState extends State<DashboardPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(_error ?? _tx('dashboard.no_data', 'Sin datos')),
+            Text(_error ?? _tx('dashboard.no_data')),
             const SizedBox(height: 12),
             PrimaryButton.icon(
               onPressed: _load,
               icon: const Icon(Icons.refresh),
-              label: Text(_tx('common.retry', 'Reintentar')),
+              label: Text(_tx('common.retry')),
             ),
           ],
         ),
@@ -262,10 +261,7 @@ class _DashboardPageState extends State<DashboardPage> {
               if (_editing)
                 Expanded(
                   child: Text(
-                    _tx(
-                      'dashboard.edit_hint',
-                      'Abre el menú (☰) para añadir widgets',
-                    ),
+                    _tx('dashboard.edit_hint'),
                     style: const TextStyle(
                       fontSize: FncFonts.size12,
                       color: FncColors.materialGrey,
@@ -279,8 +275,8 @@ class _DashboardPageState extends State<DashboardPage> {
                 icon: Icon(_editing ? Icons.check : Icons.tune),
                 label: Text(
                   _editing
-                      ? _tx('dashboard.done_btn', 'Listo')
-                      : _tx('dashboard.customize_btn', 'Personalizar'),
+                      ? _tx('dashboard.done_btn')
+                      : _tx('dashboard.customize_btn'),
                 ),
               ),
             ],
@@ -306,12 +302,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 40),
                         child: Center(
-                          child: Text(
-                            _tx(
-                              'dashboard.empty_layout',
-                              'No hay widgets. Pulsa "Personalizar" y abre el menú para añadir alguno.',
-                            ),
-                          ),
+                          child: Text(_tx('dashboard.empty_layout')),
                         ),
                       ),
                     ],
@@ -364,8 +355,8 @@ class _DashboardPageState extends State<DashboardPage> {
       canConfigure:
           definition?.configurable == true ||
           (definition?.supportedSizes.length ?? 0) > 1,
-      configureTooltip: _tx('dashboard.configure_tooltip', 'Configurar'),
-      removeTooltip: _tx('dashboard.remove_tooltip', 'Quitar'),
+      configureTooltip: _tx('dashboard.configure_tooltip'),
+      removeTooltip: _tx('dashboard.remove_tooltip'),
       onConfigure: () => _editWidget(instance),
       onRemove: () => _removeWidget(instance.id),
     );

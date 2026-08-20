@@ -190,7 +190,11 @@ void _agentSubgraph(
   for (final id in agent.knowledgePacks) {
     final packNodeId = acc.node('knowledge_pack', id, label: names.pack(id));
     acc.edge(parentId, packNodeId);
-    _packTree(acc, packNodeId: packNodeId, items: names.packItems[id] ?? const []);
+    _packTree(
+      acc,
+      packNodeId: packNodeId,
+      items: names.packItems[id] ?? const [],
+    );
   }
   if (agent.useMemory) {
     final file = agent.memoryFile.isEmpty ? 'memory' : agent.memoryFile;

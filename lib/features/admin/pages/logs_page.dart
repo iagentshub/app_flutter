@@ -61,7 +61,7 @@ class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
   bool _exporting = false;
   String? _viewerError;
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   @override
   void initState() {
@@ -94,7 +94,7 @@ class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
     final token = _token;
     if (token == null || token.isEmpty) {
       setState(() {
-        _summaryError = _tx('common.no_session', 'No hay sesión activa');
+        _summaryError = _tx('common.no_session');
         _summaryLoading = false;
       });
       return;
@@ -119,10 +119,7 @@ class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _summaryError = _tx(
-          'logs.error_summary',
-          'No se pudo cargar el resumen de logs',
-        );
+        _summaryError = _tx('logs.error_summary');
         _summaryLoading = false;
       });
     }
@@ -131,9 +128,7 @@ class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
   Future<void> _loadViewer({int page = 1}) async {
     final token = _token;
     if (token == null || token.isEmpty) {
-      setState(
-        () => _viewerError = _tx('common.no_session', 'No hay sesión activa'),
-      );
+      setState(() => _viewerError = _tx('common.no_session'));
       return;
     }
     setState(() {
@@ -166,7 +161,7 @@ class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _viewerError = _tx('logs.error_load', 'No se pudieron cargar los logs');
+        _viewerError = _tx('logs.error_load');
         _viewerLoading = false;
       });
     }
@@ -193,7 +188,7 @@ class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
           .replaceAll(RegExp(r'[^0-9]'), '')
           .substring(0, 14);
       await FilePicker.saveFile(
-        dialogTitle: _tx('logs.save_dialog_title', 'Guardar logs'),
+        dialogTitle: _tx('logs.save_dialog_title'),
         fileName: 'logs_$stamp.csv',
         bytes: bytes,
         type: FileType.custom,
@@ -202,10 +197,7 @@ class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('logs.error_export', 'No se pudo exportar el CSV'),
-        isError: true,
-      );
+      showMessage(_tx('logs.error_export'), isError: true);
     } finally {
       if (mounted) setState(() => _exporting = false);
     }
@@ -220,9 +212,9 @@ class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
   void _openLogsFiltersDialog() {
     showFilterDialog(
       context,
-      title: _tx('common.filters', 'Filtros'),
-      clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
-      closeLabel: _tx('logs.filter_btn', 'Filtrar'),
+      title: _tx('common.filters'),
+      clearLabel: _tx('common.clear_filters'),
+      closeLabel: _tx('logs.filter_btn'),
       onApply: _loadViewer,
       onClear: () {
         setState(() {
@@ -235,14 +227,12 @@ class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
       buildFields: (setDialogState) => [
         DropdownButtonFormField<String>(
           initialValue: _level,
-          decoration: InputDecoration(
-            labelText: _tx('logs.level_label', 'Nivel'),
-          ),
+          decoration: InputDecoration(labelText: _tx('logs.level_label')),
           items: _levels
               .map(
                 (l) => DropdownMenuItem(
                   value: l,
-                  child: Text(l.isEmpty ? _tx('logs.all', 'Todos') : l),
+                  child: Text(l.isEmpty ? _tx('logs.all') : l),
                 ),
               )
               .toList(),
@@ -254,14 +244,12 @@ class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
           initialValue: _source,
-          decoration: InputDecoration(
-            labelText: _tx('logs.service_label', 'Servicio'),
-          ),
+          decoration: InputDecoration(labelText: _tx('logs.service_label')),
           items: _sources
               .map(
                 (s) => DropdownMenuItem(
                   value: s,
-                  child: Text(s.isEmpty ? _tx('logs.all', 'Todos') : s),
+                  child: Text(s.isEmpty ? _tx('logs.all') : s),
                 ),
               )
               .toList(),
@@ -273,15 +261,13 @@ class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
         const SizedBox(height: 12),
         TextField(
           controller: _ipController,
-          decoration: InputDecoration(labelText: _tx('logs.ip_label', 'IP')),
+          decoration: InputDecoration(labelText: _tx('logs.ip_label')),
           onChanged: (_) => setDialogState(() {}),
         ),
         const SizedBox(height: 12),
         TextField(
           controller: _usernameController,
-          decoration: InputDecoration(
-            labelText: _tx('logs.user_label', 'Usuario'),
-          ),
+          decoration: InputDecoration(labelText: _tx('logs.user_label')),
           onChanged: (_) => setDialogState(() {}),
         ),
       ],
@@ -339,12 +325,12 @@ class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
             segments: [
               ButtonSegment(
                 value: false,
-                label: Text(_tx('logs.tab_summary', 'Resumen')),
+                label: Text(_tx('logs.tab_summary')),
                 icon: const Icon(Icons.dashboard_outlined),
               ),
               ButtonSegment(
                 value: true,
-                label: Text(_tx('logs.tab_viewer', 'Visor')),
+                label: Text(_tx('logs.tab_viewer')),
                 icon: const Icon(Icons.list_alt_outlined),
               ),
             ],

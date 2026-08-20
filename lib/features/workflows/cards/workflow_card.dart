@@ -197,8 +197,7 @@ class WorkflowCard extends StatelessWidget {
                     workflow: item,
                     agentsById: agentsById,
                     names:
-                        await graphNamesLoader?.call() ??
-                        const ResourceNames(),
+                        await graphNamesLoader?.call() ?? const ResourceNames(),
                   ),
                   closeLabel: graphCloseLabel,
                   searchHint: graphSearchHint,

@@ -84,7 +84,7 @@ class _AgentsPageState extends State<AgentsPage>
   String _agentType = 'all';
   String _memory = 'all';
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   List<String> get _agentTypeOptions =>
       _agents.map((a) => a.agentType).toSet().toList()..sort();
@@ -114,11 +114,11 @@ class _AgentsPageState extends State<AgentsPage>
   );
 
   void _openFiltersDialog() {
-    final optionAll = _tx('explore.option_all', 'Todas');
+    final optionAll = _tx('explore.option_all');
     final scopeOptions = [
       ('all', optionAll),
-      ('private', _tx('agents.scope_private', 'Privado')),
-      ('public', _tx('agents.scope_public', 'Público')),
+      ('private', _tx('agents.scope_private')),
+      ('public', _tx('agents.scope_public')),
     ];
     final typeOptions = [
       ('all', optionAll),
@@ -126,15 +126,15 @@ class _AgentsPageState extends State<AgentsPage>
     ];
     final memoryOptions = [
       ('all', optionAll),
-      ('with', _tx('agents.memory_with', 'Con memoria')),
-      ('without', _tx('agents.memory_without', 'Sin memoria')),
+      ('with', _tx('agents.memory_with')),
+      ('without', _tx('agents.memory_without')),
     ];
 
     showFilterDialog(
       context,
-      title: _tx('common.filters', 'Filtros'),
-      clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
-      closeLabel: _tx('common.close', 'Cerrar'),
+      title: _tx('common.filters'),
+      clearLabel: _tx('common.clear_filters'),
+      closeLabel: _tx('common.close'),
       onClear: () => setState(() {
         _scope = 'all';
         _agentType = 'all';
@@ -142,7 +142,7 @@ class _AgentsPageState extends State<AgentsPage>
       }),
       buildFields: (setDialogState) => [
         FilterDropdown(
-          label: _tx('agents.scope_label', 'Visibilidad'),
+          label: _tx('agents.scope_label'),
           value: _scope,
           options: scopeOptions,
           onChanged: (v) {
@@ -152,7 +152,7 @@ class _AgentsPageState extends State<AgentsPage>
         ),
         const SizedBox(height: 12),
         FilterDropdown(
-          label: _tx('agents.type_label', 'Tipo de agente'),
+          label: _tx('agents.type_label'),
           value: _agentType,
           options: typeOptions,
           onChanged: (v) {
@@ -162,7 +162,7 @@ class _AgentsPageState extends State<AgentsPage>
         ),
         const SizedBox(height: 12),
         FilterDropdown(
-          label: _tx('agents.memory_label', 'Memoria'),
+          label: _tx('agents.memory_label'),
           value: _memory,
           options: memoryOptions,
           onChanged: (v) {
@@ -219,7 +219,7 @@ class _AgentsPageState extends State<AgentsPage>
     final token = _token;
     if (token == null || token.isEmpty) {
       setState(() {
-        _error = _tx('common.no_session', 'No hay sesión activa');
+        _error = _tx('common.no_session');
         _loading = false;
       });
       return;
@@ -277,10 +277,7 @@ class _AgentsPageState extends State<AgentsPage>
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = _tx(
-          'agents.error_generic',
-          'No se pudieron cargar los agentes',
-        );
+        _error = _tx('agents.error_generic');
         _loading = false;
       });
     }

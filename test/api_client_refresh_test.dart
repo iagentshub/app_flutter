@@ -145,10 +145,7 @@ void main() {
     });
 
     final client = construir(mock, refresh: null);
-    await expectLater(
-      client.get('/api/auth/me'),
-      throwsA(isA<ApiError>()),
-    );
+    await expectLater(client.get('/api/auth/me'), throwsA(isA<ApiError>()));
     expect(renovaciones, 0, reason: 'el 401 del login no es una sesión caduca');
   });
 

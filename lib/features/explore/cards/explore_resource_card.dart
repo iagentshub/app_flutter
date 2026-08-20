@@ -79,7 +79,7 @@ extension _ExploreResourceCard on _ExplorePageState {
             const SizedBox(height: 8),
             LabelChipsRow(
               labels: item.labels,
-              labelText: (label) => _tx('labels.$label', label),
+              labelText: (label) => trOr('labels.$label', label),
               leading: <Widget>[
                 ResourceTypeBadge(
                   type: item.resourceType,
@@ -109,7 +109,7 @@ extension _ExploreResourceCard on _ExplorePageState {
               children: [
                 ActionIconButton(
                   icon: Icons.visibility_outlined,
-                  tooltip: _tx('explore.preview', 'Vista previa'),
+                  tooltip: _tx('explore.preview'),
                   onPressed: busy ? null : () => _preview(item),
                 ),
                 if (item.resourceType == 'agent' ||
@@ -120,15 +120,15 @@ extension _ExploreResourceCard on _ExplorePageState {
                       'explore-graph-${item.resourceType}-${item.resourceId}',
                     ),
                     icon: Icons.hub_outlined,
-                    tooltip: _tx('explore.graph', 'Ver grafo'),
+                    tooltip: _tx('explore.graph'),
                     onPressed: busy ? null : () => _showResourceGraph(item),
                   ),
                 if (isLinkable)
                   ActionIconButton(
                     icon: linked ? Icons.link : Icons.link_outlined,
                     tooltip: linked
-                        ? _tx('explore.linked_tooltip', 'Ya enlazado')
-                        : _tx('explore.link', 'Enlazar'),
+                        ? _tx('explore.linked_tooltip')
+                        : _tx('explore.link'),
                     onPressed: (busy || linked)
                         ? null
                         : () => _runAction(_controller.link(item)),
@@ -137,8 +137,8 @@ extension _ExploreResourceCard on _ExplorePageState {
                 ActionIconButton(
                   icon: starred ? Icons.bookmark : Icons.bookmark_outline,
                   tooltip: starred
-                      ? _tx('explore.unstar', 'Quitar de favoritos')
-                      : _tx('explore.star', 'Añadir a favoritos'),
+                      ? _tx('explore.unstar')
+                      : _tx('explore.star'),
                   onPressed: busy
                       ? null
                       : () => _runAction(_controller.toggleStar(item)),
@@ -165,7 +165,7 @@ extension _ExploreResourceCard on _ExplorePageState {
           Icon(Icons.link, size: 12, color: scheme.primary),
           const SizedBox(width: 4),
           Text(
-            _tx('explore.linked_badge', 'Enlazado'),
+            _tx('explore.linked_badge'),
             style: TextStyle(fontSize: FncFonts.size12, color: scheme.primary),
           ),
         ],

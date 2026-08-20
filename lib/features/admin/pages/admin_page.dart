@@ -22,6 +22,7 @@ import '../../../shared/widgets/kpi/kpi_tile.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../../../utils/i18n.dart';
 import '../../../utils/validators.dart';
 import '../repositories/admin_agents_repository.dart';
 import '../repositories/admin_connections_repository.dart';
@@ -158,7 +159,7 @@ class _AdminPageState extends State<AdminPage>
   bool _loading = true;
   String? _error;
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   String? get _token => _services.sessionController.gaToken;
 
@@ -225,7 +226,7 @@ class _AdminPageState extends State<AdminPage>
     final token = _token;
     if (token == null || token.isEmpty) {
       setState(() {
-        _error = _tx('common.no_session', 'No hay sesión activa');
+        _error = _tx('common.no_session');
         _loading = false;
       });
       return;
@@ -276,7 +277,7 @@ class _AdminPageState extends State<AdminPage>
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = _tx('admin.error_generic', 'No se pudo cargar Admin');
+        _error = _tx('admin.error_generic');
         _loading = false;
       });
     }
@@ -294,10 +295,7 @@ class _AdminPageState extends State<AdminPage>
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('admin.error_generic', 'No se pudo completar la acción'),
-        isError: true,
-      );
+      showMessage(_tx('admin.error_generic'), isError: true);
     }
   }
 
@@ -315,8 +313,8 @@ class _AdminPageState extends State<AdminPage>
       context,
       title: title,
       message: body,
-      cancelLabel: _tx('common.cancel', 'Cancelar'),
-      confirmLabel: confirmLabel ?? _tx('common.delete', 'Eliminar'),
+      cancelLabel: _tx('common.cancel'),
+      confirmLabel: confirmLabel ?? _tx('common.delete'),
       destructive: destructive,
     );
   }

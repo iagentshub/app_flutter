@@ -99,46 +99,24 @@ extension _KnowledgeResourceGraph on _KnowledgePageState {
     Future<GraphBuild> Function() buildGraph,
   ) {
     return ResourceGraphButton(
-      tooltip: _tx('knowledge.graph_tooltip', 'Ver relaciones'),
+      tooltip: _tx('knowledge.graph_tooltip'),
       dialogTitle: _tx(
         'knowledge.graph_title',
-        'Relaciones de {{name}}',
       ).replaceAll('{{name}}', resourceName),
       buildGraph: buildGraph,
-      closeLabel: _tx('common.close', 'Cerrar'),
-      searchHint: _tx('graph.search_hint', 'Buscar en el grafo...'),
-      sortTooltip: _tx('graph.sort_tooltip', 'Ordenar'),
-      sortHierarchyVerticalLabel: _tx(
-        'graph.sort_hierarchy_vertical',
-        'Jerárquico (arriba-abajo)',
-      ),
-      sortHierarchyHorizontalLabel: _tx(
-        'graph.sort_hierarchy_horizontal',
-        'Jerárquico (izquierda-derecha)',
-      ),
-      sortGalaxyLabel: _tx('graph.sort_galaxy', 'Galaxia'),
-      showLabelsTooltip: _tx('graph.show_labels_tooltip', 'Mostrar nombres'),
-      hideLabelsTooltip: _tx('graph.hide_labels_tooltip', 'Ocultar nombres'),
-      quickViewDescriptionLabel: _tx(
-        'graph.quick_view_description',
-        'Descripción',
-      ),
-      quickViewNoDescriptionLabel: _tx(
-        'graph.quick_view_no_description',
-        'Sin descripción',
-      ),
-      quickViewConnectionsLabel: _tx(
-        'graph.quick_view_connections',
-        'Conexiones',
-      ),
-      quickViewNoConnectionsLabel: _tx(
-        'graph.quick_view_no_connections',
-        'Sin conexiones',
-      ),
-      emptyLabel: _tx(
-        'knowledge.graph_empty',
-        'Este objeto no tiene relaciones',
-      ),
+      closeLabel: _tx('common.close'),
+      searchHint: _tx('graph.search_hint'),
+      sortTooltip: _tx('graph.sort_tooltip'),
+      sortHierarchyVerticalLabel: _tx('graph.sort_hierarchy_vertical'),
+      sortHierarchyHorizontalLabel: _tx('graph.sort_hierarchy_horizontal'),
+      sortGalaxyLabel: _tx('graph.sort_galaxy'),
+      showLabelsTooltip: _tx('graph.show_labels_tooltip'),
+      hideLabelsTooltip: _tx('graph.hide_labels_tooltip'),
+      quickViewDescriptionLabel: _tx('graph.quick_view_description'),
+      quickViewNoDescriptionLabel: _tx('graph.quick_view_no_description'),
+      quickViewConnectionsLabel: _tx('graph.quick_view_connections'),
+      quickViewNoConnectionsLabel: _tx('graph.quick_view_no_connections'),
+      emptyLabel: _tx('knowledge.graph_empty'),
     );
   }
 }

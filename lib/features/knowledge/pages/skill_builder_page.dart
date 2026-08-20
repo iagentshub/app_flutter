@@ -57,7 +57,7 @@ class _SkillBuilderPageState extends State<SkillBuilderPage>
   String? _error;
   StreamSubscription<AgentBuilderEvent>? _subscription;
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
   String? get _token => widget.sessionController.gaToken;
 
   @override
@@ -116,10 +116,7 @@ class _SkillBuilderPageState extends State<SkillBuilderPage>
     final text = _textController.text.trim();
     if (token == null || connectionId == null || text.isEmpty || _streaming) {
       if (connectionId == null) {
-        showMessage(
-          _tx('skill_builder.no_connection', 'Elige una conexión primero'),
-          isError: true,
-        );
+        showMessage(_tx('skill_builder.no_connection'), isError: true);
       }
       return;
     }
@@ -151,12 +148,7 @@ class _SkillBuilderPageState extends State<SkillBuilderPage>
               scrollToEnd(_scrollController);
             } else if (event.type == 'error') {
               setState(() {
-                _error =
-                    event.message ??
-                    _tx(
-                      'skill_builder.generic_error',
-                      'Error del constructor de skills',
-                    );
+                _error = event.message ?? _tx('skill_builder.generic_error');
               });
             } else if (event.type == 'builder_done') {
               final assistantMessage = event.assistantMessage ?? '';
@@ -206,12 +198,7 @@ class _SkillBuilderPageState extends State<SkillBuilderPage>
       _thinking = false;
       _partialReply = '';
       _stage = null;
-      _error =
-          apiError?.message ??
-          _tx(
-            'skill_builder.connection_error',
-            'Error de conexión con el constructor de skills',
-          );
+      _error = apiError?.message ?? _tx('skill_builder.connection_error');
       if (_messages.isNotEmpty &&
           _messages.last.role == 'user' &&
           _messages.last.content == failedText) {
@@ -250,16 +237,13 @@ class _SkillBuilderPageState extends State<SkillBuilderPage>
   String get _thinkingLabel {
     switch (_stage) {
       case 'replying':
-        return _tx('skill_builder.stage_replying', 'Redactando respuesta…');
+        return _tx('skill_builder.stage_replying');
       case 'drafting':
-        return _tx('skill_builder.stage_drafting', 'Preparando el borrador…');
+        return _tx('skill_builder.stage_drafting');
       case 'writing_instructions':
-        return _tx(
-          'skill_builder.stage_writing',
-          'Escribiendo el contenido de la skill…',
-        );
+        return _tx('skill_builder.stage_writing');
       default:
-        return _tx('skill_builder.stage_analyzing', 'Analizando tu solicitud…');
+        return _tx('skill_builder.stage_analyzing');
     }
   }
 
@@ -269,13 +253,13 @@ class _SkillBuilderPageState extends State<SkillBuilderPage>
     return Scaffold(
       backgroundColor: colors.surfaceContainerLowest,
       appBar: AppBar(
-        title: Text(_tx('skill_builder.title', 'Constructor de skills IA')),
+        title: Text(_tx('skill_builder.title')),
         actions: [
           if (_skillSaved)
             TertiaryButton.icon(
               onPressed: () => Navigator.of(context).pop(true),
               icon: const Icon(Icons.check),
-              label: Text(_tx('skill_builder.done_action', 'Terminar')),
+              label: Text(_tx('skill_builder.done_action')),
             ),
         ],
       ),
@@ -293,45 +277,24 @@ class _SkillBuilderPageState extends State<SkillBuilderPage>
             onSend: _send,
             onStop: _stop,
             onSuggestion: _sendSuggestion,
-            title: _tx('skill_builder.assistant_title', 'Asistente de diseño'),
-            subtitle: _tx(
-              'skill_builder.assistant_subtitle',
-              'Define la skill y revisa el borrador antes de crearla',
-            ),
+            title: _tx('skill_builder.assistant_title'),
+            subtitle: _tx('skill_builder.assistant_subtitle'),
             partialReply: _partialReply,
             thinkingLabel: _thinkingLabel,
             draft: _pendingDraft,
-            draftTitle: _tx('skill_builder.draft_ready', 'Borrador propuesto'),
-            draftActionLabel: _tx(
-              'skill_builder.draft_review',
-              'Revisar y crear',
-            ),
+            draftTitle: _tx('skill_builder.draft_ready'),
+            draftActionLabel: _tx('skill_builder.draft_review'),
             onReviewDraft: _pendingDraft == null
                 ? null
                 : () => _reviewDraft(_pendingDraft!),
-            intro: _tx(
-              'skill_builder.intro',
-              'Describe qué debe hacer la skill y cuándo debería utilizarse.',
-            ),
-            inputHint: _tx(
-              'skill_builder.input_hint',
-              'Describe la skill que quieres crear…',
-            ),
-            sendTooltip: _tx('skill_builder.send', 'Enviar mensaje'),
-            stopTooltip: _tx('skill_builder.stop', 'Detener respuesta'),
+            intro: _tx('skill_builder.intro'),
+            inputHint: _tx('skill_builder.input_hint'),
+            sendTooltip: _tx('skill_builder.send'),
+            stopTooltip: _tx('skill_builder.stop'),
             suggestions: [
-              _tx(
-                'skill_builder.suggestion_review',
-                'Revisar código antes de entregarlo',
-              ),
-              _tx(
-                'skill_builder.suggestion_meetings',
-                'Preparar resúmenes de reuniones',
-              ),
-              _tx(
-                'skill_builder.suggestion_research',
-                'Investigar y contrastar fuentes',
-              ),
+              _tx('skill_builder.suggestion_review'),
+              _tx('skill_builder.suggestion_meetings'),
+              _tx('skill_builder.suggestion_research'),
             ],
             error: _error,
           );

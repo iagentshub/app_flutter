@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/resource_type_badge.dart';
+import '../../../utils/i18n.dart';
 import '../models/official_import_models.dart';
 
 class OfficialImportComponentTile extends StatelessWidget {
@@ -21,7 +22,7 @@ class OfficialImportComponentTile extends StatelessWidget {
 
   final ImportComponent component;
   final bool busy;
-  final String Function(String, String) tx;
+  final String Function(String) tx;
   final ValueChanged<bool> onToggle;
   final ValueChanged<String?> onClassify;
   final ValueChanged<String?> onLanguage;
@@ -48,8 +49,7 @@ class OfficialImportComponentTile extends StatelessWidget {
               label: component.effectiveType,
             ),
             Chip(label: Text(component.state)),
-            if (component.omitted)
-              Chip(label: Text(tx('official.omitted', 'Omitido'))),
+            if (component.omitted) Chip(label: Text(tx('official.omitted'))),
           ],
         );
         final details = _details(
@@ -115,23 +115,17 @@ class OfficialImportComponentTile extends StatelessWidget {
       if (component.variants.isNotEmpty)
         Text('${component.variants.length} variantes agrupadas'),
       if (component.dependencies.isNotEmpty)
-        Text('Depende de: ${component.dependencies.join(', ')}'),
+        Text('${tr('admin.depends_on')}: ${component.dependencies.join(', ')}'),
       for (final relation in component.relations)
         Text('${relation.type}: ${relation.targetId}'),
-      if (component.omitted)
-        Text(
-          tx(
-            'official.omitted_explanation',
-            'No se importará. Puedes clasificarlo manualmente si realmente es un recurso.',
-          ),
-        ),
+      if (component.omitted) Text(tx('official.omitted_explanation')),
       if (component.effectiveType == 'agent')
         Align(
           alignment: Alignment.centerLeft,
           child: TertiaryButton.icon(
             onPressed: busy ? null : onEditRelations,
             icon: const Icon(Icons.account_tree_outlined),
-            label: Text(tx('official.edit_relations', 'Editar relaciones')),
+            label: Text(tx('official.edit_relations')),
           ),
         ),
       if (needsClassification)
@@ -140,9 +134,7 @@ class OfficialImportComponentTile extends StatelessWidget {
           child: DropdownButtonFormField<String>(
             isExpanded: true,
             initialValue: component.forcedType,
-            decoration: InputDecoration(
-              labelText: tx('official.classify_as', 'Clasificar como'),
-            ),
+            decoration: InputDecoration(labelText: tx('official.classify_as')),
             items: const [
               DropdownMenuItem(value: 'agent', child: Text('agent')),
               DropdownMenuItem(value: 'skill', child: Text('skill')),
@@ -160,9 +152,7 @@ class OfficialImportComponentTile extends StatelessWidget {
         child: DropdownButtonFormField<String>(
           isExpanded: true,
           initialValue: component.language.isEmpty ? '' : component.language,
-          decoration: InputDecoration(
-            labelText: tx('official.language', 'Idioma'),
-          ),
+          decoration: InputDecoration(labelText: tx('official.language')),
           items: const [
             DropdownMenuItem(value: '', child: Text('Sin especificar')),
             DropdownMenuItem(value: 'lang_es', child: Text('Español')),
@@ -185,7 +175,7 @@ class OfficialImportComponentTile extends StatelessWidget {
             isExpanded: true,
             initialValue: component.toolLanguage,
             decoration: InputDecoration(
-              labelText: tx('official.tool_language', 'Lenguaje de ejecución'),
+              labelText: tx('official.tool_language'),
             ),
             items: const [
               DropdownMenuItem(value: '', child: Text('Sin especificar')),
@@ -206,8 +196,8 @@ class OfficialImportComponentTile extends StatelessWidget {
             ),
             label: Text(
               component.securityAccepted
-                  ? tx('official.reviewed', 'Código revisado')
-                  : tx('official.review_code', 'Revisar código'),
+                  ? tx('official.reviewed')
+                  : tx('official.review_code'),
             ),
           ),
         ),

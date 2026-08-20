@@ -3,24 +3,18 @@ part of '../pages/admin_page.dart';
 extension _AdminExploreTab on _AdminPageState {
   String _resourceTypeLabel(AdminResourceType? type) {
     return switch (type) {
-      AdminResourceType.user => _tx('admin.type_user', 'Usuario'),
-      AdminResourceType.group => _tx('admin.type_group', 'Grupo'),
-      AdminResourceType.agent => _tx('admin.type_agent', 'Agente'),
-      AdminResourceType.connection => _tx('admin.type_connection', 'Conexión'),
-      AdminResourceType.knowledge => _tx(
-        'admin.type_knowledge',
-        'Conocimiento',
-      ),
-      AdminResourceType.workflow => _tx('admin.type_workflow', 'Orquestación'),
-      AdminResourceType.llmOrchestration => _tx(
-        'admin.type_llm_orchestration',
-        'Orquestación LLM',
-      ),
-      AdminResourceType.skill => _tx('admin.type_skill', 'Skill'),
-      AdminResourceType.memory => _tx('admin.type_memory', 'Memoria'),
-      AdminResourceType.prompt => _tx('admin.type_prompt', 'Prompt'),
-      AdminResourceType.tool => _tx('admin.type_tool', 'Herramienta'),
-      null => _tx('admin.type_all', 'Todos'),
+      AdminResourceType.user => _tx('admin.type_user'),
+      AdminResourceType.group => _tx('admin.type_group'),
+      AdminResourceType.agent => _tx('admin.type_agent'),
+      AdminResourceType.connection => _tx('admin.type_connection'),
+      AdminResourceType.knowledge => _tx('admin.type_knowledge'),
+      AdminResourceType.workflow => _tx('admin.type_workflow'),
+      AdminResourceType.llmOrchestration => _tx('admin.type_llm_orchestration'),
+      AdminResourceType.skill => _tx('admin.type_skill'),
+      AdminResourceType.memory => _tx('admin.type_memory'),
+      AdminResourceType.prompt => _tx('admin.type_prompt'),
+      AdminResourceType.tool => _tx('admin.type_tool'),
+      null => _tx('admin.type_all'),
     };
   }
 
@@ -193,25 +187,17 @@ extension _AdminExploreTab on _AdminPageState {
     return _buildFilterableList<AdminExploreItem>(
       items: items,
       itemBuilder: _buildExploreCard,
-      emptyText: _tx(
-        'admin.explore_empty',
-        'No hay objetos que coincidan con los filtros',
-      ),
+      emptyText: _tx('admin.explore_empty'),
       toolbar: ExploreSearchToolbar(
         searchController: _exploreSearchController,
-        searchHint: _tx(
-          'admin.explore_search_hint',
-          'Buscar objetos por nombre, usuario o propietario',
-        ),
+        searchHint: _tx('admin.explore_search_hint'),
         onSearchChanged: (_) => _onSearchChanged(),
         typeOptions: _adminExploreTypeOptions,
         selectedTypes: _exploreTypes.map((type) => type.wireName).toSet(),
-        allTypesLabel: _tx('admin.type_all', 'Todos'),
-        typeFilterTooltip: _tx('admin.explore_filter_type', 'Filtrar por tipo'),
-        multipleTypesLabel: (count) => _tx(
-          'admin.explore_types_selected',
-          '{count} tipos',
-        ).replaceAll('{count}', '$count'),
+        allTypesLabel: _tx('admin.type_all'),
+        typeFilterTooltip: _tx('admin.explore_filter_type'),
+        multipleTypesLabel: (count) =>
+            _tx('admin.explore_types_selected').replaceAll('{count}', '$count'),
         onTypesChanged: (values) => refresh(() {
           _exploreTypes
             ..clear()
@@ -222,7 +208,7 @@ extension _AdminExploreTab on _AdminPageState {
           AppIconButton.outlined(
             onPressed: _load,
             icon: const Icon(Icons.refresh),
-            tooltip: _tx('admin.refresh', 'Actualizar'),
+            tooltip: _tx('admin.refresh'),
           ),
           if ((_exploreTypes.isEmpty ||
                   _exploreTypes.contains(AdminResourceType.user)) &&
@@ -231,13 +217,13 @@ extension _AdminExploreTab on _AdminPageState {
             AppIconButton.filled(
               onPressed: _openCreateUserDialog,
               icon: const Icon(Icons.add),
-              tooltip: _tx('admin.users_new_btn', 'Nuevo usuario'),
+              tooltip: _tx('admin.users_new_btn'),
             ),
           if (_exploreTypes.length == 1 &&
               _exploreTypes.single != AdminResourceType.group)
             FilterButton(
               activeCount: _exploreActiveFilterCount,
-              tooltip: _tx('common.filters', 'Filtros'),
+              tooltip: _tx('common.filters'),
               onPressed: _openExploreFilters,
             ),
         ],
@@ -332,10 +318,7 @@ extension _AdminExploreTab on _AdminPageState {
             Wrap(
               spacing: 6,
               runSpacing: 6,
-              children: [
-                _resourceTypeBadge(item.type),
-                ..._labelBadges(data),
-              ],
+              children: [_resourceTypeBadge(item.type), ..._labelBadges(data)],
             ),
           ],
         ),
@@ -349,7 +332,7 @@ extension _AdminExploreTab on _AdminPageState {
   ) {
     return ActionIconButton(
       icon: Icons.hub_outlined,
-      tooltip: _tx('admin.action_graph', 'Ver relaciones'),
+      tooltip: _tx('admin.action_graph'),
       onPressed: () => _openResourceGraph(type, item),
     );
   }
@@ -371,49 +354,28 @@ extension _AdminExploreTab on _AdminPageState {
       await showResourceGraphDialog(
         context: context,
         title:
-            '${_tx('admin.graph_title', 'Relaciones de')} ${_resourceTypeLabel(type).toLowerCase()}',
+            '${_tx('admin.graph_title')} ${_resourceTypeLabel(type).toLowerCase()}',
         nodes: graph.nodes,
         edges: graph.edges,
         rootId: graph.rootId,
-        closeLabel: _tx('common.close', 'Cerrar'),
-        searchHint: _tx('graph.search_hint', 'Buscar en el grafo...'),
-        sortTooltip: _tx('graph.sort_tooltip', 'Ordenar'),
-        sortHierarchyVerticalLabel: _tx(
-          'graph.sort_hierarchy_vertical',
-          'Jerarquía vertical',
-        ),
-        sortHierarchyHorizontalLabel: _tx(
-          'graph.sort_hierarchy_horizontal',
-          'Jerarquía horizontal',
-        ),
-        sortGalaxyLabel: _tx('graph.sort_galaxy', 'Galaxia'),
-        showLabelsTooltip: _tx('graph.show_labels_tooltip', 'Mostrar nombres'),
-        hideLabelsTooltip: _tx('graph.hide_labels_tooltip', 'Ocultar nombres'),
-        quickViewDescriptionLabel: _tx(
-          'graph.quick_view_description',
-          'Descripción',
-        ),
-        quickViewNoDescriptionLabel: _tx(
-          'graph.quick_view_no_description',
-          'Sin descripción',
-        ),
-        quickViewConnectionsLabel: _tx(
-          'graph.quick_view_connections',
-          'Relaciones',
-        ),
-        quickViewNoConnectionsLabel: _tx(
-          'graph.quick_view_no_connections',
-          'Sin relaciones',
-        ),
-        emptyLabel: _tx('admin.graph_empty', 'Este objeto no tiene relaciones'),
+        closeLabel: _tx('common.close'),
+        searchHint: _tx('graph.search_hint'),
+        sortTooltip: _tx('graph.sort_tooltip'),
+        sortHierarchyVerticalLabel: _tx('graph.sort_hierarchy_vertical'),
+        sortHierarchyHorizontalLabel: _tx('graph.sort_hierarchy_horizontal'),
+        sortGalaxyLabel: _tx('graph.sort_galaxy'),
+        showLabelsTooltip: _tx('graph.show_labels_tooltip'),
+        hideLabelsTooltip: _tx('graph.hide_labels_tooltip'),
+        quickViewDescriptionLabel: _tx('graph.quick_view_description'),
+        quickViewNoDescriptionLabel: _tx('graph.quick_view_no_description'),
+        quickViewConnectionsLabel: _tx('graph.quick_view_connections'),
+        quickViewNoConnectionsLabel: _tx('graph.quick_view_no_connections'),
+        emptyLabel: _tx('admin.graph_empty'),
       );
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('admin.graph_error', 'No se pudieron cargar las relaciones'),
-        isError: true,
-      );
+      showMessage(_tx('admin.graph_error'), isError: true);
     }
   }
 }

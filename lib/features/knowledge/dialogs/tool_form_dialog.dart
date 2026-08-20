@@ -8,7 +8,7 @@ const int _maxToolBinaryBytes = 50 * 1024 * 1024;
 class _ToolFormDialog extends StatefulWidget {
   const _ToolFormDialog({required this.tx, this.initial});
 
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
   final Map<String, dynamic>? initial;
 
   @override
@@ -33,7 +33,7 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
 
   bool get _isNew => widget.initial == null;
 
-  String _tx(String path, String fallback) => widget.tx(path, fallback);
+  String _tx(String path) => widget.tx(path);
 
   /// La visibilidad no es un campo aparte: es la label "private"/"public"
   /// del grupo excluyente de Visibilidad (misma fuente única de verdad que
@@ -106,10 +106,7 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
     final bytes = file.bytes;
     if (bytes == null) {
       setState(() {
-        _fileError = _tx(
-          'knowledge.binary_read_error',
-          'No se pudieron leer los bytes del fichero',
-        );
+        _fileError = _tx('knowledge.binary_read_error');
       });
       return;
     }
@@ -121,19 +118,13 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
   void _handlePickedBytes(String fileName, List<int> bytes) {
     if (bytes.isEmpty) {
       setState(() {
-        _fileError = _tx(
-          'knowledge.binary_read_error',
-          'No se pudieron leer los bytes del fichero',
-        );
+        _fileError = _tx('knowledge.binary_read_error');
       });
       return;
     }
     if (bytes.length > _maxToolBinaryBytes) {
       setState(() {
-        _fileError = _tx(
-          'knowledge.binary_too_large',
-          'El fichero no puede superar 50 MB',
-        );
+        _fileError = _tx('knowledge.binary_too_large');
       });
       return;
     }
@@ -159,10 +150,7 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
       });
     } on FormatException {
       setState(() {
-        _fileError = _tx(
-          'knowledge.script_decode_error',
-          'El fichero no parece texto legible. ¿Seguro que es un .py/.sh válido?',
-        );
+        _fileError = _tx('knowledge.script_decode_error');
       });
     }
   }
@@ -174,10 +162,7 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_language == 'cpp' && !_hasAnyBinary) {
       setState(() {
-        _fileError = _tx(
-          'knowledge.binary_required',
-          'Selecciona un binario para esta herramienta antes de guardar',
-        );
+        _fileError = _tx('knowledge.binary_required');
       });
       return;
     }
@@ -250,10 +235,7 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _tx(
-                      'knowledge.drop_hint_file',
-                      'Arrastra un fichero aquí o haz clic para seleccionarlo',
-                    ),
+                    _tx('knowledge.drop_hint_file'),
                     textAlign: TextAlign.center,
                   ),
                   if (_language != 'cpp') ...[
@@ -261,7 +243,6 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
                     Text(
                       _tx(
                         'knowledge.drop_hint_extension',
-                        'Formato esperado: .{{ext}}',
                       ).replaceAll('{{ext}}', _scriptExtension),
                       style: theme.textTheme.bodySmall,
                     ),
@@ -293,8 +274,8 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
     return AlertDialog(
       title: Text(
         widget.initial == null
-            ? _tx('knowledge.new_tool_title', 'Nueva herramienta')
-            : _tx('knowledge.edit_tool_title', 'Editar herramienta'),
+            ? _tx('knowledge.new_tool_title')
+            : _tx('knowledge.edit_tool_title'),
       ),
       content: SizedBox(
         width: dialogContentWidth(context, 620),
@@ -306,10 +287,10 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(
-                  labelText: _tx('agents.field_name', 'Nombre'),
+                  labelText: _tx('agents.field_name'),
                 ),
                 validator: (value) => (value == null || value.trim().isEmpty)
-                    ? _tx('agents.name_required', 'El nombre es obligatorio')
+                    ? _tx('agents.name_required')
                     : null,
               ),
               const SizedBox(height: 10),
@@ -318,7 +299,7 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
                 minLines: 2,
                 maxLines: 4,
                 decoration: InputDecoration(
-                  labelText: _tx('agents.field_description', 'Descripción'),
+                  labelText: _tx('agents.field_description'),
                 ),
               ),
               const SizedBox(height: 10),
@@ -332,7 +313,7 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
                 initialValue: _language,
                 isExpanded: true,
                 decoration: InputDecoration(
-                  labelText: _tx('knowledge.field_language', 'Lenguaje'),
+                  labelText: _tx('knowledge.field_language'),
                 ),
                 items: [
                   for (final language in ['python', 'shell', 'cpp'])
@@ -360,16 +341,10 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
                   minLines: 8,
                   maxLines: 16,
                   decoration: InputDecoration(
-                    labelText: _tx(
-                      'knowledge.field_tool_content',
-                      'Contenido de la herramienta',
-                    ),
+                    labelText: _tx('knowledge.field_tool_content'),
                   ),
                   validator: (value) => (value == null || value.trim().isEmpty)
-                      ? _tx(
-                          'knowledge.content_required',
-                          'El contenido es obligatorio',
-                        )
+                      ? _tx('knowledge.content_required')
                       : null,
                 ),
               ],
@@ -380,12 +355,9 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
       actions: [
         TertiaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(_tx('common.cancel', 'Cancelar')),
+          child: Text(_tx('common.cancel')),
         ),
-        PrimaryButton(
-          onPressed: _submit,
-          child: Text(_tx('common.save', 'Guardar')),
-        ),
+        PrimaryButton(onPressed: _submit, child: Text(_tx('common.save'))),
       ],
     );
   }

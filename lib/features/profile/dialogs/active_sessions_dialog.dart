@@ -20,7 +20,7 @@ Future<void> showActiveSessionsDialog({
   required BuildContext context,
   required ProfileRepository repository,
   required String token,
-  required String Function(String path, String fallback) tx,
+  required String Function(String path) tx,
 }) {
   return showDialog<void>(
     context: context,
@@ -38,7 +38,7 @@ class _ActiveSessionsDialog extends StatefulWidget {
 
   final ProfileRepository repository;
   final String token;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<_ActiveSessionsDialog> createState() => _ActiveSessionsDialogState();
@@ -68,10 +68,7 @@ class _ActiveSessionsDialogState extends State<_ActiveSessionsDialog>
     } catch (_) {
       if (!mounted) return;
       setState(() => _loading = false);
-      showMessage(
-        widget.tx('profile.sessions_error', 'No se pudieron cargar las sesiones'),
-        isError: true,
-      );
+      showMessage(widget.tx('profile.sessions_error'), isError: true);
     }
   }
 
@@ -79,13 +76,10 @@ class _ActiveSessionsDialogState extends State<_ActiveSessionsDialog>
     setState(() => _working = true);
     try {
       await widget.repository.revokeSession(widget.token, session.id);
-      showMessage(widget.tx('profile.sessions_closed', 'Sesión cerrada'));
+      showMessage(widget.tx('profile.sessions_closed'));
       await _load();
     } catch (_) {
-      showMessage(
-        widget.tx('profile.sessions_close_error', 'No se pudo cerrar la sesión'),
-        isError: true,
-      );
+      showMessage(widget.tx('profile.sessions_close_error'), isError: true);
     } finally {
       if (mounted) setState(() => _working = false);
     }
@@ -95,18 +89,10 @@ class _ActiveSessionsDialogState extends State<_ActiveSessionsDialog>
     setState(() => _working = true);
     try {
       await widget.repository.revokeOtherSessions(widget.token);
-      showMessage(
-        widget.tx(
-          'profile.sessions_others_closed',
-          'Se han cerrado las demás sesiones',
-        ),
-      );
+      showMessage(widget.tx('profile.sessions_others_closed'));
       await _load();
     } catch (_) {
-      showMessage(
-        widget.tx('profile.sessions_close_error', 'No se pudo cerrar la sesión'),
-        isError: true,
-      );
+      showMessage(widget.tx('profile.sessions_close_error'), isError: true);
     } finally {
       if (mounted) setState(() => _working = false);
     }
@@ -117,7 +103,7 @@ class _ActiveSessionsDialogState extends State<_ActiveSessionsDialog>
     final otras = _sessions.where((s) => !s.current).length;
 
     return AlertDialog(
-      title: Text(widget.tx('profile.sessions_title', 'Sesiones activas')),
+      title: Text(widget.tx('profile.sessions_title')),
       contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
       content: SizedBox(
         width: dialogContentWidth(context, 480),
@@ -138,10 +124,7 @@ class _ActiveSessionsDialogState extends State<_ActiveSessionsDialog>
                     if (otras == 0) ...[
                       const SizedBox(height: 8),
                       Text(
-                        widget.tx(
-                          'profile.sessions_empty',
-                          'No hay otras sesiones abiertas',
-                        ),
+                        widget.tx('profile.sessions_empty'),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -153,16 +136,11 @@ class _ActiveSessionsDialogState extends State<_ActiveSessionsDialog>
         if (otras > 0)
           DangerButton(
             onPressed: _working ? null : _revokeOthers,
-            child: Text(
-              widget.tx(
-                'profile.sessions_close_others',
-                'Cerrar las demás sesiones',
-              ),
-            ),
+            child: Text(widget.tx('profile.sessions_close_others')),
           ),
         TertiaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(widget.tx('common.close', 'Cerrar')),
+          child: Text(widget.tx('common.close')),
         ),
       ],
     );
@@ -189,10 +167,7 @@ class _ActiveSessionsDialogState extends State<_ActiveSessionsDialog>
             children: [
               Text(
                 origen.isEmpty
-                    ? widget.tx(
-                        'profile.sessions_unknown_origin',
-                        'Origen desconocido',
-                      )
+                    ? widget.tx('profile.sessions_unknown_origin')
                     : origen,
                 style: const TextStyle(
                   fontWeight: FontWeight.w600,
@@ -201,7 +176,7 @@ class _ActiveSessionsDialogState extends State<_ActiveSessionsDialog>
               ),
               const SizedBox(height: 2),
               Text(
-                '${widget.tx('profile.sessions_last_seen', 'Última actividad')}: '
+                '${widget.tx('profile.sessions_last_seen')}: '
                 '${_fecha(session.lastSeenAt ?? session.createdAt)}',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
@@ -216,14 +191,14 @@ class _ActiveSessionsDialogState extends State<_ActiveSessionsDialog>
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              widget.tx('profile.sessions_current', 'Esta sesión'),
+              widget.tx('profile.sessions_current'),
               style: Theme.of(context).textTheme.bodySmall,
             ),
           )
         else
           ActionIconButton(
             icon: Icons.logout,
-            tooltip: widget.tx('profile.sessions_close', 'Cerrar sesión'),
+            tooltip: widget.tx('profile.sessions_close'),
             danger: true,
             onPressed: _working ? null : () => _revoke(session),
           ),

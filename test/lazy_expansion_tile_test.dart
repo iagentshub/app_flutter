@@ -6,8 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 // limita a ocultarlos. Estas pruebas fijan la diferencia: aquí el constructor
 // de hijos no llega a ejecutarse hasta que el grupo se abre.
 
-Widget _wrap(Widget child) =>
-    MaterialApp(home: Scaffold(body: ListView(children: [child])));
+Widget _wrap(Widget child) => MaterialApp(
+  home: Scaffold(body: ListView(children: [child])),
+);
 
 void main() {
   testWidgets('no construye el contenido mientras está cerrado', (

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
+import '../../../utils/i18n.dart';
 
 enum ChartSeriesStyle { line, dashedLine, bars, dots }
 
@@ -35,21 +36,26 @@ class CentinelChart extends StatelessWidget {
     required this.series,
     this.markerIndex,
     this.markerLabel,
-    this.emptyLabel = 'Inicia la prueba para ver la gráfica',
+    this.emptyLabel,
     super.key,
   });
 
   final List<ChartSeries> series;
   final int? markerIndex;
   final String? markerLabel;
-  final String emptyLabel;
+
+  /// Texto del vacío. Sin él, el genérico traducido.
+  final String? emptyLabel;
 
   @override
   Widget build(BuildContext context) {
     final hasData = series.any((s) => s.values.isNotEmpty);
     if (!hasData) {
       return Center(
-        child: Text(emptyLabel, style: Theme.of(context).textTheme.bodySmall),
+        child: Text(
+          emptyLabel ?? tr('admin.centinel_chart_empty'),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
       );
     }
     final scheme = Theme.of(context).colorScheme;

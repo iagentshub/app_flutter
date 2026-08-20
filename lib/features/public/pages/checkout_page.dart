@@ -7,6 +7,7 @@ import '../../../core/network/api_error.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../utils/i18n.dart';
 import '../../billing/widgets/payment_element.dart';
 
 class CheckoutPage extends StatefulWidget {
@@ -43,7 +44,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
       (_tier == 'developer' && _seats == 1) ||
       (_tier == 'business' && _seats >= 2 && _seats <= 100);
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   @override
   void initState() {
@@ -165,10 +166,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
           .toString();
       await confirmPaymentElement(
         returnUrl,
-        unsupportedMessage: _tx(
-          'checkout.integrated_web_only',
-          'El pago integrado solo está disponible en la web.',
-        ),
+        unsupportedMessage: _tx('checkout.integrated_web_only'),
       );
       await _services.apiClient.post(
         '/api/billing/confirm',
@@ -204,24 +202,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
         ? '—'
         : '${(_amountCents! / 100).toStringAsFixed(2)} €';
     final localError = switch (_localErrorKey) {
-      'checkout.web_only' => _tx(
-        'checkout.web_only',
-        'Abre www.iagentshub.com/app/checkout en el navegador para completar el pago.',
-      ),
-      'checkout.stripe_unavailable' => _tx(
-        'checkout.stripe_unavailable',
-        'Stripe no está configurado en este servidor.',
-      ),
-      'checkout.invalid_plan' => _tx(
-        'checkout.invalid_plan',
-        'El plan seleccionado no es válido.',
-      ),
+      'checkout.web_only' => _tx('checkout.web_only'),
+      'checkout.stripe_unavailable' => _tx('checkout.stripe_unavailable'),
+      'checkout.invalid_plan' => _tx('checkout.invalid_plan'),
       _ => null,
     };
     final visibleError = _error ?? localError;
     return Scaffold(
       appBar: AppBar(
-        title: Text(_tx('checkout.subscription_title', 'Suscripción')),
+        title: Text(_tx('checkout.subscription_title')),
         leading: BackButton(onPressed: () => AppRouter.toProfile(context)),
       ),
       body: Center(
@@ -236,28 +225,23 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      _tx('checkout.title', 'Completa tu suscripción'),
+                      _tx('checkout.title'),
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     const SizedBox(height: 16),
                     Text(
                       _tier == 'business'
-                          ? '${_tx('checkout.plan_business', 'Business')} · ${_tx('checkout.seats_many', '{{count}} licencias').replaceAll('{{count}}', '$_seats')}'
-                          : '${_tx('checkout.plan_individual', 'Individual')} · ${_tx('checkout.seats_one', '1 licencia')}',
+                          ? '${_tx('checkout.plan_business')} · ${_tx('checkout.seats_many').replaceAll('{{count}}', '$_seats')}'
+                          : '${_tx('checkout.plan_individual')} · ${_tx('checkout.seats_one')}',
                     ),
                     Text(
-                      '$amount ${_tx(_interval == 'year' ? 'checkout.interval_year' : 'checkout.interval_month', _interval == 'year' ? '/ año' : '/ mes')}',
+                      '$amount ${tr(_interval == 'year' ? 'checkout.interval_year' : 'checkout.interval_month')}',
                     ),
                     const Divider(height: 32),
                     if (_loading)
                       const Center(child: CircularProgressIndicator())
                     else if (_success)
-                      Text(
-                        _tx(
-                          'checkout.success',
-                          'Pago confirmado. Abriendo tu facturación…',
-                        ),
-                      )
+                      Text(_tx('checkout.success'))
                     else ...[
                       if (_clientSecret != null)
                         SizedBox(
@@ -266,7 +250,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
                             _clientSecret!,
                             unavailableMessage: _tx(
                               'checkout.web_version_only',
-                              'Completa la suscripción desde la versión web de iAgents Hub.',
                             ),
                           ),
                         ),
@@ -286,10 +269,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
                             : _confirm,
                         child: Text(
                           _confirming
-                              ? _tx('checkout.processing', 'Procesando…')
+                              ? _tx('checkout.processing')
                               : _tx(
                                   'checkout.subscribe_btn',
-                                  'Pagar {{amount}}',
                                 ).replaceAll('{{amount}}', amount),
                         ),
                       ),

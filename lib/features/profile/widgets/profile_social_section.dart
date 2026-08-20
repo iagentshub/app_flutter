@@ -10,14 +10,14 @@ extension _ProfileSocialSection on _ProfilePageState {
             Expanded(
               child: _sectionHeader(
                 Icons.public_outlined,
-                _tx('profile.tab_social', 'Perfil público'),
+                _tx('profile.tab_social'),
               ),
             ),
             TertiaryButton.icon(
               onPressed: () =>
                   AppRouter.toPublicProfile(context, bundle.session.username),
               icon: const Icon(Icons.open_in_new, size: 16),
-              label: Text(_tx('profile.view_public_profile', 'Ver mi perfil')),
+              label: Text(_tx('profile.view_public_profile')),
             ),
           ],
         ),
@@ -34,13 +34,13 @@ extension _ProfileSocialSection on _ProfilePageState {
                   maxLines: 4,
                   maxLength: 500,
                   decoration: InputDecoration(
-                    labelText: _tx('profile.bio_label', 'Bio'),
+                    labelText: _tx('profile.bio_label'),
                     alignLabelWithHint: true,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  _tx('profile.languages_label', 'Idiomas'),
+                  _tx('profile.languages_label'),
                   style: Theme.of(context).textTheme.labelMedium,
                 ),
                 const SizedBox(height: 8),
@@ -50,10 +50,7 @@ extension _ProfileSocialSection on _ProfilePageState {
                     Expanded(
                       child: !_controller.hasLanguages
                           ? Text(
-                              _tx(
-                                'profile.languages_empty',
-                                'Sin idiomas seleccionados',
-                              ),
+                              _tx('profile.languages_empty'),
                               style: Theme.of(context).textTheme.bodySmall,
                             )
                           : Wrap(
@@ -76,9 +73,7 @@ extension _ProfileSocialSection on _ProfilePageState {
                     SecondaryButton.icon(
                       onPressed: _openLanguagesDialog,
                       icon: const Icon(Icons.tune, size: 16),
-                      label: Text(
-                        _tx('profile.manage_languages', 'Gestionar idiomas'),
-                      ),
+                      label: Text(_tx('profile.manage_languages')),
                     ),
                   ],
                 ),
@@ -88,38 +83,30 @@ extension _ProfileSocialSection on _ProfilePageState {
                   value: _controller.isEmailPublic,
                   onChanged: _controller.setEmailPublic,
                   secondary: const Icon(Icons.alternate_email, size: 20),
-                  title: Text(
-                    _tx('profile.email_public_label', 'Mostrar mi email'),
-                  ),
+                  title: Text(_tx('profile.email_public_label')),
                   subtitle: Text(
                     _controller.isEmailPublic
                         ? (bundle.session.email ?? '')
-                        : _tx(
-                            'profile.email_private_hint',
-                            'Tu email permanece privado.',
-                          ),
+                        : _tx('profile.email_private_hint'),
                   ),
                 ),
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: _controller.githubController,
                   decoration: InputDecoration(
-                    labelText: _tx('profile.github_label', 'Usuario de GitHub'),
+                    labelText: _tx('profile.github_label'),
                     prefixIcon: const Icon(Icons.code, size: 20),
                     prefixText: 'github.com/',
                   ),
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  _tx('profile.cv_label', 'Resumen profesional'),
+                  _tx('profile.cv_label'),
                   style: Theme.of(context).textTheme.labelMedium,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _tx(
-                    'profile.cv_hint',
-                    'Soporta Markdown. Aparecerá en tu perfil público.',
-                  ),
+                  _tx('profile.cv_hint'),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 8),
@@ -141,8 +128,8 @@ extension _ProfileSocialSection on _ProfilePageState {
                   icon: const Icon(Icons.save_as_outlined),
                   label: Text(
                     _controller.savingProfile
-                        ? _tx('profile.saving', 'Guardando...')
-                        : _tx('profile.save_social', 'Guardar perfil público'),
+                        ? _tx('profile.saving')
+                        : _tx('profile.save_social'),
                   ),
                 ),
               ],

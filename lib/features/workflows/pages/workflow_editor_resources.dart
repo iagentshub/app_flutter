@@ -5,7 +5,7 @@ extension _WorkflowEditorResources on _WorkflowEditorPageState {
     final token = _token;
     if (token == null || token.isEmpty) {
       _refresh(() {
-        _error = _tx('common.no_session', 'No hay sesión activa');
+        _error = _tx('common.no_session');
         _loadingAgents = false;
       });
       return;
@@ -34,10 +34,7 @@ extension _WorkflowEditorResources on _WorkflowEditorPageState {
     } catch (_) {
       if (!mounted) return;
       _refresh(() {
-        _error = _tx(
-          'workflow_editor.error_load_agents',
-          'No se pudieron cargar los agentes disponibles',
-        );
+        _error = _tx('workflow_editor.error_load_agents');
         _loadingAgents = false;
       });
     }

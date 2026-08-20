@@ -2,6 +2,7 @@ import '../../../core/network/api_error.dart';
 import '../../../core/network/api_repository.dart';
 import '../../../models/explore/explore_models.dart';
 import '../../../shared/graph/resource_graph_builder.dart';
+import '../../../utils/i18n.dart';
 
 /// Relación entre el catálogo y lo que el usuario ya tiene enlazado.
 ///
@@ -99,7 +100,8 @@ class ExploreRepository extends ApiRepository {
     return (
       items: items,
       total: total ?? offset + items.length,
-      linkedMatches: int.tryParse(response.headers['x-linked-count'] ?? '') ?? 0,
+      linkedMatches:
+          int.tryParse(response.headers['x-linked-count'] ?? '') ?? 0,
     );
   }
 
@@ -157,10 +159,7 @@ class ExploreRepository extends ApiRepository {
     return ExploreOfficialPackDetail.fromJson(response.json);
   }
 
-  Future<GraphBuild> getOfficialPackGraph(
-    String token,
-    String sourceId,
-  ) async {
+  Future<GraphBuild> getOfficialPackGraph(String token, String sourceId) async {
     final response = await apiClient.get(
       '/api/explore/official_source/${Uri.encodeComponent(sourceId)}/relations',
       gaToken: token,
@@ -312,7 +311,7 @@ class ExploreRepository extends ApiRepository {
       default:
         throw ApiError(
           statusCode: 422,
-          message: 'Tipo no soportado para link: $resourceType',
+          message: '${tr('explore.link_type_unsupported')}: $resourceType',
         );
     }
   }

@@ -26,7 +26,7 @@ class CentinelProbeTab extends StatefulWidget {
 
   final CentinelRepository repository;
   final String token;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<CentinelProbeTab> createState() => _CentinelProbeTabState();
@@ -48,7 +48,7 @@ class _CentinelProbeTabState extends State<CentinelProbeTab>
   Map<String, dynamic>? _verdict;
   String? _finalStatus;
 
-  String _tx(String path, String fallback) => widget.tx(path, fallback);
+  String _tx(String path) => widget.tx(path);
 
   @override
   void dispose() {
@@ -92,10 +92,7 @@ class _CentinelProbeTabState extends State<CentinelProbeTab>
       showMessage(error.message, isError: true);
       if (mounted) setState(() => _starting = false);
     } catch (_) {
-      showMessage(
-        _tx('centinel.probe_start_error', 'No se pudo iniciar la búsqueda'),
-        isError: true,
-      );
+      showMessage(_tx('centinel.probe_start_error'), isError: true);
       if (mounted) setState(() => _starting = false);
     }
   }
@@ -150,15 +147,13 @@ class _CentinelProbeTabState extends State<CentinelProbeTab>
               PrimaryButton.icon(
                 onPressed: _starting ? null : _start,
                 icon: const Icon(Icons.play_arrow),
-                label: Text(
-                  _tx('centinel.actions_probe_start', 'Iniciar búsqueda'),
-                ),
+                label: Text(_tx('centinel.actions_probe_start')),
               )
             else
               PrimaryButton.tonalIcon(
                 onPressed: _abort,
                 icon: const Icon(Icons.stop_circle_outlined),
-                label: Text(_tx('centinel.actions_probe_stop', 'Detener')),
+                label: Text(_tx('centinel.actions_probe_stop')),
               ),
           ],
         ),
@@ -197,7 +192,7 @@ class _CentinelProbeTabState extends State<CentinelProbeTab>
                     enabled: !disabled,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      labelText: _tx('centinel.probe_start_label', 'Inicio'),
+                      labelText: _tx('centinel.probe_start_label'),
                     ),
                   ),
                 ),
@@ -208,7 +203,7 @@ class _CentinelProbeTabState extends State<CentinelProbeTab>
                     enabled: !disabled,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      labelText: _tx('centinel.probe_step_label', 'Paso'),
+                      labelText: _tx('centinel.probe_step_label'),
                     ),
                   ),
                 ),
@@ -219,10 +214,7 @@ class _CentinelProbeTabState extends State<CentinelProbeTab>
                     enabled: !disabled,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      labelText: _tx(
-                        'centinel.probe_concurrency_label',
-                        'Concurrencia máx (0=∞)',
-                      ),
+                      labelText: _tx('centinel.probe_concurrency_label'),
                     ),
                   ),
                 ),
@@ -235,10 +227,7 @@ class _CentinelProbeTabState extends State<CentinelProbeTab>
                       decimal: true,
                     ),
                     decoration: InputDecoration(
-                      labelText: _tx(
-                        'centinel.probe_timeout_label',
-                        'Timeout/req (s)',
-                      ),
+                      labelText: _tx('centinel.probe_timeout_label'),
                     ),
                   ),
                 ),
@@ -246,7 +235,7 @@ class _CentinelProbeTabState extends State<CentinelProbeTab>
             ),
             const SizedBox(height: 12),
             Text(
-              _tx('centinel.probe_duration_step_label', 'Duración por paso'),
+              _tx('centinel.probe_duration_step_label'),
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 6),
@@ -264,10 +253,7 @@ class _CentinelProbeTabState extends State<CentinelProbeTab>
             ),
             const SizedBox(height: 10),
             Text(
-              _tx(
-                'centinel.probe_hint',
-                'Lanza pruebas secuenciales aumentando el número de usuarios de paso en paso. Se detiene al primer error, mostrando el límite estable de la plataforma.',
-              ),
+              _tx('centinel.probe_hint'),
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],

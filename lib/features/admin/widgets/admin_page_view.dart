@@ -8,9 +8,9 @@ extension _AdminPageView on _AdminPageState {
       return ListView(
         children: [
           AsyncStatePanel.error(
-            title: _tx('admin.error_title', 'Error cargando Admin'),
+            title: _tx('admin.error_title'),
             message: _error!,
-            retryLabel: _tx('common.retry', 'Reintentar'),
+            retryLabel: _tx('common.retry'),
             onRetry: _load,
           ),
         ],
@@ -18,10 +18,10 @@ extension _AdminPageView on _AdminPageState {
     }
 
     final tabLabels = [
-      _tx('admin.tab_general', 'General'),
-      _tx('admin.tab_explore', 'Explorar'),
-      _tx('admin.tab_official', 'Paquetes oficiales'),
-      _tx('admin.tab_config', 'Configuración'),
+      _tx('admin.tab_general'),
+      _tx('admin.tab_explore'),
+      _tx('admin.tab_official'),
+      _tx('admin.tab_config'),
     ];
     final section = _AdminPageState._tabIds[_tabController.index];
 

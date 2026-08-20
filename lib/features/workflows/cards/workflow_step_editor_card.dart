@@ -4,7 +4,7 @@ extension _WorkflowStepEditorCard on _WorkflowEditorPageState {
   String _stepLabel(int index) {
     final step = _steps[index];
     final name = step.label.isNotEmpty ? step.label : step.agentId;
-    final stepPrefix = _tx('workflow_editor.step_prefix', 'Paso');
+    final stepPrefix = _tx('workflow_editor.step_prefix');
     return '$stepPrefix ${index + 1}${name.isEmpty ? '' : ': $name'}';
   }
 
@@ -31,10 +31,7 @@ extension _WorkflowStepEditorCard on _WorkflowEditorPageState {
     );
     if (allowed) return chip;
     return Tooltip(
-      message: _tx(
-        'workflow_editor.invalid_connection',
-        'La conexión crearía un ciclo o ya existe',
-      ),
+      message: _tx('workflow_editor.invalid_connection'),
       child: chip,
     );
   }
@@ -47,7 +44,7 @@ extension _WorkflowStepEditorCard on _WorkflowEditorPageState {
     ];
     final loopTargets = _loopTargetsFor(step.id);
     final loopTargetId = step.loopTargetId;
-    final stepPrefix = _tx('workflow_editor.step_prefix', 'Paso');
+    final stepPrefix = _tx('workflow_editor.step_prefix');
 
     return Container(
       key: key,
@@ -68,7 +65,7 @@ extension _WorkflowStepEditorCard on _WorkflowEditorPageState {
               const Spacer(),
               AppIconButton(
                 icon: const Icon(Icons.delete_outline),
-                tooltip: _tx('common.actions.delete', 'Eliminar'),
+                tooltip: _tx('common.actions.delete'),
                 onPressed: _steps.length > 1 ? () => _removeStep(index) : null,
               ),
             ],
@@ -78,7 +75,7 @@ extension _WorkflowStepEditorCard on _WorkflowEditorPageState {
                 ? step.agentId
                 : null,
             decoration: InputDecoration(
-              labelText: _tx('workflow_editor.agent_label', 'Agente'),
+              labelText: _tx('workflow_editor.agent_label'),
             ),
             items: _agents
                 .map(
@@ -98,10 +95,7 @@ extension _WorkflowStepEditorCard on _WorkflowEditorPageState {
                 (_, {required currentLength, required isFocused, maxLength}) =>
                     null,
             decoration: InputDecoration(
-              labelText: _tx(
-                'workflow_editor.step_label_field',
-                'Etiqueta (opcional)',
-              ),
+              labelText: _tx('workflow_editor.step_label_field'),
             ),
             onChanged: (value) => _refresh(() => step.label = value),
           ),
@@ -112,10 +106,7 @@ extension _WorkflowStepEditorCard on _WorkflowEditorPageState {
             maxLines: 5,
             maxLength: maxInstructionLength,
             decoration: InputDecoration(
-              labelText: _tx(
-                'workflow_editor.instruction_label',
-                'Instrucción para este paso',
-              ),
+              labelText: _tx('workflow_editor.instruction_label'),
             ),
             onChanged: (value) => _refresh(() => step.instruction = value),
           ),
@@ -124,11 +115,11 @@ extension _WorkflowStepEditorCard on _WorkflowEditorPageState {
             segments: [
               ButtonSegment(
                 value: 'agent',
-                label: Text(_tx('workflow_editor.kind_agent', 'Agente')),
+                label: Text(_tx('workflow_editor.kind_agent')),
               ),
               ButtonSegment(
                 value: 'evaluator',
-                label: Text(_tx('workflow_editor.kind_evaluator', 'Evaluador')),
+                label: Text(_tx('workflow_editor.kind_evaluator')),
               ),
             ],
             selected: {step.kind},
@@ -150,10 +141,7 @@ extension _WorkflowStepEditorCard on _WorkflowEditorPageState {
                     maxLength,
                   }) => null,
               decoration: InputDecoration(
-                labelText: _tx(
-                  'workflow_editor.evaluator_condition_label',
-                  'Condición de evaluación',
-                ),
+                labelText: _tx('workflow_editor.evaluator_condition_label'),
               ),
               // Sin _refresh el problema "necesita una condición" seguía
               // listado aunque ya la hubieras escrito.
@@ -163,9 +151,7 @@ extension _WorkflowStepEditorCard on _WorkflowEditorPageState {
             const SizedBox(height: 10),
             Row(
               children: [
-                Text(
-                  _tx('workflow_editor.max_iterations_label', 'Máx. vueltas'),
-                ),
+                Text(_tx('workflow_editor.max_iterations_label')),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Slider(
@@ -186,7 +172,7 @@ extension _WorkflowStepEditorCard on _WorkflowEditorPageState {
           if (otherSteps.isNotEmpty) ...[
             const SizedBox(height: 14),
             Text(
-              _tx('workflow_editor.continue_to_label', 'Continúa hacia'),
+              _tx('workflow_editor.continue_to_label'),
               style: Theme.of(
                 context,
               ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
@@ -207,25 +193,16 @@ extension _WorkflowStepEditorCard on _WorkflowEditorPageState {
                   : null,
               decoration: InputDecoration(
                 labelText: step.isEvaluator
-                    ? _tx(
-                        'workflow_editor.loop_target_required',
-                        'Cierra ciclo hacia (obligatorio)',
-                      )
-                    : _tx(
-                        'workflow_editor.loop_target_optional',
-                        'Cierra ciclo hacia (opcional)',
-                      ),
+                    ? _tx('workflow_editor.loop_target_required')
+                    : _tx('workflow_editor.loop_target_optional'),
                 helperText: loopTargets.isEmpty
-                    ? _tx(
-                        'workflow_editor.loop_needs_ancestor',
-                        'Un ciclo solo puede volver a un paso anterior del flujo',
-                      )
+                    ? _tx('workflow_editor.loop_needs_ancestor')
                     : null,
               ),
               items: [
                 DropdownMenuItem(
                   value: null,
-                  child: Text(_tx('workflow_editor.no_loop', 'Sin ciclo')),
+                  child: Text(_tx('workflow_editor.no_loop')),
                 ),
                 // Solo los pasos anteriores: el backend rechaza un ciclo que
                 // salte hacia delante (workflow_validator.py:211-214).
@@ -241,12 +218,7 @@ extension _WorkflowStepEditorCard on _WorkflowEditorPageState {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  Text(
-                    _tx(
-                      'workflow_editor.fixed_iterations_label',
-                      'Vueltas fijas',
-                    ),
-                  ),
+                  Text(_tx('workflow_editor.fixed_iterations_label')),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Slider(

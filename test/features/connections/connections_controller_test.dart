@@ -6,14 +6,14 @@ import 'package:app_flutter/features/connections/repositories/connections_reposi
 import 'package:app_flutter/models/connections/connection_models.dart';
 import 'package:app_flutter/shared/state/backend_controller.dart';
 import 'package:app_flutter/shared/state/session_controller.dart';
+import 'package:app_flutter/utils/i18n.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../support/i18n_de_prueba.dart';
 import '../../support/memory_secure_store.dart';
-
-String _tx(String path, String fallback) => fallback;
 
 Map<String, dynamic> _connection({
   String id = 'c1',
@@ -44,6 +44,8 @@ http.Response _json(Object body, {int statusCode = 200}) => http.Response(
 );
 
 void main() {
+  setUp(cargarTraduccionesDePrueba);
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late BackendController backendController;
@@ -97,7 +99,7 @@ void main() {
     final controller = ConnectionsController(
       repository: ConnectionsRepository(apiClient: client),
       sessionController: await session(token: token),
-      tx: _tx,
+      tx: tr,
     );
     addTearDown(controller.dispose);
     return controller;

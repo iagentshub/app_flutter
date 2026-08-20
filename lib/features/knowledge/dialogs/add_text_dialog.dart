@@ -3,7 +3,7 @@ part of '../pages/knowledge_page.dart';
 class _AddTextDialog extends StatefulWidget {
   const _AddTextDialog({required this.tx});
 
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<_AddTextDialog> createState() => _AddTextDialogState();
@@ -37,7 +37,7 @@ class _AddTextDialogState extends State<_AddTextDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.tx('knowledge.add_text_title', 'Añadir texto')),
+      title: Text(widget.tx('knowledge.add_text_title')),
       content: SizedBox(
         width: dialogContentWidth(context, 620),
         child: Form(
@@ -48,14 +48,11 @@ class _AddTextDialogState extends State<_AddTextDialog> {
               TextFormField(
                 controller: _titleController,
                 decoration: InputDecoration(
-                  labelText: widget.tx('knowledge.title_label', 'Título'),
+                  labelText: widget.tx('knowledge.title_label'),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return widget.tx(
-                      'knowledge.title_required',
-                      'Título obligatorio',
-                    );
+                    return widget.tx('knowledge.title_required');
                   }
                   return null;
                 },
@@ -69,10 +66,7 @@ class _AddTextDialogState extends State<_AddTextDialog> {
               TextFormField(
                 controller: _sourceController,
                 decoration: InputDecoration(
-                  labelText: widget.tx(
-                    'knowledge.optional_source',
-                    'Fuente (opcional)',
-                  ),
+                  labelText: widget.tx('knowledge.optional_source'),
                 ),
               ),
               const SizedBox(height: 10),
@@ -81,14 +75,11 @@ class _AddTextDialogState extends State<_AddTextDialog> {
                 minLines: 6,
                 maxLines: 12,
                 decoration: InputDecoration(
-                  labelText: widget.tx('knowledge.content_label', 'Contenido'),
+                  labelText: widget.tx('knowledge.content_label'),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return widget.tx(
-                      'knowledge.content_required',
-                      'Contenido obligatorio',
-                    );
+                    return widget.tx('knowledge.content_required');
                   }
                   return null;
                 },
@@ -100,11 +91,11 @@ class _AddTextDialogState extends State<_AddTextDialog> {
       actions: [
         TertiaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(widget.tx('common.cancel', 'Cancelar')),
+          child: Text(widget.tx('common.cancel')),
         ),
         PrimaryButton(
           onPressed: _submit,
-          child: Text(widget.tx('common.save', 'Guardar')),
+          child: Text(widget.tx('common.save')),
         ),
       ],
     );

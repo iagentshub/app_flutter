@@ -10,7 +10,7 @@ extension _ChatConversations on _ChatPageState {
     final token = _token;
     if (token == null || token.isEmpty) {
       refresh(() {
-        _error = 'No hay sesión activa';
+        _error = tr('common.no_session');
         _loadingConversations = false;
       });
       return;
@@ -55,7 +55,7 @@ extension _ChatConversations on _ChatPageState {
     } catch (_) {
       if (!mounted) return;
       refresh(() {
-        _error = 'No se pudo cargar el historial de chat';
+        _error = tr('agents.chat_history_error');
         _loadingConversations = false;
       });
     }
@@ -182,13 +182,7 @@ extension _ChatConversations on _ChatPageState {
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx(
-          'agents.chat.msg_create_failed',
-          'No se pudo crear la conversación',
-        ),
-        isError: true,
-      );
+      showMessage(_tx('agents.chat.msg_create_failed'), isError: true);
     }
   }
 
@@ -221,13 +215,7 @@ extension _ChatConversations on _ChatPageState {
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx(
-          'agents.chat.msg_delete_failed',
-          'No se pudo borrar la conversación',
-        ),
-        isError: true,
-      );
+      showMessage(_tx('agents.chat.msg_delete_failed'), isError: true);
     }
   }
 }

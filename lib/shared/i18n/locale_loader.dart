@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart';
 
+import '../../utils/i18n.dart';
+
 abstract final class LocaleLoader {
   static final Map<String, Map<String, dynamic>> _cache = {};
 
@@ -25,25 +27,11 @@ abstract final class LocaleLoader {
     return <String, dynamic>{};
   }
 
-  static String text(
-    Map<String, dynamic> bundle,
-    String path, {
-    String fallback = '',
-  }) {
-    dynamic current = bundle;
-    for (final segment in path.split('.')) {
-      if (current is Map && current.containsKey(segment)) {
-        current = current[segment];
-      } else {
-        return fallback;
-      }
-    }
-    return current is String ? current : fallback;
-  }
-
-  static bool isEnglishRoute(String location) => location.startsWith('/en');
-
-  /// Idioma de una ruta pública: las inglesas cuelgan de `/en`.
-  static String routeLanguageCode(String location) =>
-      isEnglishRoute(location) ? 'en' : 'es';
+  /// Traducción de [path] en un bundle concreto.
+  ///
+  /// La resolución vive en `utils/i18n.dart`, que es donde puede llegar
+  /// cualquier widget sin recibir el bundle por parámetro. Esto se queda para
+  /// quien ya tiene el bundle en la mano.
+  static String text(Map<String, dynamic> bundle, String path) =>
+      I18n.resolveEn(bundle, path);
 }

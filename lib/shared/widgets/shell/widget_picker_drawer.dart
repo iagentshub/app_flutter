@@ -4,10 +4,11 @@ class _WidgetPickerDrawerContent extends StatelessWidget {
   const _WidgetPickerDrawerContent({required this.state, required this.tx});
 
   final DashboardEditState state;
-  final String Function(String key, String fallback) tx;
+  final String Function(String key) tx;
 
-  String _dashboardTx(String key, String fallback) =>
-      tx('dashboard_$key', fallback);
+  /// La clave lleva el tipo de widget dentro, así que puede no existir: se cae
+  /// al propio tipo, que es legible.
+  String _dashboardTx(String key) => trOr('dashboard_$key', key);
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +19,7 @@ class _WidgetPickerDrawerContent extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: Text(
-            tx('customize_dashboard', 'Personalizar dashboard'),
+            tx('customize_dashboard'),
             style: const TextStyle(
               fontSize: FncFonts.size16,
               fontWeight: FontWeight.w700,
@@ -28,7 +29,7 @@ class _WidgetPickerDrawerContent extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
-            tx('customize_hint', 'Toca un widget para añadirlo al dashboard.'),
+            tx('customize_hint'),
             style: const TextStyle(
               fontSize: FncFonts.size12,
               color: FncColors.materialGrey,
@@ -40,12 +41,7 @@ class _WidgetPickerDrawerContent extends StatelessWidget {
           child: missing.isEmpty
               ? Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Text(
-                    tx(
-                      'customize_empty',
-                      'Ya has añadido todos los widgets disponibles.',
-                    ),
-                  ),
+                  child: Text(tx('customize_empty')),
                 )
               : ListView(
                   padding: const EdgeInsets.symmetric(horizontal: 12),

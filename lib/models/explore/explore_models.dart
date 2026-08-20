@@ -1,3 +1,4 @@
+import '../../utils/i18n.dart';
 
 class ExploreItem {
   const ExploreItem({required this.raw});
@@ -8,7 +9,7 @@ class ExploreItem {
   String get resourceId => raw['resource_id'] as String? ?? '';
   String get ownerId => raw['owner'] as String? ?? '';
   String get ownerUsername => raw['owner_username'] as String? ?? '';
-  String get name => raw['name'] as String? ?? '(sin nombre)';
+  String get name => raw['name'] as String? ?? tr('common.unnamed');
   String get description => raw['description'] as String? ?? '';
   String get category => raw['category'] as String? ?? '';
 

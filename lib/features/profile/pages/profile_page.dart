@@ -17,6 +17,7 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../../../utils/i18n.dart';
 import '../controllers/profile_controller.dart';
 import '../dialogs/active_sessions_dialog.dart';
 import '../repositories/profile_repository.dart';
@@ -52,7 +53,7 @@ class _ProfilePageState extends State<ProfilePage>
 
   static const _sectionIds = ['account', 'social', 'groups', 'providers'];
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   @override
   void initState() {
@@ -134,7 +135,7 @@ class _ProfilePageState extends State<ProfilePage>
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: Text(_tx('profile.manage_languages', 'Gestionar idiomas')),
+          title: Text(_tx('profile.manage_languages')),
           content: SizedBox(
             width: dialogContentWidth(context, 320),
             child: Column(
@@ -161,11 +162,11 @@ class _ProfilePageState extends State<ProfilePage>
           actions: [
             TertiaryButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(_tx('common.cancel', 'Cancelar')),
+              child: Text(_tx('common.cancel')),
             ),
             PrimaryButton(
               onPressed: () => Navigator.of(context).pop(draft),
-              child: Text(_tx('common.save', 'Guardar')),
+              child: Text(_tx('common.save')),
             ),
           ],
         ),
@@ -191,7 +192,7 @@ class _ProfilePageState extends State<ProfilePage>
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: Text(_tx('profile.tab_security', 'Seguridad')),
+          title: Text(_tx('profile.tab_security')),
           content: SizedBox(
             width: dialogContentWidth(context, 360),
             child: Column(
@@ -201,10 +202,7 @@ class _ProfilePageState extends State<ProfilePage>
                   controller: _controller.currentPasswordController,
                   obscureText: true,
                   decoration: InputDecoration(
-                    labelText: _tx(
-                      'profile.current_password_label',
-                      'Contraseña actual',
-                    ),
+                    labelText: _tx('profile.current_password_label'),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -212,10 +210,7 @@ class _ProfilePageState extends State<ProfilePage>
                   controller: _controller.newPasswordController,
                   obscureText: true,
                   decoration: InputDecoration(
-                    labelText: _tx(
-                      'profile.new_password_label',
-                      'Nueva contraseña',
-                    ),
+                    labelText: _tx('profile.new_password_label'),
                   ),
                 ),
               ],
@@ -224,7 +219,7 @@ class _ProfilePageState extends State<ProfilePage>
           actions: [
             TertiaryButton(
               onPressed: submitting ? null : () => Navigator.of(context).pop(),
-              child: Text(_tx('common.cancel', 'Cancelar')),
+              child: Text(_tx('common.cancel')),
             ),
             PrimaryButton.icon(
               onPressed: submitting
@@ -243,8 +238,8 @@ class _ProfilePageState extends State<ProfilePage>
               icon: const Icon(Icons.lock_reset_outlined),
               label: Text(
                 submitting
-                    ? _tx('profile.updating', 'Actualizando...')
-                    : _tx('profile.change_password', 'Cambiar contraseña'),
+                    ? _tx('profile.updating')
+                    : _tx('profile.change_password'),
               ),
             ),
           ],
@@ -265,16 +260,10 @@ class _ProfilePageState extends State<ProfilePage>
 
     final confirm = await showConfirmActionDialog(
       context,
-      title: _tx(
-        'profile.deletion_confirm_title',
-        'Solicitar eliminación de cuenta',
-      ),
-      message: _tx(
-        'profile.deletion_confirm_message',
-        'La cuenta se programará para eliminación en 30 días. ¿Deseas continuar?',
-      ),
-      cancelLabel: _tx('common.cancel', 'Cancelar'),
-      confirmLabel: _tx('common.confirm', 'Confirmar'),
+      title: _tx('profile.deletion_confirm_title'),
+      message: _tx('profile.deletion_confirm_message'),
+      cancelLabel: _tx('common.cancel'),
+      confirmLabel: _tx('common.confirm'),
       destructive: true,
     );
     if (!confirm) return;
@@ -290,9 +279,9 @@ class _ProfilePageState extends State<ProfilePage>
       return ListView(
         children: [
           AsyncStatePanel.error(
-            title: _tx('profile.error_title', 'Error cargando perfil'),
+            title: _tx('profile.error_title'),
             message: error,
-            retryLabel: _tx('common.retry', 'Reintentar'),
+            retryLabel: _tx('common.retry'),
             onRetry: _controller.load,
           ),
         ],
@@ -301,16 +290,14 @@ class _ProfilePageState extends State<ProfilePage>
 
     final bundle = _controller.bundle;
     if (bundle == null) {
-      return Center(
-        child: Text(_tx('profile.empty', 'No hay datos de perfil disponibles')),
-      );
+      return Center(child: Text(_tx('profile.empty')));
     }
 
     final tabLabels = <String>[
-      _tx('profile.tab_account', 'Mi cuenta'),
-      _tx('profile.tab_social', 'Perfil público'),
-      _tx('profile.tab_groups', 'Grupos'),
-      _tx('connections.tab_providers', 'Proveedores'),
+      _tx('profile.tab_account'),
+      _tx('profile.tab_social'),
+      _tx('profile.tab_groups'),
+      _tx('connections.tab_providers'),
     ];
     final section = _sectionIds[_tabController.index];
     final token = _controller.token;

@@ -7,18 +7,18 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/resource_type_badge.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 
-typedef AdminTx = String Function(String path, String fallback);
+typedef AdminTx = String Function(String path);
 
 /// Mismos textos que el filtro de tipo de Explorar, para que un componente se
 /// llame igual en todo el producto.
 String _componentTypeLabel(AdminTx tx, String type) {
   return switch (type) {
-    'agent' => tx('explore.type_agents', 'Agentes'),
-    'skill' => tx('explore.type_skills', 'Skills'),
-    'prompt' => tx('explore.type_prompts', 'Prompts'),
-    'tool' => tx('explore.type_tools', 'Herramientas'),
-    'knowledge' => tx('explore.type_knowledge', 'Knowledge'),
-    'workflow' => tx('explore.type_workflows', 'Workflows'),
+    'agent' => tx('explore.type_agents'),
+    'skill' => tx('explore.type_skills'),
+    'prompt' => tx('explore.type_prompts'),
+    'tool' => tx('explore.type_tools'),
+    'knowledge' => tx('explore.type_knowledge'),
+    'workflow' => tx('explore.type_workflows'),
     _ => type,
   };
 }
@@ -48,7 +48,7 @@ Future<Map<String, dynamic>?> showOfficialSourceEditDialog(
     context: context,
     builder: (context) => StatefulBuilder(
       builder: (context, setDialogState) => AlertDialog(
-        title: Text(tx('official.edit_title', 'Editar fuente oficial')),
+        title: Text(tx('official.edit_title')),
         content: SizedBox(
           width: dialogContentWidth(context, 580),
           child: SingleChildScrollView(
@@ -57,44 +57,37 @@ Future<Map<String, dynamic>?> showOfficialSourceEditDialog(
               children: [
                 TextField(
                   controller: name,
-                  decoration: InputDecoration(
-                    labelText: tx('official.name', 'Nombre'),
-                  ),
+                  decoration: InputDecoration(labelText: tx('official.name')),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: description,
                   maxLines: 3,
                   decoration: InputDecoration(
-                    labelText: tx('common.description', 'Descripción'),
+                    labelText: tx('common.description'),
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: repositoryUrl,
                   decoration: InputDecoration(
-                    labelText: tx(
-                      'official.repository_url',
-                      'Repositorio de GitHub',
-                    ),
+                    labelText: tx('official.repository_url'),
                   ),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: trackingMode,
                   decoration: InputDecoration(
-                    labelText: tx('official.tracking', 'Seguimiento'),
+                    labelText: tx('official.tracking'),
                   ),
                   items: [
                     DropdownMenuItem(
                       value: 'release',
-                      child: Text(
-                        tx('official.tracking_release', 'Última release'),
-                      ),
+                      child: Text(tx('official.tracking_release')),
                     ),
                     DropdownMenuItem(
                       value: 'branch',
-                      child: Text(tx('official.tracking_branch', 'Rama')),
+                      child: Text(tx('official.tracking_branch')),
                     ),
                   ],
                   onChanged: (value) => setDialogState(
@@ -105,14 +98,14 @@ Future<Map<String, dynamic>?> showOfficialSourceEditDialog(
                 TextField(
                   controller: trackingRef,
                   decoration: InputDecoration(
-                    labelText: tx('official.tracking_ref', 'Referencia'),
+                    labelText: tx('official.tracking_ref'),
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: license,
                   decoration: InputDecoration(
-                    labelText: tx('official.license', 'Licencia'),
+                    labelText: tx('official.license'),
                   ),
                 ),
               ],
@@ -122,7 +115,7 @@ Future<Map<String, dynamic>?> showOfficialSourceEditDialog(
         actions: [
           TertiaryButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(tx('common.cancel', 'Cancelar')),
+            child: Text(tx('common.cancel')),
           ),
           PrimaryButton(
             onPressed: () {
@@ -140,7 +133,7 @@ Future<Map<String, dynamic>?> showOfficialSourceEditDialog(
                 'license': license.text.trim(),
               });
             },
-            child: Text(tx('common.save', 'Guardar')),
+            child: Text(tx('common.save')),
           ),
         ],
       ),
@@ -195,7 +188,8 @@ Future<Set<String>?> showOfficialComponentsDialog(
       .toSet();
   final unsupported = rows.where((item) => !supported(item)).length;
   final byId = {
-    for (final component in rows) component['component_id'].toString(): component,
+    for (final component in rows)
+      component['component_id'].toString(): component,
   };
 
   bool dependsOn(String candidateId, String dependencyId, Set<String> seen) {
@@ -213,9 +207,7 @@ Future<Set<String>?> showOfficialComponentsDialog(
     context: context,
     builder: (context) => StatefulBuilder(
       builder: (context, setDialogState) => AlertDialog(
-        title: Text(
-          tx('official.choose_publish_content', 'Elegir contenido de la fuente'),
-        ),
+        title: Text(tx('official.choose_publish_content')),
         content: SizedBox(
           width: dialogContentWidth(context, 620),
           height: dialogContentHeight(context, 500),
@@ -224,11 +216,7 @@ Future<Set<String>?> showOfficialComponentsDialog(
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  tx(
-                    'official.publish_selection_hint',
-                    'Lo marcado queda publicado en el hub como un recurso más. '
-                        'Lo que desmarques se borra.',
-                  ),
+                  tx('official.publish_selection_hint'),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
@@ -239,8 +227,6 @@ Future<Set<String>?> showOfficialComponentsDialog(
                   child: Text(
                     tx(
                       'official.unsupported_hint',
-                      '{count} objetos del repositorio no tienen equivalente en el hub '
-                          '(hooks, MCP, reglas): salen en gris y no se pueden traer.',
                     ).replaceAll('{count}', '$unsupported'),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
@@ -326,13 +312,13 @@ Future<Set<String>?> showOfficialComponentsDialog(
         actions: [
           TertiaryButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(tx('common.cancel', 'Cancelar')),
+            child: Text(tx('common.cancel')),
           ),
           PrimaryButton(
             // Vaciar la selección es una acción válida: deja la fuente dada de
             // alta pero sin nada suyo publicado en el hub.
             onPressed: () => Navigator.pop(context, Set.of(selected)),
-            child: Text(tx('official.publish_selection', 'Aplicar selección')),
+            child: Text(tx('official.publish_selection')),
           ),
         ],
       ),

@@ -10,14 +10,11 @@ extension _AgentFormSections on _AgentFormPageState {
           TextFormField(
             controller: _nameController,
             decoration: InputDecoration(
-              labelText: widget.tx('agents.field_name', 'Nombre'),
+              labelText: widget.tx('agents.field_name'),
             ),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return widget.tx(
-                  'agents.name_required',
-                  'El nombre es obligatorio',
-                );
+                return widget.tx('agents.name_required');
               }
               return null;
             },
@@ -28,7 +25,7 @@ extension _AgentFormSections on _AgentFormPageState {
             minLines: 2,
             maxLines: 4,
             decoration: InputDecoration(
-              labelText: widget.tx('agents.field_description', 'Descripción'),
+              labelText: widget.tx('agents.field_description'),
             ),
           ),
           const SizedBox(height: 12),
@@ -42,15 +39,12 @@ extension _AgentFormSections on _AgentFormPageState {
             minLines: 5,
             maxLines: 10,
             decoration: InputDecoration(
-              labelText: widget.tx('agents.field_prompt', 'System prompt'),
+              labelText: widget.tx('agents.field_prompt'),
             ),
             validator: (value) {
               if (!widget.requireQualityPrompt) return null;
               if (value == null || value.trim().length < 90) {
-                return widget.tx(
-                  'agents.prompt_too_short',
-                  'Añade instrucciones más completas (mínimo 90 caracteres)',
-                );
+                return widget.tx('agents.prompt_too_short');
               }
               return null;
             },
@@ -75,23 +69,18 @@ extension _AgentFormSections on _AgentFormPageState {
                   initialValue: _connectionId,
                   isExpanded: true,
                   decoration: InputDecoration(
-                    labelText: widget.tx(
-                      'agents.field_connection',
-                      'Conexión LLM',
-                    ),
+                    labelText: widget.tx('agents.field_connection'),
                   ),
                   items: [
                     DropdownMenuItem<String>(
                       value: null,
-                      child: Text(
-                        widget.tx('agents.no_connection', '-- Sin conexión --'),
-                      ),
+                      child: Text(widget.tx('agents.no_connection')),
                     ),
                     ..._connections.map(
                       (conn) => DropdownMenuItem<String>(
                         value: conn.id,
                         child: Text(
-                          '${conn.name} (${conn.type == 'llm_orchestration' ? (conn.model == 'balanced' ? widget.tx('llm_orchestrations.balanced', 'Balanceo') : widget.tx('llm_orchestrations.stack', 'Pila')) : conn.type})',
+                          '${conn.name} (${conn.type == 'llm_orchestration' ? (conn.model == 'balanced' ? widget.tx('llm_orchestrations.balanced') : widget.tx('llm_orchestrations.stack')) : conn.type})',
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -101,7 +90,7 @@ extension _AgentFormSections on _AgentFormPageState {
                 ),
           const SizedBox(height: 20),
           Text(
-            '${widget.tx('agents.field_temperature', 'Temperatura')}: ${_temperature.toStringAsFixed(2)}',
+            '${widget.tx('agents.field_temperature')}: ${_temperature.toStringAsFixed(2)}',
             style: Theme.of(context).textTheme.labelMedium,
           ),
           Slider(
@@ -124,15 +113,12 @@ extension _AgentFormSections on _AgentFormPageState {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            widget.tx('agents.resources_section_title', 'Recursos del agente'),
+            widget.tx('agents.resources_section_title'),
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 4),
           Text(
-            widget.tx(
-              'agents.resources_section_description',
-              'Añade skills, documentos, prompts y herramientas sin saturar el formulario.',
-            ),
+            widget.tx('agents.resources_section_description'),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
@@ -149,17 +135,14 @@ extension _AgentFormSections on _AgentFormPageState {
                   children: [
                     _resourceSummaryRow(
                       icon: Icons.auto_awesome_outlined,
-                      label: widget.tx('agents.field_skills', 'Skills'),
+                      label: widget.tx('agents.field_skills'),
                       selectedIds: _selectedSkillIds,
                       names: {for (final item in _skills) item.id: item.name},
                     ),
                     const Divider(height: 24),
                     _resourceSummaryRow(
                       icon: Icons.description_outlined,
-                      label: widget.tx(
-                        'agents.field_knowledge',
-                        'Conocimiento',
-                      ),
+                      label: widget.tx('agents.field_knowledge'),
                       selectedIds: _selectedKnowledgeIds,
                       names: {
                         for (final item in _knowledgeItems) item.id: item.title,
@@ -168,14 +151,14 @@ extension _AgentFormSections on _AgentFormPageState {
                     const Divider(height: 24),
                     _resourceSummaryRow(
                       icon: Icons.short_text_outlined,
-                      label: widget.tx('agents.field_prompts', 'Prompts'),
+                      label: widget.tx('agents.field_prompts'),
                       selectedIds: _selectedPromptIds,
                       names: {for (final item in _prompts) item.id: item.name},
                     ),
                     const Divider(height: 24),
                     _resourceSummaryRow(
                       icon: Icons.build_outlined,
-                      label: widget.tx('agents.field_tools', 'Herramientas'),
+                      label: widget.tx('agents.field_tools'),
                       selectedIds: _selectedToolIds,
                       names: {for (final item in _tools) item.id: item.name},
                     ),
@@ -186,12 +169,7 @@ extension _AgentFormSections on _AgentFormPageState {
                         key: const ValueKey('agent-open-resources-picker'),
                         onPressed: _openResourcePicker,
                         icon: const Icon(Icons.add_link),
-                        label: Text(
-                          widget.tx(
-                            'agents.resources_manage',
-                            'Buscar y seleccionar recursos',
-                          ),
-                        ),
+                        label: Text(widget.tx('agents.resources_manage')),
                       ),
                     ),
                   ],
@@ -200,14 +178,14 @@ extension _AgentFormSections on _AgentFormPageState {
             ),
           const SizedBox(height: 24),
           Text(
-            widget.tx('agents.memory_section_title', 'Memoria persistente'),
+            widget.tx('agents.memory_section_title'),
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 4),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             value: _useMemory,
-            title: Text(widget.tx('agents.field_use_memory', 'Usar memoria')),
+            title: Text(widget.tx('agents.field_use_memory')),
             onChanged: (value) => refresh(() => _useMemory = value),
           ),
           if (_useMemory) ...[
@@ -219,20 +197,14 @@ extension _AgentFormSections on _AgentFormPageState {
                         child: TextFormField(
                           controller: _memoryFileController,
                           decoration: InputDecoration(
-                            labelText: widget.tx(
-                              'agents.field_memory_file',
-                              'Archivo de memoria',
-                            ),
+                            labelText: widget.tx('agents.field_memory_file'),
                           ),
                         ),
                       ),
                       if (_memoryFiles.isNotEmpty)
                         PopupMenuButton<String>(
                           icon: const Icon(Icons.folder_open_outlined),
-                          tooltip: widget.tx(
-                            'agents.pick_existing',
-                            'Elegir existente',
-                          ),
+                          tooltip: widget.tx('agents.pick_existing'),
                           onSelected: (value) =>
                               refresh(() => _memoryFileController.text = value),
                           itemBuilder: (context) => _memoryFiles
@@ -264,7 +236,7 @@ extension _AgentFormSections on _AgentFormPageState {
         .take(2)
         .toList();
     final summary = selectedNames.isEmpty
-        ? widget.tx('agents.resources_none_selected', 'Sin seleccionar')
+        ? widget.tx('agents.resources_none_selected')
         : [
             ...selectedNames,
             if (selectedIds.length > selectedNames.length)
@@ -305,7 +277,7 @@ extension _AgentFormSections on _AgentFormPageState {
           DropdownButtonFormField<String>(
             initialValue: _agentType,
             decoration: InputDecoration(
-              labelText: widget.tx('agents.field_type', 'Tipo de agente'),
+              labelText: widget.tx('agents.field_type'),
             ),
             items: const [
               DropdownMenuItem(value: 'generic', child: Text('generic')),
@@ -322,7 +294,7 @@ extension _AgentFormSections on _AgentFormPageState {
           TextFormField(
             controller: _modelController,
             decoration: InputDecoration(
-              labelText: widget.tx('agents.field_model', 'Modelo (opcional)'),
+              labelText: widget.tx('agents.field_model'),
             ),
           ),
         ],

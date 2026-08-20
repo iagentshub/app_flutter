@@ -17,7 +17,7 @@ class _AccountFormDialog extends StatefulWidget {
   /// [existing], que no se puede cambiar.
   final List<AccountProviderMeta> providers;
   final AccountItem? existing;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<_AccountFormDialog> createState() => _AccountFormDialogState();
@@ -87,11 +87,7 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
     setState(() => _apiKeyController.text = accessToken);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          widget.tx('providers.github_connected', 'Conectado con GitHub'),
-        ),
-      ),
+      SnackBar(content: Text(widget.tx('providers.github_connected'))),
     );
   }
 
@@ -146,19 +142,13 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
           _testMessage = preview.message?.isNotEmpty == true
               ? preview.message
               : (preview.ok
-                    ? widget.tx('providers.test_ok', 'Conexión correcta')
-                    : widget.tx(
-                        'providers.error_generic',
-                        'No se pudo probar la conexión',
-                      ));
+                    ? widget.tx('providers.test_ok')
+                    : widget.tx('providers.error_generic'));
         } else {
           _testOk = preview.models.isNotEmpty;
           _testMessage = preview.models.isNotEmpty
-              ? '${preview.modelsCount} ${widget.tx('providers.models_found', 'modelos encontrados')}'
-              : widget.tx(
-                  'providers.no_models_found',
-                  'No se encontraron modelos disponibles',
-                );
+              ? '${preview.modelsCount} ${widget.tx('providers.models_found')}'
+              : widget.tx('providers.no_models_found');
         }
       });
     } on ApiError catch (error) {
@@ -171,10 +161,7 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
       if (!mounted) return;
       setState(() {
         _testOk = false;
-        _testMessage = widget.tx(
-          'providers.error_generic',
-          'No se pudo probar la conexión',
-        );
+        _testMessage = widget.tx('providers.error_generic');
       });
     } finally {
       if (mounted) setState(() => _testing = false);
@@ -221,12 +208,7 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            widget.tx(
-              'providers.error_generic',
-              'No se pudo guardar la cuenta',
-            ),
-          ),
+          content: Text(widget.tx('providers.error_generic')),
           backgroundColor: FncColors.materialRed.shade700,
         ),
       );
@@ -236,8 +218,8 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
   @override
   Widget build(BuildContext context) {
     final title = _isEdit
-        ? '${widget.tx('providers.edit_action', 'Editar')} ${widget.existing!.name.isNotEmpty ? widget.existing!.name : _meta.label}'
-        : widget.tx('providers.add_account', 'Añadir cuenta');
+        ? '${widget.tx('providers.edit_action')} ${widget.existing!.name.isNotEmpty ? widget.existing!.name : _meta.label}'
+        : widget.tx('providers.add_account');
 
     return AlertDialog(
       title: Text(title),
@@ -262,10 +244,7 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
                   child: DropdownButtonFormField<String>(
                     initialValue: _selectedProvider,
                     decoration: InputDecoration(
-                      labelText: widget.tx(
-                        'providers.provider_label',
-                        'Proveedor',
-                      ),
+                      labelText: widget.tx('providers.provider_label'),
                     ),
                     items: widget.providers
                         .map(
@@ -283,10 +262,7 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
               TextField(
                 controller: _nameController,
                 decoration: InputDecoration(
-                  labelText: widget.tx(
-                    'providers.name_label',
-                    'Nombre (opcional)',
-                  ),
+                  labelText: widget.tx('providers.name_label'),
                   hintText: _meta.label,
                 ),
               ),
@@ -295,7 +271,7 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
                 TextField(
                   controller: _urlController,
                   decoration: InputDecoration(
-                    labelText: widget.tx('providers.url_label', 'URL del hub'),
+                    labelText: widget.tx('providers.url_label'),
                     hintText: 'https://hub.ejemplo.com',
                   ),
                 ),
@@ -305,7 +281,7 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
                 TextField(
                   controller: _usernameController,
                   decoration: InputDecoration(
-                    labelText: widget.tx('providers.username_label', 'Usuario'),
+                    labelText: widget.tx('providers.username_label'),
                   ),
                 ),
               ],
@@ -316,12 +292,7 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
                   child: SecondaryButton.icon(
                     onPressed: _connectWithGithub,
                     icon: const Icon(Icons.open_in_new),
-                    label: Text(
-                      widget.tx(
-                        'providers.github_connect_action',
-                        'Conectar con GitHub',
-                      ),
-                    ),
+                    label: Text(widget.tx('providers.github_connect_action')),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -332,12 +303,9 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
                   obscureText: true,
                   decoration: InputDecoration(
                     labelText: _isHub
-                        ? widget.tx('providers.password_label', 'Contraseña')
+                        ? widget.tx('providers.password_label')
                         : _meta.provider == 'github'
-                        ? widget.tx(
-                            'providers.github_token_label',
-                            'Token (o conecta arriba)',
-                          )
+                        ? widget.tx('providers.github_token_label')
                         : 'API Key',
                     hintText: _isEdit ? widget.existing?.apiKeyMasked : null,
                   ),
@@ -350,21 +318,14 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
                       Expanded(
                         child: SecondaryButton(
                           onPressed: () => _setOllamaHost(_ollamaLocalHost),
-                          child: Text(
-                            widget.tx('providers.ollama_host_local', 'Local'),
-                          ),
+                          child: Text(widget.tx('providers.ollama_host_local')),
                         ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: SecondaryButton(
                           onPressed: () => _setOllamaHost(_ollamaCloudHost),
-                          child: Text(
-                            widget.tx(
-                              'providers.ollama_host_cloud',
-                              'Oficial (ollama.com)',
-                            ),
-                          ),
+                          child: Text(widget.tx('providers.ollama_host_cloud')),
                         ),
                       ),
                     ],
@@ -378,10 +339,7 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
                 if (_isOllama) ...[
                   const SizedBox(height: 4),
                   Text(
-                    widget.tx(
-                      'providers.ollama_cloud_hint',
-                      'Para Ollama Cloud, pega tu API Key de ollama.com/settings/keys',
-                    ),
+                    widget.tx('providers.ollama_cloud_hint'),
                     style: TextStyle(
                       fontSize: FncFonts.size11,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -399,7 +357,7 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.health_and_safety_outlined),
-                label: Text(widget.tx('providers.test_action', 'Probar')),
+                label: Text(widget.tx('providers.test_action')),
               ),
               if (_testMessage != null) ...[
                 const SizedBox(height: 8),
@@ -419,11 +377,11 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
       actions: [
         TertiaryButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: Text(widget.tx('common.cancel', 'Cancelar')),
+          child: Text(widget.tx('common.cancel')),
         ),
         PrimaryButton(
           onPressed: _saving ? null : _save,
-          child: Text(widget.tx('common.save', 'Guardar')),
+          child: Text(widget.tx('common.save')),
         ),
       ],
     );

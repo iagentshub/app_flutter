@@ -53,8 +53,7 @@ class _SessionRecoveryPageState extends State<SessionRecoveryPage> {
     if (mounted) setState(() {});
   }
 
-  String _tx(String key, String fallback) =>
-      _texts.text(key, fallback: fallback);
+  String _tx(String key) => _texts.text(key);
 
   @override
   Widget build(BuildContext context) {
@@ -77,14 +76,8 @@ class _SessionRecoveryPageState extends State<SessionRecoveryPage> {
                     children: [
                       Semantics(
                         label: restoring
-                            ? _tx(
-                                'session_restoring_semantics',
-                                'Validando la sesión guardada',
-                              )
-                            : _tx(
-                                'session_unavailable_semantics',
-                                'Servidor no disponible',
-                              ),
+                            ? _tx('session_restoring_semantics')
+                            : _tx('session_unavailable_semantics'),
                         child: restoring
                             ? const SizedBox.square(
                                 dimension: 44,
@@ -99,28 +92,16 @@ class _SessionRecoveryPageState extends State<SessionRecoveryPage> {
                       const SizedBox(height: 24),
                       Text(
                         restoring
-                            ? _tx(
-                                'session_restoring_title',
-                                'Comprobando tu sesión',
-                              )
-                            : _tx(
-                                'session_unavailable_title',
-                                'No se puede conectar con el servidor',
-                              ),
+                            ? _tx('session_restoring_title')
+                            : _tx('session_unavailable_title'),
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.headlineSmall,
                       ),
                       const SizedBox(height: 12),
                       Text(
                         restoring
-                            ? _tx(
-                                'session_restoring_body',
-                                'Espera mientras verificamos tus credenciales.',
-                              )
-                            : _tx(
-                                'session_unavailable_body',
-                                'Tu sesión se conserva, pero no abriremos el dashboard hasta poder validarla.',
-                              ),
+                            ? _tx('session_restoring_body')
+                            : _tx('session_unavailable_body'),
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyLarge,
                       ),
@@ -139,7 +120,7 @@ class _SessionRecoveryPageState extends State<SessionRecoveryPage> {
                             key: const ValueKey('session-retry-button'),
                             onPressed: widget.onRetry,
                             icon: const Icon(Icons.refresh),
-                            label: Text(_tx('common_retry', 'Reintentar')),
+                            label: Text(_tx('common_retry')),
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -151,12 +132,7 @@ class _SessionRecoveryPageState extends State<SessionRecoveryPage> {
                             ),
                             onPressed: widget.onConfigureBackend,
                             icon: const Icon(Icons.dns_outlined),
-                            label: Text(
-                              _tx(
-                                'session_configure_backend',
-                                'Configurar servidor',
-                              ),
-                            ),
+                            label: Text(_tx('session_configure_backend')),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -165,12 +141,7 @@ class _SessionRecoveryPageState extends State<SessionRecoveryPage> {
                             'session-use-another-account-button',
                           ),
                           onPressed: widget.onUseAnotherAccount,
-                          child: Text(
-                            _tx(
-                              'session_use_another_account',
-                              'Usar otra cuenta',
-                            ),
-                          ),
+                          child: Text(_tx('session_use_another_account')),
                         ),
                       ],
                     ],

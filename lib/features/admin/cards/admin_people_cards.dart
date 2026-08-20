@@ -40,20 +40,20 @@ extension _AdminPeopleCards on _AdminPageState {
                 _resourceTypeBadge(AdminResourceType.user),
                 _badge(
                   isAdmin
-                      ? _tx('admin.role_admin', 'Admin')
-                      : _tx('admin.role_standard', 'Estándar'),
+                      ? _tx('admin.role_admin')
+                      : _tx('admin.role_standard'),
                   isAdmin ? FncColors.purple : FncColors.slate,
                 ),
                 _badge(
                   active
-                      ? _tx('admin.status_active', 'Activo')
-                      : _tx('admin.status_blocked', 'Bloqueado'),
+                      ? _tx('admin.status_active')
+                      : _tx('admin.status_blocked'),
                   active ? FncColors.success : FncColors.danger,
                 ),
                 _badge(
                   verified
-                      ? _tx('admin.verified_yes', 'Verificado')
-                      : _tx('admin.verified_no', 'Sin verificar'),
+                      ? _tx('admin.verified_yes')
+                      : _tx('admin.verified_no'),
                   verified ? FncColors.success : FncColors.labelDevelopment,
                 ),
                 if (tokens > 0) _badge(_fmtTokens(tokens), FncColors.info),
@@ -68,7 +68,7 @@ extension _AdminPeopleCards on _AdminPageState {
                 _resourceGraphAction(AdminResourceType.user, user),
                 ActionIconButton(
                   icon: Icons.edit_outlined,
-                  tooltip: _tx('common.edit', 'Editar'),
+                  tooltip: _tx('common.edit'),
                   onPressed: () => _openEditUserDialog(user),
                 ),
                 ActionIconButton(
@@ -76,19 +76,19 @@ extension _AdminPeopleCards on _AdminPageState {
                       ? Icons.block_outlined
                       : Icons.check_circle_outline,
                   tooltip: active
-                      ? _tx('admin.action_block', 'Bloquear')
-                      : _tx('admin.action_unblock', 'Desbloquear'),
+                      ? _tx('admin.action_block')
+                      : _tx('admin.action_unblock'),
                   onPressed: () => _toggleUserActive(user),
                 ),
                 if (!isAdmin)
                   ActionIconButton(
                     icon: Icons.shield_outlined,
-                    tooltip: _tx('admin.action_make_admin', 'Hacer admin'),
+                    tooltip: _tx('admin.action_make_admin'),
                     onPressed: () => _promoteUser(user),
                   ),
                 ActionIconButton(
                   icon: Icons.delete_outline,
-                  tooltip: _tx('common.delete', 'Eliminar'),
+                  tooltip: _tx('common.delete'),
                   danger: true,
                   onPressed: () => _deleteUser(user),
                 ),
@@ -131,15 +131,15 @@ extension _AdminPeopleCards on _AdminPageState {
                 ),
                 _badge(
                   disabled
-                      ? _tx('admin.status_disabled', 'Desactivado')
-                      : _tx('admin.status_active', 'Activo'),
+                      ? _tx('admin.status_disabled')
+                      : _tx('admin.status_active'),
                   disabled ? FncColors.danger : FncColors.success,
                 ),
               ],
             ),
             const SizedBox(height: 4),
             Text(
-              '${_tx('admin.table_creator', 'Creador')}: $creator · $date',
+              '${_tx('admin.table_creator')}: $creator · $date',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 8),
@@ -149,19 +149,16 @@ extension _AdminPeopleCards on _AdminPageState {
               children: [
                 _resourceTypeBadge(AdminResourceType.group),
                 _badge(
-                  '${_tx('admin.table_members', 'Miembros')}: $members',
+                  '${_tx('admin.table_members')}: $members',
                   FncColors.slate,
                 ),
                 _badge(
-                  '${_tx('admin.tab_connections', 'Conexiones')}: $connections',
+                  '${_tx('admin.tab_connections')}: $connections',
                   FncColors.slate,
                 ),
+                _badge('${_tx('admin.tab_agents')}: $agents', FncColors.slate),
                 _badge(
-                  '${_tx('admin.tab_agents', 'Agentes')}: $agents',
-                  FncColors.slate,
-                ),
-                _badge(
-                  '${_tx('admin.tab_knowledge', 'Conocimiento')}: $knowledge',
+                  '${_tx('admin.tab_knowledge')}: $knowledge',
                   FncColors.slate,
                 ),
                 if (tokens > 0) _badge(_fmtTokens(tokens), FncColors.info),
@@ -177,13 +174,13 @@ extension _AdminPeopleCards on _AdminPageState {
                       ? Icons.check_circle_outline
                       : Icons.block_outlined,
                   tooltip: disabled
-                      ? _tx('admin.action_reactivate', 'Reactivar')
-                      : _tx('admin.action_deactivate', 'Desactivar'),
+                      ? _tx('admin.action_reactivate')
+                      : _tx('admin.action_deactivate'),
                   onPressed: () => _toggleGroupStatus(group),
                 ),
                 ActionIconButton(
                   icon: Icons.delete_outline,
-                  tooltip: _tx('common.delete', 'Eliminar'),
+                  tooltip: _tx('common.delete'),
                   danger: true,
                   onPressed: () => _deleteGroup(group),
                 ),

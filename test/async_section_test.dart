@@ -26,7 +26,8 @@ void main() {
 
   test('un ApiError se muestra con el mensaje del backend', () async {
     final section = AsyncSection<List<String>>(
-      fetch: () async => throw ApiError(statusCode: 403, message: 'Sin permiso'),
+      fetch: () async =>
+          throw ApiError(statusCode: 403, message: 'Sin permiso'),
       genericError: () => 'error genérico',
     );
     addTearDown(section.dispose);

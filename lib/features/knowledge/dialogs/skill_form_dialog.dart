@@ -8,7 +8,7 @@ class _SkillFormDialog extends StatefulWidget {
     this.requireQualityContent = false,
   });
 
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
   final Map<String, dynamic>? initial;
   final bool allowPublic;
   final bool requireQualityContent;
@@ -80,8 +80,8 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
     return AlertDialog(
       title: Text(
         widget.initial == null
-            ? widget.tx('knowledge.new_skill_title', 'Nueva skill')
-            : widget.tx('knowledge.edit_skill_title', 'Editar skill'),
+            ? widget.tx('knowledge.new_skill_title')
+            : widget.tx('knowledge.edit_skill_title'),
       ),
       content: SizedBox(
         width: dialogContentWidth(context, 620),
@@ -93,10 +93,10 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(
-                  labelText: widget.tx('knowledge.name_label', 'Nombre'),
+                  labelText: widget.tx('knowledge.name_label'),
                 ),
                 validator: (value) => (value == null || value.trim().isEmpty)
-                    ? widget.tx('knowledge.name_required', 'Nombre obligatorio')
+                    ? widget.tx('knowledge.name_required')
                     : null,
               ),
               const SizedBox(height: 10),
@@ -104,20 +104,16 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
                 DropdownButtonFormField<String>(
                   initialValue: _scope,
                   decoration: InputDecoration(
-                    labelText: widget.tx('knowledge.scope_label', 'Scope'),
+                    labelText: widget.tx('knowledge.scope_label'),
                   ),
                   items: [
                     DropdownMenuItem(
                       value: 'private',
-                      child: Text(
-                        widget.tx('knowledge.scope_private', 'Privado'),
-                      ),
+                      child: Text(widget.tx('knowledge.scope_private')),
                     ),
                     DropdownMenuItem(
                       value: 'public',
-                      child: Text(
-                        widget.tx('knowledge.scope_public', 'Público'),
-                      ),
+                      child: Text(widget.tx('knowledge.scope_public')),
                     ),
                   ],
                   onChanged: (value) {
@@ -128,14 +124,9 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
               else
                 InputDecorator(
                   decoration: InputDecoration(
-                    labelText: widget.tx('knowledge.scope_label', 'Scope'),
+                    labelText: widget.tx('knowledge.scope_label'),
                   ),
-                  child: Text(
-                    widget.tx(
-                      'knowledge.scope_temp_session',
-                      'Privado · temporal durante esta sesión',
-                    ),
-                  ),
+                  child: Text(widget.tx('knowledge.scope_temp_session')),
                 ),
               const SizedBox(height: 10),
               GroupedLabelPicker(
@@ -150,10 +141,7 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
                 minLines: 2,
                 maxLines: 4,
                 decoration: InputDecoration(
-                  labelText: widget.tx(
-                    'knowledge.description_label',
-                    'Descripción',
-                  ),
+                  labelText: widget.tx('knowledge.description_label'),
                 ),
               ),
               const SizedBox(height: 10),
@@ -161,10 +149,7 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
                 initialValue: _category,
                 isExpanded: true,
                 decoration: InputDecoration(
-                  labelText: widget.tx(
-                    'knowledge.skill_category_label',
-                    'Categoría',
-                  ),
+                  labelText: widget.tx('knowledge.skill_category_label'),
                 ),
                 items: [
                   for (final category in ['', ...kSkillCategories])
@@ -195,18 +180,12 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
                 minLines: 8,
                 maxLines: 16,
                 decoration: InputDecoration(
-                  labelText: widget.tx(
-                    'knowledge.skill_content_label',
-                    'Contenido de la skill',
-                  ),
+                  labelText: widget.tx('knowledge.skill_content_label'),
                 ),
                 validator: (value) {
                   if (!widget.requireQualityContent) return null;
                   if (value == null || value.trim().length < 180) {
-                    return widget.tx(
-                      'knowledge.skill_quality_error',
-                      'Añade instrucciones más completas (mínimo 180 caracteres)',
-                    );
+                    return widget.tx('knowledge.skill_quality_error');
                   }
                   return null;
                 },
@@ -218,11 +197,11 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
       actions: [
         TertiaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(widget.tx('common.cancel', 'Cancelar')),
+          child: Text(widget.tx('common.cancel')),
         ),
         PrimaryButton(
           onPressed: _submit,
-          child: Text(widget.tx('common.save', 'Guardar')),
+          child: Text(widget.tx('common.save')),
         ),
       ],
     );

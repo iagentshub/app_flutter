@@ -3,7 +3,6 @@ part of '../pages/admin_page.dart';
 extension _AdminPageSections on _AdminPageState {
   String _pctLabel(double progress) => _tx(
     'admin.stat_pct_of_total',
-    '{pct}% del total',
   ).replaceAll('{pct}', '${(progress * 100).round()}');
 
   static const _healthOkColor = FncColors.success;
@@ -25,6 +24,11 @@ extension _AdminPageSections on _AdminPageState {
     final verifiedPct = stats.usersTotal > 0
         ? stats.usersVerified / stats.usersTotal
         : 0.0;
+    // El cupo del demo. A 0 el modo invitado está apagado y la tarjeta no
+    // aporta nada; con tope, el anillo dice cuánto queda antes del 503.
+    final guestPct = stats.guestsMax > 0
+        ? (stats.guestsActive / stats.guestsMax).clamp(0.0, 1.0).toDouble()
+        : 0.0;
     final publicPct = agentsTotal > 0 ? stats.agentsPublic / agentsTotal : 0.0;
     final privatePct = agentsTotal > 0
         ? stats.agentsPrivate / agentsTotal
@@ -32,31 +36,40 @@ extension _AdminPageSections on _AdminPageState {
 
     final tiles = <KpiTile>[
       KpiTile(
-        label: _tx('admin.stat_connections', 'Conexiones'),
+        label: _tx('admin.stat_connections'),
         value: stats.connectionsTotal,
         icon: Icons.hub_outlined,
         tint: scheme.secondary,
       ),
       KpiTile(
-        label: _tx('admin.stat_knowledge', 'Knowledge'),
+        label: _tx('admin.stat_knowledge'),
         value: stats.knowledgeTotal,
         icon: Icons.menu_book_outlined,
         tint: scheme.secondary,
       ),
       KpiTile(
-        label: _tx('admin.stat_workflows', 'Orquestaciones'),
+        label: _tx('admin.stat_workflows'),
         value: stats.workflowsTotal,
         icon: Icons.account_tree_outlined,
         tint: scheme.secondary,
       ),
       KpiTile(
-        label: _tx('admin.stat_conversations', 'Conversaciones'),
+        label: _tx('admin.stat_conversations'),
         value: stats.conversationsTotal,
         icon: Icons.forum_outlined,
         tint: scheme.tertiary,
       ),
+      if (stats.guestsMax > 0)
+        KpiTile(
+          label: _tx('admin.stat_guests'),
+          value: stats.guestsActive,
+          icon: Icons.person_outline,
+          tint: scheme.secondary,
+          progress: guestPct,
+          progressLabel: '${stats.guestsActive}/${stats.guestsMax}',
+        ),
       KpiTile(
-        label: _tx('admin.stat_agents_public', 'Agentes públicos'),
+        label: _tx('admin.stat_agents_public'),
         value: stats.agentsPublic,
         icon: Icons.public,
         tint: scheme.tertiary,
@@ -64,7 +77,7 @@ extension _AdminPageSections on _AdminPageState {
         progressLabel: _pctLabel(publicPct),
       ),
       KpiTile(
-        label: _tx('admin.stat_agents_private', 'Agentes privados'),
+        label: _tx('admin.stat_agents_private'),
         value: stats.agentsPrivate,
         icon: Icons.lock_outline,
         tint: scheme.tertiary,
@@ -76,35 +89,33 @@ extension _AdminPageSections on _AdminPageState {
     final noErrorsToday = stats.errorsToday == 0;
     final healthTiles = <KpiTile>[
       KpiTile(
-        label: _tx('admin.stat_requests_today', 'Peticiones hoy'),
+        label: _tx('admin.stat_requests_today'),
         value: stats.requestsToday,
         icon: Icons.swap_horiz,
         tint: scheme.primary,
       ),
       KpiTile(
-        label: _tx('admin.stat_errors_today', 'Errores hoy'),
+        label: _tx('admin.stat_errors_today'),
         value: stats.errorsToday,
         icon: Icons.error_outline,
         tint: _healthColor(context, noErrorsToday),
       ),
       KpiTile(
-        label: _tx('admin.stat_failure_rate', '% de fallo'),
+        label: _tx('admin.stat_failure_rate'),
         value: stats.failureRatePct.round(),
         icon: Icons.percent,
         tint: _healthColor(context, stats.failureRatePct == 0),
         unit: '%',
       ),
       KpiTile(
-        label: _tx('admin.stat_avg_latency', 'Latencia media'),
+        label: _tx('admin.stat_avg_latency'),
         value: stats.avgLatencyMs,
         icon: Icons.speed_outlined,
         tint: scheme.secondary,
         unit: 'ms',
       ),
       KpiTile(
-        label:
-            stats.topErrorEndpoint ??
-            _tx('admin.stat_no_errors_today', 'Sin fallos hoy'),
+        label: stats.topErrorEndpoint ?? _tx('admin.stat_no_errors_today'),
         value: stats.topErrorCount,
         icon: Icons.report_gmailerrorred_outlined,
         tint: _healthColor(context, noErrorsToday),
@@ -117,7 +128,7 @@ extension _AdminPageSections on _AdminPageState {
     final serverHealthTiles = <KpiTile>[
       if (stats.diskUsedPct != null)
         KpiTile(
-          label: _tx('admin.stat_disk_usage', 'Disco'),
+          label: _tx('admin.stat_disk_usage'),
           value: stats.diskUsedPct!.round(),
           icon: Icons.storage_outlined,
           tint: _healthColor(context, stats.diskUsedPct! < 85),
@@ -130,7 +141,7 @@ extension _AdminPageSections on _AdminPageState {
         ),
       if (stats.memoryUsedPct != null)
         KpiTile(
-          label: _tx('admin.stat_memory_usage', 'Memoria'),
+          label: _tx('admin.stat_memory_usage'),
           value: stats.memoryUsedPct!.round(),
           icon: Icons.memory_outlined,
           tint: _healthColor(context, stats.memoryUsedPct! < 85),
@@ -143,7 +154,7 @@ extension _AdminPageSections on _AdminPageState {
         ),
       if (stats.cpuLoadPct != null)
         KpiTile(
-          label: _tx('admin.stat_cpu_load', 'Carga CPU'),
+          label: _tx('admin.stat_cpu_load'),
           value: stats.cpuLoadPct!.round(),
           icon: Icons.speed_outlined,
           tint: _healthColor(context, stats.cpuLoadPct! < 85),
@@ -153,7 +164,6 @@ extension _AdminPageSections on _AdminPageState {
               ? null
               : _tx(
                   'admin.stat_cpu_cores',
-                  '{n} núcleos',
                 ).replaceAll('{n}', '${stats.cpuCores}'),
         ),
     ];
@@ -167,17 +177,17 @@ extension _AdminPageSections on _AdminPageState {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             sliver: SliverToBoxAdapter(
               child: KpiHeroCard(
-                title: _tx('admin.stat_users', 'Usuarios'),
+                title: _tx('admin.stat_users'),
                 value: stats.usersTotal,
                 rings: [
                   KpiHeroRing(
                     progress: activePct,
-                    label: _tx('admin.stat_active', 'Activos'),
+                    label: _tx('admin.stat_active'),
                     color: scheme.primary,
                   ),
                   KpiHeroRing(
                     progress: verifiedPct,
-                    label: _tx('admin.stat_verified', 'Verificados'),
+                    label: _tx('admin.stat_verified'),
                     color: scheme.tertiary,
                   ),
                 ],
@@ -196,7 +206,7 @@ extension _AdminPageSections on _AdminPageState {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
             sliver: SliverToBoxAdapter(
               child: Text(
-                _tx('admin.stat_section_health', 'Estado de la aplicación'),
+                _tx('admin.stat_section_health'),
                 style: Theme.of(
                   context,
                 ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
@@ -216,7 +226,7 @@ extension _AdminPageSections on _AdminPageState {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
               sliver: SliverToBoxAdapter(
                 child: Text(
-                  _tx('admin.stat_section_server', 'Salud del servidor'),
+                  _tx('admin.stat_section_server'),
                   style: Theme.of(
                     context,
                   ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),

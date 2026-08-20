@@ -1,8 +1,11 @@
 import 'package:app_flutter/features/workflows/pages/llm_orchestration_editor_page.dart';
 import 'package:app_flutter/models/connections/connection_models.dart';
 import 'package:app_flutter/models/workflows/llm_orchestration_models.dart';
+import 'package:app_flutter/utils/i18n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/i18n_de_prueba.dart';
 
 const _connections = [
   ConnectionItem(raw: {'id': 'first', 'name': 'First', 'model': 'fast-model'}),
@@ -14,9 +17,9 @@ const _connections = [
   ),
 ];
 
-String _tx(String path, String fallback) => fallback;
-
 void main() {
+  setUp(cargarTraduccionesDePrueba);
+
   testWidgets('form switches between stack and balanced routing', (
     tester,
   ) async {
@@ -27,7 +30,7 @@ void main() {
 
     await tester.pumpWidget(
       const MaterialApp(
-        home: LlmOrchestrationEditorPage(connections: _connections, tx: _tx),
+        home: LlmOrchestrationEditorPage(connections: _connections, tx: tr),
       ),
     );
 
@@ -64,7 +67,7 @@ void main() {
 
     await tester.pumpWidget(
       const MaterialApp(
-        home: LlmOrchestrationEditorPage(connections: _connections, tx: _tx),
+        home: LlmOrchestrationEditorPage(connections: _connections, tx: tr),
       ),
     );
 
@@ -104,7 +107,7 @@ void main() {
           connections: _connections,
           initial: shared,
           configureBinding: true,
-          tx: _tx,
+          tx: tr,
         ),
       ),
     );

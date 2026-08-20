@@ -22,7 +22,7 @@ class LlmOrchestrationCard extends StatelessWidget {
 
   final LlmOrchestrationItem item;
   final Map<String, ConnectionItem> connectionsById;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
   final VoidCallback onToggleActive;
   final VoidCallback onEdit;
   final VoidCallback onConfigure;
@@ -58,7 +58,7 @@ class LlmOrchestrationCard extends StatelessWidget {
                 ),
                 if (!item.isActive) ...[
                   const SizedBox(width: 8),
-                  InactiveBadge(label: tx('common.inactive', 'Inactivo')),
+                  InactiveBadge(label: tx('common.inactive')),
                 ],
               ],
             ),
@@ -80,33 +80,26 @@ class LlmOrchestrationCard extends StatelessWidget {
               children: [
                 _MetadataLabel(
                   text: balanced
-                      ? tx('llm_orchestrations.balanced', 'Balanceo')
-                      : tx('llm_orchestrations.stack', 'Pila'),
+                      ? tx('llm_orchestrations.balanced')
+                      : tx('llm_orchestrations.stack'),
                 ),
                 _MetadataLabel(
                   text: tx(
                     'llm_orchestrations.candidate_count',
-                    '{{count}} conexiones',
                   ).replaceAll('{{count}}', '${item.candidates.length}'),
                 ),
                 if (item.shared)
                   _MetadataLabel(
                     text: item.bindingConfigured
-                        ? tx(
-                            'llm_orchestrations.binding_ready',
-                            'Conexiones configuradas',
-                          )
-                        : tx(
-                            'llm_orchestrations.binding_pending',
-                            'Falta configurar conexiones',
-                          ),
+                        ? tx('llm_orchestrations.binding_ready')
+                        : tx('llm_orchestrations.binding_pending'),
                   ),
               ],
             ),
             if (balanced) ...[
               const SizedBox(height: 12),
               Text(
-                tx('llm_orchestrations.router', 'Conexión orquestadora'),
+                tx('llm_orchestrations.router'),
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: colors.onSurfaceVariant,
                 ),
@@ -124,11 +117,8 @@ class LlmOrchestrationCard extends StatelessWidget {
             const SizedBox(height: 14),
             Text(
               balanced
-                  ? tx('llm_orchestrations.candidates', 'Conexiones candidatas')
-                  : tx(
-                      'llm_orchestrations.execution_order',
-                      'Orden de ejecución',
-                    ),
+                  ? tx('llm_orchestrations.candidates')
+                  : tx('llm_orchestrations.execution_order'),
               style: theme.textTheme.labelMedium?.copyWith(
                 color: colors.onSurfaceVariant,
                 fontWeight: FontWeight.w700,
@@ -188,29 +178,26 @@ class LlmOrchestrationCard extends StatelessWidget {
               children: [
                 OriginBadge(
                   propertyType: item.propertyType,
-                  ownerLabel: tx('common.owner', 'Propietario'),
-                  linkedLabel: tx('common.linked', 'Enlace'),
-                  forkLabel: tx('common.fork', 'Fork'),
+                  ownerLabel: tx('common.owner'),
+                  linkedLabel: tx('common.linked'),
+                  forkLabel: tx('common.fork'),
                 ),
                 const Spacer(),
                 if (!item.readOnly)
                   ActionIconButton(
                     icon: Icons.edit_outlined,
-                    tooltip: tx('common.edit', 'Editar'),
+                    tooltip: tx('common.edit'),
                     onPressed: onEdit,
                   ),
                 if (item.shared)
                   ActionIconButton(
                     icon: Icons.tune_outlined,
-                    tooltip: tx(
-                      'llm_orchestrations.configure_connections',
-                      'Configurar mis conexiones',
-                    ),
+                    tooltip: tx('llm_orchestrations.configure_connections'),
                     onPressed: onConfigure,
                   ),
                 if (!item.readOnly)
                   OverflowMenuButton(
-                    tooltip: tx('common.more_actions', 'Más acciones'),
+                    tooltip: tx('common.more_actions'),
                     actions: _overflowActions(),
                   ),
               ],
@@ -234,18 +221,18 @@ class LlmOrchestrationCard extends StatelessWidget {
               ? Icons.toggle_on_outlined
               : Icons.toggle_off_outlined,
           label: item.isActive
-              ? tx('common.deactivate', 'Desactivar')
-              : tx('common.activate', 'Activar'),
+              ? tx('common.deactivate')
+              : tx('common.activate'),
           onSelected: onToggleActive,
         ),
         OverflowMenuAction(
           icon: Icons.group_add_outlined,
-          label: tx('common.share_group', 'Compartir con grupo'),
+          label: tx('common.share_group'),
           onSelected: onShare,
         ),
         OverflowMenuAction(
           icon: Icons.delete_outline,
-          label: tx('common.delete', 'Eliminar'),
+          label: tx('common.delete'),
           onSelected: onDelete,
           danger: true,
           separatedBefore: true,
@@ -257,7 +244,7 @@ class LlmOrchestrationCard extends StatelessWidget {
   String _connectionLabel(ConnectionItem? connection, String fallback) {
     if (connection == null) {
       return fallback.isEmpty
-          ? tx('llm_orchestrations.connection_unassigned', 'Por configurar')
+          ? tx('llm_orchestrations.connection_unassigned')
           : fallback;
     }
     if (connection.model.isEmpty) return connection.name;

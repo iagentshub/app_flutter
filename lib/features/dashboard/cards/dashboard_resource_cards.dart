@@ -29,33 +29,33 @@ class _RecentResourcesBody extends StatelessWidget {
     ]..sort((a, b) => _resourceDate(b.raw).compareTo(_resourceDate(a.raw)));
 
     if (resources.isEmpty) {
-      return Text(tx('no_recent_resources', 'No hay recursos recientes'));
+      return Text(tx('no_recent_resources'));
     }
 
     final metadata = <String, ({IconData icon, String label, String route})>{
       'agent': (
         icon: Icons.smart_toy_outlined,
-        label: tx('feed_agent', 'Agente'),
+        label: tx('feed_agent'),
         route: InternalRoutes.agents,
       ),
       'skill': (
         icon: Icons.auto_awesome_outlined,
-        label: tx('feed_skill', 'Skill'),
+        label: tx('feed_skill'),
         route: InternalRoutes.knowledge,
       ),
       'knowledge': (
         icon: Icons.menu_book_outlined,
-        label: tx('feed_knowledge', 'Knowledge'),
+        label: tx('feed_knowledge'),
         route: InternalRoutes.knowledge,
       ),
       'workflow': (
         icon: Icons.account_tree_outlined,
-        label: tx('summary_workflows', 'Workflow'),
+        label: tx('summary_workflows'),
         route: InternalRoutes.orchestrations,
       ),
       'tool': (
         icon: Icons.build_outlined,
-        label: tx('feed_tool', 'Herramienta'),
+        label: tx('feed_tool'),
         route: InternalRoutes.knowledge,
       ),
     };
@@ -73,7 +73,7 @@ class _RecentResourcesBody extends StatelessWidget {
             title: Text(
               resource.raw['name']?.toString() ??
                   resource.raw['title']?.toString() ??
-                  tx('default_resource_name', 'Recurso'),
+                  tx('default_resource_name'),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -118,14 +118,14 @@ class _AgentHealthBody extends StatelessWidget {
       final reasons = <String>[];
       final connectionId = agent['connection_id']?.toString() ?? '';
       if (connectionId.isEmpty || !connectionIds.contains(connectionId)) {
-        reasons.add(tx('health_no_connection', 'sin conexión'));
+        reasons.add(tx('health_no_connection'));
       }
       final prompt =
           agent['system_prompt']?.toString() ??
           agent['instructions']?.toString() ??
           '';
       if (prompt.trim().isEmpty) {
-        reasons.add(tx('health_no_instructions', 'sin instrucciones'));
+        reasons.add(tx('health_no_instructions'));
       }
       if (reasons.isNotEmpty) issues.add((agent: agent, reasons: reasons));
     }
@@ -136,7 +136,7 @@ class _AgentHealthBody extends StatelessWidget {
     final limit = config.limit ?? 4;
 
     if (total == 0) {
-      return Text(tx('no_recent_agents', 'Todavía no hay agentes'));
+      return Text(tx('no_recent_agents'));
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -145,7 +145,7 @@ class _AgentHealthBody extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                tx('health_ready_count', '{{ready}} de {{total}} listos')
+                tx('health_ready_count')
                     .replaceAll('{{ready}}', '$ready')
                     .replaceAll('{{total}}', '$total'),
               ),
@@ -166,8 +166,7 @@ class _AgentHealthBody extends StatelessWidget {
                 color: Theme.of(context).colorScheme.tertiary,
               ),
               title: Text(
-                issue.agent['name']?.toString() ??
-                    tx('default_agent_name', 'Agente'),
+                issue.agent['name']?.toString() ?? tx('default_agent_name'),
               ),
               subtitle: Text(issue.reasons.join(' · ')),
               onTap: () => AppRouter.toAgents(context),
@@ -198,7 +197,7 @@ class _GroupBody extends StatelessWidget {
         .length;
 
     if (active == null) {
-      return Text(tx('group_empty', 'No hay ningún grupo activo'));
+      return Text(tx('group_empty'));
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,22 +206,17 @@ class _GroupBody extends StatelessWidget {
           contentPadding: EdgeInsets.zero,
           leading: const CircleAvatar(child: Icon(Icons.groups_outlined)),
           title: Text(active['name']?.toString() ?? 'Grupo'),
-          subtitle: Text(
-            active['role']?.toString() ?? tx('group_member', 'Miembro'),
-          ),
+          subtitle: Text(active['role']?.toString() ?? tx('group_member')),
         ),
         Row(
           children: [
             Expanded(
-              child: _GroupStat(
-                value: '$teamCount',
-                label: tx('group_teams', 'Grupos compartidos'),
-              ),
+              child: _GroupStat(value: '$teamCount', label: tx('group_teams')),
             ),
             Expanded(
               child: _GroupStat(
                 value: '${data.invitations.length}',
-                label: tx('group_invitations', 'Invitaciones'),
+                label: tx('group_invitations'),
               ),
             ),
           ],
@@ -233,7 +227,7 @@ class _GroupBody extends StatelessWidget {
           child: TertiaryButton.icon(
             onPressed: () => AppRouter.toManager(context),
             icon: const Icon(Icons.settings_outlined),
-            label: Text(tx('group_manage', 'Gestionar')),
+            label: Text(tx('group_manage')),
           ),
         ),
       ],

@@ -22,10 +22,7 @@ extension _WorkflowRunHistoryActions on _WorkflowsPageState {
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('workflows.run_open_error', 'No se pudo abrir la ejecución'),
-        isError: true,
-      );
+      showMessage(_tx('workflows.run_open_error'), isError: true);
     }
   }
 

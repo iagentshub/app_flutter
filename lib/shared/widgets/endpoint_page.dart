@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../app/theme/fnc_colors.dart';
 import '../../core/network/api_client.dart';
 import '../../core/network/api_error.dart';
+import '../../utils/i18n.dart';
 import '../state/session_controller.dart';
 
 class EndpointPage extends StatefulWidget {
@@ -47,7 +48,7 @@ class _EndpointPageState extends State<EndpointPage> {
     final token = widget.sessionController.gaToken;
     if (token == null || token.isEmpty) {
       setState(() {
-        _error = 'No hay sesión activa';
+        _error = tr('common.no_session');
         _loading = false;
       });
       return;

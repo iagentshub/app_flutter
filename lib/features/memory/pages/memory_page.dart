@@ -39,7 +39,7 @@ class _MemoryPageState extends State<MemoryPage> with StateMessaging {
 
   List<MemoryFileItem> get _files => _section.data ?? const [];
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   @override
   void initState() {
@@ -51,8 +51,7 @@ class _MemoryPageState extends State<MemoryPage> with StateMessaging {
     )..addListener(_onTextsChanged);
     _section = AsyncSection<List<MemoryFileItem>>(
       fetch: _fetchFiles,
-      genericError: () =>
-          _tx('memory.error_generic', 'No se pudo cargar Memory'),
+      genericError: () => _tx('memory.error_generic'),
     );
     _load();
   }
@@ -76,10 +75,7 @@ class _MemoryPageState extends State<MemoryPage> with StateMessaging {
   Future<List<MemoryFileItem>> _fetchFiles() async {
     final token = _token;
     if (token == null || token.isEmpty) {
-      throw ApiError(
-        statusCode: 401,
-        message: _tx('common.no_session', 'No hay sesión activa'),
-      );
+      throw ApiError(statusCode: 401, message: _tx('common.no_session'));
     }
     return _repository.listFiles(token);
   }
@@ -114,10 +110,7 @@ class _MemoryPageState extends State<MemoryPage> with StateMessaging {
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('memory.load_file_error', 'No se pudo cargar el archivo'),
-        isError: true,
-      );
+      showMessage(_tx('memory.load_file_error'), isError: true);
     }
   }
 
@@ -125,10 +118,7 @@ class _MemoryPageState extends State<MemoryPage> with StateMessaging {
     final token = _token;
     if (token == null || token.isEmpty) return;
     if (filename.trim().isEmpty) {
-      showMessage(
-        _tx('memory.filename_required', 'Nombre de archivo obligatorio'),
-        isError: true,
-      );
+      showMessage(_tx('memory.filename_required'), isError: true);
       return;
     }
 
@@ -137,28 +127,24 @@ class _MemoryPageState extends State<MemoryPage> with StateMessaging {
 
     try {
       await _repository.saveFile(token, normalized, content);
-      showMessage(_tx('memory.save_success', 'Archivo guardado'));
+      showMessage(_tx('memory.save_success'));
       await _load();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('memory.save_error', 'No se pudo guardar el archivo'),
-        isError: true,
-      );
+      showMessage(_tx('memory.save_error'), isError: true);
     }
   }
 
   Future<void> _deleteFile(MemoryFileItem file) async {
     final confirm = await showConfirmActionDialog(
       context,
-      title: _tx('memory.delete_dialog_title', 'Eliminar archivo'),
+      title: _tx('memory.delete_dialog_title'),
       message: _tx(
         'memory.delete_dialog_body',
-        '¿Seguro que quieres eliminar "{{filename}}"?',
       ).replaceAll('{{filename}}', file.filename),
-      cancelLabel: _tx('common.cancel', 'Cancelar'),
-      confirmLabel: _tx('common.delete', 'Eliminar'),
+      cancelLabel: _tx('common.cancel'),
+      confirmLabel: _tx('common.delete'),
       destructive: true,
     );
     if (!confirm) return;
@@ -168,15 +154,12 @@ class _MemoryPageState extends State<MemoryPage> with StateMessaging {
 
     try {
       await _repository.deleteFile(token, file.filename);
-      showMessage(_tx('memory.delete_success', 'Archivo eliminado'));
+      showMessage(_tx('memory.delete_success'));
       await _load();
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('memory.delete_error', 'No se pudo eliminar el archivo'),
-        isError: true,
-      );
+      showMessage(_tx('memory.delete_error'), isError: true);
     }
   }
 
@@ -184,7 +167,7 @@ class _MemoryPageState extends State<MemoryPage> with StateMessaging {
   Widget build(BuildContext context) {
     return AsyncSectionBuilder<List<MemoryFileItem>>(
       section: _section,
-      retryLabel: _tx('common.retry', 'Reintentar'),
+      retryLabel: _tx('common.retry'),
       builder: (context, _) => _buildContent(context),
     );
   }
@@ -195,16 +178,16 @@ class _MemoryPageState extends State<MemoryPage> with StateMessaging {
         AppIconButton.filled(
           onPressed: _createFile,
           icon: const Icon(Icons.add),
-          tooltip: _tx('memory.new_file_tooltip', 'Nuevo archivo'),
+          tooltip: _tx('memory.new_file_tooltip'),
         ),
         AppIconButton.outlined(
           onPressed: _load,
           icon: const Icon(Icons.refresh),
-          tooltip: _tx('memory.refresh_tooltip', 'Actualizar'),
+          tooltip: _tx('memory.refresh_tooltip'),
         ),
       ],
       summary: Text(
-        '${_tx('memory.files_count', 'Archivos')}: ${_files.length}',
+        '${_tx('memory.files_count')}: ${_files.length}',
         style: Theme.of(context).textTheme.bodyMedium,
       ),
     );
@@ -216,22 +199,18 @@ class _MemoryPageState extends State<MemoryPage> with StateMessaging {
       empty: AsyncStatePanel.empty(
         padding: EdgeInsets.zero,
         icon: Icons.description_outlined,
-        title: _tx('memory.empty_title', 'Sin archivos de memoria'),
-        message: _tx(
-          'memory.empty_files',
-          'La memoria guarda lo que tus agentes deben recordar entre '
-              'conversaciones.',
-        ),
-        actionLabel: _tx('memory.empty_action', 'Crear el primero'),
+        title: _tx('memory.empty_title'),
+        message: _tx('memory.empty_files'),
+        actionLabel: _tx('memory.empty_action'),
         onAction: _createFile,
       ),
       itemBuilder: (context, index) {
         final file = _files[index];
         return MemoryFileCard(
           file: file,
-          sizeLabel: _tx('memory.size_label', 'Tamaño'),
-          editTooltip: _tx('common.edit', 'Editar'),
-          deleteTooltip: _tx('common.delete', 'Eliminar'),
+          sizeLabel: _tx('memory.size_label'),
+          editTooltip: _tx('common.edit'),
+          deleteTooltip: _tx('common.delete'),
           onEdit: () => _editFile(file),
           onDelete: () => _deleteFile(file),
         );

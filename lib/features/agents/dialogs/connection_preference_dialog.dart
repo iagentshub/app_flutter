@@ -13,7 +13,7 @@ class _ConnectionPreferenceDialog extends StatefulWidget {
 
   final List<ConnectionItem> connections;
   final String? initialConnectionId;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
   final Future<void> Function(String? connectionId) onSave;
 
   @override
@@ -42,30 +42,23 @@ class _ConnectionPreferenceDialogState
   Widget build(BuildContext context) {
     final tx = widget.tx;
     return AlertDialog(
-      title: Text(tx('agents.preferences_title', 'Preferencia de conexión')),
+      title: Text(tx('agents.preferences_title')),
       content: SizedBox(
         width: dialogContentWidth(context, 360),
         child: DropdownButtonFormField<String?>(
           initialValue: _target,
           isExpanded: true,
-          decoration: InputDecoration(
-            labelText: tx('agents.field_connection', 'Conexión LLM'),
-          ),
+          decoration: InputDecoration(labelText: tx('agents.field_connection')),
           items: [
             DropdownMenuItem<String?>(
               value: null,
-              child: Text(
-                tx(
-                  'agents.preferences_use_default',
-                  'Usar la conexión del agente',
-                ),
-              ),
+              child: Text(tx('agents.preferences_use_default')),
             ),
             ...widget.connections.map(
               (conn) => DropdownMenuItem<String?>(
                 value: conn.id,
                 child: Text(
-                  '${conn.name} (${conn.type == 'llm_orchestration' ? (conn.model == 'balanced' ? tx('llm_orchestrations.balanced', 'Balanceo') : tx('llm_orchestrations.stack', 'Pila')) : conn.type})',
+                  '${conn.name} (${conn.type == 'llm_orchestration' ? (conn.model == 'balanced' ? tx('llm_orchestrations.balanced') : tx('llm_orchestrations.stack')) : conn.type})',
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -77,11 +70,11 @@ class _ConnectionPreferenceDialogState
       actions: [
         TertiaryButton(
           onPressed: _saving ? null : () => Navigator.of(context).pop(),
-          child: Text(tx('common.cancel', 'Cancelar')),
+          child: Text(tx('common.cancel')),
         ),
         PrimaryButton(
           onPressed: _saving ? null : _save,
-          child: Text(tx('common.save', 'Guardar')),
+          child: Text(tx('common.save')),
         ),
       ],
     );

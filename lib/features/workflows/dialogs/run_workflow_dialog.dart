@@ -12,7 +12,7 @@ class RunWorkflowDialog extends StatefulWidget {
   });
 
   final String workflowName;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<RunWorkflowDialog> createState() => _RunWorkflowDialogState();
@@ -38,7 +38,7 @@ class _RunWorkflowDialogState extends State<RunWorkflowDialog> {
     return AlertDialog(
       title: Text(
         widget
-            .tx('workflows.run_dialog_title', 'Ejecutar: {{name}}')
+            .tx('workflows.run_dialog_title')
             .replaceAll('{{name}}', widget.workflowName),
       ),
       content: SizedBox(
@@ -51,17 +51,11 @@ class _RunWorkflowDialogState extends State<RunWorkflowDialog> {
             maxLines: 10,
             autofocus: true,
             decoration: InputDecoration(
-              labelText: widget.tx(
-                'workflows.run_input_label',
-                'Input inicial',
-              ),
+              labelText: widget.tx('workflows.run_input_label'),
             ),
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return widget.tx(
-                  'workflows.run_input_required',
-                  'Input obligatorio',
-                );
+                return widget.tx('workflows.run_input_required');
               }
               return null;
             },
@@ -71,11 +65,11 @@ class _RunWorkflowDialogState extends State<RunWorkflowDialog> {
       actions: [
         TertiaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(widget.tx('common.cancel', 'Cancelar')),
+          child: Text(widget.tx('common.cancel')),
         ),
         PrimaryButton(
           onPressed: _submit,
-          child: Text(widget.tx('workflows.run_btn', 'Ejecutar')),
+          child: Text(widget.tx('workflows.run_btn')),
         ),
       ],
     );

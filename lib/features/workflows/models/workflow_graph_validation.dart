@@ -21,18 +21,11 @@ const int maxLoopIterations = 20;
 
 /// Un problema que impide guardar. [nodeId] permite señalarlo en el lienzo.
 class WorkflowIssue {
-  const WorkflowIssue(
-    this.key,
-    this.fallback, {
-    this.nodeId,
-    this.params = const {},
-  });
+  const WorkflowIssue(this.key, {this.nodeId, this.params = const {}});
 
-  /// Clave i18n bajo el namespace `resources`.
+  /// Clave i18n bajo el namespace `resources`. El texto vive en
+  /// `assets/locales/`, no aquí: este modelo solo dice *qué* falla.
   final String key;
-
-  /// Texto en español, redactado en línea con el mensaje del backend.
-  final String fallback;
 
   /// Nodo al que se puede atribuir el problema, si aplica.
   final String? nodeId;
@@ -49,7 +42,7 @@ class WorkflowIssue {
   }
 
   @override
-  String toString() => render(fallback);
+  String toString() => render(key);
 }
 
 /// Orden topológico sobre las aristas de secuencia.
@@ -157,18 +150,12 @@ List<WorkflowIssue> validateWorkflowGraph(List<WorkflowStepDraft> steps) {
   final issues = <WorkflowIssue>[];
 
   if (steps.isEmpty) {
-    return [
-      const WorkflowIssue(
-        'workflow_editor.validate_no_steps',
-        'La orquestación necesita al menos un paso',
-      ),
-    ];
+    return [const WorkflowIssue('workflow_editor.validate_no_steps')];
   }
   if (steps.length > maxWorkflowNodes) {
     issues.add(
       const WorkflowIssue(
         'workflow_editor.validate_max_steps',
-        'Una orquestación admite como máximo {{max}} pasos',
         params: {'max': '$maxWorkflowNodes'},
       ),
     );
@@ -183,7 +170,6 @@ List<WorkflowIssue> validateWorkflowGraph(List<WorkflowStepDraft> steps) {
       issues.add(
         WorkflowIssue(
           'workflow_editor.validate_select_agent',
-          'Selecciona un agente para el paso {{step}}',
           nodeId: step.id,
           params: {'step': position},
         ),
@@ -193,7 +179,6 @@ List<WorkflowIssue> validateWorkflowGraph(List<WorkflowStepDraft> steps) {
       issues.add(
         WorkflowIssue(
           'workflow_editor.validate_label_length',
-          'La etiqueta del paso {{step}} supera los {{max}} caracteres',
           nodeId: step.id,
           params: {'step': position, 'max': '$maxLabelLength'},
         ),
@@ -203,7 +188,6 @@ List<WorkflowIssue> validateWorkflowGraph(List<WorkflowStepDraft> steps) {
       issues.add(
         WorkflowIssue(
           'workflow_editor.validate_instruction_length',
-          'La instrucción del paso {{step}} supera los {{max}} caracteres',
           nodeId: step.id,
           params: {'step': position, 'max': '$maxInstructionLength'},
         ),
@@ -215,7 +199,6 @@ List<WorkflowIssue> validateWorkflowGraph(List<WorkflowStepDraft> steps) {
         issues.add(
           WorkflowIssue(
             'workflow_editor.validate_evaluator_condition',
-            'El paso {{step}} es un evaluador y necesita una condición',
             nodeId: step.id,
             params: {'step': position},
           ),
@@ -225,7 +208,6 @@ List<WorkflowIssue> validateWorkflowGraph(List<WorkflowStepDraft> steps) {
         issues.add(
           WorkflowIssue(
             'workflow_editor.validate_condition_length',
-            'La condición del paso {{step}} supera los {{max}} caracteres',
             nodeId: step.id,
             params: {'step': position, 'max': '$maxConditionLength'},
           ),
@@ -237,7 +219,6 @@ List<WorkflowIssue> validateWorkflowGraph(List<WorkflowStepDraft> steps) {
         issues.add(
           WorkflowIssue(
             'workflow_editor.validate_evaluator_loop',
-            'El paso {{step}} es un evaluador y debe volver a un paso anterior',
             nodeId: step.id,
             params: {'step': position},
           ),
@@ -248,8 +229,6 @@ List<WorkflowIssue> validateWorkflowGraph(List<WorkflowStepDraft> steps) {
         issues.add(
           WorkflowIssue(
             'workflow_editor.validate_max_iterations',
-            'El máximo de vueltas del paso {{step}} debe estar entre '
-                '{{min}} y {{max}}',
             nodeId: step.id,
             params: {
               'step': position,
@@ -265,8 +244,6 @@ List<WorkflowIssue> validateWorkflowGraph(List<WorkflowStepDraft> steps) {
       issues.add(
         WorkflowIssue(
           'workflow_editor.validate_loop_iterations',
-          'Las vueltas del ciclo del paso {{step}} deben estar entre '
-              '{{min}} y {{max}}',
           nodeId: step.id,
           params: {
             'step': position,
@@ -295,10 +272,7 @@ List<WorkflowIssue> validateWorkflowGraph(List<WorkflowStepDraft> steps) {
   if (steps.length == 1) {
     if (sequenceCount > 0) {
       issues.add(
-        const WorkflowIssue(
-          'workflow_editor.validate_single_step_no_edges',
-          'Una orquestación de un solo paso no necesita conexiones',
-        ),
+        const WorkflowIssue('workflow_editor.validate_single_step_no_edges'),
       );
     }
     return issues;
@@ -311,18 +285,12 @@ List<WorkflowIssue> validateWorkflowGraph(List<WorkflowStepDraft> steps) {
         if (incoming[step.id] == 0 && outgoing[step.id]!.isEmpty) step,
     ];
     if (orphans.isEmpty) {
-      issues.add(
-        const WorkflowIssue(
-          'workflow_editor.validate_connect_steps',
-          'Todos los pasos deben estar conectados entre sí',
-        ),
-      );
+      issues.add(const WorkflowIssue('workflow_editor.validate_connect_steps'));
     } else {
       for (final orphan in orphans) {
         issues.add(
           WorkflowIssue(
             'workflow_editor.validate_step_disconnected',
-            'El paso {{step}} no está conectado con el resto del flujo',
             nodeId: orphan.id,
             params: {'step': '${steps.indexOf(orphan) + 1}'},
           ),
@@ -342,12 +310,7 @@ List<WorkflowIssue> validateWorkflowGraph(List<WorkflowStepDraft> steps) {
 
   // Sin inicio o sin final ⇒ todo el grafo es un ciclo; no hay más que decir.
   if (starts.isEmpty || ends.isEmpty) {
-    issues.add(
-      const WorkflowIssue(
-        'workflow_editor.validate_sequence_cycle',
-        'La secuencia principal contiene un ciclo',
-      ),
-    );
+    issues.add(const WorkflowIssue('workflow_editor.validate_sequence_cycle'));
     return issues;
   }
 
@@ -357,8 +320,6 @@ List<WorkflowIssue> validateWorkflowGraph(List<WorkflowStepDraft> steps) {
       issues.add(
         WorkflowIssue(
           'workflow_editor.validate_single_start',
-          'El paso {{step}} es un segundo inicio: la orquestación debe tener '
-              'un único punto de partida',
           nodeId: step.id,
           params: {'step': '${steps.indexOf(step) + 1}'},
         ),
@@ -370,8 +331,6 @@ List<WorkflowIssue> validateWorkflowGraph(List<WorkflowStepDraft> steps) {
       issues.add(
         WorkflowIssue(
           'workflow_editor.validate_single_end',
-          'El paso {{step}} es un segundo final: la orquestación debe tener '
-              'un único punto de salida',
           nodeId: step.id,
           params: {'step': '${steps.indexOf(step) + 1}'},
         ),
@@ -381,12 +340,7 @@ List<WorkflowIssue> validateWorkflowGraph(List<WorkflowStepDraft> steps) {
 
   final ordered = topologicalOrder(steps);
   if (ordered == null) {
-    issues.add(
-      const WorkflowIssue(
-        'workflow_editor.validate_cycle_or_orphan',
-        'El flujo principal contiene un ciclo o pasos desconectados',
-      ),
-    );
+    issues.add(const WorkflowIssue('workflow_editor.validate_cycle_or_orphan'));
     return issues;
   }
 
@@ -401,7 +355,6 @@ List<WorkflowIssue> validateWorkflowGraph(List<WorkflowStepDraft> steps) {
       issues.add(
         WorkflowIssue(
           'workflow_editor.validate_loop_target',
-          'El ciclo del paso {{step}} apunta a un paso que no existe',
           nodeId: step.id,
           params: {'step': position},
         ),
@@ -415,7 +368,6 @@ List<WorkflowIssue> validateWorkflowGraph(List<WorkflowStepDraft> steps) {
       issues.add(
         WorkflowIssue(
           'workflow_editor.validate_loop_backwards',
-          'El ciclo del paso {{step}} debe volver a un paso anterior del flujo',
           nodeId: step.id,
           params: {'step': position},
         ),
@@ -428,7 +380,6 @@ List<WorkflowIssue> validateWorkflowGraph(List<WorkflowStepDraft> steps) {
       issues.add(
         WorkflowIssue(
           'workflow_editor.validate_loops_overlap',
-          'El ciclo del paso {{step}} se solapa o anida con otro ciclo',
           nodeId: step.id,
           params: {'step': position},
         ),

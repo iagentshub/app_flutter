@@ -36,7 +36,29 @@
     "close": "Close",
     "not_found": "Page not found",
     "go_home": "Go home",
-    "delete_confirm_body": "Are you sure you want to delete \"{{nombre}}\"?"
+    "delete_confirm_body": "Are you sure you want to delete \"{{nombre}}\"?",
+    "actions": {
+      "delete": "Delete",
+      "close": "Close"
+    },
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "inactive": "Inactive",
+    "more_actions": "More actions",
+    "clear": "Clear",
+    "continue": "Continue",
+    "description": "Description",
+    "import": "Import",
+    "no_results": "No results",
+    "refresh": "Refresh",
+    "select_all": "Select all",
+    "status": "Status",
+    "type": "Type",
+    "unnamed": "(unnamed)",
+    "untitled": "(untitled)",
+    "response_too_large": "The server response exceeds the allowed limit",
+    "event_too_large": "A server event exceeds the allowed limit",
+    "coming_soon": "Coming soon"
   },
   "groups": {
     "title": "GROUPS",
@@ -312,7 +334,8 @@
       "reply_you": "You",
       "cancel_reply_tooltip": "Cancel reply",
       "msg_create_failed": "Could not create the conversation",
-      "msg_delete_failed": "Could not delete the conversation"
+      "msg_delete_failed": "Could not delete the conversation",
+      "jump_to_last": "Latest message"
     },
     "msg_not_editable": "This agent is not editable (public or shared)",
     "msg_saved": "Agent saved",
@@ -324,7 +347,20 @@
     "delete_dialog_title": "Delete agent",
     "empty_title": "No agents yet",
     "empty_action": "Create the first one",
-    "empty_search_title": "No results"
+    "empty_search_title": "No results",
+    "builder_assistant_subtitle": "Define the agent and review the draft before creating it",
+    "builder_assistant_title": "Design assistant",
+    "already_public": "Already public",
+    "connections_never_public": "Connections are never published.",
+    "field_knowledge_packs": "Knowledge packs",
+    "prompt_too_short": "Add fuller instructions (90 characters minimum)",
+    "publish": "Publish",
+    "publish_dependencies_help": "Choose which dependencies to publish and link to the agent.",
+    "publish_dependencies_title": "Publish agent",
+    "chat_history_error": "The chat history could not be loaded",
+    "chat_reply_error": "The agent returned an error",
+    "chat_connection_error": "Connection error with the agent",
+    "builder_needs_connection": "You need an LLM connection to use the assistant."
   },
   "skill_builder": {
     "create_choice_title": "How do you want to create the skill?",
@@ -350,7 +386,9 @@
     "no_connection": "Choose a connection first",
     "connection_error": "Connection error with the skill builder",
     "generic_error": "Skill builder error",
-    "done_action": "Done"
+    "done_action": "Done",
+    "assistant_subtitle": "Define the skill and review the draft before creating it",
+    "assistant_title": "Design assistant"
   },
   "connections": {
     "credential_unreadable_badge": "Needs attention",
@@ -406,7 +444,8 @@
     "msg_delete_failed": "Could not delete the connection",
     "msg_bulk_test_failed": "Could not run the bulk test",
     "delete_dialog_title": "Delete connection",
-    "msg_synced": "Synced: {{detalle}}"
+    "msg_synced": "Synced: {{detalle}}",
+    "field_required": "Required field"
   },
   "providers": {
     "add_account": "Add account",
@@ -562,7 +601,12 @@
     "users_invite_sent": "Invitation sent to",
     "users_invite_error": "Couldn't send the invitation",
     "users_invite_no_group": "Activate a shared group to invite users",
-    "users_load_more": "Load more"
+    "users_load_more": "Load more",
+    "graph": "View graph",
+    "graph_empty": "This resource has no relations",
+    "graph_error": "The graph could not be loaded",
+    "load_more": "Load more",
+    "link_type_unsupported": "Unsupported type to link"
   },
   "labels": {
     "type_label": "Resource type",
@@ -782,7 +826,8 @@
     "remove_tooltip": "Remove",
     "invitations_title": "Invitations",
     "invitations_need_team": "Activate a shared group to manage invitations.",
-    "empty_invitations": "No pending invitations."
+    "empty_invitations": "No pending invitations.",
+    "groups_load_error": "The group list could not be loaded"
   },
   "workflow_editor": {
     "add_step_btn": "Add step",
@@ -929,7 +974,17 @@
     "save_success": "Workflow saved",
     "steps_suffix": "steps",
     "still_working": "working {{time}}",
-    "timeline_title": "Event log"
+    "timeline_title": "Event log",
+    "activated": "Orchestration activated",
+    "deactivated": "Orchestration deactivated",
+    "run_background_hint": "You can close this: it will keep running in the background.",
+    "run_cancelling": "Cancelling…",
+    "run_history_title": "Runs",
+    "run_open_error": "The run could not be opened",
+    "run_start_error": "The run could not be started",
+    "toggle_error": "The status could not be changed",
+    "run_history_empty": "No runs yet.",
+    "run_status_queued": "Queued"
   },
   "dashboard": {
     "error_generic": "Could not load the dashboard",
@@ -1013,7 +1068,9 @@
     "group_member": "Member",
     "group_teams": "Shared groups",
     "group_invitations": "Invitations",
-    "group_manage": "Manage"
+    "group_manage": "Manage",
+    "toggle_favorite": "Add to or remove from favourites",
+    "test_connections": "Test connections"
   },
   "history": {
     "dialog_title": "Version history",
@@ -1215,7 +1272,10 @@
     "pack_upload_failed": "Could not include the directory",
     "pack_file_count": "{{count}} files",
     "pack_delete_title": "Delete pack",
-    "pack_delete_confirm": "The pack and all of its files will be deleted. Continue?"
+    "pack_delete_confirm": "The pack and all of its files will be deleted. Continue?",
+    "skills_load_error": "Skills could not be loaded",
+    "no_skills": "No skills yet.",
+    "pick_directory": "Include knowledge directory"
   },
   "admin": {
     "tab_general": "General",
@@ -1258,6 +1318,7 @@
     "stat_knowledge": "Knowledge",
     "stat_workflows": "Orchestrations",
     "stat_conversations": "Conversations",
+    "stat_guests": "Guests",
     "stat_agents_public": "Public agents",
     "stat_agents_private": "Private agents",
     "stat_pct_of_total": "{pct}% of total",
@@ -1461,7 +1522,16 @@
     "metadata_col_rows": "Rows",
     "metadata_col_cols": "Columns",
     "metadata_col_size": "Size",
-    "metadata_no_data": "No data"
+    "metadata_no_data": "No data",
+    "confirm_delete_prompt": "Are you sure you want to delete this prompt?",
+    "toast_prompt_deleted": "Prompt deleted",
+    "centinel_chart_empty": "Start the test to see the chart",
+    "centinel_run_error": "Run error",
+    "llm_semantic_analysis": "LLM · semantic analysis",
+    "last_release": "Latest release",
+    "depends_on": "Depends on",
+    "deterministic_rules": "Manual · deterministic rules",
+    "main_branch": "main branch"
   },
   "logs": {
     "error_summary": "Couldn't load the logs summary",
@@ -1695,6 +1765,25 @@
     "tree_discovering": "Discovering tests…",
     "tree_filter_placeholder": "Filter…",
     "tree_modules_title": "Modules",
-    "tree_select_all": "All"
+    "tree_select_all": "All",
+    "stress_rampup_info": "What ramp-up is"
+  },
+  "resources": {
+    "knowledge": "Knowledge",
+    "knowledge_pack": "Knowledge pack",
+    "memory": "Memory",
+    "prompt": "Prompt",
+    "skill": "Skill",
+    "tool": "Tool"
+  },
+  "auth": {
+    "session_cookie_missing": "The backend did not return the ga_token session cookie",
+    "identifier_required": "Username or email is required",
+    "email_required": "Email is required",
+    "email_invalid": "Invalid email",
+    "username_required": "Username is required",
+    "backend_url_required": "The backend URL is required",
+    "backend_not_json": "The response is not valid iAgents Hub JSON",
+    "backend_incompatible": "The server does not expose a compatible iAgents Hub API"
   }
 }

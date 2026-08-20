@@ -17,7 +17,7 @@ class _SidebarFooter extends StatelessWidget {
   final String initial;
   final String languageCode;
   final bool billingEnabled;
-  final String Function(String key, String fallback) tx;
+  final String Function(String key) tx;
   final ValueChanged<String> onOpenPublicRoute;
   final VoidCallback onLogout;
 
@@ -45,7 +45,7 @@ class _SidebarFooter extends StatelessWidget {
               for (final item in _publicItems)
                 if (item.labelKey != 'public_pricing' || billingEnabled)
                   Tooltip(
-                    message: tx(item.labelKey, item.fallback),
+                    message: tr(item.labelKey),
                     child: IconButton(
                       onPressed: () => onOpenPublicRoute(
                         item.route(languageCode: languageCode),
@@ -101,7 +101,7 @@ class _SidebarFooter extends StatelessWidget {
                 ),
               ),
               Tooltip(
-                message: tx('logout', 'Cerrar sesión'),
+                message: tx('logout'),
                 child: IconButton(
                   onPressed: onLogout,
                   constraints: const BoxConstraints.tightFor(
@@ -124,57 +124,54 @@ class _SidebarFooter extends StatelessWidget {
 
 class _PublicNavItem {
   const _PublicNavItem({
-    required this.esRoute,
-    required this.enRoute,
+    required this.ruta,
     required this.labelKey,
-    required this.fallback,
     required this.icon,
   });
 
-  final String esRoute;
-  final String enRoute;
+  /// Ruta en el idioma base. Las demás se derivan.
+  final String ruta;
   final String labelKey;
-  final String fallback;
   final IconData icon;
 
+  /// El sitio público sirve el idioma base en la raíz y los demás bajo su
+  /// código: `/docs` y `/en/docs`.
+  ///
+  /// Antes había un campo por idioma —`esRoute`, `enRoute`— y un
+  /// `languageCode == 'en' ? enRoute : esRoute`. Con un tercer idioma eso no
+  /// falla de forma visible: manda al español y nadie se entera. Derivarla del
+  /// código es lo que hace que un idioma nuevo funcione sin volver aquí a
+  /// añadir un campo por cada entrada del menú.
   String route({required String languageCode}) =>
-      languageCode == 'en' ? enRoute : esRoute;
+      languageCode == LocaleController.fallbackLanguageCode
+      ? ruta
+      : '/$languageCode$ruta';
 }
 
 const _publicItems = [
   _PublicNavItem(
-    esRoute: ExternalRoutes.home,
-    enRoute: '${ExternalRoutes.homeEn}/',
+    ruta: ExternalRoutes.home,
     labelKey: 'public_home',
-    fallback: 'Inicio',
     icon: Icons.home_outlined,
   ),
   _PublicNavItem(
-    esRoute: '${ExternalRoutes.pricing}/',
-    enRoute: '${ExternalRoutes.pricingEn}/',
+    ruta: '${ExternalRoutes.pricing}/',
     labelKey: 'public_pricing',
-    fallback: 'Precios',
     icon: Icons.sell_outlined,
   ),
   _PublicNavItem(
-    esRoute: ExternalRoutes.docs,
-    enRoute: ExternalRoutes.docsEn,
+    ruta: ExternalRoutes.docs,
     labelKey: 'public_docs',
-    fallback: 'Documentación',
     icon: Icons.menu_book_outlined,
   ),
   _PublicNavItem(
-    esRoute: ExternalRoutes.support,
-    enRoute: ExternalRoutes.supportEn,
+    ruta: ExternalRoutes.support,
     labelKey: 'public_support',
-    fallback: 'Soporte',
     icon: Icons.support_agent_outlined,
   ),
   _PublicNavItem(
-    esRoute: ExternalRoutes.about,
-    enRoute: ExternalRoutes.aboutEn,
+    ruta: ExternalRoutes.about,
     labelKey: 'public_about',
-    fallback: 'Acerca de',
     icon: Icons.info_outline_rounded,
   ),
 ];

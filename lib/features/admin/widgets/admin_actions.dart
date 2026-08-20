@@ -9,8 +9,8 @@ extension _AdminActions on _AdminPageState {
     await _run(
       () => _usersRepository.setUserActive(token, username, !active),
       active
-          ? _tx('admin.toast_user_blocked', 'Usuario bloqueado')
-          : _tx('admin.toast_user_unblocked', 'Usuario desbloqueado'),
+          ? _tx('admin.toast_user_blocked')
+          : _tx('admin.toast_user_unblocked'),
     );
   }
 
@@ -19,18 +19,15 @@ extension _AdminActions on _AdminPageState {
     if (token == null) return;
     final username = (user['username'] ?? '').toString();
     final ok = await _confirm(
-      _tx('admin.action_make_admin', 'Hacer admin'),
-      _tx(
-        'admin.confirm_promote',
-        '¿Ascender a "{username}" a administrador?',
-      ).replaceAll('{username}', username),
-      confirmLabel: _tx('admin.action_make_admin', 'Hacer admin'),
+      _tx('admin.action_make_admin'),
+      _tx('admin.confirm_promote').replaceAll('{username}', username),
+      confirmLabel: _tx('admin.action_make_admin'),
       destructive: false,
     );
     if (!ok) return;
     await _run(
       () => _usersRepository.patchUser(token, username, role: 'admin'),
-      _tx('admin.toast_user_promoted', 'Usuario ascendido a admin'),
+      _tx('admin.toast_user_promoted'),
     );
   }
 
@@ -39,16 +36,13 @@ extension _AdminActions on _AdminPageState {
     if (token == null) return;
     final username = (user['username'] ?? '').toString();
     final ok = await _confirm(
-      _tx('common.delete', 'Eliminar'),
-      _tx(
-        'admin.confirm_delete_user',
-        '¿Seguro que quieres eliminar al usuario "{username}"?',
-      ).replaceAll('{username}', username),
+      _tx('common.delete'),
+      _tx('admin.confirm_delete_user').replaceAll('{username}', username),
     );
     if (!ok) return;
     await _run(
       () => _usersRepository.deleteUser(token, username),
-      _tx('admin.toast_user_deleted', 'Usuario eliminado'),
+      _tx('admin.toast_user_deleted'),
     );
   }
 
@@ -71,7 +65,7 @@ extension _AdminActions on _AdminPageState {
             ? null
             : result['password'] as String?,
       ),
-      _tx('admin.toast_user_updated', 'Usuario actualizado'),
+      _tx('admin.toast_user_updated'),
     );
   }
 
@@ -92,7 +86,7 @@ extension _AdminActions on _AdminPageState {
         displayName: result['display_name'] as String?,
         role: result['role'] as String,
       ),
-      _tx('admin.toast_user_created', 'Usuario creado'),
+      _tx('admin.toast_user_created'),
     );
   }
 
@@ -107,12 +101,9 @@ extension _AdminActions on _AdminPageState {
     final newStatus = isDisabled ? 'active' : 'disabled';
     if (!isDisabled) {
       final ok = await _confirm(
-        _tx('admin.action_deactivate', 'Desactivar'),
-        _tx(
-          'admin.confirm_deactivate_group',
-          '¿Desactivar el grupo "{name}"?',
-        ).replaceAll('{name}', name),
-        confirmLabel: _tx('admin.action_deactivate', 'Desactivar'),
+        _tx('admin.action_deactivate'),
+        _tx('admin.confirm_deactivate_group').replaceAll('{name}', name),
+        confirmLabel: _tx('admin.action_deactivate'),
         // Reversible: el grupo se puede reactivar desde el mismo sitio.
         destructive: false,
       );
@@ -121,8 +112,8 @@ extension _AdminActions on _AdminPageState {
     await _run(
       () => _groupsRepository.setGroupStatus(token, id, newStatus),
       isDisabled
-          ? _tx('admin.toast_group_reactivated', 'Grupo reactivado')
-          : _tx('admin.toast_group_deactivated', 'Grupo desactivado'),
+          ? _tx('admin.toast_group_reactivated')
+          : _tx('admin.toast_group_deactivated'),
     );
   }
 
@@ -132,16 +123,13 @@ extension _AdminActions on _AdminPageState {
     final id = (group['id'] ?? '').toString();
     final name = (group['name'] ?? id).toString();
     final ok = await _confirm(
-      _tx('common.delete', 'Eliminar'),
-      _tx(
-        'admin.confirm_delete_group',
-        '¿Seguro que quieres eliminar el grupo "{name}"?',
-      ).replaceAll('{name}', name),
+      _tx('common.delete'),
+      _tx('admin.confirm_delete_group').replaceAll('{name}', name),
     );
     if (!ok) return;
     await _run(
       () => _groupsRepository.deleteGroup(token, id),
-      _tx('admin.toast_group_deleted', 'Grupo eliminado'),
+      _tx('admin.toast_group_deleted'),
     );
   }
 
@@ -158,7 +146,7 @@ extension _AdminActions on _AdminPageState {
     if (result == null) return;
     await _run(
       () => _agentsRepository.updateAgent(token, id, result),
-      _tx('admin.toast_agent_updated', 'Agente actualizado'),
+      _tx('admin.toast_agent_updated'),
     );
   }
 
@@ -169,16 +157,13 @@ extension _AdminActions on _AdminPageState {
     final name = (agent['name'] ?? id).toString();
     final scope = (agent['scope'] ?? 'private').toString();
     final ok = await _confirm(
-      _tx('common.delete', 'Eliminar'),
-      _tx(
-        'admin.confirm_delete_agent',
-        '¿Seguro que quieres eliminar el agente "{name}"?',
-      ).replaceAll('{name}', name),
+      _tx('common.delete'),
+      _tx('admin.confirm_delete_agent').replaceAll('{name}', name),
     );
     if (!ok) return;
     await _run(
       () => _agentsRepository.deleteAgent(token, id, scope: scope),
-      _tx('admin.toast_agent_deleted', 'Agente eliminado'),
+      _tx('admin.toast_agent_deleted'),
     );
   }
 
@@ -189,16 +174,13 @@ extension _AdminActions on _AdminPageState {
     if (token == null) return;
     final id = (conn['id'] ?? '').toString();
     final ok = await _confirm(
-      _tx('common.delete', 'Eliminar'),
-      _tx(
-        'admin.confirm_delete_connection',
-        '¿Seguro que quieres eliminar esta conexión?',
-      ),
+      _tx('common.delete'),
+      _tx('admin.confirm_delete_connection'),
     );
     if (!ok) return;
     await _run(
       () => _connectionsRepository.deleteAdminConnection(token, id),
-      _tx('admin.toast_connection_deleted', 'Conexión eliminada'),
+      _tx('admin.toast_connection_deleted'),
     );
   }
 
@@ -207,16 +189,13 @@ extension _AdminActions on _AdminPageState {
     if (token == null) return;
     final id = (item['id'] ?? '').toString();
     final ok = await _confirm(
-      _tx('common.delete', 'Eliminar'),
-      _tx(
-        'admin.confirm_delete_knowledge',
-        '¿Seguro que quieres eliminar este elemento?',
-      ),
+      _tx('common.delete'),
+      _tx('admin.confirm_delete_knowledge'),
     );
     if (!ok) return;
     await _run(
       () => _knowledgeRepository.deleteAdminKnowledge(token, id),
-      _tx('admin.toast_knowledge_deleted', 'Elemento eliminado'),
+      _tx('admin.toast_knowledge_deleted'),
     );
   }
 
@@ -225,16 +204,13 @@ extension _AdminActions on _AdminPageState {
     if (token == null) return;
     final id = (item['id'] ?? '').toString();
     final ok = await _confirm(
-      _tx('common.delete', 'Eliminar'),
-      _tx(
-        'admin.confirm_delete_workflow',
-        '¿Seguro que quieres eliminar esta orquestación?',
-      ),
+      _tx('common.delete'),
+      _tx('admin.confirm_delete_workflow'),
     );
     if (!ok) return;
     await _run(
       () => _resourcesRepository.deleteAdminWorkflow(token, id),
-      _tx('admin.toast_workflow_deleted', 'Orquestación eliminada'),
+      _tx('admin.toast_workflow_deleted'),
     );
   }
 
@@ -243,19 +219,13 @@ extension _AdminActions on _AdminPageState {
     if (token == null) return;
     final id = (item['id'] ?? '').toString();
     final ok = await _confirm(
-      _tx('common.delete', 'Eliminar'),
-      _tx(
-        'admin.confirm_delete_llm_orchestration',
-        '¿Seguro que quieres eliminar esta orquestación LLM?',
-      ),
+      _tx('common.delete'),
+      _tx('admin.confirm_delete_llm_orchestration'),
     );
     if (!ok) return;
     await _run(
       () => _resourcesRepository.deleteAdminLlmOrchestration(token, id),
-      _tx(
-        'admin.toast_llm_orchestration_deleted',
-        'Orquestación LLM eliminada',
-      ),
+      _tx('admin.toast_llm_orchestration_deleted'),
     );
   }
 
@@ -264,16 +234,13 @@ extension _AdminActions on _AdminPageState {
     if (token == null) return;
     final id = (item['id'] ?? '').toString();
     final ok = await _confirm(
-      _tx('common.delete', 'Eliminar'),
-      _tx(
-        'admin.confirm_delete_skill',
-        '¿Seguro que quieres eliminar esta skill?',
-      ),
+      _tx('common.delete'),
+      _tx('admin.confirm_delete_skill'),
     );
     if (!ok) return;
     await _run(
       () => _resourcesRepository.deleteAdminSkill(token, id),
-      _tx('admin.toast_skill_deleted', 'Skill eliminada'),
+      _tx('admin.toast_skill_deleted'),
     );
   }
 
@@ -282,16 +249,13 @@ extension _AdminActions on _AdminPageState {
     if (token == null) return;
     final id = (item['id'] ?? '').toString();
     final ok = await _confirm(
-      _tx('common.delete', 'Eliminar'),
-      _tx(
-        'admin.confirm_delete_prompt',
-        '¿Seguro que quieres eliminar este prompt?',
-      ),
+      _tx('common.delete'),
+      _tx('admin.confirm_delete_prompt'),
     );
     if (!ok) return;
     await _run(
       () => _resourcesRepository.deleteAdminPrompt(token, id),
-      _tx('admin.toast_prompt_deleted', 'Prompt eliminado'),
+      _tx('admin.toast_prompt_deleted'),
     );
   }
 
@@ -300,16 +264,13 @@ extension _AdminActions on _AdminPageState {
     if (token == null) return;
     final id = (item['id'] ?? '').toString();
     final ok = await _confirm(
-      _tx('common.delete', 'Eliminar'),
-      _tx(
-        'admin.confirm_delete_tool',
-        '¿Seguro que quieres eliminar esta herramienta?',
-      ),
+      _tx('common.delete'),
+      _tx('admin.confirm_delete_tool'),
     );
     if (!ok) return;
     await _run(
       () => _resourcesRepository.deleteAdminTool(token, id),
-      _tx('admin.toast_tool_deleted', 'Herramienta eliminada'),
+      _tx('admin.toast_tool_deleted'),
     );
   }
 
@@ -318,16 +279,13 @@ extension _AdminActions on _AdminPageState {
     if (token == null) return;
     final id = (item['id'] ?? '').toString();
     final ok = await _confirm(
-      _tx('common.delete', 'Eliminar'),
-      _tx(
-        'admin.confirm_delete_memory',
-        '¿Seguro que quieres eliminar este fichero de memoria?',
-      ),
+      _tx('common.delete'),
+      _tx('admin.confirm_delete_memory'),
     );
     if (!ok) return;
     await _run(
       () => _resourcesRepository.deleteAdminMemory(token, id),
-      _tx('admin.toast_memory_deleted', 'Fichero de memoria eliminado'),
+      _tx('admin.toast_memory_deleted'),
     );
   }
 
@@ -363,7 +321,7 @@ extension _AdminActions on _AdminPageState {
         id,
         newOwner,
       ),
-      _tx('admin.toast_owner_changed', 'Propietario actualizado'),
+      _tx('admin.toast_owner_changed'),
     );
   }
 
@@ -385,14 +343,15 @@ extension _AdminActions on _AdminPageState {
         official: !official,
       ),
       official
-          ? _tx('admin.toast_official_removed', 'Ya no es oficial')
-          : _tx('admin.toast_official_set', 'Marcado como oficial'),
+          ? _tx('admin.toast_official_removed')
+          : _tx('admin.toast_official_set'),
     );
   }
 
   bool _isOfficial(Map<String, dynamic> item) {
     final labels = item['labels'];
-    return labels is List && labels.map((e) => e.toString()).contains('official');
+    return labels is List &&
+        labels.map((e) => e.toString()).contains('official');
   }
 
   Widget _officialAction(Map<String, dynamic> item, String resourceType) {
@@ -400,8 +359,8 @@ extension _AdminActions on _AdminPageState {
     return ActionIconButton(
       icon: official ? Icons.verified : Icons.verified_outlined,
       tooltip: official
-          ? _tx('admin.action_unset_official', 'Quitar el sello oficial')
-          : _tx('admin.action_set_official', 'Marcar como oficial'),
+          ? _tx('admin.action_unset_official')
+          : _tx('admin.action_set_official'),
       onPressed: () => _toggleOfficial(item, resourceType),
     );
   }

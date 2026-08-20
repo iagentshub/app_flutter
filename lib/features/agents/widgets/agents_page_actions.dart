@@ -49,41 +49,27 @@ extension _AgentsPageActions on _AgentsPageState {
     final choice = await showDialog<String>(
       context: context,
       builder: (context) => SimpleDialog(
-        title: Text(
-          _tx('agents.create_choice_title', '¿Cómo quieres crear el agente?'),
-        ),
+        title: Text(_tx('agents.create_choice_title')),
         children: [
           _createChoiceOption(
             context,
             icon: Icons.edit_note_outlined,
-            title: _tx('agents.create_choice_scratch', 'Desde cero'),
-            subtitle: _tx(
-              'agents.create_choice_scratch_desc',
-              'Un formulario en blanco, tú decides cada campo.',
-            ),
+            title: _tx('agents.create_choice_scratch'),
+            subtitle: _tx('agents.create_choice_scratch_desc'),
             value: 'scratch',
           ),
           _createChoiceOption(
             context,
             icon: Icons.public,
-            title: _tx(
-              'agents.create_choice_public',
-              'A partir de un agente público',
-            ),
-            subtitle: _tx(
-              'agents.create_choice_public_desc',
-              'Parte de uno ya existente como plantilla y edítalo.',
-            ),
+            title: _tx('agents.create_choice_public'),
+            subtitle: _tx('agents.create_choice_public_desc'),
             value: 'public',
           ),
           _createChoiceOption(
             context,
             icon: Icons.auto_awesome_outlined,
-            title: _tx('agents.create_choice_ai', 'Con ayuda de IA'),
-            subtitle: _tx(
-              'agents.create_choice_ai_desc',
-              'Descríbelo en una conversación y te propone un borrador.',
-            ),
+            title: _tx('agents.create_choice_ai'),
+            subtitle: _tx('agents.create_choice_ai_desc'),
             value: 'ai',
           ),
         ],
@@ -152,23 +138,12 @@ extension _AgentsPageActions on _AgentsPageState {
       showMessage(error.message, isError: true);
       return;
     } catch (_) {
-      showMessage(
-        _tx(
-          'agents.create_public_load_error',
-          'No se pudieron cargar los agentes públicos',
-        ),
-        isError: true,
-      );
+      showMessage(_tx('agents.create_public_load_error'), isError: true);
       return;
     }
     if (!mounted) return;
     if (publicAgents.isEmpty) {
-      showMessage(
-        _tx(
-          'agents.create_public_empty',
-          'No hay agentes públicos disponibles todavía',
-        ),
-      );
+      showMessage(_tx('agents.create_public_empty'));
       return;
     }
 
@@ -191,13 +166,7 @@ extension _AgentsPageActions on _AgentsPageState {
       showMessage(error.message, isError: true);
       return;
     } catch (_) {
-      showMessage(
-        _tx(
-          'agents.create_public_load_error',
-          'No se pudieron cargar los agentes públicos',
-        ),
-        isError: true,
-      );
+      showMessage(_tx('agents.create_public_load_error'), isError: true);
       return;
     }
     if (!mounted) return;
@@ -205,7 +174,7 @@ extension _AgentsPageActions on _AgentsPageState {
     final template = <String, dynamic>{
       'name':
           '${selected.name} '
-          '(${_tx('agents.create_public_copy_suffix', 'copia')})',
+          '(${_tx('agents.create_public_copy_suffix')})',
       'description': selected.description,
       'system_prompt': preview['system_prompt'] ?? '',
       'agent_type': preview['agent_type'] ?? 'generic',
@@ -231,12 +200,7 @@ extension _AgentsPageActions on _AgentsPageState {
 
   Future<void> _openEditDialog(AgentItem item) async {
     if (item.readOnly) {
-      showMessage(
-        _tx(
-          'agents.msg_not_editable',
-          'Este agente no es editable (público o compartido)',
-        ),
-      );
+      showMessage(_tx('agents.msg_not_editable'));
       return;
     }
 
@@ -269,37 +233,28 @@ extension _AgentsPageActions on _AgentsPageState {
     if (token == null || token.isEmpty) return;
     try {
       await _repository.saveAgent(token, payload);
-      showMessage(_tx('agents.msg_saved', 'Agente guardado'));
+      showMessage(_tx('agents.msg_saved'));
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('agents.msg_save_failed', 'No se pudo guardar el agente'),
-        isError: true,
-      );
+      showMessage(_tx('agents.msg_save_failed'), isError: true);
     }
   }
 
   Future<void> _deleteAgent(AgentItem item) async {
     if (item.readOnly) {
-      showMessage(
-        _tx(
-          'agents.msg_not_deletable',
-          'Este agente no se puede eliminar (público o compartido)',
-        ),
-      );
+      showMessage(_tx('agents.msg_not_deletable'));
       return;
     }
 
     final confirm = await showConfirmActionDialog(
       context,
-      title: _tx('agents.delete_dialog_title', 'Eliminar agente'),
+      title: _tx('agents.delete_dialog_title'),
       message: _tx(
         'common.delete_confirm_body',
-        '¿Seguro que quieres eliminar "{{nombre}}"?',
       ).replaceAll('{{nombre}}', item.name),
       cancelLabel: 'Cancelar',
-      confirmLabel: _tx('common.delete', 'Eliminar'),
+      confirmLabel: _tx('common.delete'),
       destructive: true,
     );
     if (!confirm) return;
@@ -308,14 +263,11 @@ extension _AgentsPageActions on _AgentsPageState {
     if (token == null || token.isEmpty) return;
     try {
       await _repository.deleteAgent(token, item.id);
-      showMessage(_tx('agents.msg_deleted', 'Agente eliminado'));
+      showMessage(_tx('agents.msg_deleted'));
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('agents.msg_delete_failed', 'No se pudo eliminar el agente'),
-        isError: true,
-      );
+      showMessage(_tx('agents.msg_delete_failed'), isError: true);
     }
   }
 
@@ -329,13 +281,7 @@ extension _AgentsPageActions on _AgentsPageState {
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx(
-          'agents.msg_toggle_failed',
-          'No se pudo cambiar el estado del agente',
-        ),
-        isError: true,
-      );
+      showMessage(_tx('agents.msg_toggle_failed'), isError: true);
     }
   }
 
@@ -345,7 +291,7 @@ extension _AgentsPageActions on _AgentsPageState {
     try {
       final result = await _repository.exportAgent(token, item.id, format);
       await FilePicker.saveFile(
-        dialogTitle: _tx('agents.export_dialog_title', 'Guardar exportación'),
+        dialogTitle: _tx('agents.export_dialog_title'),
         fileName: result.filename ?? '${item.id}-$format.zip',
         bytes: result.bytes,
         type: FileType.custom,
@@ -354,10 +300,7 @@ extension _AgentsPageActions on _AgentsPageState {
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('agents.export_error', 'No se pudo exportar el agente'),
-        isError: true,
-      );
+      showMessage(_tx('agents.export_error'), isError: true);
     }
   }
 

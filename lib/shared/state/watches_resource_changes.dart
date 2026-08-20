@@ -52,8 +52,9 @@ mixin WatchesResourceChanges<T extends StatefulWidget> on State<T> {
 
   void _handleChange() {
     if (!mounted) return;
-    final touched =
-        (_events?.pending ?? const <String>{}).intersection(watchedResources);
+    final touched = (_events?.pending ?? const <String>{}).intersection(
+      watchedResources,
+    );
     if (touched.isEmpty) return;
     onResourcesChanged(touched);
   }

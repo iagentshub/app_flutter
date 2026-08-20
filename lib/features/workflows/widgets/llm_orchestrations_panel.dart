@@ -30,7 +30,7 @@ class LlmOrchestrationsPanel extends StatefulWidget {
   final ApiClient apiClient;
   final SessionController sessionController;
   final LocaleController localeController;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<LlmOrchestrationsPanel> createState() => _LlmOrchestrationsPanelState();
@@ -39,8 +39,10 @@ class LlmOrchestrationsPanel extends StatefulWidget {
 class _LlmOrchestrationsPanelState extends State<LlmOrchestrationsPanel>
     with WatchesResourceChanges {
   @override
-  Set<String> get watchedResources =>
-      const {'llm-orchestrations', 'connections'};
+  Set<String> get watchedResources => const {
+    'llm-orchestrations',
+    'connections',
+  };
 
   @override
   Future<void> onResourcesChanged(Set<String> changed) => _load();
@@ -106,10 +108,7 @@ class _LlmOrchestrationsPanelState extends State<LlmOrchestrationsPanel>
     if (_connections.length < requiredConnections) {
       _message(
         widget
-            .tx(
-              'llm_orchestrations.connections_required',
-              'Necesitas al menos {{count}} conexiones LLM activas.',
-            )
+            .tx('llm_orchestrations.connections_required')
             .replaceAll('{{count}}', '$requiredConnections'),
         error: true,
       );
@@ -134,14 +133,8 @@ class _LlmOrchestrationsPanelState extends State<LlmOrchestrationsPanel>
       }
       _message(
         initial?.shared == true
-            ? widget.tx(
-                'llm_orchestrations.binding_saved',
-                'Tus conexiones se han vinculado',
-              )
-            : widget.tx(
-                'llm_orchestrations.saved',
-                'Orquestación LLM guardada',
-              ),
+            ? widget.tx('llm_orchestrations.binding_saved')
+            : widget.tx('llm_orchestrations.saved'),
       );
       await _load();
     } on ApiError catch (error) {
@@ -152,15 +145,12 @@ class _LlmOrchestrationsPanelState extends State<LlmOrchestrationsPanel>
   Future<void> _delete(LlmOrchestrationItem item) async {
     final confirmed = await showConfirmActionDialog(
       context,
-      title: widget.tx(
-        'llm_orchestrations.delete_title',
-        'Eliminar orquestación LLM',
-      ),
+      title: widget.tx('llm_orchestrations.delete_title'),
       message: widget
-          .tx('llm_orchestrations.delete_body', '¿Eliminar “{{name}}”?')
+          .tx('llm_orchestrations.delete_body')
           .replaceAll('{{name}}', item.name),
-      cancelLabel: widget.tx('common.cancel', 'Cancelar'),
-      confirmLabel: widget.tx('common.delete', 'Eliminar'),
+      cancelLabel: widget.tx('common.cancel'),
+      confirmLabel: widget.tx('common.delete'),
       destructive: true,
     );
     if (!confirmed) return;
@@ -194,12 +184,9 @@ class _LlmOrchestrationsPanelState extends State<LlmOrchestrationsPanel>
     if (_loading) return const AsyncStatePanel.loading();
     if (_error != null) {
       return AsyncStatePanel.error(
-        title: widget.tx(
-          'llm_orchestrations.load_error',
-          'No se pudieron cargar',
-        ),
+        title: widget.tx('llm_orchestrations.load_error'),
         message: _error!,
-        retryLabel: widget.tx('common.retry', 'Reintentar'),
+        retryLabel: widget.tx('common.retry'),
         onRetry: _load,
       );
     }
@@ -211,30 +198,20 @@ class _LlmOrchestrationsPanelState extends State<LlmOrchestrationsPanel>
           AppIconButton.filled(
             onPressed: () => _edit(),
             icon: const Icon(Icons.add),
-            tooltip: widget.tx(
-              'llm_orchestrations.create',
-              'Nueva orquestación LLM',
-            ),
+            tooltip: widget.tx('llm_orchestrations.create'),
           ),
           AppIconButton.outlined(
             onPressed: _load,
             icon: const Icon(Icons.refresh),
-            tooltip: widget.tx('common.refresh', 'Actualizar'),
+            tooltip: widget.tx('common.refresh'),
           ),
         ],
         summary: Text(
-          '${widget.tx('llm_orchestrations.count', 'Orquestaciones LLM')}: ${_items.length}',
+          '${widget.tx('llm_orchestrations.count')}: ${_items.length}',
         ),
       ),
       emptyFillsViewport: true,
-      empty: Center(
-        child: Text(
-          widget.tx(
-            'llm_orchestrations.empty',
-            'Crea una pila o un balanceador de conexiones LLM.',
-          ),
-        ),
-      ),
+      empty: Center(child: Text(widget.tx('llm_orchestrations.empty'))),
       itemCount: _items.length,
       itemBuilder: (context, index) {
         final item = _items[index];

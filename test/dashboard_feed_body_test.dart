@@ -6,13 +6,18 @@ import 'package:app_flutter/features/dashboard/repositories/dashboard_repository
 import 'package:app_flutter/features/explore/repositories/explore_repository.dart';
 import 'package:app_flutter/models/dashboard/dashboard_widget_config.dart';
 import 'package:app_flutter/shared/state/backend_controller.dart';
+import 'package:app_flutter/utils/i18n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'support/i18n_de_prueba.dart';
+
 void main() {
+  setUp(cargarTraduccionesDePrueba);
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late BackendController backendController;
@@ -39,7 +44,7 @@ void main() {
     await tester.pumpWidget(_app(client));
     await tester.pumpAndSettle();
 
-    expect(find.text('No se pudo cargar la actividad'), findsOneWidget);
+    expect(find.text("No se pudo cargar la actividad"), findsOneWidget);
     expect(find.text('Reintentar'), findsOneWidget);
 
     await tester.tap(find.text('Reintentar'));
@@ -95,7 +100,8 @@ Widget _app(ApiClient client) {
         repository: DashboardRepository(client),
         exploreRepository: ExploreRepository(apiClient: client),
         config: const DashboardWidgetConfig(),
-        tx: (_, fallback) => fallback,
+        // Igual que DashboardPage: la clave del widget cuelga de `dashboard.`
+        tx: (clave) => trOr('dashboard.$clave', clave),
       ),
     ),
   );

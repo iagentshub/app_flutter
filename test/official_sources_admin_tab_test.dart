@@ -3,13 +3,18 @@ import 'dart:convert';
 import 'package:app_flutter/core/network/api_client.dart';
 import 'package:app_flutter/features/admin/widgets/official_sources_admin_tab.dart';
 import 'package:app_flutter/shared/state/backend_controller.dart';
+import 'package:app_flutter/utils/i18n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'support/i18n_de_prueba.dart';
+
 void main() {
+  setUp(cargarTraduccionesDePrueba);
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   final components = <Object>[
@@ -181,7 +186,7 @@ Widget _tab(BackendController backend, http.Client client) {
       body: OfficialSourcesAdminTab(
         apiClient: ApiClient(backend, client: client),
         token: 'admin-token',
-        tx: (_, fallback) => fallback,
+        tx: tr,
       ),
     ),
   );

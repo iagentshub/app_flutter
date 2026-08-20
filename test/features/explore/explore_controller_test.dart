@@ -8,16 +8,17 @@ import 'package:app_flutter/features/manager/repositories/manager_repository.dar
 import 'package:app_flutter/models/explore/explore_models.dart';
 import 'package:app_flutter/shared/state/backend_controller.dart';
 import 'package:app_flutter/shared/state/session_controller.dart';
+import 'package:app_flutter/utils/i18n.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../support/i18n_de_prueba.dart';
 import '../../support/memory_secure_store.dart';
 
 /// Devuelve el fallback tal cual: el controller no debe depender de que
 /// haya locales cargados para producir sus mensajes.
-String _tx(String path, String fallback) => fallback;
 
 Map<String, dynamic> _resource({
   String type = 'agent',
@@ -35,6 +36,8 @@ Map<String, dynamic> _resource({
 };
 
 void main() {
+  setUp(cargarTraduccionesDePrueba);
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late BackendController backendController;
@@ -69,7 +72,7 @@ void main() {
       repository: ExploreRepository(apiClient: client),
       managerRepository: ManagerRepository(apiClient: client),
       sessionController: await session(token: token),
-      tx: _tx,
+      tx: tr,
     );
     addTearDown(controller.dispose);
     return controller;
@@ -536,7 +539,7 @@ void main() {
       repository: ExploreRepository(apiClient: client),
       managerRepository: ManagerRepository(apiClient: client),
       sessionController: await session(),
-      tx: _tx,
+      tx: tr,
     );
     var notifications = 0;
     controller.addListener(() => notifications++);

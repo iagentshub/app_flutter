@@ -1,4 +1,3 @@
-
 enum AdminResourceType {
   user('user'),
   group('group'),
@@ -79,4 +78,3 @@ class AdminExploreResult {
     );
   }
 }
-

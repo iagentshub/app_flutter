@@ -5,9 +5,7 @@ extension _ProfileAccountSection on _ProfilePageState {
     final username = bundle.session.username;
     final initial = username.isNotEmpty ? username[0].toUpperCase() : '?';
     final planTier = bundle.license.tier;
-    final planLabel = planTier == 'free'
-        ? _tx('profile.plan_free', 'Gratuito')
-        : planTier;
+    final planLabel = planTier == 'free' ? _tx('profile.plan_free') : planTier;
     final memberSince = bundle.social.createdAt;
 
     return Column(
@@ -51,24 +49,21 @@ extension _ProfileAccountSection on _ProfilePageState {
           ),
         ),
         const SizedBox(height: 20),
-        _sectionHeader(
-          Icons.badge_outlined,
-          _tx('profile.identity_title', 'Identidad'),
-        ),
+        _sectionHeader(Icons.badge_outlined, _tx('profile.identity_title')),
         const SizedBox(height: 8),
         Card(
           child: Column(
             children: [
               _infoRow(
                 Icons.groups_outlined,
-                _tx('profile.active_group_label', 'Grupo activo'),
+                _tx('profile.active_group_label'),
                 bundle.session.groupName ?? bundle.session.groupId ?? '-',
               ),
               if (memberSince != null && memberSince.isNotEmpty) ...[
                 const Divider(height: 1),
                 _infoRow(
                   Icons.calendar_today_outlined,
-                  _tx('profile.member_since', 'Miembro desde'),
+                  _tx('profile.member_since'),
                   memberSince,
                 ),
               ],
@@ -76,10 +71,7 @@ extension _ProfileAccountSection on _ProfilePageState {
           ),
         ),
         const SizedBox(height: 24),
-        _sectionHeader(
-          Icons.tune_outlined,
-          _tx('profile.tab_preferences', 'Preferencias'),
-        ),
+        _sectionHeader(Icons.tune_outlined, _tx('profile.tab_preferences')),
         const SizedBox(height: 8),
         Card(
           child: Padding(
@@ -91,7 +83,7 @@ extension _ProfileAccountSection on _ProfilePageState {
                   DropdownButtonFormField<String>(
                     initialValue: _controller.theme,
                     decoration: InputDecoration(
-                      labelText: _tx('profile.theme_label', 'Tema'),
+                      labelText: _tx('profile.theme_label'),
                     ),
                     items: kThemeIds
                         .map(
@@ -109,11 +101,8 @@ extension _ProfileAccountSection on _ProfilePageState {
                 else
                   InputDecorator(
                     decoration: InputDecoration(
-                      labelText: _tx('profile.theme_label', 'Tema'),
-                      helperText: _tx(
-                        'profile.theme_managed_hint',
-                        'El tema está definido por el administrador.',
-                      ),
+                      labelText: _tx('profile.theme_label'),
+                      helperText: _tx('profile.theme_managed_hint'),
                     ),
                     child: Text(_controller.defaultTheme),
                   ),
@@ -121,7 +110,7 @@ extension _ProfileAccountSection on _ProfilePageState {
                 DropdownButtonFormField<String>(
                   initialValue: _controller.language,
                   decoration: InputDecoration(
-                    labelText: _tx('profile.language_label', 'Idioma'),
+                    labelText: _tx('profile.language_label'),
                   ),
                   items: const [
                     DropdownMenuItem(value: 'es', child: Text('Español')),
@@ -134,17 +123,14 @@ extension _ProfileAccountSection on _ProfilePageState {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  _tx('profile.app_icon_label', 'Icono de la aplicación'),
+                  _tx('profile.app_icon_label'),
                   style: Theme.of(
                     context,
                   ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _tx(
-                    'profile.app_icon_description',
-                    'Elige el icono que se muestra dentro de iAgents.',
-                  ),
+                  _tx('profile.app_icon_description'),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 10),
@@ -157,11 +143,8 @@ extension _ProfileAccountSection on _ProfilePageState {
                   icon: const Icon(Icons.save_outlined),
                   label: Text(
                     _controller.savingSettings
-                        ? _tx('profile.saving', 'Guardando...')
-                        : _tx(
-                            'profile.save_preferences',
-                            'Guardar preferencias',
-                          ),
+                        ? _tx('profile.saving')
+                        : _tx('profile.save_preferences'),
                   ),
                 ),
               ],
@@ -169,10 +152,7 @@ extension _ProfileAccountSection on _ProfilePageState {
           ),
         ),
         const SizedBox(height: 24),
-        _sectionHeader(
-          Icons.lock_outline,
-          _tx('profile.tab_security', 'Seguridad'),
-        ),
+        _sectionHeader(Icons.lock_outline, _tx('profile.tab_security')),
         const SizedBox(height: 8),
         Card(
           child: Padding(
@@ -181,35 +161,22 @@ extension _ProfileAccountSection on _ProfilePageState {
               children: [
                 Row(
                   children: [
-                    Expanded(
-                      child: Text(_tx('profile.security_hint', 'Contraseña')),
-                    ),
+                    Expanded(child: Text(_tx('profile.security_hint'))),
                     SecondaryButton.icon(
                       onPressed: _openChangePasswordDialog,
                       icon: const Icon(Icons.lock_reset_outlined),
-                      label: Text(
-                        _tx('profile.change_password', 'Cambiar contraseña'),
-                      ),
+                      label: Text(_tx('profile.change_password')),
                     ),
                   ],
                 ),
                 const Divider(height: 24),
                 Row(
                   children: [
-                    Expanded(
-                      child: Text(
-                        _tx(
-                          'profile.sessions_hint',
-                          'Dispositivos con la sesión abierta',
-                        ),
-                      ),
-                    ),
+                    Expanded(child: Text(_tx('profile.sessions_hint'))),
                     SecondaryButton.icon(
                       onPressed: _openActiveSessionsDialog,
                       icon: const Icon(Icons.devices_other),
-                      label: Text(
-                        _tx('profile.sessions_open', 'Ver sesiones activas'),
-                      ),
+                      label: Text(_tx('profile.sessions_open')),
                     ),
                   ],
                 ),
@@ -220,7 +187,7 @@ extension _ProfileAccountSection on _ProfilePageState {
         const SizedBox(height: 24),
         _sectionHeader(
           Icons.warning_amber_outlined,
-          _tx('profile.account_zone_title', 'Zona de cuenta'),
+          _tx('profile.account_zone_title'),
           color: FncColors.materialRed,
         ),
         const SizedBox(height: 8),
@@ -232,11 +199,8 @@ extension _ProfileAccountSection on _ProfilePageState {
               children: [
                 Text(
                   bundle.deletion.scheduled
-                      ? '${_tx('profile.deletion_scheduled', 'Eliminación programada para')}: ${bundle.deletion.deletionDate ?? '-'}'
-                      : _tx(
-                          'profile.no_deletion_scheduled',
-                          'No hay eliminación programada',
-                        ),
+                      ? '${_tx('profile.deletion_scheduled')}: ${bundle.deletion.deletionDate ?? '-'}'
+                      : _tx('profile.no_deletion_scheduled'),
                 ),
                 const SizedBox(height: 10),
                 SecondaryButton.icon(
@@ -248,11 +212,8 @@ extension _ProfileAccountSection on _ProfilePageState {
                   icon: const Icon(Icons.warning_amber_outlined),
                   label: Text(
                     _controller.requestingDeletion
-                        ? _tx('profile.scheduling', 'Programando...')
-                        : _tx(
-                            'profile.request_deletion',
-                            'Solicitar eliminación de cuenta',
-                          ),
+                        ? _tx('profile.scheduling')
+                        : _tx('profile.request_deletion'),
                   ),
                 ),
               ],

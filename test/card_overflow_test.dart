@@ -4,8 +4,11 @@ import 'package:app_flutter/features/memory/cards/memory_file_card.dart';
 import 'package:app_flutter/models/agents/agent_models.dart';
 import 'package:app_flutter/models/connections/connection_models.dart';
 import 'package:app_flutter/models/memory/memory_models.dart';
+import 'package:app_flutter/utils/i18n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/i18n_de_prueba.dart';
 
 /// La fila de acciones de `AgentCard` llegó a tener ocho elementos y a 328 px
 /// —el ancho que da la rejilla en un móvil de 360— Flutter lanzaba
@@ -16,8 +19,6 @@ import 'package:flutter_test/flutter_test.dart';
 /// Ninguna prueba montaba las tarjetas a ancho de móvil, así que el problema
 /// pasó inadvertido. Estas sí, para que no vuelva al añadir la próxima acción.
 const _mobileCardWidth = 328.0;
-
-String _tx(String path, String fallback) => fallback;
 
 Widget _host(Widget child) {
   return MaterialApp(
@@ -43,6 +44,8 @@ const _agent = AgentItem(
 );
 
 void main() {
+  setUp(cargarTraduccionesDePrueba);
+
   setUp(() {
     // Móvil de 360x800, el caso que reportaba el desbordamiento.
     TestWidgetsFlutterBinding.ensureInitialized();
@@ -59,7 +62,7 @@ void main() {
       _host(
         AgentCard(
           item: _agent,
-          tx: _tx,
+          tx: tr,
           onChat: () {},
           onExport: (_) {},
           onShare: () {},
@@ -87,7 +90,7 @@ void main() {
       _host(
         AgentCard(
           item: _agent,
-          tx: _tx,
+          tx: tr,
           onChat: () {},
           onExport: (format) => exported = format,
           onShare: () {},
@@ -133,7 +136,7 @@ void main() {
       _host(
         ConnectionCard(
           item: item,
-          tx: _tx,
+          tx: tr,
           providerLabel: 'OpenAI',
           onTest: () {},
           onShare: () {},

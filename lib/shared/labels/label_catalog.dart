@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/theme/fnc_colors.dart';
+import '../../utils/i18n.dart';
 
 /// Tabla canónica de colores para labels.
 /// (assets/js/labels.js): 3 grupos exclusivos (visibilidad, entorno, estado).
@@ -101,10 +102,7 @@ String languageLabelKey(String code) => 'lang_${code.toLowerCase()}';
 String? languageCodeFromLabel(String key) =>
     isLanguageLabel(key) ? key.substring('lang_'.length) : null;
 
-String contentLanguageLabel(
-  String Function(String path, String fallback) tx,
-  String codeOrKey,
-) {
+String contentLanguageLabel(String Function(String path) tx, String codeOrKey) {
   final key = codeOrKey.startsWith('lang_')
       ? codeOrKey
       : languageLabelKey(codeOrKey);
@@ -121,7 +119,7 @@ String contentLanguageLabel(
     'ar' => 'Árabe',
     _ => code.toUpperCase(),
   };
-  return tx('labels.$key', fallback);
+  return trOr('labels.$key', fallback);
 }
 
 /// Construye el contrato canónico que comparten los recursos textuales.

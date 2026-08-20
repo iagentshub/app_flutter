@@ -7,9 +7,9 @@ extension _AgentsPageView on _AgentsPageState {
       return ListView(
         children: [
           AsyncStatePanel.error(
-            title: _tx('agents.error_title', 'Error cargando agentes'),
+            title: _tx('agents.error_title'),
             message: _error!,
-            retryLabel: _tx('common.retry', 'Reintentar'),
+            retryLabel: _tx('common.retry'),
             onRetry: _load,
           ),
         ],
@@ -23,7 +23,7 @@ extension _AgentsPageView on _AgentsPageState {
         search: TextField(
           controller: _queryController,
           decoration: InputDecoration(
-            labelText: _tx('agents.search_hint', 'Buscar agente'),
+            labelText: _tx('agents.search_hint'),
             prefixIcon: const Icon(Icons.search, size: 20),
           ),
           onChanged: (value) {
@@ -37,16 +37,16 @@ extension _AgentsPageView on _AgentsPageState {
           AppIconButton.filled(
             onPressed: _openCreateChoiceDialog,
             icon: const Icon(Icons.add),
-            tooltip: _tx('agents.new', 'Nuevo agente'),
+            tooltip: _tx('agents.new'),
           ),
           AppIconButton.outlined(
             onPressed: _load,
             icon: const Icon(Icons.refresh),
-            tooltip: _tx('common.update', 'Actualizar'),
+            tooltip: _tx('common.update'),
           ),
           FilterButton(
             activeCount: _activeFilterCount,
-            tooltip: _tx('common.filters', 'Filtros'),
+            tooltip: _tx('common.filters'),
             onPressed: _openFiltersDialog,
           ),
           AppIconButton.outlined(
@@ -59,17 +59,17 @@ extension _AgentsPageView on _AgentsPageState {
               localeController: _services.localeController,
             ),
             icon: const Icon(Icons.groups_outlined),
-            tooltip: _tx('groups.toggle_tooltip', 'Grupos'),
+            tooltip: _tx('groups.toggle_tooltip'),
             isSelected: _activeGroupId != null,
           ),
           if (_activeGroupId != null)
             ActionChip(
-              label: Text(_tx('groups.active_clear', 'Grupo activo ✕')),
+              label: Text(_tx('groups.active_clear')),
               onPressed: () => _onGroupSelect(null),
             ),
         ],
         summary: Text(
-          '${_tx('agents.count_label', 'Agentes')}: ${filteredAgents.length}',
+          '${_tx('agents.count_label')}: ${filteredAgents.length}',
           style: Theme.of(context).textTheme.bodyMedium,
         ),
       ),
@@ -80,24 +80,16 @@ extension _AgentsPageView on _AgentsPageState {
           ? AsyncStatePanel.empty(
               padding: EdgeInsets.zero,
               icon: Icons.smart_toy_outlined,
-              title: _tx('agents.empty_title', 'Todavía sin agentes'),
-              message: _tx(
-                'agents.empty',
-                'Un agente combina un modelo, sus instrucciones y el '
-                    'conocimiento que le des.',
-              ),
-              actionLabel: _tx('agents.empty_action', 'Crear el primero'),
+              title: _tx('agents.empty_title'),
+              message: _tx('agents.empty'),
+              actionLabel: _tx('agents.empty_action'),
               onAction: _openCreateChoiceDialog,
             )
           : AsyncStatePanel.empty(
               padding: EdgeInsets.zero,
               icon: Icons.search_off,
-              title: _tx('agents.empty_search_title', 'Sin resultados'),
-              message: _tx(
-                'agents.empty_search',
-                'Ningún agente coincide con esa búsqueda o esos '
-                    'filtros.',
-              ),
+              title: _tx('agents.empty_search_title'),
+              message: _tx('agents.empty_search'),
             ),
       itemCount: filteredAgents.length,
       itemBuilder: (context, index) => _buildAgentCard(filteredAgents[index]),

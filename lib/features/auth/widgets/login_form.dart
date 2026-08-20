@@ -17,81 +17,22 @@ extension _LoginForm on _LoginPageState {
             }
 
             final t = snapshot.data!;
-            final cardTitle = _txt(
-              t,
-              'card_title',
-              _isEnglish ? 'Welcome' : 'Bienvenido',
-            );
-            final cardSub = _txt(
-              t,
-              'card_sub',
-              _isEnglish
-                  ? 'Access your agent platform'
-                  : 'Accede a tu espacio de agentes',
-            );
-            final fieldIdentifier = _txt(
-              t,
-              'field_identifier',
-              _isEnglish ? 'Username or email' : 'Usuario o email',
-            );
-            final fieldPassword = _txt(
-              t,
-              'field_password',
-              _isEnglish ? 'Password' : 'Contraseña',
-            );
-            final loginBtn = _txt(
-              t,
-              'login_btn',
-              _isEnglish ? 'Sign in' : 'Entrar',
-            );
-            final loginBtnLoading = _txt(
-              t,
-              'login_btn_loading',
-              _isEnglish ? 'Signing in…' : 'Entrando…',
-            );
-            final forgotPassword = _txt(
-              t,
-              'forgot_password',
-              _isEnglish
-                  ? 'Forgot your password?'
-                  : '¿Olvidaste tu contraseña?',
-            );
-            final rememberAccount = _txt(
-              t,
-              'remember_account',
-              _isEnglish ? 'Remember my account' : 'Recordar mi cuenta',
-            );
-            final divider = _txt(t, 'divider', _isEnglish ? 'or' : 'o');
-            final guestLogin = _txt(
-              t,
-              'guest_login',
-              _isEnglish ? 'Access as guest' : 'Acceder como invitado',
-            );
-            final guestLoading = _txt(
-              t,
-              'guest_entering',
-              _isEnglish ? 'Entering…' : 'Entrando…',
-            );
-            final registerAction = _txt(
-              t,
-              'register_action',
-              _isEnglish ? 'Create account' : 'Crear cuenta',
-            );
-            final fieldPasswordRequired = _txt(
-              t,
-              'field_password_required',
-              _isEnglish
-                  ? 'Password is required'
-                  : 'La contraseña es obligatoria',
-            );
+            final cardTitle = _txt(t, 'card_title');
+            final cardSub = _txt(t, 'card_sub');
+            final fieldIdentifier = _txt(t, 'field_identifier');
+            final fieldPassword = _txt(t, 'field_password');
+            final loginBtn = _txt(t, 'login_btn');
+            final loginBtnLoading = _txt(t, 'login_btn_loading');
+            final forgotPassword = _txt(t, 'forgot_password');
+            final rememberAccount = _txt(t, 'remember_account');
+            final divider = _txt(t, 'divider');
+            final guestLogin = _txt(t, 'guest_login');
+            final guestLoading = _txt(t, 'guest_entering');
+            final guestNotice = _txt(t, 'guest_notice');
+            final registerAction = _txt(t, 'register_action');
+            final fieldPasswordRequired = _txt(t, 'field_password_required');
             final backendDown = _backendStatus == _BackendStatus.down;
-            final backendDownMsg = _txt(
-              t,
-              'backend_down',
-              _isEnglish
-                  ? 'Unable to reach this backend. Check your connection or pick another backend below.'
-                  : 'No se pudo conectar con este backend. Revisa tu conexión o elige otro backend abajo.',
-            );
+            final backendDownMsg = _txt(t, 'backend_down');
 
             return Form(
               key: _formKey,
@@ -161,9 +102,7 @@ extension _LoginForm on _LoginPageState {
                     controller: _identifierController,
                     validator: (value) => Validators.requiredField(
                       value,
-                      message: _isEnglish
-                          ? 'Username or email is required'
-                          : 'El usuario o email es obligatorio',
+                      message: tr('auth.identifier_required'),
                     ),
                     autocorrect: false,
                     textCapitalization: TextCapitalization.none,
@@ -191,20 +130,8 @@ extension _LoginForm on _LoginPageState {
                         // visible. Las cadenas llevaban traducidas desde el
                         // principio, sin que nadie las usara.
                         tooltip: _showPassword
-                            ? _txt(
-                                t,
-                                'hide_password',
-                                _isEnglish
-                                    ? 'Hide password'
-                                    : 'Ocultar contraseña',
-                              )
-                            : _txt(
-                                t,
-                                'show_password',
-                                _isEnglish
-                                    ? 'Show password'
-                                    : 'Mostrar contraseña',
-                              ),
+                            ? _txt(t, 'hide_password')
+                            : _txt(t, 'show_password'),
                         onPressed: () =>
                             refresh(() => _showPassword = !_showPassword),
                         icon: Icon(
@@ -374,6 +301,17 @@ extension _LoginForm on _LoginPageState {
                               ? null
                               : _submitGuest,
                           child: Text(_loading ? guestLoading : guestLogin),
+                        ),
+                      ),
+                      // El invitado hace ya lo mismo que una cuenta, así que lo
+                      // único que lo distingue —que al salir se borra entero—
+                      // hay que decirlo antes de que empiece a trabajar.
+                      const SizedBox(height: 8),
+                      Text(
+                        guestNotice,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: FncColors.textMuted(context),
                         ),
                       ),
                     ],

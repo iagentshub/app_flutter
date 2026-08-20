@@ -12,8 +12,9 @@ import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/origin_badge.dart';
 import '../../../shared/widgets/resource_graph_button.dart';
 import '../../../shared/widgets/token_usage_badge.dart';
+import '../../../utils/i18n.dart';
 
-typedef AgentCardText = String Function(String path, String fallback);
+typedef AgentCardText = String Function(String path);
 
 /// Presentación reutilizable de un agente.
 ///
@@ -83,39 +84,39 @@ class AgentCard extends StatelessWidget {
   /// pulsarse. Solo se quedan a la vista las tres frecuentes; el resto entra
   /// en el menú, que siempre cabe.
   List<OverflowMenuAction> _overflowActions() {
-    final exportar = tx('agents.export_tooltip', 'Exportar');
+    final exportar = tx('agents.export_tooltip');
     return [
       if (!item.readOnly)
         OverflowMenuAction(
           icon: Icons.group_add_outlined,
-          label: tx('common.share_group', 'Compartir con grupo'),
+          label: tx('common.share_group'),
           onSelected: onShare,
         ),
       OverflowMenuAction(
         icon: Icons.history,
-        label: tx('history.dialog_title', 'Historial de versiones'),
+        label: tx('history.dialog_title'),
         onSelected: onHistory,
       ),
       if (!item.readOnly) ...[
         OverflowMenuAction(
           icon: Icons.ios_share_outlined,
-          label: '$exportar · ${tx('agents.export_openai', 'OpenAI')}',
+          label: '$exportar · ${tx('agents.export_openai')}',
           onSelected: () => onExport('openai'),
           separatedBefore: true,
         ),
         OverflowMenuAction(
           icon: Icons.ios_share_outlined,
-          label: '$exportar · ${tx('agents.export_claude', 'Claude')}',
+          label: '$exportar · ${tx('agents.export_claude')}',
           onSelected: () => onExport('claude'),
         ),
         OverflowMenuAction(
           icon: Icons.ios_share_outlined,
-          label: '$exportar · ${tx('agents.export_github', 'GitHub Copilot')}',
+          label: '$exportar · ${tx('agents.export_github')}',
           onSelected: () => onExport('github'),
         ),
         OverflowMenuAction(
           icon: Icons.ios_share_outlined,
-          label: '$exportar · ${tx('agents.export_mcp', 'Servidor MCP')}',
+          label: '$exportar · ${tx('agents.export_mcp')}',
           onSelected: () => onExport('mcp'),
         ),
       ],
@@ -125,15 +126,15 @@ class AgentCard extends StatelessWidget {
               ? Icons.toggle_on_outlined
               : Icons.toggle_off_outlined,
           label: item.isActive
-              ? tx('common.deactivate', 'Desactivar')
-              : tx('common.activate', 'Activar'),
+              ? tx('common.deactivate')
+              : tx('common.activate'),
           onSelected: onToggleActive!,
           separatedBefore: true,
         ),
       if (!item.readOnly)
         OverflowMenuAction(
           icon: Icons.delete_outline,
-          label: tx('common.delete', 'Eliminar'),
+          label: tx('common.delete'),
           onSelected: onDelete,
           danger: true,
           separatedBefore: true,
@@ -171,7 +172,7 @@ class AgentCard extends StatelessWidget {
                 ),
                 if (!item.isActive) ...[
                   const SizedBox(width: 8),
-                  InactiveBadge(label: tx('common.inactive', 'Inactivo')),
+                  InactiveBadge(label: tx('common.inactive')),
                 ],
               ],
             ),
@@ -188,18 +189,18 @@ class AgentCard extends StatelessWidget {
             const SizedBox(height: 8),
             LabelChipsRow(
               labels: item.displayLabels,
-              labelText: (label) => tx('labels.$label', label),
+              labelText: (label) => trOr('labels.$label', label),
               leading: [
                 OriginBadge(
                   propertyType: item.propertyType,
-                  ownerLabel: tx('common.owner', 'Propietario'),
-                  linkedLabel: tx('common.linked', 'Enlace'),
-                  forkLabel: tx('common.fork', 'Fork'),
+                  ownerLabel: tx('common.owner'),
+                  linkedLabel: tx('common.linked'),
+                  forkLabel: tx('common.fork'),
                 ),
                 TokenUsageBadge(
                   tokensIn: item.tokensIn,
                   tokensOut: item.tokensOut,
-                  tooltip: tx('agents.tokens_tooltip', 'Tokens consumidos'),
+                  tooltip: tx('agents.tokens_tooltip'),
                 ),
               ],
             ),
@@ -208,72 +209,49 @@ class AgentCard extends StatelessWidget {
               children: [
                 Tooltip(
                   message: item.connectionId.isEmpty
-                      ? tx(
-                          'agents.chat_no_connection',
-                          'Configura una conexión para este agente',
-                        )
+                      ? tx('agents.chat_no_connection')
                       : '',
                   child: PrimaryButton.icon(
                     onPressed: item.connectionId.isEmpty ? null : onChat,
                     icon: const Icon(Icons.chat_bubble_outline),
-                    label: Text(tx('agents.chat_action', 'Chat')),
+                    label: Text(tx('agents.chat_action')),
                   ),
                 ),
                 const Spacer(),
                 if (!item.readOnly)
                   ActionIconButton(
                     icon: Icons.edit_outlined,
-                    tooltip: tx('common.edit', 'Editar'),
+                    tooltip: tx('common.edit'),
                     onPressed: onEdit,
                   ),
                 ResourceGraphButton(
-                  tooltip: tx('agents.graph_tooltip', 'Ver grafo de contenido'),
+                  tooltip: tx('agents.graph_tooltip'),
                   dialogTitle: item.name,
-                  buildGraph: () =>
-                      agentGraph(agent: item, names: _graphNames),
-                  closeLabel: tx('common.close', 'Cerrar'),
-                  searchHint: tx('graph.search_hint', 'Buscar en el grafo...'),
-                  sortTooltip: tx('graph.sort_tooltip', 'Ordenar'),
+                  buildGraph: () => agentGraph(agent: item, names: _graphNames),
+                  closeLabel: tx('common.close'),
+                  searchHint: tx('graph.search_hint'),
+                  sortTooltip: tx('graph.sort_tooltip'),
                   sortHierarchyVerticalLabel: tx(
                     'graph.sort_hierarchy_vertical',
-                    'Jerárquico (arriba-abajo)',
                   ),
                   sortHierarchyHorizontalLabel: tx(
                     'graph.sort_hierarchy_horizontal',
-                    'Jerárquico (izquierda-derecha)',
                   ),
-                  sortGalaxyLabel: tx('graph.sort_galaxy', 'Galaxia'),
-                  showLabelsTooltip: tx(
-                    'graph.show_labels_tooltip',
-                    'Mostrar nombres',
-                  ),
-                  hideLabelsTooltip: tx(
-                    'graph.hide_labels_tooltip',
-                    'Ocultar nombres',
-                  ),
-                  quickViewDescriptionLabel: tx(
-                    'graph.quick_view_description',
-                    'Descripción',
-                  ),
+                  sortGalaxyLabel: tx('graph.sort_galaxy'),
+                  showLabelsTooltip: tx('graph.show_labels_tooltip'),
+                  hideLabelsTooltip: tx('graph.hide_labels_tooltip'),
+                  quickViewDescriptionLabel: tx('graph.quick_view_description'),
                   quickViewNoDescriptionLabel: tx(
                     'graph.quick_view_no_description',
-                    'Sin descripción',
                   ),
-                  quickViewConnectionsLabel: tx(
-                    'graph.quick_view_connections',
-                    'Conexiones',
-                  ),
+                  quickViewConnectionsLabel: tx('graph.quick_view_connections'),
                   quickViewNoConnectionsLabel: tx(
                     'graph.quick_view_no_connections',
-                    'Sin conexiones',
                   ),
-                  emptyLabel: tx(
-                    'agents.graph_empty',
-                    'Este agente todavía no tiene skills, knowledge, conexión ni memoria.',
-                  ),
+                  emptyLabel: tx('agents.graph_empty'),
                 ),
                 OverflowMenuButton(
-                  tooltip: tx('common.more_actions', 'Más acciones'),
+                  tooltip: tx('common.more_actions'),
                   actions: _overflowActions(),
                 ),
               ],

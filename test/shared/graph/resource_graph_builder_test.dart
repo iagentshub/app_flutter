@@ -66,9 +66,7 @@ void main() {
 
   test('un pack cuelga su jerarquía real de carpetas y ficheros', () {
     final graph = agentGraph(agent: _agent, names: _names);
-    final porTipo = {
-      for (final node in graph.nodes) node.label: node.type,
-    };
+    final porTipo = {for (final node in graph.nodes) node.label: node.type};
 
     expect(porTipo['estilo'], 'knowledge_directory');
     expect(porTipo['tono.md'], 'knowledge');

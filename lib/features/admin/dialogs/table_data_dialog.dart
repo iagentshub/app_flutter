@@ -11,7 +11,7 @@ class _TableDataDialog extends StatefulWidget {
   final MetadataRepository repository;
   final String token;
   final MetadataTable table;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<_TableDataDialog> createState() => _TableDataDialogState();
@@ -62,10 +62,7 @@ class _TableDataDialogState extends State<_TableDataDialog> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = widget.tx(
-          'admin.error_generic',
-          'No se pudo completar la acción',
-        );
+        _error = widget.tx('admin.error_generic');
         _loading = false;
       });
     }
@@ -97,7 +94,7 @@ class _TableDataDialogState extends State<_TableDataDialog> {
                   ),
                   AppIconButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    tooltip: widget.tx('common.actions.close', 'Cerrar'),
+                    tooltip: widget.tx('common.actions.close'),
                     icon: const Icon(Icons.close),
                   ),
                 ],
@@ -109,10 +106,7 @@ class _TableDataDialogState extends State<_TableDataDialog> {
                     child: TextField(
                       controller: _queryController,
                       decoration: InputDecoration(
-                        labelText: widget.tx(
-                          'admin.metadata_search_in_table',
-                          'Buscar en tabla',
-                        ),
+                        labelText: widget.tx('admin.metadata_search_in_table'),
                       ),
                       onSubmitted: (_) {
                         _page = 1;
@@ -126,7 +120,7 @@ class _TableDataDialogState extends State<_TableDataDialog> {
                       _page = 1;
                       _load();
                     },
-                    child: Text(widget.tx('common.search', 'Buscar')),
+                    child: Text(widget.tx('common.search')),
                   ),
                 ],
               ),
@@ -159,7 +153,6 @@ class _TableDataDialogState extends State<_TableDataDialog> {
                                             Text(
                                               widget.tx(
                                                 'admin.metadata_no_data',
-                                                'Sin datos',
                                               ),
                                             ),
                                           ),
@@ -171,7 +164,6 @@ class _TableDataDialogState extends State<_TableDataDialog> {
                                               i == 0
                                                   ? widget.tx(
                                                       'admin.metadata_no_data',
-                                                      'Sin datos',
                                                     )
                                                   : '',
                                             ),
@@ -208,7 +200,7 @@ class _TableDataDialogState extends State<_TableDataDialog> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '${widget.tx('admin.table_count', 'Total')}: ${data.total} · ${data.page}/${data.pages == 0 ? 1 : data.pages}',
+                      '${widget.tx('admin.table_count')}: ${data.total} · ${data.page}/${data.pages == 0 ? 1 : data.pages}',
                     ),
                     Wrap(
                       spacing: 8,

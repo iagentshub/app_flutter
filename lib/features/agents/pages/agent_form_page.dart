@@ -40,7 +40,7 @@ class AgentFormPage extends StatefulWidget {
 
   final ApiClient apiClient;
   final String token;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
   final Map<String, dynamic>? initial;
   final bool requireQualityPrompt;
 
@@ -95,8 +95,8 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
       _selectedLabels.contains('public') ? 'public' : 'private';
 
   String get _title => widget.initial == null
-      ? widget.tx('agents.new_title', 'Nuevo agente')
-      : widget.tx('agents.edit_title', 'Editar agente');
+      ? widget.tx('agents.new_title')
+      : widget.tx('agents.edit_title');
 
   @override
   void initState() {
@@ -280,7 +280,7 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
         AgentPublishDependencyOption(
           key: 'skill:$id',
           name: item?.name ?? id,
-          typeLabel: widget.tx('resources.skill', 'Skill'),
+          typeLabel: widget.tx('resources.skill'),
           alreadyPublic: item != null && isPublic(item.labels, item.scope),
         ),
       );
@@ -293,7 +293,7 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
         AgentPublishDependencyOption(
           key: 'knowledge:$id',
           name: item?.title ?? id,
-          typeLabel: widget.tx('resources.knowledge', 'Conocimiento'),
+          typeLabel: widget.tx('resources.knowledge'),
           alreadyPublic: item != null && isPublic(item.labels, item.scope),
         ),
       );
@@ -306,10 +306,7 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
         AgentPublishDependencyOption(
           key: 'knowledge_pack:$id',
           name: pack?.name ?? id,
-          typeLabel: widget.tx(
-            'resources.knowledge_pack',
-            'Pack de conocimiento',
-          ),
+          typeLabel: widget.tx('resources.knowledge_pack'),
           alreadyPublic: pack != null && isPublic(pack.labels, pack.scope),
         ),
       );
@@ -322,7 +319,7 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
         AgentPublishDependencyOption(
           key: 'prompt:$id',
           name: item?.name ?? id,
-          typeLabel: widget.tx('resources.prompt', 'Prompt'),
+          typeLabel: widget.tx('resources.prompt'),
           alreadyPublic: item != null && isPublic(item.labels, item.scope),
         ),
       );
@@ -333,7 +330,7 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
         AgentPublishDependencyOption(
           key: 'tool:$id',
           name: item?.name ?? id,
-          typeLabel: widget.tx('resources.tool', 'Tool'),
+          typeLabel: widget.tx('resources.tool'),
           alreadyPublic: item != null && isPublic(item.labels, item.scope),
         ),
       );
@@ -344,7 +341,7 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
         AgentPublishDependencyOption(
           key: 'memory:$memoryFile',
           name: memoryFile,
-          typeLabel: widget.tx('resources.memory', 'Memoria'),
+          typeLabel: widget.tx('resources.memory'),
         ),
       );
     }
@@ -380,7 +377,7 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
               type: AgentResourceType.knowledgePack,
               title: pack.name,
               subtitle: widget
-                  .tx('agents.pack_file_count', '{{count}} archivos')
+                  .tx('agents.pack_file_count')
                   .replaceAll('{{count}}', '${pack.fileCount}'),
             ),
           for (final prompt in _prompts)
@@ -434,7 +431,7 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
                 key: const ValueKey('agent-form-save'),
                 onPressed: _submit,
                 icon: const Icon(Icons.check, size: 18),
-                label: Text(widget.tx('common.save', 'Guardar')),
+                label: Text(widget.tx('common.save')),
               ),
             ),
           ],
@@ -458,27 +455,10 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
                             isScrollable: true,
                             tabAlignment: TabAlignment.start,
                             tabs: [
-                              Tab(
-                                text: widget.tx('agents.tab_basic', 'Básico'),
-                              ),
-                              Tab(
-                                text: widget.tx(
-                                  'agents.tab_connection',
-                                  'Conexión',
-                                ),
-                              ),
-                              Tab(
-                                text: widget.tx(
-                                  'agents.tab_knowledge',
-                                  'Conocimiento',
-                                ),
-                              ),
-                              Tab(
-                                text: widget.tx(
-                                  'agents.tab_advanced',
-                                  'Avanzado',
-                                ),
-                              ),
+                              Tab(text: widget.tx('agents.tab_basic')),
+                              Tab(text: widget.tx('agents.tab_connection')),
+                              Tab(text: widget.tx('agents.tab_knowledge')),
+                              Tab(text: widget.tx('agents.tab_advanced')),
                             ],
                           ),
                         ),

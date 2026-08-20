@@ -1,12 +1,15 @@
 import 'package:app_flutter/features/workflows/cards/llm_orchestration_card.dart';
 import 'package:app_flutter/models/connections/connection_models.dart';
 import 'package:app_flutter/models/workflows/llm_orchestration_models.dart';
+import 'package:app_flutter/utils/i18n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-String _tx(String path, String fallback) => fallback;
+import 'support/i18n_de_prueba.dart';
 
 void main() {
+  setUp(cargarTraduccionesDePrueba);
+
   for (final width in [360.0, 768.0, 1024.0, 1440.0, 1920.0]) {
     testWidgets('LLM orchestration card stays compact at ${width.toInt()} px', (
       tester,
@@ -49,7 +52,7 @@ void main() {
               child: LlmOrchestrationCard(
                 item: item,
                 connectionsById: connections,
-                tx: _tx,
+                tx: tr,
                 onToggleActive: () {},
                 onEdit: () {},
                 onConfigure: () {},

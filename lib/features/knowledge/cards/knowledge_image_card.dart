@@ -36,7 +36,7 @@ extension _KnowledgeImageCard on _KnowledgePageState {
             const SizedBox(height: 8),
             LabelChipsRow(
               labels: item.displayLabels,
-              labelText: (label) => _tx('labels.$label', label),
+              labelText: (label) => trOr('labels.$label', label),
             ),
             if (!item.readOnly) ...[
               const SizedBox(height: 10),
@@ -46,17 +46,17 @@ extension _KnowledgeImageCard on _KnowledgePageState {
                   _buildKnowledgeItemGraphButton(item),
                   ActionIconButton(
                     icon: Icons.edit_outlined,
-                    tooltip: _tx('common.edit', 'Editar'),
+                    tooltip: _tx('common.edit'),
                     onPressed: () => _editItem(item),
                   ),
                   ActionIconButton(
                     icon: Icons.group_add_outlined,
-                    tooltip: _tx('common.share_group', 'Compartir con grupo'),
+                    tooltip: _tx('common.share_group'),
                     onPressed: () => _shareItem(item),
                   ),
                   ActionIconButton(
                     icon: Icons.delete_outline,
-                    tooltip: _tx('common.delete', 'Eliminar'),
+                    tooltip: _tx('common.delete'),
                     danger: true,
                     onPressed: () => _deleteItem(item),
                   ),

@@ -9,7 +9,7 @@ class _OwnerPickerDialog extends StatefulWidget {
 
   final String currentOwner;
   final List<String> usernames;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<_OwnerPickerDialog> createState() => _OwnerPickerDialogState();
@@ -22,7 +22,7 @@ class _OwnerPickerDialogState extends State<_OwnerPickerDialog> {
   Widget build(BuildContext context) {
     final tx = widget.tx;
     return AlertDialog(
-      title: Text(tx('admin.change_owner_title', 'Cambiar propietario')),
+      title: Text(tx('admin.change_owner_title')),
       content: SizedBox(
         width: dialogContentWidth(context, 360),
         child: Autocomplete<String>(
@@ -37,12 +37,11 @@ class _OwnerPickerDialogState extends State<_OwnerPickerDialog> {
               controller: controller,
               focusNode: focusNode,
               decoration: InputDecoration(
-                labelText: tx('admin.change_owner_hint', 'Nuevo propietario'),
-                helperText: tx('admin.change_owner_current', 'Actual: {owner}')
-                    .replaceAll(
-                      '{owner}',
-                      widget.currentOwner.isEmpty ? '—' : widget.currentOwner,
-                    ),
+                labelText: tx('admin.change_owner_hint'),
+                helperText: tx('admin.change_owner_current').replaceAll(
+                  '{owner}',
+                  widget.currentOwner.isEmpty ? '—' : widget.currentOwner,
+                ),
               ),
               onChanged: (v) => setState(() => _selected = v),
             );
@@ -52,13 +51,13 @@ class _OwnerPickerDialogState extends State<_OwnerPickerDialog> {
       actions: [
         TertiaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(tx('common.cancel', 'Cancelar')),
+          child: Text(tx('common.cancel')),
         ),
         PrimaryButton(
           onPressed: _selected.trim().isEmpty
               ? null
               : () => Navigator.of(context).pop(_selected.trim()),
-          child: Text(tx('admin.action_change_owner', 'Cambiar propietario')),
+          child: Text(tx('admin.action_change_owner')),
         ),
       ],
     );
@@ -69,7 +68,7 @@ class _UserEditDialog extends StatefulWidget {
   const _UserEditDialog({required this.user, required this.tx});
 
   final Map<String, dynamic> user;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<_UserEditDialog> createState() => _UserEditDialogState();
@@ -99,7 +98,7 @@ class _UserEditDialogState extends State<_UserEditDialog> {
     final email = (widget.user['email'] ?? widget.user['username'] ?? '')
         .toString();
     return AlertDialog(
-      title: Text(widget.tx('admin.edit_user_title', 'Editar usuario')),
+      title: Text(widget.tx('admin.edit_user_title')),
       content: SizedBox(
         width: dialogContentWidth(context, 420),
         child: Column(
@@ -111,16 +110,16 @@ class _UserEditDialogState extends State<_UserEditDialog> {
             DropdownButtonFormField<String>(
               initialValue: _role,
               decoration: InputDecoration(
-                labelText: widget.tx('admin.field_role', 'Rol'),
+                labelText: widget.tx('admin.field_role'),
               ),
               items: [
                 DropdownMenuItem(
                   value: 'standard',
-                  child: Text(widget.tx('admin.role_standard', 'Estándar')),
+                  child: Text(widget.tx('admin.role_standard')),
                 ),
                 DropdownMenuItem(
                   value: 'admin',
-                  child: Text(widget.tx('admin.role_admin', 'Admin')),
+                  child: Text(widget.tx('admin.role_admin')),
                 ),
               ],
               onChanged: (v) => setState(() => _role = v ?? 'standard'),
@@ -128,7 +127,7 @@ class _UserEditDialogState extends State<_UserEditDialog> {
             const SizedBox(height: 10),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(widget.tx('admin.field_active', 'Activo')),
+              title: Text(widget.tx('admin.field_active')),
               value: _active,
               onChanged: (v) => setState(() => _active = v),
             ),
@@ -137,10 +136,7 @@ class _UserEditDialogState extends State<_UserEditDialog> {
               controller: _passwordController,
               obscureText: true,
               decoration: InputDecoration(
-                labelText: widget.tx(
-                  'admin.field_password_optional',
-                  'Nueva contraseña (opcional)',
-                ),
+                labelText: widget.tx('admin.field_password_optional'),
               ),
             ),
           ],
@@ -149,7 +145,7 @@ class _UserEditDialogState extends State<_UserEditDialog> {
       actions: [
         TertiaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(widget.tx('common.cancel', 'Cancelar')),
+          child: Text(widget.tx('common.cancel')),
         ),
         PrimaryButton(
           onPressed: () => Navigator.of(context).pop({
@@ -157,7 +153,7 @@ class _UserEditDialogState extends State<_UserEditDialog> {
             'is_active': _active,
             'password': _passwordController.text.trim(),
           }),
-          child: Text(widget.tx('common.save', 'Guardar')),
+          child: Text(widget.tx('common.save')),
         ),
       ],
     );
@@ -167,7 +163,7 @@ class _UserEditDialogState extends State<_UserEditDialog> {
 class _UserCreateDialog extends StatefulWidget {
   const _UserCreateDialog({required this.tx});
 
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<_UserCreateDialog> createState() => _UserCreateDialogState();
@@ -205,7 +201,7 @@ class _UserCreateDialogState extends State<_UserCreateDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.tx('admin.create_user_title', 'Nuevo usuario')),
+      title: Text(widget.tx('admin.create_user_title')),
       content: SizedBox(
         width: dialogContentWidth(context, 420),
         child: Form(
@@ -218,10 +214,7 @@ class _UserCreateDialogState extends State<_UserCreateDialog> {
                 autocorrect: false,
                 textCapitalization: TextCapitalization.none,
                 decoration: InputDecoration(
-                  labelText: widget.tx(
-                    'admin.field_username',
-                    'Usuario público',
-                  ),
+                  labelText: widget.tx('admin.field_username'),
                 ),
                 validator: Validators.username,
               ),
@@ -230,20 +223,17 @@ class _UserCreateDialogState extends State<_UserCreateDialog> {
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
-                  labelText: widget.tx('admin.field_email', 'Email'),
+                  labelText: widget.tx('admin.field_email'),
                 ),
                 validator: (value) => (value == null || value.trim().isEmpty)
-                    ? widget.tx('agents.name_required', 'Obligatorio')
+                    ? widget.tx('agents.name_required')
                     : null,
               ),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _displayNameController,
                 decoration: InputDecoration(
-                  labelText: widget.tx(
-                    'admin.field_display_name',
-                    'Nombre para mostrar',
-                  ),
+                  labelText: widget.tx('admin.field_display_name'),
                 ),
               ),
               const SizedBox(height: 10),
@@ -251,26 +241,26 @@ class _UserCreateDialogState extends State<_UserCreateDialog> {
                 controller: _passwordController,
                 obscureText: true,
                 decoration: InputDecoration(
-                  labelText: widget.tx('admin.field_password', 'Contraseña'),
+                  labelText: widget.tx('admin.field_password'),
                 ),
                 validator: (value) => (value == null || value.trim().length < 4)
-                    ? widget.tx('agents.name_required', 'Obligatorio')
+                    ? widget.tx('agents.name_required')
                     : null,
               ),
               const SizedBox(height: 10),
               DropdownButtonFormField<String>(
                 initialValue: _role,
                 decoration: InputDecoration(
-                  labelText: widget.tx('admin.field_role', 'Rol'),
+                  labelText: widget.tx('admin.field_role'),
                 ),
                 items: [
                   DropdownMenuItem(
                     value: 'standard',
-                    child: Text(widget.tx('admin.role_standard', 'Estándar')),
+                    child: Text(widget.tx('admin.role_standard')),
                   ),
                   DropdownMenuItem(
                     value: 'admin',
-                    child: Text(widget.tx('admin.role_admin', 'Admin')),
+                    child: Text(widget.tx('admin.role_admin')),
                   ),
                 ],
                 onChanged: (v) => setState(() => _role = v ?? 'standard'),
@@ -282,11 +272,11 @@ class _UserCreateDialogState extends State<_UserCreateDialog> {
       actions: [
         TertiaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(widget.tx('common.cancel', 'Cancelar')),
+          child: Text(widget.tx('common.cancel')),
         ),
         PrimaryButton(
           onPressed: _submit,
-          child: Text(widget.tx('common.create', 'Crear')),
+          child: Text(widget.tx('common.create')),
         ),
       ],
     );

@@ -8,7 +8,6 @@ class AppSidebarRail extends StatelessWidget {
   const AppSidebarRail({
     super.key,
     required this.isAdmin,
-    required this.role,
     required this.location,
     required this.initial,
     required this.tx,
@@ -18,10 +17,9 @@ class AppSidebarRail extends StatelessWidget {
   });
 
   final bool isAdmin;
-  final String role;
   final String location;
   final String initial;
-  final String Function(String key, String fallback) tx;
+  final String Function(String key) tx;
   final ValueChanged<String> onNavigate;
   final VoidCallback onExpand;
   final VoidCallback onLogout;
@@ -30,9 +28,11 @@ class AppSidebarRail extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final tokens = _SidebarTokens.of(context);
-    final expandTooltip = tx('sidebar_show', 'Mostrar menú');
+    final expandTooltip = tx('sidebar_show');
     final groups = <List<_NavItem>>[
-      _visibleMainItems(role),
+      // Sin filtrar por rol: ver el comentario del mismo punto en
+      // app_shell_navigation.dart.
+      _mainItems,
       _secondaryItems,
       if (isAdmin) _adminItems,
     ];
@@ -64,7 +64,7 @@ class AppSidebarRail extends StatelessWidget {
                     ),
                     child: _RailButton(
                       icon: item.icon,
-                      tooltip: tx(item.labelKey, item.labelKey),
+                      tooltip: trOr(item.labelKey, item.labelKey),
                       selected: location == item.route,
                       onTap: () => onNavigate(item.route),
                     ),
@@ -87,7 +87,7 @@ class AppSidebarRail extends StatelessWidget {
           ),
         ),
         Tooltip(
-          message: tx('logout', 'Cerrar sesión'),
+          message: tx('logout'),
           child: IconButton(
             onPressed: onLogout,
             icon: const Icon(Icons.logout_rounded, size: 20),

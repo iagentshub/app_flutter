@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../utils/i18n.dart';
 
 import '../models/workflow_graph_validation.dart';
 
@@ -21,7 +22,7 @@ class WorkflowIssuesPanel extends StatelessWidget {
   final String title;
 
   /// Traduce la clave i18n del problema; recibe también el texto por defecto.
-  final String Function(String key, String fallback) translate;
+  final String Function(String key) translate;
 
   @override
   Widget build(BuildContext context) {
@@ -63,9 +64,7 @@ class WorkflowIssuesPanel extends StatelessWidget {
               itemCount: issues.length,
               itemBuilder: (context, index) {
                 final issue = issues[index];
-                final message = issue.render(
-                  translate(issue.key, issue.fallback),
-                );
+                final message = issue.render(tr(issue.key));
                 final nodeId = issue.nodeId;
                 return InkWell(
                   onTap: nodeId == null ? null : () => onSelectNode(nodeId),

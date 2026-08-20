@@ -15,7 +15,7 @@ class _MembersDialog extends StatefulWidget {
   final GroupItem group;
   final String currentUsername;
   final bool canManage;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<_MembersDialog> createState() => _MembersDialogState();
@@ -66,12 +66,9 @@ class _MembersDialogState extends State<_MembersDialog>
   Future<void> _removeMember(String username) async {
     try {
       await _repository.removeMember(widget.token, widget.group.id, username);
-      showMessage(widget.tx('groups.member_removed', 'Miembro eliminado'));
+      showMessage(widget.tx('groups.member_removed'));
     } catch (_) {
-      showMessage(
-        widget.tx('groups.create_error', 'No se pudo crear el grupo'),
-        isError: true,
-      );
+      showMessage(widget.tx('groups.create_error'), isError: true);
     }
   }
 
@@ -86,9 +83,7 @@ class _MembersDialogState extends State<_MembersDialog>
     final scheme = Theme.of(context).colorScheme;
 
     return AlertDialog(
-      title: Text(
-        '${widget.tx('groups.members', 'Miembros')} · ${widget.group.name}',
-      ),
+      title: Text('${widget.tx('groups.members')} · ${widget.group.name}'),
       contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
       content: SizedBox(
         width: dialogContentWidth(context, 480),
@@ -153,10 +148,7 @@ class _MembersDialogState extends State<_MembersDialog>
                                 const SizedBox(width: 4),
                                 ActionIconButton(
                                   icon: Icons.person_remove_outlined,
-                                  tooltip: widget.tx(
-                                    'common.delete',
-                                    'Eliminar',
-                                  ),
+                                  tooltip: widget.tx('common.delete'),
                                   danger: true,
                                   onPressed: () => _removeMember(username),
                                 ),
@@ -169,12 +161,7 @@ class _MembersDialogState extends State<_MembersDialog>
                     if (_invitations.isNotEmpty) ...[
                       const SizedBox(height: 20),
                       Text(
-                        widget
-                            .tx(
-                              'groups.pending_invitations',
-                              'Invitaciones pendientes',
-                            )
-                            .toUpperCase(),
+                        widget.tx('groups.pending_invitations').toUpperCase(),
                         style: TextStyle(
                           fontSize: FncFonts.size12,
                           fontWeight: FontWeight.w700,
@@ -194,10 +181,7 @@ class _MembersDialogState extends State<_MembersDialog>
                                 Expanded(child: Text(username)),
                                 ActionIconButton(
                                   icon: Icons.close,
-                                  tooltip: widget.tx(
-                                    'common.cancel',
-                                    'Cancelar',
-                                  ),
+                                  tooltip: widget.tx('common.cancel'),
                                   onPressed: () => _cancelInvitation(
                                     (inv['id'] ?? '').toString(),
                                   ),
@@ -216,7 +200,7 @@ class _MembersDialogState extends State<_MembersDialog>
       actions: [
         PrimaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(widget.tx('common.cancel', 'Cancelar')),
+          child: Text(widget.tx('common.cancel')),
         ),
       ],
     );

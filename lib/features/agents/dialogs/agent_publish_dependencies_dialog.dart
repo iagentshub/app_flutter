@@ -21,7 +21,7 @@ Future<Set<String>?> showAgentPublishDependenciesDialog({
   required BuildContext context,
   required List<AgentPublishDependencyOption> options,
   required Set<String> initialSelection,
-  required String Function(String path, String fallback) tx,
+  required String Function(String path) tx,
 }) => showDialog<Set<String>>(
   context: context,
   builder: (_) => _AgentPublishDependenciesDialog(
@@ -40,7 +40,7 @@ class _AgentPublishDependenciesDialog extends StatefulWidget {
 
   final List<AgentPublishDependencyOption> options;
   final Set<String> initialSelection;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<_AgentPublishDependenciesDialog> createState() =>
@@ -62,9 +62,7 @@ class _AgentPublishDependenciesDialogState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return AlertDialog(
-      title: Text(
-        widget.tx('agents.publish_dependencies_title', 'Publicar agente'),
-      ),
+      title: Text(widget.tx('agents.publish_dependencies_title')),
       contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
       content: SizedBox(
         width: dialogContentWidth(context, 560),
@@ -72,12 +70,7 @@ class _AgentPublishDependenciesDialogState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              widget.tx(
-                'agents.publish_dependencies_help',
-                'Selecciona qué dependencias quieres publicar y enlazar al agente.',
-              ),
-            ),
+            Text(widget.tx('agents.publish_dependencies_help')),
             const SizedBox(height: 8),
             Row(
               children: [
@@ -89,10 +82,7 @@ class _AgentPublishDependenciesDialogState
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    widget.tx(
-                      'agents.connections_never_public',
-                      'Las conexiones nunca se publican.',
-                    ),
+                    widget.tx('agents.connections_never_public'),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -111,14 +101,12 @@ class _AgentPublishDependenciesDialogState
                         .map((option) => option.key)
                         .toSet(),
                   ),
-                  child: Text(
-                    widget.tx('common.select_all', 'Seleccionar todo'),
-                  ),
+                  child: Text(widget.tx('common.select_all')),
                 ),
                 TertiaryButton(
                   key: const ValueKey('publish-dependencies-clear'),
                   onPressed: () => setState(_selected.clear),
-                  child: Text(widget.tx('common.clear', 'Limpiar')),
+                  child: Text(widget.tx('common.clear')),
                 ),
               ],
             ),
@@ -136,7 +124,7 @@ class _AgentPublishDependenciesDialogState
                     title: Text(option.name),
                     subtitle: Text(
                       option.alreadyPublic
-                          ? '${option.typeLabel} · ${widget.tx('agents.already_public', 'Ya público')}'
+                          ? '${option.typeLabel} · ${widget.tx('agents.already_public')}'
                           : option.typeLabel,
                     ),
                     onChanged: (value) => setState(() {
@@ -156,12 +144,12 @@ class _AgentPublishDependenciesDialogState
       actions: [
         TertiaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(widget.tx('common.cancel', 'Cancelar')),
+          child: Text(widget.tx('common.cancel')),
         ),
         PrimaryButton(
           key: const ValueKey('publish-dependencies-confirm'),
           onPressed: () => Navigator.of(context).pop(_selected),
-          child: Text(widget.tx('agents.publish', 'Publicar')),
+          child: Text(widget.tx('agents.publish')),
         ),
       ],
     );

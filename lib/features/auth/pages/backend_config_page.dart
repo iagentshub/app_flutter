@@ -81,7 +81,7 @@ class _BackendConfigPageState extends State<BackendConfigPage> {
     );
   }
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   Future<void> _openAddDialog() async {
     final saved = await showDialog<SavedBackend>(
@@ -101,10 +101,7 @@ class _BackendConfigPageState extends State<BackendConfigPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _tx(
-              'backend_config.added_toast',
-              'Backend "{name}" añadido',
-            ).replaceAll('{name}', saved.name),
+            _tx('backend_config.added_toast').replaceAll('{name}', saved.name),
           ),
         ),
       );
@@ -128,13 +125,12 @@ class _BackendConfigPageState extends State<BackendConfigPage> {
   Future<void> _confirmDelete(SavedBackend backend) async {
     final confirm = await showConfirmActionDialog(
       context,
-      title: _tx('backend_config.delete_dialog_title', 'Eliminar backend'),
+      title: _tx('backend_config.delete_dialog_title'),
       message: _tx(
         'backend_config.delete_dialog_body',
-        '¿Seguro que quieres eliminar "{name}"?',
       ).replaceAll('{name}', backend.name),
-      cancelLabel: _tx('backend_config.cancel', 'Cancelar'),
-      confirmLabel: _tx('backend_config.delete_confirm', 'Eliminar'),
+      cancelLabel: _tx('backend_config.cancel'),
+      confirmLabel: _tx('backend_config.delete_confirm'),
       destructive: true,
     );
     if (confirm) {
@@ -149,9 +145,7 @@ class _BackendConfigPageState extends State<BackendConfigPage> {
     final connectionError = widget.backendController.lastConnectionError;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_tx('backend_config.page_title', 'Configurar backend')),
-      ),
+      appBar: AppBar(title: Text(_tx('backend_config.page_title'))),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -160,17 +154,14 @@ class _BackendConfigPageState extends State<BackendConfigPage> {
               padding: const EdgeInsets.all(16),
               children: [
                 Text(
-                  _tx('backend_config.list_title', 'Backends disponibles'),
+                  _tx('backend_config.list_title'),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _tx(
-                    'backend_config.list_subtitle',
-                    'Elige a cuál conectarte, o añade uno nuevo.',
-                  ),
+                  _tx('backend_config.list_subtitle'),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 14),
@@ -191,24 +182,14 @@ class _BackendConfigPageState extends State<BackendConfigPage> {
                     errorMessage: (selected && connectionError != null)
                         ? connectionError
                         : null,
-                    officialLabel: _tx(
-                      'backend_config.official_badge',
-                      'Oficial',
-                    ),
-                    healthOkLabel: _tx('backend_config.test_ok', 'Conexión OK'),
+                    officialLabel: _tx('backend_config.official_badge'),
+                    healthOkLabel: _tx('backend_config.test_ok'),
                     healthErrorLabel: _tx(
                       'backend_config.test_connection_error_short',
-                      'Sin conexión',
                     ),
-                    healthUnknownLabel: _tx(
-                      'backend_config.health_unknown',
-                      'Estado desconocido',
-                    ),
-                    editTooltip: _tx('backend_config.edit_tooltip', 'Editar'),
-                    deleteTooltip: _tx(
-                      'backend_config.delete_tooltip',
-                      'Eliminar',
-                    ),
+                    healthUnknownLabel: _tx('backend_config.health_unknown'),
+                    editTooltip: _tx('backend_config.edit_tooltip'),
+                    deleteTooltip: _tx('backend_config.delete_tooltip'),
                     onTap: () =>
                         widget.backendController.setSelectedBackend(option.id),
                     onEdit: (official || savedEntry == null)
@@ -223,9 +204,7 @@ class _BackendConfigPageState extends State<BackendConfigPage> {
                 SecondaryButton.icon(
                   onPressed: _openAddDialog,
                   icon: const Icon(Icons.add),
-                  label: Text(
-                    _tx('backend_config.add_button', 'Añadir backend'),
-                  ),
+                  label: Text(_tx('backend_config.add_button')),
                 ),
               ],
             ),

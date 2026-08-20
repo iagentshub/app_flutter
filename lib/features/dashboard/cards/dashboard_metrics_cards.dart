@@ -99,7 +99,7 @@ class _ActivityBody extends StatelessWidget {
     );
 
     if (daily.isEmpty) {
-      return Text(tx('no_activity', 'Sin actividad todavía'));
+      return Text(tx('no_activity'));
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -107,7 +107,6 @@ class _ActivityBody extends StatelessWidget {
         Text(
           tx(
             'total_tokens_days',
-            'Total: {{total}} tokens ({{days}} días)',
           ).replaceAll('{{total}}', '$total').replaceAll('{{days}}', '$days'),
           style: Theme.of(context).textTheme.bodyMedium,
         ),
@@ -179,8 +178,8 @@ class _TokenUsageBody extends StatelessWidget {
         .map((c) => c['id']?.toString() ?? '')
         .toSet();
 
-    final defaultAgentName = tx('default_agent_name', 'Agente');
-    final defaultConnectionName = tx('default_connection_name', 'Conexión');
+    final defaultAgentName = tx('default_agent_name');
+    final defaultConnectionName = tx('default_connection_name');
 
     List<MapEntry<String, int>> rows;
     if (groupBy == 'agent') {
@@ -227,7 +226,7 @@ class _TokenUsageBody extends StatelessWidget {
     final max = rows.isEmpty ? 1 : rows.first.value;
 
     if (rows.isEmpty) {
-      return Text(tx('no_token_usage', 'Todavía no hay consumo de tokens'));
+      return Text(tx('no_token_usage'));
     }
     return Column(
       children: rows.map((entry) {

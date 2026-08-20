@@ -7,10 +7,7 @@ extension _DocumentActions on _KnowledgePageState {
 
     refresh(() {
       _uploading = true;
-      _packOperationMessage = _tx(
-        'knowledge.document_selecting',
-        'Selecciona el documento',
-      );
+      _packOperationMessage = _tx('knowledge.document_selecting');
     });
     FilePickerResult? result;
     try {
@@ -21,11 +18,8 @@ extension _DocumentActions on _KnowledgePageState {
           if (!mounted) return;
           refresh(() {
             _packOperationMessage = status == FilePickerStatus.picking
-                ? _tx('knowledge.document_reading', 'Leyendo el documento…')
-                : _tx(
-                    'knowledge.document_preparing',
-                    'Preparando el documento…',
-                  );
+                ? _tx('knowledge.document_reading')
+                : _tx('knowledge.document_preparing');
           });
         },
       );
@@ -35,13 +29,7 @@ extension _DocumentActions on _KnowledgePageState {
         _uploading = false;
         _packOperationMessage = null;
       });
-      showMessage(
-        _tx(
-          'knowledge.document_pick_failed',
-          'No se pudo abrir o leer el documento seleccionado',
-        ),
-        isError: true,
-      );
+      showMessage(_tx('knowledge.document_pick_failed'), isError: true);
       return;
     }
     if (!mounted) return;
@@ -53,31 +41,18 @@ extension _DocumentActions on _KnowledgePageState {
 
     final file = result.files.first;
     if (!isSupportedKnowledgePackPath(file.name)) {
-      showMessage(
-        _tx(
-          'knowledge.document_unsupported',
-          'Este formato no se puede convertir en conocimiento',
-        ),
-        isError: true,
-      );
+      showMessage(_tx('knowledge.document_unsupported'), isError: true);
       return;
     }
     final bytes = file.bytes;
     if (bytes == null || bytes.isEmpty) {
-      showMessage(
-        _tx(
-          'knowledge.msg_file_unreadable',
-          'No se pudieron leer los bytes del fichero',
-        ),
-        isError: true,
-      );
+      showMessage(_tx('knowledge.msg_file_unreadable'), isError: true);
       return;
     }
     if (excedeElLimiteDeSubida(bytes.length)) {
       showMessage(
         _tx(
           'knowledge.document_too_large',
-          'El documento supera el límite de {limit}',
         ).replaceAll('{limit}', UploadLimits.formatted),
         isError: true,
       );
@@ -89,10 +64,7 @@ extension _DocumentActions on _KnowledgePageState {
 
     refresh(() {
       _uploading = true;
-      _packOperationMessage = _tx(
-        'knowledge.document_uploading',
-        'Subiendo e indexando el documento…',
-      );
+      _packOperationMessage = _tx('knowledge.document_uploading');
     });
     try {
       await _repository.uploadDocument(
@@ -104,16 +76,12 @@ extension _DocumentActions on _KnowledgePageState {
       showMessage(
         _tx(
           'knowledge.msg_document_uploaded',
-          'Documento subido: {{nombre}}',
         ).replaceAll('{{nombre}}', file.name),
       );
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('knowledge.msg_upload_failed', 'No se pudo subir el documento'),
-        isError: true,
-      );
+      showMessage(_tx('knowledge.msg_upload_failed'), isError: true);
     } finally {
       if (mounted) {
         refresh(() {

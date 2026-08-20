@@ -27,7 +27,7 @@ class _CentinelPageState extends State<CentinelPage>
   late final TabController _tabController;
   late final TranslatedTexts _t;
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   String? get _token => _services.sessionController.gaToken;
 
@@ -64,15 +64,13 @@ class _CentinelPageState extends State<CentinelPage>
   Widget build(BuildContext context) {
     final token = _token;
     if (token == null || token.isEmpty) {
-      return Center(
-        child: Text(_tx('common.no_session', 'No hay sesión activa')),
-      );
+      return Center(child: Text(_tx('common.no_session')));
     }
 
     final tabLabels = [
-      _tx('centinel.tab_functional', 'Funcionalidad'),
-      _tx('centinel.tab_stress', 'Rendimiento'),
-      _tx('centinel.tab_probe', 'Buscar límite'),
+      _tx('centinel.tab_functional'),
+      _tx('centinel.tab_stress'),
+      _tx('centinel.tab_probe'),
     ];
 
     return Column(

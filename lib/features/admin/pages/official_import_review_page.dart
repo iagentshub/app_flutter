@@ -20,7 +20,7 @@ class OfficialImportReviewPage extends StatefulWidget {
   final ImportDraft draft;
   final AdminOfficialSourcesRepository repository;
   final String token;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<OfficialImportReviewPage> createState() =>
@@ -137,9 +137,7 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: Text(
-            widget.tx('official.review_tool', 'Revisar herramienta ejecutable'),
-          ),
+          title: Text(widget.tx('official.review_tool')),
           content: SizedBox(
             width: 760,
             height: 520,
@@ -169,14 +167,8 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
                   enabled: !component.securityBlocked,
                   title: Text(
                     component.securityBlocked
-                        ? widget.tx(
-                            'official.tool_blocked',
-                            'La revisión de seguridad bloquea esta herramienta.',
-                          )
-                        : widget.tx(
-                            'official.tool_accept',
-                            'He revisado el código y acepto importarlo.',
-                          ),
+                        ? widget.tx('official.tool_blocked')
+                        : widget.tx('official.tool_accept'),
                   ),
                   onChanged: (value) =>
                       setDialogState(() => accepted = value == true),
@@ -187,13 +179,13 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
           actions: [
             TertiaryButton(
               onPressed: () => Navigator.pop(context),
-              child: Text(widget.tx('common.cancel', 'Cancelar')),
+              child: Text(widget.tx('common.cancel')),
             ),
             PrimaryButton(
               onPressed: accepted && !component.securityBlocked
                   ? () => Navigator.pop(context, true)
                   : null,
-              child: Text(widget.tx('common.confirm', 'Confirmar')),
+              child: Text(widget.tx('common.confirm')),
             ),
           ],
         ),
@@ -229,7 +221,7 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: Text(widget.tx('official.relations', 'Relaciones del agente')),
+          title: Text(widget.tx('official.relations')),
           content: SizedBox(
             width: 560,
             height: 460,
@@ -254,11 +246,11 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
           actions: [
             TertiaryButton(
               onPressed: () => Navigator.pop(context),
-              child: Text(widget.tx('common.cancel', 'Cancelar')),
+              child: Text(widget.tx('common.cancel')),
             ),
             PrimaryButton(
               onPressed: () => Navigator.pop(context, selected),
-              child: Text(widget.tx('common.save', 'Guardar')),
+              child: Text(widget.tx('common.save')),
             ),
           ],
         ),
@@ -301,16 +293,10 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text(
-            widget.tx('official.confirm_apply', 'Confirmar importación'),
-          ),
+          title: Text(widget.tx('official.confirm_apply')),
           content: Text(
             widget
-                .tx(
-                  'official.diff_summary',
-                  'Se crearán {create}, actualizarán {update} y eliminarán '
-                      '{delete} recursos.',
-                )
+                .tx('official.diff_summary')
                 .replaceAll('{create}', '${diff.counts['create'] ?? 0}')
                 .replaceAll('{update}', '${diff.counts['update'] ?? 0}')
                 .replaceAll('{delete}', '${diff.counts['delete'] ?? 0}'),
@@ -318,11 +304,11 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
           actions: [
             TertiaryButton(
               onPressed: () => Navigator.pop(context, false),
-              child: Text(widget.tx('common.cancel', 'Cancelar')),
+              child: Text(widget.tx('common.cancel')),
             ),
             PrimaryButton(
               onPressed: () => Navigator.pop(context, true),
-              child: Text(widget.tx('official.apply', 'Aplicar cambios')),
+              child: Text(widget.tx('official.apply')),
             ),
           ],
         ),
@@ -347,50 +333,29 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
       if (!mounted) return;
       await showResourceGraphDialog(
         context: context,
-        title: widget.tx('official.preview_graph', 'Grafo previo'),
+        title: widget.tx('official.preview_graph'),
         nodes: graph.nodes,
         edges: graph.edges,
         rootId: graph.rootId,
-        closeLabel: widget.tx('common.close', 'Cerrar'),
-        searchHint: widget.tx('graph.search_hint', 'Buscar en el grafo...'),
-        sortTooltip: widget.tx('graph.sort_tooltip', 'Ordenar'),
-        sortHierarchyVerticalLabel: widget.tx(
-          'graph.sort_hierarchy_vertical',
-          'Jerarquía vertical',
-        ),
+        closeLabel: widget.tx('common.close'),
+        searchHint: widget.tx('graph.search_hint'),
+        sortTooltip: widget.tx('graph.sort_tooltip'),
+        sortHierarchyVerticalLabel: widget.tx('graph.sort_hierarchy_vertical'),
         sortHierarchyHorizontalLabel: widget.tx(
           'graph.sort_hierarchy_horizontal',
-          'Jerarquía horizontal',
         ),
-        sortGalaxyLabel: widget.tx('graph.sort_galaxy', 'Galaxia'),
-        showLabelsTooltip: widget.tx(
-          'graph.show_labels_tooltip',
-          'Mostrar nombres',
-        ),
-        hideLabelsTooltip: widget.tx(
-          'graph.hide_labels_tooltip',
-          'Ocultar nombres',
-        ),
-        quickViewDescriptionLabel: widget.tx(
-          'graph.quick_view_description',
-          'Descripción',
-        ),
+        sortGalaxyLabel: widget.tx('graph.sort_galaxy'),
+        showLabelsTooltip: widget.tx('graph.show_labels_tooltip'),
+        hideLabelsTooltip: widget.tx('graph.hide_labels_tooltip'),
+        quickViewDescriptionLabel: widget.tx('graph.quick_view_description'),
         quickViewNoDescriptionLabel: widget.tx(
           'graph.quick_view_no_description',
-          'Sin descripción',
         ),
-        quickViewConnectionsLabel: widget.tx(
-          'graph.quick_view_connections',
-          'Relaciones',
-        ),
+        quickViewConnectionsLabel: widget.tx('graph.quick_view_connections'),
         quickViewNoConnectionsLabel: widget.tx(
           'graph.quick_view_no_connections',
-          'Sin relaciones',
         ),
-        emptyLabel: widget.tx(
-          'admin.graph_empty',
-          'Este objeto no tiene relaciones',
-        ),
+        emptyLabel: widget.tx('admin.graph_empty'),
       );
     } catch (exception) {
       if (mounted) setState(() => error = exception.toString());
@@ -425,9 +390,7 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
         );
         return Scaffold(
           appBar: AppBar(
-            title: Text(
-              widget.tx('official.review_title', 'Revisar repositorio oficial'),
-            ),
+            title: Text(widget.tx('official.review_title')),
             actions: mobile
                 ? null
                 : [
@@ -435,9 +398,7 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
                       padding: const EdgeInsets.only(right: 12),
                       child: PrimaryButton(
                         onPressed: canApply ? apply : null,
-                        child: Text(
-                          widget.tx('official.apply', 'Aplicar cambios'),
-                        ),
+                        child: Text(widget.tx('official.apply')),
                       ),
                     ),
                   ],
@@ -447,7 +408,7 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
                   minimum: const EdgeInsets.fromLTRB(12, 8, 12, 12),
                   child: PrimaryButton(
                     onPressed: canApply ? apply : null,
-                    child: Text(widget.tx('official.apply', 'Aplicar cambios')),
+                    child: Text(widget.tx('official.apply')),
                   ),
                 )
               : null,
@@ -459,7 +420,8 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
                         padding: EdgeInsets.fromLTRB(padding, 12, padding, 8),
                         sliver: SliverToBoxAdapter(
                           child: _toolbar(
-                            availableWidth: constraints.maxWidth - (padding * 2),
+                            availableWidth:
+                                constraints.maxWidth - (padding * 2),
                             mobile: true,
                           ),
                         ),

@@ -36,7 +36,29 @@
     "close": "Cerrar",
     "not_found": "Página no encontrada",
     "go_home": "Ir al inicio",
-    "delete_confirm_body": "¿Seguro que quieres eliminar \"{{nombre}}\"?"
+    "delete_confirm_body": "¿Seguro que quieres eliminar \"{{nombre}}\"?",
+    "actions": {
+      "delete": "Eliminar",
+      "close": "Cerrar"
+    },
+    "activate": "Activar",
+    "deactivate": "Desactivar",
+    "inactive": "Inactivo",
+    "more_actions": "Más acciones",
+    "clear": "Limpiar",
+    "continue": "Continuar",
+    "description": "Descripción",
+    "import": "Importar",
+    "no_results": "Sin resultados",
+    "refresh": "Actualizar",
+    "select_all": "Seleccionar todo",
+    "status": "Estado",
+    "type": "Tipo",
+    "unnamed": "(sin nombre)",
+    "untitled": "(sin título)",
+    "response_too_large": "La respuesta del servidor supera el límite permitido",
+    "event_too_large": "Un evento del servidor supera el límite permitido",
+    "coming_soon": "Próximamente"
   },
   "groups": {
     "title": "GRUPOS",
@@ -312,7 +334,8 @@
       "reply_you": "Tú",
       "cancel_reply_tooltip": "Cancelar respuesta",
       "msg_create_failed": "No se pudo crear la conversación",
-      "msg_delete_failed": "No se pudo borrar la conversación"
+      "msg_delete_failed": "No se pudo borrar la conversación",
+      "jump_to_last": "Último mensaje"
     },
     "msg_not_editable": "Este agente no es editable (público o compartido)",
     "msg_saved": "Agente guardado",
@@ -324,7 +347,20 @@
     "delete_dialog_title": "Eliminar agente",
     "empty_title": "Todavía sin agentes",
     "empty_action": "Crear el primero",
-    "empty_search_title": "Sin resultados"
+    "empty_search_title": "Sin resultados",
+    "builder_assistant_subtitle": "Define el agente y revisa el borrador antes de crearlo",
+    "builder_assistant_title": "Asistente de diseño",
+    "already_public": "Ya público",
+    "connections_never_public": "Las conexiones nunca se publican.",
+    "field_knowledge_packs": "Packs de conocimiento",
+    "prompt_too_short": "Añade instrucciones más completas (mínimo 90 caracteres)",
+    "publish": "Publicar",
+    "publish_dependencies_help": "Selecciona qué dependencias quieres publicar y enlazar al agente.",
+    "publish_dependencies_title": "Publicar agente",
+    "chat_history_error": "No se pudo cargar el historial de chat",
+    "chat_reply_error": "Error de respuesta del agente",
+    "chat_connection_error": "Error de conexión con el agente",
+    "builder_needs_connection": "Necesitas una conexión LLM para usar el asistente."
   },
   "skill_builder": {
     "create_choice_title": "¿Cómo quieres crear la skill?",
@@ -350,7 +386,9 @@
     "no_connection": "Elige una conexión primero",
     "connection_error": "Error de conexión con el constructor de skills",
     "generic_error": "Error del constructor de skills",
-    "done_action": "Terminar"
+    "done_action": "Terminar",
+    "assistant_subtitle": "Define la skill y revisa el borrador antes de crearla",
+    "assistant_title": "Asistente de diseño"
   },
   "connections": {
     "credential_unreadable_badge": "Requiere atención",
@@ -406,7 +444,8 @@
     "msg_delete_failed": "No se pudo eliminar la conexión",
     "msg_bulk_test_failed": "No se pudo ejecutar test masivo",
     "delete_dialog_title": "Eliminar conexión",
-    "msg_synced": "Sincronizado: {{detalle}}"
+    "msg_synced": "Sincronizado: {{detalle}}",
+    "field_required": "Campo obligatorio"
   },
   "providers": {
     "add_account": "Añadir cuenta",
@@ -562,7 +601,12 @@
     "users_invite_sent": "Invitación enviada a",
     "users_invite_error": "No se pudo enviar la invitación",
     "users_invite_no_group": "Activa un grupo de equipo para invitar usuarios",
-    "users_load_more": "Cargar más"
+    "users_load_more": "Cargar más",
+    "graph": "Ver grafo",
+    "graph_empty": "El recurso no tiene relaciones",
+    "graph_error": "No se pudo cargar el grafo",
+    "load_more": "Cargar más",
+    "link_type_unsupported": "Tipo no soportado para enlazar"
   },
   "labels": {
     "type_label": "Tipo de recurso",
@@ -782,7 +826,8 @@
     "remove_tooltip": "Quitar",
     "invitations_title": "Invitaciones",
     "invitations_need_team": "Activa un grupo compartido para gestionar invitaciones.",
-    "empty_invitations": "No hay invitaciones pendientes."
+    "empty_invitations": "No hay invitaciones pendientes.",
+    "groups_load_error": "No se pudo cargar la lista de grupos"
   },
   "workflow_editor": {
     "add_step_btn": "Añadir paso",
@@ -929,7 +974,17 @@
     "save_success": "Workflow guardado",
     "steps_suffix": "pasos",
     "still_working": "trabajando {{time}}",
-    "timeline_title": "Registro de eventos"
+    "timeline_title": "Registro de eventos",
+    "activated": "Orquestación activada",
+    "deactivated": "Orquestación desactivada",
+    "run_background_hint": "Puedes cerrar: seguirá ejecutándose en segundo plano.",
+    "run_cancelling": "Cancelando…",
+    "run_history_title": "Ejecuciones",
+    "run_open_error": "No se pudo abrir la ejecución",
+    "run_start_error": "No se pudo iniciar la ejecución",
+    "toggle_error": "No se pudo cambiar el estado",
+    "run_history_empty": "Todavía no hay ejecuciones.",
+    "run_status_queued": "En cola"
   },
   "dashboard": {
     "error_generic": "No se pudo cargar el dashboard",
@@ -1013,7 +1068,9 @@
     "group_member": "Miembro",
     "group_teams": "Grupos compartidos",
     "group_invitations": "Invitaciones",
-    "group_manage": "Gestionar"
+    "group_manage": "Gestionar",
+    "toggle_favorite": "Marcar o quitar de favoritos",
+    "test_connections": "Probar conexiones"
   },
   "history": {
     "dialog_title": "Historial de versiones",
@@ -1215,7 +1272,10 @@
     "pack_upload_failed": "No se pudo incluir el directorio",
     "pack_file_count": "{{count}} archivos",
     "pack_delete_title": "Eliminar pack",
-    "pack_delete_confirm": "Se eliminarán el pack y todos sus archivos. ¿Continuar?"
+    "pack_delete_confirm": "Se eliminarán el pack y todos sus archivos. ¿Continuar?",
+    "skills_load_error": "No se pudieron cargar las skills",
+    "no_skills": "No hay skills todavía.",
+    "pick_directory": "Incluir directorio de conocimiento"
   },
   "admin": {
     "tab_general": "General",
@@ -1258,6 +1318,7 @@
     "stat_knowledge": "Knowledge",
     "stat_workflows": "Orquestaciones",
     "stat_conversations": "Conversaciones",
+    "stat_guests": "Invitados",
     "stat_agents_public": "Agentes públicos",
     "stat_agents_private": "Agentes privados",
     "stat_pct_of_total": "{pct}% del total",
@@ -1461,7 +1522,16 @@
     "metadata_col_rows": "Filas",
     "metadata_col_cols": "Columnas",
     "metadata_col_size": "Peso",
-    "metadata_no_data": "Sin datos"
+    "metadata_no_data": "Sin datos",
+    "confirm_delete_prompt": "¿Seguro que quieres eliminar este prompt?",
+    "toast_prompt_deleted": "Prompt eliminado",
+    "centinel_chart_empty": "Inicia la prueba para ver la gráfica",
+    "centinel_run_error": "Error en el run",
+    "llm_semantic_analysis": "LLM · análisis semántico",
+    "last_release": "Última release",
+    "depends_on": "Depende de",
+    "deterministic_rules": "Manual · reglas deterministas",
+    "main_branch": "Rama main"
   },
   "logs": {
     "error_summary": "No se pudo cargar el resumen de logs",
@@ -1695,6 +1765,25 @@
     "tree_discovering": "Descubriendo tests…",
     "tree_filter_placeholder": "Filtrar…",
     "tree_modules_title": "Módulos",
-    "tree_select_all": "Todo"
+    "tree_select_all": "Todo",
+    "stress_rampup_info": "Qué es el ramp-up"
+  },
+  "resources": {
+    "knowledge": "Conocimiento",
+    "knowledge_pack": "Pack de conocimiento",
+    "memory": "Memoria",
+    "prompt": "Prompt",
+    "skill": "Skill",
+    "tool": "Tool"
+  },
+  "auth": {
+    "session_cookie_missing": "El backend no devolvió la cookie de sesión ga_token",
+    "identifier_required": "El usuario o email es obligatorio",
+    "email_required": "El email es obligatorio",
+    "email_invalid": "Email no válido",
+    "username_required": "El usuario es obligatorio",
+    "backend_url_required": "La URL del backend es obligatoria",
+    "backend_not_json": "La respuesta no es JSON válido de iAgents Hub",
+    "backend_incompatible": "El servidor no expone una API compatible de iAgents Hub"
   }
 }

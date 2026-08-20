@@ -8,7 +8,7 @@ extension _ToolActions on _KnowledgePageState {
     final token = _token;
     if (token == null || token.isEmpty) {
       refresh(() {
-        _toolsError = _tx('common.no_session', 'No hay sesión activa');
+        _toolsError = _tx('common.no_session');
         _toolsLoading = false;
       });
       return;
@@ -37,10 +37,7 @@ extension _ToolActions on _KnowledgePageState {
     } catch (_) {
       if (!mounted) return;
       refresh(() {
-        _toolsError = _tx(
-          'knowledge.load_error_tools',
-          'No se pudieron cargar las herramientas',
-        );
+        _toolsError = _tx('knowledge.load_error_tools');
         _toolsLoading = false;
       });
     }
@@ -57,12 +54,7 @@ extension _ToolActions on _KnowledgePageState {
 
   Future<void> _openEditToolDialog(ToolItem item) async {
     if (item.readOnly) {
-      showMessage(
-        _tx(
-          'knowledge.readonly_tool',
-          'Esta herramienta no es editable (del sistema o compartida)',
-        ),
-      );
+      showMessage(_tx('knowledge.readonly_tool'));
       return;
     }
     final token = _token;
@@ -107,15 +99,12 @@ extension _ToolActions on _KnowledgePageState {
           );
         }
       }
-      showMessage(_tx('knowledge.tool_saved', 'Herramienta guardada'));
+      showMessage(_tx('knowledge.tool_saved'));
       return true;
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('knowledge.tool_save_error', 'No se pudo guardar la herramienta'),
-        isError: true,
-      );
+      showMessage(_tx('knowledge.tool_save_error'), isError: true);
     }
     return false;
   }
@@ -128,41 +117,29 @@ extension _ToolActions on _KnowledgePageState {
       await _toolsRepository.setToolActive(token, item.id, activate);
       showMessage(
         activate
-            ? _tx('knowledge.tool_activated', 'Herramienta activada')
-            : _tx('knowledge.tool_deactivated', 'Herramienta desactivada'),
+            ? _tx('knowledge.tool_activated')
+            : _tx('knowledge.tool_deactivated'),
       );
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx(
-          'knowledge.tool_toggle_error',
-          'No se pudo cambiar el estado de la herramienta',
-        ),
-        isError: true,
-      );
+      showMessage(_tx('knowledge.tool_toggle_error'), isError: true);
     }
   }
 
   Future<void> _deleteTool(ToolItem item) async {
     if (item.readOnly) {
-      showMessage(
-        _tx(
-          'knowledge.readonly_tool_delete',
-          'Esta herramienta no se puede eliminar (del sistema o compartida)',
-        ),
-      );
+      showMessage(_tx('knowledge.readonly_tool_delete'));
       return;
     }
     final confirm = await showConfirmActionDialog(
       context,
-      title: _tx('knowledge.delete_tool_title', 'Eliminar herramienta'),
+      title: _tx('knowledge.delete_tool_title'),
       message: _tx(
         'knowledge.delete_tool_confirm',
-        '¿Seguro que quieres eliminar "{name}"?',
       ).replaceAll('{name}', item.name),
-      cancelLabel: _tx('common.cancel', 'Cancelar'),
-      confirmLabel: _tx('common.delete', 'Eliminar'),
+      cancelLabel: _tx('common.cancel'),
+      confirmLabel: _tx('common.delete'),
       destructive: true,
     );
     if (!confirm) return;
@@ -171,17 +148,11 @@ extension _ToolActions on _KnowledgePageState {
     if (token == null || token.isEmpty) return;
     try {
       await _toolsRepository.deleteTool(token, item.scope, item.id);
-      showMessage(_tx('knowledge.tool_deleted', 'Herramienta eliminada'));
+      showMessage(_tx('knowledge.tool_deleted'));
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx(
-          'knowledge.tool_delete_error',
-          'No se pudo eliminar la herramienta',
-        ),
-        isError: true,
-      );
+      showMessage(_tx('knowledge.tool_delete_error'), isError: true);
     }
   }
 
@@ -223,20 +194,14 @@ extension _ToolActions on _KnowledgePageState {
         item.id,
       );
       await FilePicker.saveFile(
-        dialogTitle: _tx('knowledge.download_binary', 'Descargar binario'),
+        dialogTitle: _tx('knowledge.download_binary'),
         fileName: result.filename ?? item.binaryFilename ?? '${item.id}.bin',
         bytes: result.bytes,
       );
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx(
-          'knowledge.binary_download_error',
-          'No se pudo descargar el binario',
-        ),
-        isError: true,
-      );
+      showMessage(_tx('knowledge.binary_download_error'), isError: true);
     }
   }
 }

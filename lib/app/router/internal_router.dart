@@ -8,8 +8,10 @@ import 'package:go_router/go_router.dart';
 // otro sitio devolvería su parte al bundle principal sin que nadie lo note —
 // `test/deferred_routes_test.dart` vigila justo eso.
 import '../../features/admin/pages/admin_page.dart' deferred as admin_page;
-import '../../features/admin/pages/centinel_page.dart' deferred as centinel_page;
-import '../../features/admin/pages/metadata_page.dart' deferred as metadata_page;
+import '../../features/admin/pages/centinel_page.dart'
+    deferred as centinel_page;
+import '../../features/admin/pages/metadata_page.dart'
+    deferred as metadata_page;
 import '../../features/agents/pages/agents_page.dart';
 import '../../features/auth/pages/vscode_auth_page.dart';
 import '../../features/auth/repositories/auth_repository.dart';
@@ -22,7 +24,8 @@ import '../../features/labels/pages/labels_page.dart';
 import '../../features/manager/pages/manager_page.dart';
 import '../../features/memory/pages/memory_page.dart';
 import '../../features/profile/pages/profile_page.dart';
-import '../../features/public/pages/checkout_page.dart' deferred as checkout_page;
+import '../../features/public/pages/checkout_page.dart'
+    deferred as checkout_page;
 import '../../features/public/pages/public_profile_page.dart';
 import '../../features/workflows/pages/workflows_page.dart'
     deferred as workflows_page;

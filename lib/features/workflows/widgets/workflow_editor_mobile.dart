@@ -8,9 +8,9 @@ extension _WorkflowEditorMobile on _WorkflowEditorPageState {
         children: [
           Expanded(
             child: Text(
-              '${_steps.length} ${_tx('workflows.steps_suffix', 'pasos')} · '
+              '${_steps.length} ${_tx('workflows.steps_suffix')} · '
               '${_steps.connectionCount} '
-              '${_tx('workflows.connections_suffix', 'conexiones')}',
+              '${_tx('workflows.connections_suffix')}',
               style: Theme.of(context).textTheme.labelMedium,
               overflow: TextOverflow.ellipsis,
             ),
@@ -18,13 +18,13 @@ extension _WorkflowEditorMobile on _WorkflowEditorPageState {
           AppIconButton.outlined(
             onPressed: _autoLayout,
             icon: const Icon(Icons.auto_awesome_mosaic_outlined),
-            tooltip: _tx('workflow_editor.auto_layout', 'Auto-organizar'),
+            tooltip: _tx('workflow_editor.auto_layout'),
           ),
           const SizedBox(width: 6),
           AppIconButton.filled(
             onPressed: _addStep,
             icon: const Icon(Icons.add_rounded),
-            tooltip: _tx('workflow_editor.add_step_btn', 'Añadir paso'),
+            tooltip: _tx('workflow_editor.add_step_btn'),
           ),
         ],
       ),
@@ -42,7 +42,7 @@ extension _WorkflowEditorMobile on _WorkflowEditorPageState {
               actions: [
                 TertiaryButton(
                   onPressed: () => _refresh(() => _error = null),
-                  child: Text(_tx('common.close', 'Cerrar')),
+                  child: Text(_tx('common.close')),
                 ),
               ],
             ),
@@ -89,10 +89,7 @@ extension _WorkflowEditorMobile on _WorkflowEditorPageState {
                       const SizedBox(height: 12),
                       WorkflowIssuesPanel(
                         issues: _issues,
-                        title: _tx(
-                          'workflow_editor.issues_title',
-                          '{{n}} problemas impiden guardar',
-                        ),
+                        title: _tx('workflow_editor.issues_title'),
                         translate: _tx,
                         onSelectNode: (id) => _refresh(() {
                           _selectedStepId = id;

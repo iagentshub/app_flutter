@@ -41,10 +41,7 @@ extension _CentinelStressResults on _CentinelStressTabState {
               children: [
                 Expanded(
                   child: Text(
-                    _tx(
-                      'centinel.chart_response_time_title',
-                      'Tiempo de respuesta en tiempo real',
-                    ),
+                    _tx('centinel.chart_response_time_title'),
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),
@@ -52,9 +49,7 @@ extension _CentinelStressResults on _CentinelStressTabState {
                   TertiaryButton.icon(
                     onPressed: _exportCsv,
                     icon: const Icon(Icons.download_outlined, size: 16),
-                    label: Text(
-                      _tx('centinel.summary_export_csv', 'Exportar CSV'),
-                    ),
+                    label: Text(_tx('centinel.summary_export_csv')),
                   ),
               ],
             ),
@@ -64,19 +59,19 @@ extension _CentinelStressResults on _CentinelStressTabState {
               children: [
                 _legendItem(
                   FncColors.chartEmerald,
-                  _tx('centinel.chart_legend_avg', 'Promedio'),
+                  _tx('centinel.chart_legend_avg'),
                 ),
                 _legendItem(
                   FncColors.chartBlue,
-                  _tx('centinel.chart_legend_p95', 'p95'),
+                  _tx('centinel.chart_legend_p95'),
                 ),
                 _legendItem(
                   FncColors.chartPurple,
-                  _tx('centinel.chart_legend_rps', 'req/s'),
+                  _tx('centinel.chart_legend_rps'),
                 ),
                 _legendItem(
                   FncColors.chartPink,
-                  _tx('centinel.chart_legend_users', 'Usuarios'),
+                  _tx('centinel.chart_legend_users'),
                 ),
               ],
             ),
@@ -84,13 +79,10 @@ extension _CentinelStressResults on _CentinelStressTabState {
             SizedBox(
               height: 260,
               child: CentinelChart(
-                emptyLabel: _tx(
-                  'centinel.stress_chart_empty',
-                  'Inicia la prueba para ver la gráfica',
-                ),
+                emptyLabel: _tx('centinel.stress_chart_empty'),
                 markerIndex: breakIndex >= 0 ? breakIndex : null,
                 markerLabel: breakIndex >= 0
-                    ? _tx('centinel.chart_break_marker', 'quiebre')
+                    ? _tx('centinel.chart_break_marker')
                     : null,
                 series: [
                   ChartSeries(
@@ -160,7 +152,7 @@ extension _CentinelStressResults on _CentinelStressTabState {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _tx('centinel.results_title', 'Resultados'),
+              _tx('centinel.results_title'),
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 12),
@@ -168,23 +160,17 @@ extension _CentinelStressResults on _CentinelStressTabState {
               spacing: 24,
               runSpacing: 12,
               children: [
+                _statBlock(_tx('centinel.summary_stat_total'), '$total'),
                 _statBlock(
-                  _tx('centinel.summary_stat_total', 'Peticiones totales'),
-                  '$total',
-                ),
-                _statBlock(
-                  _tx('centinel.summary_stat_errors', 'Errores'),
+                  _tx('centinel.summary_stat_errors'),
                   '$errors ($errorPct%)',
                   color: (errors is num && errors > 0)
                       ? FncColors.materialRed
                       : null,
                 ),
+                _statBlock(_tx('centinel.summary_stat_avg'), '${avgS}s'),
                 _statBlock(
-                  _tx('centinel.summary_stat_avg', 'Media de resolución'),
-                  '${avgS}s',
-                ),
-                _statBlock(
-                  _tx('centinel.summary_stat_avg_user', 'Media por usuario'),
+                  _tx('centinel.summary_stat_avg_user'),
                   '${avgPerUserS}s',
                   color: muchWorse ? FncColors.materialRed : null,
                 ),
@@ -246,7 +232,7 @@ extension _CentinelStressResults on _CentinelStressTabState {
       children: [
         Expanded(
           child: _top3Column(
-            _tx('centinel.summary_top_endpoints', 'Top endpoints con fallos'),
+            _tx('centinel.summary_top_endpoints'),
             topEndpoints.take(3),
             total,
           ),
@@ -254,7 +240,7 @@ extension _CentinelStressResults on _CentinelStressTabState {
         const SizedBox(width: 16),
         Expanded(
           child: _top3Column(
-            _tx('centinel.summary_top_error_types', 'Top tipos de error'),
+            _tx('centinel.summary_top_error_types'),
             topMsgs.take(3),
             total,
           ),
@@ -318,7 +304,7 @@ extension _CentinelStressResults on _CentinelStressTabState {
             Row(
               children: [
                 Text(
-                  _tx('centinel.errors_table_title', 'Errores detectados'),
+                  _tx('centinel.errors_table_title'),
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(width: 8),
@@ -335,24 +321,16 @@ extension _CentinelStressResults on _CentinelStressTabState {
                     columns: [
                       const DataColumn(label: Text('t (s)')),
                       DataColumn(
-                        label: Text(
-                          _tx('centinel.errors_table_col_method', 'Método'),
-                        ),
+                        label: Text(_tx('centinel.errors_table_col_method')),
                       ),
                       DataColumn(
-                        label: Text(
-                          _tx('centinel.errors_table_col_endpoint', 'Endpoint'),
-                        ),
+                        label: Text(_tx('centinel.errors_table_col_endpoint')),
                       ),
                       DataColumn(
-                        label: Text(
-                          _tx('centinel.errors_table_col_code', 'Código'),
-                        ),
+                        label: Text(_tx('centinel.errors_table_col_code')),
                       ),
                       DataColumn(
-                        label: Text(
-                          _tx('centinel.errors_table_col_error', 'Error'),
-                        ),
+                        label: Text(_tx('centinel.errors_table_col_error')),
                       ),
                       const DataColumn(label: Text('s')),
                     ],

@@ -21,6 +21,7 @@ import '../../../shared/utils/scroll_to_end.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../../../utils/i18n.dart';
 import '../repositories/agents_repository.dart';
 import '../repositories/chat_repository.dart';
 import '../widgets/chat_composer.dart';
@@ -75,7 +76,7 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
   /// mandan al enviar y se limpian después, sin quedar vinculados al agente.
   List<KnowledgeItem> _attachedKnowledge = [];
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   List<ChatConversation> _conversations = const [];
   String? _conversationCursor;
@@ -183,22 +184,14 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
               connectionId,
             );
             if (!mounted) return;
-            showMessage(
-              _tx('agents.preferences_saved', 'Preferencia guardada'),
-            );
+            showMessage(_tx('agents.preferences_saved'));
           },
         ),
       );
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx(
-          'agents.preferences_load_error',
-          'No se pudieron cargar las preferencias',
-        ),
-        isError: true,
-      );
+      showMessage(_tx('agents.preferences_load_error'), isError: true);
     }
   }
 
@@ -210,10 +203,7 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
         actions: [
           AppIconButton(
             icon: const Icon(Icons.tune),
-            tooltip: _tx(
-              'agents.preferences_tooltip',
-              'Preferencia de conexión',
-            ),
+            tooltip: _tx('agents.preferences_tooltip'),
             onPressed: _openPreferences,
           ),
           Builder(
@@ -224,10 +214,7 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
                 }
                 return AppIconButton(
                   icon: const Icon(Icons.history),
-                  tooltip: _tx(
-                    'agents.chat.history_tooltip',
-                    'Historial de conversaciones',
-                  ),
+                  tooltip: _tx('agents.chat.history_tooltip'),
                   onPressed: () => Scaffold.of(context).openEndDrawer(),
                 );
               },
@@ -267,19 +254,10 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
       onNewConversation: _newConversation,
       onSelectConversation: _selectConversation,
       onDeleteConversation: _deleteConversation,
-      newConversationLabel: _tx(
-        'agents.chat.new_conversation',
-        'Nueva conversación',
-      ),
-      untitledConversationLabel: _tx(
-        'agents.chat.untitled_conversation',
-        'Conversación',
-      ),
-      tokensTooltip: _tx('agents.tokens_tooltip', 'Tokens consumidos'),
-      deleteTooltip: _tx(
-        'agents.chat.delete_conversation',
-        'Borrar conversación',
-      ),
+      newConversationLabel: _tx('agents.chat.new_conversation'),
+      untitledConversationLabel: _tx('agents.chat.untitled_conversation'),
+      tokensTooltip: _tx('agents.tokens_tooltip'),
+      deleteTooltip: _tx('agents.chat.delete_conversation'),
       hasMore: _hasMoreConversations,
       loadingMore: _loadingMoreConversations,
       onLoadMore: _loadMoreConversations,
@@ -299,7 +277,7 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
           if (!away) return const SizedBox.shrink();
           return ActionChip(
             avatar: const Icon(Icons.arrow_downward, size: 16),
-            label: Text(_tx('agents.chat.jump_to_last', 'Último mensaje')),
+            label: Text(_tx('agents.chat.jump_to_last')),
             onPressed: () => scrollToEnd(_scrollController),
           );
         },
@@ -318,23 +296,17 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
             PrimaryButton.icon(
               onPressed: _bootstrap,
               icon: const Icon(Icons.refresh),
-              label: Text(_tx('common.retry', 'Reintentar')),
+              label: Text(_tx('common.retry')),
             ),
           ],
         ),
       );
     }
 
-    final copyCodeTooltip = _tx(
-      'agents.chat.copy_code_tooltip',
-      'Copiar código',
-    );
-    final replyActionLabel = _tx('agents.chat.reply_action', 'Responder');
-    final copyActionLabel = _tx('agents.chat.copy_action', 'Copiar');
-    final messageCopiedLabel = _tx(
-      'agents.chat.message_copied',
-      'Mensaje copiado',
-    );
+    final copyCodeTooltip = _tx('agents.chat.copy_code_tooltip');
+    final replyActionLabel = _tx('agents.chat.reply_action');
+    final copyActionLabel = _tx('agents.chat.copy_action');
+    final messageCopiedLabel = _tx('agents.chat.message_copied');
 
     return Column(
       children: [
@@ -397,16 +369,13 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
           streaming: _streaming,
           onSend: _send,
           onStop: _stop,
-          sendTooltip: _tx('agents.chat.send', 'Enviar mensaje'),
-          stopTooltip: _tx('agents.chat.stop', 'Detener respuesta'),
-          composerHint: _tx('agents.chat.placeholder', 'Escribe un mensaje…'),
+          sendTooltip: _tx('agents.chat.send'),
+          stopTooltip: _tx('agents.chat.stop'),
+          composerHint: _tx('agents.chat.placeholder'),
           replyTo: _replyTo,
           replyToLabel: _replyTo == null ? null : _replyLabelFor(_replyTo!),
           onCancelReply: _cancelReply,
-          cancelReplyTooltip: _tx(
-            'agents.chat.cancel_reply_tooltip',
-            'Cancelar respuesta',
-          ),
+          cancelReplyTooltip: _tx('agents.chat.cancel_reply_tooltip'),
         ),
       ],
     );

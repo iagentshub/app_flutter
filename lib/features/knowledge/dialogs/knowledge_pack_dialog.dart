@@ -31,7 +31,7 @@ class KnowledgePackDialog extends StatefulWidget {
 
   final List<LocalKnowledgeFile> files;
   final int ignoredCount;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<KnowledgePackDialog> createState() => _KnowledgePackDialogState();
@@ -75,12 +75,7 @@ class _KnowledgePackDialogState extends State<KnowledgePackDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: Text(
-      widget.tx(
-        'knowledge.pack_dialog_title',
-        'Incluir directorio de conocimiento',
-      ),
-    ),
+    title: Text(widget.tx('knowledge.pack_dialog_title')),
     content: SizedBox(
       width: dialogContentWidth(context, 560),
       child: SingleChildScrollView(
@@ -94,7 +89,7 @@ class _KnowledgePackDialogState extends State<KnowledgePackDialog> {
               autofocus: true,
               maxLength: 160,
               decoration: InputDecoration(
-                labelText: widget.tx('knowledge.pack_name', 'Nombre del pack'),
+                labelText: widget.tx('knowledge.pack_name'),
               ),
               onSubmitted: (_) => _submit(),
             ),
@@ -104,39 +99,23 @@ class _KnowledgePackDialogState extends State<KnowledgePackDialog> {
               maxLines: 3,
               maxLength: 2000,
               decoration: InputDecoration(
-                labelText: widget.tx(
-                  'knowledge.description_label',
-                  'Descripción',
-                ),
+                labelText: widget.tx('knowledge.description_label'),
               ),
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               initialValue: _sourceMode,
               decoration: InputDecoration(
-                labelText: widget.tx(
-                  'knowledge.pack_source_mode',
-                  'Gestión del directorio',
-                ),
+                labelText: widget.tx('knowledge.pack_source_mode'),
               ),
               items: [
                 DropdownMenuItem(
                   value: 'upload',
-                  child: Text(
-                    widget.tx(
-                      'knowledge.pack_source_upload',
-                      'Subir copia a la aplicación',
-                    ),
-                  ),
+                  child: Text(widget.tx('knowledge.pack_source_upload')),
                 ),
                 DropdownMenuItem(
                   value: 'reference',
-                  child: Text(
-                    widget.tx(
-                      'knowledge.pack_source_reference',
-                      'Catalogar sólo referencias',
-                    ),
-                  ),
+                  child: Text(widget.tx('knowledge.pack_source_reference')),
                 ),
               ],
               onChanged: (value) =>
@@ -144,14 +123,8 @@ class _KnowledgePackDialogState extends State<KnowledgePackDialog> {
             ),
             const SizedBox(height: 6),
             Text(switch (_sourceMode) {
-              'reference' => widget.tx(
-                'knowledge.pack_source_reference_help',
-                'Sólo se guardan rutas y metadatos. El agente podrá ver el catálogo, pero no leer el contenido local.',
-              ),
-              _ => widget.tx(
-                'knowledge.pack_source_upload_help',
-                'Los archivos se copian al pack para que el agente pueda utilizarlos y podrás volver a sincronizar el directorio.',
-              ),
+              'reference' => widget.tx('knowledge.pack_source_reference_help'),
+              _ => widget.tx('knowledge.pack_source_upload_help'),
             }, style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: 8),
             GroupedLabelPicker(
@@ -161,20 +134,14 @@ class _KnowledgePackDialogState extends State<KnowledgePackDialog> {
             ),
             Text(
               widget
-                  .tx(
-                    'knowledge.pack_files_ready',
-                    '{{count}} archivos preparados',
-                  )
+                  .tx('knowledge.pack_files_ready')
                   .replaceAll('{{count}}', '${widget.files.length}'),
             ),
             if (widget.ignoredCount > 0) ...[
               const SizedBox(height: 4),
               Text(
                 widget
-                    .tx(
-                      'knowledge.pack_files_ignored',
-                      '{{count}} archivos se omitirán por seguridad, tamaño o error de lectura',
-                    )
+                    .tx('knowledge.pack_files_ignored')
                     .replaceAll('{{count}}', '${widget.ignoredCount}'),
                 style: TextStyle(color: Theme.of(context).colorScheme.tertiary),
               ),
@@ -202,11 +169,11 @@ class _KnowledgePackDialogState extends State<KnowledgePackDialog> {
     actions: [
       SecondaryButton(
         onPressed: () => Navigator.of(context).pop(),
-        child: Text(widget.tx('common.cancel', 'Cancelar')),
+        child: Text(widget.tx('common.cancel')),
       ),
       PrimaryButton(
         onPressed: _submit,
-        child: Text(widget.tx('knowledge.import_action', 'Importar')),
+        child: Text(widget.tx('knowledge.import_action')),
       ),
     ],
   );

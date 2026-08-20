@@ -10,7 +10,7 @@ extension _ManagerInvitationsCard on _ManagerPageState {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _tx('manager.invitations_title', 'Invitaciones'),
+              _tx('manager.invitations_title'),
               style: const TextStyle(
                 fontSize: FncFonts.size18,
                 fontWeight: FontWeight.bold,
@@ -18,19 +18,9 @@ extension _ManagerInvitationsCard on _ManagerPageState {
             ),
             const SizedBox(height: 8),
             if (!canManage)
-              Text(
-                _tx(
-                  'manager.invitations_need_team',
-                  'Activa un grupo compartido para gestionar invitaciones.',
-                ),
-              )
+              Text(_tx('manager.invitations_need_team'))
             else if (_controller.invitations.isEmpty)
-              Text(
-                _tx(
-                  'manager.empty_invitations',
-                  'No hay invitaciones pendientes.',
-                ),
-              )
+              Text(_tx('manager.empty_invitations'))
             else
               ..._controller.invitations.map((inv) {
                 final id = (inv['id'] ?? '').toString();
@@ -45,7 +35,7 @@ extension _ManagerInvitationsCard on _ManagerPageState {
                   ),
                   trailing: ActionIconButton(
                     icon: Icons.close,
-                    tooltip: _tx('common.cancel', 'Cancelar'),
+                    tooltip: _tx('common.cancel'),
                     danger: true,
                     onPressed: () =>
                         _runAction(_controller.cancelInvitation(id)),

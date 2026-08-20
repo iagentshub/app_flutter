@@ -10,6 +10,7 @@ import 'package:app_flutter/shared/state/backend_controller.dart';
 import 'package:app_flutter/shared/state/locale_controller.dart';
 import 'package:app_flutter/shared/state/session_controller.dart';
 import 'package:app_flutter/shared/widgets/explore_search_toolbar.dart';
+import 'package:app_flutter/utils/i18n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -17,11 +18,6 @@ import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/memory_secure_store.dart';
-
-String _catalogText(String path, String fallback) => switch (path) {
-  'labels.desc_owner' => 'Descripción del propietario',
-  _ => fallback,
-};
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -37,20 +33,26 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
-          body: LabelGroupCard(group: kOwnershipGroup, text: _catalogText),
+          body: LabelGroupCard(group: kOwnershipGroup, text: tr),
         ),
       ),
     );
 
     expect(find.text('Propiedad'), findsOneWidget);
-    expect(find.text('Descripción del propietario'), findsNothing);
+    expect(
+      find.text("Eres el propietario directo de este recurso."),
+      findsNothing,
+    );
 
     await tester.tap(
       find.byKey(const ValueKey('label-group-toggle-labels.group_ownership')),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Descripción del propietario'), findsOneWidget);
+    expect(
+      find.text("Eres el propietario directo de este recurso."),
+      findsOneWidget,
+    );
   });
 
   testWidgets('la búsqueda de etiquetas usa la barra y diálogo comunes', (

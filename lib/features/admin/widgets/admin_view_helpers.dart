@@ -30,7 +30,7 @@ extension _AdminViewHelpers on _AdminPageState {
       for (final value in raw)
         if (value.toString().isNotEmpty)
           _badge(
-            _tx('labels.${value.toString()}', value.toString()),
+            trOr('labels.${value.toString()}', value.toString()),
             labelColor(value.toString()),
           ),
     ];
@@ -74,17 +74,17 @@ extension _AdminViewHelpers on _AdminPageState {
   }) {
     showFilterDialog(
       context,
-      title: _tx('common.filters', 'Filtros'),
-      clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
-      closeLabel: _tx('common.close', 'Cerrar'),
+      title: _tx('common.filters'),
+      clearLabel: _tx('common.clear_filters'),
+      closeLabel: _tx('common.close'),
       onClear: () => onChanged(''),
       buildFields: (setDialogState) => [
         _dropdown(
-          label: _tx('admin.table_owner', 'Propietario'),
+          label: _tx('admin.table_owner'),
           value: currentOwner,
           width: 360,
           options: [
-            ('', _tx('admin.all_owners', 'Todos los propietarios')),
+            ('', _tx('admin.all_owners')),
             ...owners.map((o) => (o, o)),
           ],
           onChanged: (v) {
@@ -99,22 +99,22 @@ extension _AdminViewHelpers on _AdminPageState {
   void _openKnowledgeFiltersDialog() {
     showFilterDialog(
       context,
-      title: _tx('common.filters', 'Filtros'),
-      clearLabel: _tx('common.clear_filters', 'Limpiar filtros'),
-      closeLabel: _tx('common.close', 'Cerrar'),
+      title: _tx('common.filters'),
+      clearLabel: _tx('common.clear_filters'),
+      closeLabel: _tx('common.close'),
       onClear: () => refresh(() {
         _knowledgeType = '';
         _knowledgeOwner = '';
       }),
       buildFields: (setDialogState) => [
         _dropdown(
-          label: _tx('admin.filter_type', 'Tipo'),
+          label: _tx('admin.filter_type'),
           value: _knowledgeType,
           width: 360,
           options: [
-            ('', _tx('admin.all_types', 'Todos los tipos')),
+            ('', _tx('admin.all_types')),
             ('url', 'URL'),
-            ('document', _tx('admin.type_document', 'Documento')),
+            ('document', _tx('admin.type_document')),
           ],
           onChanged: (v) {
             refresh(() => _knowledgeType = v);
@@ -123,11 +123,11 @@ extension _AdminViewHelpers on _AdminPageState {
         ),
         const SizedBox(height: 12),
         _dropdown(
-          label: _tx('admin.table_owner', 'Propietario'),
+          label: _tx('admin.table_owner'),
           value: _knowledgeOwner,
           width: 360,
           options: [
-            ('', _tx('admin.all_owners', 'Todos los propietarios')),
+            ('', _tx('admin.all_owners')),
             ..._ownersOf(_knowledge).map((o) => (o, o)),
           ],
           onChanged: (v) {

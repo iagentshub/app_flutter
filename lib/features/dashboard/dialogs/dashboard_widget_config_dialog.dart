@@ -40,7 +40,7 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
     return AlertDialog(
       title: Text(
         widget
-            .tx('configure_widget_title', 'Configurar: {{name}}')
+            .tx('configure_widget_title')
             .replaceAll(
               '{{name}}',
               dashboardWidgetTitle(widget.widgetType, widget.tx),
@@ -63,13 +63,13 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
       actions: [
         TertiaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(widget.tx('common.cancel', 'Cancelar')),
+          child: Text(widget.tx('common.cancel')),
         ),
         PrimaryButton(
           onPressed: () => Navigator.of(
             context,
           ).pop(_DashboardWidgetEditResult(config: _draft, size: _size)),
-          child: Text(widget.tx('common.save', 'Guardar')),
+          child: Text(widget.tx('common.save')),
         ),
       ],
     );
@@ -91,27 +91,24 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _pillRow(
-              tx('group_by_label', 'Agrupar por'),
+              tx('group_by_label'),
               {
-                'connection': tx('group_by_connection', 'Conexión'),
-                'agent': tx('group_by_agent', 'Agente'),
+                'connection': tx('group_by_connection'),
+                'agent': tx('group_by_agent'),
               },
               _draft.groupBy ?? 'connection',
               (v) => setState(() => _draft = _draft.copyWith(groupBy: v)),
             ),
             const SizedBox(height: 12),
             _pillRow(
-              tx('connections_label', 'Conexiones'),
-              {
-                'all': tx('scope_all', 'Todas'),
-                'personal': tx('scope_personal', 'Personales'),
-              },
+              tx('connections_label'),
+              {'all': tx('scope_all'), 'personal': tx('scope_personal')},
               _draft.scope ?? 'all',
               (v) => setState(() => _draft = _draft.copyWith(scope: v)),
             ),
             const SizedBox(height: 12),
             _numberRow(
-              tx('quantity_label', 'Cantidad'),
+              tx('quantity_label'),
               [3, 5, 10],
               _draft.limit ?? 5,
               (v) => setState(() => _draft = _draft.copyWith(limit: v)),
@@ -124,17 +121,14 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _pillRow(
-              tx('connections_label', 'Conexiones'),
-              {
-                'all': tx('scope_all', 'Todas'),
-                'personal': tx('scope_personal', 'Personales'),
-              },
+              tx('connections_label'),
+              {'all': tx('scope_all'), 'personal': tx('scope_personal')},
               _draft.scope ?? 'all',
               (v) => setState(() => _draft = _draft.copyWith(scope: v)),
             ),
             const SizedBox(height: 12),
             _numberRow(
-              tx('quantity_label', 'Cantidad'),
+              tx('quantity_label'),
               [2, 4, 6, 8],
               _draft.pageSize ?? 4,
               (v) => setState(() => _draft = _draft.copyWith(pageSize: v)),
@@ -143,21 +137,21 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
         );
       case 'recent':
         return _numberRow(
-          tx('quantity_label', 'Cantidad'),
+          tx('quantity_label'),
           [2, 4, 6, 8],
           _draft.pageSize ?? 4,
           (v) => setState(() => _draft = _draft.copyWith(pageSize: v)),
         );
       case 'recent-conversations':
         return _numberRow(
-          tx('quantity_label', 'Cantidad'),
+          tx('quantity_label'),
           [3, 5, 8],
           _draft.limit ?? 5,
           (value) => setState(() => _draft = _draft.copyWith(limit: value)),
         );
       case 'activity':
         return _numberRow(
-          tx('period_days_label', 'Periodo (días)'),
+          tx('period_days_label'),
           [7, 14, 30],
           _draft.days ?? 14,
           (v) => setState(() => _draft = _draft.copyWith(days: v)),
@@ -175,7 +169,7 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
             ),
             const SizedBox(height: 12),
             _numberRow(
-              tx('quantity_label', 'Cantidad'),
+              tx('quantity_label'),
               [4, 8, 15, 25],
               _draft.limit ?? 8,
               (v) => setState(() => _draft = _draft.copyWith(limit: v)),
@@ -187,20 +181,20 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
           kQuickActionItems,
           _draft.items ?? kQuickActionItems,
           (item) => switch (item) {
-            'agent' => tx('action_agent', 'Nuevo agente'),
-            'connection' => tx('action_connection', 'Nueva conexión'),
-            'workflow' => tx('action_workflow', 'Nuevo workflow'),
-            _ => tx('action_knowledge', 'Añadir conocimiento'),
+            'agent' => tx('action_agent'),
+            'connection' => tx('action_connection'),
+            'workflow' => tx('action_workflow'),
+            _ => tx('action_knowledge'),
           },
           (next) => setState(() => _draft = _draft.copyWith(items: next)),
         );
       case 'token-kpi':
         return _pillRow(
-          tx('period_label', 'Periodo'),
+          tx('period_label'),
           {
-            'today': tx('period_today', 'Hoy'),
-            '7d': tx('period_7d', '7 días'),
-            '30d': tx('period_30d', '30 días'),
+            'today': tx('period_today'),
+            '7d': tx('period_7d'),
+            '30d': tx('period_30d'),
           },
           _draft.period ?? '7d',
           (value) => setState(() => _draft = _draft.copyWith(period: value)),
@@ -214,16 +208,16 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
               kRecentResourceTypes,
               _draft.types ?? kRecentResourceTypes,
               (type) => switch (type) {
-                'agent' => tx('feed_agent', 'Agentes'),
-                'skill' => tx('feed_skill', 'Skills'),
-                'workflow' => tx('summary_workflows', 'Workflows'),
-                _ => tx('feed_knowledge', 'Knowledge'),
+                'agent' => tx('feed_agent'),
+                'skill' => tx('feed_skill'),
+                'workflow' => tx('summary_workflows'),
+                _ => tx('feed_knowledge'),
               },
               (next) => setState(() => _draft = _draft.copyWith(types: next)),
             ),
             const SizedBox(height: 12),
             _numberRow(
-              tx('quantity_label', 'Cantidad'),
+              tx('quantity_label'),
               [4, 6, 10],
               _draft.limit ?? 6,
               (value) => setState(() => _draft = _draft.copyWith(limit: value)),
@@ -232,18 +226,13 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
         );
       case 'agent-health':
         return _numberRow(
-          tx('quantity_label', 'Cantidad'),
+          tx('quantity_label'),
           [2, 4, 6],
           _draft.limit ?? 4,
           (value) => setState(() => _draft = _draft.copyWith(limit: value)),
         );
       default:
-        return Text(
-          tx(
-            'no_widget_options',
-            'Este widget no tiene opciones configurables.',
-          ),
-        );
+        return Text(tx('no_widget_options'));
     }
   }
 
@@ -254,7 +243,7 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          widget.tx('size_label', 'Tamaño'),
+          widget.tx('size_label'),
           style: Theme.of(context).textTheme.labelMedium,
         ),
         const SizedBox(height: 6),
@@ -265,19 +254,10 @@ class _WidgetConfigDialogState extends State<_WidgetConfigDialog> {
             for (final size in sizes)
               ChoiceChip(
                 label: Text(switch (size) {
-                  DashboardWidgetSize.compact => widget.tx(
-                    'size_compact',
-                    'Compacto',
-                  ),
-                  DashboardWidgetSize.medium => widget.tx(
-                    'size_medium',
-                    'Mediano',
-                  ),
-                  DashboardWidgetSize.wide => widget.tx('size_wide', 'Ancho'),
-                  DashboardWidgetSize.full => widget.tx(
-                    'size_full',
-                    'Completo',
-                  ),
+                  DashboardWidgetSize.compact => widget.tx('size_compact'),
+                  DashboardWidgetSize.medium => widget.tx('size_medium'),
+                  DashboardWidgetSize.wide => widget.tx('size_wide'),
+                  DashboardWidgetSize.full => widget.tx('size_full'),
                 }),
                 selected: _size == size,
                 onSelected: (_) => setState(() => _size = size),

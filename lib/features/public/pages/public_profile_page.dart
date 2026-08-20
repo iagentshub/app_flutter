@@ -49,7 +49,7 @@ class _PublicProfilePageState extends State<PublicProfilePage>
   bool _followBusy = false;
   Set<String> _selectedTypes = <String>{};
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   @override
   void initState() {
@@ -100,12 +100,12 @@ class _PublicProfilePageState extends State<PublicProfilePage>
       _resources.where((item) => item.resourceType == type).length;
 
   String _typeLabel(String type) => switch (type) {
-    'agent' => _tx('explore.type_agents', 'Agentes'),
-    'skill' => _tx('explore.type_skills', 'Skills'),
-    'prompt' => _tx('explore.type_prompts', 'Prompts'),
-    'tool' => _tx('explore.type_tools', 'Herramientas'),
-    'knowledge' => _tx('explore.type_knowledge', 'Knowledge'),
-    'workflow' => _tx('explore.type_workflows', 'Workflows'),
+    'agent' => _tx('explore.type_agents'),
+    'skill' => _tx('explore.type_skills'),
+    'prompt' => _tx('explore.type_prompts'),
+    'tool' => _tx('explore.type_tools'),
+    'knowledge' => _tx('explore.type_knowledge'),
+    'workflow' => _tx('explore.type_workflows'),
     _ => type,
   };
 
@@ -134,7 +134,7 @@ class _PublicProfilePageState extends State<PublicProfilePage>
     final token = _token;
     if (token == null || token.isEmpty) {
       setState(() {
-        _error = _tx('common.no_session', 'No hay sesión activa');
+        _error = _tx('common.no_session');
         _loading = false;
       });
       return;
@@ -168,10 +168,7 @@ class _PublicProfilePageState extends State<PublicProfilePage>
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = _tx(
-          'public_profile.error_generic',
-          'No se pudo cargar el perfil público',
-        );
+        _error = _tx('public_profile.error_generic');
         _loading = false;
       });
     }
@@ -192,13 +189,7 @@ class _PublicProfilePageState extends State<PublicProfilePage>
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx(
-          'public_profile.follow_update_error',
-          'No se pudo actualizar follow',
-        ),
-        isError: true,
-      );
+      showMessage(_tx('public_profile.follow_update_error'), isError: true);
     } finally {
       if (mounted) setState(() => _followBusy = false);
     }
@@ -260,7 +251,7 @@ class _PublicProfilePageState extends State<PublicProfilePage>
           actions: [
             PrimaryButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(_tx('common.close', 'Cerrar')),
+              child: Text(_tx('common.close')),
             ),
           ],
         ),
@@ -268,10 +259,7 @@ class _PublicProfilePageState extends State<PublicProfilePage>
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {
-      showMessage(
-        _tx('public_profile.preview_error', 'No se pudo abrir preview'),
-        isError: true,
-      );
+      showMessage(_tx('public_profile.preview_error'), isError: true);
     }
   }
 
@@ -282,12 +270,9 @@ class _PublicProfilePageState extends State<PublicProfilePage>
       return ListView(
         children: [
           AsyncStatePanel.error(
-            title: _tx(
-              'public_profile.error_loading',
-              'Error cargando perfil público',
-            ),
+            title: _tx('public_profile.error_loading'),
             message: _error!,
-            retryLabel: _tx('common.retry', 'Reintentar'),
+            retryLabel: _tx('common.retry'),
             onRetry: _load,
           ),
         ],
@@ -297,11 +282,7 @@ class _PublicProfilePageState extends State<PublicProfilePage>
     final followStatus = _followStatus;
     final profile = _profile;
     if (followStatus == null || profile == null) {
-      return Center(
-        child: Text(
-          _tx('public_profile.no_follow_status', 'Sin estado de seguimiento'),
-        ),
-      );
+      return Center(child: Text(_tx('public_profile.no_follow_status')));
     }
 
     final filteredResources = _filteredResources;
@@ -345,10 +326,7 @@ class _PublicProfilePageState extends State<PublicProfilePage>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _tx(
-                            'public_profile.professional_summary',
-                            'Presentación profesional',
-                          ),
+                          _tx('public_profile.professional_summary'),
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(fontWeight: FontWeight.w700),
                         ),
@@ -369,20 +347,14 @@ class _PublicProfilePageState extends State<PublicProfilePage>
         ],
         const SizedBox(height: 24),
         Text(
-          _tx(
-            'public_profile.resources_title',
-            'Proyectos y recursos públicos',
-          ),
+          _tx('public_profile.resources_title'),
           style: Theme.of(
             context,
           ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 4),
         Text(
-          _tx(
-            'public_profile.resources_subtitle',
-            'Explora el trabajo publicado por este usuario.',
-          ),
+          _tx('public_profile.resources_subtitle'),
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
@@ -390,21 +362,13 @@ class _PublicProfilePageState extends State<PublicProfilePage>
         const SizedBox(height: 12),
         ExploreSearchToolbar(
           searchController: _searchController,
-          searchHint: _tx(
-            'public_profile.search_hint',
-            'Buscar por nombre, descripción, categoría o etiqueta',
-          ),
+          searchHint: _tx('public_profile.search_hint'),
           typeOptions: _typeOptions,
           selectedTypes: _selectedTypes,
-          allTypesLabel: _tx('explore.type_all', 'Todos'),
-          typeFilterTooltip: _tx(
-            'explore.type_filter_tooltip',
-            'Filtrar recursos por tipo',
-          ),
-          multipleTypesLabel: (count) => _tx(
-            'labels.types_selected',
-            '{count} tipos',
-          ).replaceAll('{count}', '$count'),
+          allTypesLabel: _tx('explore.type_all'),
+          typeFilterTooltip: _tx('explore.type_filter_tooltip'),
+          multipleTypesLabel: (count) =>
+              _tx('labels.types_selected').replaceAll('{count}', '$count'),
           allowMultipleTypes: false,
           onSearchChanged: (_) => setState(() {}),
           onTypesChanged: (types) {
@@ -414,7 +378,6 @@ class _PublicProfilePageState extends State<PublicProfilePage>
             Text(
               _tx(
                 'public_profile.results_count',
-                '{count} resultados',
               ).replaceAll('{count}', '${filteredResources.length}'),
               style: Theme.of(context).textTheme.bodySmall,
             ),
@@ -429,12 +392,7 @@ class _PublicProfilePageState extends State<PublicProfilePage>
       empty: Card(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Text(
-            _tx(
-              'public_profile.empty_resources',
-              'No hay recursos públicos que coincidan con la búsqueda.',
-            ),
-          ),
+          child: Text(_tx('public_profile.empty_resources')),
         ),
       ),
       itemCount: filteredResources.length,
@@ -443,7 +401,7 @@ class _PublicProfilePageState extends State<PublicProfilePage>
         return PublicResourceCard(
           item: item,
           typeLabel: _typeLabel(item.resourceType),
-          previewTooltip: _tx('explore.preview', 'Vista previa'),
+          previewTooltip: _tx('explore.preview'),
           onPreview: () => _preview(item),
         );
       },

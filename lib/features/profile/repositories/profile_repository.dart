@@ -1,5 +1,6 @@
 import '../../../core/network/api_repository.dart';
 import '../../../models/profile/profile_models.dart';
+import '../../../utils/i18n.dart';
 
 class ProfileRepository extends ApiRepository {
   ProfileRepository({required super.apiClient});
@@ -155,6 +156,6 @@ class ProfileRepository extends ApiRepository {
       gaToken: token,
     );
     return response.json['message'] as String? ??
-        'Cuenta programada para eliminación';
+        tr('profile.deletion_scheduled');
   }
 }

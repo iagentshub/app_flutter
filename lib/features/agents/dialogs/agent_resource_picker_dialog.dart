@@ -68,7 +68,7 @@ class AgentResourcePickerDialog extends StatefulWidget {
 
   final List<AgentResourceOption> options;
   final AgentResourceSelection initial;
-  final String Function(String path, String fallback) tx;
+  final String Function(String path) tx;
 
   @override
   State<AgentResourcePickerDialog> createState() =>
@@ -111,17 +111,13 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
   }
 
   String _typeLabel(AgentResourceType type) => switch (type) {
-    AgentResourceType.skill => widget.tx('agents.field_skills', 'Skills'),
+    AgentResourceType.skill => widget.tx('agents.field_skills'),
     AgentResourceType.knowledgePack => widget.tx(
       'agents.field_knowledge_packs',
-      'Packs de conocimiento',
     ),
-    AgentResourceType.knowledge => widget.tx(
-      'agents.field_knowledge',
-      'Conocimiento',
-    ),
-    AgentResourceType.prompt => widget.tx('agents.field_prompts', 'Prompts'),
-    AgentResourceType.tool => widget.tx('agents.field_tools', 'Herramientas'),
+    AgentResourceType.knowledge => widget.tx('agents.field_knowledge'),
+    AgentResourceType.prompt => widget.tx('agents.field_prompts'),
+    AgentResourceType.tool => widget.tx('agents.field_tools'),
   };
 
   IconData _typeIcon(AgentResourceType type) => switch (type) {
@@ -148,7 +144,7 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
   Widget _selectionCount(ThemeData theme) {
     return Text(
       widget
-          .tx('agents.resources_selected_count', '{{count}} seleccionados')
+          .tx('agents.resources_selected_count')
           .replaceAll('{{count}}', '${_selection.length}'),
       style: theme.textTheme.labelMedium?.copyWith(
         color: theme.colorScheme.onSurfaceVariant,
@@ -166,10 +162,7 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
           controller: _searchController,
           autofocus: !mobile,
           decoration: InputDecoration(
-            hintText: widget.tx(
-              'agents.resources_search_hint',
-              'Buscar por nombre, tipo o alias',
-            ),
+            hintText: widget.tx('agents.resources_search_hint'),
             prefixIcon: const Icon(Icons.search),
             suffixIcon: _query.isEmpty
                 ? null
@@ -179,10 +172,7 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
                       setState(() => _query = '');
                     },
                     icon: const Icon(Icons.close),
-                    tooltip: widget.tx(
-                      'agents.resources_clear_search',
-                      'Limpiar búsqueda',
-                    ),
+                    tooltip: widget.tx('agents.resources_clear_search'),
                   ),
           ),
           onChanged: (value) => setState(() => _query = value),
@@ -193,7 +183,7 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
           child: Row(
             children: [
               FilterChip(
-                label: Text(widget.tx('agents.resources_all', 'Todo')),
+                label: Text(widget.tx('agents.resources_all')),
                 selected: _filter == null,
                 onSelected: (_) => setState(() => _filter = null),
               ),
@@ -216,10 +206,7 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
           child: visible.isEmpty
               ? Center(
                   child: Text(
-                    widget.tx(
-                      'agents.resources_no_match',
-                      'No hay recursos que coincidan con la búsqueda.',
-                    ),
+                    widget.tx('agents.resources_no_match'),
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -279,14 +266,9 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
             leading: AppIconButton(
               onPressed: () => Navigator.of(context).pop(),
               icon: const Icon(Icons.close),
-              tooltip: widget.tx('common.cancel', 'Cancelar'),
+              tooltip: widget.tx('common.cancel'),
             ),
-            title: Text(
-              widget.tx(
-                'agents.resources_picker_mobile_title',
-                'Recursos del agente',
-              ),
-            ),
+            title: Text(widget.tx('agents.resources_picker_mobile_title')),
             actions: [
               Padding(
                 padding: const EdgeInsets.only(right: 8),
@@ -294,10 +276,7 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
                   key: const ValueKey('agent-resources-apply'),
                   onPressed: _apply,
                   icon: const Icon(Icons.check),
-                  tooltip: widget.tx(
-                    'agents.resources_apply',
-                    'Aplicar selección',
-                  ),
+                  tooltip: widget.tx('agents.resources_apply'),
                 ),
               ),
             ],
@@ -314,9 +293,7 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
     }
 
     return AlertDialog(
-      title: Text(
-        widget.tx('agents.resources_picker_title', 'Seleccionar conocimiento'),
-      ),
+      title: Text(widget.tx('agents.resources_picker_title')),
       contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
       content: SizedBox(
         width: dialogContentWidth(context, 680),
@@ -327,12 +304,12 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
         _selectionCount(theme),
         TertiaryButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(widget.tx('common.cancel', 'Cancelar')),
+          child: Text(widget.tx('common.cancel')),
         ),
         PrimaryButton(
           key: const ValueKey('agent-resources-apply'),
           onPressed: _apply,
-          child: Text(widget.tx('agents.resources_apply', 'Aplicar selección')),
+          child: Text(widget.tx('agents.resources_apply')),
         ),
       ],
     );

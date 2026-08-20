@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../utils/i18n.dart';
 
 import 'api_error.dart';
 
@@ -23,7 +24,7 @@ class BoundedLineTransformer extends StreamTransformerBase<String, String> {
           throw ApiError(
             statusCode: 502,
             code: 'stream_event_too_large',
-            message: 'Un evento del servidor supera el límite permitido',
+            message: tr('common.event_too_large'),
           );
         }
         pending.write(fragment);

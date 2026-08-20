@@ -50,7 +50,7 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection>
   List<Map<String, dynamic>> _invitations = const [];
   bool _loading = true;
 
-  String _tx(String path, String fallback) => _t.text(path, fallback: fallback);
+  String _tx(String path) => _t.text(path);
 
   @override
   void initState() {
@@ -100,22 +100,22 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection>
     final name = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(_tx('groups.dialog_title', 'Nuevo grupo')),
+        title: Text(_tx('groups.dialog_title')),
         content: TextField(
           controller: controller,
           autofocus: true,
           decoration: InputDecoration(
-            labelText: _tx('groups.dialog_name_label', 'Nombre del grupo'),
+            labelText: _tx('groups.dialog_name_label'),
           ),
         ),
         actions: [
           TertiaryButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(_tx('common.cancel', 'Cancelar')),
+            child: Text(_tx('common.cancel')),
           ),
           PrimaryButton(
             onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-            child: Text(_tx('common.create', 'Crear')),
+            child: Text(_tx('common.create')),
           ),
         ],
       ),
@@ -127,10 +127,7 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection>
       widget.apiClient.invalidateCache('/api/groups');
       await _load();
     } catch (_) {
-      showMessage(
-        _tx('groups.create_error', 'No se pudo crear el grupo'),
-        isError: true,
-      );
+      showMessage(_tx('groups.create_error'), isError: true);
     }
   }
 
@@ -141,13 +138,10 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection>
         (inv['id'] ?? '').toString(),
       );
       widget.apiClient.invalidateCache('/api/groups');
-      showMessage(_tx('groups.invitation_accepted', 'Invitación aceptada'));
+      showMessage(_tx('groups.invitation_accepted'));
       await _load();
     } catch (_) {
-      showMessage(
-        _tx('groups.create_error', 'No se pudo crear el grupo'),
-        isError: true,
-      );
+      showMessage(_tx('groups.create_error'), isError: true);
     }
   }
 
@@ -157,13 +151,10 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection>
         widget.token,
         (inv['id'] ?? '').toString(),
       );
-      showMessage(_tx('groups.invitation_rejected', 'Invitación rechazada'));
+      showMessage(_tx('groups.invitation_rejected'));
       await _load();
     } catch (_) {
-      showMessage(
-        _tx('groups.create_error', 'No se pudo crear el grupo'),
-        isError: true,
-      );
+      showMessage(_tx('groups.create_error'), isError: true);
     }
   }
 
@@ -194,13 +185,13 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection>
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             ChoiceChip(
-              label: Text(_tx('groups.mine', 'Mis grupos')),
+              label: Text(_tx('groups.mine')),
               selected: _tab == 'mine',
               onSelected: (_) => setState(() => _tab = 'mine'),
             ),
             ChoiceChip(
               label: Text(
-                '${_tx('groups.invitations', 'Invitaciones')}${_invitations.isEmpty ? '' : ' (${_invitations.length})'}',
+                '${_tx('groups.invitations')}${_invitations.isEmpty ? '' : ' (${_invitations.length})'}',
               ),
               selected: _tab == 'invitations',
               onSelected: (_) => setState(() => _tab = 'invitations'),
@@ -209,7 +200,7 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection>
               PrimaryButton.icon(
                 onPressed: _createGroup,
                 icon: const Icon(Icons.add),
-                label: Text(_tx('groups.new_group', 'Nuevo grupo')),
+                label: Text(_tx('groups.new_group')),
               ),
           ],
         ),
@@ -221,16 +212,14 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection>
 
   List<Widget> _buildMine() {
     if (_groups.isEmpty) {
-      return [
-        Text(_tx('groups.empty_mine', 'No perteneces a ningún grupo todavía.')),
-      ];
+      return [Text(_tx('groups.empty_mine'))];
     }
     return _groups.map((group) {
       final canManage = group.role == 'owner' || group.role == 'admin';
       final roleLabel = switch (group.role) {
-        'owner' => _tx('groups.role_owner', 'Propietario'),
-        'admin' => _tx('groups.role_admin', 'Admin'),
-        _ => _tx('groups.role_member', 'Miembro'),
+        'owner' => _tx('groups.role_owner'),
+        'admin' => _tx('groups.role_admin'),
+        _ => _tx('groups.role_member'),
       };
       return Card(
         margin: const EdgeInsets.only(bottom: 10),
@@ -260,9 +249,7 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection>
               SecondaryButton(
                 onPressed: () => _openManageDialog(group),
                 child: Text(
-                  canManage
-                      ? _tx('groups.manage', 'Gestionar')
-                      : _tx('groups.view', 'Ver'),
+                  canManage ? _tx('groups.manage') : _tx('groups.view'),
                 ),
               ),
             ],
@@ -274,11 +261,7 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection>
 
   List<Widget> _buildInvitations() {
     if (_invitations.isEmpty) {
-      return [
-        Text(
-          _tx('groups.empty_invitations', 'No tienes invitaciones pendientes.'),
-        ),
-      ];
+      return [Text(_tx('groups.empty_invitations'))];
     }
     return _invitations.map((inv) {
       final name = (inv['group_name'] ?? inv['group_id'] ?? '').toString();
@@ -302,7 +285,7 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection>
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${_tx('groups.invited_by', 'Invitado por')}: $invitedBy',
+                      '${_tx('groups.invited_by')}: $invitedBy',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
@@ -310,12 +293,12 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection>
               ),
               ActionIconButton(
                 icon: Icons.check,
-                tooltip: _tx('groups.accept', 'Aceptar'),
+                tooltip: _tx('groups.accept'),
                 onPressed: () => _acceptInvitation(inv),
               ),
               ActionIconButton(
                 icon: Icons.close,
-                tooltip: _tx('groups.reject', 'Rechazar'),
+                tooltip: _tx('groups.reject'),
                 danger: true,
                 onPressed: () => _rejectInvitation(inv),
               ),
