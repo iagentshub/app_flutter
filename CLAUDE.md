@@ -142,7 +142,8 @@ El porqué completo está en `docs/adr/008-sesiones-revocables.md` del repo
 ## Reglas que ya vigila la suite
 
 - **i18n**: todo texto de interfaz pasa por `_tx(clave, fallback)` y vive en
-  `assets/locales/{es,en}/`. Nada de literales en el árbol de widgets.
+  `assets/locales/{es,en}/`. Nada de literales en el árbol de widgets. Las tres
+  reglas del idioma están abajo, en su propia sección.
 - **Colores y fuentes**: `app/theme/fnc_colors.dart` y `fnc_fonts.dart`. En ficheros
   `part of`, el `import` va en el padre.
 - **Tamaños** (`test/feature_architecture_test.dart`): páginas ≤ 700 líneas, componentes
@@ -152,6 +153,65 @@ El porqué completo está en `docs/adr/008-sesiones-revocables.md` del repo
   y llega en `/api/settings/platform/public`; se lee con `UploadLimits.exceeds(bytes)`,
   que con 0 —sin límite, el default— no rechaza nada. Había tres copias del número en
   Dart y ninguna coincidía con la del backend.
+
+## El idioma: tres reglas y por qué
+
+Hoy hay dos idiomas. Todo lo que se escriba dando por hecho que **son
+exactamente dos** funciona igual de bien y de mal: al añadir el tercero no falla
+nada visible, simplemente esas pantallas se quedan en español y nadie se entera.
+Ese fallo silencioso ya pasó una vez —22 ternarios en login y registro, un campo
+de ruta por idioma en el pie del menú— y `test/i18n_sin_literales_test.dart` lo
+vigila en `features/auth`, `features/public`, `shared/widgets`, `shared/i18n` y
+`shared/state`.
+
+**1. El idioma es un código, nunca un booleano.** Ni `isEnglish`, ni
+`languageCode == 'en' ? … : …`. Si hay que elegir entre valores por idioma, sale
+de `LocaleController.supportedLanguageCodes` o se deriva del propio código:
+
+```dart
+// mal: al añadir 'fr' esto manda al español y no falla nada
+final ruta = languageCode == 'en' ? '/en/docs' : '/docs';
+
+// bien: el idioma base va sin prefijo, los demás se derivan
+final ruta = languageCode == LocaleController.fallbackLanguageCode
+    ? base
+    : '/$languageCode$base';
+```
+
+**2. Un solo argumento: el identificador.** `tr('agents.publish')`, y el texto
+vive en `assets/locales/`. La función está en `lib/utils/i18n.dart` para que
+llegue a cualquier widget sin `BuildContext` ni pasar el bundle.
+
+Hubo un tiempo en que cada llamada llevaba además el texto en español
+—`_tx('clave', 'Publicar')`— como red por si faltaba la clave. Tenía dos costes.
+El visible: cada cadena en dos sitios, y al cambiar una se olvidaba la otra. El
+grave: **una clave sin declarar no se notaba**, porque salía ese texto de
+respaldo y en inglés seguía saliendo en español. Se colaron 50 así, entre ellas
+los botones de activar y desactivar recursos en cuatro pantallas.
+
+Ahora, si la clave falta, se ve **el identificador** —feo a propósito— y queda un
+aviso en consola (`[i18n] falta la clave «…»`). La única excepción es
+`trOr(id, alternativa)`, para claves construidas en tiempo de ejecución
+(`trOr('labels.$etiqueta', etiqueta)`): ahí la ausencia es normal y el
+identificador sería peor que el nombre crudo.
+
+Tres guardas cubren esto, y cada una ve lo que las otras no: que toda clave
+usada exista (`i18n_claves_existentes_test.dart`), que no quede texto español
+escrito en el código (`i18n_sin_literales_test.dart`) y que es/en tengan las
+mismas claves. **Los mensajes de excepción se quedan en el código**: van a
+`throw` y el usuario no los lee.
+
+**3. Añadir un idioma es crear su directorio y sumar el código** a
+`supportedLanguageCodes` — y su nombre nativo a `LocaleController.languageNames`,
+que está justo al lado para que sea un solo sitio. Las pantallas que ofrecen el
+cambio recorren esa lista; ninguna escribe una opción por idioma.
+
+Y al revés: **un fichero de locales que no carga nadie sobra**. La app pide cinco
+namespaces —`resources`, `auth`, `common`, `nav`, `pricing`— y llegó a haber 25
+ficheros por idioma: 284 KB en el bundle que nadie leía, y una clave que se
+escribía en el fichero equivocado la mitad de las veces.
+`test/locales_sin_huerfanos_test.dart` compara los ficheros con los namespaces
+que el código carga de verdad.
 
 ## Antes de dar algo por terminado
 
