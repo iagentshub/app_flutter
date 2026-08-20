@@ -305,10 +305,6 @@ extension _KnowledgeSections on _KnowledgePageState {
                     ),
                   ),
                 ),
-                if (!item.isActive) ...[
-                  const SizedBox(width: 8),
-                  InactiveBadge(label: _tx('common.inactive')),
-                ],
               ],
             ),
             const SizedBox(height: 6),
@@ -363,16 +359,6 @@ extension _KnowledgeSections on _KnowledgePageState {
                   ),
                 if (!item.readOnly)
                   ActionIconButton(
-                    icon: item.isActive
-                        ? Icons.toggle_on_outlined
-                        : Icons.toggle_off_outlined,
-                    tooltip: item.isActive
-                        ? _tx('common.deactivate')
-                        : _tx('common.activate'),
-                    onPressed: () => _toggleSkillActive(item),
-                  ),
-                if (!item.readOnly)
-                  ActionIconButton(
                     icon: Icons.delete_outline,
                     tooltip: _tx('common.delete'),
                     danger: true,
@@ -385,8 +371,7 @@ extension _KnowledgeSections on _KnowledgePageState {
       ),
     );
 
-    if (item.isActive) return card;
-    return dimmedWhenInactive(context, card);
+    return card;
   }
 
   Widget _buildItemCard(KnowledgeItem item) {

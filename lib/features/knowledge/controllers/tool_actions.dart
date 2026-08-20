@@ -21,7 +21,6 @@ extension _ToolActions on _KnowledgePageState {
       final tools = await _toolsRepository.listTools(
         token,
         groupId: _activeGroupId,
-        includeInactive: true,
       );
       if (!mounted) return;
       refresh(() {
@@ -107,24 +106,6 @@ extension _ToolActions on _KnowledgePageState {
       showMessage(_tx('knowledge.tool_save_error'), isError: true);
     }
     return false;
-  }
-
-  Future<void> _toggleToolActive(ToolItem item) async {
-    final token = _token;
-    if (token == null || token.isEmpty) return;
-    final activate = !item.isActive;
-    try {
-      await _toolsRepository.setToolActive(token, item.id, activate);
-      showMessage(
-        activate
-            ? _tx('knowledge.tool_activated')
-            : _tx('knowledge.tool_deactivated'),
-      );
-    } on ApiError catch (error) {
-      showMessage(error.message, isError: true);
-    } catch (_) {
-      showMessage(_tx('knowledge.tool_toggle_error'), isError: true);
-    }
   }
 
   Future<void> _deleteTool(ToolItem item) async {

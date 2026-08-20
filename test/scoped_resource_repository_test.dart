@@ -40,47 +40,34 @@ void main() {
     return (client, peticiones);
   }
 
-  test(
-    'el listado codifica scope, grupo e inactivos igual en los tres',
-    () async {
-      final (client, peticiones) = clienteEspia();
+  test('el listado codifica scope y grupo igual en los tres', () async {
+    final (client, peticiones) = clienteEspia();
 
-      await SkillsRepository(apiClient: client).listSkills(
-        'token',
-        scope: 'group',
-        groupId: 'ORANGE JAZZTEL/2026',
-        includeInactive: true,
-      );
-      await PromptsRepository(apiClient: client).listPrompts(
-        'token',
-        scope: 'group',
-        groupId: 'ORANGE JAZZTEL/2026',
-        includeInactive: true,
-      );
-      await ToolsRepository(apiClient: client).listTools(
-        'token',
-        scope: 'group',
-        groupId: 'ORANGE JAZZTEL/2026',
-        includeInactive: true,
-      );
+    await SkillsRepository(
+      apiClient: client,
+    ).listSkills('token', scope: 'group', groupId: 'ORANGE JAZZTEL/2026');
+    await PromptsRepository(
+      apiClient: client,
+    ).listPrompts('token', scope: 'group', groupId: 'ORANGE JAZZTEL/2026');
+    await ToolsRepository(
+      apiClient: client,
+    ).listTools('token', scope: 'group', groupId: 'ORANGE JAZZTEL/2026');
 
-      expect(peticiones, hasLength(3));
-      expect(peticiones.map((uri) => uri.path).toList(), [
-        '/api/skills',
-        '/api/prompts',
-        '/api/tools',
-      ]);
-      // El mismo contrato para los tres, sin depender de cómo cada repositorio
-      // arme la query a mano.
-      for (final uri in peticiones) {
-        expect(uri.queryParameters['scope'], 'group');
-        expect(uri.queryParameters['group_id'], 'ORANGE JAZZTEL/2026');
-        expect(uri.queryParameters['include_inactive'], 'true');
-      }
-    },
-  );
+    expect(peticiones, hasLength(3));
+    expect(peticiones.map((uri) => uri.path).toList(), [
+      '/api/skills',
+      '/api/prompts',
+      '/api/tools',
+    ]);
+    // El mismo contrato para los tres, sin depender de cómo cada repositorio
+    // arme la query a mano.
+    for (final uri in peticiones) {
+      expect(uri.queryParameters['scope'], 'group');
+      expect(uri.queryParameters['group_id'], 'ORANGE JAZZTEL/2026');
+    }
+  });
 
-  test('sin grupo ni inactivos no se mandan esos parámetros', () async {
+  test('sin grupo no se manda ese parámetro', () async {
     final (client, peticiones) = clienteEspia();
 
     await SkillsRepository(apiClient: client).listSkills('token');
@@ -119,22 +106,6 @@ void main() {
     final skills = await SkillsRepository(apiClient: client).listSkills('t');
 
     expect(skills, isEmpty);
-  });
-
-  test('activar y desactivar usan el endpoint común de cada recurso', () async {
-    final (client, peticiones) = clienteEspia(body: '{}');
-
-    await SkillsRepository(apiClient: client).setSkillActive('t', 'a1', true);
-    await PromptsRepository(
-      apiClient: client,
-    ).setPromptActive('t', 'p1', false);
-    await ToolsRepository(apiClient: client).setToolActive('t', 'h1', true);
-
-    expect(peticiones.map((uri) => uri.path).toList(), [
-      '/api/skills/a1/activate',
-      '/api/prompts/p1/deactivate',
-      '/api/tools/h1/activate',
-    ]);
   });
 
   test('skills y prompts envían las labels de idioma sin alterar', () async {

@@ -16,13 +16,7 @@ class ToolsRepository extends ScopedResourceRepository<ToolItem> {
     String token, {
     String scope = 'all',
     String? groupId,
-    bool includeInactive = false,
-  }) => list(
-    token,
-    scope: scope,
-    groupId: groupId,
-    includeInactive: includeInactive,
-  );
+  }) => list(token, scope: scope, groupId: groupId);
 
   Future<Map<String, dynamic>> getTool(String token, String scope, String id) =>
       get(token, scope, id);
@@ -35,9 +29,6 @@ class ToolsRepository extends ScopedResourceRepository<ToolItem> {
 
   Future<void> deleteTool(String token, String scope, String id) =>
       remove(token, scope, id);
-
-  Future<void> setToolActive(String token, String id, bool active) =>
-      setResourceActive(token, id, active);
 
   /// Sube el binario de una tool `cpp`, segundo paso del flujo en dos pasos
   /// (`POST /api/tools/{scope}` para los metadatos, luego este endpoint) —

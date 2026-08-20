@@ -29,7 +29,6 @@ import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
 import '../../../shared/widgets/grouped_label_picker.dart';
-import '../../../shared/widgets/inactive_badge.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/origin_badge.dart';
 import '../../../shared/widgets/resource_collection_view.dart';

@@ -237,11 +237,11 @@ class _AgentsPageState extends State<AgentsPage>
           groupId: _activeGroupId,
           includeInactive: true,
         ),
-        _skillsRepository.listSkills(token, includeInactive: true),
+        _skillsRepository.listSkills(token),
         _knowledgeRepository.listItems(token),
         _knowledgeRepository.listPacks(token),
-        _promptsRepository.listPrompts(token, includeInactive: true),
-        _toolsRepository.listTools(token, includeInactive: true),
+        _promptsRepository.listPrompts(token),
+        _toolsRepository.listTools(token),
         _connectionsRepository.listConnections(token, includeInactive: true),
       ]);
       if (!mounted) return;

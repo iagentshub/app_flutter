@@ -21,7 +21,6 @@ extension _PromptActions on _KnowledgePageState {
       final prompts = await _promptsRepository.listPrompts(
         token,
         groupId: _activeGroupId,
-        includeInactive: true,
       );
       if (!mounted) return;
       refresh(() {
@@ -96,24 +95,6 @@ extension _PromptActions on _KnowledgePageState {
       showMessage(_tx('knowledge.prompt_save_error'), isError: true);
     }
     return false;
-  }
-
-  Future<void> _togglePromptActive(PromptItem item) async {
-    final token = _token;
-    if (token == null || token.isEmpty) return;
-    final activate = !item.isActive;
-    try {
-      await _promptsRepository.setPromptActive(token, item.id, activate);
-      showMessage(
-        activate
-            ? _tx('knowledge.prompt_activated')
-            : _tx('knowledge.prompt_deactivated'),
-      );
-    } on ApiError catch (error) {
-      showMessage(error.message, isError: true);
-    } catch (_) {
-      showMessage(_tx('knowledge.prompt_toggle_error'), isError: true);
-    }
   }
 
   Future<void> _deletePrompt(PromptItem item) async {

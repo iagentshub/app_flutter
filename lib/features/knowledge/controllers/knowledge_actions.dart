@@ -20,7 +20,6 @@ extension _KnowledgeActions on _KnowledgePageState {
       final skills = await _skillsRepository.listSkills(
         token,
         groupId: _activeGroupId,
-        includeInactive: true,
       );
       if (!mounted) return;
       refresh(() {
@@ -189,20 +188,6 @@ extension _KnowledgeActions on _KnowledgePageState {
       showMessage(_tx('knowledge.msg_skill_save_failed'), isError: true);
     }
     return false;
-  }
-
-  Future<void> _toggleSkillActive(SkillItem item) async {
-    final token = _token;
-    if (token == null || token.isEmpty) return;
-    final activate = !item.isActive;
-    try {
-      await _skillsRepository.setSkillActive(token, item.id, activate);
-      showMessage(activate ? 'Skill activada' : 'Skill desactivada');
-    } on ApiError catch (error) {
-      showMessage(error.message, isError: true);
-    } catch (_) {
-      showMessage(_tx('knowledge.msg_skill_toggle_failed'), isError: true);
-    }
   }
 
   Future<void> _deleteSkill(SkillItem item) async {

@@ -6,8 +6,8 @@ import 'page_result.dart';
 /// `skills_repository.dart` y `prompts_repository.dart` eran literalmente el
 /// mismo fichero salvo por la palabra «skill»/«prompt», y
 /// `tools_repository.dart` solo añadía la subida y descarga del binario. Cada
-/// cambio en el contrato —añadir `include_inactive`, cambiar la codificación
-/// del `group_id`, meter paginación— había que aplicarlo tres veces, y ya
+/// cambio en el contrato —cambiar la codificación del `group_id`, meter
+/// paginación— había que aplicarlo tres veces, y ya
 /// había divergencia: `agents_repository` codificaba el `group_id` con
 /// `Uri.encodeComponent` mientras los otros tres usaban
 /// `Uri.encodeQueryComponent`.
@@ -46,7 +46,6 @@ class ScopedResourceRepository<T> extends ApiRepository {
     String token, {
     String scope = 'all',
     String? groupId,
-    bool includeInactive = false,
   }) async {
     final items = <T>[];
     var offset = 0;
@@ -55,7 +54,6 @@ class ScopedResourceRepository<T> extends ApiRepository {
         token,
         scope: scope,
         groupId: groupId,
-        includeInactive: includeInactive,
         limit: 100,
         offset: offset,
       );
@@ -69,7 +67,6 @@ class ScopedResourceRepository<T> extends ApiRepository {
     String token, {
     String scope = 'all',
     String? groupId,
-    bool includeInactive = false,
     int limit = 50,
     int offset = 0,
   }) async {
@@ -78,7 +75,6 @@ class ScopedResourceRepository<T> extends ApiRepository {
       queryParameters: {
         'scope': scope,
         if (groupId != null && groupId.isNotEmpty) 'group_id': groupId,
-        if (includeInactive) 'include_inactive': 'true',
         'limit': '$limit',
         'offset': '$offset',
       },
@@ -116,7 +112,4 @@ class ScopedResourceRepository<T> extends ApiRepository {
   Future<void> remove(String token, String scope, String id) async {
     await apiClient.delete(_path(scope, id), gaToken: token);
   }
-
-  Future<void> setResourceActive(String token, String id, bool active) =>
-      setActive(token, basePath, id, active);
 }

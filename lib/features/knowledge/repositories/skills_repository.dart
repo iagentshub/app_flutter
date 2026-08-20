@@ -16,13 +16,7 @@ class SkillsRepository extends ScopedResourceRepository<SkillItem> {
     String token, {
     String scope = 'all',
     String? groupId,
-    bool includeInactive = false,
-  }) => list(
-    token,
-    scope: scope,
-    groupId: groupId,
-    includeInactive: includeInactive,
-  );
+  }) => list(token, scope: scope, groupId: groupId);
 
   Future<Map<String, dynamic>> getSkill(
     String token,
@@ -38,7 +32,4 @@ class SkillsRepository extends ScopedResourceRepository<SkillItem> {
 
   Future<void> deleteSkill(String token, String scope, String id) =>
       remove(token, scope, id);
-
-  Future<void> setSkillActive(String token, String id, bool active) =>
-      setResourceActive(token, id, active);
 }

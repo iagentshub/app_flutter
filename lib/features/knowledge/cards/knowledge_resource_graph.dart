@@ -15,7 +15,6 @@ extension _KnowledgeResourceGraph on _KnowledgePageState {
         return await _agentsRepository.listAgents(
           token,
           groupId: _activeGroupId,
-          includeInactive: true,
         );
       } catch (_) {
         // Sin agentes el grafo sigue teniendo sentido: enseña el recurso y su

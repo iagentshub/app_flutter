@@ -15,13 +15,7 @@ class PromptsRepository extends ScopedResourceRepository<PromptItem> {
     String token, {
     String scope = 'all',
     String? groupId,
-    bool includeInactive = false,
-  }) => list(
-    token,
-    scope: scope,
-    groupId: groupId,
-    includeInactive: includeInactive,
-  );
+  }) => list(token, scope: scope, groupId: groupId);
 
   Future<Map<String, dynamic>> getPrompt(
     String token,
@@ -37,7 +31,4 @@ class PromptsRepository extends ScopedResourceRepository<PromptItem> {
 
   Future<void> deletePrompt(String token, String scope, String id) =>
       remove(token, scope, id);
-
-  Future<void> setPromptActive(String token, String id, bool active) =>
-      setResourceActive(token, id, active);
 }
