@@ -77,18 +77,35 @@ class _DeferredPageState extends State<DeferredPage> {
     if (_loading) unawaited(_load());
   }
 
+  @override
+  void didUpdateWidget(DeferredPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.name == widget.name) return;
+
+    // Las rutas diferidas viven al mismo nivel del Navigator y Flutter puede
+    // reutilizar este State al pasar, por ejemplo, de Admin a Centinel. El
+    // estado anterior no demuestra que la nueva biblioteca esté cargada: si
+    // se construye su símbolo antes de llamar a loadLibrary, dart2js deja la
+    // aplicación en blanco con un DeferredLoadingError.
+    _loading = !DeferredPage.isLoaded(widget.name);
+    _failed = false;
+    if (_loading) unawaited(_load());
+  }
+
   Future<void> _load() async {
+    final name = widget.name;
+    final loader = widget.loader;
     try {
-      await widget.loader();
-      DeferredPage._loaded.add(widget.name);
-      if (!mounted) return;
+      await loader();
+      DeferredPage._loaded.add(name);
+      if (!mounted || widget.name != name) return;
       setState(() => _loading = false);
     } catch (error, stackTrace) {
       // La carga de una parte diferida es una petición HTTP: cualquier fallo
       // de red o de despliegue (parte que ya no existe tras un deploy nuevo)
       // llega aquí, y todos se resuelven igual — reintentar.
-      AppDiagnostics.report('deferred.${widget.name}', error, stackTrace);
-      if (!mounted) return;
+      AppDiagnostics.report('deferred.$name', error, stackTrace);
+      if (!mounted || widget.name != name) return;
       setState(() {
         _loading = false;
         _failed = true;

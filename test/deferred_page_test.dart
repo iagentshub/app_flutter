@@ -98,12 +98,70 @@ void main() {
     expect(find.text('Página cargada'), findsOneWidget);
     expect(cargas, 1);
   });
+
+  testWidgets('carga la nueva parte cuando Navigator reutiliza el State', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      name: 'admin_page',
+      loader: () async {},
+      pageLabel: 'Admin cargado',
+    );
+    await tester.pumpAndSettle();
+
+    final centinel = Completer<void>();
+    await _pump(
+      tester,
+      name: 'centinel_page',
+      loader: () => centinel.future,
+      pageLabel: 'Centinel cargado',
+    );
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('Centinel cargado'), findsNothing);
+
+    centinel.complete();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Centinel cargado'), findsOneWidget);
+  });
+
+  testWidgets('ignora la carga anterior si la ruta cambia mientras espera', (
+    tester,
+  ) async {
+    final admin = Completer<void>();
+    await _pump(
+      tester,
+      name: 'admin_page',
+      loader: () => admin.future,
+      pageLabel: 'Admin cargado',
+    );
+
+    final centinel = Completer<void>();
+    await _pump(
+      tester,
+      name: 'centinel_page',
+      loader: () => centinel.future,
+      pageLabel: 'Centinel cargado',
+    );
+
+    admin.complete();
+    await tester.pump();
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('Centinel cargado'), findsNothing);
+
+    centinel.complete();
+    await tester.pumpAndSettle();
+    expect(find.text('Centinel cargado'), findsOneWidget);
+  });
 }
 
 Future<void> _pump(
   WidgetTester tester, {
   required String name,
   required DeferredLibraryLoader loader,
+  String pageLabel = 'Página cargada',
 }) async {
   SharedPreferences.setMockInitialValues({});
   final backend = await BackendController.bootstrap();
@@ -122,7 +180,7 @@ Future<void> _pump(
           child: DeferredPage(
             name: name,
             loader: loader,
-            builder: (context) => const Text('Página cargada'),
+            builder: (context) => Text(pageLabel),
           ),
         ),
       ),
