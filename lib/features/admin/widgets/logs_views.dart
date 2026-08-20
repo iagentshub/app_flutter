@@ -30,7 +30,7 @@ extension _LogsViews on _LogsPageViewState {
         physics: const AlwaysScrollableScrollPhysics(),
         gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
           maxCrossAxisExtent: 280,
-          mainAxisExtent: 150,
+          mainAxisExtent: 170,
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
         ),
@@ -67,6 +67,11 @@ extension _LogsViews on _LogsPageViewState {
                       _tx('logs.fe_summary')
                           .replaceAll('{warn}', '${day.feWarnings}')
                           .replaceAll('{err}', '${day.feErrors}'),
+                    ),
+                    Text(
+                      _tx(
+                        'logs.audit_count',
+                      ).replaceAll('{n}', '${day.audits}'),
                     ),
                     const Spacer(),
                     Row(
@@ -116,6 +121,14 @@ extension _LogsViews on _LogsPageViewState {
           runSpacing: 6,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
+            for (final category in _categories)
+              ChoiceChip(
+                label: Text(
+                  category.isEmpty ? _tx('logs.all') : _categoryLabel(category),
+                ),
+                selected: _category == category,
+                onSelected: (_) => _filterByCategory(category),
+              ),
             AppIconButton.outlined(
               onPressed: _exporting ? null : _exportCsv,
               tooltip: _tx('logs.export_csv'),
@@ -168,12 +181,21 @@ extension _LogsViews on _LogsPageViewState {
                     DataColumn(label: Text(_tx('logs.col_date'))),
                     DataColumn(label: Text(_tx('logs.col_time'))),
                     DataColumn(label: Text(_tx('logs.col_level'))),
+                    DataColumn(label: Text(_tx('logs.col_category'))),
+                    DataColumn(label: Text(_tx('logs.col_outcome'))),
                     DataColumn(label: Text(_tx('logs.col_ip'))),
                     DataColumn(label: Text(_tx('logs.col_user'))),
                     DataColumn(label: Text(_tx('logs.col_service'))),
+                    DataColumn(label: Text(_tx('logs.col_action'))),
+                    DataColumn(label: Text(_tx('logs.col_resource'))),
                     DataColumn(label: Text(_tx('logs.col_message'))),
+                    DataColumn(label: Text(_tx('logs.col_details'))),
                   ],
                   rows: data.items.map((entry) {
+                    final resource = [
+                      entry.resourceType,
+                      entry.resourceId,
+                    ].where((value) => value.isNotEmpty).join(':');
                     return DataRow(
                       cells: [
                         DataCell(Text(entry.date)),
@@ -186,6 +208,10 @@ extension _LogsViews on _LogsPageViewState {
                               fontWeight: FontWeight.w700,
                             ),
                           ),
+                        ),
+                        DataCell(Text(_categoryLabel(entry.category))),
+                        DataCell(
+                          Text(entry.outcome.isEmpty ? '-' : entry.outcome),
                         ),
                         DataCell(
                           InkWell(
@@ -201,11 +227,32 @@ extension _LogsViews on _LogsPageViewState {
                         ),
                         DataCell(Text(entry.source)),
                         DataCell(
+                          Text(entry.action.isEmpty ? '-' : entry.action),
+                        ),
+                        DataCell(Text(resource.isEmpty ? '-' : resource)),
+                        DataCell(
                           SizedBox(
                             width: 420,
-                            child: Text(
-                              entry.summary,
-                              overflow: TextOverflow.ellipsis,
+                            child: Tooltip(
+                              message: entry.summary,
+                              child: Text(
+                                entry.summary,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ),
+                        DataCell(
+                          SizedBox(
+                            width: 320,
+                            child: Tooltip(
+                              message: entry.detailsJson,
+                              child: Text(
+                                entry.detailsJson.isEmpty
+                                    ? '-'
+                                    : entry.detailsJson,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ),
                         ),
@@ -217,8 +264,11 @@ extension _LogsViews on _LogsPageViewState {
             ),
           ),
           const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 8,
             children: [
               Text(
                 _tx('logs.page_total')

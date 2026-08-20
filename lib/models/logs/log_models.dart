@@ -11,6 +11,12 @@ class LogEntry {
   String get level => raw['level']?.toString() ?? '';
   String get source => raw['source']?.toString() ?? '';
   String get summary => raw['summary']?.toString() ?? '';
+  String get category => raw['category']?.toString() ?? 'DIAGNOSTIC';
+  String get action => raw['action']?.toString() ?? '';
+  String get resourceType => raw['resource_type']?.toString() ?? '';
+  String get resourceId => raw['resource_id']?.toString() ?? '';
+  String get outcome => raw['outcome']?.toString() ?? '';
+  String get detailsJson => raw['details_json']?.toString() ?? '';
 }
 
 class LogsPage {
@@ -59,4 +65,5 @@ class LogsSummaryDay {
   int get feErrors => _asInt(raw['fe_errors']);
   int get warnings => _asInt(raw['warnings']);
   int get errors => _asInt(raw['errors']);
+  int get audits => _asInt(raw['audits']);
 }

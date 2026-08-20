@@ -26,6 +26,7 @@ class _AdminConfigTabState extends State<_AdminConfigTab> with StateMessaging {
   late final TextEditingController _maxSessionsController;
   late final TextEditingController _maxUploadMbController;
   late final TextEditingController _logRetentionController;
+  late final TextEditingController _auditLogRetentionController;
   late final TextEditingController _stressConcurrencyController;
   late bool _emailVerify;
   late bool _guestEnabled;
@@ -62,6 +63,9 @@ class _AdminConfigTabState extends State<_AdminConfigTab> with StateMessaging {
     _logRetentionController = TextEditingController(
       text: (cfg['log_retention_days'] ?? 30).toString(),
     );
+    _auditLogRetentionController = TextEditingController(
+      text: (cfg['audit_log_retention_days'] ?? 365).toString(),
+    );
     _stressConcurrencyController = TextEditingController(
       text: (cfg['stress_max_concurrency'] ?? 0).toString(),
     );
@@ -84,6 +88,7 @@ class _AdminConfigTabState extends State<_AdminConfigTab> with StateMessaging {
     _maxSessionsController.dispose();
     _maxUploadMbController.dispose();
     _logRetentionController.dispose();
+    _auditLogRetentionController.dispose();
     _stressConcurrencyController.dispose();
     super.dispose();
   }
@@ -106,6 +111,8 @@ class _AdminConfigTabState extends State<_AdminConfigTab> with StateMessaging {
         'billing_enabled': _billingEnabled,
         'log_retention_days':
             int.tryParse(_logRetentionController.text.trim()) ?? 30,
+        'audit_log_retention_days':
+            int.tryParse(_auditLogRetentionController.text.trim()) ?? 365,
         'max_request_bytes': _mbToBytes(_maxUploadMbController.text),
         'stress_max_concurrency':
             int.tryParse(_stressConcurrencyController.text.trim()) ?? 0,
@@ -249,6 +256,20 @@ class _AdminConfigTabState extends State<_AdminConfigTab> with StateMessaging {
             labelText:
                 '${_tx('admin.config_retention')} ${_tx('admin.config_days_hint')}',
           ),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _auditLogRetentionController,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            labelText:
+                '${_tx('admin.config_audit_retention')} ${_tx('admin.config_days_hint')}',
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          _tx('admin.config_audit_retention_hint'),
+          style: const TextStyle(fontSize: FncFonts.size12),
         ),
       ]),
       _sectionCard(_tx('admin.config_section_billing'), [

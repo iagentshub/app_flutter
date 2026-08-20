@@ -14,6 +14,11 @@ class LogsRepository extends ApiRepository {
     String? username,
     String? level,
     String? source,
+    String? category,
+    String? action,
+    String? resourceType,
+    String? resourceId,
+    String? outcome,
     String? query,
     int page = 1,
     int pageSize = 50,
@@ -27,6 +32,13 @@ class LogsRepository extends ApiRepository {
       if (username != null && username.isNotEmpty) 'username': username,
       if (level != null && level.isNotEmpty) 'level': level,
       if (source != null && source.isNotEmpty) 'source': source,
+      if (category != null && category.isNotEmpty) 'category': category,
+      if (action != null && action.isNotEmpty) 'action': action,
+      if (resourceType != null && resourceType.isNotEmpty)
+        'resource_type': resourceType,
+      if (resourceId != null && resourceId.isNotEmpty)
+        'resource_id': resourceId,
+      if (outcome != null && outcome.isNotEmpty) 'outcome': outcome,
       if (query != null && query.isNotEmpty) 'q': query,
     };
     final path = Uri(path: _basePath, queryParameters: params).toString();
@@ -56,6 +68,11 @@ class LogsRepository extends ApiRepository {
     String? username,
     String? level,
     String? source,
+    String? category,
+    String? action,
+    String? resourceType,
+    String? resourceId,
+    String? outcome,
     String? query,
   }) async {
     final params = <String, String>{
@@ -65,6 +82,13 @@ class LogsRepository extends ApiRepository {
       if (username != null && username.isNotEmpty) 'username': username,
       if (level != null && level.isNotEmpty) 'level': level,
       if (source != null && source.isNotEmpty) 'source': source,
+      if (category != null && category.isNotEmpty) 'category': category,
+      if (action != null && action.isNotEmpty) 'action': action,
+      if (resourceType != null && resourceType.isNotEmpty)
+        'resource_type': resourceType,
+      if (resourceId != null && resourceId.isNotEmpty)
+        'resource_id': resourceId,
+      if (outcome != null && outcome.isNotEmpty) 'outcome': outcome,
       if (query != null && query.isNotEmpty) 'q': query,
     };
     final path = Uri(

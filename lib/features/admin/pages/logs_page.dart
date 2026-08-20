@@ -38,6 +38,8 @@ class LogsPageView extends StatefulWidget {
 
 const _levels = ['', 'DEBUG', 'INFO', 'OK', 'WARNING', 'ERROR'];
 const _sources = ['', 'BE', 'FE'];
+const _categories = ['', 'AUDIT', 'DIAGNOSTIC'];
+const _outcomes = ['', 'SUCCESS', 'DENIED', 'FAILURE'];
 
 class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
   late final LogsRepository _repository;
@@ -52,8 +54,13 @@ class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
   final _ipController = TextEditingController();
   final _usernameController = TextEditingController();
   final _queryController = TextEditingController();
+  final _actionController = TextEditingController();
+  final _resourceTypeController = TextEditingController();
+  final _resourceIdController = TextEditingController();
   String _level = '';
   String _source = '';
+  String _category = '';
+  String _outcome = '';
   String? _dateFilter;
 
   LogsPage? _logsPage;
@@ -83,6 +90,9 @@ class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
     _ipController.dispose();
     _usernameController.dispose();
     _queryController.dispose();
+    _actionController.dispose();
+    _resourceTypeController.dispose();
+    _resourceIdController.dispose();
     _t.removeListener(_onTextsChanged);
     _t.dispose();
     super.dispose();
@@ -145,6 +155,11 @@ class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
         query: _queryController.text.trim(),
         level: _level,
         source: _source,
+        category: _category,
+        action: _actionController.text.trim(),
+        resourceType: _resourceTypeController.text.trim(),
+        resourceId: _resourceIdController.text.trim(),
+        outcome: _outcome,
         page: page,
       );
       if (!mounted) return;
@@ -181,6 +196,11 @@ class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
         query: _queryController.text.trim(),
         level: _level,
         source: _source,
+        category: _category,
+        action: _actionController.text.trim(),
+        resourceType: _resourceTypeController.text.trim(),
+        resourceId: _resourceIdController.text.trim(),
+        outcome: _outcome,
       );
       final bytes = Uint8List.fromList(utf8.encode(csv));
       final stamp = DateTime.now()
@@ -206,8 +226,13 @@ class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
   int get _logsActiveFilterCount =>
       (_level.isNotEmpty ? 1 : 0) +
       (_source.isNotEmpty ? 1 : 0) +
+      (_category.isNotEmpty ? 1 : 0) +
+      (_outcome.isNotEmpty ? 1 : 0) +
       (_ipController.text.isNotEmpty ? 1 : 0) +
-      (_usernameController.text.isNotEmpty ? 1 : 0);
+      (_usernameController.text.isNotEmpty ? 1 : 0) +
+      (_actionController.text.isNotEmpty ? 1 : 0) +
+      (_resourceTypeController.text.isNotEmpty ? 1 : 0) +
+      (_resourceIdController.text.isNotEmpty ? 1 : 0);
 
   void _openLogsFiltersDialog() {
     showFilterDialog(
@@ -220,9 +245,14 @@ class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
         setState(() {
           _level = '';
           _source = '';
+          _category = '';
+          _outcome = '';
         });
         _ipController.clear();
         _usernameController.clear();
+        _actionController.clear();
+        _resourceTypeController.clear();
+        _resourceIdController.clear();
       },
       buildFields: (setDialogState) => [
         DropdownButtonFormField<String>(
@@ -259,6 +289,44 @@ class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
           },
         ),
         const SizedBox(height: 12),
+        DropdownButtonFormField<String>(
+          initialValue: _category,
+          decoration: InputDecoration(labelText: _tx('logs.category_label')),
+          items: _categories
+              .map(
+                (category) => DropdownMenuItem(
+                  value: category,
+                  child: Text(
+                    category.isEmpty
+                        ? _tx('logs.all')
+                        : _categoryLabel(category),
+                  ),
+                ),
+              )
+              .toList(),
+          onChanged: (value) {
+            setState(() => _category = value ?? '');
+            setDialogState(() {});
+          },
+        ),
+        const SizedBox(height: 12),
+        DropdownButtonFormField<String>(
+          initialValue: _outcome,
+          decoration: InputDecoration(labelText: _tx('logs.outcome_label')),
+          items: _outcomes
+              .map(
+                (outcome) => DropdownMenuItem(
+                  value: outcome,
+                  child: Text(outcome.isEmpty ? _tx('logs.all') : outcome),
+                ),
+              )
+              .toList(),
+          onChanged: (value) {
+            setState(() => _outcome = value ?? '');
+            setDialogState(() {});
+          },
+        ),
+        const SizedBox(height: 12),
         TextField(
           controller: _ipController,
           decoration: InputDecoration(labelText: _tx('logs.ip_label')),
@@ -268,6 +336,26 @@ class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
         TextField(
           controller: _usernameController,
           decoration: InputDecoration(labelText: _tx('logs.user_label')),
+          onChanged: (_) => setDialogState(() {}),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _actionController,
+          decoration: InputDecoration(labelText: _tx('logs.action_label')),
+          onChanged: (_) => setDialogState(() {}),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _resourceTypeController,
+          decoration: InputDecoration(
+            labelText: _tx('logs.resource_type_label'),
+          ),
+          onChanged: (_) => setDialogState(() {}),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _resourceIdController,
+          decoration: InputDecoration(labelText: _tx('logs.resource_id_label')),
           onChanged: (_) => setDialogState(() {}),
         ),
       ],
@@ -290,10 +378,15 @@ class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
     _ipController.clear();
     _usernameController.clear();
     _queryController.clear();
+    _actionController.clear();
+    _resourceTypeController.clear();
+    _resourceIdController.clear();
     setState(() {
       _dateFilter = date;
       _level = '';
       _source = '';
+      _category = '';
+      _outcome = '';
       _viewerTab = true;
     });
     _loadViewer();
@@ -301,6 +394,11 @@ class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
 
   void _clearDateFilter() {
     setState(() => _dateFilter = null);
+    _loadViewer();
+  }
+
+  void _filterByCategory(String category) {
+    setState(() => _category = category);
     _loadViewer();
   }
 
@@ -313,6 +411,12 @@ class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
     };
     return AppTheme.statusColor(base, Theme.of(context).colorScheme.surface);
   }
+
+  String _categoryLabel(String category) => switch (category) {
+    'AUDIT' => _tx('logs.category_audit'),
+    'DIAGNOSTIC' => _tx('logs.category_diagnostic'),
+    _ => _tx('logs.all'),
+  };
 
   @override
   Widget build(BuildContext context) {
