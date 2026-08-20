@@ -6,12 +6,14 @@ import 'package:app_flutter/features/profile/repositories/profile_repository.dar
 import 'package:app_flutter/shared/state/backend_controller.dart';
 import 'package:app_flutter/shared/state/locale_controller.dart';
 import 'package:app_flutter/shared/state/session_controller.dart';
+import 'package:app_flutter/utils/i18n.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:image/image.dart' as img;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../support/i18n_de_prueba.dart';
 import '../../support/memory_secure_store.dart';
 
 /// Un PNG mínimo pero decodificable, para probar el flujo real de
@@ -20,7 +22,6 @@ List<int> _fakeImageBytes() => img.encodePng(img.Image(width: 4, height: 4));
 
 /// Devuelve el fallback tal cual: el controller no debe depender de que
 /// haya locales cargados para producir sus mensajes.
-String _tx(String path, String fallback) => fallback;
 
 Map<String, dynamic> _session({
   String username = 'alice',
@@ -58,6 +59,8 @@ Map<String, dynamic> _social({
 };
 
 void main() {
+  setUp(cargarTraduccionesDePrueba);
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late BackendController backendController;
@@ -130,7 +133,7 @@ void main() {
       sessionController: await session(token: token),
       localeController: locale ?? await LocaleController.bootstrap(),
       syncTheme: (theme) async => themes?.add(theme),
-      tx: _tx,
+      tx: tr,
     );
     addTearDown(controller.dispose);
     return controller;
@@ -212,7 +215,7 @@ void main() {
     await controller.load();
 
     expect(themes, ['light']);
-    expect(locale.isEnglish, isTrue);
+    expect(locale.languageCode, 'en');
   });
 
   test('saveSettings omite el tema cuando lo fija el administrador', () async {
@@ -484,7 +487,7 @@ void main() {
       sessionController: await session(),
       localeController: await LocaleController.bootstrap(),
       syncTheme: (_) async {},
-      tx: _tx,
+      tx: tr,
     );
     var notifications = 0;
     controller.addListener(() => notifications++);

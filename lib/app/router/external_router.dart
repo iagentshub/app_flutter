@@ -16,16 +16,18 @@ import '../../shared/widgets/terminal_view_transition.dart';
 
 /// Rutas accesibles sin sesión: marketing público y flujo de autenticación.
 abstract final class ExternalRoutes {
+  // Rutas del sitio público, en el idioma base. Las demás **no se declaran**:
+  // se derivan del código (`/en/docs`, `/fr/docs`) en `publicRoutes`. Antes
+  // había una constante por idioma y página —`docs` y `docsEn`, diez en
+  // total—, así que añadir un tercer idioma eran cinco constantes más y
+  // acordarse de sumarlas a la lista de redirecciones.
+  static const publicPaths = [home, about, docs, support, pricing];
+
   static const home = '/';
-  static const homeEn = '/en';
   static const about = '/about';
-  static const aboutEn = '/en/about';
   static const docs = '/docs';
-  static const docsEn = '/en/docs';
   static const support = '/support';
-  static const supportEn = '/en/support';
   static const pricing = '/pricing';
-  static const pricingEn = '/en/pricing';
 
   static const login = '/login';
   static const register = '/register';
@@ -54,6 +56,24 @@ Uri resolvePublicSiteUri({
   return Uri.parse('$publicSiteBaseUrl$normalizedPath');
 }
 
+/// Las rutas públicas en todos los idiomas: `/docs`, `/en/docs`, y las que
+/// traiga `supportedLanguageCodes` el día que crezca. El idioma base va sin
+/// prefijo, que es como las sirve el sitio público.
+List<String> publicPathsPorIdioma() {
+  final rutas = <String>[];
+  for (final idioma in LocaleController.supportedLanguageCodes) {
+    for (final base in ExternalRoutes.publicPaths) {
+      if (idioma == LocaleController.fallbackLanguageCode) {
+        // La raíz del idioma base la declara aparte quien llama.
+        if (base != ExternalRoutes.home) rutas.add(base);
+      } else {
+        rutas.add(base == ExternalRoutes.home ? '/$idioma' : '/$idioma$base');
+      }
+    }
+  }
+  return rutas;
+}
+
 /// Rutas top-level (fuera del [ShellRoute]) para marketing público y auth.
 List<RouteBase> externalRoutes({
   required BackendController backendController,
@@ -68,17 +88,11 @@ List<RouteBase> externalRoutes({
       path: ExternalRoutes.home,
       redirect: (context, state) => ExternalRoutes.login,
     ),
-    for (final path in const [
-      ExternalRoutes.homeEn,
-      ExternalRoutes.about,
-      ExternalRoutes.aboutEn,
-      ExternalRoutes.docs,
-      ExternalRoutes.docsEn,
-      ExternalRoutes.support,
-      ExternalRoutes.supportEn,
-      ExternalRoutes.pricing,
-      ExternalRoutes.pricingEn,
-    ])
+    // El sitio público lo sirve React fuera de /app/. Estas rutas existen aquí
+    // solo para recoger a quien llegue a ellas dentro de la app y mandarlo a su
+    // sitio. Se declaran para el idioma base y para cada idioma soportado, en
+    // vez de escribir el par a mano: un idioma nuevo entra solo.
+    for (final path in publicPathsPorIdioma())
       GoRoute(path: path, redirect: (context, state) => ExternalRoutes.home),
     GoRoute(
       path: ExternalRoutes.login,

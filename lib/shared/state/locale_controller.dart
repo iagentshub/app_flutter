@@ -25,15 +25,23 @@ class LocaleController extends ChangeNotifier {
   /// directorio y sumar el código aquí.
   static const supportedLanguageCodes = ['es', 'en'];
 
+  /// Nombre nativo de cada idioma, para los selectores. Vive junto a la lista
+  /// de arriba para que añadir un idioma siga siendo **un solo sitio**: las
+  /// pantallas que ofrecen el cambio los recorren, en vez de escribir una
+  /// opción por idioma a mano.
+  static const languageNames = <String, String>{
+    'es': 'Español',
+    'en': 'English',
+  };
+
+  /// Nombre del idioma, o su código en mayúsculas si aún no tiene nombre.
+  static String languageName(String code) =>
+      languageNames[code] ?? code.toUpperCase();
+
   String _languageCode;
   String get languageCode => _languageCode;
 
   Locale get locale => Locale(_languageCode);
-
-  /// Atajo para las vistas que solo alternan entre los dos idiomas actuales
-  /// (el conmutador de login, los iconos de la barra pública). Es una
-  /// comodidad local, no algo que deba viajar por las firmas.
-  bool get isEnglish => _languageCode == 'en';
 
   static Future<LocaleController> bootstrap() async {
     final prefs = await LocalStore.instance();

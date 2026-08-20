@@ -21,7 +21,6 @@ void main() {
 
     expect(controller.languageCode, 'es');
     expect(controller.locale, const Locale('es'));
-    expect(controller.isEnglish, isFalse);
   });
 
   test('recupera el idioma persistido', () async {

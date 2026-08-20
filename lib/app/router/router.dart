@@ -138,9 +138,6 @@ abstract final class AppRouter {
   static void toForgotPassword(BuildContext context) =>
       context.go(ExternalRoutes.forgotPassword);
 
-  static void toHome(BuildContext context, {bool english = false}) =>
-      context.go(english ? ExternalRoutes.homeEn : ExternalRoutes.home);
-
   static Future<void> toBackendConfig(BuildContext context) =>
       context.push(ExternalRoutes.backendConfig);
 
