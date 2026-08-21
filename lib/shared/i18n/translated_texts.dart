@@ -51,6 +51,10 @@ class TranslatedTexts extends ChangeNotifier {
   /// Traducción de [path] en el idioma activo, o el identificador si falta.
   String text(String path) => LocaleLoader.text(_bundle, path);
 
+  /// Diccionario de cadenas bajo `path` — para datos traducidos (la lista de
+  /// países del checkout), no para copia de interfaz. Vacío si aún no cargó.
+  Map<String, String> map(String path) => LocaleLoader.map(_bundle, path);
+
   @override
   void dispose() {
     _disposed = true;
