@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/resource_type_badge.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 
@@ -44,7 +45,7 @@ Future<Map<String, dynamic>?> showOfficialSourceEditDialog(
   var trackingMode = source['tracking_mode']?.toString() == 'branch'
       ? 'branch'
       : 'release';
-  final result = await showDialog<Map<String, dynamic>>(
+  final result = await showAppDialog<Map<String, dynamic>>(
     context: context,
     builder: (context) => StatefulBuilder(
       builder: (context, setDialogState) => AlertDialog(
@@ -139,7 +140,7 @@ Future<Map<String, dynamic>?> showOfficialSourceEditDialog(
       ),
     ),
   );
-  // showDialog completa al iniciar el pop; el overlay todavía usa los
+  // showAppDialog completa al iniciar el pop; el overlay todavía usa los
   // controladores durante su animación de salida.
   unawaited(
     Future<void>.delayed(kThemeAnimationDuration, () {
@@ -203,7 +204,7 @@ Future<Set<String>?> showOfficialComponentsDialog(
     return false;
   }
 
-  return showDialog<Set<String>>(
+  return showAppDialog<Set<String>>(
     context: context,
     builder: (context) => StatefulBuilder(
       builder: (context, setDialogState) => AlertDialog(

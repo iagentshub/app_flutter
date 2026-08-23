@@ -44,7 +44,7 @@ extension _PromptActions on _KnowledgePageState {
 
   Future<void> _openCreatePromptDialog() async {
     final allowPublic = _services.sessionController.user?.role != 'guest';
-    final payload = await showDialog<Map<String, dynamic>>(
+    final payload = await showAppDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) =>
           _PromptFormDialog(tx: _tx, allowPublic: allowPublic),
@@ -68,7 +68,7 @@ extension _PromptActions on _KnowledgePageState {
 
     if (!mounted) return;
     final allowPublic = _services.sessionController.user?.role != 'guest';
-    final payload = await showDialog<Map<String, dynamic>>(
+    final payload = await showAppDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => _PromptFormDialog(
         tx: _tx,
@@ -105,9 +105,8 @@ extension _PromptActions on _KnowledgePageState {
     final confirm = await showConfirmActionDialog(
       context,
       title: _tx('knowledge.delete_prompt_title'),
-      message: _tx(
-        'knowledge.delete_prompt_confirm',
-      ).replaceAll('{name}', item.name),
+      message: _tx('knowledge.delete_prompt_confirm')
+          .replaceAll('{name}', item.name),
       cancelLabel: _tx('common.cancel'),
       confirmLabel: _tx('common.delete'),
       destructive: true,
@@ -123,6 +122,31 @@ extension _PromptActions on _KnowledgePageState {
       showMessage(error.message, isError: true);
     } catch (_) {
       showMessage(_tx('knowledge.prompt_delete_error'), isError: true);
+    }
+  }
+
+  Future<void> _togglePromptActive(PromptItem item) async {
+    final token = _token;
+    if (token == null || token.isEmpty || item.readOnly) return;
+    final active = !item.isActive;
+    try {
+      await _promptsRepository.setPromptActive(
+        token,
+        item.scope,
+        item.id,
+        active,
+      );
+      showMessage(
+        _tx(
+          active
+              ? 'knowledge.content_activated'
+              : 'knowledge.content_deactivated',
+        ),
+      );
+    } on ApiError catch (error) {
+      showMessage(error.message, isError: true);
+    } catch (_) {
+      showMessage(_tx('knowledge.msg_item_toggle_failed'), isError: true);
     }
   }
 

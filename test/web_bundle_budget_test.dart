@@ -68,6 +68,44 @@ void main() {
     );
   });
 
+  // La versión de Flutter vive en el `environment: flutter:` del pubspec y los
+  // tres workflows que compilan esta app la leen de ahí. Escrita a mano en uno
+  // de ellos, vuelve la situación que motivó esto: este CI validaba 3.44.8
+  // mientras los `docker-publish` de iAgents y backend_fastapi instalaban lo
+  // que `channel: stable` diera ese día, así que la imagen que se despliega se
+  // compilaba con una versión que nadie había validado.
+  test('el pubspec fija la versión de Flutter y CI la lee de ahí', () {
+    final pubspec = File('pubspec.yaml').readAsStringSync();
+    final fijada = RegExp(
+      r'^\s*flutter:\s*(\d+\.\d+\.\d+)\s*$',
+      multiLine: true,
+    ).firstMatch(pubspec)?.group(1);
+
+    expect(
+      fijada,
+      isNotNull,
+      reason:
+          'pubspec.yaml tiene que declarar `flutter: X.Y.Z` exacto en '
+          '`environment`: es lo que leen los tres workflows.',
+    );
+
+    final fuente = workflow.readAsStringSync();
+    expect(
+      fuente,
+      isNot(contains(RegExp(r'flutter-version:\s*\d'))),
+      reason:
+          'La versión escrita a mano en el workflow se separa de la del '
+          'pubspec sin que nada falle. Usa flutter-version-file.',
+    );
+    expect(
+      'flutter-version-file'.allMatches(fuente).length,
+      2,
+      reason:
+          'Los dos jobs que instalan Flutter tienen que leer el pubspec: el '
+          'que valida y el que publica la imagen unificada.',
+    );
+  });
+
   test('CI ejecuta el presupuesto después de construir la web', () {
     final lineas = workflow.readAsLinesSync();
     final compilacion = lineas.indexWhere(

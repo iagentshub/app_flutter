@@ -75,7 +75,7 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
   }
 
   Future<void> _connectWithGithub() async {
-    final accessToken = await showDialog<String>(
+    final accessToken = await showAppDialog<String>(
       context: context,
       builder: (context) => _GithubDeviceFlowDialog(
         apiClient: widget.apiClient,
@@ -334,12 +334,16 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
                 ],
                 TextField(
                   controller: _hostController,
-                  decoration: const InputDecoration(labelText: 'Host'),
+                  decoration: InputDecoration(
+                    labelText: _isOllama
+                        ? widget.tx('providers.ollama_host_custom')
+                        : 'Host',
+                  ),
                 ),
                 if (_isOllama) ...[
                   const SizedBox(height: 4),
                   Text(
-                    widget.tx('providers.ollama_cloud_hint'),
+                    widget.tx('providers.ollama_host_hint'),
                     style: TextStyle(
                       fontSize: FncFonts.size11,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,

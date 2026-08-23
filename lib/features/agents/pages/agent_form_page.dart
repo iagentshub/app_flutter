@@ -17,6 +17,7 @@ import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/tools/tool_language.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/grouped_label_picker.dart';
+import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../dialogs/agent_publish_dependencies_dialog.dart';
 import '../dialogs/agent_resource_picker_dialog.dart';
@@ -353,7 +354,7 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
 
   Future<void> _openResourcePicker() async {
     if (_loadingCatalogs) return;
-    final selection = await showDialog<AgentResourceSelection>(
+    final selection = await showAppDialog<AgentResourceSelection>(
       context: context,
       builder: (context) => AgentResourcePickerDialog(
         options: [

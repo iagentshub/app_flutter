@@ -12,6 +12,7 @@ import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/explore_search_toolbar.dart';
+import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/resource_collection_view.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
@@ -235,7 +236,7 @@ class _PublicProfilePageState extends State<PublicProfilePage>
         resourceId: item.resourceId,
       );
       if (!mounted) return;
-      await showDialog<void>(
+      await showAppDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
           title: Text(item.name),

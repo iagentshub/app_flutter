@@ -58,6 +58,51 @@ void main() {
     expect(edited, isTrue);
   });
 
+  testWidgets('AgentCard desactivada conserva gestión pero bloquea el chat', (
+    tester,
+  ) async {
+    var chatted = false;
+    var edited = false;
+    const item = AgentItem(
+      raw: {
+        'id': 'agent-inactive',
+        'name': 'Agente desactivado',
+        'connection_id': 'connection-1',
+        'is_active': false,
+      },
+    );
+
+    await tester.pumpWidget(
+      _host(
+        AgentCard(
+          item: item,
+          tx: tr,
+          onChat: () => chatted = true,
+          onExport: (_) {},
+          onShare: () {},
+          onHistory: () {},
+          onEdit: () => edited = true,
+          onDelete: () {},
+          onToggleActive: () {},
+        ),
+      ),
+    );
+
+    final chatButton = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Chat'),
+    );
+    expect(chatButton.onPressed, isNull);
+    expect(find.text('Desactivado'), findsOneWidget);
+    expect(
+      find.byTooltip('Activa el agente para abrir el chat'),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byTooltip('Editar'));
+    expect(edited, isTrue);
+    expect(chatted, isFalse);
+  });
+
   testWidgets('ConnectionCard disables unavailable virtual actions', (
     tester,
   ) async {

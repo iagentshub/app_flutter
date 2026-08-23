@@ -5,6 +5,7 @@ import '../../../app/theme/fnc_fonts.dart';
 import '../../../models/profile/profile_models.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../repositories/profile_repository.dart';
@@ -22,7 +23,7 @@ Future<void> showActiveSessionsDialog({
   required String token,
   required String Function(String path) tx,
 }) {
-  return showDialog<void>(
+  return showAppDialog<void>(
     context: context,
     builder: (context) =>
         _ActiveSessionsDialog(repository: repository, token: token, tx: tx),

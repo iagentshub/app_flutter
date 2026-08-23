@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../shared/widgets/motion/app_page_transitions.dart';
 import 'fnc_colors.dart';
 import 'fnc_fonts.dart';
 
@@ -68,6 +69,9 @@ abstract final class AppTheme {
       scaffoldBackgroundColor: pageBackground,
       cardColor: cardColor,
       useMaterial3: true,
+      // Las páginas que se abren con `Navigator.push` toman su transición de
+      // aquí, no de cada llamada — ver app_page_transitions.dart.
+      pageTransitionsTheme: appPageTransitionsTheme,
       textTheme: FncFonts.textTheme(Brightness.light),
       cardTheme: CardThemeData(
         color: cardColor,
@@ -160,6 +164,7 @@ abstract final class AppTheme {
       scaffoldBackgroundColor: FncColors.black,
       cardColor: cardColor,
       useMaterial3: true,
+      pageTransitionsTheme: appPageTransitionsTheme,
       cardTheme: CardThemeData(
         color: cardColor,
         elevation: 0,

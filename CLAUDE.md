@@ -139,6 +139,71 @@ Lo que hay que saber al tocar `api_client.dart`:
 El porqué completo está en `docs/adr/008-sesiones-revocables.md` del repo
 `backend_fastapi`.
 
+## El movimiento vive en un sitio
+
+Las transiciones son del paquete [`animations`](https://pub.dev/packages/animations)
+(Material Motion) y se declaran en `shared/widgets/motion/`, nunca sueltas en una
+pantalla. Cuatro piezas y cuándo toca cada una:
+
+- **Cambiar de sección** dentro del shell → nada: la ponen las páginas del
+  router (`fadeThroughPage` en `internal_router.dart`), no el shell.
+
+  **El `child` que un ShellRoute entrega a su layout es el Navigator del shell,
+  y lleva `GlobalKey`.** Envolverlo en algo que mantenga viva la vista saliente
+  junto a la entrante —un `PageTransitionSwitcher`, un `AnimatedSwitcher`— pone
+  el mismo Navigator en dos ramas del árbol. En debug salta «Duplicate GlobalKey
+  detected»; **en release no hay aserción y la pantalla no se pinta hasta que
+  otro evento programa un frame**, que se vive como «las vistas tardan segundos
+  y no salen hasta que abro el menú». Pasó, y por eso `AppShell` entrega su
+  `child` tal cual. `shell_navigation_repinta_test.dart` es el guard.
+
+- **Abrir una página sobre otra** con `Navigator.push` → nada. La transición
+  —*shared axis Z*— la pone `appPageTransitionsTheme` desde `ThemeData`, así que
+  el `MaterialPageRoute` de siempre ya la hereda. Ponerla en el tema y no en cada
+  `push` es también lo que conserva el gesto de retroceso de iOS, que lo aporta
+  `MaterialRouteTransitionMixin` leyendo ese mismo tema. Por eso **iOS y macOS
+  nativos se quedan con la transición de Cupertino**: ahí el deslizamiento no es
+  decoración, es el gesto de volver atrás.
+- **Rutas hermanas** —las secciones internas y también login, registro o
+  recuperar contraseña— → `fadeThroughPage(key: state.pageKey, …)` en el
+  `pageBuilder` de go_router. La `key` tiene que ser la `pageKey` del estado: es
+  lo que le dice al Navigator que son páginas distintas.
+
+  Su `fillColor` es el `scaffoldBackgroundColor`, **nunca el `canvasColor` que
+  trae por defecto**: en el tema claro ese es blanco puro (#FFFFFF) mientras el
+  fondo real de las páginas es #F5F5F7, y la diferencia se veía como un fogonazo
+  blanco a mitad de transición, en los dos sentidos. Hay un test que lo fija.
+- **Diálogos** → `showAppDialog`, nunca `showDialog`. Misma firma, así que migrar
+  es cambiar el nombre. `feature_architecture_test.dart` rechaza la llamada
+  directa: no rompe nada visible —el diálogo sale igual— y por eso solo se nota
+  en el test.
+
+**Toda animación consulta `AppMotion.reduced(context)` y, si es cierto, se quita
+entera.** No se acorta: el framework ya acelera los `AnimationController` ×20 en
+ese modo y el resto —un parpadeo de 15 ms— es justo lo que molesta a quien tiene
+sensibilidad vestibular. `StatusDot`, `LaunchSplash` y el grafo ya lo hacían cada
+uno por su cuenta; ahora la consulta está en un sitio.
+
+Dos cosas deliberadas. **Ninguna transición desplaza contenido**: el fundido del
+shell llevaba un slide y un barrido de scanline, y se retiraron porque al
+superponerse con listas que aún se maquetaban daban sensación de elementos
+descuadrados. Y **`TerminalViewTransition` sigue existiendo** para los dos casos
+que no son un cambio entre vistas sino una entrada sin saliente —splash → app en
+`main.dart`, y la página de error del router—; ahí un switcher no tendría de qué
+hacer la otra mitad.
+
+Sobre el paquete: la **3.x** migra a `material_ui`, que es a donde Flutter está
+moviendo Material. Cuesta **53 KB** medidos en el bundle web (4,98 MiB frente a
+4,93) y no cambia una sola llamada de las nuestras: el changelog de 3.0.0 es esa
+migración y nada más.
+
+`OpenContainer` (el *container transform*, la tarjeta que se despliega en
+pantalla) **no está integrado**, y no por olvido: exige que el widget de la
+tarjeta construya la página destino, y aquí abrir un recurso lo deciden las
+extensiones de acciones sobre el `State` de la página, que devuelven un payload.
+Encajarlo significaría mover esa lógica a las tarjetas. El *shared axis Z* del
+tema da el mismo «esto se abre hacia dentro» sin tocar nada.
+
 ## Reglas que ya vigila la suite
 
 - **i18n**: todo texto de interfaz pasa por `_tx(clave, fallback)` y vive en
@@ -212,6 +277,37 @@ ficheros por idioma: 284 KB en el bundle que nadie leía, y una clave que se
 escribía en el fichero equivocado la mitad de las veces.
 `test/locales_sin_huerfanos_test.dart` compara los ficheros con los namespaces
 que el código carga de verdad.
+
+## La versión de Flutter la fija el pubspec
+
+`environment: flutter:` de `pubspec.yaml` es **la** versión, exacta, y los tres
+workflows que compilan esta app la leen de ahí con `flutter-version-file`: el CI
+de este repo (sus dos jobs) y los `docker-publish` de `iAgents` y
+`backend_fastapi`, que hacen checkout de este repositorio para construir la
+imagen unificada.
+
+Antes solo la fijaba el CI de aquí —en 3.44.8— y los otros dos instalaban
+`channel: stable` sin más. Como esos dos son los que construyen **la imagen que
+se despliega**, producción se compilaba con lo que hubiera ese día y el CI
+validaba otra cosa. Nada fallaba: son la misma app compilada por dos SDK
+distintos, y el que llegaba al usuario era el que nadie había probado.
+
+Dos detalles que cuestan un CI rojo si se pasan por alto:
+
+- **La versión tiene que ser exacta** (`3.47.1`, no un rango). La action exige
+  una versión concreta, y un rango devolvería el problema tal cual estaba: cada
+  runner resolvería la suya.
+- **La ruta del fichero es relativa al workspace**, no al `working-directory`
+  del paso que compila. En el job `publish-unified` de este repo, y en los dos
+  `docker-publish`, es `app_flutter/pubspec.yaml`, porque ahí este repositorio
+  va en un subdirectorio.
+
+Al subir de versión: cambiar el pubspec, comprobar `flutter analyze` y
+`flutter test`, y **volver a medir el bundle** —`tool/build_web.sh` y
+`tool/check_web_bundle_size.sh`—, porque el presupuesto está anotado con la
+versión con la que se midió. `iAgents/tests/test_docker_contexto.py` vigila que
+ningún workflow vuelva a decidir la suya, y `web_bundle_budget_test.dart` que
+este repo siga declarándola.
 
 ## Antes de dar algo por terminado
 

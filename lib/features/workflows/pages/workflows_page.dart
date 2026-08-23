@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../core/network/api_error.dart';
 import '../../../features/agents/repositories/agents_repository.dart';
 import '../../../features/connections/repositories/connections_repository.dart';
+import '../../../features/executions/controllers/resource_executions_controller.dart';
 import '../../../features/knowledge/repositories/knowledge_repository.dart';
 import '../../../features/knowledge/repositories/prompts_repository.dart';
 import '../../../features/knowledge/repositories/skills_repository.dart';
@@ -23,6 +24,7 @@ import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
+import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/resource_collection_view.dart';
 import '../../../shared/widgets/resource_toolbar.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
@@ -61,6 +63,8 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
   late final TranslatedTexts _t;
   late final WorkflowRunsController _workflowRuns;
   late final bool _ownsWorkflowRuns;
+  late final ResourceExecutionsController _executionState;
+  late final bool _ownsExecutionState;
   List<WorkflowItem> _workflows = const [];
   Map<String, AgentItem> _agentsById = const {};
   bool _loading = true;
@@ -116,6 +120,15 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
           sessionController: _services.sessionController,
           autoStart: false,
         );
+    _ownsExecutionState = _services.resourceExecutionsController == null;
+    _executionState =
+        _services.resourceExecutionsController ??
+        ResourceExecutionsController(
+          apiClient: _services.apiClient,
+          sessionController: _services.sessionController,
+          autoStart: false,
+        );
+    _executionState.addListener(_onExecutionStateChanged);
     _t = TranslatedTexts(
       localeController: _services.localeController,
       namespace: 'resources',
@@ -127,10 +140,16 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
     if (mounted) setState(() {});
   }
 
+  void _onExecutionStateChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
     _t.removeListener(_onTextsChanged);
     _t.dispose();
+    _executionState.removeListener(_onExecutionStateChanged);
+    if (_ownsExecutionState) _executionState.dispose();
     if (_ownsWorkflowRuns) _workflowRuns.dispose();
     super.dispose();
   }
@@ -220,6 +239,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
           sessionController: _services.sessionController,
           localeController: _services.localeController,
           workflowRunsController: _workflowRuns,
+          executionStateController: _executionState,
         ),
       ),
     );
@@ -249,6 +269,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
           sessionController: _services.sessionController,
           localeController: _services.localeController,
           workflowRunsController: _workflowRuns,
+          executionStateController: _executionState,
           initial: initial,
         ),
       ),
@@ -299,9 +320,8 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
     final confirm = await showConfirmActionDialog(
       context,
       title: _tx('workflows.delete_dialog_title'),
-      message: _tx(
-        'workflows.delete_dialog_body',
-      ).replaceAll('{{name}}', item.name),
+      message: _tx('workflows.delete_dialog_body')
+          .replaceAll('{{name}}', item.name),
       cancelLabel: _tx('common.cancel'),
       confirmLabel: _tx('common.delete'),
       destructive: true,
@@ -329,7 +349,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
       return;
     }
 
-    final input = await showDialog<String>(
+    final input = await showAppDialog<String>(
       context: context,
       builder: (context) => RunWorkflowDialog(workflowName: item.name, tx: _tx),
     );
@@ -342,7 +362,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
         input: input.trim(),
       );
       if (!mounted) return;
-      await showDialog<void>(
+      await showAppDialog<void>(
         context: context,
         barrierDismissible: false,
         builder: (context) => RunProgressDialog(
@@ -364,6 +384,9 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
   }
 
   String? _workflowRunIssue(WorkflowItem item) {
+    if (!item.isActive) {
+      return _tx('workflows.run_error_inactive');
+    }
     if (item.nodes.isEmpty) {
       return _tx('workflows.run_error_no_steps');
     }
@@ -384,11 +407,14 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
               : displayStep,
         );
       }
+      if (!agent.isActive) {
+        return _tx('workflows.run_error_agent_inactive')
+            .replaceAll('{{agent}}', agent.name);
+      }
       if (agent.connectionId.isEmpty &&
           item.llmOrchestrationConnectionId.isEmpty) {
-        return _tx(
-          'workflows.run_error_agent_connection',
-        ).replaceAll('{{agent}}', agent.name);
+        return _tx('workflows.run_error_agent_connection')
+            .replaceAll('{{agent}}', agent.name);
       }
     }
     return null;
@@ -447,6 +473,8 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
         final item = filteredWorkflows[index];
         return WorkflowCard(
           item: item,
+          inProgress: _executionState.isInProgress('workflow', item.id),
+          inProgressLabel: _tx('common.in_progress'),
           agentsById: _agentsById,
           graphNamesLoader: _loadGraphNames,
           stepsLabel: _tx('workflows.steps_suffix'),

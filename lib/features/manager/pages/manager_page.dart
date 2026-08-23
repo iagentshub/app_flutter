@@ -10,6 +10,7 @@ import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
+import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/resource_collection_view.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../controllers/manager_controller.dart';
@@ -85,7 +86,7 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
     final controller = TextEditingController(text: initial);
     final formKey = GlobalKey<FormState>();
 
-    final value = await showDialog<String>(
+    final value = await showAppDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(title),

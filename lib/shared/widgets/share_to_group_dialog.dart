@@ -7,6 +7,7 @@ import '../../utils/i18n.dart';
 import '../i18n/locale_loader.dart';
 import '../repositories/sharing_repository.dart';
 import '../state/locale_controller.dart';
+import 'motion/app_modal.dart';
 import 'responsive_dialog.dart';
 import 'status_dot.dart';
 
@@ -24,7 +25,7 @@ Future<void> showShareToGroupDialog({
   required LocaleController localeController,
   VoidCallback? onShared,
 }) {
-  return showDialog<void>(
+  return showAppDialog<void>(
     context: context,
     builder: (context) => _ShareToGroupDialog(
       apiClient: apiClient,

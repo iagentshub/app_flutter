@@ -13,14 +13,12 @@ class WorkflowRunsController extends ChangeNotifier {
     required ApiClient apiClient,
     required SessionController sessionController,
     bool autoStart = true,
-    Duration activePollInterval = const Duration(seconds: 5),
-    Duration idlePollInterval = const Duration(minutes: 1),
+    this._activePollInterval = const Duration(seconds: 5),
+    this._idlePollInterval = const Duration(minutes: 1),
   }) : _repository = WorkflowsRepository(apiClient: apiClient),
        _apiClient = apiClient,
        _session = sessionController,
-       _autoStart = autoStart,
-       _activePollInterval = activePollInterval,
-       _idlePollInterval = idlePollInterval {
+       _autoStart = autoStart {
     _lastIdentity = _identity;
     if (autoStart) {
       _session.addListener(_identityChanged);
@@ -126,6 +124,7 @@ class WorkflowRunsController extends ChangeNotifier {
       input: input,
     );
     _upsert(run);
+    unawaited(refresh());
     return run;
   }
 

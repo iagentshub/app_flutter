@@ -1,3 +1,4 @@
 {
-  "credential_unreadable": "La credencial guardada no se puede leer. Edítala e introdúcela de nuevo."
+  "credential_unreadable": "La credencial guardada no se puede leer. Edítala e introdúcela de nuevo.",
+  "resource_execution_in_progress": "Este recurso ya está en curso para tu usuario. Espera a que termine o detén la ejecución actual."
 }

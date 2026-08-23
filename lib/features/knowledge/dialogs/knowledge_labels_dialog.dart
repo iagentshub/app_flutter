@@ -21,7 +21,7 @@ Future<_KnowledgeEditResult?> _showKnowledgeEditDialog(
   String initialDescription = '',
   List<LabelGroupDef> groups = kLabelGroups,
 }) {
-  return showDialog<_KnowledgeEditResult>(
+  return showAppDialog<_KnowledgeEditResult>(
     context: context,
     builder: (context) => _KnowledgeEditDialog(
       initialName: initialName,

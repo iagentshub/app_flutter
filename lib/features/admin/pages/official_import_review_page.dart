@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/graph/graph_dialog.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/motion/app_modal.dart';
 import '../models/official_import_models.dart';
 import '../repositories/admin_official_sources_repository.dart';
 import '../widgets/official_import_groups.dart';
@@ -133,7 +134,7 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
 
   Future<void> reviewTool(ImportComponent component) async {
     var accepted = component.securityAccepted;
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAppDialog<bool>(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
@@ -217,7 +218,7 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
               }.contains(item.effectiveType),
         )
         .toList(growable: false);
-    final result = await showDialog<Set<String>>(
+    final result = await showAppDialog<Set<String>>(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
@@ -290,7 +291,7 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
     try {
       final diff = await widget.repository.getDiff(widget.token, draft.id);
       if (!mounted) return;
-      final confirmed = await showDialog<bool>(
+      final confirmed = await showAppDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
           title: Text(widget.tx('official.confirm_apply')),

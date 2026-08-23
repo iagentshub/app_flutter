@@ -14,12 +14,10 @@ export '../../models/backend/backend_models.dart';
 
 class BackendController extends ChangeNotifier {
   BackendController._({
-    required String selectedBackendId,
-    required List<SavedBackend> savedBackends,
-    http.Client? pingClient,
-  }) : _selectedBackendId = selectedBackendId,
-       _savedBackends = savedBackends,
-       _pingClient = pingClient;
+    required this._selectedBackendId,
+    required this._savedBackends,
+    this._pingClient,
+  });
 
   static const _selectedKey = 'selected_backend_id';
   static const _savedBackendsJsonKey = 'saved_backends_json';

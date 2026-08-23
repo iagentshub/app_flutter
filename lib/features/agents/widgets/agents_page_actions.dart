@@ -46,7 +46,7 @@ extension _AgentsPageActions on _AgentsPageState {
   }
 
   Future<void> _openCreateChoiceDialog() async {
-    final choice = await showDialog<String>(
+    final choice = await showAppDialog<String>(
       context: context,
       builder: (context) => SimpleDialog(
         title: Text(_tx('agents.create_choice_title')),
@@ -250,9 +250,8 @@ extension _AgentsPageActions on _AgentsPageState {
     final confirm = await showConfirmActionDialog(
       context,
       title: _tx('agents.delete_dialog_title'),
-      message: _tx(
-        'common.delete_confirm_body',
-      ).replaceAll('{{nombre}}', item.name),
+      message: _tx('common.delete_confirm_body')
+          .replaceAll('{{nombre}}', item.name),
       cancelLabel: 'Cancelar',
       confirmLabel: _tx('common.delete'),
       destructive: true,
@@ -305,6 +304,10 @@ extension _AgentsPageActions on _AgentsPageState {
   }
 
   Future<void> _openChat(AgentItem item) async {
+    if (!item.isActive) {
+      showMessage(_tx('agents.chat_inactive'), isError: true);
+      return;
+    }
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => ChatPage(
@@ -312,6 +315,7 @@ extension _AgentsPageActions on _AgentsPageState {
           apiClient: _services.apiClient,
           sessionController: _services.sessionController,
           localeController: _services.localeController,
+          executionStateController: _executionState,
         ),
       ),
     );

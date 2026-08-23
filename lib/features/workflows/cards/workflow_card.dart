@@ -42,7 +42,9 @@ class WorkflowCard extends StatelessWidget {
     required this.onRun,
     required this.onEdit,
     required this.onDelete,
-    this.inactiveLabel = 'Inactivo',
+    this.inProgress = false,
+    this.inProgressLabel = 'En curso',
+    this.inactiveLabel = 'Desactivado',
     this.activateTooltip = 'Activar',
     this.deactivateTooltip = 'Desactivar',
     this.onToggleActive,
@@ -87,6 +89,8 @@ class WorkflowCard extends StatelessWidget {
   final VoidCallback onRun;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final bool inProgress;
+  final String inProgressLabel;
   final String inactiveLabel;
   final String activateTooltip;
   final String deactivateTooltip;
@@ -113,14 +117,24 @@ class WorkflowCard extends StatelessWidget {
                     item.name,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: Theme.of(context).textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w700),
                   ),
                 ),
                 if (!item.isActive) ...[
                   const SizedBox(width: 8),
                   InactiveBadge(label: inactiveLabel),
+                ],
+                if (inProgress) ...[
+                  const SizedBox(width: 8),
+                  Chip(
+                    avatar: const SizedBox.square(
+                      dimension: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    label: Text(inProgressLabel),
+                    visualDensity: VisualDensity.compact,
+                  ),
                 ],
               ],
             ),
@@ -147,10 +161,8 @@ class WorkflowCard extends StatelessWidget {
                 item.description,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: colors.onSurfaceVariant,
-                  height: 1.35,
-                ),
+                style: Theme.of(context).textTheme.bodyMedium
+                    ?.copyWith(color: colors.onSurfaceVariant, height: 1.35),
               ),
             ],
             const SizedBox(height: 14),
@@ -172,7 +184,7 @@ class WorkflowCard extends StatelessWidget {
             Row(
               children: [
                 PrimaryButton.icon(
-                  onPressed: onRun,
+                  onPressed: !item.isActive || inProgress ? null : onRun,
                   style: FilledButton.styleFrom(
                     visualDensity: VisualDensity.compact,
                     padding: const EdgeInsets.symmetric(

@@ -19,9 +19,11 @@ import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/scroll_to_end.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../../utils/i18n.dart';
+import '../../executions/controllers/resource_executions_controller.dart';
 import '../repositories/agents_repository.dart';
 import '../repositories/chat_repository.dart';
 import '../widgets/chat_composer.dart';
@@ -39,6 +41,7 @@ class ChatPage extends StatefulWidget {
     required this.apiClient,
     required this.sessionController,
     required this.localeController,
+    this.executionStateController,
     super.key,
   });
 
@@ -46,6 +49,7 @@ class ChatPage extends StatefulWidget {
   final ApiClient apiClient;
   final SessionController sessionController;
   final LocaleController localeController;
+  final ResourceExecutionsController? executionStateController;
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -127,6 +131,7 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
       localeController: widget.localeController,
       namespace: 'resources',
     )..addListener(_onTextsChanged);
+    widget.executionStateController?.addListener(_onExecutionStateChanged);
     _textController.addListener(_onComposerTextChanged);
     _scrollController.addListener(_onScroll);
     _bootstrap();
@@ -134,6 +139,10 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
   }
 
   void _onTextsChanged() {
+    if (mounted) setState(() {});
+  }
+
+  void _onExecutionStateChanged() {
     if (mounted) setState(() {});
   }
 
@@ -146,6 +155,7 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
 
   @override
   void dispose() {
+    widget.executionStateController?.removeListener(_onExecutionStateChanged);
     _subscription?.cancel();
     if (!(_streamCompleter?.isCompleted ?? true)) {
       _streamCompleter!.complete();
@@ -175,7 +185,7 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
       if (!mounted) return;
       final currentPreference = results[0] as String?;
       final connections = results[1] as List<ConnectionItem>;
-      await showDialog<void>(
+      await showAppDialog<void>(
         context: context,
         builder: (context) => _ConnectionPreferenceDialog(
           connections: connections,
@@ -375,6 +385,14 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
                 .toList();
           }),
           streaming: _streaming,
+          busy:
+              !_streaming &&
+              (widget.executionStateController?.isInProgress(
+                    'agent',
+                    widget.agent.id,
+                  ) ??
+                  false),
+          busyLabel: _tx('common.in_progress'),
           onSend: _send,
           onStop: _stop,
           sendTooltip: _tx('agents.chat.send'),

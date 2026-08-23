@@ -19,6 +19,7 @@ import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/explore_search_toolbar.dart';
 import '../../../shared/widgets/kpi/kpi_hero_card.dart';
 import '../../../shared/widgets/kpi/kpi_tile.dart';
+import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';

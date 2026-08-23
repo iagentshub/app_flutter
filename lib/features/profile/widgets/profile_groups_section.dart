@@ -11,6 +11,7 @@ import '../../../shared/state/watches_resource_changes.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
+import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../manager/repositories/manager_repository.dart';
@@ -97,7 +98,7 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection>
 
   Future<void> _createGroup() async {
     final controller = TextEditingController();
-    final name = await showDialog<String>(
+    final name = await showAppDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(_tx('groups.dialog_title')),
@@ -159,7 +160,7 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection>
   }
 
   Future<void> _openManageDialog(GroupItem group) async {
-    await showDialog<void>(
+    await showAppDialog<void>(
       context: context,
       builder: (context) => _ManageGroupDialog(
         apiClient: widget.apiClient,

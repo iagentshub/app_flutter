@@ -24,14 +24,11 @@ part 'explore_resource_loading.dart';
 /// no tiene. `null` significa que no hay nada que mostrar.
 class ExploreController extends ChangeNotifier {
   ExploreController({
-    required ExploreRepository repository,
-    required ManagerRepository managerRepository,
-    required SessionController sessionController,
-    required String Function(String path) tx,
-  }) : _repository = repository,
-       _managerRepository = managerRepository,
-       _sessionController = sessionController,
-       _tx = tx;
+    required this._repository,
+    required this._managerRepository,
+    required this._sessionController,
+    required this._tx,
+  });
 
   static const usersPageSize = 20;
   static const resourcesPageSize = 40;

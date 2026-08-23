@@ -32,20 +32,14 @@ typedef AgentDraftPresenter =
 /// el panel lo muestre dentro del chat.
 class AgentBuilderController extends ChangeNotifier {
   AgentBuilderController({
-    required AgentBuilderRepository builderRepository,
-    required AgentsRepository agentsRepository,
-    required ConnectionsRepository connectionsRepository,
-    required SkillsRepository skillsRepository,
-    required KnowledgeRepository knowledgeRepository,
-    required SessionController sessionController,
-    required String Function(String path) tx,
-  }) : _builderRepository = builderRepository,
-       _agentsRepository = agentsRepository,
-       _connectionsRepository = connectionsRepository,
-       _skillsRepository = skillsRepository,
-       _knowledgeRepository = knowledgeRepository,
-       _sessionController = sessionController,
-       _tx = tx;
+    required this._builderRepository,
+    required this._agentsRepository,
+    required this._connectionsRepository,
+    required this._skillsRepository,
+    required this._knowledgeRepository,
+    required this._sessionController,
+    required this._tx,
+  });
 
   final AgentBuilderRepository _builderRepository;
   final AgentsRepository _agentsRepository;

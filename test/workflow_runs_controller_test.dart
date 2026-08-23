@@ -108,12 +108,15 @@ void main() {
       );
 
       final aliceResponse = Completer<http.Response>();
-      var requestCount = 0;
+      var workflowRequestCount = 0;
       final client = ApiClient(
         backend,
         client: MockClient((request) {
-          requestCount += 1;
-          if (requestCount == 1) return aliceResponse.future;
+          if (request.url.path == '/api/resource-executions') {
+            return Future.value(http.Response('[]', 200));
+          }
+          workflowRequestCount += 1;
+          if (workflowRequestCount == 1) return aliceResponse.future;
           return Future.value(
             http.Response(
               jsonEncode([_run(id: 'bob-run', name: 'Privado de Bob')]),

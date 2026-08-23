@@ -18,6 +18,8 @@ class ChatComposer extends StatelessWidget {
     required this.attachedKnowledge,
     required this.onRemoveKnowledge,
     required this.streaming,
+    this.busy = false,
+    this.busyLabel = 'En curso',
     required this.onSend,
     required this.onStop,
     required this.sendTooltip,
@@ -35,6 +37,8 @@ class ChatComposer extends StatelessWidget {
   final List<KnowledgeItem> attachedKnowledge;
   final ValueChanged<String> onRemoveKnowledge;
   final bool streaming;
+  final bool busy;
+  final String busyLabel;
   final VoidCallback onSend;
   final VoidCallback onStop;
   final String sendTooltip;
@@ -93,10 +97,13 @@ class ChatComposer extends StatelessWidget {
                       maxLines: 5,
                       textInputAction: TextInputAction.send,
                       decoration: InputDecoration(
-                        hintText: composerHint,
+                        hintText: busy ? busyLabel : composerHint,
                         border: const OutlineInputBorder(),
                       ),
-                      onSubmitted: (_) => onSend(),
+                      enabled: !busy,
+                      onSubmitted: (_) {
+                        if (!busy) onSend();
+                      },
                     ),
                   ),
                 ),
@@ -109,8 +116,8 @@ class ChatComposer extends StatelessWidget {
                   )
                 else
                   AppIconButton.filled(
-                    onPressed: onSend,
-                    tooltip: sendTooltip,
+                    onPressed: busy ? null : onSend,
+                    tooltip: busy ? busyLabel : sendTooltip,
                     icon: const Icon(Icons.send),
                   ),
               ],

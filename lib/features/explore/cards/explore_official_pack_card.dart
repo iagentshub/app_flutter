@@ -146,7 +146,7 @@ extension _ExploreOfficialPackCard on _ExplorePageState {
   }
 
   Future<void> _confirmLinkOfficialPack(ExploreOfficialPack pack) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showAppDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(_tx('explore.pack_link_all')),

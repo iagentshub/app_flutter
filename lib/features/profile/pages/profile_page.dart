@@ -15,6 +15,7 @@ import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/brand_icon.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
+import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../../utils/i18n.dart';
@@ -131,7 +132,7 @@ class _ProfilePageState extends State<ProfilePage>
 
   Future<void> _openLanguagesDialog() async {
     var draft = {..._controller.selectedLanguages};
-    final result = await showDialog<Set<String>>(
+    final result = await showAppDialog<Set<String>>(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
@@ -188,7 +189,7 @@ class _ProfilePageState extends State<ProfilePage>
 
   Future<void> _openChangePasswordDialog() async {
     var submitting = false;
-    await showDialog<void>(
+    await showAppDialog<void>(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(

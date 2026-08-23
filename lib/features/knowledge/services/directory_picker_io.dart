@@ -10,9 +10,8 @@ Future<KnowledgeDirectorySelection?> pickKnowledgeDirectory({
   KnowledgeDirectoryProgressCallback? onProgress,
 }) async {
   final selected = Platform.isIOS
-      ? await const MethodChannel(
-          'com.iagentshub.app/knowledge_directory',
-        ).invokeMethod<String>('pickDirectory')
+      ? await const MethodChannel('com.iagentshub.app/knowledge_directory')
+            .invokeMethod<String>('pickDirectory')
       : await FilePicker.getDirectoryPath(
           dialogTitle: tr('knowledge.pick_directory'),
         );

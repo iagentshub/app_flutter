@@ -46,7 +46,7 @@ class ApiClient {
   ApiClient(
     this.backendController, {
     http.Client? client,
-    Duration requestTimeout = const Duration(seconds: 30),
+    this._requestTimeout = const Duration(seconds: 30),
     int maxResponseBytes = 20 * 1024 * 1024,
     int maxDownloadBytes = 200 * 1024 * 1024,
     int maxStreamLineChars = 1024 * 1024,
@@ -58,7 +58,6 @@ class ApiClient {
     ResourceEvents? resourceEvents,
   }) : resourceEvents = resourceEvents ?? ResourceEvents(),
        _client = client ?? createHttpClient(),
-       _requestTimeout = requestTimeout,
        _maxResponseBytes = maxResponseBytes,
        _maxDownloadBytes = maxDownloadBytes,
        _maxStreamLineChars = maxStreamLineChars {

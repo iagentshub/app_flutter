@@ -5,6 +5,7 @@ import '../../models/common/resource_version.dart';
 import '../i18n/locale_loader.dart';
 import '../repositories/resource_version_repository.dart';
 import '../state/locale_controller.dart';
+import 'motion/app_modal.dart';
 import 'responsive_dialog.dart';
 
 String _fmtVersionDate(String raw) {
@@ -27,7 +28,7 @@ Future<void> showResourceHistoryDialog({
   required LocaleController localeController,
   VoidCallback? onRestored,
 }) {
-  return showDialog<void>(
+  return showAppDialog<void>(
     context: context,
     builder: (context) => _ResourceHistoryDialog(
       apiClient: apiClient,
@@ -111,7 +112,7 @@ class _ResourceHistoryDialogState extends State<_ResourceHistoryDialog> {
   }
 
   Future<void> _restore(ResourceVersionItem item) async {
-    final confirm = await showDialog<bool>(
+    final confirm = await showAppDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(_tx('history.restore_title')),

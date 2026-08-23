@@ -20,12 +20,10 @@ import '../repositories/manager_repository.dart';
 /// entero aquí y se testea sin `WidgetTester`.
 class ManagerController extends ChangeNotifier {
   ManagerController({
-    required ManagerRepository repository,
-    required SessionController sessionController,
-    required String Function(String path) tx,
-  }) : _repository = repository,
-       _sessionController = sessionController,
-       _tx = tx;
+    required this._repository,
+    required this._sessionController,
+    required this._tx,
+  });
 
   final ManagerRepository _repository;
   final SessionController _sessionController;

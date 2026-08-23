@@ -18,6 +18,7 @@ import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/state/theme_controller.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../../utils/i18n.dart';
@@ -94,6 +95,51 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
     widget.backendController.addListener(_onBackendConnectivityChanged);
     _loadPlatformSettings();
     _loadRememberedAccount();
+    _backendPollTimer = Timer.periodic(
+      _backendPollInterval,
+      (_) => _pollBackendStatus(),
+    );
+  }
+
+  /// Cada cuánto se vuelve a preguntar por el backend mientras el login está
+  /// en pantalla. `BackendController` no sondea nada: su estado solo cambia
+  /// cuando `ApiClient` reporta el resultado de una petición real, y aquí no
+  /// hay ninguna entre el chequeo inicial y el botón de entrar. Sin esto el
+  /// indicador se quedaba congelado en la última foto —verde con el servidor
+  /// ya caído, o rojo después de que volviera— hasta que el usuario intentaba
+  /// entrar.
+  static const _backendPollInterval = Duration(seconds: 10);
+
+  Timer? _backendPollTimer;
+
+  /// Evita que dos sondeos se solapen si la red va lenta: el timeout de
+  /// `ApiClient` es mayor que este intervalo.
+  bool _polling = false;
+
+  Future<void> _pollBackendStatus() async {
+    if (_polling || !mounted) return;
+    _polling = true;
+    try {
+      final platform = await widget.authRepository.platformPublic();
+      if (!mounted) return;
+      // Solo al *volver*: con el servidor ya en verde no hay nada que aplicar
+      // —`ApiClient` ya avisó a `BackendController` y el listener mantiene el
+      // indicador—, y repetir `_applyPlatformResult` cada diez segundos
+      // volvería a sincronizar el tema del backend, pisando el que el usuario
+      // acabara de elegir en esta misma pantalla.
+      if (_backendStatus != _BackendStatus.ok) {
+        _applyPlatformResult(platform, true);
+      }
+    } catch (_) {
+      // Aplicar la caída restaura los flags a su valor cerrado: con el backend
+      // fuera no se sabe si hay registro o invitado, y ofrecerlos lleva a un
+      // error al pulsar.
+      if (mounted && _backendStatus != _BackendStatus.down) {
+        _applyPlatformResult(null, false);
+      }
+    } finally {
+      _polling = false;
+    }
   }
 
   void _onLocaleChanged() {
@@ -151,6 +197,7 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
   @override
   void dispose() {
     widget.localeController.removeListener(_onLocaleChanged);
+    _backendPollTimer?.cancel();
     widget.backendController.removeListener(_onBackendConnectivityChanged);
     _identifierController.dispose();
     _passwordController.dispose();
@@ -306,7 +353,7 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
     String tx(String path) => _txt(texts, path);
 
     if (!mounted) return;
-    final result = await showDialog<GithubLoginPollResult>(
+    final result = await showAppDialog<GithubLoginPollResult>(
       context: context,
       builder: (context) =>
           _GithubLoginDialog(authRepository: widget.authRepository, tx: tx),

@@ -45,16 +45,12 @@ String? githubUrlFromUsername(String input) {
 /// recibe [syncTheme] y lo llama cuando el backend le da un tema nuevo.
 class ProfileController extends ChangeNotifier {
   ProfileController({
-    required ProfileRepository repository,
-    required SessionController sessionController,
-    required LocaleController localeController,
-    required Future<void> Function(String theme) syncTheme,
-    required String Function(String path) tx,
-  }) : _repository = repository,
-       _sessionController = sessionController,
-       _localeController = localeController,
-       _syncTheme = syncTheme,
-       _tx = tx;
+    required this._repository,
+    required this._sessionController,
+    required this._localeController,
+    required this._syncTheme,
+    required this._tx,
+  });
 
   /// Tope de la imagen ya comprimida (JPEG) que acepta el backend: el mismo
   /// que cualquier otra petición, el que fija el administrador. Aquí había un

@@ -12,7 +12,7 @@ import '../../features/auth/repositories/auth_repository.dart';
 import '../../shared/state/backend_controller.dart';
 import '../../shared/state/locale_controller.dart';
 import '../../shared/state/session_controller.dart';
-import '../../shared/widgets/terminal_view_transition.dart';
+import '../../shared/widgets/motion/app_route_pages.dart';
 
 /// Rutas accesibles sin sesión: marketing público y flujo de autenticación.
 abstract final class ExternalRoutes {
@@ -96,7 +96,8 @@ List<RouteBase> externalRoutes({
       GoRoute(path: path, redirect: (context, state) => ExternalRoutes.home),
     GoRoute(
       path: ExternalRoutes.login,
-      builder: (context, state) => TerminalViewTransition(
+      pageBuilder: (context, state) => fadeThroughPage(
+        key: state.pageKey,
         child: LoginPage(
           backendController: backendController,
           sessionController: sessionController,
@@ -108,7 +109,8 @@ List<RouteBase> externalRoutes({
     ),
     GoRoute(
       path: ExternalRoutes.register,
-      builder: (context, state) => TerminalViewTransition(
+      pageBuilder: (context, state) => fadeThroughPage(
+        key: state.pageKey,
         child: RegisterPage(
           authRepository: authRepository,
           localeController: localeController,
@@ -117,7 +119,8 @@ List<RouteBase> externalRoutes({
     ),
     GoRoute(
       path: ExternalRoutes.forgotPassword,
-      builder: (context, state) => TerminalViewTransition(
+      pageBuilder: (context, state) => fadeThroughPage(
+        key: state.pageKey,
         child: ForgotPasswordPage(
           authRepository: authRepository,
           localeController: localeController,
@@ -126,7 +129,8 @@ List<RouteBase> externalRoutes({
     ),
     GoRoute(
       path: ExternalRoutes.resetPassword,
-      builder: (context, state) => TerminalViewTransition(
+      pageBuilder: (context, state) => fadeThroughPage(
+        key: state.pageKey,
         child: ResetPasswordPage(
           authRepository: authRepository,
           localeController: localeController,
@@ -136,7 +140,8 @@ List<RouteBase> externalRoutes({
     ),
     GoRoute(
       path: ExternalRoutes.verify,
-      builder: (context, state) => TerminalViewTransition(
+      pageBuilder: (context, state) => fadeThroughPage(
+        key: state.pageKey,
         child: VerifyPage(
           authRepository: authRepository,
           sessionController: sessionController,
@@ -147,7 +152,8 @@ List<RouteBase> externalRoutes({
     ),
     GoRoute(
       path: ExternalRoutes.backendConfig,
-      builder: (context, state) => TerminalViewTransition(
+      pageBuilder: (context, state) => fadeThroughPage(
+        key: state.pageKey,
         child: BackendConfigPage(
           backendController: backendController,
           localeController: localeController,
@@ -160,7 +166,8 @@ List<RouteBase> externalRoutes({
     ])
       GoRoute(
         path: path,
-        builder: (context, state) => TerminalViewTransition(
+        pageBuilder: (context, state) => fadeThroughPage(
+          key: state.pageKey,
           child: SessionRecoveryPage(
             sessionController: sessionController,
             backendController: backendController,

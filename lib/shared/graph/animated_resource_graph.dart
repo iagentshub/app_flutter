@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import '../../app/theme/fnc_colors.dart';
 import '../../app/theme/fnc_fonts.dart';
 import '../labels/label_catalog.dart';
+import '../widgets/motion/app_modal.dart';
 import 'galaxy_background_painter.dart';
 import 'graph_edge_painter.dart';
 import 'graph_models.dart';
@@ -1397,7 +1398,7 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
       for (final other in widget.nodes)
         if (connectedIds.contains(other.id)) other,
     ];
-    showDialog<void>(
+    showAppDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Row(

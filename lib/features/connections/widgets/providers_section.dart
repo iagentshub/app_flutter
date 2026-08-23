@@ -17,6 +17,7 @@ import '../../../shared/widgets/attention_badge.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
+import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/resource_toolbar.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
@@ -115,7 +116,7 @@ class _ProvidersSectionState extends State<ProvidersSection>
   Future<void> _openCreateAccountDialog() async {
     final token = widget.token;
     if (token.isEmpty) return;
-    final changed = await showDialog<bool>(
+    final changed = await showAppDialog<bool>(
       context: context,
       builder: (context) => _AccountFormDialog(
         apiClient: widget.apiClient,
@@ -130,7 +131,7 @@ class _ProvidersSectionState extends State<ProvidersSection>
   Future<void> _openEditAccountDialog(AccountItem account) async {
     final token = widget.token;
     if (token.isEmpty) return;
-    final changed = await showDialog<bool>(
+    final changed = await showAppDialog<bool>(
       context: context,
       builder: (context) => _AccountFormDialog(
         apiClient: widget.apiClient,
@@ -190,7 +191,7 @@ class _ProvidersSectionState extends State<ProvidersSection>
         showMessage(_tx('providers.no_models_found'), isError: true);
         return;
       }
-      final selected = await showDialog<List<String>>(
+      final selected = await showAppDialog<List<String>>(
         context: context,
         builder: (context) => _AccountSyncDialog(
           models: preview.models,

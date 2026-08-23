@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'buttons/app_buttons.dart';
+import 'motion/app_modal.dart';
 
 /// Confirmación de una acción que el usuario debe ratificar.
 ///
@@ -17,7 +18,7 @@ Future<bool> showConfirmActionDialog(
   required String confirmLabel,
   bool destructive = false,
 }) async {
-  final confirmed = await showDialog<bool>(
+  final confirmed = await showAppDialog<bool>(
     context: context,
     builder: (dialogContext) => AlertDialog(
       icon: destructive ? const Icon(Icons.warning_amber_rounded) : null,

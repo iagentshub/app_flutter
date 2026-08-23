@@ -1,7 +1,9 @@
+import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 
 import '../state/async_section.dart';
 import 'async_state_panel.dart';
+import 'motion/app_motion.dart';
 
 /// Pinta una [AsyncSection] con la presentación que ya usaba cada página.
 ///
@@ -24,25 +26,59 @@ class AsyncSectionBuilder<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: section,
-      builder: (context, _) {
-        final data = section.data;
+      builder: (context, _) => _conTransicion(context, _estado(context)),
+    );
+  }
 
-        // Con datos ya cargados se siguen mostrando aunque una recarga falle
-        // o esté en curso: vaciar la vista por un error de red es peor que
-        // enseñar lo último bueno que se tenía.
-        if (data != null) return builder(context, data);
-        if (section.loading) return const AsyncStatePanel.loading();
+  /// El estado visible y su identidad. La clave es el estado, **no** los
+  /// datos: con contenido en pantalla una recarga que trae otros elementos no
+  /// debe fundir la vista entera, solo repintarla.
+  ({String clave, Widget vista}) _estado(BuildContext context) {
+    final data = section.data;
 
-        final error = section.error;
-        if (error != null) {
-          return AsyncStatePanel.error(
-            message: error,
-            retryLabel: retryLabel,
-            onRetry: section.load,
-          );
-        }
-        return const AsyncStatePanel.loading();
-      },
+    // Con datos ya cargados se siguen mostrando aunque una recarga falle
+    // o esté en curso: vaciar la vista por un error de red es peor que
+    // enseñar lo último bueno que se tenía.
+    if (data != null) {
+      return (clave: 'data', vista: builder(context, data));
+    }
+    if (section.loading) {
+      return (clave: 'loading', vista: const AsyncStatePanel.loading());
+    }
+
+    final error = section.error;
+    if (error != null) {
+      return (
+        clave: 'error',
+        vista: AsyncStatePanel.error(
+          message: error,
+          retryLabel: retryLabel,
+          onRetry: section.load,
+        ),
+      );
+    }
+    return (clave: 'loading', vista: const AsyncStatePanel.loading());
+  }
+
+  /// Funde el indicador de carga con lo que llega detrás. Sin esto, el
+  /// contenido sustituye al spinner en un fotograma y el salto se lee como un
+  /// parpadeo, sobre todo cuando la respuesta llega rápido.
+  Widget _conTransicion(
+    BuildContext context,
+    ({String clave, Widget vista}) e,
+  ) {
+    final keyed = KeyedSubtree(key: ValueKey<String>(e.clave), child: e.vista);
+    if (AppMotion.reduced(context)) return keyed;
+    return PageTransitionSwitcher(
+      duration: AppMotion.section,
+      transitionBuilder: (child, primaryAnimation, secondaryAnimation) =>
+          FadeThroughTransition(
+            animation: primaryAnimation,
+            secondaryAnimation: secondaryAnimation,
+            fillColor: Colors.transparent,
+            child: child,
+          ),
+      child: keyed,
     );
   }
 }

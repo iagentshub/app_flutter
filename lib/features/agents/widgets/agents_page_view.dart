@@ -99,6 +99,7 @@ extension _AgentsPageView on _AgentsPageState {
   Widget _buildAgentCard(AgentItem item) {
     return AgentCard(
       item: item,
+      inProgress: _executionState?.isInProgress('agent', item.id) ?? false,
       skillNames: _skillNames,
       knowledgeNames: _knowledgeNames,
       knowledgePackNames: _knowledgePackNames,

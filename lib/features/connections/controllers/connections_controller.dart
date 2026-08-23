@@ -40,12 +40,10 @@ class ConnectionsMassTestSummary {
 /// que la página decida cómo presentar el mensaje.
 class ConnectionsController extends ChangeNotifier {
   ConnectionsController({
-    required ConnectionsRepository repository,
-    required SessionController sessionController,
-    required String Function(String path) tx,
-  }) : _repository = repository,
-       _sessionController = sessionController,
-       _tx = tx;
+    required this._repository,
+    required this._sessionController,
+    required this._tx,
+  });
 
   final ConnectionsRepository _repository;
   final SessionController _sessionController;

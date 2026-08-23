@@ -50,7 +50,7 @@ extension _AdminActions on _AdminPageState {
     final token = _token;
     if (token == null) return;
     final username = (user['username'] ?? '').toString();
-    final result = await showDialog<Map<String, dynamic>>(
+    final result = await showAppDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => _UserEditDialog(user: user, tx: _tx),
     );
@@ -72,7 +72,7 @@ extension _AdminActions on _AdminPageState {
   Future<void> _openCreateUserDialog() async {
     final token = _token;
     if (token == null) return;
-    final result = await showDialog<Map<String, dynamic>>(
+    final result = await showAppDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => _UserCreateDialog(tx: _tx),
     );
@@ -139,7 +139,7 @@ extension _AdminActions on _AdminPageState {
     final token = _token;
     if (token == null) return;
     final id = (agent['id'] ?? '').toString();
-    final result = await showDialog<Map<String, dynamic>>(
+    final result = await showAppDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => _AgentEditDialog(agent: agent, tx: _tx),
     );
@@ -305,7 +305,7 @@ extension _AdminActions on _AdminPageState {
             .where((u) => u.isNotEmpty && u != currentOwner)
             .toList()
           ..sort();
-    final newOwner = await showDialog<String>(
+    final newOwner = await showAppDialog<String>(
       context: context,
       builder: (context) => _OwnerPickerDialog(
         currentOwner: currentOwner,

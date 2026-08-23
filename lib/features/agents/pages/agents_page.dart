@@ -19,12 +19,14 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
+import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/resource_collection_view.dart';
 import '../../../shared/widgets/resource_history_dialog.dart';
 import '../../../shared/widgets/resource_toolbar.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../connections/repositories/connections_repository.dart';
+import '../../executions/controllers/resource_executions_controller.dart';
 import '../../explore/repositories/explore_repository.dart';
 import '../../knowledge/repositories/knowledge_repository.dart';
 import '../../knowledge/repositories/prompts_repository.dart';
@@ -60,6 +62,7 @@ class _AgentsPageState extends State<AgentsPage>
   late final ToolsRepository _toolsRepository;
   late final ConnectionsRepository _connectionsRepository;
   late final TranslatedTexts _t;
+  late final ResourceExecutionsController? _executionState;
   final TextEditingController _queryController = TextEditingController();
   final Debouncer _searchDebouncer = Debouncer();
   List<AgentItem> _agents = const [];
@@ -185,6 +188,8 @@ class _AgentsPageState extends State<AgentsPage>
     _connectionsRepository = ConnectionsRepository(
       apiClient: _services.apiClient,
     );
+    _executionState = _services.resourceExecutionsController;
+    _executionState?.addListener(_onExecutionStateChanged);
     _t = TranslatedTexts(
       localeController: _services.localeController,
       namespace: 'resources',
@@ -204,12 +209,17 @@ class _AgentsPageState extends State<AgentsPage>
     if (mounted) setState(() {});
   }
 
+  void _onExecutionStateChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
     _searchDebouncer.dispose();
     _queryController.dispose();
     _t.removeListener(_onTextsChanged);
     _t.dispose();
+    _executionState?.removeListener(_onExecutionStateChanged);
     super.dispose();
   }
 

@@ -5,7 +5,7 @@ extension _WorkflowRunHistoryActions on _WorkflowsPageState {
     try {
       final run = await _workflowRuns.detail(summary.id);
       if (!mounted) return;
-      await showDialog<void>(
+      await showAppDialog<void>(
         context: context,
         barrierDismissible: false,
         builder: (context) => RunProgressDialog(
@@ -29,7 +29,7 @@ extension _WorkflowRunHistoryActions on _WorkflowsPageState {
   Future<void> _openRunsPanel() async {
     await _workflowRuns.refresh();
     if (!mounted) return;
-    await showDialog<void>(
+    await showAppDialog<void>(
       context: context,
       builder: (dialogContext) => WorkflowRunsPanel(
         controller: _workflowRuns,

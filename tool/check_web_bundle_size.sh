@@ -20,9 +20,15 @@
 # haya que tocarlo a mano y quede en el diff.
 set -euo pipefail
 
-# 5,25 MiB. El bundle mide ~4,92 MiB desde que admin, workflows y checkout
-# viajan en partes diferidas (medido en Flutter 3.44.8); el margen absorbe una
-# feature nueva, no la vuelta de un módulo entero.
+# 5,25 MiB. El bundle mide ~4,98 MiB desde que admin, workflows y checkout
+# viajan en partes diferidas (medido en Flutter 3.47.1, la versión que fija
+# `environment: flutter:` del pubspec); el margen absorbe una feature nueva, no
+# la vuelta de un módulo entero.
+#
+# La versión con la que se midió importa: el número cambia al subir de SDK, así
+# que al tocar el pubspec hay que volver a medir y actualizar esta nota. De
+# 3.44.8 a 3.47.1 el bundle no se movió; los 53 KB que separan este 4,98 del
+# 4,92 anterior son de `animations` 3.x, que trae material_ui.
 MAX_MAIN_BUNDLE_BYTES="${MAX_MAIN_BUNDLE_BYTES:-5500000}"
 
 raiz="$(cd "$(dirname "$0")/.." && pwd)"

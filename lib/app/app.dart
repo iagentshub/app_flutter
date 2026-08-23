@@ -9,6 +9,7 @@ import '../core/network/api_client.dart';
 import '../core/network/api_error.dart';
 import '../features/auth/repositories/auth_repository.dart';
 import '../features/dashboard/repositories/dashboard_repository.dart';
+import '../features/executions/controllers/resource_executions_controller.dart';
 import '../features/workflows/controllers/workflow_runs_controller.dart';
 import '../shared/i18n/translated_texts.dart';
 import '../shared/state/app_services_scope.dart';
@@ -62,6 +63,7 @@ class _AppState extends State<App> {
   late final DashboardRepository _dashboardRepository;
   late final DashboardEditState _dashboardEditState;
   late final WorkflowRunsController _workflowRunsController;
+  late final ResourceExecutionsController _resourceExecutionsController;
   late final TranslatedTexts _errorTexts;
   bool _sessionValidationInFlight = false;
 
@@ -91,6 +93,10 @@ class _AppState extends State<App> {
     _dashboardRepository = DashboardRepository(_apiClient);
     _dashboardEditState = DashboardEditState();
     _workflowRunsController = WorkflowRunsController(
+      apiClient: _apiClient,
+      sessionController: widget.sessionController,
+    );
+    _resourceExecutionsController = ResourceExecutionsController(
       apiClient: _apiClient,
       sessionController: widget.sessionController,
     );
@@ -194,6 +200,7 @@ class _AppState extends State<App> {
     _errorTexts.dispose();
     _dashboardEditState.dispose();
     _workflowRunsController.dispose();
+    _resourceExecutionsController.dispose();
     _apiClient.close();
     super.dispose();
   }
@@ -215,6 +222,7 @@ class _AppState extends State<App> {
         sessionController: widget.sessionController,
         localeController: widget.localeController,
         workflowRunsController: _workflowRunsController,
+        resourceExecutionsController: _resourceExecutionsController,
         child: MaterialApp.router(
           debugShowCheckedModeBanner: false,
           title: 'iAgents',

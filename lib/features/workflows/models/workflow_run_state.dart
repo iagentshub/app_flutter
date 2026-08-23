@@ -40,10 +40,9 @@ class RunTimelineEntry {
 /// `run_workflow` en `backend/app/services/workflow_runner.py`.
 class WorkflowRunState {
   WorkflowRunState({
-    required List<WorkflowStepDraft> steps,
+    required this._steps,
     DateTime? startedAt,
-  }) : _steps = steps,
-       startedAt = startedAt ?? DateTime.now() {
+  }) : startedAt = startedAt ?? DateTime.now() {
     for (final step in _steps) {
       status[step.id] = RunNodeStatus.waiting;
     }

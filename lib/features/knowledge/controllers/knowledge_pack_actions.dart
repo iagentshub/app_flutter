@@ -135,7 +135,7 @@ extension _KnowledgePackActions on _KnowledgePageState {
   Future<void> _reviewAndUploadPack(
     KnowledgeDirectorySelection selection,
   ) async {
-    final draft = await showDialog<KnowledgePackDraft>(
+    final draft = await showAppDialog<KnowledgePackDraft>(
       context: context,
       builder: (context) => KnowledgePackDialog(
         files: selection.files,
@@ -146,7 +146,7 @@ extension _KnowledgePackActions on _KnowledgePageState {
     if (draft == null || !mounted) return;
     final token = _token;
     if (token == null || token.isEmpty) return;
-    final pack = await showDialog<KnowledgePack>(
+    final pack = await showAppDialog<KnowledgePack>(
       context: context,
       barrierDismissible: false,
       builder: (context) => KnowledgePackUploadProgressDialog(
@@ -185,9 +185,8 @@ extension _KnowledgePackActions on _KnowledgePageState {
       final confirmed = await showConfirmActionDialog(
         context,
         title: _tx('knowledge.pack_sync_confirm_title'),
-        message: _tx(
-          'knowledge.pack_sync_confirm_body',
-        ).replaceAll('{{count}}', '${selection.files.length}'),
+        message: _tx('knowledge.pack_sync_confirm_body')
+            .replaceAll('{{count}}', '${selection.files.length}'),
         confirmLabel: _tx('knowledge.pack_sync_action'),
         cancelLabel: _tx('common.cancel'),
       );
@@ -281,6 +280,26 @@ extension _KnowledgePackActions on _KnowledgePageState {
       await _repository.deletePack(token, pack.id);
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
+    }
+  }
+
+  Future<void> _togglePackActive(KnowledgePack pack) async {
+    final token = _token;
+    if (token == null || token.isEmpty || pack.readOnly) return;
+    final active = !pack.isActive;
+    try {
+      await _repository.setPackActive(token, pack.id, active);
+      showMessage(
+        _tx(
+          active
+              ? 'knowledge.content_activated'
+              : 'knowledge.content_deactivated',
+        ),
+      );
+    } on ApiError catch (error) {
+      showMessage(error.message, isError: true);
+    } catch (_) {
+      showMessage(_tx('knowledge.msg_item_toggle_failed'), isError: true);
     }
   }
 }

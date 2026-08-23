@@ -43,7 +43,7 @@ extension _KnowledgeActions on _KnowledgePageState {
 
   Future<void> _openCreateSkillDialog() async {
     final allowPublic = _services.sessionController.user?.role != 'guest';
-    final payload = await showDialog<Map<String, dynamic>>(
+    final payload = await showAppDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => _SkillFormDialog(tx: _tx, allowPublic: allowPublic),
     );
@@ -52,7 +52,7 @@ extension _KnowledgeActions on _KnowledgePageState {
   }
 
   Future<void> _openCreateSkillChoiceDialog() async {
-    final choice = await showDialog<String>(
+    final choice = await showAppDialog<String>(
       context: context,
       builder: (context) => SimpleDialog(
         title: Text(_tx('skill_builder.create_choice_title')),
@@ -136,7 +136,7 @@ extension _KnowledgeActions on _KnowledgePageState {
     if (!mounted) return false;
     final allowPublic = _services.sessionController.user?.role != 'guest';
     final initial = <String, dynamic>{...draft, 'scope': 'private'};
-    final payload = await showDialog<Map<String, dynamic>>(
+    final payload = await showAppDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => _SkillFormDialog(
         tx: _tx,
@@ -164,7 +164,7 @@ extension _KnowledgeActions on _KnowledgePageState {
 
     if (!mounted) return;
     final allowPublic = _services.sessionController.user?.role != 'guest';
-    final payload = await showDialog<Map<String, dynamic>>(
+    final payload = await showAppDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) =>
           _SkillFormDialog(tx: _tx, initial: initial, allowPublic: allowPublic),
@@ -198,9 +198,8 @@ extension _KnowledgeActions on _KnowledgePageState {
     final confirm = await showConfirmActionDialog(
       context,
       title: _tx('knowledge.delete_skill_dialog_title'),
-      message: _tx(
-        'common.delete_confirm_body',
-      ).replaceAll('{{nombre}}', item.name),
+      message: _tx('common.delete_confirm_body')
+          .replaceAll('{{nombre}}', item.name),
       cancelLabel: 'Cancelar',
       confirmLabel: _tx('common.delete'),
       destructive: true,
@@ -216,6 +215,31 @@ extension _KnowledgeActions on _KnowledgePageState {
       showMessage(error.message, isError: true);
     } catch (_) {
       showMessage(_tx('knowledge.msg_skill_delete_failed'), isError: true);
+    }
+  }
+
+  Future<void> _toggleSkillActive(SkillItem item) async {
+    final token = _token;
+    if (token == null || token.isEmpty || item.readOnly) return;
+    final active = !item.isActive;
+    try {
+      await _skillsRepository.setSkillActive(
+        token,
+        item.scope,
+        item.id,
+        active,
+      );
+      showMessage(
+        _tx(
+          active
+              ? 'knowledge.content_activated'
+              : 'knowledge.content_deactivated',
+        ),
+      );
+    } on ApiError catch (error) {
+      showMessage(error.message, isError: true);
+    } catch (_) {
+      showMessage(_tx('knowledge.msg_item_toggle_failed'), isError: true);
     }
   }
 
@@ -311,7 +335,7 @@ extension _KnowledgeActions on _KnowledgePageState {
   }
 
   Future<void> _openAddTextDialog() async {
-    final payload = await showDialog<Map<String, dynamic>>(
+    final payload = await showAppDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => _AddTextDialog(tx: _tx),
     );
@@ -341,7 +365,7 @@ extension _KnowledgeActions on _KnowledgePageState {
   }
 
   Future<void> _openAddUrlDialog() async {
-    final payload = await showDialog<Map<String, dynamic>>(
+    final payload = await showAppDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => _AddUrlDialog(tx: _tx),
     );
@@ -373,9 +397,8 @@ extension _KnowledgeActions on _KnowledgePageState {
     final confirm = await showConfirmActionDialog(
       context,
       title: _tx('knowledge.delete_item_dialog_title'),
-      message: _tx(
-        'common.delete_confirm_body',
-      ).replaceAll('{{nombre}}', item.title),
+      message: _tx('common.delete_confirm_body')
+          .replaceAll('{{nombre}}', item.title),
       cancelLabel: 'Cancelar',
       confirmLabel: _tx('common.delete'),
       destructive: true,
@@ -392,6 +415,26 @@ extension _KnowledgeActions on _KnowledgePageState {
       showMessage(error.message, isError: true);
     } catch (_) {
       showMessage(_tx('knowledge.msg_item_delete_failed'), isError: true);
+    }
+  }
+
+  Future<void> _toggleItemActive(KnowledgeItem item) async {
+    final token = _token;
+    if (token == null || token.isEmpty || item.readOnly) return;
+    final active = !item.isActive;
+    try {
+      await _repository.setItemActive(token, item.id, active);
+      showMessage(
+        _tx(
+          active
+              ? 'knowledge.content_activated'
+              : 'knowledge.content_deactivated',
+        ),
+      );
+    } on ApiError catch (error) {
+      showMessage(error.message, isError: true);
+    } catch (_) {
+      showMessage(_tx('knowledge.msg_item_toggle_failed'), isError: true);
     }
   }
 

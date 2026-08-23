@@ -9,6 +9,7 @@ import '../../../shared/widgets/async_section_builder.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
+import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/resource_collection_view.dart';
 import '../../../shared/widgets/resource_toolbar.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
@@ -81,7 +82,7 @@ class _MemoryPageState extends State<MemoryPage> with StateMessaging {
   }
 
   Future<void> _createFile() async {
-    final payload = await showDialog<Map<String, String>>(
+    final payload = await showAppDialog<Map<String, String>>(
       context: context,
       builder: (context) => _MemoryEditorDialog(tx: _tx),
     );
@@ -96,7 +97,7 @@ class _MemoryPageState extends State<MemoryPage> with StateMessaging {
     try {
       final content = await _repository.getFileContent(token, file.filename);
       if (!mounted) return;
-      final payload = await showDialog<Map<String, String>>(
+      final payload = await showAppDialog<Map<String, String>>(
         context: context,
         builder: (context) => _MemoryEditorDialog(
           tx: _tx,

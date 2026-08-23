@@ -30,6 +30,13 @@ class ToolsRepository extends ScopedResourceRepository<ToolItem> {
   Future<void> deleteTool(String token, String scope, String id) =>
       remove(token, scope, id);
 
+  Future<void> setToolActive(
+    String token,
+    String scope,
+    String id,
+    bool active,
+  ) => setActive(token, 'tools/${Uri.encodeComponent(scope)}', id, active);
+
   /// Sube el binario de una tool `cpp`, segundo paso del flujo en dos pasos
   /// (`POST /api/tools/{scope}` para los metadatos, luego este endpoint) —
   /// mismo mecanismo de multipart que `KnowledgeRepository.uploadDocument`.

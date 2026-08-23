@@ -73,8 +73,9 @@ class KnowledgeDirectoryProgress {
   final int ignored;
 }
 
-typedef KnowledgeDirectoryProgressCallback =
-    void Function(KnowledgeDirectoryProgress progress);
+typedef KnowledgeDirectoryProgressCallback = void Function(
+  KnowledgeDirectoryProgress progress,
+);
 
 /// Si un fichero de un pack no cabe en el límite que fija el administrador.
 ///

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 
 class AgentPublishDependencyOption {
@@ -22,7 +23,7 @@ Future<Set<String>?> showAgentPublishDependenciesDialog({
   required List<AgentPublishDependencyOption> options,
   required Set<String> initialSelection,
   required String Function(String path) tx,
-}) => showDialog<Set<String>>(
+}) => showAppDialog<Set<String>>(
   context: context,
   builder: (_) => _AgentPublishDependenciesDialog(
     options: options,

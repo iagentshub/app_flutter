@@ -159,4 +159,31 @@ void main() {
     );
     expect(requests[6].method, 'DELETE');
   });
+
+  test('documentos y packs usan sus endpoints de activación', () async {
+    SharedPreferences.setMockInitialValues({});
+    final backend = await BackendController.bootstrap();
+    final requests = <http.Request>[];
+    final client = ApiClient(
+      backend,
+      client: MockClient((request) async {
+        requests.add(request);
+        return http.Response(
+          '{}',
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      }),
+    );
+    addTearDown(client.close);
+    final repository = KnowledgeRepository(apiClient: client);
+
+    await repository.setItemActive('token', 'doc 1', false);
+    await repository.setPackActive('token', 'pack 1', true);
+
+    expect(requests.map((request) => request.url.path).toList(), [
+      '/api/knowledge/doc%201/deactivate',
+      '/api/knowledge/packs/pack%201/activate',
+    ]);
+  });
 }

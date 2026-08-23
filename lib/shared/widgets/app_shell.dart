@@ -21,7 +21,7 @@ import '../state/dashboard_edit_state.dart';
 import '../state/locale_controller.dart';
 import '../state/theme_controller.dart';
 import 'brand_icon.dart';
-import 'terminal_view_transition.dart';
+import 'motion/app_modal.dart';
 
 part 'shell/app_shell_navigation.dart';
 part 'shell/app_sidebar_footer.dart';
@@ -135,7 +135,7 @@ class _AppShellState extends State<AppShell> {
 
   Future<void> _logout(BuildContext context) async {
     final themeController = ThemeControllerScope.of(context, listen: false);
-    final confirm = await showDialog<bool>(
+    final confirm = await showAppDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(_tx('logout_confirm_title')),
@@ -231,12 +231,16 @@ class _AppShellState extends State<AppShell> {
                         apiClient: _services.apiClient,
                         tx: _tx,
                       ),
-                      Expanded(
-                        child: TerminalViewTransition(
-                          key: ValueKey(location),
-                          child: widget.child,
-                        ),
-                      ),
+                      // El contenido va tal cual: `widget.child` es el
+                      // Navigator del ShellRoute y lleva GlobalKey, así que
+                      // envolverlo en un switcher —que mantiene la vista
+                      // saliente y la entrante a la vez— lo pone en dos sitios
+                      // del árbol. En debug eso es «Duplicate GlobalKey»; en
+                      // release no hay aserción y la pantalla simplemente no
+                      // se pinta hasta que algo fuerza un frame. La transición
+                      // entre secciones la hace el router, dentro del
+                      // Navigator: ver internal_router.dart.
+                      Expanded(child: widget.child),
                     ],
                   ),
                 );

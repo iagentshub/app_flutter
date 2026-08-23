@@ -55,7 +55,7 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog>
   }
 
   Future<void> _openMembersDialog() async {
-    await showDialog<void>(
+    await showAppDialog<void>(
       context: context,
       builder: (context) => _MembersDialog(
         apiClient: widget.apiClient,
@@ -70,7 +70,7 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog>
   }
 
   Future<void> _openInviteDialog() async {
-    final username = await showDialog<String>(
+    final username = await showAppDialog<String>(
       context: context,
       builder: (context) => _InviteUserDialog(tx: widget.tx),
     );
@@ -152,7 +152,7 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog>
       return;
     }
 
-    final newOwner = await showDialog<String>(
+    final newOwner = await showAppDialog<String>(
       context: context,
       builder: (context) => SimpleDialog(
         title: Text(widget.tx('groups.leave_owner_title')),

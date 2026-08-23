@@ -34,9 +34,8 @@ extension _KnowledgePackCard on _KnowledgePageState {
             ],
             const SizedBox(height: 8),
             Text(
-              _tx(
-                'knowledge.pack_file_count',
-              ).replaceAll('{{count}}', '${pack.fileCount}'),
+              _tx('knowledge.pack_file_count')
+                  .replaceAll('{{count}}', '${pack.fileCount}'),
             ),
             const SizedBox(height: 4),
             Text(switch (pack.sourceMode) {
@@ -54,6 +53,8 @@ extension _KnowledgePackCard on _KnowledgePageState {
                   linkedLabel: _tx('common.linked'),
                   forkLabel: _tx('common.fork'),
                 ),
+                if (!pack.isActive)
+                  InactiveBadge(label: _tx('common.inactive')),
               ],
             ),
             const SizedBox(height: 10),
@@ -61,30 +62,45 @@ extension _KnowledgePackCard on _KnowledgePageState {
               children: [
                 const Spacer(),
                 _buildKnowledgePackGraphButton(pack),
-                if (!pack.readOnly && pack.canSynchronize)
-                  ActionIconButton(
-                    icon: Icons.sync_outlined,
-                    tooltip: _tx('knowledge.pack_sync_action'),
-                    onPressed: () => _synchronizePack(pack),
-                  ),
                 if (!pack.readOnly)
-                  ActionIconButton(
-                    icon: Icons.edit_outlined,
-                    tooltip: _tx('common.edit'),
-                    onPressed: () => _editPack(pack),
-                  ),
-                if (!pack.readOnly)
-                  ActionIconButton(
-                    icon: Icons.group_add_outlined,
-                    tooltip: _tx('common.share_group'),
-                    onPressed: () => _sharePack(pack),
-                  ),
-                if (!pack.readOnly)
-                  ActionIconButton(
-                    icon: Icons.delete_outline,
-                    tooltip: _tx('common.delete'),
-                    danger: true,
-                    onPressed: () => _deletePack(pack),
+                  OverflowMenuButton(
+                    tooltip: _tx('common.more_actions'),
+                    actions: [
+                      if (pack.canSynchronize)
+                        OverflowMenuAction(
+                          icon: Icons.sync_outlined,
+                          label: _tx('knowledge.pack_sync_action'),
+                          onSelected: () => _synchronizePack(pack),
+                        ),
+                      OverflowMenuAction(
+                        icon: Icons.edit_outlined,
+                        label: _tx('common.edit'),
+                        onSelected: () => _editPack(pack),
+                      ),
+                      OverflowMenuAction(
+                        icon: Icons.group_add_outlined,
+                        label: _tx('common.share_group'),
+                        onSelected: () => _sharePack(pack),
+                      ),
+                      OverflowMenuAction(
+                        icon: pack.isActive
+                            ? Icons.pause_circle_outline
+                            : Icons.play_circle_outline,
+                        label: _tx(
+                          pack.isActive
+                              ? 'common.deactivate'
+                              : 'common.activate',
+                        ),
+                        onSelected: () => _togglePackActive(pack),
+                      ),
+                      OverflowMenuAction(
+                        icon: Icons.delete_outline,
+                        label: _tx('common.delete'),
+                        danger: true,
+                        separatedBefore: true,
+                        onSelected: () => _deletePack(pack),
+                      ),
+                    ],
                   ),
               ],
             ),
@@ -92,6 +108,6 @@ extension _KnowledgePackCard on _KnowledgePageState {
         ),
       ),
     );
-    return card;
+    return pack.isActive ? card : dimmedWhenInactive(context, card);
   }
 }

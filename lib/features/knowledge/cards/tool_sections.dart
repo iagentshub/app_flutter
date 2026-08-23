@@ -159,6 +159,8 @@ extension _ToolSections on _KnowledgePageState {
                   forkLabel: _tx('common.fork'),
                 ),
                 _executionComingSoonBadge(),
+                if (!item.isActive)
+                  InactiveBadge(label: _tx('common.inactive')),
               ],
             ),
             const SizedBox(height: 10),
@@ -171,30 +173,48 @@ extension _ToolSections on _KnowledgePageState {
                   resourceDescription: item.description,
                   resourceType: 'tool',
                 ),
-                if (!item.readOnly)
-                  ActionIconButton(
-                    icon: Icons.group_add_outlined,
-                    tooltip: _tx('common.share_group'),
-                    onPressed: () => _shareTool(item),
-                  ),
-                ActionIconButton(
-                  icon: Icons.history,
-                  tooltip: _tx('history.dialog_title'),
-                  onPressed: () => _showToolHistory(item),
+                OverflowMenuButton(
+                  tooltip: _tx('common.more_actions'),
+                  actions: [
+                    if (!item.readOnly)
+                      OverflowMenuAction(
+                        icon: Icons.group_add_outlined,
+                        label: _tx('common.share_group'),
+                        onSelected: () => _shareTool(item),
+                      ),
+                    OverflowMenuAction(
+                      icon: Icons.history,
+                      label: _tx('history.dialog_title'),
+                      onSelected: () => _showToolHistory(item),
+                    ),
+                    if (!item.readOnly)
+                      OverflowMenuAction(
+                        icon: Icons.edit_outlined,
+                        label: _tx('common.edit'),
+                        onSelected: () => _openEditToolDialog(item),
+                      ),
+                    if (!item.readOnly)
+                      OverflowMenuAction(
+                        icon: item.isActive
+                            ? Icons.pause_circle_outline
+                            : Icons.play_circle_outline,
+                        label: _tx(
+                          item.isActive
+                              ? 'common.deactivate'
+                              : 'common.activate',
+                        ),
+                        onSelected: () => _toggleToolActive(item),
+                      ),
+                    if (!item.readOnly)
+                      OverflowMenuAction(
+                        icon: Icons.delete_outline,
+                        label: _tx('common.delete'),
+                        danger: true,
+                        separatedBefore: true,
+                        onSelected: () => _deleteTool(item),
+                      ),
+                  ],
                 ),
-                if (!item.readOnly)
-                  ActionIconButton(
-                    icon: Icons.edit_outlined,
-                    tooltip: _tx('common.edit'),
-                    onPressed: () => _openEditToolDialog(item),
-                  ),
-                if (!item.readOnly)
-                  ActionIconButton(
-                    icon: Icons.delete_outline,
-                    tooltip: _tx('common.delete'),
-                    danger: true,
-                    onPressed: () => _deleteTool(item),
-                  ),
               ],
             ),
           ],
@@ -202,6 +222,6 @@ extension _ToolSections on _KnowledgePageState {
       ),
     );
 
-    return card;
+    return item.isActive ? card : dimmedWhenInactive(context, card);
   }
 }

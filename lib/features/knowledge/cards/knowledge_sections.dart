@@ -136,9 +136,8 @@ extension _KnowledgeSections on _KnowledgePageState {
             Positioned.fill(
               child: IgnorePointer(
                 child: ColoredBox(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.primary.withValues(alpha: 0.12),
+                  color: Theme.of(context).colorScheme.primary
+                      .withValues(alpha: 0.12),
                   child: Center(
                     child: Card(
                       child: Padding(
@@ -158,9 +157,8 @@ extension _KnowledgeSections on _KnowledgePageState {
             Positioned.fill(
               child: AbsorbPointer(
                 child: ColoredBox(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.scrim.withValues(alpha: 0.34),
+                  color: Theme.of(context).colorScheme.scrim
+                      .withValues(alpha: 0.34),
                   child: Center(
                     child: Semantics(
                       liveRegion: true,
@@ -328,6 +326,8 @@ extension _KnowledgeSections on _KnowledgePageState {
                   linkedLabel: _tx('common.linked'),
                   forkLabel: _tx('common.fork'),
                 ),
+                if (!item.isActive)
+                  InactiveBadge(label: _tx('common.inactive')),
               ],
             ),
             const SizedBox(height: 10),
@@ -340,30 +340,48 @@ extension _KnowledgeSections on _KnowledgePageState {
                   resourceDescription: item.description,
                   resourceType: 'skill',
                 ),
-                if (!item.readOnly)
-                  ActionIconButton(
-                    icon: Icons.group_add_outlined,
-                    tooltip: _tx('common.share_group'),
-                    onPressed: () => _shareSkill(item),
-                  ),
-                ActionIconButton(
-                  icon: Icons.history,
-                  tooltip: _tx('history.dialog_title'),
-                  onPressed: () => _showSkillHistory(item),
+                OverflowMenuButton(
+                  tooltip: _tx('common.more_actions'),
+                  actions: [
+                    if (!item.readOnly)
+                      OverflowMenuAction(
+                        icon: Icons.group_add_outlined,
+                        label: _tx('common.share_group'),
+                        onSelected: () => _shareSkill(item),
+                      ),
+                    OverflowMenuAction(
+                      icon: Icons.history,
+                      label: _tx('history.dialog_title'),
+                      onSelected: () => _showSkillHistory(item),
+                    ),
+                    if (!item.readOnly)
+                      OverflowMenuAction(
+                        icon: Icons.edit_outlined,
+                        label: _tx('common.edit'),
+                        onSelected: () => _openEditSkillDialog(item),
+                      ),
+                    if (!item.readOnly)
+                      OverflowMenuAction(
+                        icon: item.isActive
+                            ? Icons.pause_circle_outline
+                            : Icons.play_circle_outline,
+                        label: _tx(
+                          item.isActive
+                              ? 'common.deactivate'
+                              : 'common.activate',
+                        ),
+                        onSelected: () => _toggleSkillActive(item),
+                      ),
+                    if (!item.readOnly)
+                      OverflowMenuAction(
+                        icon: Icons.delete_outline,
+                        label: _tx('common.delete'),
+                        danger: true,
+                        separatedBefore: true,
+                        onSelected: () => _deleteSkill(item),
+                      ),
+                  ],
                 ),
-                if (!item.readOnly)
-                  ActionIconButton(
-                    icon: Icons.edit_outlined,
-                    tooltip: _tx('common.edit'),
-                    onPressed: () => _openEditSkillDialog(item),
-                  ),
-                if (!item.readOnly)
-                  ActionIconButton(
-                    icon: Icons.delete_outline,
-                    tooltip: _tx('common.delete'),
-                    danger: true,
-                    onPressed: () => _deleteSkill(item),
-                  ),
               ],
             ),
           ],
@@ -371,7 +389,7 @@ extension _KnowledgeSections on _KnowledgePageState {
       ),
     );
 
-    return card;
+    return item.isActive ? card : dimmedWhenInactive(context, card);
   }
 
   Widget _buildItemCard(KnowledgeItem item) {
@@ -428,6 +446,8 @@ extension _KnowledgeSections on _KnowledgePageState {
                   linkedLabel: _tx('common.linked'),
                   forkLabel: _tx('common.fork'),
                 ),
+                if (!item.isActive)
+                  InactiveBadge(label: _tx('common.inactive')),
               ],
             ),
             const SizedBox(height: 10),
@@ -436,23 +456,38 @@ extension _KnowledgeSections on _KnowledgePageState {
                 const Spacer(),
                 _buildKnowledgeItemGraphButton(item),
                 if (!item.readOnly)
-                  ActionIconButton(
-                    icon: Icons.edit_outlined,
-                    tooltip: _tx('common.edit'),
-                    onPressed: () => _editItem(item),
-                  ),
-                if (!item.readOnly)
-                  ActionIconButton(
-                    icon: Icons.group_add_outlined,
-                    tooltip: _tx('common.share_group'),
-                    onPressed: () => _shareItem(item),
-                  ),
-                if (!item.readOnly)
-                  ActionIconButton(
-                    icon: Icons.delete_outline,
-                    tooltip: _tx('common.delete'),
-                    danger: true,
-                    onPressed: () => _deleteItem(item),
+                  OverflowMenuButton(
+                    tooltip: _tx('common.more_actions'),
+                    actions: [
+                      OverflowMenuAction(
+                        icon: Icons.edit_outlined,
+                        label: _tx('common.edit'),
+                        onSelected: () => _editItem(item),
+                      ),
+                      OverflowMenuAction(
+                        icon: Icons.group_add_outlined,
+                        label: _tx('common.share_group'),
+                        onSelected: () => _shareItem(item),
+                      ),
+                      OverflowMenuAction(
+                        icon: item.isActive
+                            ? Icons.pause_circle_outline
+                            : Icons.play_circle_outline,
+                        label: _tx(
+                          item.isActive
+                              ? 'common.deactivate'
+                              : 'common.activate',
+                        ),
+                        onSelected: () => _toggleItemActive(item),
+                      ),
+                      OverflowMenuAction(
+                        icon: Icons.delete_outline,
+                        label: _tx('common.delete'),
+                        danger: true,
+                        separatedBefore: true,
+                        onSelected: () => _deleteItem(item),
+                      ),
+                    ],
                   ),
               ],
             ),
@@ -461,6 +496,6 @@ extension _KnowledgeSections on _KnowledgePageState {
       ),
     );
 
-    return card;
+    return item.isActive ? card : dimmedWhenInactive(context, card);
   }
 }

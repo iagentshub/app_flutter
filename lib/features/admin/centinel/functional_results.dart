@@ -351,7 +351,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
   Future<void> _showHistoryDialog() async {
     await _loadHistory();
     if (!mounted) return;
-    await showDialog<void>(
+    await showAppDialog<void>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (dialogContext, setDialogState) => AlertDialog(

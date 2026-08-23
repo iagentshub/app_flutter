@@ -11,8 +11,10 @@ import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
+import '../../../shared/widgets/motion/app_modal.dart';
 import '../../agents/repositories/agents_repository.dart';
 import '../../connections/repositories/connections_repository.dart';
+import '../../executions/controllers/resource_executions_controller.dart';
 import '../cards/workflow_metadata_card.dart';
 import '../controllers/workflow_runs_controller.dart';
 import '../dialogs/run_progress_dialog.dart';
@@ -34,6 +36,7 @@ class WorkflowEditorPage extends StatefulWidget {
     required this.sessionController,
     required this.localeController,
     this.workflowRunsController,
+    this.executionStateController,
     this.initial,
     super.key,
   });
@@ -42,6 +45,7 @@ class WorkflowEditorPage extends StatefulWidget {
   final SessionController sessionController;
   final LocaleController localeController;
   final WorkflowRunsController? workflowRunsController;
+  final ResourceExecutionsController? executionStateController;
   final Map<String, dynamic>? initial;
 
   @override
@@ -68,6 +72,8 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
   String? _error;
   late final WorkflowRunsController _workflowRuns;
   late final bool _ownsWorkflowRuns;
+  late final ResourceExecutionsController _executionState;
+  late final bool _ownsExecutionState;
 
   String _tx(String path) => _t.text(path);
 
@@ -89,6 +95,15 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
           sessionController: widget.sessionController,
           autoStart: false,
         );
+    _ownsExecutionState = widget.executionStateController == null;
+    _executionState =
+        widget.executionStateController ??
+        ResourceExecutionsController(
+          apiClient: widget.apiClient,
+          sessionController: widget.sessionController,
+          autoStart: false,
+        );
+    _executionState.addListener(_onExecutionStateChanged);
     _t = TranslatedTexts(
       localeController: widget.localeController,
       namespace: 'resources',
@@ -129,8 +144,14 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
     if (mounted) setState(() {});
   }
 
+  void _onExecutionStateChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
+    _executionState.removeListener(_onExecutionStateChanged);
+    if (_ownsExecutionState) _executionState.dispose();
     if (_ownsWorkflowRuns) _workflowRuns.dispose();
     _t.removeListener(_onTextsChanged);
     _t.dispose();
@@ -235,7 +256,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
     if (id == null || id.isEmpty || _token == null || _token!.isEmpty) return;
     final name = _nameController.text.trim();
 
-    final input = await showDialog<String>(
+    final input = await showAppDialog<String>(
       context: context,
       builder: (context) => RunWorkflowDialog(workflowName: name, tx: _tx),
     );
@@ -246,7 +267,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
       input: input.trim(),
     );
     if (!mounted) return;
-    await showDialog<void>(
+    await showAppDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (context) => RunProgressDialog(
@@ -356,16 +377,23 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
   }
 
   List<Widget> _appBarActions({required bool compact}) {
-    final canRun = _workflowId != null && _issues.isEmpty && !_isDirty;
+    final inProgress =
+        _workflowId != null &&
+        _executionState.isInProgress('workflow', _workflowId!);
+    final canRun =
+        _workflowId != null && _issues.isEmpty && !_isDirty && !inProgress;
+    final runTooltip = inProgress
+        ? _tx('common.in_progress')
+        : canRun
+        ? _tx('workflow_editor.test_run_btn')
+        : _tx('workflow_editor.test_run_disabled');
     if (compact) {
       return [
         if (_workflowId != null)
           AppIconButton.outlined(
             onPressed: canRun ? _testRun : null,
             icon: const Icon(Icons.play_arrow_rounded),
-            tooltip: canRun
-                ? _tx('workflow_editor.test_run_btn')
-                : _tx('workflow_editor.test_run_disabled'),
+            tooltip: runTooltip,
           ),
         Padding(
           padding: const EdgeInsets.only(right: 8),
@@ -383,9 +411,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
         Padding(
           padding: const EdgeInsets.only(right: 8),
           child: Tooltip(
-            message: canRun
-                ? _tx('workflow_editor.test_run_btn')
-                : _tx('workflow_editor.test_run_disabled'),
+            message: runTooltip,
             child: SecondaryButton.icon(
               onPressed: canRun ? _testRun : null,
               icon: const Icon(Icons.play_arrow_rounded, size: 18),

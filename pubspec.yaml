@@ -18,8 +18,19 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # of the product and file versions while build-number is used as the build suffix.
 version: 1.0.0+1
 
+# La versión de Flutter se declara aquí y **solo** aquí: los tres workflows que
+# compilan esta app —el CI de este repo y los `docker-publish` de iAgents y
+# backend_fastapi, que hacen checkout de app_flutter para construir la imagen
+# unificada— la leen con `flutter-version-file`. Antes solo la fijaba el CI de
+# este repo, en 3.44.8, mientras los otros dos instalaban `channel: stable` sin
+# más: la imagen que se despliega se compilaba con una versión que el CI no
+# había validado nunca, y nada fallaba.
+#
+# Es una versión exacta a propósito. Un rango deja que cada runner resuelva la
+# suya y devuelve el problema tal cual estaba.
 environment:
-  sdk: ^3.10.4
+  sdk: ^3.13.0
+  flutter: 3.47.1
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -38,6 +49,12 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
+  # Transiciones de Material Motion que el framework no trae: fade through
+  # entre secciones, shared axis en los formularios y fade-scale en los
+  # diálogos. La 3.x migra a material_ui, que es a donde Flutter está moviendo
+  # Material; cuesta 53 KB medidos en el bundle web y no cambia una sola
+  # llamada de las nuestras.
+  animations: ^3.0.0
   cupertino_icons: ^1.0.8
   go_router: ^17.3.0
   shared_preferences: ^2.5.3

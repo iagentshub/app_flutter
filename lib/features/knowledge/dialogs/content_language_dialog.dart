@@ -6,7 +6,7 @@ Future<Set<String>?> _showContentLabelsDialog(
   Set<String> initial = const {'private'},
 }) {
   var selected = Set<String>.of(initial);
-  return showDialog<Set<String>>(
+  return showAppDialog<Set<String>>(
     context: context,
     builder: (context) => StatefulBuilder(
       builder: (context, setDialogState) => AlertDialog(

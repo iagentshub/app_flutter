@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../../core/network/api_client.dart';
+import '../../features/executions/controllers/resource_executions_controller.dart';
 import '../../features/workflows/controllers/workflow_runs_controller.dart';
 import 'locale_controller.dart';
 import 'session_controller.dart';
@@ -27,6 +28,7 @@ class AppServicesScope extends InheritedWidget {
     required this.sessionController,
     required this.localeController,
     this.workflowRunsController,
+    this.resourceExecutionsController,
     required super.child,
     super.key,
   });
@@ -35,6 +37,7 @@ class AppServicesScope extends InheritedWidget {
   final SessionController sessionController;
   final LocaleController localeController;
   final WorkflowRunsController? workflowRunsController;
+  final ResourceExecutionsController? resourceExecutionsController;
 
   /// Los servicios se crean una vez al arrancar y no se sustituyen, así que
   /// leerlos no crea dependencia: se puede llamar desde `initState`.
@@ -53,5 +56,6 @@ class AppServicesScope extends InheritedWidget {
       apiClient != oldWidget.apiClient ||
       sessionController != oldWidget.sessionController ||
       localeController != oldWidget.localeController ||
-      workflowRunsController != oldWidget.workflowRunsController;
+      workflowRunsController != oldWidget.workflowRunsController ||
+      resourceExecutionsController != oldWidget.resourceExecutionsController;
 }

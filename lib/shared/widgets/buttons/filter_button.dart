@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../motion/app_modal.dart';
 import '../responsive_dialog.dart';
 
 /// Botón de filtros: solo icono + insignia con el nº de filtros activos
@@ -93,7 +94,7 @@ Future<void> showFilterDialog(
   String clearLabel = 'Limpiar filtros',
   String closeLabel = 'Cerrar',
 }) {
-  return showDialog<void>(
+  return showAppDialog<void>(
     context: context,
     builder: (context) => StatefulBuilder(
       builder: (context, setDialogState) => AlertDialog(

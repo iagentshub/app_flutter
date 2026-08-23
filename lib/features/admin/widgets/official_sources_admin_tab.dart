@@ -5,6 +5,7 @@ import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
+import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../utils/i18n.dart';
 import '../dialogs/official_source_dialogs.dart';
@@ -108,7 +109,7 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
       controller.dispose();
       return;
     }
-    final accepted = await showDialog<bool>(
+    final accepted = await showAppDialog<bool>(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
@@ -217,7 +218,7 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
     controller.dispose();
     if (accepted != true || url.isEmpty) return;
     await run('import', () async {
-      final result = await showDialog<ImportDraft>(
+      final result = await showAppDialog<ImportDraft>(
         context: context,
         barrierDismissible: false,
         builder: (_) => OfficialImportProgressDialog(

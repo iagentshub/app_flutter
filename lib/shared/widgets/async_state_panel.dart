@@ -50,21 +50,19 @@ class AsyncStatePanel extends StatelessWidget {
   /// porque el botón de crear es un «+» perdido en la barra superior. Aquí se
   /// explica qué es la sección y se ofrece la acción principal a un clic.
   ///
-  /// [onAction] es opcional a propósito: «tu búsqueda no encuentra nada» no
+  /// [_onAction] es opcional a propósito: «tu búsqueda no encuentra nada» no
   /// se resuelve creando un recurso, así que ese caso se queda sin botón.
   const AsyncStatePanel.empty({
     required this.title,
     required this.message,
     this.icon = Icons.inbox_outlined,
-    String? actionLabel,
-    VoidCallback? onAction,
+    this._actionLabel,
+    this._onAction,
     this.padding = const EdgeInsets.all(16),
     super.key,
   }) : retryLabel = null,
        onRetry = null,
-       _loading = false,
-       _actionLabel = actionLabel,
-       _onAction = onAction;
+       _loading = false;
 
   final String? title;
   final String? message;

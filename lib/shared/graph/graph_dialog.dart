@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/theme/fnc_colors.dart';
 import '../../app/theme/fnc_fonts.dart';
+import '../widgets/motion/app_modal.dart';
 import 'graph_models.dart';
 import 'graph_view.dart';
 
@@ -31,7 +32,7 @@ Future<void> showResourceGraphDialog({
   required String quickViewNoConnectionsLabel,
   String emptyLabel = '',
 }) {
-  return showDialog<void>(
+  return showAppDialog<void>(
     context: context,
     builder: (context) => _ResourceGraphDialogContent(
       title: title,

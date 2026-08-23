@@ -77,6 +77,37 @@ void main() {
     );
   });
 
+  test('los diálogos se abren con showAppDialog, no con showDialog', () {
+    // `showAppDialog` aporta dos cosas que un `showDialog` suelto no tiene: la
+    // transición del resto de la app y, sobre todo, que con el ajuste de
+    // movimiento reducido el diálogo deja de escalar. Una llamada directa no
+    // rompe nada visible —el diálogo sale igual—, así que solo se nota aquí.
+    final directos = <String>[];
+    final showDialog = RegExp(r'\bshowDialog\s*[(<]');
+    const permitido = 'lib/shared/widgets/motion/app_modal.dart';
+    for (final file
+        in Directory('lib')
+            .listSync(recursive: true)
+            .whereType<File>()
+            .where((file) => file.path.endsWith('.dart'))) {
+      if (file.path.replaceAll(r'\', '/') == permitido) continue;
+      final lines = file.readAsLinesSync();
+      for (var index = 0; index < lines.length; index++) {
+        if (showDialog.hasMatch(lines[index])) {
+          directos.add('${file.path}:${index + 1}');
+        }
+      }
+    }
+
+    expect(
+      directos,
+      isEmpty,
+      reason:
+          'Usa showAppDialog de shared/widgets/motion/app_modal.dart:\n'
+          '${directos.join('\n')}',
+    );
+  });
+
   test('las features usan los componentes de botón de la aplicación', () {
     final directMaterialButtons = <String>[];
     final materialButton = RegExp(

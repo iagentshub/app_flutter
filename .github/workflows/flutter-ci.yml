@@ -26,7 +26,11 @@ jobs:
       - name: Install Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
         with:
-          flutter-version: 3.44.8
+          # La versión sale del pubspec de la app, que es donde la leen también
+          # los `docker-publish` de iAgents y backend_fastapi. Escrita aquí a
+          # mano, este CI validaba 3.44.8 mientras la imagen que se despliega se
+          # construía con lo que `channel: stable` diera ese día.
+          flutter-version-file: pubspec.yaml
           channel: stable
           cache: true
 
@@ -86,7 +90,13 @@ jobs:
       - name: Install Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
         with:
-          flutter-version: 3.44.8
+          # La versión sale del pubspec de la app, que es donde la leen también
+          # los `docker-publish` de iAgents y backend_fastapi. Escrita aquí a
+          # mano, este CI validaba 3.44.8 mientras la imagen que se despliega se
+          # construía con lo que `channel: stable` diera ese día.
+          # Este job saca el repo en app_flutter/, y la ruta es relativa al
+          # workspace, no al working-directory del paso que compila.
+          flutter-version-file: app_flutter/pubspec.yaml
           channel: stable
           cache: true
 

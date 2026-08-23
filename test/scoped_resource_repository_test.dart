@@ -43,15 +43,12 @@ void main() {
   test('el listado codifica scope y grupo igual en los tres', () async {
     final (client, peticiones) = clienteEspia();
 
-    await SkillsRepository(
-      apiClient: client,
-    ).listSkills('token', scope: 'group', groupId: 'ORANGE JAZZTEL/2026');
-    await PromptsRepository(
-      apiClient: client,
-    ).listPrompts('token', scope: 'group', groupId: 'ORANGE JAZZTEL/2026');
-    await ToolsRepository(
-      apiClient: client,
-    ).listTools('token', scope: 'group', groupId: 'ORANGE JAZZTEL/2026');
+    await SkillsRepository(apiClient: client)
+        .listSkills('token', scope: 'group', groupId: 'ORANGE JAZZTEL/2026');
+    await PromptsRepository(apiClient: client)
+        .listPrompts('token', scope: 'group', groupId: 'ORANGE JAZZTEL/2026');
+    await ToolsRepository(apiClient: client)
+        .listTools('token', scope: 'group', groupId: 'ORANGE JAZZTEL/2026');
 
     expect(peticiones, hasLength(3));
     expect(peticiones.map((uri) => uri.path).toList(), [
@@ -82,9 +79,8 @@ void main() {
   test('el id y el scope se codifican en la ruta', () async {
     final (client, peticiones) = clienteEspia(body: '{}');
 
-    await SkillsRepository(
-      apiClient: client,
-    ).getSkill('token', 'group', 'id con espacios/y barra');
+    await SkillsRepository(apiClient: client)
+        .getSkill('token', 'group', 'id con espacios/y barra');
 
     // La barra del id queda escapada, así que no abre un segmento de ruta
     // nuevo ni permite salirse del recurso.
@@ -125,12 +121,10 @@ void main() {
       'labels': ['private', 'lang_es', 'lang_en'],
     };
 
-    await SkillsRepository(
-      apiClient: client,
-    ).saveSkill('token', 'private', payload);
-    await PromptsRepository(
-      apiClient: client,
-    ).savePrompt('token', 'private', payload);
+    await SkillsRepository(apiClient: client)
+        .saveSkill('token', 'private', payload);
+    await PromptsRepository(apiClient: client)
+        .savePrompt('token', 'private', payload);
 
     expect(requests.map((request) => request.url.path), [
       '/api/skills/private',
@@ -143,5 +137,22 @@ void main() {
         'lang_en',
       ]);
     }
+  });
+
+  test('activación usa scope e id en skills, prompts y tools', () async {
+    final (client, peticiones) = clienteEspia(body: '{}');
+
+    await SkillsRepository(apiClient: client)
+        .setSkillActive('token', 'private', 'skill 1', false);
+    await PromptsRepository(apiClient: client)
+        .setPromptActive('token', 'public', 'prompt 1', true);
+    await ToolsRepository(apiClient: client)
+        .setToolActive('token', 'private', 'tool 1', false);
+
+    expect(peticiones.map((uri) => uri.path).toList(), [
+      '/api/skills/private/skill%201/deactivate',
+      '/api/prompts/public/prompt%201/activate',
+      '/api/tools/private/tool%201/deactivate',
+    ]);
   });
 }

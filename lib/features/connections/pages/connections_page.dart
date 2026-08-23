@@ -12,6 +12,7 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
+import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/resource_collection_view.dart';
 import '../../../shared/widgets/resource_toolbar.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
@@ -146,7 +147,7 @@ class _ConnectionsPageState extends State<ConnectionsPage>
     Map<String, dynamic>? initial,
     Future<List<String>> Function(String host) discoverOllamaModels,
   ) {
-    return showDialog<Map<String, dynamic>>(
+    return showAppDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => _ConnectionFormDialog(
         providers: providers,
@@ -197,7 +198,7 @@ class _ConnectionsPageState extends State<ConnectionsPage>
       unawaited(_runAction(_controller.testAll(present: _showMassTestSummary)));
 
   Future<void> _showMassTestSummary(ConnectionsMassTestSummary summary) {
-    return showDialog<void>(
+    return showAppDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(

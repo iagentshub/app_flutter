@@ -99,9 +99,8 @@ extension _KnowledgeResourceGraph on _KnowledgePageState {
   ) {
     return ResourceGraphButton(
       tooltip: _tx('knowledge.graph_tooltip'),
-      dialogTitle: _tx(
-        'knowledge.graph_title',
-      ).replaceAll('{{name}}', resourceName),
+      dialogTitle: _tx('knowledge.graph_title')
+          .replaceAll('{{name}}', resourceName),
       buildGraph: buildGraph,
       closeLabel: _tx('common.close'),
       searchHint: _tx('graph.search_hint'),

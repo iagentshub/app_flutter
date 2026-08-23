@@ -105,6 +105,8 @@ extension _PromptSections on _KnowledgePageState {
                   forkLabel: _tx('common.fork'),
                 ),
                 _aliasChip('@${item.alias}'),
+                if (!item.isActive)
+                  InactiveBadge(label: _tx('common.inactive')),
               ],
             ),
             const SizedBox(height: 10),
@@ -117,30 +119,48 @@ extension _PromptSections on _KnowledgePageState {
                   resourceDescription: item.description,
                   resourceType: 'prompt',
                 ),
-                if (!item.readOnly)
-                  ActionIconButton(
-                    icon: Icons.group_add_outlined,
-                    tooltip: _tx('common.share_group'),
-                    onPressed: () => _sharePrompt(item),
-                  ),
-                ActionIconButton(
-                  icon: Icons.history,
-                  tooltip: _tx('history.dialog_title'),
-                  onPressed: () => _showPromptHistory(item),
+                OverflowMenuButton(
+                  tooltip: _tx('common.more_actions'),
+                  actions: [
+                    if (!item.readOnly)
+                      OverflowMenuAction(
+                        icon: Icons.group_add_outlined,
+                        label: _tx('common.share_group'),
+                        onSelected: () => _sharePrompt(item),
+                      ),
+                    OverflowMenuAction(
+                      icon: Icons.history,
+                      label: _tx('history.dialog_title'),
+                      onSelected: () => _showPromptHistory(item),
+                    ),
+                    if (!item.readOnly)
+                      OverflowMenuAction(
+                        icon: Icons.edit_outlined,
+                        label: _tx('common.edit'),
+                        onSelected: () => _openEditPromptDialog(item),
+                      ),
+                    if (!item.readOnly)
+                      OverflowMenuAction(
+                        icon: item.isActive
+                            ? Icons.pause_circle_outline
+                            : Icons.play_circle_outline,
+                        label: _tx(
+                          item.isActive
+                              ? 'common.deactivate'
+                              : 'common.activate',
+                        ),
+                        onSelected: () => _togglePromptActive(item),
+                      ),
+                    if (!item.readOnly)
+                      OverflowMenuAction(
+                        icon: Icons.delete_outline,
+                        label: _tx('common.delete'),
+                        danger: true,
+                        separatedBefore: true,
+                        onSelected: () => _deletePrompt(item),
+                      ),
+                  ],
                 ),
-                if (!item.readOnly)
-                  ActionIconButton(
-                    icon: Icons.edit_outlined,
-                    tooltip: _tx('common.edit'),
-                    onPressed: () => _openEditPromptDialog(item),
-                  ),
-                if (!item.readOnly)
-                  ActionIconButton(
-                    icon: Icons.delete_outline,
-                    tooltip: _tx('common.delete'),
-                    danger: true,
-                    onPressed: () => _deletePrompt(item),
-                  ),
               ],
             ),
           ],
@@ -148,7 +168,7 @@ extension _PromptSections on _KnowledgePageState {
       ),
     );
 
-    return card;
+    return item.isActive ? card : dimmedWhenInactive(context, card);
   }
 
   /// Chip secundario con el alias `@invocable` del prompt, mismo estilo

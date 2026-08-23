@@ -1,3 +1,4 @@
 {
-  "credential_unreadable": "The stored credential cannot be read. Edit it and enter it again."
+  "credential_unreadable": "The stored credential cannot be read. Edit it and enter it again.",
+  "resource_execution_in_progress": "This resource is already in progress for your user. Wait for it to finish or stop the current execution."
 }

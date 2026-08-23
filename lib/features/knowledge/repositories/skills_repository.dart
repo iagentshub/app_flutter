@@ -32,4 +32,11 @@ class SkillsRepository extends ScopedResourceRepository<SkillItem> {
 
   Future<void> deleteSkill(String token, String scope, String id) =>
       remove(token, scope, id);
+
+  Future<void> setSkillActive(
+    String token,
+    String scope,
+    String id,
+    bool active,
+  ) => setActive(token, 'skills/${Uri.encodeComponent(scope)}', id, active);
 }

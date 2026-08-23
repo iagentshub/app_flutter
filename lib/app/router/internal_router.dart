@@ -32,6 +32,7 @@ import '../../features/workflows/pages/workflows_page.dart'
 import '../../shared/state/backend_controller.dart';
 import '../../shared/state/dashboard_edit_state.dart';
 import '../../shared/widgets/app_shell.dart';
+import '../../shared/widgets/motion/app_route_pages.dart';
 import 'deferred_page.dart';
 
 /// Rutas que requieren sesión iniciada, servidas dentro del [AppShell].
@@ -78,7 +79,8 @@ ShellRoute buildShellRoute({
     routes: [
       GoRoute(
         path: InternalRoutes.dashboard,
-        pageBuilder: (context, state) => NoTransitionPage(
+        pageBuilder: (context, state) => fadeThroughPage(
+          key: state.pageKey,
           child: DashboardPage(
             backendController: backendController,
             authRepository: authRepository,
@@ -90,11 +92,12 @@ ShellRoute buildShellRoute({
       GoRoute(
         path: InternalRoutes.agents,
         pageBuilder: (context, state) =>
-            const NoTransitionPage(child: AgentsPage()),
+            fadeThroughPage(key: state.pageKey, child: const AgentsPage()),
       ),
       GoRoute(
         path: InternalRoutes.orchestrations,
-        pageBuilder: (context, state) => NoTransitionPage(
+        pageBuilder: (context, state) => fadeThroughPage(
+          key: state.pageKey,
           child: DeferredPage(
             name: 'workflows_page',
             loader: workflows_page.loadLibrary,
@@ -109,41 +112,42 @@ ShellRoute buildShellRoute({
       GoRoute(
         path: InternalRoutes.connections,
         pageBuilder: (context, state) =>
-            const NoTransitionPage(child: ConnectionsPage()),
+            fadeThroughPage(key: state.pageKey, child: const ConnectionsPage()),
       ),
       GoRoute(
         path: InternalRoutes.memory,
         pageBuilder: (context, state) =>
-            const NoTransitionPage(child: MemoryPage()),
+            fadeThroughPage(key: state.pageKey, child: const MemoryPage()),
       ),
       GoRoute(
         path: InternalRoutes.knowledge,
         pageBuilder: (context, state) =>
-            const NoTransitionPage(child: KnowledgePage()),
+            fadeThroughPage(key: state.pageKey, child: const KnowledgePage()),
       ),
       GoRoute(
         path: InternalRoutes.explore,
         pageBuilder: (context, state) =>
-            const NoTransitionPage(child: ExplorePage()),
+            fadeThroughPage(key: state.pageKey, child: const ExplorePage()),
       ),
       GoRoute(
         path: InternalRoutes.labels,
         pageBuilder: (context, state) =>
-            const NoTransitionPage(child: LabelsPage()),
+            fadeThroughPage(key: state.pageKey, child: const LabelsPage()),
       ),
       GoRoute(
         path: InternalRoutes.manager,
         pageBuilder: (context, state) =>
-            const NoTransitionPage(child: ManagerPage()),
+            fadeThroughPage(key: state.pageKey, child: const ManagerPage()),
       ),
       GoRoute(
         path: InternalRoutes.profile,
         pageBuilder: (context, state) =>
-            const NoTransitionPage(child: ProfilePage()),
+            fadeThroughPage(key: state.pageKey, child: const ProfilePage()),
       ),
       GoRoute(
         path: InternalRoutes.checkout,
-        pageBuilder: (context, state) => NoTransitionPage(
+        pageBuilder: (context, state) => fadeThroughPage(
+          key: state.pageKey,
           child: DeferredPage(
             name: 'checkout_page',
             loader: checkout_page.loadLibrary,
@@ -155,7 +159,8 @@ ShellRoute buildShellRoute({
       ),
       GoRoute(
         path: InternalRoutes.vscodeAuth,
-        pageBuilder: (context, state) => NoTransitionPage(
+        pageBuilder: (context, state) => fadeThroughPage(
+          key: state.pageKey,
           child: VsCodeAuthPage(
             authRepository: authRepository,
             state: state.uri.queryParameters['state'],
@@ -165,7 +170,8 @@ ShellRoute buildShellRoute({
       ),
       GoRoute(
         path: InternalRoutes.admin,
-        pageBuilder: (context, state) => NoTransitionPage(
+        pageBuilder: (context, state) => fadeThroughPage(
+          key: state.pageKey,
           child: DeferredPage(
             name: 'admin_page',
             loader: admin_page.loadLibrary,
@@ -175,7 +181,8 @@ ShellRoute buildShellRoute({
       ),
       GoRoute(
         path: InternalRoutes.adminMetadata,
-        pageBuilder: (context, state) => NoTransitionPage(
+        pageBuilder: (context, state) => fadeThroughPage(
+          key: state.pageKey,
           child: DeferredPage(
             name: 'metadata_page',
             loader: metadata_page.loadLibrary,
@@ -185,7 +192,8 @@ ShellRoute buildShellRoute({
       ),
       GoRoute(
         path: InternalRoutes.adminCentinel,
-        pageBuilder: (context, state) => NoTransitionPage(
+        pageBuilder: (context, state) => fadeThroughPage(
+          key: state.pageKey,
           child: DeferredPage(
             name: 'centinel_page',
             loader: centinel_page.loadLibrary,
@@ -199,7 +207,8 @@ ShellRoute buildShellRoute({
       ),
       GoRoute(
         path: '${InternalRoutes.publicProfilePrefix}:username',
-        pageBuilder: (context, state) => NoTransitionPage(
+        pageBuilder: (context, state) => fadeThroughPage(
+          key: state.pageKey,
           child: PublicProfilePage(
             username: state.pathParameters['username'] ?? '',
           ),

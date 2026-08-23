@@ -43,7 +43,7 @@ extension _ToolActions on _KnowledgePageState {
   }
 
   Future<void> _openCreateToolDialog() async {
-    final payload = await showDialog<Map<String, dynamic>>(
+    final payload = await showAppDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => _ToolFormDialog(tx: _tx),
     );
@@ -65,7 +65,7 @@ extension _ToolActions on _KnowledgePageState {
     } catch (_) {}
 
     if (!mounted) return;
-    final payload = await showDialog<Map<String, dynamic>>(
+    final payload = await showAppDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => _ToolFormDialog(tx: _tx, initial: initial),
     );
@@ -116,9 +116,8 @@ extension _ToolActions on _KnowledgePageState {
     final confirm = await showConfirmActionDialog(
       context,
       title: _tx('knowledge.delete_tool_title'),
-      message: _tx(
-        'knowledge.delete_tool_confirm',
-      ).replaceAll('{name}', item.name),
+      message: _tx('knowledge.delete_tool_confirm')
+          .replaceAll('{name}', item.name),
       cancelLabel: _tx('common.cancel'),
       confirmLabel: _tx('common.delete'),
       destructive: true,
@@ -134,6 +133,26 @@ extension _ToolActions on _KnowledgePageState {
       showMessage(error.message, isError: true);
     } catch (_) {
       showMessage(_tx('knowledge.tool_delete_error'), isError: true);
+    }
+  }
+
+  Future<void> _toggleToolActive(ToolItem item) async {
+    final token = _token;
+    if (token == null || token.isEmpty || item.readOnly) return;
+    final active = !item.isActive;
+    try {
+      await _toolsRepository.setToolActive(token, item.scope, item.id, active);
+      showMessage(
+        _tx(
+          active
+              ? 'knowledge.content_activated'
+              : 'knowledge.content_deactivated',
+        ),
+      );
+    } on ApiError catch (error) {
+      showMessage(error.message, isError: true);
+    } catch (_) {
+      showMessage(_tx('knowledge.msg_item_toggle_failed'), isError: true);
     }
   }
 

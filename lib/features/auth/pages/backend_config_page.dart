@@ -10,6 +10,7 @@ import '../../../shared/state/backend_controller.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
+import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/status_dot.dart';
 
@@ -84,7 +85,7 @@ class _BackendConfigPageState extends State<BackendConfigPage> {
   String _tx(String path) => _t.text(path);
 
   Future<void> _openAddDialog() async {
-    final saved = await showDialog<SavedBackend>(
+    final saved = await showAppDialog<SavedBackend>(
       context: context,
       builder: (context) => _BackendFormDialog(
         backendController: widget.backendController,
@@ -109,7 +110,7 @@ class _BackendConfigPageState extends State<BackendConfigPage> {
   }
 
   Future<void> _openEditDialog(SavedBackend backend) async {
-    final saved = await showDialog<SavedBackend>(
+    final saved = await showAppDialog<SavedBackend>(
       context: context,
       builder: (context) => _BackendFormDialog(
         backendController: widget.backendController,

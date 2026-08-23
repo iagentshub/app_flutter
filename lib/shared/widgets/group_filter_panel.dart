@@ -7,6 +7,7 @@ import '../../features/manager/repositories/manager_repository.dart';
 import '../../models/manager/group_models.dart';
 import '../i18n/translated_texts.dart';
 import '../state/locale_controller.dart';
+import 'motion/app_modal.dart';
 import 'responsive_dialog.dart';
 
 /// Abre el selector de grupos (groups) como diálogo en vez de panel
@@ -20,7 +21,7 @@ Future<void> showGroupFilterDialog(
   required ValueChanged<String?> onSelect,
   required LocaleController localeController,
 }) {
-  return showDialog<void>(
+  return showAppDialog<void>(
     context: context,
     builder: (context) => _GroupFilterDialog(
       apiClient: apiClient,
@@ -100,7 +101,7 @@ class _GroupFilterDialogState extends State<_GroupFilterDialog> {
 
   Future<void> _createGroup() async {
     final controller = TextEditingController();
-    final name = await showDialog<String>(
+    final name = await showAppDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(_tx('groups.dialog_title')),

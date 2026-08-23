@@ -31,4 +31,11 @@ class PromptsRepository extends ScopedResourceRepository<PromptItem> {
 
   Future<void> deletePrompt(String token, String scope, String id) =>
       remove(token, scope, id);
+
+  Future<void> setPromptActive(
+    String token,
+    String scope,
+    String id,
+    bool active,
+  ) => setActive(token, 'prompts/${Uri.encodeComponent(scope)}', id, active);
 }

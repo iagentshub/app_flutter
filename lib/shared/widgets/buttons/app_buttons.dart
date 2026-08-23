@@ -7,44 +7,38 @@ import 'package:flutter/material.dart';
 class PrimaryButton extends StatelessWidget {
   const PrimaryButton({
     required this.onPressed,
-    required Widget child,
+    required Widget this._child,
     this.style,
     super.key,
-  }) : _child = child,
-       _icon = null,
+  }) : _icon = null,
        _label = null,
        _variant = _PrimaryButtonVariant.filled;
 
   const PrimaryButton.icon({
     required this.onPressed,
-    required Widget icon,
-    required Widget label,
+    required Widget this._icon,
+    required Widget this._label,
     this.style,
     super.key,
   }) : _child = null,
-       _icon = icon,
-       _label = label,
        _variant = _PrimaryButtonVariant.filled;
 
   const PrimaryButton.elevated({
     required this.onPressed,
-    required Widget child,
+    required Widget this._child,
     this.style,
     super.key,
-  }) : _child = child,
-       _icon = null,
+  }) : _icon = null,
        _label = null,
        _variant = _PrimaryButtonVariant.elevated;
 
   const PrimaryButton.tonalIcon({
     required this.onPressed,
-    required Widget icon,
-    required Widget label,
+    required Widget this._icon,
+    required Widget this._label,
     this.style,
     super.key,
   }) : _child = null,
-       _icon = icon,
-       _label = label,
        _variant = _PrimaryButtonVariant.tonalIcon;
 
   final VoidCallback? onPressed;
@@ -86,22 +80,19 @@ enum _PrimaryButtonVariant { filled, elevated, tonalIcon }
 class SecondaryButton extends StatelessWidget {
   const SecondaryButton({
     required this.onPressed,
-    required Widget child,
+    required Widget this._child,
     this.style,
     super.key,
-  }) : _child = child,
-       _icon = null,
+  }) : _icon = null,
        _label = null;
 
   const SecondaryButton.icon({
     required this.onPressed,
-    required Widget icon,
-    required Widget label,
+    required Widget this._icon,
+    required Widget this._label,
     this.style,
     super.key,
-  }) : _child = null,
-       _icon = icon,
-       _label = label;
+  }) : _child = null;
 
   final VoidCallback? onPressed;
   final ButtonStyle? style;
@@ -128,24 +119,21 @@ class SecondaryButton extends StatelessWidget {
 class TertiaryButton extends StatelessWidget {
   const TertiaryButton({
     required this.onPressed,
-    required Widget child,
+    required Widget this._child,
     this.style,
     this.autofocus = false,
     super.key,
-  }) : _child = child,
-       _icon = null,
+  }) : _icon = null,
        _label = null;
 
   const TertiaryButton.icon({
     required this.onPressed,
-    required Widget icon,
-    required Widget label,
+    required Widget this._icon,
+    required Widget this._label,
     this.style,
     this.autofocus = false,
     super.key,
-  }) : _child = null,
-       _icon = icon,
-       _label = label;
+  }) : _child = null;
 
   final VoidCallback? onPressed;
   final ButtonStyle? style;
@@ -187,22 +175,19 @@ class TertiaryButton extends StatelessWidget {
 class DangerButton extends StatelessWidget {
   const DangerButton({
     required this.onPressed,
-    required Widget child,
+    required Widget this._child,
     this.style,
     super.key,
-  }) : _child = child,
-       _icon = null,
+  }) : _icon = null,
        _label = null;
 
   const DangerButton.icon({
     required this.onPressed,
-    required Widget icon,
-    required Widget label,
+    required Widget this._icon,
+    required Widget this._label,
     this.style,
     super.key,
-  }) : _child = null,
-       _icon = icon,
-       _label = label;
+  }) : _child = null;
 
   final VoidCallback? onPressed;
   final ButtonStyle? style;

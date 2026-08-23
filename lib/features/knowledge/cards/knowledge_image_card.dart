@@ -9,7 +9,7 @@ extension _KnowledgeImageCard on _KnowledgePageState {
     final size = item.sizeBytes > 0
         ? formatToolBinarySize(item.sizeBytes)
         : '—';
-    return Card(
+    final card = Card(
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -37,6 +37,10 @@ extension _KnowledgeImageCard on _KnowledgePageState {
             LabelChipsRow(
               labels: item.displayLabels,
               labelText: (label) => trOr('labels.$label', label),
+              leading: [
+                if (!item.isActive)
+                  InactiveBadge(label: _tx('common.inactive')),
+              ],
             ),
             if (!item.readOnly) ...[
               const SizedBox(height: 10),
@@ -44,21 +48,38 @@ extension _KnowledgeImageCard on _KnowledgePageState {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   _buildKnowledgeItemGraphButton(item),
-                  ActionIconButton(
-                    icon: Icons.edit_outlined,
-                    tooltip: _tx('common.edit'),
-                    onPressed: () => _editItem(item),
-                  ),
-                  ActionIconButton(
-                    icon: Icons.group_add_outlined,
-                    tooltip: _tx('common.share_group'),
-                    onPressed: () => _shareItem(item),
-                  ),
-                  ActionIconButton(
-                    icon: Icons.delete_outline,
-                    tooltip: _tx('common.delete'),
-                    danger: true,
-                    onPressed: () => _deleteItem(item),
+                  OverflowMenuButton(
+                    tooltip: _tx('common.more_actions'),
+                    actions: [
+                      OverflowMenuAction(
+                        icon: Icons.edit_outlined,
+                        label: _tx('common.edit'),
+                        onSelected: () => _editItem(item),
+                      ),
+                      OverflowMenuAction(
+                        icon: Icons.group_add_outlined,
+                        label: _tx('common.share_group'),
+                        onSelected: () => _shareItem(item),
+                      ),
+                      OverflowMenuAction(
+                        icon: item.isActive
+                            ? Icons.pause_circle_outline
+                            : Icons.play_circle_outline,
+                        label: _tx(
+                          item.isActive
+                              ? 'common.deactivate'
+                              : 'common.activate',
+                        ),
+                        onSelected: () => _toggleItemActive(item),
+                      ),
+                      OverflowMenuAction(
+                        icon: Icons.delete_outline,
+                        label: _tx('common.delete'),
+                        danger: true,
+                        separatedBefore: true,
+                        onSelected: () => _deleteItem(item),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -67,5 +88,6 @@ extension _KnowledgeImageCard on _KnowledgePageState {
         ),
       ),
     );
+    return item.isActive ? card : dimmedWhenInactive(context, card);
   }
 }

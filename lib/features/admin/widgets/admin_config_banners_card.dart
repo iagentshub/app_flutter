@@ -66,7 +66,7 @@ class _AdminBannersCardState extends State<_AdminBannersCard>
   }
 
   Future<void> _openCreateDialog() async {
-    final payload = await showDialog<Map<String, dynamic>>(
+    final payload = await showAppDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => _NotificationBannerFormDialog(tx: _tx),
     );
@@ -80,7 +80,7 @@ class _AdminBannersCardState extends State<_AdminBannersCard>
       _showInvalidBannerId();
       return;
     }
-    final payload = await showDialog<Map<String, dynamic>>(
+    final payload = await showAppDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) =>
           _NotificationBannerFormDialog(tx: _tx, initial: banner),

@@ -51,9 +51,8 @@ extension _DocumentActions on _KnowledgePageState {
     }
     if (excedeElLimiteDeSubida(bytes.length)) {
       showMessage(
-        _tx(
-          'knowledge.document_too_large',
-        ).replaceAll('{limit}', UploadLimits.formatted),
+        _tx('knowledge.document_too_large')
+            .replaceAll('{limit}', UploadLimits.formatted),
         isError: true,
       );
       return;
@@ -74,9 +73,8 @@ extension _DocumentActions on _KnowledgePageState {
         labels: labels.toList(),
       );
       showMessage(
-        _tx(
-          'knowledge.msg_document_uploaded',
-        ).replaceAll('{{nombre}}', file.name),
+        _tx('knowledge.msg_document_uploaded')
+            .replaceAll('{{nombre}}', file.name),
       );
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);

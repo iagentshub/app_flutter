@@ -38,6 +38,7 @@ class AgentCard extends StatelessWidget {
     this.toolNames = const {},
     this.connectionNames = const {},
     this.onToggleActive,
+    this.inProgress = false,
     super.key,
   });
 
@@ -66,6 +67,7 @@ class AgentCard extends StatelessWidget {
   /// Activar/desactivar (borrado suave). Si es null, no se ofrece la acción
   /// (p. ej. en recursos compartidos de solo lectura).
   final VoidCallback? onToggleActive;
+  final bool inProgress;
 
   /// Catálogo de nombres que el grafo necesita para no enseñar ids crudos.
   ResourceNames get _graphNames => ResourceNames(
@@ -174,6 +176,17 @@ class AgentCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   InactiveBadge(label: tx('common.inactive')),
                 ],
+                if (inProgress) ...[
+                  const SizedBox(width: 8),
+                  Chip(
+                    avatar: const SizedBox.square(
+                      dimension: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    label: Text(tx('common.in_progress')),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 6),
@@ -208,11 +221,18 @@ class AgentCard extends StatelessWidget {
             Row(
               children: [
                 Tooltip(
-                  message: item.connectionId.isEmpty
+                  message: !item.isActive
+                      ? tx('agents.chat_inactive')
+                      : item.connectionId.isEmpty
                       ? tx('agents.chat_no_connection')
                       : '',
                   child: PrimaryButton.icon(
-                    onPressed: item.connectionId.isEmpty ? null : onChat,
+                    onPressed:
+                        !item.isActive ||
+                            item.connectionId.isEmpty ||
+                            inProgress
+                        ? null
+                        : onChat,
                     icon: const Icon(Icons.chat_bubble_outline),
                     label: Text(tx('agents.chat_action')),
                   ),

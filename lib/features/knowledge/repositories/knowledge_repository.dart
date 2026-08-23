@@ -307,6 +307,9 @@ class KnowledgeRepository extends ApiRepository {
     );
   }
 
+  Future<void> setPackActive(String token, String id, bool active) =>
+      setActive(token, 'knowledge/packs', id, active);
+
   Future<void> updatePack(
     String token,
     String id, {
@@ -340,4 +343,7 @@ class KnowledgeRepository extends ApiRepository {
       gaToken: token,
     );
   }
+
+  Future<void> setItemActive(String token, String id, bool active) =>
+      setActive(token, 'knowledge', id, active);
 }

@@ -241,9 +241,8 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
                   if (_language != 'cpp') ...[
                     const SizedBox(height: 4),
                     Text(
-                      _tx(
-                        'knowledge.drop_hint_extension',
-                      ).replaceAll('{{ext}}', _scriptExtension),
+                      _tx('knowledge.drop_hint_extension')
+                          .replaceAll('{{ext}}', _scriptExtension),
                       style: theme.textTheme.bodySmall,
                     ),
                   ],

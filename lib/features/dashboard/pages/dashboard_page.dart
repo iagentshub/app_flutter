@@ -19,6 +19,7 @@ import '../../../shared/state/backend_controller.dart';
 import '../../../shared/state/dashboard_edit_state.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/kpi/kpi_row_tile.dart';
+import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../utils/i18n.dart';
 import '../../auth/repositories/auth_repository.dart';
@@ -113,6 +114,15 @@ class _DashboardPageState extends State<DashboardPage> {
       _error = null;
     });
     try {
+      // Los banners no dependen de las preferencias ni de los datos, pero
+      // estaban al final de la cadena esperando a las dos: una ronda de red
+      // entera de más en la pantalla que más se abre. Aquí se lanza con las
+      // otras y se recoge al final.
+      //
+      // Adelantarla es seguro porque `getActiveBanners` no lanza —captura
+      // dentro y devuelve lista vacía—, así que no puede quedar un future sin
+      // recoger si `getPreferences` falla y salta al catch.
+      final bannersFuture = widget.dashboardRepository.getActiveBanners(token);
       final preferences = await widget.dashboardRepository.getPreferences(
         token,
       );
@@ -120,7 +130,7 @@ class _DashboardPageState extends State<DashboardPage> {
         gaToken: token,
         sources: dashboardDataSourcesFor(preferences.instances),
       );
-      final banners = await widget.dashboardRepository.getActiveBanners(token);
+      final banners = await bannersFuture;
       if (!mounted) return;
       setState(() {
         _data = data;
@@ -207,7 +217,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _editWidget(DashboardWidgetInstance instance) async {
-    final result = await showDialog<_DashboardWidgetEditResult>(
+    final result = await showAppDialog<_DashboardWidgetEditResult>(
       context: context,
       builder: (context) => _WidgetConfigDialog(
         widgetType: instance.type,

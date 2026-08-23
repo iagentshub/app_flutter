@@ -18,6 +18,7 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/explore_search_toolbar.dart';
 import '../../../shared/widgets/label_chips_row.dart';
+import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/multi_select_dropdown.dart';
 import '../../../shared/widgets/resource_collection_view.dart';
 import '../../../shared/widgets/resource_type_badge.dart';
@@ -105,7 +106,7 @@ class _ExplorePageState extends State<ExplorePage>
       item,
       present: (payload) async {
         if (!mounted) return;
-        await showDialog<void>(
+        await showAppDialog<void>(
           context: context,
           builder: (context) =>
               _PreviewDialog(title: item.name, jsonPayload: payload, tx: _tx),
