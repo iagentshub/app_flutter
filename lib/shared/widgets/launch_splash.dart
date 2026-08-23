@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../app/theme/fnc_colors.dart';
+import '../../app/theme/fnc_fonts.dart';
 import '../../core/network/api_client.dart';
 import '../../features/auth/repositories/auth_repository.dart';
 import '../branding/brand_mark_geometry.dart';
@@ -148,17 +149,120 @@ class _LaunchSplashState extends State<LaunchSplash>
             ],
           ),
         ),
-        child: Center(
-          child: CoordinatorToIaMark(
-            animation: _controller,
-            entrance: _entranceController,
-            fromMark: _fromMark,
-            toMark: _toMark,
-          ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Center(
+              child: CoordinatorToIaMark(
+                animation: _controller,
+                entrance: _entranceController,
+                fromMark: _fromMark,
+                toMark: _toMark,
+              ),
+            ),
+            SafeArea(
+              minimum: const EdgeInsets.only(bottom: 28),
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: FadeTransition(
+                  opacity: CurvedAnimation(
+                    parent: _entranceController,
+                    curve: const Interval(0.45, 1, curve: Curves.easeOut),
+                  ),
+                  child: const DakreoSignature(),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
+}
+
+/// Firma de la empresa desarrolladora, dibujada en vector para conservar la
+/// nitidez del logotipo en web y en pantallas de alta densidad.
+class DakreoSignature extends StatelessWidget {
+  const DakreoSignature({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Developed by Dakreo',
+      image: true,
+      child: ExcludeSemantics(
+        child: Column(
+          key: const Key('dakreo-signature'),
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Developed by',
+              style: FncFonts.codeMicro.copyWith(
+                color: FncColors.grayD0D0D0,
+                letterSpacing: 0.8,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(
+                  width: 42,
+                  height: 24,
+                  child: CustomPaint(painter: _DakreoMarkPainter()),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'DAKREO',
+                  style: FncFonts.code.copyWith(
+                    color: FncColors.white,
+                    fontSize: FncFonts.size14,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 4,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DakreoMarkPainter extends CustomPainter {
+  const _DakreoMarkPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final stroke = Paint()
+      ..color = FncColors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.2
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final left = Path()
+      ..moveTo(size.width * 0.34, size.height * 0.18)
+      ..lineTo(size.width * 0.16, size.height * 0.5)
+      ..lineTo(size.width * 0.34, size.height * 0.82);
+    final right = Path()
+      ..moveTo(size.width * 0.66, size.height * 0.18)
+      ..lineTo(size.width * 0.84, size.height * 0.5)
+      ..lineTo(size.width * 0.66, size.height * 0.82);
+
+    canvas
+      ..drawPath(left, stroke)
+      ..drawPath(right, stroke)
+      ..drawCircle(
+        Offset(size.width * 0.5, size.height * 0.5),
+        size.height * 0.15,
+        Paint()..color = FncColors.purple,
+      );
+  }
+
+  @override
+  bool shouldRepaint(_DakreoMarkPainter oldDelegate) => false;
 }
 
 /// Superficie de marca del splash. El nombre de clase se conserva para no
