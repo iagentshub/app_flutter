@@ -44,20 +44,38 @@ void main() {
     expect(_botonRegistro().onPressed, isNull);
   });
 
-  testWidgets('ofrece los dos documentos junto a la casilla', (tester) async {
+  testWidgets('ofrece los dos documentos dentro de la frase de la casilla', (
+    tester,
+  ) async {
     await _pumpRegister(tester);
 
-    expect(find.text('Términos y condiciones'), findsOneWidget);
-    expect(find.text('Política de privacidad'), findsOneWidget);
+    // Los enlaces ya no son dos botones debajo, sino tramos de la propia
+    // frase que se acepta, así que hay que mirar el texto compuesto.
+    final frase = tester
+        .widgetList<RichText>(find.byType(RichText))
+        .map((w) => w.text.toPlainText())
+        .firstWhere((t) => t.contains('acepto'), orElse: () => '');
+
+    expect(frase, contains('términos y condiciones'));
+    expect(frase, contains('política de privacidad'));
   });
 
-  testWidgets('con el registro cerrado la casilla no se puede marcar', (
+  testWidgets('con el registro cerrado no hay formulario que enviar', (
     tester,
   ) async {
     await _pumpRegister(tester, registration: 'closed');
 
-    final casilla = tester.widget<Checkbox>(find.byType(Checkbox));
-    expect(casilla.onChanged, isNull);
+    // Antes se pintaban los tres campos en gris con la casilla deshabilitada.
+    // Ahora no se pinta nada: sin casilla y sin botón no hay forma de mandar
+    // un alta, que es la garantía que este test protege.
+    expect(find.byType(Checkbox), findsNothing);
+    expect(find.byType(PrimaryButton), findsNothing);
+    expect(find.byType(TextFormField), findsNothing);
+    expect(
+      find.text('Registro deshabilitado en este backend. Contacta con el '
+          'administrador.'),
+      findsOneWidget,
+    );
   });
 }
 

@@ -16,6 +16,27 @@ import 'package:flutter/material.dart';
 abstract final class FncFonts {
   static const String monospace = 'monospace';
 
+  // -----------------------------------------------------------------------
+  // Tipografía del sitio público. Declaradas en pubspec.yaml a partir de los
+  // .woff2 que frontend_react carga con @fontsource-variable, convertidos a
+  // TTF porque Flutter no lee woff2.
+  //
+  // Las usa **solo** /register: es la pantalla a la que se llega desde la
+  // landing, y hasta ahora cambiaba de tipografía al cruzarla. El resto de la
+  // app sigue con la fuente del sistema a propósito (ver la nota de arriba):
+  // esto suma ~108 KB al bundle, no 108 KB por pantalla.
+  // -----------------------------------------------------------------------
+  static const String geist = 'Geist';
+  static const String geistMono = 'Geist Mono';
+
+  /// Peso por el eje `wght` de una fuente variable.
+  ///
+  /// El sistema público pide pesos que no están en la escala de nueve de
+  /// Material: **520** en titulares y **550** en botones y etiquetas.
+  /// `fontWeight` solo sabe de múltiplos de 100 y los redondearía a 500, que
+  /// se nota en los titulares grandes.
+  static List<FontVariation> wght(double peso) => [FontVariation('wght', peso)];
+
   /// Usado únicamente por AppTheme.light()/dark() para construir ThemeData.
   static TextTheme textTheme(Brightness brightness) {
     final base = brightness == Brightness.dark
@@ -39,6 +60,7 @@ abstract final class FncFonts {
   static const double size14 = 14;
   static const double size15 = 15;
   static const double size16 = 16;
+  static const double size17 = 17;
   static const double size18 = 18;
   static const double size19 = 19;
   static const double size20 = 20;
@@ -48,6 +70,7 @@ abstract final class FncFonts {
   static const double size32 = 32;
   static const double size38 = 38;
   static const double size40 = 40;
+  static const double size46 = 46;
 
   // -----------------------------------------------------------------------
   // Roles completos con nombre para patrones que se repiten literalmente en
