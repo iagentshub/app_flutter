@@ -254,4 +254,43 @@ abstract final class FncColors {
   static const galaxyLabel = Color(0xED111111);
   static const galaxyTextMuted = grayD0D0D0;
   static const galaxyStar = white;
+
+  // ---------------------------------------------------------------------
+  // 9) Paleta del sitio público (frontend_react/src/styles/react.css).
+  //
+  //    No depende del brightness ni del accent: el marketing es oscuro
+  //    siempre. /register es la costura entre la web y la app —se llega
+  //    pulsando «Crear cuenta gratis» en la landing— y era la única pantalla
+  //    que cambiaba de paleta y de tipografía al cruzarla. Estos tokens
+  //    existen para esa pantalla; **la app autenticada no debe usarlos**,
+  //    tiene su ColorScheme.
+  // ---------------------------------------------------------------------
+  static const publicCanvas = Color(0xFF08090A);
+  static const publicSurface = Color(0xFF0F1011);
+  static const publicSurfaceElevated = Color(0xFF161718);
+  static const publicSurface3 = Color(0xFF1C1D1F);
+  static const publicBorder = Color(0xFF26272B);
+  static const publicBorderStrong = Color(0xFF34363B);
+  static const publicText = Color(0xFFF5F5F3);
+  static const publicTextSecondary = Color(0xFF989BA2);
+  static const publicTextTertiary = Color(0xFF74777E);
+  static const publicCoral = Color(0xFFFF6363);
+  static const publicCoralSurface = Color(0xFF452324);
+  static const publicSuccess = Color(0xFF58C98D);
+  static const publicError = Color(0xFFFF7474);
+
+  /// El coral puro no llega a 4.5:1 con texto blanco; la caja «Hub» del logo
+  /// usa esta variante oscurecida, igual que `--public-accent-solid`.
+  static const publicAccentSolid = Color(0xFFB94044);
+
+  /// `--topbar-bg`: rgba(14, 14, 14, 0.90).
+  static const publicTopbar = Color(0xE60E0E0E);
+
+  /// Los dos radiales de `.public-shell-glow`, al 15% y al 7% del coral.
+  static const publicGlowStrong = Color(0x26FF6363);
+  static const publicGlowSoft = Color(0x12FF6363);
+
+  /// Coral al 30%: el halo de `.public-field-control:focus` y el borde de los
+  /// bloques con icono coral (`color-mix(coral 34%, …)` redondeado al mismo).
+  static const publicCoralRing = Color(0x4DFF6363);
 }

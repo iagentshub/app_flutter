@@ -103,6 +103,23 @@ flutter:
     - assets/locales/en/
     - assets/locales/es/
 
+  # Geist es la tipografía del sitio público (frontend_react la carga con
+  # @fontsource-variable). Aquí van los mismos ficheros latinos convertidos a
+  # TTF, porque Flutter no lee woff2. Solo las usa /register: es la pantalla a
+  # la que lleva «Crear cuenta gratis» desde la landing, y era donde se veía el
+  # salto de tipografía entre la web y la app.
+  #
+  # Son variables (eje wght 100-900) a propósito: los pesos 520 y 550 del
+  # sistema público no existen en la escala de Material y se piden con
+  # FncFonts.wght(). Declarar `weight:` aquí las fijaría en una instancia.
+  fonts:
+    - family: Geist
+      fonts:
+        - asset: assets/fonts/Geist-Variable.ttf
+    - family: Geist Mono
+      fonts:
+        - asset: assets/fonts/GeistMono-Variable.ttf
+
 flutter_launcher_icons:
   android: true
   ios: true

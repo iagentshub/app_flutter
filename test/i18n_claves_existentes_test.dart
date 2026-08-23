@@ -47,6 +47,11 @@ void main() {
       RegExp(r"tr\(\s*'([a-zA-Z0-9_.]+)'"),
       RegExp(r"_txt\(\s*\w+\s*,\s*'([a-zA-Z0-9_.]+)'"),
       RegExp(r"\.text\(\s*'([a-zA-Z0-9_.]+)'"),
+      // `_tx('clave')`, el atajo de página sobre `TranslatedTexts.text`. Sin
+      // esto el guardián no veía ninguna pantalla que lo use: el rediseño de
+      // /register se subió con tres claves del hero sin declarar y la página
+      // enseñaba «register.hero_headline» en el titular.
+      RegExp(r"_tx\(\s*'([a-zA-Z0-9_.]+)'"),
     ];
 
     final sinDeclarar = <String>{};
@@ -54,7 +59,7 @@ void main() {
       'lib',
     ).listSync(recursive: true).whereType<File>()) {
       if (!f.path.endsWith('.dart')) continue;
-      final texto = f.readAsStringSync();
+      final texto = _sinComentarios(f.readAsStringSync());
       for (final p in patrones) {
         for (final m in p.allMatches(texto)) {
           final clave = m.group(1)!;
@@ -73,3 +78,16 @@ void main() {
     );
   });
 }
+
+/// Los ejemplos de los comentarios no son llamadas: `i18n.dart` documenta
+/// `_tx('clave')` en su propio docstring, y sin quitarlos el guardián exige
+/// declarar una clave llamada «clave».
+String _sinComentarios(String src) => src
+    .split('\n')
+    .map((linea) {
+      final i = linea.indexOf('//');
+      if (i < 0) return linea;
+      if (i > 0 && linea[i - 1] == ':') return linea; // http://
+      return linea.substring(0, i);
+    })
+    .join('\n');

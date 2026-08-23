@@ -119,7 +119,14 @@ class AuthRepository {
     forgetCsrfToken();
   }
 
-  Future<bool> register({
+  /// Devuelve la respuesta entera, no solo `ok`.
+  ///
+  /// Con `EMAIL_VERIFY_ENABLED` el backend contesta `pending_verification:
+  /// true` y **no abre sesión** (`session.py`, POST /api/auth/register). Al
+  /// quedarnos solo con `ok` la pantalla decía «ya puedes iniciar sesión» y
+  /// mandaba al usuario a un login que iba a rechazarle, sin nombrar el correo
+  /// que tenía que abrir.
+  Future<Map<String, dynamic>> register({
     required String username,
     required String email,
     required String password,
@@ -132,7 +139,7 @@ class AuthRepository {
         'password': password,
       },
     );
-    return response.json['ok'] == true;
+    return response.json;
   }
 
   Future<bool> forgotPassword({required String email}) async {
