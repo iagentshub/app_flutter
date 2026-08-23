@@ -99,6 +99,31 @@ void main() {
     },
   );
 
+  testWidgets('muestra la firma de Dakreo en inglés al pie del splash', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+    final backendController = await BackendController.bootstrap();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: LaunchSplash(
+          backendController: backendController,
+          onFinished: () {},
+        ),
+      ),
+    );
+
+    expect(find.byKey(const Key('dakreo-signature')), findsOneWidget);
+    expect(find.text('Developed by'), findsOneWidget);
+    expect(find.text('DAKREO'), findsOneWidget);
+    expect(find.bySemanticsLabel('Developed by Dakreo'), findsOneWidget);
+    await tester.pump(reducedMotionSplashDuration);
+  });
+
   Future<void> pumpMark(
     WidgetTester tester,
     double progress, {
