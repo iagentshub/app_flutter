@@ -16,6 +16,7 @@ import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/scroll_to_end.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../../../utils/i18n.dart';
 import '../repositories/skill_builder_repository.dart';
 
 class SkillBuilderPage extends StatefulWidget {
@@ -148,7 +149,10 @@ class _SkillBuilderPageState extends State<SkillBuilderPage>
               scrollToEnd(_scrollController);
             } else if (event.type == 'error') {
               setState(() {
-                _error = event.message ?? _tx('skill_builder.generic_error');
+                _error = trErrorOr(
+                  event.code,
+                  event.message ?? _tx('skill_builder.generic_error'),
+                );
               });
             } else if (event.type == 'builder_done') {
               final assistantMessage = event.assistantMessage ?? '';

@@ -95,6 +95,7 @@ class ChatStreamEvent {
     this.reply,
     this.tokensIn,
     this.tokensOut,
+    this.code,
     this.message,
   });
 
@@ -103,6 +104,7 @@ class ChatStreamEvent {
   final String? reply;
   final int? tokensIn;
   final int? tokensOut;
+  final String? code;
   final String? message;
 
   factory ChatStreamEvent.fromJson(Map<String, dynamic> json) {
@@ -119,6 +121,7 @@ class ChatStreamEvent {
       reply: json['reply']?.toString(),
       tokensIn: tokensIn,
       tokensOut: tokensOut,
+      code: json['code']?.toString(),
       message: json['message']?.toString(),
     );
   }

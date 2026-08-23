@@ -732,12 +732,13 @@ class ApiClient {
         return ApiError(statusCode: response.statusCode, message: detail);
       }
       if (detail is Map<String, dynamic>) {
-        final message =
+        final fallback =
             detail['message'] as String? ?? 'Error ${response.statusCode}';
+        final code = detail['code'] as String?;
         return ApiError(
           statusCode: response.statusCode,
-          message: message,
-          code: detail['code'] as String?,
+          message: trErrorOr(code, fallback),
+          code: code,
         );
       }
     }

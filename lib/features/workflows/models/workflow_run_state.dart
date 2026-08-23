@@ -1,3 +1,5 @@
+import '../../../utils/i18n.dart';
+
 import 'workflow_step_draft.dart';
 
 /// Estado de un nodo durante una ejecución.
@@ -192,7 +194,7 @@ class WorkflowRunState {
       case 'error':
         if (nodeId.isNotEmpty) status[nodeId] = RunNodeStatus.error;
         if (nodeId.isNotEmpty) activeNodeId = nodeId;
-        error = event['message']?.toString();
+        error = _errorMessage(event);
         running = false;
         break;
 
@@ -224,10 +226,13 @@ class WorkflowRunState {
   String? _detailFor(String type, Map<String, dynamic> event) {
     if (type == 'evaluation_done') return event['reason']?.toString();
     if (type == 'loop_limit_reached' || type == 'error') {
-      return event['message']?.toString();
+      return _errorMessage(event);
     }
     return null;
   }
+
+  String _errorMessage(Map<String, dynamic> event) =>
+      trErrorOr(event['code']?.toString(), event['message']?.toString() ?? '');
 
   /// Nodos que el motor reinicia al rebobinar un ciclo.
   ///

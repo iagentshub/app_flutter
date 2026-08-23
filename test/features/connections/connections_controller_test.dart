@@ -362,6 +362,32 @@ void main() {
     expect(controller.testMessage('c1'), 'Falló\nTimeout');
   });
 
+  test(
+    'testConnection traduce credential_unreadable aunque responda 200',
+    () async {
+      final controller = await build((request) async {
+        if (request.url.path.endsWith('/test')) {
+          return _json({
+            'id': 'c1',
+            'ok': false,
+            'code': 'credential_unreadable',
+            'message': 'Fallback sin traducir',
+            'detail': '',
+          });
+        }
+        return listResponse(request);
+      });
+      await controller.load();
+
+      await controller.testConnection(controller.connections.first);
+
+      expect(
+        controller.testMessage('c1'),
+        'La credencial guardada no se puede leer. Edítala e introdúcela de nuevo.',
+      );
+    },
+  );
+
   test('testAll usa sólo el filtro visible y presenta el resumen', () async {
     Map<String, dynamic>? body;
     ConnectionsMassTestSummary? shown;

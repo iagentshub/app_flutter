@@ -2,6 +2,8 @@ import 'package:app_flutter/features/workflows/models/workflow_run_state.dart';
 import 'package:app_flutter/features/workflows/models/workflow_step_draft.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'support/i18n_de_prueba.dart';
+
 final _t0 = DateTime.utc(2026, 1, 1, 12);
 DateTime _at(int seconds) => _t0.add(Duration(seconds: seconds));
 
@@ -24,6 +26,24 @@ void main() {
     expect(state.totalCount, 3);
     expect(state.completedCount, 0);
     expect(state.running, isTrue);
+  });
+
+  test('traduce errores tipados del workflow', () {
+    cargarTraduccionesDePrueba(idioma: 'en');
+    final state = WorkflowRunState(steps: _pipeline(), startedAt: _t0);
+
+    state.apply({
+      'type': 'error',
+      'node_id': 'a',
+      'code': 'credential_unreadable',
+      'message': 'Fallback en español',
+    }, _at(1));
+
+    expect(
+      state.error,
+      'The stored credential cannot be read. Edit it and enter it again.',
+    );
+    expect(state.timeline.single.detail, state.error);
   });
 
   test(

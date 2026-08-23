@@ -1,4 +1,5 @@
 import 'package:app_flutter/models/admin/admin_explore_models.dart';
+import 'package:app_flutter/models/agents/agent_builder_models.dart';
 import 'package:app_flutter/models/agents/agent_models.dart';
 import 'package:app_flutter/models/chat/chat_models.dart';
 import 'package:app_flutter/models/connections/connection_models.dart';
@@ -63,6 +64,22 @@ void main() {
     });
     expect(event.type, 'routing_failover');
     expect(event.message, contains('backup'));
+  });
+
+  test('SSE models preserve stable error codes', () {
+    final chat = ChatStreamEvent.fromJson({
+      'type': 'error',
+      'code': 'credential_unreadable',
+      'message': 'fallback',
+    });
+    final builder = AgentBuilderEvent.fromJson({
+      'type': 'error',
+      'code': 'credential_unreadable',
+      'message': 'fallback',
+    });
+
+    expect(chat.code, 'credential_unreadable');
+    expect(builder.code, 'credential_unreadable');
   });
 
   test('admin explore accepts private LLM orchestrations', () {

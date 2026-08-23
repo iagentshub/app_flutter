@@ -124,6 +124,7 @@ class ConnectionTestResult {
     required this.id,
     required this.ok,
     required this.message,
+    this.code,
     this.detail,
     this.latencyMs,
   });
@@ -131,6 +132,7 @@ class ConnectionTestResult {
   final String id;
   final bool ok;
   final String message;
+  final String? code;
   final String? detail;
   final int? latencyMs;
 
@@ -139,6 +141,7 @@ class ConnectionTestResult {
       id: json['id'] as String? ?? '',
       ok: json['ok'] == true,
       message: json['message'] as String? ?? '',
+      code: json['code'] as String?,
       detail: json['detail'] as String?,
       latencyMs: json['latency_ms'] as int?,
     );

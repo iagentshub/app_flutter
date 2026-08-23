@@ -2,6 +2,7 @@
 class AgentBuilderEvent {
   const AgentBuilderEvent({
     required this.type,
+    this.code,
     this.message,
     this.assistantMessage,
     this.stage,
@@ -10,6 +11,7 @@ class AgentBuilderEvent {
   });
 
   final String type;
+  final String? code;
   final String? message;
   final String? assistantMessage;
 
@@ -24,6 +26,7 @@ class AgentBuilderEvent {
   factory AgentBuilderEvent.fromJson(Map<String, dynamic> json) {
     return AgentBuilderEvent(
       type: json['type']?.toString() ?? '',
+      code: json['code']?.toString(),
       message: json['message']?.toString(),
       assistantMessage: json['assistant_message']?.toString(),
       stage: json['stage']?.toString(),

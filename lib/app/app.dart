@@ -10,6 +10,7 @@ import '../core/network/api_error.dart';
 import '../features/auth/repositories/auth_repository.dart';
 import '../features/dashboard/repositories/dashboard_repository.dart';
 import '../features/workflows/controllers/workflow_runs_controller.dart';
+import '../shared/i18n/translated_texts.dart';
 import '../shared/state/app_services_scope.dart';
 import '../shared/state/backend_controller.dart';
 import '../shared/state/dashboard_edit_state.dart';
@@ -61,11 +62,19 @@ class _AppState extends State<App> {
   late final DashboardRepository _dashboardRepository;
   late final DashboardEditState _dashboardEditState;
   late final WorkflowRunsController _workflowRunsController;
+  late final TranslatedTexts _errorTexts;
   bool _sessionValidationInFlight = false;
 
   @override
   void initState() {
     super.initState();
+    // Catálogo global de códigos de API/SSE. Se mantiene separado de los
+    // namespaces de página porque cualquier petición puede fallar antes de
+    // que la vista concreta termine de cargar sus textos.
+    _errorTexts = TranslatedTexts(
+      localeController: widget.localeController,
+      namespace: 'errors',
+    );
     _apiClient = ApiClient(
       widget.backendController,
       client: widget.httpClient,
@@ -182,6 +191,7 @@ class _AppState extends State<App> {
   @override
   void dispose() {
     _router.dispose();
+    _errorTexts.dispose();
     _dashboardEditState.dispose();
     _workflowRunsController.dispose();
     _apiClient.close();

@@ -10,6 +10,7 @@ import '../../../models/knowledge/knowledge_models.dart';
 import '../../../models/skills/skill_models.dart';
 import '../../../shared/state/action_result.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../utils/i18n.dart';
 import '../../connections/repositories/connections_repository.dart';
 import '../../knowledge/repositories/knowledge_repository.dart';
 import '../../knowledge/repositories/skills_repository.dart';
@@ -241,7 +242,10 @@ class AgentBuilderController extends ChangeNotifier {
       _stage = event.stage;
       if (visible.isNotEmpty) _partialReply = visible;
     } else if (event.type == 'error') {
-      _error = event.message ?? _tx('agents.builder_generic_error');
+      _error = trErrorOr(
+        event.code,
+        event.message ?? _tx('agents.builder_generic_error'),
+      );
     } else if (event.type == 'builder_done') {
       final assistantMessage = event.assistantMessage ?? '';
       // Cerrar el turno aquí y no en onDone evita una burbuja de espera vacía

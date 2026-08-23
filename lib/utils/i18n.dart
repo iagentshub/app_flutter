@@ -32,6 +32,17 @@ String tr(String id) => I18n.resolve(id);
 /// Si la clave es literal, esta no es la función: es [tr].
 String trOr(String id, String alternativa) => I18n.resolveOr(id, alternativa);
 
+/// Traduce un código estable del backend y conserva su mensaje como fallback.
+///
+/// Los errores HTTP y SSE comparten el namespace global `errors`: de este
+/// modo el idioma visible no depende del texto de respaldo enviado por el
+/// servidor y los códigos nuevos siguen siendo compatibles hasta que el
+/// cliente incorpore su traducción.
+String trErrorOr(String? code, String fallback) {
+  if (code == null || code.isEmpty) return fallback;
+  return I18n.resolveOrEn('errors', code, fallback);
+}
+
 /// Los bundles de traducción del idioma activo.
 ///
 /// Vive aquí, en `utils/`, y no en la capa de i18n, porque [tr] tiene que
@@ -76,6 +87,17 @@ abstract final class I18n {
       if (valor != null) return valor;
     }
     return alternativa;
+  }
+
+  /// Resuelve una clave dentro de un namespace concreto con fallback.
+  ///
+  /// Los códigos de API viven en `errors.json` y no llevan el namespace en el
+  /// payload. Consultarlos de forma acotada evita colisiones con claves de UI
+  /// que puedan llamarse igual en otros bundles.
+  static String resolveOrEn(String namespace, String id, String alternativa) {
+    final bundle = _bundles[namespace];
+    if (bundle == null) return alternativa;
+    return _buscar(bundle, id) ?? alternativa;
   }
 
   /// Resuelve mirando primero un bundle concreto —el de la página, que es el

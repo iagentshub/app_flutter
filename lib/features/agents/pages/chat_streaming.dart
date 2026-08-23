@@ -84,7 +84,10 @@ extension _ChatStreaming on _ChatPageState {
               maybeScrollToEnd(_scrollController);
             } else if (event.type == 'error') {
               refresh(
-                () => _error = event.message ?? tr('agents.chat_reply_error'),
+                () => _error = trErrorOr(
+                  event.code,
+                  event.message ?? tr('agents.chat_reply_error'),
+                ),
               );
             } else if (event.type == 'routing_selected' ||
                 event.type == 'routing_warning' ||

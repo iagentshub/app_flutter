@@ -10,6 +10,8 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'support/i18n_de_prueba.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -360,6 +362,37 @@ void main() {
       throwsA(isA<ApiError>()),
     );
     expect(unauthorizedCalls, 0);
+  });
+
+  test('traduce los errores estructurados por su código estable', () async {
+    cargarTraduccionesDePrueba(idioma: 'en');
+    final mock = MockClient(
+      (request) async => http.Response(
+        jsonEncode({
+          'detail': {
+            'code': 'credential_unreadable',
+            'message': 'Mensaje de respaldo en español',
+          },
+        }),
+        409,
+        headers: {'content-type': 'application/json'},
+      ),
+    );
+    final client = ApiClient(backendController, client: mock);
+    addTearDown(client.close);
+
+    await expectLater(
+      client.get('/api/items'),
+      throwsA(
+        isA<ApiError>()
+            .having((error) => error.code, 'code', 'credential_unreadable')
+            .having(
+              (error) => error.message,
+              'message',
+              'The stored credential cannot be read. Edit it and enter it again.',
+            ),
+      ),
+    );
   });
 
   test(

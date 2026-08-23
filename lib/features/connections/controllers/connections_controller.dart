@@ -5,6 +5,7 @@ import '../../../models/connections/connection_models.dart';
 import '../../../shared/state/action_result.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/debouncer.dart';
+import '../../../utils/i18n.dart';
 import '../repositories/connections_repository.dart';
 
 const connectionCategoryIds = ['llm', 'machine', 'database'];
@@ -383,9 +384,8 @@ class ConnectionsController extends ChangeNotifier {
 
   String _testResultMessage(ConnectionTestResult result) {
     final detail = result.detail?.trim();
-    return detail == null || detail.isEmpty
-        ? result.message
-        : '${result.message}\n$detail';
+    final message = trErrorOr(result.code, result.message);
+    return detail == null || detail.isEmpty ? message : '$message\n$detail';
   }
 
   void _resetPendingStatus(List<String> ids) {
