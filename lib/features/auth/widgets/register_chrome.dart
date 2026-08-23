@@ -149,20 +149,78 @@ extension _RegisterChrome on _RegisterPageState {
           ),
         ),
         if (!compacto) ...[
-          const SizedBox(height: 24),
-          Text(
-            _tx('register.hero_sub'),
-            style: _texto(
-              FncFonts.size17,
-              400,
-              color: FncColors.publicTextSecondary,
-              alto: 1.65,
-            ),
+          const SizedBox(height: 28),
+          _ventaja(
+            _tx('register.benefit_selfhosted_title'),
+            _tx('register.benefit_selfhosted_body'),
+          ),
+          const SizedBox(height: 16),
+          _ventaja(
+            _tx('register.benefit_providers_title'),
+            _tx('register.benefit_providers_body'),
+          ),
+          const SizedBox(height: 16),
+          _ventaja(
+            _tx('register.benefit_agents_title'),
+            _tx('register.benefit_agents_body'),
+          ),
+          const SizedBox(height: 16),
+          _ventaja(
+            _tx('register.benefit_groups_title'),
+            _tx('register.benefit_groups_body'),
           ),
         ],
       ],
     );
   }
+
+  /// Una ventaja del hero: check coral, título y una línea.
+  ///
+  /// Sustituye al párrafo de `hero.sub` que se copió de la landing. Ahí ese
+  /// texto explica qué es el producto, que es lo que toca en la portada; aquí
+  /// el visitante ya viene de leerlo y la pregunta es otra —qué gana creando
+  /// la cuenta—, y eso se lee en lista, no en prosa.
+  ///
+  /// Las dos cadenas llegan resueltas y no se compone la clave con
+  /// interpolación: `_tx('register.benefit_${x}_title')` funcionaría, pero el
+  /// guardián de claves solo ve identificadores literales y dejaría de
+  /// vigilarlas.
+  Widget _ventaja(String titulo, String cuerpo) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Padding(
+        padding: EdgeInsets.only(top: 3),
+        child: Icon(Icons.check, size: 16, color: FncColors.publicCoral),
+      ),
+      const SizedBox(width: 12),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              titulo,
+              style: _texto(
+                FncFonts.size14,
+                550,
+                color: FncColors.publicText,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              cuerpo,
+              style: _texto(
+                FncFonts.size13,
+                400,
+                color: FncColors.publicTextSecondary,
+                alto: 1.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
 }
 
 /// `.landing-logo`: «iAgents» y «Hub» en caja, nunca pegados.
