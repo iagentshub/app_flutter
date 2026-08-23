@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/theme/fnc_colors.dart';
 import '../../app/theme/fnc_fonts.dart';
+import '../widgets/motion/app_modal.dart';
 import 'graph_models.dart';
 import 'graph_view.dart';
 
@@ -34,10 +35,12 @@ Future<void> showResourceGraphDialog({
   // Este contenido ya es una superficie fullscreen. Envolverlo en la
   // transición fade-scale de los diálogos contenidos crea una capa
   // transformada adicional que, en web, puede dejar la cabecera sin pintar
-  // aunque sus controles sigan recibiendo eventos. La ruta estándar de
-  // Flutter mantiene una sola superficie y conserva visible la zona superior.
-  return showDialog<void>(
+  // aunque sus controles sigan recibiendo eventos. `fullscreenSurface` toma la
+  // ruta estándar de Flutter, que mantiene una sola superficie y conserva
+  // visible la zona superior.
+  return showAppDialog<void>(
     context: context,
+    fullscreenSurface: true,
     builder: (context) => _ResourceGraphDialogContent(
       title: title,
       nodes: nodes,

@@ -41,8 +41,25 @@ class KnowledgeItem extends ResourceItem {
     ].any(lower.endsWith);
   }
 
-  int get charCount {
-    final value = raw['char_count'];
+  int get charCount => _asInt(raw['char_count']);
+
+  /// Caracteres que tenía el original antes de que el backend acotara la
+  /// extracción. Solo difiere de [charCount] cuando [contentTruncated].
+  int get sourceCharCount {
+    final total = _asInt(raw['source_char_count']);
+    return total > 0 ? total : charCount;
+  }
+
+  /// Si el documento entró a medias. Hay que enseñarlo: el original no se
+  /// guarda en ningún sitio, así que una ficha recortada que se pinta como
+  /// completa es indistinguible de una completa, y el usuario le pregunta al
+  /// agente por un texto que nunca llegó.
+  bool get contentTruncated => raw['content_truncated'] == true;
+
+  /// `max_chars`, `timeout` o `max_download_bytes`.
+  String get truncationReason => raw['truncation_reason'] as String? ?? '';
+
+  static int _asInt(Object? value) {
     if (value is int) return value;
     if (value is num) return value.toInt();
     return 0;

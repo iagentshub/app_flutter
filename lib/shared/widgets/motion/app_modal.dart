@@ -19,13 +19,23 @@ import 'app_motion.dart';
 /// - **La etiqueta de la barrera sigue traducida.** `showModal` la toma de
 ///   `MaterialLocalizations`, igual que `showDialog`, así que el lector de
 ///   pantalla sigue anunciando en el idioma de la app cómo se cierra.
+///
+/// [fullscreenSurface] marca el contenido que ya ocupa la pantalla entera y no
+/// puede escalar: la capa transformada que añade el *fade through* deja, en
+/// web, la cabecera del diálogo sin pintar aunque sus controles sigan
+/// recibiendo eventos. Esos casos toman la misma ruta que el movimiento
+/// reducido —`showDialog` a secas—, que es exactamente lo que necesitan.
+/// Escrito aquí y no como excepción del guard de
+/// `test/feature_architecture_test.dart`: una excepción por ruta invita a la
+/// siguiente y no explica nada al que abra el fichero.
 Future<T?> showAppDialog<T>({
   required BuildContext context,
   required WidgetBuilder builder,
   bool barrierDismissible = true,
+  bool fullscreenSurface = false,
   RouteSettings? routeSettings,
 }) {
-  if (AppMotion.reduced(context)) {
+  if (fullscreenSurface || AppMotion.reduced(context)) {
     return showDialog<T>(
       context: context,
       builder: builder,

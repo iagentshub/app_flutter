@@ -1277,7 +1277,12 @@
     "pack_delete_confirm": "The pack and all of its files will be deleted. Continue?",
     "skills_load_error": "Skills could not be loaded",
     "no_skills": "No skills yet.",
-    "pick_directory": "Include knowledge directory"
+    "pick_directory": "Include knowledge directory",
+    "truncated_badge": "Incomplete",
+    "truncated_tooltip_max_chars": "The document was too large and only {shown} of about {total} characters were imported. The agent cannot read the rest.",
+    "truncated_tooltip_timeout": "Reading the document took too long and stopped: only {shown} of about {total} characters were imported.",
+    "truncated_tooltip_max_download_bytes": "The download was cut short by size and the text is incomplete: {shown} characters were imported.",
+    "truncated_tooltip_generic": "The content is incomplete: {shown} of about {total} characters were imported."
   },
   "admin": {
     "tab_general": "General",

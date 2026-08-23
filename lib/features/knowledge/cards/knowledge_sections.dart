@@ -448,6 +448,15 @@ extension _KnowledgeSections on _KnowledgePageState {
                 ),
                 if (!item.isActive)
                   InactiveBadge(label: _tx('common.inactive')),
+                // El original no se guarda en ninguna parte: una ficha
+                // recortada que no lo diga es indistinguible de una completa, y
+                // el usuario acaba preguntándole al agente por un texto que
+                // nunca llegó a importarse.
+                if (item.contentTruncated)
+                  AttentionBadge(
+                    label: _tx('knowledge.truncated_badge'),
+                    tooltip: _truncationTooltip(item),
+                  ),
               ],
             ),
             const SizedBox(height: 10),
@@ -498,4 +507,20 @@ extension _KnowledgeSections on _KnowledgePageState {
 
     return item.isActive ? card : dimmedWhenInactive(context, card);
   }
+
+  /// El motivo concreto, con las cifras dentro. El chip solo dice que falta
+  /// algo; cuánto y por qué va aquí, que es lo que el usuario necesita para
+  /// decidir si vuelve a subirlo partido.
+  String _truncationTooltip(KnowledgeItem item) {
+    final clave = switch (item.truncationReason) {
+      'max_chars' => 'knowledge.truncated_tooltip_max_chars',
+      'timeout' => 'knowledge.truncated_tooltip_timeout',
+      'max_download_bytes' => 'knowledge.truncated_tooltip_max_download_bytes',
+      _ => 'knowledge.truncated_tooltip_generic',
+    };
+    return _tx(clave)
+        .replaceAll('{shown}', item.charCount.toString())
+        .replaceAll('{total}', item.sourceCharCount.toString());
+  }
+
 }

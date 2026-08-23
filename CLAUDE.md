@@ -178,6 +178,14 @@ pantalla. Cuatro piezas y cuándo toca cada una:
   directa: no rompe nada visible —el diálogo sale igual— y por eso solo se nota
   en el test.
 
+  Un contenido que **ya ocupa la pantalla entera** pasa `fullscreenSurface: true`
+  y toma la misma ruta que el movimiento reducido, sin escalado: la capa
+  transformada del *fade through* deja, en web, la cabecera del diálogo sin
+  pintar aunque sus controles sigan recibiendo eventos. Es el caso del grafo.
+  La excepción vive en el parámetro y no en una lista de rutas permitidas del
+  test, porque una excepción por ruta invita a la siguiente y no le explica nada
+  a quien abra el fichero.
+
 **Toda animación consulta `AppMotion.reduced(context)` y, si es cierto, se quita
 entera.** No se acorta: el framework ya acelera los `AnimationController` ×20 en
 ese modo y el resto —un parpadeo de 15 ms— es justo lo que molesta a quien tiene
