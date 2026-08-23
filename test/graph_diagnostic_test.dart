@@ -1,3 +1,5 @@
+import 'package:animations/animations.dart';
+import 'package:app_flutter/app/theme/fnc_colors.dart';
 import 'package:app_flutter/shared/graph/graph_dialog.dart';
 import 'package:app_flutter/shared/graph/graph_models.dart';
 import 'package:app_flutter/shared/graph/graph_view.dart';
@@ -92,6 +94,68 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('Test workflow'), findsOneWidget);
+      expect(
+        tester.widget<Dialog>(find.byType(Dialog)).backgroundColor,
+        FncColors.galaxyDeep,
+      );
+      final initialHeader = tester.widget<Container>(
+        find.byKey(const Key('resource-graph-dialog-header')),
+      );
+      final initialDecoration = initialHeader.decoration;
+
+      Future<void> selectMode(String label, GraphSortMode expectedMode) async {
+        await tester.tap(find.byIcon(Icons.tune));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 600));
+        await tester.tap(find.text(label));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 600));
+        expect(
+          tester
+              .widget<AnimatedResourceGraph>(find.byType(AnimatedResourceGraph))
+              .sortController!
+              .mode,
+          expectedMode,
+        );
+      }
+
+      void expectSameDialogChrome() {
+        expect(
+          tester.widget<Dialog>(find.byType(Dialog)).backgroundColor,
+          FncColors.galaxyDeep,
+        );
+        expect(
+          tester
+              .widget<Container>(
+                find.byKey(const Key('resource-graph-dialog-header')),
+              )
+              .decoration,
+          initialDecoration,
+          reason:
+              'Cambiar el layout no debe cambiar la apariencia del diálogo.',
+        );
+      }
+
+      await selectMode(
+        'Jerárquico (izquierda-derecha)',
+        GraphSortMode.hierarchyHorizontal,
+      );
+      expectSameDialogChrome();
+      await selectMode('Galaxia', GraphSortMode.galaxy);
+      expectSameDialogChrome();
+      await selectMode(
+        'Jerárquico (arriba-abajo)',
+        GraphSortMode.hierarchyVertical,
+      );
+      expectSameDialogChrome();
+      expect(
+        find.byType(FadeScaleTransition),
+        findsNothing,
+        reason:
+            'El grafo fullscreen no debe vivir dentro de una capa fade-scale: '
+            'en web puede dejar invisible la cabecera aunque siga siendo '
+            'interactiva.',
+      );
 
       // Los nodos deben entrar en el recorrido de Tab y abrir su vista rápida
       // con teclado, no solo mediante el GestureDetector del puntero.

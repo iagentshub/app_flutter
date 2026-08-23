@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 
 import '../../app/theme/fnc_colors.dart';
 import '../../app/theme/fnc_fonts.dart';
-import '../widgets/motion/app_modal.dart';
 import 'graph_models.dart';
 import 'graph_view.dart';
 
@@ -32,7 +31,12 @@ Future<void> showResourceGraphDialog({
   required String quickViewNoConnectionsLabel,
   String emptyLabel = '',
 }) {
-  return showAppDialog<void>(
+  // Este contenido ya es una superficie fullscreen. Envolverlo en la
+  // transición fade-scale de los diálogos contenidos crea una capa
+  // transformada adicional que, en web, puede dejar la cabecera sin pintar
+  // aunque sus controles sigan recibiendo eventos. La ruta estándar de
+  // Flutter mantiene una sola superficie y conserva visible la zona superior.
+  return showDialog<void>(
     context: context,
     builder: (context) => _ResourceGraphDialogContent(
       title: title,
@@ -167,18 +171,14 @@ class _ResourceGraphDialogContentState
     IconData icon,
   ) {
     final selected = _sortController.mode == mode;
-    final isGalaxy = _sortController.mode == GraphSortMode.galaxy;
     return PopupMenuItem<GraphSortMode>(
       value: mode,
       child: Row(
         children: [
-          Icon(icon, size: 18, color: isGalaxy ? FncColors.galaxyStar : null),
+          Icon(icon, size: 18, color: FncColors.galaxyStar),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(
-              label,
-              style: TextStyle(color: isGalaxy ? FncColors.white : null),
-            ),
+            child: Text(label, style: const TextStyle(color: FncColors.white)),
           ),
           if (selected)
             const Icon(
@@ -193,79 +193,71 @@ class _ResourceGraphDialogContentState
 
   @override
   Widget build(BuildContext context) {
-    // Pantalla completa real (sin márgenes ni esquinas redondeadas de
-    // diálogo) para aprovechar todo el espacio al explorar el grafo. En
-    // modo galaxia, el fondo del diálogo entero (incluido el margen
-    // alrededor del lienzo) usa el mismo negro que el resto de la app,
-    // para que no quede un marco de un tono distinto rodeando el grafo.
-    final isGalaxy = _sortController.mode == GraphSortMode.galaxy;
+    // El diálogo es siempre el mismo observatorio oscuro. Cambiar el modo
+    // solo modifica el layout interno del grafo; no debe reconstruir una
+    // ventana visualmente distinta alrededor del mismo contenido.
+    final graph = AnimatedResourceGraph(
+      nodes: widget.nodes,
+      edges: widget.edges,
+      rootId: widget.rootId,
+      emptyLabel: widget.emptyLabel,
+      highlightQuery: _query,
+      showLabels: _showLabels,
+      sortController: _sortController,
+      quickViewDescriptionLabel: widget.quickViewDescriptionLabel,
+      quickViewNoDescriptionLabel: widget.quickViewNoDescriptionLabel,
+      quickViewConnectionsLabel: widget.quickViewConnectionsLabel,
+      quickViewNoConnectionsLabel: widget.quickViewNoConnectionsLabel,
+      quickViewCloseTooltip: widget.closeLabel,
+    );
     return Dialog.fullscreen(
-      backgroundColor: isGalaxy ? FncColors.galaxyDeep : null,
+      backgroundColor: FncColors.galaxyDeep,
       child: Padding(
-        padding: EdgeInsets.all(isGalaxy ? 14 : 20),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(context, isGalaxy: isGalaxy),
-            SizedBox(height: isGalaxy ? 12 : 8),
-            Expanded(
-              child: AnimatedResourceGraph(
-                nodes: widget.nodes,
-                edges: widget.edges,
-                rootId: widget.rootId,
-                emptyLabel: widget.emptyLabel,
-                highlightQuery: _query,
-                showLabels: _showLabels,
-                sortController: _sortController,
-                quickViewDescriptionLabel: widget.quickViewDescriptionLabel,
-                quickViewNoDescriptionLabel: widget.quickViewNoDescriptionLabel,
-                quickViewConnectionsLabel: widget.quickViewConnectionsLabel,
-                quickViewNoConnectionsLabel: widget.quickViewNoConnectionsLabel,
-                quickViewCloseTooltip: widget.closeLabel,
-              ),
-            ),
+            _buildHeader(context),
+            const SizedBox(height: 12),
+            Expanded(child: graph),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context, {required bool isGalaxy}) {
+  Widget _buildHeader(BuildContext context) {
     final title = Row(
       children: [
-        if (isGalaxy) ...[
-          const Icon(Icons.blur_on, color: FncColors.galaxyStar, size: 20),
-          const SizedBox(width: 10),
-        ],
+        const Icon(Icons.blur_on, color: FncColors.galaxyStar, size: 20),
+        const SizedBox(width: 10),
         Expanded(
           child: Text(
             widget.title,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: FncFonts.size20,
               fontWeight: FontWeight.w700,
-              color: isGalaxy ? FncColors.white : null,
+              color: FncColors.white,
             ),
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        if (isGalaxy) ...[
-          _galaxyMetric(
-            icon: Icons.circle_outlined,
-            value: widget.nodes.length,
-            semanticLabel: '${widget.title}: ${widget.nodes.length}',
-          ),
-          const SizedBox(width: 6),
-          _galaxyMetric(
-            icon: Icons.timeline,
-            value: widget.edges.length,
-            semanticLabel:
-                '${widget.quickViewConnectionsLabel}: ${widget.edges.length}',
-          ),
-          const SizedBox(width: 4),
-        ],
+        _galaxyMetric(
+          icon: Icons.circle_outlined,
+          value: widget.nodes.length,
+          semanticLabel: '${widget.title}: ${widget.nodes.length}',
+        ),
+        const SizedBox(width: 6),
+        _galaxyMetric(
+          icon: Icons.timeline,
+          value: widget.edges.length,
+          semanticLabel:
+              '${widget.quickViewConnectionsLabel}: ${widget.edges.length}',
+        ),
+        const SizedBox(width: 4),
         IconButton(
           icon: const Icon(Icons.close),
-          color: isGalaxy ? FncColors.galaxyStar : null,
+          color: FncColors.galaxyStar,
           tooltip: widget.closeLabel,
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -276,41 +268,33 @@ class _ResourceGraphDialogContentState
       children: [
         Expanded(
           child: TextField(
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: FncFonts.size13,
-              color: isGalaxy ? FncColors.white : null,
+              color: FncColors.white,
             ),
             decoration: InputDecoration(
               isDense: true,
-              filled: isGalaxy,
-              fillColor: isGalaxy ? FncColors.galaxySurfaceStrong : null,
+              filled: true,
+              fillColor: FncColors.galaxySurfaceStrong,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
                 vertical: 11,
               ),
-              prefixIcon: Icon(
+              prefixIcon: const Icon(
                 Icons.search,
                 size: 18,
-                color: isGalaxy ? FncColors.galaxyTextMuted : null,
+                color: FncColors.galaxyTextMuted,
               ),
               hintText: widget.searchHint,
-              hintStyle: isGalaxy
-                  ? const TextStyle(color: FncColors.galaxyTextMuted)
-                  : null,
-              enabledBorder: isGalaxy
-                  ? OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(
-                        color: FncColors.galaxyBorder,
-                      ),
-                    )
-                  : const OutlineInputBorder(),
-              focusedBorder: isGalaxy
-                  ? OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: FncColors.blue),
-                    )
-                  : const OutlineInputBorder(),
+              hintStyle: const TextStyle(color: FncColors.galaxyTextMuted),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: FncColors.galaxyBorder),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: FncColors.blue),
+              ),
             ),
             onChanged: (value) {
               final query = value.trim();
@@ -333,27 +317,23 @@ class _ResourceGraphDialogContentState
           tooltip: _showLabels
               ? widget.hideLabelsTooltip
               : widget.showLabelsTooltip,
-          color: isGalaxy ? FncColors.galaxyStar : null,
-          style: isGalaxy
-              ? IconButton.styleFrom(
-                  backgroundColor: FncColors.galaxySurfaceStrong,
-                  side: const BorderSide(color: FncColors.galaxyBorder),
-                )
-              : null,
+          color: FncColors.galaxyStar,
+          style: IconButton.styleFrom(
+            backgroundColor: FncColors.galaxySurfaceStrong,
+            side: const BorderSide(color: FncColors.galaxyBorder),
+          ),
           icon: Icon(_showLabels ? Icons.label : Icons.label_off_outlined),
           onPressed: () => setState(() => _showLabels = !_showLabels),
         ),
         const SizedBox(width: 8),
         PopupMenuButton<GraphSortMode>(
           tooltip: widget.sortTooltip,
-          color: isGalaxy ? FncColors.galaxySurfaceStrong : null,
-          iconColor: isGalaxy ? FncColors.galaxyStar : null,
-          style: isGalaxy
-              ? IconButton.styleFrom(
-                  backgroundColor: FncColors.galaxySurfaceStrong,
-                  side: const BorderSide(color: FncColors.galaxyBorder),
-                )
-              : null,
+          color: FncColors.galaxySurfaceStrong,
+          iconColor: FncColors.galaxyStar,
+          style: IconButton.styleFrom(
+            backgroundColor: FncColors.galaxySurfaceStrong,
+            side: const BorderSide(color: FncColors.galaxyBorder),
+          ),
           icon: const Icon(Icons.tune),
           onSelected: _sortController.setMode,
           itemBuilder: (context) => _sortMenuItems(),
@@ -361,10 +341,8 @@ class _ResourceGraphDialogContentState
       ],
     );
 
-    if (!isGalaxy) {
-      return Column(children: [title, const SizedBox(height: 8), controls]);
-    }
     return Container(
+      key: const Key('resource-graph-dialog-header'),
       padding: const EdgeInsets.fromLTRB(14, 8, 10, 12),
       decoration: BoxDecoration(
         gradient: const LinearGradient(

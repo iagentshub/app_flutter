@@ -1013,7 +1013,8 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
                                       ),
                                       lineColor: isGalaxy
                                           ? FncColors.galaxyEdge
-                                          : FncColors.materialGrey,
+                                          : FncColors.galaxyTextMuted
+                                                .withValues(alpha: 0.72),
                                       dashedColor: isGalaxy
                                           ? FncColors.materialOrangeAccent
                                                 .withValues(alpha: 0.35)
@@ -1174,11 +1175,27 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
                             color: color.withValues(alpha: 0.32),
                           ),
                         )
-                      : const BoxDecoration(),
+                      : BoxDecoration(
+                          color: FncColors.galaxyLabel,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: color.withValues(alpha: 0.48),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: FncColors.materialBlack.withValues(
+                                alpha: 0.28,
+                              ),
+                              blurRadius: 5,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
                   child: Padding(
-                    padding: isGalaxy
-                        ? const EdgeInsets.symmetric(horizontal: 7, vertical: 3)
-                        : EdgeInsets.zero,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 3,
+                    ),
                     child: Text(
                       node.label,
                       textAlign: TextAlign.center,
@@ -1187,7 +1204,7 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
                       style: TextStyle(
                         fontSize: FncFonts.size11,
                         fontWeight: isRoot ? FontWeight.w700 : FontWeight.w500,
-                        color: isGalaxy ? FncColors.white : null,
+                        color: FncColors.white,
                       ),
                     ),
                   ),
@@ -1287,7 +1304,8 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
   }
 
   /// Nodo con icono dentro de un círculo de color, usado en los modos
-  /// jerárquicos (comportamiento sin cambios respecto al diseño original).
+  /// jerárquicos. El borde claro evita que el círculo se funda con la
+  /// superficie tanto en el tema oscuro como en el claro.
   Widget _buildIconNode(
     GraphNode node,
     Color color,
@@ -1301,6 +1319,10 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
       decoration: BoxDecoration(
         color: color,
         shape: BoxShape.circle,
+        border: Border.all(
+          color: FncColors.white.withValues(alpha: 0.72),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
             color: color.withValues(alpha: 0.45),
