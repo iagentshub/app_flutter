@@ -7,6 +7,7 @@ import '../../core/network/api_client.dart';
 import '../../core/network/api_error.dart';
 import '../../utils/i18n.dart';
 import '../state/session_controller.dart';
+import 'animated_iagents_mark.dart';
 
 class EndpointPage extends StatefulWidget {
   const EndpointPage({
@@ -94,7 +95,7 @@ class _EndpointPageState extends State<EndpointPage> {
           ],
           const SizedBox(height: 16),
           if (_loading)
-            const Center(child: CircularProgressIndicator())
+            const Center(child: IAgentsLoadingMark())
           else if (_error != null)
             Card(
               child: Padding(

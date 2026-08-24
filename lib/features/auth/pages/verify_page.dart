@@ -6,6 +6,7 @@ import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/state/theme_controller.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../repositories/auth_repository.dart';
 
@@ -95,8 +96,8 @@ class _VerifyPageState extends State<VerifyPage> {
         // La verificación no debe fallar por una preferencia visual.
       }
 
-      if (!mounted) return;
-      AppRouter.toDashboard(context);
+      // El cambio de SessionController ya activa el redirect protegido del
+      // GoRouter. Una segunda navegación aquí reiniciaba la vista de destino.
     } on ApiError catch (error) {
       if (!mounted) return;
       setState(() {
@@ -125,7 +126,7 @@ class _VerifyPageState extends State<VerifyPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (_loading) const CircularProgressIndicator(),
+                    if (_loading) const IAgentsLoadingMark(),
                     const SizedBox(height: 12),
                     Text(_message ?? _tx('verify.loading_title')),
                     const SizedBox(height: 10),

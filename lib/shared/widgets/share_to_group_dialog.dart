@@ -7,6 +7,7 @@ import '../../utils/i18n.dart';
 import '../i18n/locale_loader.dart';
 import '../repositories/sharing_repository.dart';
 import '../state/locale_controller.dart';
+import 'animated_iagents_mark.dart';
 import 'motion/app_modal.dart';
 import 'responsive_dialog.dart';
 import 'status_dot.dart';
@@ -131,9 +132,8 @@ class _ShareToGroupDialogState extends State<_ShareToGroupDialog> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                _tx(
-                  'groups.unshare_kept',
-                ).replaceAll('{count}', '${result.kept.length}'),
+                _tx('groups.unshare_kept')
+                    .replaceAll('{count}', '${result.kept.length}'),
               ),
             ),
           );
@@ -159,9 +159,8 @@ class _ShareToGroupDialogState extends State<_ShareToGroupDialog> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _pending.remove(group.id));
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(_tx('groups.share_error'))));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(_tx('groups.share_error'))));
     }
   }
 
@@ -174,7 +173,7 @@ class _ShareToGroupDialogState extends State<_ShareToGroupDialog> {
         child: _loading
             ? const SizedBox(
                 height: 120,
-                child: Center(child: CircularProgressIndicator()),
+                child: Center(child: IAgentsLoadingMark()),
               )
             : _error != null
             ? Text(_error!)

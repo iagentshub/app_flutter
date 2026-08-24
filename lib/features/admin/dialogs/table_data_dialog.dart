@@ -128,7 +128,7 @@ class _TableDataDialogState extends State<_TableDataDialog> {
               if (_loading)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 40),
-                  child: Center(child: CircularProgressIndicator()),
+                  child: Center(child: IAgentsLoadingMark()),
                 )
               else if (_error != null)
                 Text(

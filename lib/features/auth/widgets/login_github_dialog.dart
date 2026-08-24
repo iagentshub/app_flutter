@@ -119,9 +119,8 @@ class _GithubLoginDialogState extends State<_GithubLoginDialog> {
     final code = _code?.userCode;
     if (code == null || code.isEmpty) return;
     Clipboard.setData(ClipboardData(text: code));
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(widget.tx('github_code_copied'))));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(widget.tx('github_code_copied'))));
   }
 
   @override
@@ -150,7 +149,7 @@ class _GithubLoginDialogState extends State<_GithubLoginDialog> {
     if (_loading) {
       return const SizedBox(
         height: 80,
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(child: IAgentsLoadingMark()),
       );
     }
     if (_error != null) {
@@ -197,11 +196,7 @@ class _GithubLoginDialogState extends State<_GithubLoginDialog> {
         const SizedBox(height: 16),
         Row(
           children: [
-            const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
+            const SizedBox(width: 16, height: 16, child: IAgentsLoadingMark()),
             const SizedBox(width: 10),
             Expanded(
               child: Text(

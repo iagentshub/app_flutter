@@ -272,7 +272,7 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
                 ? const SizedBox(
                     width: 16,
                     height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: IAgentsLoadingMark(),
                   )
                 : const Icon(Icons.search),
             onPressed: _discoveringModels ? null : _discoverOllamaModels,

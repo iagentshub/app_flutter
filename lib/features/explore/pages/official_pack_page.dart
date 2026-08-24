@@ -5,6 +5,7 @@ import '../../../models/explore/explore_models.dart';
 import '../../../shared/graph/graph_dialog.dart';
 import '../../../shared/graph/resource_graph_builder.dart';
 import '../../../shared/utils/debouncer.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/resource_type_badge.dart';
 import '../repositories/explore_repository.dart';
@@ -194,18 +195,16 @@ class _OfficialPackPageState extends State<OfficialPackPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _tx(
-              'explore.pack_link_ok',
-            ).replaceAll('{{count}}', '${result.createdCount}'),
+            _tx('explore.pack_link_ok')
+                .replaceAll('{{count}}', '${result.createdCount}'),
           ),
         ),
       );
       Navigator.of(context).pop(true);
     } on ApiError catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.message)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error.message)));
       setState(() => _linking = false);
     } catch (_) {
       if (!mounted) return;
@@ -237,9 +236,8 @@ class _OfficialPackPageState extends State<OfficialPackPage> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final count = Text(
-                    _tx(
-                      'explore.pack_selected',
-                    ).replaceAll('{{count}}', '${_selected.length}'),
+                    _tx('explore.pack_selected')
+                        .replaceAll('{{count}}', '${_selected.length}'),
                   );
                   final action = PrimaryButton.icon(
                     onPressed: _selected.isEmpty || _linking
@@ -248,7 +246,7 @@ class _OfficialPackPageState extends State<OfficialPackPage> {
                     icon: _linking
                         ? const SizedBox.square(
                             dimension: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: IAgentsLoadingMark(),
                           )
                         : const Icon(Icons.link),
                     label: Text(_tx('explore.pack_link_selection')),
@@ -275,7 +273,7 @@ class _OfficialPackPageState extends State<OfficialPackPage> {
   }
 
   Widget _buildBody() {
-    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (_loading) return const Center(child: IAgentsLoadingMark());
     if (_error != null) {
       return Center(
         child: Padding(

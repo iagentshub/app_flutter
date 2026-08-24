@@ -83,11 +83,12 @@ extension _ChatStreaming on _ChatPageState {
               _streamingReply.value = '';
               maybeScrollToEnd(_scrollController);
             } else if (event.type == 'error') {
-              refresh(
-                () => _error = trErrorOr(
+              _finishFailedStream(
+                trErrorOr(
                   event.code,
                   event.message ?? tr('agents.chat_reply_error'),
                 ),
+                completer,
               );
             } else if (event.type == 'routing_selected' ||
                 event.type == 'routing_warning' ||
@@ -97,16 +98,11 @@ extension _ChatStreaming on _ChatPageState {
           },
           onError: (error) {
             if (!mounted) return;
-            refresh(() => _error = tr('agents.chat_connection_error'));
-            if (!completer.isCompleted) completer.complete();
+            _finishFailedStream(tr('agents.chat_connection_error'), completer);
           },
           onDone: () {
             if (!mounted) return;
-            refresh(() {
-              _streaming = false;
-              _thinking = false;
-            });
-            if (!completer.isCompleted) completer.complete();
+            _finishStream(completer: completer, cancelSubscription: false);
           },
           cancelOnError: true,
         );
@@ -114,11 +110,28 @@ extension _ChatStreaming on _ChatPageState {
     if (identical(_streamCompleter, completer)) _streamCompleter = null;
   }
 
+  void _finishFailedStream(String error, Completer<void> completer) {
+    _finishStream(error: error, completer: completer);
+  }
+
   void _stop() {
+    _finishStream(completer: _streamCompleter);
+  }
+
+  void _finishStream({
+    String? error,
+    Completer<void>? completer,
+    bool cancelSubscription = true,
+  }) {
     final partialReply = _replyBuffer.toString();
-    final cancellation = _subscription?.cancel();
-    if (cancellation != null) unawaited(cancellation);
+    final subscription = _subscription;
     _subscription = null;
+    // Los errores SSE llegan desde el propio callback de la suscripción.
+    // Posponer la cancelación sirve también para Stop y mantiene una única
+    // ruta terminal sin intentar cerrar el stream mientras entrega un evento.
+    if (cancelSubscription && subscription != null) {
+      scheduleMicrotask(() => unawaited(subscription.cancel()));
+    }
     refresh(() {
       if (partialReply.isNotEmpty) {
         _messages = [
@@ -131,14 +144,13 @@ extension _ChatStreaming on _ChatPageState {
           ),
         ];
       }
+      if (error != null) _error = error;
       _streaming = false;
       _thinking = false;
     });
     _replyBuffer.clear();
     _streamingReply.value = '';
-    if (!(_streamCompleter?.isCompleted ?? true)) {
-      _streamCompleter!.complete();
-    }
+    if (!(completer?.isCompleted ?? true)) completer!.complete();
   }
 
   void _setReply(ChatMessage message) => refresh(() => _replyTo = message);

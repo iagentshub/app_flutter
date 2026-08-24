@@ -12,6 +12,7 @@ import '../../../models/accounts/account_models.dart';
 import '../../../models/github/github_device_flow.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/attention_badge.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
@@ -163,9 +164,8 @@ class _ProvidersSectionState extends State<ProvidersSection>
       );
       showMessage(
         deleted > 0
-            ? _tx(
-                'providers.unlinked_with_connections',
-              ).replaceFirst('{count}', '$deleted')
+            ? _tx('providers.unlinked_with_connections')
+                  .replaceFirst('{count}', '$deleted')
             : _tx('providers.unlinked'),
       );
       await _loadAccounts();
@@ -412,7 +412,7 @@ class _ProvidersSectionState extends State<ProvidersSection>
                       ? const SizedBox(
                           width: 16,
                           height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child: IAgentsLoadingMark(),
                         )
                       : const Icon(Icons.sync),
                   label: Text(_tx('providers.sync_action')),

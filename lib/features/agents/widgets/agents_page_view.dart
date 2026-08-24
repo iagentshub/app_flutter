@@ -2,22 +2,8 @@ part of '../pages/agents_page.dart';
 
 extension _AgentsPageView on _AgentsPageState {
   Widget _buildPage(BuildContext context) {
-    if (_loading) return const AsyncStatePanel.loading();
-    if (_error != null) {
-      return ListView(
-        children: [
-          AsyncStatePanel.error(
-            title: _tx('agents.error_title'),
-            message: _error!,
-            retryLabel: _tx('common.retry'),
-            onRetry: _load,
-          ),
-        ],
-      );
-    }
-
     final filteredAgents = _filteredAgents;
-    return ResourceCollectionView(
+    final content = ResourceCollectionView(
       onRefresh: _load,
       header: ResourceToolbar(
         search: TextField(
@@ -93,6 +79,15 @@ extension _AgentsPageView on _AgentsPageState {
             ),
       itemCount: filteredAgents.length,
       itemBuilder: (context, index) => _buildAgentCard(filteredAgents[index]),
+    );
+    return IAgentsAsyncView(
+      loading: _loading,
+      localeController: _services.localeController,
+      error: _error,
+      errorTitle: _tx('agents.error_title'),
+      retryLabel: _tx('common.retry'),
+      onRetry: _load,
+      child: content,
     );
   }
 

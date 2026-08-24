@@ -358,7 +358,7 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
                     ? const SizedBox(
                         width: 16,
                         height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: IAgentsLoadingMark(),
                       )
                     : const Icon(Icons.health_and_safety_outlined),
                 label: Text(widget.tx('providers.test_action')),

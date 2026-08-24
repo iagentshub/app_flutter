@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../models/dashboard/dashboard_feed_item.dart';
 import '../../../models/dashboard/dashboard_widget_config.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/resource_type_badge.dart';
 import '../../explore/repositories/explore_repository.dart';
@@ -100,7 +101,7 @@ class _DashboardFeedBodyState extends State<DashboardFeedBody> {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(16),
-          child: CircularProgressIndicator(),
+          child: IAgentsLoadingMark(),
         ),
       );
     }
@@ -160,7 +161,7 @@ class _DashboardFeedBodyState extends State<DashboardFeedBody> {
             trailing: pending
                 ? const SizedBox.square(
                     dimension: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: IAgentsLoadingMark(),
                   )
                 : AppIconButton(
                     icon: Icon(

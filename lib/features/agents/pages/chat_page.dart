@@ -18,6 +18,7 @@ import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/utils/scroll_to_end.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
@@ -42,6 +43,7 @@ class ChatPage extends StatefulWidget {
     required this.sessionController,
     required this.localeController,
     this.executionStateController,
+    this.chatRepository,
     super.key,
   });
 
@@ -50,6 +52,7 @@ class ChatPage extends StatefulWidget {
   final SessionController sessionController;
   final LocaleController localeController;
   final ResourceExecutionsController? executionStateController;
+  final ChatRepository? chatRepository;
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -122,7 +125,8 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
   @override
   void initState() {
     super.initState();
-    _repository = ChatRepository(apiClient: widget.apiClient);
+    _repository =
+        widget.chatRepository ?? ChatRepository(apiClient: widget.apiClient);
     _agentsRepository = AgentsRepository(apiClient: widget.apiClient);
     _connectionsRepository = ConnectionsRepository(apiClient: widget.apiClient);
     _promptsRepository = PromptsRepository(apiClient: widget.apiClient);
@@ -323,12 +327,15 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
     final messageCopiedLabel = _tx('agents.chat.message_copied');
     final interruptedLabel = _tx('agents.chat.interrupted');
     final estimatedUsageLabel = _tx('agents.chat.estimated_usage');
+    final tokensInputLabel = _tx('agents.chat.tokens_input');
+    final tokensOutputLabel = _tx('agents.chat.tokens_output');
+    final tokensUnitLabel = _tx('agents.chat.tokens_unit');
 
     return Column(
       children: [
         Expanded(
           child: _loadingMessages
-              ? const Center(child: CircularProgressIndicator())
+              ? const Center(child: IAgentsLoadingMark())
               : Stack(
                   children: [
                     ChatMessageList(
@@ -344,6 +351,9 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
                       messageCopiedLabel: messageCopiedLabel,
                       interruptedLabel: interruptedLabel,
                       estimatedUsageLabel: estimatedUsageLabel,
+                      tokensInputLabel: tokensInputLabel,
+                      tokensOutputLabel: tokensOutputLabel,
+                      tokensUnitLabel: tokensUnitLabel,
                       loadingOlder: _loadingOlderMessages,
                     ),
                     _buildJumpToEndChip(),

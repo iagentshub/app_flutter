@@ -90,7 +90,7 @@ class _MembersDialogState extends State<_MembersDialog>
         child: _loading
             ? const SizedBox(
                 height: 160,
-                child: Center(child: CircularProgressIndicator()),
+                child: Center(child: IAgentsLoadingMark()),
               )
             : SingleChildScrollView(
                 child: Column(

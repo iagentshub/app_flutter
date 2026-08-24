@@ -92,7 +92,7 @@ class _ConnectionStatusBodyState extends State<_ConnectionStatusBody> {
                   ? const SizedBox(
                       width: 16,
                       height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: IAgentsLoadingMark(),
                     )
                   : const Icon(Icons.refresh, size: 20),
               tooltip: widget.tx('test_connections'),
@@ -268,9 +268,9 @@ class _CompositionBody extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: top[i].value / max,
                     minHeight: 6,
-                    backgroundColor: Theme.of(
-                      context,
-                    ).colorScheme.surfaceContainerHighest,
+                    backgroundColor: Theme.of(context)
+                        .colorScheme
+                        .surfaceContainerHighest,
                     valueColor: AlwaysStoppedAnimation(
                       _colors[i % _colors.length],
                     ),

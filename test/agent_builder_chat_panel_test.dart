@@ -1,5 +1,6 @@
 import 'package:app_flutter/features/agents/widgets/agent_builder_chat_panel.dart';
 import 'package:app_flutter/models/chat/chat_models.dart';
+import 'package:app_flutter/shared/widgets/animated_iagents_mark.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -103,7 +104,7 @@ void main() {
 
     expect(find.text('Necesito un agente de soporte'), findsOneWidget);
     expect(find.text('Que canales atendera?'), findsOneWidget);
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byType(IAgentsLoadingMark), findsOneWidget);
     expect(find.text('No se pudo completar la respuesta'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -146,7 +147,7 @@ void main() {
     );
 
     expect(find.text('He preparado el bo'), findsOneWidget);
-    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.byType(IAgentsLoadingMark), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -163,7 +164,7 @@ void main() {
     );
 
     expect(find.text('Asistente IA'), findsOneWidget);
-    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.byType(IAgentsLoadingMark), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

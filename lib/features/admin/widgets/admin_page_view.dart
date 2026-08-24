@@ -2,21 +2,6 @@ part of '../pages/admin_page.dart';
 
 extension _AdminPageView on _AdminPageState {
   Widget _buildPage(BuildContext context) {
-    if (_loading) return const AsyncStatePanel.loading();
-
-    if (_error != null) {
-      return ListView(
-        children: [
-          AsyncStatePanel.error(
-            title: _tx('admin.error_title'),
-            message: _error!,
-            retryLabel: _tx('common.retry'),
-            onRetry: _load,
-          ),
-        ],
-      );
-    }
-
     final tabLabels = [
       _tx('admin.tab_general'),
       _tx('admin.tab_explore'),
@@ -25,7 +10,7 @@ extension _AdminPageView on _AdminPageState {
     ];
     final section = _AdminPageState._tabIds[_tabController.index];
 
-    return Column(
+    final content = Column(
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -41,6 +26,17 @@ extension _AdminPageView on _AdminPageState {
         ),
         Expanded(child: _buildSection(section)),
       ],
+    );
+
+    return IAgentsAsyncView(
+      key: const Key('admin-loading-overlay'),
+      loading: _loading,
+      localeController: _services.localeController,
+      error: _error,
+      errorTitle: _tx('admin.error_title'),
+      retryLabel: _tx('common.retry'),
+      onRetry: _load,
+      child: content,
     );
   }
 

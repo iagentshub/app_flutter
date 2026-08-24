@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'animated_iagents_mark.dart';
 import 'buttons/app_buttons.dart';
 
 /// Presentación compartida para estados de carga, error y colecciones vacías.
@@ -79,7 +80,7 @@ class AsyncStatePanel extends StatelessWidget {
     if (_loading) {
       return Padding(
         padding: padding,
-        child: const Center(child: CircularProgressIndicator()),
+        child: const Center(child: IAgentsLoadingMark()),
       );
     }
 

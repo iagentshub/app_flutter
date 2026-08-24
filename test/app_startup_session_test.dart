@@ -9,6 +9,8 @@ import 'package:app_flutter/shared/state/backend_controller.dart';
 import 'package:app_flutter/shared/state/locale_controller.dart';
 import 'package:app_flutter/shared/state/session_controller.dart';
 import 'package:app_flutter/shared/state/theme_controller.dart';
+import 'package:app_flutter/shared/widgets/animated_iagents_mark.dart';
+import 'package:app_flutter/shared/widgets/iagents_loading_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -93,7 +95,8 @@ void main() {
 
     expect(state.session.status, SessionStatus.restoring);
     expect(find.byType(SessionRecoveryPage), findsOneWidget);
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byType(IAgentsLoadingIndicator), findsOneWidget);
+    expect(find.byType(IAgentsLoadingMark), findsOneWidget);
 
     response.complete(
       http.Response(

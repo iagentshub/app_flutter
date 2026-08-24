@@ -157,7 +157,7 @@ class _GithubDeviceFlowDialogState extends State<_GithubDeviceFlowDialog> {
     if (_loading) {
       return const SizedBox(
         height: 80,
-        child: Center(child: CircularProgressIndicator()),
+        child: Center(child: IAgentsLoadingMark()),
       );
     }
     if (_error != null) {
@@ -204,11 +204,7 @@ class _GithubDeviceFlowDialogState extends State<_GithubDeviceFlowDialog> {
         const SizedBox(height: 16),
         Row(
           children: [
-            const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
+            const SizedBox(width: 16, height: 16, child: IAgentsLoadingMark()),
             const SizedBox(width: 10),
             Expanded(
               child: Text(

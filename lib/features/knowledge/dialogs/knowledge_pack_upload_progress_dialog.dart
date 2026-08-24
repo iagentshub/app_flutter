@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/network/api_error.dart';
 import '../../../models/knowledge/knowledge_models.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../models/local_knowledge_file.dart';
@@ -269,7 +270,7 @@ class _KnowledgePackUploadProgressDialogState
               child: SizedBox(
                 width: 18,
                 height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
+                child: IAgentsLoadingMark(),
               ),
             ),
         ],

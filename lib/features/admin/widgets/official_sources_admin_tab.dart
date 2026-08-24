@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_client.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
@@ -86,9 +87,8 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
 
   void notify(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> openImport() async {
@@ -349,7 +349,7 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (loading) return const Center(child: CircularProgressIndicator());
+    if (loading) return const Center(child: IAgentsLoadingMark());
     if (error != null) return Center(child: Text(error!));
     return RefreshIndicator(
       onRefresh: load,
@@ -441,9 +441,8 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
               const SizedBox(height: 6),
               Text(
                 syncError,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.error,
-                ),
+                style: Theme.of(context).textTheme.bodySmall
+                    ?.copyWith(color: Theme.of(context).colorScheme.error),
               ),
             ],
             const SizedBox(height: 4),

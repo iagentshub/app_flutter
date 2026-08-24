@@ -116,7 +116,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
   void _deselectAll() => refresh(() => _selectedFiles = {});
 
   Widget _buildTreeBody() {
-    if (_treeLoading) return const Center(child: CircularProgressIndicator());
+    if (_treeLoading) return const Center(child: IAgentsLoadingMark());
     if (_treeError != null) {
       return Center(
         child: Padding(

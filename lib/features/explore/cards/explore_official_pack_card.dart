@@ -119,7 +119,7 @@ extension _ExploreOfficialPackCard on _ExplorePageState {
                 if (busy)
                   const SizedBox.square(
                     dimension: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: IAgentsLoadingMark(),
                   ),
               ],
             ),
@@ -151,9 +151,8 @@ extension _ExploreOfficialPackCard on _ExplorePageState {
       builder: (context) => AlertDialog(
         title: Text(_tx('explore.pack_link_all')),
         content: Text(
-          _tx(
-            'explore.pack_link_confirm',
-          ).replaceAll('{{count}}', '${pack.totalCount}'),
+          _tx('explore.pack_link_confirm')
+              .replaceAll('{{count}}', '${pack.totalCount}'),
         ),
         actions: [
           SecondaryButton(

@@ -162,7 +162,7 @@ class _AdminBannersCardState extends State<_AdminBannersCard>
         const Center(
           child: Padding(
             padding: EdgeInsets.all(12),
-            child: CircularProgressIndicator(),
+            child: IAgentsLoadingMark(),
           ),
         )
       else if (_error != null)

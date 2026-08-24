@@ -4,6 +4,7 @@ import '../../../app/theme/fnc_fonts.dart';
 import '../../../models/agents/agent_models.dart';
 import '../../../models/workflows/workflow_models.dart';
 import '../../../shared/graph/resource_graph_builder.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/inactive_badge.dart';
@@ -130,7 +131,7 @@ class WorkflowCard extends StatelessWidget {
                   Chip(
                     avatar: const SizedBox.square(
                       dimension: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: IAgentsLoadingMark(),
                     ),
                     label: Text(inProgressLabel),
                     visualDensity: VisualDensity.compact,

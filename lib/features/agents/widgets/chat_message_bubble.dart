@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../app/theme/fnc_colors.dart';
 import '../../../models/chat/chat_models.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 import 'chat_markdown_body.dart';
 
 String _fmtTime(DateTime dt) {
@@ -27,6 +28,9 @@ class ChatMessageBubble extends StatelessWidget {
     required this.messageCopiedLabel,
     required this.interruptedLabel,
     required this.estimatedUsageLabel,
+    required this.tokensInputLabel,
+    required this.tokensOutputLabel,
+    required this.tokensUnitLabel,
     this.thinking = false,
     super.key,
   });
@@ -40,6 +44,9 @@ class ChatMessageBubble extends StatelessWidget {
   final String messageCopiedLabel;
   final String interruptedLabel;
   final String estimatedUsageLabel;
+  final String tokensInputLabel;
+  final String tokensOutputLabel;
+  final String tokensUnitLabel;
 
   bool get _actionsEnabled => !thinking && message.content.trim().isNotEmpty;
 
@@ -71,9 +78,8 @@ class ChatMessageBubble extends StatelessWidget {
     } else if (action == 'copy') {
       await Clipboard.setData(ClipboardData(text: message.content));
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(messageCopiedLabel)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(messageCopiedLabel)));
     }
   }
 
@@ -83,6 +89,11 @@ class ChatMessageBubble extends StatelessWidget {
     final bubbleColor = isUser
         ? Theme.of(context).colorScheme.primaryContainer
         : Theme.of(context).colorScheme.surfaceContainerHighest;
+    final hasMetadata =
+        !thinking &&
+        (message.createdAt != null ||
+            (!isUser &&
+                (message.tokensIn != null || message.tokensOut != null)));
 
     final bubble = Container(
       margin: const EdgeInsets.symmetric(vertical: 6),
@@ -96,11 +107,7 @@ class ChatMessageBubble extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (thinking)
-            const SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
+            const SizedBox(width: 18, height: 18, child: IAgentsLoadingMark())
           else
             ChatMarkdownBody(
               text: message.content,
@@ -120,26 +127,7 @@ class ChatMessageBubble extends StatelessWidget {
               ],
             ),
           ],
-          if (!isUser &&
-              (message.tokensIn != null || message.tokensOut != null)) ...[
-            const SizedBox(height: 4),
-            Text(
-              '↑ ${message.tokensIn ?? 0} ↓ ${message.tokensOut ?? 0} tokens',
-              style: Theme.of(context).textTheme.labelSmall,
-            ),
-            if (message.usageEstimated)
-              Text(
-                estimatedUsageLabel,
-                style: Theme.of(context).textTheme.labelSmall,
-              ),
-          ],
-          if (!thinking && message.createdAt != null) ...[
-            const SizedBox(height: 2),
-            Text(
-              _fmtTime(message.createdAt!),
-              style: Theme.of(context).textTheme.labelSmall,
-            ),
-          ],
+          if (hasMetadata) _buildMetadata(context, isUser),
         ],
       ),
     );
@@ -160,6 +148,82 @@ class ChatMessageBubble extends StatelessWidget {
               )
             : bubble,
       ),
+    );
+  }
+
+  Widget _buildMetadata(BuildContext context, bool isUser) {
+    final scheme = Theme.of(context).colorScheme;
+    final style = Theme.of(context).textTheme.labelSmall
+        ?.copyWith(color: scheme.onSurfaceVariant, height: 1.2);
+
+    return Container(
+      key: const Key('chat-message-metadata'),
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.only(top: 8),
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.7)),
+        ),
+      ),
+      child: Wrap(
+        alignment: isUser ? WrapAlignment.end : WrapAlignment.start,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 12,
+        runSpacing: 6,
+        children: [
+          if (!isUser &&
+              (message.tokensIn != null || message.tokensOut != null))
+            _MetadataItem(
+              key: const Key('chat-message-token-usage'),
+              icon: Icons.data_usage_outlined,
+              text:
+                  '$tokensInputLabel ${message.tokensIn ?? 0} · '
+                  '$tokensOutputLabel ${message.tokensOut ?? 0} '
+                  '$tokensUnitLabel',
+              style: style,
+            ),
+          if (!isUser && message.usageEstimated)
+            _MetadataItem(
+              icon: Icons.info_outline,
+              text: estimatedUsageLabel,
+              style: style,
+            ),
+          if (message.createdAt != null)
+            _MetadataItem(
+              key: const Key('chat-message-time'),
+              icon: Icons.schedule,
+              text: _fmtTime(message.createdAt!),
+              style: style,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MetadataItem extends StatelessWidget {
+  const _MetadataItem({
+    required this.icon,
+    required this.text,
+    required this.style,
+    super.key,
+  });
+
+  final IconData icon;
+  final String text;
+  final TextStyle? style;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = style?.color;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 13, color: color),
+        const SizedBox(width: 4),
+        Flexible(child: Text(text, style: style)),
+      ],
     );
   }
 }

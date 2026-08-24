@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/chat/chat_models.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 
 /// Transcripción de los constructores por IA de agentes y skills.
 ///
@@ -124,20 +125,15 @@ class _ThinkingState extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(
     children: [
-      const SizedBox(
-        width: 13,
-        height: 13,
-        child: CircularProgressIndicator(strokeWidth: 1.6),
-      ),
+      const SizedBox(width: 13, height: 13, child: IAgentsLoadingMark()),
       const SizedBox(width: 10),
       Flexible(
         child: Text(
           label,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
+          style: Theme.of(context).textTheme.bodyMedium
+              ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       ),
     ],
@@ -152,10 +148,8 @@ class _ReadableMessageText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final lines = content.trim().split('\n');
-    final baseStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-      height: 1.6,
-      color: Theme.of(context).colorScheme.onSurface,
-    );
+    final baseStyle = Theme.of(context).textTheme.bodyMedium
+        ?.copyWith(height: 1.6, color: Theme.of(context).colorScheme.onSurface);
     return SelectionArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,9 +187,8 @@ class _ReadableLine extends StatelessWidget {
         padding: const EdgeInsets.only(top: 10, bottom: 4),
         child: Text(
           heading,
-          style: Theme.of(
-            context,
-          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+          style: Theme.of(context).textTheme.titleSmall
+              ?.copyWith(fontWeight: FontWeight.w600),
         ),
       );
     }

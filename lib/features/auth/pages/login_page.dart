@@ -10,6 +10,7 @@ import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_error.dart';
 import '../../../core/storage/local_store.dart';
+import '../../../models/auth/session_user.dart';
 import '../../../models/github/github_device_flow.dart';
 import '../../../shared/i18n/locale_loader.dart';
 import '../../../shared/state/backend_controller.dart';
@@ -17,12 +18,13 @@ import '../../../shared/state/boot_platform_cache.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/state/theme_controller.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/iagents_loading_indicator.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../../utils/i18n.dart';
-import '../../../utils/safe_redirect.dart';
 import '../../../utils/validators.dart';
 import '../repositories/auth_repository.dart';
 
@@ -37,7 +39,6 @@ class LoginPage extends StatefulWidget {
     required this.sessionController,
     required this.localeController,
     required this.authRepository,
-    this.redirectTo,
     super.key,
   });
 
@@ -45,7 +46,6 @@ class LoginPage extends StatefulWidget {
   final SessionController sessionController;
   final LocaleController localeController;
   final AuthRepository authRepository;
-  final String? redirectTo;
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -296,6 +296,19 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
     }
   }
 
+  Future<void> _activateSession(
+    String token,
+    SessionUser user, {
+    required bool remember,
+  }) {
+    widget.authRepository.clearCache();
+    return widget.sessionController.login(
+      token: token,
+      user: user,
+      remember: remember,
+    );
+  }
+
   Future<void> _submit() async {
     final themeController = ThemeControllerScope.of(context, listen: false);
     final form = _formKey.currentState;
@@ -308,6 +321,7 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
       _errorMessage = null;
     });
 
+    var authenticated = false;
     try {
       final (result, token) = await widget.authRepository.login(
         identifier: _identifierController.text,
@@ -318,18 +332,10 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
       }
 
       final me = await widget.authRepository.me(token);
-      widget.authRepository.clearCache();
-      await widget.sessionController.login(
-        token: token,
-        user: me,
-        remember: _rememberAccount,
-      );
+      await _activateSession(token, me, remember: _rememberAccount);
+      authenticated = true;
       await _persistRememberedAccount();
       unawaited(_syncUserSettings(token, themeController));
-
-      if (!mounted) return;
-      final destination = safeRedirect(widget.redirectTo);
-      AppRouter.go(context, destination);
     } on ApiError catch (error) {
       if (!mounted) return;
       setState(() => _errorMessage = error.message);
@@ -337,7 +343,10 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
       if (!mounted) return;
       setState(() => _errorMessage = _txt(texts, 'error_connection'));
     } finally {
-      if (mounted) {
+      // SessionController notifica al GoRouter y este desmonta LoginPage. No
+      // ocultamos antes el overlay: hacerlo durante el fade-through dejaba un
+      // fotograma sin logo antes de aparecer el cargador del destino.
+      if (mounted && !authenticated) {
         setState(() => _loading = false);
       }
     }
@@ -364,19 +373,13 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
       _loading = true;
       _errorMessage = null;
     });
+    var authenticated = false;
     try {
       final token = result.gaToken!;
       final me = await widget.authRepository.me(token);
-      widget.authRepository.clearCache();
-      await widget.sessionController.login(
-        token: token,
-        user: me,
-        remember: true,
-      );
+      await _activateSession(token, me, remember: true);
+      authenticated = true;
       unawaited(_syncUserSettings(token, themeController));
-      if (!mounted) return;
-      final destination = safeRedirect(widget.redirectTo);
-      AppRouter.go(context, destination);
     } on ApiError catch (error) {
       if (!mounted) return;
       setState(() => _errorMessage = error.message);
@@ -384,7 +387,7 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
       if (!mounted) return;
       setState(() => _errorMessage = tx('error_connection'));
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted && !authenticated) setState(() => _loading = false);
     }
   }
 
@@ -397,6 +400,7 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
       _errorMessage = null;
     });
 
+    var authenticated = false;
     try {
       final (result, token) = await widget.authRepository.guestLogin();
       if (!result.ok) {
@@ -404,15 +408,9 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
       }
 
       final me = await widget.authRepository.me(token);
-      await widget.sessionController.login(
-        token: token,
-        user: me,
-        remember: false,
-      );
+      await _activateSession(token, me, remember: false);
+      authenticated = true;
       await _syncUserSettings(token, themeController);
-      if (!mounted) return;
-      final destination = safeRedirect(widget.redirectTo);
-      AppRouter.go(context, destination);
     } on ApiError catch (error) {
       if (!mounted) return;
       setState(() => _errorMessage = error.message);
@@ -420,7 +418,7 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
       if (!mounted) return;
       setState(() => _errorMessage = _txt(texts, 'guest_error'));
     } finally {
-      if (mounted) {
+      if (mounted && !authenticated) {
         setState(() => _loading = false);
       }
     }
@@ -429,75 +427,90 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final wide = constraints.maxWidth >= 1000;
-            final formArea = Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 56, 24, 32),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 480),
-                  child: _buildFormCard(context),
-                ),
-              ),
-            );
+      body: IAgentsLoadingOverlay(
+        key: const Key('login-loading-overlay'),
+        loading: _loading,
+        localeController: widget.localeController,
+        logoSize: 96,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: SafeArea(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final wide = constraints.maxWidth >= 1000;
+                    final formArea = Center(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(24, 56, 24, 32),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 480),
+                          child: _buildFormCard(context),
+                        ),
+                      ),
+                    );
 
-            if (!wide) {
-              return SingleChildScrollView(
-                key: const Key('login-mobile-layout'),
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 520),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                    if (!wide) {
+                      return SingleChildScrollView(
+                        key: const Key('login-mobile-layout'),
+                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 520),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TertiaryButton(
+                                    onPressed: _toggleLanguage,
+                                    child: Text(_siguienteIdioma.toUpperCase()),
+                                  ),
+                                ),
+                                _buildHeroPanel(context, compact: true),
+                                _buildFormCard(context),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+
+                    return Stack(
+                      key: const Key('login-desktop-layout'),
                       children: [
-                        Align(
-                          alignment: Alignment.centerRight,
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 32),
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 1360),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    flex: 5,
+                                    child: _buildHeroPanel(context),
+                                  ),
+                                  const SizedBox(width: 48),
+                                  Expanded(flex: 6, child: formArea),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 16,
                           child: TertiaryButton(
                             onPressed: _toggleLanguage,
                             child: Text(_siguienteIdioma.toUpperCase()),
                           ),
                         ),
-                        _buildHeroPanel(context, compact: true),
-                        _buildFormCard(context),
                       ],
-                    ),
-                  ),
+                    );
+                  },
                 ),
-              );
-            }
-
-            return Stack(
-              key: const Key('login-desktop-layout'),
-              children: [
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1360),
-                      child: Row(
-                        children: [
-                          Expanded(flex: 5, child: _buildHeroPanel(context)),
-                          const SizedBox(width: 48),
-                          Expanded(flex: 6, child: formArea),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 8,
-                  right: 16,
-                  child: TertiaryButton(
-                    onPressed: _toggleLanguage,
-                    child: Text(_siguienteIdioma.toUpperCase()),
-                  ),
-                ),
-              ],
-            );
-          },
+              ),
+            ),
+          ],
         ),
       ),
     );

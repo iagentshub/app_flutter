@@ -5,6 +5,7 @@ import '../../../shared/state/backend_controller.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/iagents_loading_indicator.dart';
 
 class SessionRecoveryPage extends StatefulWidget {
   const SessionRecoveryPage({
@@ -61,6 +62,22 @@ class _SessionRecoveryPageState extends State<SessionRecoveryPage> {
         widget.sessionController.status == SessionStatus.restoring;
     final scheme = Theme.of(context).colorScheme;
 
+    if (restoring) {
+      return Scaffold(
+        body: SafeArea(
+          child: Center(
+            child: IAgentsLoadingIndicator(
+              localeController: widget.localeController,
+              messages: [
+                _tx('session_restoring_title'),
+                _tx('session_restoring_body'),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -75,75 +92,62 @@ class _SessionRecoveryPageState extends State<SessionRecoveryPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Semantics(
-                        label: restoring
-                            ? _tx('session_restoring_semantics')
-                            : _tx('session_unavailable_semantics'),
-                        child: restoring
-                            ? const SizedBox.square(
-                                dimension: 44,
-                                child: CircularProgressIndicator(),
-                              )
-                            : Icon(
-                                Icons.cloud_off_outlined,
-                                size: 48,
-                                color: scheme.error,
-                              ),
+                        label: _tx('session_unavailable_semantics'),
+                        child: Icon(
+                          Icons.cloud_off_outlined,
+                          size: 48,
+                          color: scheme.error,
+                        ),
                       ),
                       const SizedBox(height: 24),
                       Text(
-                        restoring
-                            ? _tx('session_restoring_title')
-                            : _tx('session_unavailable_title'),
+                        _tx('session_unavailable_title'),
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.headlineSmall,
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        restoring
-                            ? _tx('session_restoring_body')
-                            : _tx('session_unavailable_body'),
+                        _tx('session_unavailable_body'),
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyLarge,
                       ),
-                      if (!restoring) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          widget.backendController.effectiveBaseUrl,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: scheme.onSurfaceVariant),
+                      const SizedBox(height: 8),
+                      Text(
+                        widget.backendController.effectiveBaseUrl,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodySmall
+                            ?.copyWith(color: scheme.onSurfaceVariant),
+                      ),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        child: PrimaryButton.icon(
+                          key: const ValueKey('session-retry-button'),
+                          onPressed: widget.onRetry,
+                          icon: const Icon(Icons.refresh),
+                          label: Text(_tx('common_retry')),
                         ),
-                        const SizedBox(height: 24),
-                        SizedBox(
-                          width: double.infinity,
-                          child: PrimaryButton.icon(
-                            key: const ValueKey('session-retry-button'),
-                            onPressed: widget.onRetry,
-                            icon: const Icon(Icons.refresh),
-                            label: Text(_tx('common_retry')),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          width: double.infinity,
-                          child: SecondaryButton.icon(
-                            key: const ValueKey(
-                              'session-configure-backend-button',
-                            ),
-                            onPressed: widget.onConfigureBackend,
-                            icon: const Icon(Icons.dns_outlined),
-                            label: Text(_tx('session_configure_backend')),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TertiaryButton(
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: SecondaryButton.icon(
                           key: const ValueKey(
-                            'session-use-another-account-button',
+                            'session-configure-backend-button',
                           ),
-                          onPressed: widget.onUseAnotherAccount,
-                          child: Text(_tx('session_use_another_account')),
+                          onPressed: widget.onConfigureBackend,
+                          icon: const Icon(Icons.dns_outlined),
+                          label: Text(_tx('session_configure_backend')),
                         ),
-                      ],
+                      ),
+                      const SizedBox(height: 8),
+                      TertiaryButton(
+                        key: const ValueKey(
+                          'session-use-another-account-button',
+                        ),
+                        onPressed: widget.onUseAnotherAccount,
+                        child: Text(_tx('session_use_another_account')),
+                      ),
                     ],
                   ),
                 ),

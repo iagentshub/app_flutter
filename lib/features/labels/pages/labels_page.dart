@@ -9,6 +9,7 @@ import '../../../models/workflows/workflow_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/app_services_scope.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
@@ -407,7 +408,7 @@ class _LabelsPageState extends State<LabelsPage>
       // igual que antes de compartir el esqueleto.
       emptyFillsViewport: _loading,
       empty: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: IAgentsLoadingMark())
           : AsyncStatePanel.empty(
               padding: EdgeInsets.zero,
               icon: Icons.search_off,

@@ -2,30 +2,13 @@ part of '../pages/connections_page.dart';
 
 extension _ConnectionsPageView on _ConnectionsPageState {
   Widget _buildPage(BuildContext context) {
-    if (_controller.loading) {
-      return const AsyncStatePanel.loading();
-    }
-
-    if (_controller.error != null) {
-      return ListView(
-        children: [
-          AsyncStatePanel.error(
-            title: _tx('connections.error_title'),
-            message: _controller.error!,
-            retryLabel: _tx('common.retry'),
-            onRetry: _controller.load,
-          ),
-        ],
-      );
-    }
-
     final tabLabels = [
       _tx('connections.tab_llm'),
       _tx('connections.tab_machine'),
       _tx('connections.tab_database'),
     ];
 
-    return Column(
+    final content = Column(
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -84,9 +67,7 @@ extension _ConnectionsPageView on _ConnectionsPageState {
                                   ? const SizedBox(
                                       width: 16,
                                       height: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
+                                      child: IAgentsLoadingMark(),
                                     )
                                   : const Icon(Icons.play_circle_outline),
                             ),
@@ -150,6 +131,15 @@ extension _ConnectionsPageView on _ConnectionsPageState {
         ),
       ],
     );
+    return IAgentsAsyncView(
+      loading: _controller.loading,
+      localeController: _services.localeController,
+      error: _controller.error,
+      errorTitle: _tx('connections.error_title'),
+      retryLabel: _tx('common.retry'),
+      onRetry: _controller.load,
+      child: content,
+    );
   }
 
   List<Widget> _buildProviderGroupSlivers(
@@ -162,9 +152,8 @@ extension _ConnectionsPageView on _ConnectionsPageState {
         sliver: SliverToBoxAdapter(
           child: Text(
             '$providerLabel (${items.length})',
-            style: Theme.of(
-              context,
-            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+            style: Theme.of(context).textTheme.titleSmall
+                ?.copyWith(fontWeight: FontWeight.w700),
           ),
         ),
       ),

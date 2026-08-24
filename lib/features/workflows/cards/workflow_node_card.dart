@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../models/workflow_step_draft.dart';
 
 /// Estado visual de un nodo dentro del lienzo.
@@ -130,9 +131,8 @@ class WorkflowNodeCard extends StatelessWidget {
             agentName,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(color: colors.onSurfaceVariant),
           ),
           const Spacer(),
           Text(
@@ -182,9 +182,9 @@ class _NodeGlyph extends StatelessWidget {
         borderRadius: BorderRadius.circular(9),
       ),
       child: status == WorkflowNodeVisualStatus.running
-          ? Padding(
-              padding: const EdgeInsets.all(8),
-              child: CircularProgressIndicator(strokeWidth: 2.4, color: accent),
+          ? const Padding(
+              padding: EdgeInsets.all(8),
+              child: IAgentsLoadingMark(),
             )
           : Icon(_icon, size: 18, color: accent),
     );

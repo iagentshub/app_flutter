@@ -8,6 +8,7 @@ import '../../../models/manager/group_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/watches_resource_changes.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
@@ -175,7 +176,7 @@ class _ProfileGroupsSectionState extends State<ProfileGroupsSection>
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (_loading) return const Center(child: IAgentsLoadingMark());
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -27,6 +27,18 @@ abstract final class LocaleLoader {
     return <String, dynamic>{};
   }
 
+  /// Lee de forma síncrona una colección de un bundle ya precargado.
+  /// Devuelve vacío si aún no está en caché o si la ruta no es un mapa.
+  static Map<String, String> cachedMap({
+    required String languageCode,
+    required String namespace,
+    required String path,
+  }) {
+    final bundle = _cache['$languageCode/$namespace'];
+    if (bundle == null) return const {};
+    return map(bundle, path);
+  }
+
   /// Traducción de [path] en un bundle concreto.
   ///
   /// La resolución vive en `utils/i18n.dart`, que es donde puede llegar

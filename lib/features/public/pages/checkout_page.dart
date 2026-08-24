@@ -6,6 +6,7 @@ import '../../../core/config/runtime_config.dart';
 import '../../../core/network/api_error.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/app_services_scope.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../billing/widgets/payment_element.dart';
 
@@ -299,7 +300,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     ..._buildAmount(context),
                     const Divider(height: 32),
                     if (_loading)
-                      const Center(child: CircularProgressIndicator())
+                      const Center(child: IAgentsLoadingMark())
                     else if (_success)
                       Text(_tx('checkout.success'))
                     else if (!_readyToPay)
@@ -343,9 +344,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
       ];
     }
     final estilo = Theme.of(context).textTheme.bodyMedium;
-    final destacado = Theme.of(
-      context,
-    ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold);
+    final destacado = Theme.of(context).textTheme.titleMedium
+        ?.copyWith(fontWeight: FontWeight.bold);
     return [
       _amountRow(_tx('checkout.subtotal_label'), _subtotalCents, estilo),
       _amountRow(_tx('checkout.tax_label'), _taxCents, estilo),
@@ -453,9 +453,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
       child: Text(
         _confirming
             ? _tx('checkout.processing')
-            : _tx(
-                'checkout.pay_btn',
-              ).replaceAll('{{amount}}', _money(_totalCents)),
+            : _tx('checkout.pay_btn')
+                  .replaceAll('{{amount}}', _money(_totalCents)),
       ),
     ),
     const SizedBox(height: 8),

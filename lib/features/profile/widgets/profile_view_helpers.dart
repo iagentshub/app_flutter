@@ -112,10 +112,7 @@ extension _ProfileViewHelpers on _ProfilePageState {
               child: _controller.uploadingAvatar
                   ? const Padding(
                       padding: EdgeInsets.all(5),
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: FncColors.white,
-                      ),
+                      child: IAgentsLoadingMark(),
                     )
                   : const Icon(
                       Icons.camera_alt,

@@ -245,7 +245,7 @@ class _ManageGroupDialogState extends State<_ManageGroupDialog>
         child: _loading
             ? const SizedBox(
                 height: 160,
-                child: Center(child: CircularProgressIndicator()),
+                child: Center(child: IAgentsLoadingMark()),
               )
             : SingleChildScrollView(
                 child: Column(

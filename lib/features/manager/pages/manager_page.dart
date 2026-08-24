@@ -6,10 +6,10 @@ import '../../../models/manager/group_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/action_result.dart';
 import '../../../shared/state/app_services_scope.dart';
-import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
+import '../../../shared/widgets/iagents_async_view.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/resource_collection_view.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
@@ -148,9 +148,8 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
       confirm: () => showConfirmActionDialog(
         context,
         title: _tx('manager.delete_dialog_title'),
-        message: _tx(
-          'manager.delete_dialog_body',
-        ).replaceAll('{{name}}', item.name),
+        message: _tx('manager.delete_dialog_body')
+            .replaceAll('{{name}}', item.name),
         cancelLabel: _tx('common.cancel'),
         confirmLabel: _tx('common.delete'),
       ),
@@ -172,24 +171,9 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
 
   @override
   Widget build(BuildContext context) {
-    if (_controller.loading) return const AsyncStatePanel.loading();
-    final error = _controller.error;
-    if (error != null) {
-      return ListView(
-        children: [
-          AsyncStatePanel.error(
-            title: _tx('manager.error_loading_title'),
-            message: error,
-            retryLabel: _tx('common.retry'),
-            onRetry: _controller.load,
-          ),
-        ],
-      );
-    }
-
     final groups = _controller.groups;
 
-    return ResourceCollectionView(
+    final content = ResourceCollectionView(
       onRefresh: _controller.load,
       gridPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       header: Column(
@@ -236,6 +220,15 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
           sliver: SliverToBoxAdapter(child: _buildInvitationsCard()),
         ),
       ],
+    );
+    return IAgentsAsyncView(
+      loading: _controller.loading,
+      localeController: _services.localeController,
+      error: _controller.error,
+      errorTitle: _tx('manager.error_loading_title'),
+      retryLabel: _tx('common.retry'),
+      onRetry: _controller.load,
+      child: content,
     );
   }
 }

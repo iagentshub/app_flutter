@@ -9,6 +9,7 @@ import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
@@ -447,7 +448,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
           actions: _appBarActions(compact: compact),
         ),
         body: _loadingAgents
-            ? const Center(child: CircularProgressIndicator())
+            ? const Center(child: IAgentsLoadingMark())
             : compact
             ? _buildMobileEditor()
             : Form(

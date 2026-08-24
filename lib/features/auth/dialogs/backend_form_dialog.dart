@@ -100,16 +100,13 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
         _verified = false;
         _verifiedUrl = null;
         _statusMessage = result.error != null
-            ? _tx(
-                'backend_config.test_connection_error',
-              ).replaceAll('{error}', result.error!)
+            ? _tx('backend_config.test_connection_error')
+                  .replaceAll('{error}', result.error!)
             : result.statusCode != null
-            ? _tx(
-                'backend_config.test_http_error',
-              ).replaceAll('{code}', '${result.statusCode}')
-            : _tx(
-                'backend_config.test_connection_error',
-              ).replaceAll('{error}', result.error ?? '');
+            ? _tx('backend_config.test_http_error')
+                  .replaceAll('{code}', '${result.statusCode}')
+            : _tx('backend_config.test_connection_error')
+                  .replaceAll('{error}', result.error ?? '');
         _testing = false;
       });
     }
@@ -218,9 +215,8 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
                 const SizedBox(height: 12),
                 DecoratedBox(
                   decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.errorContainer.withValues(alpha: 0.45),
+                    color: Theme.of(context).colorScheme.errorContainer
+                        .withValues(alpha: 0.45),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: CheckboxListTile(
@@ -251,7 +247,7 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
                 ? const SizedBox(
                     width: 16,
                     height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: IAgentsLoadingMark(),
                   )
                 : const Icon(Icons.wifi_find),
             label: Text(
@@ -267,7 +263,7 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
                 ? const SizedBox(
                     width: 16,
                     height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: IAgentsLoadingMark(),
                   )
                 : Icon(_isEditing ? Icons.save_outlined : Icons.add),
             label: Text(

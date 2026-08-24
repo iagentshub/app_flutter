@@ -7,11 +7,12 @@ import '../../../models/connections/connection_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/action_result.dart';
 import '../../../shared/state/app_services_scope.dart';
-import '../../../shared/widgets/async_state_panel.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
+import '../../../shared/widgets/iagents_async_view.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/resource_collection_view.dart';
 import '../../../shared/widgets/resource_toolbar.dart';
@@ -175,9 +176,8 @@ class _ConnectionsPageState extends State<ConnectionsPage>
         confirm: () => showConfirmActionDialog(
           context,
           title: _tx('connections.delete_title'),
-          message: _tx(
-            'connections.delete_confirm',
-          ).replaceAll('{{name}}', item.name),
+          message: _tx('connections.delete_confirm')
+              .replaceAll('{{name}}', item.name),
           cancelLabel: _tx('common.cancel'),
           confirmLabel: _tx('common.delete'),
         ),
@@ -202,9 +202,8 @@ class _ConnectionsPageState extends State<ConnectionsPage>
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          _tx(
-            'connections.mass_test_title',
-          ).replaceAll('{{n}}', '${summary.results.length}'),
+          _tx('connections.mass_test_title')
+              .replaceAll('{{n}}', '${summary.results.length}'),
         ),
         content: SizedBox(
           width: dialogContentWidth(context, 520),

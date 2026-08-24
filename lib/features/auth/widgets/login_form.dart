@@ -10,9 +10,15 @@ extension _LoginForm on _LoginPageState {
           future: _authTextsFuture,
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
-              return const Padding(
-                padding: EdgeInsets.all(32),
-                child: Center(child: CircularProgressIndicator()),
+              return Padding(
+                padding: const EdgeInsets.all(32),
+                child: Center(
+                  child: IAgentsLoadingIndicator(
+                    localeController: widget.localeController,
+                    logoSize: 56,
+                    maxMessageWidth: 240,
+                  ),
+                ),
               );
             }
 
@@ -310,9 +316,8 @@ extension _LoginForm on _LoginPageState {
                       Text(
                         guestNotice,
                         textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: FncColors.textMuted(context),
-                        ),
+                        style: Theme.of(context).textTheme.bodySmall
+                            ?.copyWith(color: FncColors.textMuted(context)),
                       ),
                     ],
                   ],

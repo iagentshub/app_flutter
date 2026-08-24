@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/chat/chat_models.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/token_usage_badge.dart';
 
@@ -56,7 +57,7 @@ class ChatHistoryPanel extends StatelessWidget {
         if (loading)
           const Padding(
             padding: EdgeInsets.all(24),
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(child: IAgentsLoadingMark()),
           )
         else
           Expanded(
@@ -73,7 +74,7 @@ class ChatHistoryPanel extends StatelessWidget {
                   if (index == conversations.length) {
                     return const Padding(
                       padding: EdgeInsets.all(12),
-                      child: Center(child: CircularProgressIndicator()),
+                      child: Center(child: IAgentsLoadingMark()),
                     );
                   }
                   final item = conversations[index];

@@ -5,6 +5,7 @@ import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_error.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/app_services_scope.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
 import '../repositories/metadata_repository.dart';
@@ -199,7 +200,7 @@ class _MetadataPageState extends State<MetadataPage>
   }
 
   Widget _buildTablesTab() {
-    if (_tablesLoading) return const Center(child: CircularProgressIndicator());
+    if (_tablesLoading) return const Center(child: IAgentsLoadingMark());
     if (_tablesError != null) {
       return ListView(
         padding: const EdgeInsets.all(16),

@@ -7,6 +7,7 @@ import 'package:app_flutter/shared/state/app_services_scope.dart';
 import 'package:app_flutter/shared/state/backend_controller.dart';
 import 'package:app_flutter/shared/state/locale_controller.dart';
 import 'package:app_flutter/shared/state/session_controller.dart';
+import 'package:app_flutter/shared/widgets/animated_iagents_mark.dart';
 import 'package:app_flutter/shared/widgets/async_state_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -30,14 +31,14 @@ void main() {
     final parte = Completer<void>();
     await _pump(tester, name: 'demo', loader: () => parte.future);
 
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byType(IAgentsLoadingMark), findsOneWidget);
     expect(find.text('Página cargada'), findsNothing);
 
     parte.complete();
     await tester.pumpAndSettle();
 
     expect(find.text('Página cargada'), findsOneWidget);
-    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.byType(IAgentsLoadingMark), findsNothing);
   });
 
   testWidgets('un fallo de red deja reintentar la descarga', (tester) async {
@@ -94,7 +95,7 @@ void main() {
       },
     );
 
-    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.byType(IAgentsLoadingMark), findsNothing);
     expect(find.text('Página cargada'), findsOneWidget);
     expect(cargas, 1);
   });
@@ -118,7 +119,7 @@ void main() {
       pageLabel: 'Centinel cargado',
     );
 
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byType(IAgentsLoadingMark), findsOneWidget);
     expect(find.text('Centinel cargado'), findsNothing);
 
     centinel.complete();
@@ -148,7 +149,7 @@ void main() {
 
     admin.complete();
     await tester.pump();
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byType(IAgentsLoadingMark), findsOneWidget);
     expect(find.text('Centinel cargado'), findsNothing);
 
     centinel.complete();

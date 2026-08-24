@@ -20,10 +20,10 @@ import '../../../models/workflows/workflow_models.dart';
 import '../../../shared/graph/resource_graph_builder.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/app_services_scope.dart';
-import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
+import '../../../shared/widgets/iagents_async_view.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/resource_collection_view.dart';
 import '../../../shared/widgets/resource_toolbar.dart';
@@ -421,20 +421,6 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
   }
 
   Widget _buildAgentWorkflows(BuildContext context) {
-    if (_loading) return const AsyncStatePanel.loading();
-    if (_error != null) {
-      return ListView(
-        children: [
-          AsyncStatePanel.error(
-            title: _tx('workflows.error_loading_title'),
-            message: _error!,
-            retryLabel: _tx('common.retry'),
-            onRetry: _load,
-          ),
-        ],
-      );
-    }
-
     final filteredWorkflows = _filteredWorkflows;
     final toolbar = ResourceToolbar(
       actions: [
@@ -465,7 +451,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
       ),
     );
 
-    return ResourceCollectionView(
+    final content = ResourceCollectionView(
       header: toolbar,
       onRefresh: _load,
       itemCount: filteredWorkflows.length,
@@ -517,6 +503,15 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
               : () => _toggleWorkflowActive(item),
         );
       },
+    );
+    return IAgentsAsyncView(
+      loading: _loading,
+      localeController: _services.localeController,
+      error: _error,
+      errorTitle: _tx('workflows.error_loading_title'),
+      retryLabel: _tx('common.retry'),
+      onRetry: _load,
+      child: content,
     );
   }
 

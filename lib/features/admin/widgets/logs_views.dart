@@ -3,7 +3,7 @@ part of '../pages/logs_page.dart';
 extension _LogsViews on _LogsPageViewState {
   Widget _buildSummary() {
     if (_summaryLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: IAgentsLoadingMark());
     }
     if (_summaryError != null) {
       return Center(
@@ -69,9 +69,8 @@ extension _LogsViews on _LogsPageViewState {
                           .replaceAll('{err}', '${day.feErrors}'),
                     ),
                     Text(
-                      _tx(
-                        'logs.audit_count',
-                      ).replaceAll('{n}', '${day.audits}'),
+                      _tx('logs.audit_count')
+                          .replaceAll('{n}', '${day.audits}'),
                     ),
                     const Spacer(),
                     Row(
@@ -136,7 +135,7 @@ extension _LogsViews on _LogsPageViewState {
                   ? const SizedBox(
                       width: 16,
                       height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: IAgentsLoadingMark(),
                     )
                   : const Icon(Icons.download_outlined),
             ),
@@ -148,9 +147,8 @@ extension _LogsViews on _LogsPageViewState {
             if (_dateFilter != null)
               ActionChip(
                 label: Text(
-                  _tx(
-                    'logs.day_filter_chip',
-                  ).replaceAll('{date}', _dateFilter!),
+                  _tx('logs.day_filter_chip')
+                      .replaceAll('{date}', _dateFilter!),
                 ),
                 onPressed: _clearDateFilter,
               ),
@@ -167,7 +165,7 @@ extension _LogsViews on _LogsPageViewState {
         if (_viewerLoading)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 40),
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(child: IAgentsLoadingMark()),
           )
         else if (data == null)
           Text(_tx('logs.viewer_hint'))

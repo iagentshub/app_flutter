@@ -7,6 +7,13 @@
   "more_actions": "More actions",
   "select_all": "Select all",
   "clear": "Clear",
+  "loading_messages": {
+    "loading": "Loading…",
+    "processing": "Processing…",
+    "preparing": "Preparing your workspace…",
+    "improving": "Improving the user experience…",
+    "almost_ready": "Almost ready…"
+  },
   "nav": {
     "dashboard": "Dashboard",
     "agents": "Agents",

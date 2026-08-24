@@ -11,10 +11,11 @@ import '../../../shared/state/action_result.dart';
 import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/state/brand_icon_controller.dart';
 import '../../../shared/state/theme_controller.dart';
-import '../../../shared/widgets/async_state_panel.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/brand_icon.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
+import '../../../shared/widgets/iagents_async_view.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
@@ -274,80 +275,75 @@ class _ProfilePageState extends State<ProfilePage>
 
   @override
   Widget build(BuildContext context) {
-    if (_controller.loading) return const AsyncStatePanel.loading();
-    final error = _controller.error;
-    if (error != null) {
-      return ListView(
+    final bundle = _controller.bundle;
+    final Widget content;
+    if (bundle == null) {
+      content = Center(child: Text(_tx('profile.empty')));
+    } else {
+      final tabLabels = <String>[
+        _tx('profile.tab_account'),
+        _tx('profile.tab_social'),
+        _tx('profile.tab_groups'),
+        _tx('connections.tab_providers'),
+      ];
+      final section = _sectionIds[_tabController.index];
+      final token = _controller.token;
+
+      content = Column(
         children: [
-          AsyncStatePanel.error(
-            title: _tx('profile.error_title'),
-            message: error,
-            retryLabel: _tx('common.retry'),
-            onRetry: _controller.load,
+          Material(
+            color: FncColors.transparent,
+            child: TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              tabs: tabLabels.map((label) => Tab(text: label)).toList(),
+            ),
+          ),
+          Expanded(
+            // Proveedores trae su propio ListView con scroll interno,
+            // incompatible con el ListView de ancho acotado que usan el resto
+            // de secciones — se monta a pantalla completa.
+            child: section == 'providers'
+                ? (token == null || token.isEmpty
+                      ? const SizedBox.shrink()
+                      : ProvidersSection(
+                          apiClient: _services.apiClient,
+                          token: token,
+                          localeController: _services.localeController,
+                        ))
+                : RefreshIndicator(
+                    onRefresh: _controller.load,
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 700),
+                        child: ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.all(16),
+                          children: [
+                            switch (section) {
+                              'social' => _buildSocialSection(bundle),
+                              'groups' => _buildGroupsSection(bundle),
+                              _ => _buildAccountSection(bundle),
+                            },
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
           ),
         ],
       );
     }
-
-    final bundle = _controller.bundle;
-    if (bundle == null) {
-      return Center(child: Text(_tx('profile.empty')));
-    }
-
-    final tabLabels = <String>[
-      _tx('profile.tab_account'),
-      _tx('profile.tab_social'),
-      _tx('profile.tab_groups'),
-      _tx('connections.tab_providers'),
-    ];
-    final section = _sectionIds[_tabController.index];
-    final token = _controller.token;
-
-    return Column(
-      children: [
-        Material(
-          color: FncColors.transparent,
-          child: TabBar(
-            controller: _tabController,
-            isScrollable: true,
-            tabAlignment: TabAlignment.start,
-            tabs: tabLabels.map((label) => Tab(text: label)).toList(),
-          ),
-        ),
-        Expanded(
-          // Proveedores trae su propio ListView con scroll interno,
-          // incompatible con el ListView de ancho acotado que usan el resto
-          // de secciones — se monta a pantalla completa.
-          child: section == 'providers'
-              ? (token == null || token.isEmpty
-                    ? const SizedBox.shrink()
-                    : ProvidersSection(
-                        apiClient: _services.apiClient,
-                        token: token,
-                        localeController: _services.localeController,
-                      ))
-              : RefreshIndicator(
-                  onRefresh: _controller.load,
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 700),
-                      child: ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.all(16),
-                        children: [
-                          switch (section) {
-                            'social' => _buildSocialSection(bundle),
-                            'groups' => _buildGroupsSection(bundle),
-                            _ => _buildAccountSection(bundle),
-                          },
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-        ),
-      ],
+    return IAgentsAsyncView(
+      loading: _controller.loading,
+      localeController: _services.localeController,
+      error: _controller.error,
+      errorTitle: _tx('profile.error_title'),
+      retryLabel: _tx('common.retry'),
+      onRetry: _controller.load,
+      child: content,
     );
   }
 }

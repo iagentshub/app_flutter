@@ -8,6 +8,7 @@ import '../../../core/config/backend_url.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/backend_controller.dart';
 import '../../../shared/state/locale_controller.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
@@ -127,9 +128,8 @@ class _BackendConfigPageState extends State<BackendConfigPage> {
     final confirm = await showConfirmActionDialog(
       context,
       title: _tx('backend_config.delete_dialog_title'),
-      message: _tx(
-        'backend_config.delete_dialog_body',
-      ).replaceAll('{name}', backend.name),
+      message: _tx('backend_config.delete_dialog_body')
+          .replaceAll('{name}', backend.name),
       cancelLabel: _tx('backend_config.cancel'),
       confirmLabel: _tx('backend_config.delete_confirm'),
       destructive: true,
@@ -156,9 +156,8 @@ class _BackendConfigPageState extends State<BackendConfigPage> {
               children: [
                 Text(
                   _tx('backend_config.list_title'),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: Theme.of(context).textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
                 Text(

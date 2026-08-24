@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_error.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/lazy_expansion_tile.dart';
@@ -440,9 +441,9 @@ class _CentinelFunctionalTabState extends State<CentinelFunctionalTab>
           child: LinearProgressIndicator(
             value: _progress / 100,
             minHeight: 8,
-            backgroundColor: Theme.of(
-              context,
-            ).colorScheme.surfaceContainerHighest,
+            backgroundColor: Theme.of(context)
+                .colorScheme
+                .surfaceContainerHighest,
             valueColor: AlwaysStoppedAnimation(
               hasFailures ? FncColors.danger : FncColors.success,
             ),

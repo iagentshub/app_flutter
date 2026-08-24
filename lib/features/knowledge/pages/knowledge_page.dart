@@ -22,6 +22,7 @@ import '../../../shared/state/upload_limits.dart';
 import '../../../shared/state/watches_resource_changes.dart';
 import '../../../shared/tools/tool_language.dart';
 import '../../../shared/utils/memoized.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/attention_badge.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';

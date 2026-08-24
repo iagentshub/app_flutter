@@ -103,7 +103,6 @@ List<RouteBase> externalRoutes({
           sessionController: sessionController,
           localeController: localeController,
           authRepository: authRepository,
-          redirectTo: state.uri.queryParameters['redirect'],
         ),
       ),
     ),

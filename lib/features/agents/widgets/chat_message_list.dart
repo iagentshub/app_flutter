@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/chat/chat_models.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 import 'chat_message_bubble.dart';
 
 /// Transcripción de una conversación de chat con un agente, incluida la
@@ -20,6 +21,9 @@ class ChatMessageList extends StatelessWidget {
     required this.messageCopiedLabel,
     required this.interruptedLabel,
     required this.estimatedUsageLabel,
+    required this.tokensInputLabel,
+    required this.tokensOutputLabel,
+    required this.tokensUnitLabel,
     this.loadingOlder = false,
     super.key,
   });
@@ -40,6 +44,9 @@ class ChatMessageList extends StatelessWidget {
   final String messageCopiedLabel;
   final String interruptedLabel;
   final String estimatedUsageLabel;
+  final String tokensInputLabel;
+  final String tokensOutputLabel;
+  final String tokensUnitLabel;
   final bool loadingOlder;
 
   @override
@@ -53,7 +60,7 @@ class ChatMessageList extends StatelessWidget {
           if (index == 0) {
             return const Padding(
               padding: EdgeInsets.all(12),
-              child: Center(child: CircularProgressIndicator()),
+              child: Center(child: IAgentsLoadingMark()),
             );
           }
           index -= 1;
@@ -81,6 +88,9 @@ class ChatMessageList extends StatelessWidget {
       messageCopiedLabel: messageCopiedLabel,
       interruptedLabel: interruptedLabel,
       estimatedUsageLabel: estimatedUsageLabel,
+      tokensInputLabel: tokensInputLabel,
+      tokensOutputLabel: tokensOutputLabel,
+      tokensUnitLabel: tokensUnitLabel,
     );
   }
 }

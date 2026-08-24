@@ -34,7 +34,7 @@ extension _ExploreCollectionViews on _ExplorePageState {
     }
 
     if (_controller.loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: IAgentsLoadingMark());
     }
 
     return _buildScrollView();
@@ -94,7 +94,7 @@ extension _ExploreCollectionViews on _ExplorePageState {
                 child: _controller.resourcesLoadingMore
                     ? const Padding(
                         padding: EdgeInsets.all(12),
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: IAgentsLoadingMark(),
                       )
                     : SecondaryButton(
                         onPressed: () =>
@@ -122,9 +122,8 @@ extension _ExploreCollectionViews on _ExplorePageState {
           children: [
             Text(
               linkedMatches > 0
-                  ? _tx(
-                      'explore.empty_all_linked',
-                    ).replaceAll('{count}', '$linkedMatches')
+                  ? _tx('explore.empty_all_linked')
+                        .replaceAll('{count}', '$linkedMatches')
                   : _tx('explore.empty'),
             ),
             if (linkedMatches > 0) ...[
@@ -153,7 +152,7 @@ extension _ExploreCollectionViews on _ExplorePageState {
     }
 
     if (_controller.usersLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: IAgentsLoadingMark());
     }
 
     return _buildUsersScrollView();
@@ -190,7 +189,7 @@ extension _ExploreCollectionViews on _ExplorePageState {
                 child: _controller.usersLoadingMore
                     ? const Padding(
                         padding: EdgeInsets.all(12),
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: IAgentsLoadingMark(),
                       )
                     : SecondaryButton(
                         onPressed: () =>

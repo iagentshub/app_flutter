@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'animated_iagents_mark.dart';
 import 'responsive_masonry_grid.dart';
 
 /// Rejilla de tarjetas dentro de un scroll de slivers, con su margen habitual.
@@ -133,7 +134,7 @@ class ResourceCollectionView extends StatelessWidget {
           const SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.all(16),
-              child: Center(child: CircularProgressIndicator()),
+              child: Center(child: IAgentsLoadingMark()),
             ),
           ),
       ],

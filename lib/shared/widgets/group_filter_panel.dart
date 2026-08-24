@@ -7,6 +7,7 @@ import '../../features/manager/repositories/manager_repository.dart';
 import '../../models/manager/group_models.dart';
 import '../i18n/translated_texts.dart';
 import '../state/locale_controller.dart';
+import 'animated_iagents_mark.dart';
 import 'motion/app_modal.dart';
 import 'responsive_dialog.dart';
 
@@ -133,9 +134,8 @@ class _GroupFilterDialogState extends State<_GroupFilterDialog> {
       await _load();
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(_tx('groups.create_error'))));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(_tx('groups.create_error'))));
     }
   }
 
@@ -162,7 +162,7 @@ class _GroupFilterDialogState extends State<_GroupFilterDialog> {
         width: dialogContentWidth(context, 360),
         height: dialogContentHeight(context, 420),
         child: _loading
-            ? const Center(child: CircularProgressIndicator())
+            ? const Center(child: IAgentsLoadingMark())
             : ListView(
                 children: [
                   _item(context, null, _tx('groups.all')),

@@ -1,3 +1,4 @@
+import 'package:app_flutter/shared/widgets/animated_iagents_mark.dart';
 import 'package:app_flutter/shared/widgets/async_state_panel.dart';
 import 'package:app_flutter/shared/widgets/confirm_action_dialog.dart';
 import 'package:app_flutter/shared/widgets/resource_toolbar.dart';
@@ -30,7 +31,7 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(home: Scaffold(body: AsyncStatePanel.loading())),
     );
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byType(IAgentsLoadingMark), findsOneWidget);
   });
 
   testWidgets('showConfirmActionDialog devuelve la decisión', (tester) async {

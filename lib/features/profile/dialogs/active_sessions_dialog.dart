@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../models/profile/profile_models.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
@@ -111,7 +112,7 @@ class _ActiveSessionsDialogState extends State<_ActiveSessionsDialog>
         child: _loading
             ? const SizedBox(
                 height: 160,
-                child: Center(child: CircularProgressIndicator()),
+                child: Center(child: IAgentsLoadingMark()),
               )
             : SingleChildScrollView(
                 child: Column(

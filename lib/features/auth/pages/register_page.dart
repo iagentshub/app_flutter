@@ -12,6 +12,7 @@ import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_error.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../../utils/validators.dart';
@@ -52,14 +53,18 @@ TextStyle _texto(
   letterSpacing: espaciado,
 );
 
-TextStyle _mono(double tamano, double peso, {Color? color, double? espaciado}) =>
-    TextStyle(
-      fontFamily: FncFonts.geistMono,
-      fontSize: tamano,
-      fontVariations: FncFonts.wght(peso),
-      color: color,
-      letterSpacing: espaciado,
-    );
+TextStyle _mono(
+  double tamano,
+  double peso, {
+  Color? color,
+  double? espaciado,
+}) => TextStyle(
+  fontFamily: FncFonts.geistMono,
+  fontSize: tamano,
+  fontVariations: FncFonts.wght(peso),
+  color: color,
+  letterSpacing: espaciado,
+);
 
 OutlineInputBorder _borde(Color color) => OutlineInputBorder(
   borderRadius: BorderRadius.circular(_radioControl),
@@ -136,7 +141,8 @@ class _RegisterPageState extends State<RegisterPage> with StateMessaging {
       ..onTap = () => _abrirPaginaPublica('/terms');
     _tocarPrivacidad = TapGestureRecognizer()
       ..onTap = () => _abrirPaginaPublica('/privacy');
-    _tocarInicio = TapGestureRecognizer()..onTap = () => _abrirPaginaPublica('/');
+    _tocarInicio = TapGestureRecognizer()
+      ..onTap = () => _abrirPaginaPublica('/');
     _loadPlatformSettings();
   }
 

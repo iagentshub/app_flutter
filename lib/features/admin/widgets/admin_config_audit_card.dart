@@ -162,7 +162,7 @@ class _AdminConfigAuditCardState extends State<_AdminConfigAuditCard> {
   Widget build(BuildContext context) {
     if (_loading) {
       return _sectionCard(_tx('admin.config_section_audit'), const [
-        Center(child: CircularProgressIndicator()),
+        Center(child: IAgentsLoadingMark()),
       ]);
     }
     if (_error != null) {
@@ -191,9 +191,8 @@ class _AdminConfigAuditCardState extends State<_AdminConfigAuditCard> {
             child: Text(
               _showOk
                   ? _tx('admin.config_audit_hide_ok')
-                  : _tx(
-                      'admin.config_audit_show_ok',
-                    ).replaceAll('{count}', '${okChecks.length}'),
+                  : _tx('admin.config_audit_show_ok')
+                        .replaceAll('{count}', '${okChecks.length}'),
             ),
           ),
         ),

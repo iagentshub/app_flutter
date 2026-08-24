@@ -1,5 +1,6 @@
 import 'package:app_flutter/features/agents/widgets/chat_message_bubble.dart';
 import 'package:app_flutter/models/chat/chat_models.dart';
+import 'package:app_flutter/shared/widgets/animated_iagents_mark.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -48,6 +49,9 @@ void main() {
             messageCopiedLabel: 'Mensaje copiado',
             interruptedLabel: 'Respuesta interrumpida',
             estimatedUsageLabel: 'Uso estimado',
+            tokensInputLabel: 'Entrada',
+            tokensOutputLabel: 'Salida',
+            tokensUnitLabel: 'tokens',
           ),
         ),
       );
@@ -89,6 +93,9 @@ void main() {
               messageCopiedLabel: 'Mensaje copiado',
               interruptedLabel: 'Respuesta interrumpida',
               estimatedUsageLabel: 'Uso estimado',
+              tokensInputLabel: 'Entrada',
+              tokensOutputLabel: 'Salida',
+              tokensUnitLabel: 'tokens',
             ),
           ),
         );
@@ -123,13 +130,16 @@ void main() {
             messageCopiedLabel: 'Mensaje copiado',
             interruptedLabel: 'Respuesta interrumpida',
             estimatedUsageLabel: 'Uso estimado',
+            tokensInputLabel: 'Entrada',
+            tokensOutputLabel: 'Salida',
+            tokensUnitLabel: 'tokens',
           ),
         ),
       );
 
       // `pumpAndSettle` no vale aquí: el spinner indeterminado nunca deja de
       // animar, así que se avanza un tiempo acotado en su lugar.
-      await tester.longPress(find.byType(CircularProgressIndicator));
+      await tester.longPress(find.byType(IAgentsLoadingMark));
       await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.text('Responder'), findsNothing);
@@ -155,6 +165,9 @@ void main() {
               messageCopiedLabel: 'Mensaje copiado',
               interruptedLabel: 'Respuesta interrumpida',
               estimatedUsageLabel: 'Uso estimado',
+              tokensInputLabel: 'Entrada',
+              tokensOutputLabel: 'Salida',
+              tokensUnitLabel: 'tokens',
             ),
           ),
         );
@@ -187,6 +200,9 @@ void main() {
             messageCopiedLabel: 'Mensaje copiado',
             interruptedLabel: 'Respuesta interrumpida',
             estimatedUsageLabel: 'Uso estimado',
+            tokensInputLabel: 'Entrada',
+            tokensOutputLabel: 'Salida',
+            tokensUnitLabel: 'tokens',
           ),
         ),
       );
@@ -195,6 +211,56 @@ void main() {
       expect(find.text('Respuesta interrumpida'), findsOneWidget);
       expect(find.text('Uso estimado'), findsOneWidget);
       expect(find.byIcon(Icons.stop_circle_outlined), findsOneWidget);
+    });
+
+    testWidgets('separa visualmente hora y tokens del cuerpo en móvil', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(360, 700);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final message = ChatMessage(
+        role: 'assistant',
+        content: 'Respuesta final del agente.',
+        tokensIn: 881,
+        tokensOut: 4440,
+        createdAt: DateTime(2026, 1, 1, 18, 59),
+      );
+
+      await tester.pumpWidget(
+        _host(
+          ChatMessageBubble(
+            message: message,
+            onReply: (_) {},
+            copyCodeTooltip: 'Copiar código',
+            replyActionLabel: 'Responder',
+            copyActionLabel: 'Copiar',
+            messageCopiedLabel: 'Mensaje copiado',
+            interruptedLabel: 'Respuesta interrumpida',
+            estimatedUsageLabel: 'Uso estimado',
+            tokensInputLabel: 'Entrada',
+            tokensOutputLabel: 'Salida',
+            tokensUnitLabel: 'tokens',
+          ),
+        ),
+      );
+
+      expect(find.byKey(const Key('chat-message-metadata')), findsOneWidget);
+      expect(find.byKey(const Key('chat-message-token-usage')), findsOneWidget);
+      expect(find.byKey(const Key('chat-message-time')), findsOneWidget);
+      expect(find.byIcon(Icons.data_usage_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.schedule), findsOneWidget);
+      expect(find.text('Entrada 881 · Salida 4440 tokens'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      final metadata = tester.widget<Container>(
+        find.byKey(const Key('chat-message-metadata')),
+      );
+      expect(metadata.margin, const EdgeInsets.only(top: 12));
+      final decoration = metadata.decoration! as BoxDecoration;
+      expect((decoration.border! as Border).top.style, BorderStyle.solid);
     });
   });
 }

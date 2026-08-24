@@ -9,9 +9,7 @@ extension _RegisterForm on _RegisterPageState {
     if (!_configLoaded) {
       contenido = const Padding(
         padding: EdgeInsets.all(32),
-        child: Center(
-          child: CircularProgressIndicator(color: FncColors.publicCoral),
-        ),
+        child: Center(child: IAgentsLoadingMark()),
       );
     } else if (!_registrationEnabled) {
       contenido = _contenidoCerrado();
@@ -43,10 +41,7 @@ extension _RegisterForm on _RegisterPageState {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            _tx('register.title'),
-            style: _tituloTarjeta(),
-          ),
+          Text(_tx('register.title'), style: _tituloTarjeta()),
           const SizedBox(height: 6),
           Text(
             _tx('register.card_sub'),
@@ -57,10 +52,7 @@ extension _RegisterForm on _RegisterPageState {
               alto: 1.5,
             ),
           ),
-          if (_message != null) ...[
-            const SizedBox(height: 22),
-            _banner(),
-          ],
+          if (_message != null) ...[const SizedBox(height: 22), _banner()],
           const SizedBox(height: 26),
           _CampoPublico(
             label: _tx('register.username_label'),

@@ -14,7 +14,7 @@ extension _ToolSections on _KnowledgePageState {
   }
 
   Widget _buildToolsSection() {
-    if (_toolsLoading) return const Center(child: CircularProgressIndicator());
+    if (_toolsLoading) return const Center(child: IAgentsLoadingMark());
     if (_toolsError != null) return _buildToolsErrorState();
 
     final filteredTools = _filteredTools;

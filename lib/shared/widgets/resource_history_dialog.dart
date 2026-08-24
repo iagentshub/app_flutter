@@ -5,6 +5,7 @@ import '../../models/common/resource_version.dart';
 import '../i18n/locale_loader.dart';
 import '../repositories/resource_version_repository.dart';
 import '../state/locale_controller.dart';
+import 'animated_iagents_mark.dart';
 import 'motion/app_modal.dart';
 import 'responsive_dialog.dart';
 
@@ -117,9 +118,8 @@ class _ResourceHistoryDialogState extends State<_ResourceHistoryDialog> {
       builder: (context) => AlertDialog(
         title: Text(_tx('history.restore_title')),
         content: Text(
-          _tx(
-            'history.restore_confirm',
-          ).replaceAll('{version}', '${item.version}'),
+          _tx('history.restore_confirm')
+              .replaceAll('{version}', '${item.version}'),
         ),
         actions: [
           TextButton(
@@ -149,9 +149,8 @@ class _ResourceHistoryDialogState extends State<_ResourceHistoryDialog> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _restoring = null);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(_tx('history.restore_error'))));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(_tx('history.restore_error'))));
     }
   }
 
@@ -163,7 +162,7 @@ class _ResourceHistoryDialogState extends State<_ResourceHistoryDialog> {
         width: dialogContentWidth(context, 420),
         height: dialogContentHeight(context, 420),
         child: _loading
-            ? const Center(child: CircularProgressIndicator())
+            ? const Center(child: IAgentsLoadingMark())
             : _error != null
             ? Text(_error!)
             : _versions.isEmpty
@@ -177,9 +176,8 @@ class _ResourceHistoryDialogState extends State<_ResourceHistoryDialog> {
                   return ListTile(
                     dense: true,
                     title: Text(
-                      _tx(
-                        'history.version_label',
-                      ).replaceAll('{version}', '${item.version}'),
+                      _tx('history.version_label')
+                          .replaceAll('{version}', '${item.version}'),
                       style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                     subtitle: Text(
@@ -200,9 +198,7 @@ class _ResourceHistoryDialogState extends State<_ResourceHistoryDialog> {
                                 ? const SizedBox(
                                     width: 16,
                                     height: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
+                                    child: IAgentsLoadingMark(),
                                   )
                                 : Text(_tx('history.restore_action')),
                           ),

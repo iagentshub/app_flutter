@@ -17,7 +17,9 @@ import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/state/backend_controller.dart';
 import '../../../shared/state/dashboard_edit_state.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/iagents_loading_indicator.dart';
 import '../../../shared/widgets/kpi/kpi_row_tile.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
@@ -241,109 +243,118 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Center(child: CircularProgressIndicator());
     if (_error != null || _data == null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(_error ?? _tx('dashboard.no_data')),
-            const SizedBox(height: 12),
-            PrimaryButton.icon(
-              onPressed: _load,
-              icon: const Icon(Icons.refresh),
-              label: Text(_tx('common.retry')),
-            ),
-          ],
-        ),
+      return IAgentsLoadingOverlay(
+        loading: _loading,
+        localeController: _services.localeController,
+        child: _loading
+            ? const SizedBox.expand()
+            : Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(_error ?? _tx('dashboard.no_data')),
+                    const SizedBox(height: 12),
+                    PrimaryButton.icon(
+                      onPressed: _load,
+                      icon: const Icon(Icons.refresh),
+                      label: Text(_tx('common.retry')),
+                    ),
+                  ],
+                ),
+              ),
       );
     }
 
     final data = _data!;
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              if (_editing)
-                Expanded(
-                  child: Text(
-                    _tx('dashboard.edit_hint'),
-                    style: const TextStyle(
-                      fontSize: FncFonts.size12,
-                      color: FncColors.materialGrey,
-                    ),
-                  ),
-                )
-              else
-                const Spacer(),
-              TertiaryButton.icon(
-                onPressed: _toggleEditing,
-                icon: Icon(_editing ? Icons.check : Icons.tune),
-                label: Text(
-                  _editing
-                      ? _tx('dashboard.done_btn')
-                      : _tx('dashboard.customize_btn'),
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (_banners.isNotEmpty)
+    return IAgentsLoadingOverlay(
+      loading: _loading,
+      localeController: _services.localeController,
+      child: Column(
+        children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: Column(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                for (final banner in _banners)
-                  _NotificationBannerCard(banner: banner),
+                if (_editing)
+                  Expanded(
+                    child: Text(
+                      _tx('dashboard.edit_hint'),
+                      style: const TextStyle(
+                        fontSize: FncFonts.size12,
+                        color: FncColors.materialGrey,
+                      ),
+                    ),
+                  )
+                else
+                  const Spacer(),
+                TertiaryButton.icon(
+                  onPressed: _toggleEditing,
+                  icon: Icon(_editing ? Icons.check : Icons.tune),
+                  label: Text(
+                    _editing
+                        ? _tx('dashboard.done_btn')
+                        : _tx('dashboard.customize_btn'),
+                  ),
+                ),
               ],
             ),
           ),
-        Expanded(
-          child: RefreshIndicator(
-            onRefresh: _load,
-            child: _layout.isEmpty
-                ? ListView(
-                    padding: const EdgeInsets.all(16),
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 40),
-                        child: Center(
-                          child: Text(_tx('dashboard.empty_layout')),
-                        ),
-                      ),
-                    ],
-                  )
-                : _editing
-                ? ReorderableListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    buildDefaultDragHandles: false,
-                    itemCount: _layout.length,
-                    onReorderItem: _reorder,
-                    itemBuilder: (context, index) =>
-                        _buildCard(_layout[index], data, index: index),
-                  )
-                : CustomScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    slivers: [
-                      SliverPadding(
-                        padding: const EdgeInsets.all(16),
-                        sliver: SliverToBoxAdapter(
-                          child: ResponsiveDashboardGrid(
-                            items: _layout,
-                            itemBuilder: (context, instance, index) =>
-                                _buildCard(instance, data, inGrid: true),
+          if (_banners.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Column(
+                children: [
+                  for (final banner in _banners)
+                    _NotificationBannerCard(banner: banner),
+                ],
+              ),
+            ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _load,
+              child: _layout.isEmpty
+                  ? ListView(
+                      padding: const EdgeInsets.all(16),
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 40),
+                          child: Center(
+                            child: Text(_tx('dashboard.empty_layout')),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    )
+                  : _editing
+                  ? ReorderableListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      buildDefaultDragHandles: false,
+                      itemCount: _layout.length,
+                      onReorderItem: _reorder,
+                      itemBuilder: (context, index) =>
+                          _buildCard(_layout[index], data, index: index),
+                    )
+                  : CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        SliverPadding(
+                          padding: const EdgeInsets.all(16),
+                          sliver: SliverToBoxAdapter(
+                            child: ResponsiveDashboardGrid(
+                              items: _layout,
+                              itemBuilder: (context, instance, index) =>
+                                  _buildCard(instance, data, inGrid: true),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

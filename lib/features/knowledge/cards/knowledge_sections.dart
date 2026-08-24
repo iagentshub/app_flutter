@@ -11,7 +11,7 @@ extension _KnowledgeSections on _KnowledgePageState {
   }
 
   Widget _buildDocumentsSection() {
-    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (_loading) return const Center(child: IAgentsLoadingMark());
     if (_error != null) return _buildKnowledgeErrorState();
 
     final collection = _knowledgeCollection;
@@ -104,7 +104,7 @@ extension _KnowledgeSections on _KnowledgePageState {
                           ? const SizedBox(
                               width: 16,
                               height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                              child: IAgentsLoadingMark(),
                             )
                           : const Icon(Icons.add),
                       tooltip: _tx('knowledge.add_content'),
@@ -174,7 +174,7 @@ extension _KnowledgeSections on _KnowledgePageState {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const CircularProgressIndicator(),
+                                const IAgentsLoadingMark(),
                                 const SizedBox(height: 16),
                                 Text(
                                   _packOperationMessage!,
@@ -225,7 +225,7 @@ extension _KnowledgeSections on _KnowledgePageState {
   }
 
   Widget _buildSkillsSection() {
-    if (_skillsLoading) return const Center(child: CircularProgressIndicator());
+    if (_skillsLoading) return const Center(child: IAgentsLoadingMark());
 
     if (_skillsError != null) {
       // El título estaba escrito a mano en español, sin pasar por el
@@ -522,5 +522,4 @@ extension _KnowledgeSections on _KnowledgePageState {
         .replaceAll('{shown}', item.charCount.toString())
         .replaceAll('{total}', item.sourceCharCount.toString());
   }
-
 }

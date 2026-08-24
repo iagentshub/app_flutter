@@ -15,7 +15,7 @@ extension _PromptSections on _KnowledgePageState {
 
   Widget _buildPromptsSection() {
     if (_promptsLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: IAgentsLoadingMark());
     }
     if (_promptsError != null) return _buildPromptsErrorState();
 

@@ -5,14 +5,17 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 import 'app/app.dart';
 import 'core/config/runtime_config.dart';
 import 'core/platform/url_strategy.dart';
+import 'shared/i18n/locale_loader.dart';
 import 'shared/state/backend_controller.dart';
 import 'shared/state/brand_icon_controller.dart';
 import 'shared/state/locale_controller.dart';
 import 'shared/state/session_controller.dart';
 import 'shared/state/theme_controller.dart';
+import 'shared/widgets/animated_iagents_mark.dart';
 import 'shared/widgets/brand_icon.dart';
 import 'shared/widgets/launch_splash.dart';
 import 'shared/widgets/terminal_view_transition.dart';
+import 'utils/i18n.dart';
 
 Future<void> main() async {
   configureUrlStrategy();
@@ -43,6 +46,16 @@ Future<void> main() async {
   final localeController = results[2] as LocaleController;
   final brandIconController = results[3] as BrandIconController;
   final themeController = results[4] as ThemeController;
+
+  // El cargador de marca puede aparecer en el primer frame de App (por
+  // ejemplo al restaurar sesión). Se precarga su pequeño bundle durante el
+  // splash para que el logo y «Cargando…» nazcan juntos, sin un fotograma
+  // inicial vacío ni textos duplicados en Dart.
+  final commonTexts = await LocaleLoader.load(
+    languageCode: localeController.languageCode,
+    namespace: 'common',
+  );
+  I18n.registrar('common', commonTexts);
 
   runApp(
     _BootApp(
@@ -114,25 +127,27 @@ class _BootAppState extends State<_BootApp> {
   Widget build(BuildContext context) {
     return ThemeControllerScope(
       controller: widget.themeController,
-      child: BrandIconScope(
-        controller: widget.brandIconController,
-        child: _showSplash
-            ? MaterialApp(
-                debugShowCheckedModeBanner: false,
-                home: LaunchSplash(
-                  backendController: widget.backendController,
-                  onFinished: _onSplashFinished,
+      child: IAgentsLoadingAnimationScope(
+        child: BrandIconScope(
+          controller: widget.brandIconController,
+          child: _showSplash
+              ? MaterialApp(
+                  debugShowCheckedModeBanner: false,
+                  home: LaunchSplash(
+                    backendController: widget.backendController,
+                    onFinished: _onSplashFinished,
+                  ),
+                )
+              : TerminalViewTransition(
+                  child: App(
+                    backendController: widget.backendController,
+                    sessionController: widget.sessionController,
+                    localeController: widget.localeController,
+                    themeController: widget.themeController,
+                    initialLocation: widget.initialLocation,
+                  ),
                 ),
-              )
-            : TerminalViewTransition(
-                child: App(
-                  backendController: widget.backendController,
-                  sessionController: widget.sessionController,
-                  localeController: widget.localeController,
-                  themeController: widget.themeController,
-                  initialLocation: widget.initialLocation,
-                ),
-              ),
+        ),
       ),
     );
   }
