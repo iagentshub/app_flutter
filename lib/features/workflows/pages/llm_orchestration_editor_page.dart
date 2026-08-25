@@ -409,7 +409,7 @@ class _LlmOrchestrationEditorPageState
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Padding(
-                                      padding: EdgeInsets.only(top: 12),
+                                      padding: const EdgeInsets.only(top: 12),
                                       child: dragHandle,
                                     ),
                                     const SizedBox(width: 10),
