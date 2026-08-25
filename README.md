@@ -18,7 +18,7 @@ flutter pub get
 flutter run
 ```
 
-Requires the stable Flutter SDK (Dart 3.10+). Run `flutter doctor` to check what your target platform still needs.
+Requires the stable Flutter SDK (Dart 3.13+). Run `flutter doctor` to check what your target platform still needs.
 
 **Verification**
 

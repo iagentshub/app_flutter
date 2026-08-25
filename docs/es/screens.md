@@ -52,7 +52,7 @@ Cada una tiene su gemela en inglés con el prefijo `/en`.
 | Orquestaciones | `/orchestrations` | Encadenar agentes en un flujo, con editor visual |
 | Conexiones | `/connections` | Credenciales de IA, máquinas y bases de datos, y pestaña Proveedores para vincular cuentas externas (Anthropic, OpenAI, GitHub Copilot, Ollama, NVIDIA, Google) y elegir qué modelos traer; para Ollama se pueden descubrir modelos en vivo, y las conexiones de tipo iAgents Hub se pueden sincronizar con el hub remoto |
 | Memoria | `/memory` | Lo que los agentes recuerdan |
-| Conocimiento | `/knowledge` | Documentos y habilidades que los agentes consultan |
+| Conocimiento | `/knowledge` | Skills, Prompts, Tools, Documents y Memory que usan los agentes |
 | Explorar | `/explore` | Recursos compartidos por la comunidad, con filtros de tipo, categoría, idioma y labels |
 | Etiquetas | `/labels` | Catálogo plegable y búsqueda de labels de los recursos propios mediante la barra y el diálogo de filtros comunes, incluido el idioma del contenido |
 | Gestión | `/manager` | Espacios de trabajo, grupos e invitaciones |
@@ -69,6 +69,20 @@ significa que el idioma no aplica o no se ha declarado. Las herramientas
 mantienen separado su lenguaje de programación (Python, Shell o C++) del idioma
 del contenido. Explorar y Etiquetas reutilizan el desplegable de tipos de Admin
 y muestran los filtros múltiples en desplegables en vez de filas de botones.
+
+### Tools en el dispositivo
+
+Una Tool puede aportar instrucciones y, además, un script Python/Shell o un
+artefacto nativo identificado históricamente como `cpp`. La app obtiene del
+backend el catálogo de runtimes, comprueba sistema operativo y arquitectura, y
+verifica el SHA-256 durante la descarga del binario.
+
+La ejecución automática local todavía no está habilitada. Que una Tool aparezca
+como compatible significa que el dispositivo podrá ejecutarla cuando exista el
+ejecutor aislado y con permisos explícitos; hoy sirve como forma de enseñar al
+agente cómo realizar la tarea y de descargar su implementación autorizada. Las
+etiquetas existentes `review`, `approved` y `quarantine` indican si puede
+compartirse o consumirse.
 
 ---
 

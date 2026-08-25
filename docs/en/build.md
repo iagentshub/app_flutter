@@ -11,7 +11,7 @@
 
 ## Requirements
 
-Flutter SDK, stable channel, with Dart 3.10 or newer. Each target platform adds its own: Android Studio and a JDK for Android, Xcode for iOS and macOS, Visual Studio with the C++ workload for Windows.
+Flutter SDK, stable channel, with Dart 3.13 or newer. Each target platform adds its own: Android Studio and a JDK for Android, Xcode for iOS and macOS, Visual Studio with the C++ workload for Windows.
 
 To see what is missing:
 
@@ -39,7 +39,8 @@ flutter analyze
 flutter test
 ```
 
-Both must pass before calling a change done. `flutter analyze` currently carries a known list of style notices, none of them errors; what matters is that your change does not make it longer.
+Both must pass before calling a change done. `flutter analyze` must finish with
+no warnings or errors; a new warning is a regression, not an accepted baseline.
 
 ---
 

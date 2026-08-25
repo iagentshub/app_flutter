@@ -91,6 +91,26 @@ class AdminResourcesRepository extends ApiRepository {
     );
   }
 
+  Future<Map<String, dynamic>> getAdminTool(String token, String toolId) async {
+    final response = await apiClient.get(
+      '/api/admin/tools/${Uri.encodeComponent(toolId)}',
+      gaToken: token,
+    );
+    return response.json;
+  }
+
+  Future<void> setAdminToolSecurity(
+    String token,
+    String toolId,
+    String state,
+  ) async {
+    await apiClient.put(
+      '/api/admin/tools/${Uri.encodeComponent(toolId)}/security',
+      gaToken: token,
+      body: {'state': state},
+    );
+  }
+
   // ── Memoria ───────────────────────────────────────────────────────────
 
   Future<void> deleteAdminMemory(String token, String memoryId) async {

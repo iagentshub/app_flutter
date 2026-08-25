@@ -1,3 +1,4 @@
+import '../../../core/config/tool_runtimes.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../core/network/csrf_token.dart';
@@ -175,6 +176,7 @@ class AuthRepository {
     // se hace desde el splash, el login, el registro y el shell, y repartir la
     // captura entre los cuatro es la forma de que al cuarto se le olvide.
     UploadLimits.updateFromPlatform(response.json);
+    ToolRuntimeCatalog.updateFromPlatform(response.json);
     return response.json;
   }
 

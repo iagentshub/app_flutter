@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import '../../../core/network/scoped_resource_repository.dart';
 import '../../../models/tools/tool_models.dart';
 
@@ -40,32 +38,39 @@ class ToolsRepository extends ScopedResourceRepository<ToolItem> {
   /// Sube el binario de una tool `cpp`, segundo paso del flujo en dos pasos
   /// (`POST /api/tools/{scope}` para los metadatos, luego este endpoint) —
   /// mismo mecanismo de multipart que `KnowledgeRepository.uploadDocument`.
-  Future<Map<String, dynamic>> uploadToolBinary(
+  Future<Map<String, dynamic>> uploadToolBinaryStream(
     String token,
     String scope,
     String toolId, {
     required String fileName,
-    required List<int> fileBytes,
+    required Stream<List<int>> fileStream,
+    required int fileLength,
   }) async {
-    final response = await apiClient.postMultipart(
+    final response = await apiClient.postMultipartStream(
       '/api/tools/${Uri.encodeComponent(scope)}/${Uri.encodeComponent(toolId)}/binary',
       fieldName: 'file',
       fileName: fileName,
-      fileBytes: fileBytes,
+      fileStream: fileStream,
+      fileLength: fileLength,
       gaToken: token,
     );
     return response.json;
   }
 
-  /// Descarga el binario de una tool `cpp` para guardarlo localmente.
-  Future<({Uint8List bytes, String? filename})> downloadToolBinary(
+  Future<
+    ({
+      Stream<List<int>> stream,
+      String? filename,
+      int? contentLength,
+      String? sha256,
+    })
+  >
+  downloadToolBinaryStream(
     String token,
     String scope,
     String toolId,
-  ) async {
-    return apiClient.getBytes(
-      '/api/tools/${Uri.encodeComponent(scope)}/${Uri.encodeComponent(toolId)}/binary',
-      gaToken: token,
-    );
-  }
+  ) => apiClient.getByteStream(
+    '/api/tools/${Uri.encodeComponent(scope)}/${Uri.encodeComponent(toolId)}/binary',
+    gaToken: token,
+  );
 }

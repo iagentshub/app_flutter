@@ -18,6 +18,7 @@ import '../shared/state/dashboard_edit_state.dart';
 import '../shared/state/locale_controller.dart';
 import '../shared/state/session_controller.dart';
 import '../shared/state/theme_controller.dart';
+import '../shared/widgets/iagents_loading_indicator.dart';
 import 'router/router.dart';
 import 'theme/app_theme.dart';
 
@@ -66,6 +67,7 @@ class _AppState extends State<App> {
   late final ResourceExecutionsController _resourceExecutionsController;
   late final TranslatedTexts _errorTexts;
   bool _sessionValidationInFlight = false;
+  bool _loginDashboardHandoff = false;
 
   @override
   void initState() {
@@ -108,9 +110,13 @@ class _AppState extends State<App> {
       dashboardRepository: _dashboardRepository,
       apiClient: _apiClient,
       dashboardEditState: _dashboardEditState,
+      onLoginLoadingChanged: _setLoginDashboardHandoff,
+      hasLoginDashboardHandoff: () => _loginDashboardHandoff,
+      onDashboardReady: _finishLoginDashboardHandoff,
       onRetrySession: _revalidatePersistedSession,
       onUseAnotherAccount: _discardPersistedSession,
     );
+    _router.routeInformationProvider.addListener(_onRouteChanged);
     final initialLocation = widget.initialLocation;
     if (initialLocation != null &&
         initialLocation !=
@@ -118,6 +124,25 @@ class _AppState extends State<App> {
       _router.go(initialLocation);
     }
     _revalidatePersistedSession();
+  }
+
+  void _setLoginDashboardHandoff(bool loading) {
+    if (!mounted || _loginDashboardHandoff == loading) return;
+    setState(() => _loginDashboardHandoff = loading);
+  }
+
+  void _finishLoginDashboardHandoff() {
+    _setLoginDashboardHandoff(false);
+  }
+
+  void _onRouteChanged() {
+    if (!_loginDashboardHandoff) return;
+    final path = _router.routeInformationProvider.value.uri.path;
+    if (path == '/dashboard') return;
+    if (path == '/login' && widget.sessionController.isLoggedIn) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _finishLoginDashboardHandoff();
+    });
   }
 
   Future<void> _revalidatePersistedSession() async {
@@ -196,6 +221,7 @@ class _AppState extends State<App> {
 
   @override
   void dispose() {
+    _router.routeInformationProvider.removeListener(_onRouteChanged);
     _router.dispose();
     _errorTexts.dispose();
     _dashboardEditState.dispose();
@@ -235,6 +261,16 @@ class _AppState extends State<App> {
           ),
           localizationsDelegates: GlobalMaterialLocalizations.delegates,
           routerConfig: _router,
+          builder: (context, child) => Material(
+            type: MaterialType.transparency,
+            child: IAgentsLoadingOverlay(
+              key: const Key('login-dashboard-loading-overlay'),
+              loading: _loginDashboardHandoff,
+              localeController: widget.localeController,
+              logoSize: 96,
+              child: child ?? const SizedBox.shrink(),
+            ),
+          ),
         ),
       ),
     );

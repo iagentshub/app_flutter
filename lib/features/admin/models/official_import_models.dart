@@ -1,3 +1,7 @@
+import '../../../core/config/content_languages.dart';
+import '../../../core/config/tool_runtimes.dart';
+import '../../../models/tools/tool_models.dart';
+
 class OfficialSource {
   const OfficialSource({
     required this.id,
@@ -81,35 +85,12 @@ class OfficialSource {
   };
 }
 
-const _contentLanguageLabels = {
-  'lang_es',
-  'lang_en',
-  'lang_fr',
-  'lang_de',
-  'lang_pt',
-  'lang_it',
-  'lang_zh',
-  'lang_ja',
-  'lang_ar',
-};
-const _toolLanguages = {'python', 'shell', 'cpp'};
-
-String _knownValue(Object? value, Set<String> allowed) {
-  final normalized = '${value ?? ''}';
-  return allowed.contains(normalized) ? normalized : '';
-}
-
-String _componentToolLanguage(Map<String, dynamic> json) {
-  final explicit = _knownValue(
+ToolLanguage? _componentToolLanguage(Map<String, dynamic> json) {
+  final explicit = ToolLanguage.tryParseSupported(
     json['forced_tool_language'] ?? json['tool_language'],
-    _toolLanguages,
   );
-  if (explicit.isNotEmpty) return explicit;
-  final path = '${json['source_path'] ?? ''}'.toLowerCase();
-  if (path.endsWith('.py')) return 'python';
-  if (path.endsWith('.sh')) return 'shell';
-  if (path.endsWith('.cpp')) return 'cpp';
-  return '';
+  return explicit ??
+      ToolRuntimeCatalog.fromSourcePath('${json['source_path'] ?? ''}');
 }
 
 class ImportComponent {
@@ -127,7 +108,7 @@ class ImportComponent {
     this.content = '',
     this.forcedType,
     this.language = '',
-    this.toolLanguage = '',
+    this.toolLanguage,
     this.securityAccepted = false,
     this.securityBlocked = false,
     this.securityReviewRequired = false,
@@ -152,9 +133,8 @@ class ImportComponent {
             .map((item) => '$item')
             .toList(growable: false),
         forcedType: json['forced_type']?.toString(),
-        language: _knownValue(
+        language: ContentLanguages.normalizeLabel(
           json['forced_language'] ?? json['language'],
-          _contentLanguageLabels,
         ),
         toolLanguage: _componentToolLanguage(json),
         securityAccepted: json['security_accepted'] == true,
@@ -181,7 +161,7 @@ class ImportComponent {
   final List<String> variants;
   final String? forcedType;
   final String language;
-  final String toolLanguage;
+  final ToolLanguage? toolLanguage;
   final bool securityAccepted;
   final bool securityBlocked;
   final bool securityReviewRequired;
@@ -222,6 +202,7 @@ class OfficialImportLlmConnection {
     required this.name,
     required this.type,
     required this.model,
+    required this.supportsChat,
   });
 
   factory OfficialImportLlmConnection.fromJson(Map<String, dynamic> json) =>
@@ -230,24 +211,16 @@ class OfficialImportLlmConnection {
         name: '${json['name'] ?? json['label'] ?? json['type'] ?? ''}',
         type: '${json['type'] ?? ''}'.toLowerCase(),
         model: '${json['model'] ?? ''}',
+        supportsChat: json['supports_chat'] == true,
       );
 
   final String id;
   final String name;
   final String type;
   final String model;
+  final bool supportsChat;
 
-  static const supportedTypes = {
-    'openai',
-    'claude',
-    'gemini',
-    'grok',
-    'nvidia',
-    'qwen',
-    'ollama',
-  };
-
-  bool get compatible => id.isNotEmpty && supportedTypes.contains(type);
+  bool get compatible => id.isNotEmpty && supportsChat;
   String get displayName => model.isEmpty ? '$name · $type' : '$name · $model';
 }
 
@@ -405,9 +378,9 @@ class ImportDraft {
   );
 }
 
-bool _isLegacyImportLog(String message) => RegExp(
-  r'^[^:]+: referencia fuera del repositorio \(.+\)$',
-).hasMatch(message.trim());
+bool _isLegacyImportLog(String message) =>
+    RegExp(r'^[^:]+: referencia fuera del repositorio \(.+\)$')
+        .hasMatch(message.trim());
 
 class ImportDiff {
   const ImportDiff({required this.counts, required this.warnings});

@@ -1,10 +1,5 @@
 part of '../pages/knowledge_page.dart';
 
-/// Mismo límite que el backend (`tools.py::_MAX_TOOL_BINARY_BYTES`) —
-/// comprobación en cliente para no hacer esperar una subida que el servidor
-/// va a rechazar de todas formas.
-const int _maxToolBinaryBytes = 50 * 1024 * 1024;
-
 class _ToolFormDialog extends StatefulWidget {
   const _ToolFormDialog({required this.tx, this.initial});
 
@@ -19,15 +14,18 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _descriptionController;
+  late final TextEditingController _instructionsController;
   late final TextEditingController _contentController;
-  String _language = 'python';
+  ToolLanguage _language = ToolLanguage.python;
+  String _targetOs = '';
+  String _targetArch = '';
   Set<String> _selectedLabels = {};
 
   String? _existingBinaryFilename;
   int? _existingBinarySize;
   String? _pickedFileName;
   int? _pickedFileSize;
-  List<int>? _pickedBytes;
+  Stream<List<int>> Function()? _pickedStream;
   String? _fileError;
   bool _dragHighlight = false;
 
@@ -51,10 +49,17 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
     _descriptionController = TextEditingController(
       text: initial?['description']?.toString() ?? '',
     );
+    _instructionsController = TextEditingController(
+      text: initial?['instructions']?.toString() ?? '',
+    );
     _contentController = TextEditingController(
       text: initial?['content']?.toString() ?? '',
     );
-    _language = (initial?['language'] as String?) ?? 'python';
+    _language =
+        ToolLanguage.tryParseSupported(initial?['language']) ??
+        ToolLanguage.python;
+    _targetOs = initial?['target_os']?.toString() ?? '';
+    _targetArch = initial?['target_arch']?.toString() ?? '';
     _existingBinaryFilename = initial?['binary_filename']?.toString();
     final existingSize = initial?['binary_size'];
     _existingBinarySize = existingSize is num ? existingSize.toInt() : null;
@@ -73,84 +78,108 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
+    _instructionsController.dispose();
     _contentController.dispose();
     super.dispose();
   }
 
-  void _selectLanguage(String language) {
+  void _selectLanguage(ToolLanguage language) {
     setState(() {
-      final wasCpp = _language == 'cpp';
+      final wasBinary = _language.requiresBinary;
       _language = language;
       // Sugerencia editable (no forzada): marcar "review" al pasar a cpp en
       // una tool nueva, nunca al editar una ya existente ni en selecciones
       // repetidas del mismo chip.
-      if (language == 'cpp' && !wasCpp && _isNew) {
+      if (language.requiresBinary && !wasBinary && _isNew) {
         _selectedLabels = {..._selectedLabels, 'review'};
       }
       _fileError = null;
     });
   }
 
-  String get _scriptExtension => _language == 'shell' ? 'sh' : 'py';
+  String get _scriptExtension =>
+      ToolRuntimeCatalog.scriptExtension(_language) ?? 'py';
 
   Future<void> _pickFile() async {
-    final result = _language == 'cpp'
-        ? await FilePicker.pickFiles(withData: true)
+    final result = _language.requiresBinary
+        ? await FilePicker.pickFiles(withReadStream: true)
         : await FilePicker.pickFiles(
-            withData: true,
+            withReadStream: true,
             type: FileType.custom,
             allowedExtensions: [_scriptExtension],
           );
     if (result == null || result.files.isEmpty) return;
     final file = result.files.first;
-    final bytes = file.bytes;
-    if (bytes == null) {
-      setState(() {
-        _fileError = _tx('knowledge.binary_read_error');
-      });
-      return;
-    }
-    _handlePickedBytes(file.name, bytes);
+    await _handlePickedFile(
+      file.name,
+      file.size,
+      () => file.readStream ?? file.xFile.openRead(),
+    );
   }
 
-  /// Procesa bytes venidos tanto del selector de ficheros como de arrastrar
-  /// y soltar (`DropTarget`) — mismo camino para ambos orígenes.
-  void _handlePickedBytes(String fileName, List<int> bytes) {
-    if (bytes.isEmpty) {
+  /// Selector y drag/drop llegan al mismo camino y conservan el binario como
+  /// flujo hasta que se envía. Los scripts sí se leen para editar su texto.
+  Future<void> _handlePickedFile(
+    String fileName,
+    int declaredSize,
+    Stream<List<int>> Function() openRead,
+  ) async {
+    final safeFileName = fileName.trim().isEmpty ? 'binary.bin' : fileName;
+    if (declaredSize <= 0) {
       setState(() {
         _fileError = _tx('knowledge.binary_read_error');
       });
       return;
     }
-    if (bytes.length > _maxToolBinaryBytes) {
+    if (UploadLimits.exceeds(declaredSize)) {
       setState(() {
-        _fileError = _tx('knowledge.binary_too_large');
+        _fileError = _tx('knowledge.binary_too_large')
+            .replaceAll('{limit}', UploadLimits.formatted);
       });
       return;
     }
-    if (_language == 'cpp') {
+    if (_language.requiresBinary) {
       setState(() {
-        _pickedFileName = fileName;
-        _pickedFileSize = bytes.length;
-        _pickedBytes = bytes;
+        _pickedFileName = safeFileName;
+        _pickedFileSize = declaredSize;
+        _pickedStream = openRead;
         _fileError = null;
       });
       return;
     }
     // python/shell: el contenido es texto — se decodifica y se vuelca en el
     // mismo controller que ya usa el textarea manual, nunca se sube como
-    // binario (_pickedBytes se queda a propósito sin tocar).
+    // binario (_pickedStream se queda a propósito sin tocar).
     try {
-      final text = utf8.decode(bytes);
+      final bytes = BytesBuilder(copy: false);
+      var actualSize = 0;
+      await for (final chunk in openRead()) {
+        actualSize += chunk.length;
+        if (UploadLimits.exceeds(actualSize)) {
+          setState(() {
+            _fileError = _tx('knowledge.binary_too_large')
+                .replaceAll('{limit}', UploadLimits.formatted);
+          });
+          return;
+        }
+        bytes.add(chunk);
+      }
+      final text = utf8.decode(bytes.takeBytes());
+      if (!mounted) return;
       setState(() {
         _contentController.text = text;
-        _pickedFileName = fileName;
-        _pickedFileSize = bytes.length;
+        _pickedFileName = safeFileName;
+        _pickedFileSize = actualSize;
+        _pickedStream = null;
         _fileError = null;
       });
     } on FormatException {
       setState(() {
         _fileError = _tx('knowledge.script_decode_error');
+      });
+    } catch (_) {
+      setState(() {
+        _fileError = _tx('knowledge.binary_read_error');
       });
     }
   }
@@ -159,33 +188,42 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
       _pickedFileName != null || (_existingBinaryFilename ?? '').isNotEmpty;
 
   void _submit() {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-    if (_language == 'cpp' && !_hasAnyBinary) {
+    if (_language.requiresBinary && !_hasAnyBinary) {
       setState(() {
         _fileError = _tx('knowledge.binary_required');
       });
       return;
     }
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final payload = <String, dynamic>{
       'name': _nameController.text.trim(),
       'description': _descriptionController.text.trim(),
-      'language': _language,
+      'instructions': _instructionsController.text.trim(),
+      'language': _language.apiValue,
       'labels': _selectedLabels.toList(),
       'scope': _scope,
     };
-    if (_language != 'cpp') {
+    if (!_language.requiresBinary) {
       payload['content'] = _contentController.text.trim();
+    } else {
+      payload['target_os'] = _targetOs;
+      payload['target_arch'] = _targetArch;
     }
     if (widget.initial?['id'] != null) payload['id'] = widget.initial!['id'];
-    if (_language == 'cpp' && _pickedFileName != null && _pickedBytes != null) {
-      // Claves reservadas, nunca enviadas tal cual al backend: el
-      // controlador (`_saveTool`) las extrae para el segundo paso
-      // (`uploadToolBinary`) antes de mandar el JSON de metadatos.
-      payload['__binaryFileName'] = _pickedFileName;
-      payload['__binaryBytes'] = _pickedBytes;
+    PendingToolArtifact? artifact;
+    if (_language.requiresBinary &&
+        _pickedFileName != null &&
+        _pickedStream != null &&
+        _pickedFileSize != null) {
+      artifact = PendingToolArtifact(
+        fileName: _pickedFileName!,
+        size: _pickedFileSize!,
+        openRead: _pickedStream!,
+      );
     }
-    Navigator.of(context).pop(payload);
+    Navigator.of(context)
+        .pop(ToolFormResult(payload: payload, artifact: artifact));
   }
 
   Widget _buildFileDropZone(BuildContext context) {
@@ -205,8 +243,11 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
             setState(() => _dragHighlight = false);
             if (details.files.isEmpty) return;
             final dropped = details.files.first;
-            final bytes = await dropped.readAsBytes();
-            _handlePickedBytes(dropped.name, bytes);
+            await _handlePickedFile(
+              dropped.name,
+              await dropped.length(),
+              dropped.openRead,
+            );
           },
           child: InkWell(
             onTap: _pickFile,
@@ -238,7 +279,7 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
                     _tx('knowledge.drop_hint_file'),
                     textAlign: TextAlign.center,
                   ),
-                  if (_language != 'cpp') ...[
+                  if (!_language.requiresBinary) ...[
                     const SizedBox(height: 4),
                     Text(
                       _tx('knowledge.drop_hint_extension')
@@ -249,7 +290,7 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
                   if (displayName != null && displayName.isNotEmpty) ...[
                     const SizedBox(height: 10),
                     Text(
-                      '$displayName · ${formatToolBinarySize(displaySize ?? 0)}',
+                      '$displayName · ${formatFileSize(displaySize ?? 0)}',
                       style: theme.textTheme.bodySmall?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -302,27 +343,36 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
                 ),
               ),
               const SizedBox(height: 10),
+              TextFormField(
+                controller: _instructionsController,
+                minLines: 3,
+                maxLines: 8,
+                decoration: InputDecoration(
+                  labelText: _tx('knowledge.field_tool_instructions'),
+                ),
+              ),
+              const SizedBox(height: 10),
               GroupedLabelPicker(
                 selected: _selectedLabels,
                 onChanged: (next) => setState(() => _selectedLabels = next),
                 tx: widget.tx,
                 groups: kOperationalLabelGroups,
               ),
-              DropdownButtonFormField<String>(
+              DropdownButtonFormField<ToolLanguage>(
                 initialValue: _language,
                 isExpanded: true,
                 decoration: InputDecoration(
                   labelText: _tx('knowledge.field_language'),
                 ),
                 items: [
-                  for (final language in ['python', 'shell', 'cpp'])
+                  for (final language in ToolRuntimeCatalog.supported)
                     DropdownMenuItem(
                       value: language,
                       child: Row(
                         children: [
-                          Icon(toolLanguageIcon(language), size: 16),
+                          Icon(language.icon, size: 16),
                           const SizedBox(width: 8),
-                          Text(toolLanguageLabel(_tx, language)),
+                          Text(language.label(_tx)),
                         ],
                       ),
                     ),
@@ -333,7 +383,47 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
               ),
               const SizedBox(height: 10),
               _buildFileDropZone(context),
-              if (_language != 'cpp') ...[
+              if (_language.requiresBinary) ...[
+                const SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  initialValue: _targetOs.isEmpty ? null : _targetOs,
+                  decoration: InputDecoration(
+                    labelText: _tx('knowledge.field_target_os'),
+                  ),
+                  items: [
+                    for (final value
+                        in ToolRuntimeCatalog.targetOperatingSystems)
+                      DropdownMenuItem(
+                        value: value,
+                        child: Text(_tx('tools.target_os_$value')),
+                      ),
+                  ],
+                  validator: (value) => value == null || value.isEmpty
+                      ? _tx('knowledge.target_required')
+                      : null,
+                  onChanged: (value) => setState(() => _targetOs = value ?? ''),
+                ),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  initialValue: _targetArch.isEmpty ? null : _targetArch,
+                  decoration: InputDecoration(
+                    labelText: _tx('knowledge.field_target_arch'),
+                  ),
+                  items: [
+                    for (final value in ToolRuntimeCatalog.targetArchitectures)
+                      DropdownMenuItem(
+                        value: value,
+                        child: Text(_tx('tools.target_arch_$value')),
+                      ),
+                  ],
+                  validator: (value) => value == null || value.isEmpty
+                      ? _tx('knowledge.target_required')
+                      : null,
+                  onChanged: (value) =>
+                      setState(() => _targetArch = value ?? ''),
+                ),
+              ],
+              if (!_language.requiresBinary) ...[
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: _contentController,

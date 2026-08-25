@@ -1094,6 +1094,16 @@
     "restore_confirm": "Restore version {version}? This will overwrite the current content.",
     "restore_error": "Couldn't restore the version"
   },
+  "tools": {
+    "language_python": "Python",
+    "language_shell": "Shell",
+    "language_cpp": "C++",
+    "target_os_linux": "Linux",
+    "target_os_macos": "macOS",
+    "target_os_windows": "Windows",
+    "target_arch_x64": "x64",
+    "target_arch_arm64": "ARM64"
+  },
   "knowledge": {
     "tab_skills": "Skills",
     "tab_prompts": "Prompts",
@@ -1161,10 +1171,11 @@
     "new_tool_title": "New tool",
     "edit_tool_title": "Edit tool",
     "field_language": "Language",
-    "language_python": "Python",
-    "language_shell": "Shell",
-    "language_cpp": "C++",
-    "field_tool_content": "Tool content",
+    "field_tool_content": "Tool implementation",
+    "field_tool_instructions": "Instructions for the agent",
+    "field_target_os": "Binary operating system",
+    "field_target_arch": "Binary architecture",
+    "target_required": "Select a compatible value",
     "field_binary": "Binary",
     "no_binary": "No binary yet",
     "upload_binary": "Upload binary",
@@ -1172,7 +1183,10 @@
     "download_binary": "Download binary",
     "binary_required": "Select a binary for this tool before saving",
     "binary_read_error": "Couldn't read the file's bytes",
-    "binary_too_large": "The binary can't exceed 50 MB",
+    "binary_too_large": "The file can't exceed {limit}",
+    "binary_sha256": "SHA-256",
+    "binary_uploaded_by": "Uploaded by",
+    "binary_checksum_mismatch": "The download failed its integrity check and wasn't saved",
     "binary_download_error": "Couldn't download the binary",
     "drop_hint_file": "Drag a file here or click to select it",
     "drop_hint_extension": "Expected format: .{{ext}}",
@@ -1693,6 +1707,7 @@
     "tool_accept": "I have reviewed the code and accept importing it.",
     "tool_blocked": "The security review blocks this tool.",
     "tool_language": "Execution language",
+    "unspecified": "Not specified",
     "unnamed_package": "Unnamed source"
   },
   "centinel": {

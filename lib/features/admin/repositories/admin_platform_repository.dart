@@ -1,4 +1,5 @@
 import '../../../core/network/api_repository.dart';
+import '../../../shared/state/upload_limits.dart';
 
 /// Configuración de plataforma (`/api/settings/platform`), actualizaciones
 /// del backend y banners de notificación — el tab "Configuración" de Admin
@@ -25,7 +26,9 @@ class AdminPlatformRepository extends ApiRepository {
       gaToken: token,
       body: payload,
     );
-    return response.json;
+    final settings = response.json;
+    UploadLimits.updateFromPlatform(settings);
+    return settings;
   }
 
   Future<Map<String, dynamic>> getUserSettings(String token) async {

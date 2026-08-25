@@ -5,6 +5,7 @@ import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_error.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/app_services_scope.dart';
+import '../../../shared/utils/file_size_formatter.dart';
 import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
@@ -15,9 +16,7 @@ part '../dialogs/table_data_dialog.dart';
 
 String _fmtBytes(int bytes) {
   if (bytes <= 0) return '—';
-  if (bytes < 1024) return '$bytes B';
-  if (bytes < 1048576) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-  return '${(bytes / 1048576).toStringAsFixed(1)} MB';
+  return formatFileSize(bytes);
 }
 
 /// Página "Sistema": Logs + Tablas de la base de datos, igual que

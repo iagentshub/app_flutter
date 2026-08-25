@@ -274,6 +274,60 @@ extension _AdminActions on _AdminPageState {
     );
   }
 
+  Future<void> _setToolSecurity(Map<String, dynamic> item, String state) async {
+    final token = _token;
+    if (token == null) return;
+    final id = (item['id'] ?? '').toString();
+    if (state == 'approved') {
+      try {
+        final detail = await _resourcesRepository.getAdminTool(token, id);
+        if (!mounted) return;
+        final source = (detail['content'] ?? '').toString();
+        final instructions = (detail['instructions'] ?? '').toString();
+        final sha256 = (detail['binary_sha256'] ?? '').toString();
+        final accepted = await showAppDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(_tx('official.review_tool')),
+            content: SizedBox(
+              width: dialogContentWidth(context, 700),
+              child: SingleChildScrollView(
+                child: SelectableText(
+                  [
+                    if (instructions.isNotEmpty) instructions,
+                    if (source.isNotEmpty) source,
+                    if (sha256.isNotEmpty) 'SHA-256: $sha256',
+                  ].join('\n\n'),
+                  style: const TextStyle(fontFamily: FncFonts.monospace),
+                ),
+              ),
+            ),
+            actions: [
+              TertiaryButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(_tx('common.cancel')),
+              ),
+              PrimaryButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(_tx('official.reviewed')),
+              ),
+            ],
+          ),
+        );
+        if (accepted != true) return;
+      } on ApiError catch (error) {
+        showMessage(error.message, isError: true);
+        return;
+      }
+    }
+    await _run(
+      () => _resourcesRepository.setAdminToolSecurity(token, id, state),
+      state == 'approved'
+          ? _tx('official.reviewed')
+          : trOr('labels.$state', state),
+    );
+  }
+
   Future<void> _deleteMemory(Map<String, dynamic> item) async {
     final token = _token;
     if (token == null) return;

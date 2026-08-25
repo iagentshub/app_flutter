@@ -396,6 +396,51 @@ class ApiClient {
     );
   }
 
+  /// Descarga binaria sin acumularla en memoria ni aplicar el límite fijo de
+  /// respuestas. El consumidor debe escribir el flujo o imponer su propia
+  /// política; Tools lo contrasta además con el SHA-256 persistido.
+  Future<
+    ({
+      Stream<List<int>> stream,
+      String? filename,
+      int? contentLength,
+      String? sha256,
+    })
+  >
+  getByteStream(String path, {String? gaToken}) async {
+    http.Request build(String? token) {
+      final request = http.Request('GET', _uri(path));
+      request.followRedirects = false;
+      request.headers.addAll(_sessionHeaders(accept: '*/*', gaToken: token));
+      return request;
+    }
+
+    final streamed = await _send(build, gaToken: gaToken);
+    if (streamed.statusCode < 200 || streamed.statusCode >= 300) {
+      final response = await _readBoundedResponse(streamed);
+      throw _toApiError(
+        ApiResponse(
+          statusCode: response.statusCode,
+          headers: response.headers,
+          body: _parseBody(
+            utf8.decode(response.bodyBytes, allowMalformed: true),
+          ),
+        ),
+      );
+    }
+    final disposition = streamed.headers['content-disposition'];
+    final match = disposition == null
+        ? null
+        : RegExp('filename="?([^"; ]+)"?').firstMatch(disposition);
+    final etag = streamed.headers['etag']?.trim();
+    return (
+      stream: streamed.stream,
+      filename: _sanitizeDownloadFilename(match?.group(1)),
+      contentLength: streamed.contentLength,
+      sha256: etag == null || etag.isEmpty ? null : etag.replaceAll('"', ''),
+    );
+  }
+
   /// Variante binaria de POST para exportaciones cuyo cuerpo contiene una
   /// selección de componentes. Comparte límites y saneado con [getBytes].
   Future<({Uint8List bytes, String? filename})> postBytes(
@@ -508,6 +553,27 @@ class ApiClient {
     Map<String, String>? fields,
     String? gaToken,
     Duration? timeout,
+  }) => postMultipartStream(
+    path,
+    fieldName: fieldName,
+    fileName: fileName,
+    fileStream: Stream.value(fileBytes),
+    fileLength: fileBytes.length,
+    fields: fields,
+    gaToken: gaToken,
+    timeout: timeout,
+  );
+
+  /// Variante multipart que conserva el fichero como flujo hasta la red.
+  Future<ApiResponse> postMultipartStream(
+    String path, {
+    required String fieldName,
+    required String fileName,
+    required Stream<List<int>> fileStream,
+    required int fileLength,
+    Map<String, String>? fields,
+    String? gaToken,
+    Duration? timeout,
   }) async {
     http.MultipartRequest build(String? token) {
       final request = http.MultipartRequest('POST', _uri(path));
@@ -523,7 +589,12 @@ class ApiClient {
         request.fields.addAll(fields);
       }
       request.files.add(
-        http.MultipartFile.fromBytes(fieldName, fileBytes, filename: fileName),
+        http.MultipartFile(
+          fieldName,
+          http.ByteStream(fileStream),
+          fileLength,
+          filename: fileName,
+        ),
       );
       return request;
     }

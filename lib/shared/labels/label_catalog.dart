@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/theme/fnc_colors.dart';
+import '../../core/config/content_languages.dart';
 import '../../utils/i18n.dart';
 
 /// Tabla canónica de colores para labels.
@@ -37,18 +38,11 @@ const Map<String, Color> _labelColors = {
   'quarantine': FncColors.labelQuarantine,
   'archived': FncColors.labelArchived,
   'delete': FncColors.labelDelete,
-  'lang_es': FncColors.labelLanguage,
-  'lang_en': FncColors.labelLanguage,
-  'lang_fr': FncColors.labelLanguage,
-  'lang_de': FncColors.labelLanguage,
-  'lang_pt': FncColors.labelLanguage,
-  'lang_it': FncColors.labelLanguage,
-  'lang_zh': FncColors.labelLanguage,
-  'lang_ja': FncColors.labelLanguage,
-  'lang_ar': FncColors.labelLanguage,
 };
 
-Color labelColor(String key) => _labelColors[key] ?? FncColors.labelFallback;
+Color labelColor(String key) => ContentLanguages.isLabel(key)
+    ? FncColors.labelLanguage
+    : _labelColors[key] ?? FncColors.labelFallback;
 
 /// Claves de label conocidas por el catálogo, en el mismo orden que
 /// Los grupos representan visibilidad, entorno y estado.
@@ -71,36 +65,15 @@ const List<String> kLabelKeys = [
   ...kLanguageLabelKeys,
 ];
 
-const List<String> kContentLanguageCodes = [
-  'es',
-  'en',
-  'fr',
-  'de',
-  'pt',
-  'it',
-  'zh',
-  'ja',
-  'ar',
-];
+final List<String> kContentLanguageCodes = ContentLanguages.codes;
+const List<String> kLanguageLabelKeys = ContentLanguages.labelKeys;
 
-const List<String> kLanguageLabelKeys = [
-  'lang_es',
-  'lang_en',
-  'lang_fr',
-  'lang_de',
-  'lang_pt',
-  'lang_it',
-  'lang_zh',
-  'lang_ja',
-  'lang_ar',
-];
+bool isLanguageLabel(String key) => ContentLanguages.isLabel(key);
 
-bool isLanguageLabel(String key) => kLanguageLabelKeys.contains(key);
-
-String languageLabelKey(String code) => 'lang_${code.toLowerCase()}';
+String languageLabelKey(String code) => ContentLanguages.labelKey(code);
 
 String? languageCodeFromLabel(String key) =>
-    isLanguageLabel(key) ? key.substring('lang_'.length) : null;
+    ContentLanguages.codeFromLabel(key);
 
 String contentLanguageLabel(String Function(String path) tx, String codeOrKey) {
   final key = codeOrKey.startsWith('lang_')

@@ -6,9 +6,7 @@ extension _KnowledgeImageCard on _KnowledgePageState {
     final date = parsedDate == null
         ? '—'
         : MaterialLocalizations.of(context).formatShortDate(parsedDate);
-    final size = item.sizeBytes > 0
-        ? formatToolBinarySize(item.sizeBytes)
-        : '—';
+    final size = item.sizeBytes > 0 ? formatFileSize(item.sizeBytes) : '—';
     final card = Card(
       margin: EdgeInsets.zero,
       child: Padding(

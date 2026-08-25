@@ -123,7 +123,9 @@ void main() {
     const nombresDeIdioma = {'Español', 'Français', 'Português', 'English'};
 
     final sueltos = <String>[];
-    for (final f in Directory('lib').listSync(recursive: true).whereType<File>()) {
+    for (final f in Directory(
+      'lib',
+    ).listSync(recursive: true).whereType<File>()) {
       if (!f.path.endsWith('.dart')) continue;
       final lineas = f.readAsLinesSync();
       for (var i = 0; i < lineas.length; i++) {
@@ -176,32 +178,37 @@ void main() {
     );
   });
 
-  test('ningún fichero de locales repite una clave dentro del mismo objeto', () {
-    final repetidas = <String>[];
+  test(
+    'ningún fichero de locales repite una clave dentro del mismo objeto',
+    () {
+      final repetidas = <String>[];
 
-    for (final idioma in ['es', 'en']) {
-      for (final fichero in Directory(
-        'assets/locales/$idioma',
-      ).listSync().whereType<File>()) {
-        if (!fichero.path.endsWith('.json')) continue;
-        final nombre = fichero.uri.pathSegments.last;
-        for (final duplicada in _clavesRepetidas(fichero.readAsStringSync())) {
-          repetidas.add(
-            '$idioma/$nombre:${duplicada.linea} → ${duplicada.ruta}',
-          );
+      for (final idioma in ['es', 'en']) {
+        for (final fichero in Directory(
+          'assets/locales/$idioma',
+        ).listSync().whereType<File>()) {
+          if (!fichero.path.endsWith('.json')) continue;
+          final nombre = fichero.uri.pathSegments.last;
+          for (final duplicada in _clavesRepetidas(
+            fichero.readAsStringSync(),
+          )) {
+            repetidas.add(
+              '$idioma/$nombre:${duplicada.linea} → ${duplicada.ruta}',
+            );
+          }
         }
       }
-    }
 
-    expect(
-      repetidas,
-      isEmpty,
-      reason:
-          'jsonDecode se queda con la última y descarta la anterior sin avisar,\n'
-          'así que la primera traducción nunca llega a la pantalla.\n'
-          'Borra la que sobre:\n${repetidas.join('\n')}',
-    );
-  });
+      expect(
+        repetidas,
+        isEmpty,
+        reason:
+            'jsonDecode se queda con la última y descarta la anterior sin avisar,\n'
+            'así que la primera traducción nunca llega a la pantalla.\n'
+            'Borra la que sobre:\n${repetidas.join('\n')}',
+      );
+    },
+  );
 
   test('las pantallas auditadas no introducen literales directos en UI', () {
     const auditedFiles = [

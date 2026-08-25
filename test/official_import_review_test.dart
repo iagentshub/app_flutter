@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:app_flutter/core/network/api_client.dart';
 import 'package:app_flutter/features/admin/models/official_import_models.dart';
 import 'package:app_flutter/features/admin/pages/official_import_review_page.dart';
+import 'package:app_flutter/features/admin/repositories/admin_connections_repository.dart';
 import 'package:app_flutter/features/admin/repositories/admin_official_sources_repository.dart';
 import 'package:app_flutter/features/admin/widgets/official_import_component_tile.dart';
 import 'package:app_flutter/features/admin/widgets/official_import_progress_dialog.dart';
@@ -43,6 +44,66 @@ void main() {
     expect(draft.logs, isEmpty);
     expect(diff.counts['delete'], 3);
     expect(origin.sourcePath, 'skills/demo/SKILL.md');
+  });
+
+  test('compatibilidad LLM viene resuelta por el catálogo del backend', () {
+    final chat = OfficialImportLlmConnection.fromJson({
+      'id': 'future-provider-1',
+      'name': 'Proveedor futuro',
+      'type': 'future-provider',
+      'model': 'model-1',
+      'supports_chat': true,
+    });
+    final nonChat = OfficialImportLlmConnection.fromJson({
+      'id': 'ssh-1',
+      'name': 'Servidor',
+      'type': 'ssh',
+      'supports_chat': false,
+    });
+
+    expect(chat.compatible, isTrue);
+    expect(nonChat.compatible, isFalse);
+  });
+
+  test('selector LLM conserva solo conexiones activas con chat', () async {
+    SharedPreferences.setMockInitialValues({});
+    final backend = await BackendController.bootstrap();
+    final repository = AdminConnectionsRepository(
+      apiClient: ApiClient(
+        backend,
+        client: MockClient(
+          (_) async => _json([
+            {
+              'id': 'future-1',
+              'name': 'Future',
+              'type': 'future-provider',
+              'model': 'future-model',
+              'supports_chat': true,
+              'is_active': true,
+            },
+            {
+              'id': 'ssh-1',
+              'name': 'SSH',
+              'type': 'ssh',
+              'supports_chat': false,
+              'is_active': true,
+            },
+            {
+              'id': 'disabled-1',
+              'name': 'Disabled',
+              'type': 'openai',
+              'supports_chat': true,
+              'is_active': false,
+            },
+          ]),
+        ),
+      ),
+    );
+
+    final connections = await repository.listLlmConnections('token');
+
+    expect(connections.map((item) => item.id), ['future-1']);
+    expect(connections.single.displayName, 'Future · future-model');
   });
 
   test('separa los eventos de log de las advertencias', () {
@@ -100,9 +161,91 @@ void main() {
     });
 
     expect(invalid.language, isEmpty);
-    expect(invalid.toolLanguage, isEmpty);
+    expect(invalid.toolLanguage, isNull);
     expect(valid.language, 'lang_en');
-    expect(valid.toolLanguage, 'python');
+    expect(valid.toolLanguage?.apiValue, 'python');
+
+    expect(
+      ImportComponent.fromJson({
+        'component_id': 'shell',
+        'component_type': 'tool',
+        'source_path': 'tools/run.SH',
+      }).toolLanguage?.apiValue,
+      'shell',
+    );
+    expect(
+      ImportComponent.fromJson({
+        'component_id': 'native',
+        'component_type': 'tool',
+        'source_path': 'tools/run.cpp',
+      }).toolLanguage?.apiValue,
+      'cpp',
+    );
+  });
+
+  test('serializa el lenguaje tipado con el contrato de API', () async {
+    SharedPreferences.setMockInitialValues({});
+    final backend = await BackendController.bootstrap();
+    Map<String, dynamic>? body;
+    final repository = AdminOfficialSourcesRepository(
+      apiClient: ApiClient(
+        backend,
+        client: MockClient((request) async {
+          body = jsonDecode(request.body) as Map<String, dynamic>;
+          return _json({
+            'component_id': 'runner',
+            'component_type': 'tool',
+            'source_path': 'tools/runner.sh',
+            'forced_tool_language': body?['forced_tool_language'],
+          });
+        }),
+      ),
+    );
+
+    final updated = await repository.updateDraftComponent(
+      'token',
+      'draft-1',
+      'runner',
+      forcedToolLanguage: 'shell',
+    );
+
+    expect(body?['forced_tool_language'], 'shell');
+    expect(updated.toolLanguage?.apiValue, 'shell');
+  });
+
+  testWidgets('traduce la opción sin especificar de ambos idiomas', (
+    tester,
+  ) async {
+    final component = ImportComponent.fromJson({
+      'component_id': 'runner',
+      'component_type': 'tool',
+      'name': 'Runner',
+      'source_path': 'tools/runner',
+    });
+
+    Widget tile() => MaterialApp(
+      home: Scaffold(
+        body: OfficialImportComponentTile(
+          component: component,
+          busy: false,
+          tx: tr,
+          onToggle: (_) {},
+          onClassify: (_) {},
+          onLanguage: (_) {},
+          onToolLanguage: (_) {},
+          onEditRelations: () {},
+          onReviewTool: () {},
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(tile());
+    expect(find.text('Sin especificar'), findsNWidgets(2));
+
+    cargarTraduccionesDePrueba(idioma: 'en');
+    await tester.pumpWidget(tile());
+    expect(find.text('Not specified'), findsNWidgets(2));
+    expect(find.text('Sin especificar'), findsNothing);
   });
 
   test('envía el modo LLM y la conexión seleccionada', () async {

@@ -43,12 +43,12 @@ extension _ToolActions on _KnowledgePageState {
   }
 
   Future<void> _openCreateToolDialog() async {
-    final payload = await showAppDialog<Map<String, dynamic>>(
+    final result = await showAppDialog<ToolFormResult>(
       context: context,
       builder: (context) => _ToolFormDialog(tx: _tx),
     );
-    if (payload == null) return;
-    await _saveTool(payload);
+    if (result == null) return;
+    await _saveTool(result);
   }
 
   Future<void> _openEditToolDialog(ToolItem item) async {
@@ -65,36 +65,37 @@ extension _ToolActions on _KnowledgePageState {
     } catch (_) {}
 
     if (!mounted) return;
-    final payload = await showAppDialog<Map<String, dynamic>>(
+    final result = await showAppDialog<ToolFormResult>(
       context: context,
       builder: (context) => _ToolFormDialog(tx: _tx, initial: initial),
     );
-    if (payload == null) return;
-    payload['id'] = item.id;
-    await _saveTool(payload);
+    if (result == null) return;
+    result.payload['id'] = item.id;
+    await _saveTool(result);
   }
 
   /// Guardado en dos pasos para `cpp`: primero `POST /api/tools/{scope}`
   /// (metadatos), y solo si el diálogo dejó un fichero pendiente,
-  /// `uploadToolBinary(...)` después con el id ya asignado por el backend.
-  Future<bool> _saveTool(Map<String, dynamic> payload) async {
+  /// transmite el binario después con el id ya asignado por el backend.
+  Future<bool> _saveTool(ToolFormResult result) async {
     final token = _token;
     if (token == null || token.isEmpty) return false;
+    final payload = result.payload;
     final scope = (payload.remove('scope') as String?) ?? 'private';
-    final pendingFileName = payload.remove('__binaryFileName') as String?;
-    final pendingBytes = payload.remove('__binaryBytes') as List<int>?;
+    final artifact = result.artifact;
     try {
       final saved = await _toolsRepository.saveTool(token, scope, payload);
-      if (pendingFileName != null && pendingBytes != null) {
+      if (artifact != null) {
         final savedId = (saved['id'] ?? payload['id'])?.toString() ?? '';
         final savedScope = (saved['scope'] as String?) ?? scope;
         if (savedId.isNotEmpty) {
-          await _toolsRepository.uploadToolBinary(
+          await _toolsRepository.uploadToolBinaryStream(
             token,
             savedScope,
             savedId,
-            fileName: pendingFileName,
-            fileBytes: pendingBytes,
+            fileName: artifact.fileName,
+            fileStream: artifact.openRead(),
+            fileLength: artifact.size,
           );
         }
       }
@@ -188,16 +189,20 @@ extension _ToolActions on _KnowledgePageState {
     final token = _token;
     if (token == null || token.isEmpty) return;
     try {
-      final result = await _toolsRepository.downloadToolBinary(
+      final download = await _toolsRepository.downloadToolBinaryStream(
         token,
         item.scope,
         item.id,
       );
-      await FilePicker.saveFile(
+      final result = await saveStreamedFile(
+        stream: download.stream,
         dialogTitle: _tx('knowledge.download_binary'),
-        fileName: result.filename ?? item.binaryFilename ?? '${item.id}.bin',
-        bytes: result.bytes,
+        fileName: download.filename ?? item.binaryFilename ?? '${item.id}.bin',
+        expectedSha256: download.sha256 ?? item.binarySha256,
       );
+      if (result == StreamedFileSaveResult.checksumMismatch) {
+        showMessage(_tx('knowledge.binary_checksum_mismatch'), isError: true);
+      }
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {

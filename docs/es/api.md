@@ -51,12 +51,17 @@ La app consume la API pública de iAgentsHub. Por familias:
 | `workflows` | Orquestaciones |
 | `connections` | Credenciales de IA, máquinas y bases de datos (incluye descubrir modelos Ollama y sincronizar con otro hub) |
 | `accounts` | Cuentas de proveedor vinculadas (Anthropic, OpenAI, GitHub Copilot, Ollama, NVIDIA, Google): vincular, probar y sincronizar modelos como conexiones |
-| `knowledge`, `skills`, `resources` | Documentos y habilidades |
+| `knowledge`, `skills`, `prompts`, `tools`, `resources` | Contenido reutilizable, Tools y sus versiones |
 | `memory` | Memoria de los agentes |
 | `workspaces`, `sharing` | Espacios de trabajo, grupos y compartición |
 | `explore`, `feed` | Descubrimiento y actividad |
 | `billing` | Planes y pagos |
 | `admin` | Herramientas de administración |
+
+En Tools, la app consume `tool_runtimes` desde la configuración pública del
+servidor, no mantiene una lista local de lenguajes. Los binarios se descargan en
+streaming y se verifica su SHA-256. El backend nunca ejecuta la Tool y la
+ejecución automática local en Flutter sigue pendiente.
 
 ---
 

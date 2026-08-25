@@ -80,6 +80,7 @@ List<RouteBase> externalRoutes({
   required SessionController sessionController,
   required LocaleController localeController,
   required AuthRepository authRepository,
+  required ValueChanged<bool> onLoginLoadingChanged,
   required VoidCallback onRetrySession,
   required VoidCallback onUseAnotherAccount,
 }) {
@@ -103,6 +104,7 @@ List<RouteBase> externalRoutes({
           sessionController: sessionController,
           localeController: localeController,
           authRepository: authRepository,
+          onLoadingChanged: onLoginLoadingChanged,
         ),
       ),
     ),

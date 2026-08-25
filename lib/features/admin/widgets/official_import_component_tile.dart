@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_fonts.dart';
+import '../../../core/config/content_languages.dart';
+import '../../../core/config/tool_runtimes.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/resource_type_badge.dart';
 import '../../../utils/i18n.dart';
@@ -153,17 +155,16 @@ class OfficialImportComponentTile extends StatelessWidget {
           isExpanded: true,
           initialValue: component.language.isEmpty ? '' : component.language,
           decoration: InputDecoration(labelText: tx('official.language')),
-          items: const [
-            DropdownMenuItem(value: '', child: Text('Sin especificar')),
-            DropdownMenuItem(value: 'lang_es', child: Text('Español')),
-            DropdownMenuItem(value: 'lang_en', child: Text('English')),
-            DropdownMenuItem(value: 'lang_fr', child: Text('Français')),
-            DropdownMenuItem(value: 'lang_de', child: Text('Deutsch')),
-            DropdownMenuItem(value: 'lang_it', child: Text('Italiano')),
-            DropdownMenuItem(value: 'lang_pt', child: Text('Português')),
-            DropdownMenuItem(value: 'lang_zh', child: Text('中文')),
-            DropdownMenuItem(value: 'lang_ja', child: Text('日本語')),
-            DropdownMenuItem(value: 'lang_ar', child: Text('العربية')),
+          items: [
+            DropdownMenuItem(
+              value: '',
+              child: Text(tx('official.unspecified')),
+            ),
+            for (final language in ContentLanguages.values)
+              DropdownMenuItem(
+                value: language.labelKey,
+                child: Text(tx('labels.${language.labelKey}')),
+              ),
           ],
           onChanged: busy ? null : onLanguage,
         ),
@@ -173,15 +174,20 @@ class OfficialImportComponentTile extends StatelessWidget {
           width: fieldWidth,
           child: DropdownButtonFormField<String>(
             isExpanded: true,
-            initialValue: component.toolLanguage,
+            initialValue: component.toolLanguage?.apiValue ?? '',
             decoration: InputDecoration(
               labelText: tx('official.tool_language'),
             ),
-            items: const [
-              DropdownMenuItem(value: '', child: Text('Sin especificar')),
-              DropdownMenuItem(value: 'python', child: Text('Python')),
-              DropdownMenuItem(value: 'shell', child: Text('Shell')),
-              DropdownMenuItem(value: 'cpp', child: Text('C++')),
+            items: [
+              DropdownMenuItem(
+                value: '',
+                child: Text(tx('official.unspecified')),
+              ),
+              for (final language in ToolRuntimeCatalog.supported)
+                DropdownMenuItem(
+                  value: language.apiValue,
+                  child: Text(language.label(tx)),
+                ),
             ],
             onChanged: busy ? null : onToolLanguage,
           ),

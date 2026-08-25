@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_picker/file_picker.dart';
@@ -6,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
+import '../../../core/config/tool_runtimes.dart';
 import '../../../core/network/api_error.dart';
 import '../../../core/network/page_result.dart';
 import '../../../features/memory/pages/memory_page.dart';
@@ -20,8 +22,9 @@ import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/state/upload_limits.dart';
 import '../../../shared/state/watches_resource_changes.dart';
-import '../../../shared/tools/tool_language.dart';
+import '../../../shared/utils/file_size_formatter.dart';
 import '../../../shared/utils/memoized.dart';
+import '../../../shared/utils/streamed_file_saver.dart';
 import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/attention_badge.dart';
@@ -47,6 +50,7 @@ import '../../agents/repositories/agents_repository.dart';
 import '../dialogs/knowledge_pack_dialog.dart';
 import '../dialogs/knowledge_pack_upload_progress_dialog.dart';
 import '../models/local_knowledge_file.dart';
+import '../models/tool_form_result.dart';
 import '../repositories/knowledge_repository.dart';
 import '../repositories/prompts_repository.dart';
 import '../repositories/skills_repository.dart';
@@ -107,7 +111,7 @@ IconData skillCategoryIcon(String category) {
 }
 
 /// Etiqueta legible por categoría, siempre vía `tx` — mismo patrón que
-/// [toolLanguageLabel], que está justo al lado y ya lo hacía bien.
+/// [ToolLanguage.label], que ya lo hacía bien.
 ///
 /// Estaba fija en español para todos los idiomas: es la etiqueta que se ve en
 /// el filtro de categorías y en cada tarjeta de skill, así que un usuario con
@@ -352,7 +356,9 @@ class _KnowledgePageState extends State<KnowledgePage>
     ];
     final languageOptions = [
       ('all', optionAll),
-      ..._toolLanguageOptions.map((l) => (l, toolLanguageLabel(_tx, l))),
+      ..._toolLanguageOptions.map(
+        (language) => (language.apiValue, language.label(_tx)),
+      ),
     ];
 
     showFilterDialog(

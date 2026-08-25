@@ -305,8 +305,14 @@ extension _AdminContentCards on _AdminPageState {
 
   Widget _buildAdminToolCard(Map<String, dynamic> item) {
     final name = (item['name'] ?? item['id'] ?? '').toString();
-    final language = (item['language'] ?? '').toString();
+    final languageValue = (item['language'] ?? '').toString();
+    final language = ToolLanguage.fromApi(languageValue);
     final binaryFilename = (item['binary_filename'] ?? '').toString();
+    final labels = (item['labels'] as List? ?? const [])
+        .map((value) => value.toString())
+        .toSet();
+    final securityHeld =
+        labels.contains('review') || labels.contains('quarantine');
     final owner = _ownerOf(item);
     final date = _fmtDate(item['created_at']);
 
@@ -335,8 +341,12 @@ extension _AdminContentCards on _AdminPageState {
               runSpacing: 6,
               children: [
                 _resourceTypeBadge(AdminResourceType.tool),
-                if (language.isNotEmpty) _badge(language, FncColors.slate),
-                if (language == 'cpp')
+                if (languageValue.isNotEmpty)
+                  _badge(
+                    language.label(_tx, fallback: languageValue),
+                    FncColors.slate,
+                  ),
+                if (language.requiresBinary)
                   _badge(
                     binaryFilename.isEmpty
                         ? _tx('admin.tool_no_binary')
@@ -352,6 +362,19 @@ extension _AdminContentCards on _AdminPageState {
                 const Spacer(),
                 _resourceGraphAction(AdminResourceType.tool, item),
                 _officialAction(item, 'tool'),
+                if (securityHeld)
+                  ActionIconButton(
+                    icon: Icons.verified_outlined,
+                    tooltip: _tx('official.reviewed'),
+                    onPressed: () => _setToolSecurity(item, 'approved'),
+                  ),
+                if (!labels.contains('quarantine'))
+                  ActionIconButton(
+                    icon: Icons.gpp_bad_outlined,
+                    tooltip: trOr('labels.quarantine', 'quarantine'),
+                    danger: true,
+                    onPressed: () => _setToolSecurity(item, 'quarantine'),
+                  ),
                 ActionIconButton(
                   icon: Icons.swap_horiz,
                   tooltip: _tx('admin.action_change_owner'),

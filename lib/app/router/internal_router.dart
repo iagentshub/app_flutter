@@ -66,6 +66,8 @@ ShellRoute buildShellRoute({
   required AuthRepository authRepository,
   required DashboardRepository dashboardRepository,
   required DashboardEditState dashboardEditState,
+  required bool Function() hasLoginDashboardHandoff,
+  required VoidCallback onDashboardReady,
 }) {
   return ShellRoute(
     navigatorKey: shellNavigatorKey,
@@ -86,6 +88,8 @@ ShellRoute buildShellRoute({
             authRepository: authRepository,
             dashboardRepository: dashboardRepository,
             dashboardEditState: dashboardEditState,
+            suppressInitialLoadingOverlay: hasLoginDashboardHandoff(),
+            onInitialLoadFinished: onDashboardReady,
           ),
         ),
       ),

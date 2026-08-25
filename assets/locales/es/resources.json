@@ -1094,6 +1094,16 @@
     "restore_confirm": "¿Restaurar la versión {version}? Sobrescribirá el contenido actual.",
     "restore_error": "No se pudo restaurar la versión"
   },
+  "tools": {
+    "language_python": "Python",
+    "language_shell": "Shell",
+    "language_cpp": "C++",
+    "target_os_linux": "Linux",
+    "target_os_macos": "macOS",
+    "target_os_windows": "Windows",
+    "target_arch_x64": "x64",
+    "target_arch_arm64": "ARM64"
+  },
   "knowledge": {
     "tab_skills": "Skills",
     "tab_prompts": "Prompts",
@@ -1161,10 +1171,11 @@
     "new_tool_title": "Nueva herramienta",
     "edit_tool_title": "Editar herramienta",
     "field_language": "Lenguaje",
-    "language_python": "Python",
-    "language_shell": "Shell",
-    "language_cpp": "C++",
-    "field_tool_content": "Contenido de la herramienta",
+    "field_tool_content": "Implementación de la herramienta",
+    "field_tool_instructions": "Instrucciones para el agente",
+    "field_target_os": "Sistema operativo del binario",
+    "field_target_arch": "Arquitectura del binario",
+    "target_required": "Selecciona un valor compatible",
     "field_binary": "Binario",
     "no_binary": "Sin binario todavía",
     "upload_binary": "Subir binario",
@@ -1172,7 +1183,10 @@
     "download_binary": "Descargar binario",
     "binary_required": "Selecciona un binario para esta herramienta antes de guardar",
     "binary_read_error": "No se pudieron leer los bytes del fichero",
-    "binary_too_large": "El binario no puede superar 50 MB",
+    "binary_too_large": "El archivo no puede superar {limit}",
+    "binary_sha256": "SHA-256",
+    "binary_uploaded_by": "Subido por",
+    "binary_checksum_mismatch": "La descarga no superó la comprobación de integridad y no se guardó",
     "binary_download_error": "No se pudo descargar el binario",
     "drop_hint_file": "Arrastra un fichero aquí o haz clic para seleccionarlo",
     "drop_hint_extension": "Formato esperado: .{{ext}}",
@@ -1693,6 +1707,7 @@
     "tool_accept": "He revisado el código y acepto importarlo.",
     "tool_blocked": "La revisión de seguridad bloquea esta herramienta.",
     "tool_language": "Lenguaje de ejecución",
+    "unspecified": "Sin especificar",
     "unnamed_package": "Fuente sin nombre"
   },
   "centinel": {

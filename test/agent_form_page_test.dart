@@ -38,12 +38,16 @@ void main() {
               },
           ]);
         }
+        if (request.url.path == '/api/tools') {
+          return _json([
+            {'id': 'tool-python', 'name': 'Tool Python', 'language': 'python'},
+          ]);
+        }
         if ({
           '/api/connections',
           '/api/memory',
           '/api/knowledge',
           '/api/prompts',
-          '/api/tools',
         }.contains(request.url.path)) {
           return _json([]);
         }
@@ -74,6 +78,23 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.byType(AlertDialog), findsOneWidget);
+
+      await tester.enterText(
+        find.byKey(const ValueKey('agent-resources-search')),
+        'Tool Python',
+      );
+      await tester.pump();
+      expect(
+        find.byKey(const ValueKey('agent-resource-tool-tool-python')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('agent-resource-tool-tool-python')),
+          matching: find.text('Herramientas · Python'),
+        ),
+        findsOneWidget,
+      );
 
       await tester.enterText(
         find.byKey(const ValueKey('agent-resources-search')),

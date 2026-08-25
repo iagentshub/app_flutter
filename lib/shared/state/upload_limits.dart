@@ -22,8 +22,9 @@ abstract final class UploadLimits {
   /// contra 0 a pelo rechazaría cualquier fichero, que es lo contrario.
   static bool exceeds(int bytes) => !unlimited && bytes > _maxRequestBytes;
 
-  /// Se llama desde un único sitio, `AuthRepository.platformPublic()`: la
-  /// respuesta pasa por ahí venga de donde venga la consulta.
+  /// Se llama en los dos límites HTTP que reciben este ajuste: la lectura
+  /// pública de `AuthRepository` y el guardado de `AdminPlatformRepository`.
+  /// Así el cambio del administrador se aplica también en su sesión actual.
   static void updateFromPlatform(Map<String, dynamic> platform) {
     final raw = platform['max_request_bytes'];
     if (raw is int) {

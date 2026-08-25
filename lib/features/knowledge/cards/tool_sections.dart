@@ -83,10 +83,7 @@ extension _ToolSections on _KnowledgePageState {
   }
 
   Widget _buildToolCard(ToolItem item) {
-    final metaParts = <String>[
-      item.scope,
-      toolLanguageLabel(_tx, item.language),
-    ];
+    final metaParts = <String>[item.scope, item.languageLabel(_tx)];
 
     final card = Card(
       margin: EdgeInsets.zero,
@@ -97,7 +94,7 @@ extension _ToolSections on _KnowledgePageState {
           children: [
             Row(
               children: [
-                Icon(toolLanguageIcon(item.language), size: 20),
+                Icon(item.language.icon, size: 20),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -121,7 +118,7 @@ extension _ToolSections on _KnowledgePageState {
               ),
             ],
             const SizedBox(height: 8),
-            if (item.language == 'cpp') ...[
+            if (item.language.requiresBinary) ...[
               Row(
                 children: [
                   Icon(
@@ -134,7 +131,7 @@ extension _ToolSections on _KnowledgePageState {
                   Expanded(
                     child: Text(
                       item.hasBinary
-                          ? '${item.binaryFilename} · ${formatToolBinarySize(item.binarySize ?? 0)}'
+                          ? '${item.binaryFilename} · ${formatFileSize(item.binarySize ?? 0)}'
                           : _tx('knowledge.no_binary'),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -147,6 +144,23 @@ extension _ToolSections on _KnowledgePageState {
                     ),
                 ],
               ),
+              if (item.binarySha256.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                SelectableText(
+                  '${_tx('knowledge.binary_sha256')}: ${item.binarySha256}',
+                  style: const TextStyle(
+                    fontFamily: FncFonts.monospace,
+                    fontSize: FncFonts.size10,
+                  ),
+                ),
+              ],
+              if (item.binaryUploadedBy.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(
+                  '${_tx('knowledge.binary_uploaded_by')}: ${item.binaryUploadedBy}',
+                  style: const TextStyle(fontSize: FncFonts.size10),
+                ),
+              ],
               const SizedBox(height: 8),
             ],
             LabelChipsRow(

@@ -81,21 +81,27 @@ extension _KnowledgeFilters on _KnowledgePageState {
     },
   );
 
-  List<String> get _toolLanguageOptions =>
-      _tools.map((t) => t.language).where((l) => l.isNotEmpty).toSet().toList()
-        ..sort();
+  List<ToolLanguage> get _toolLanguageOptions =>
+      _tools
+          .map((tool) => tool.language)
+          .where((language) => language.apiValue.isNotEmpty)
+          .toSet()
+          .toList()
+        ..sort((a, b) => a.apiValue.compareTo(b.apiValue));
 
   int get _toolFilterCount =>
       (_toolScope != 'all' ? 1 : 0) + (_toolLanguage != 'all' ? 1 : 0);
 
-  List<ToolItem> get _filteredTools =>
-      _filteredToolsMemo.of([_tools, _toolScope, _toolLanguage], () {
-        return _tools.where((item) {
-          if (_toolScope != 'all' && item.scope != _toolScope) return false;
-          if (_toolLanguage != 'all' && item.language != _toolLanguage) {
-            return false;
-          }
-          return true;
-        }).toList();
-      });
+  List<ToolItem> get _filteredTools => _filteredToolsMemo.of(
+    [_tools, _toolScope, _toolLanguage],
+    () {
+      return _tools.where((item) {
+        if (_toolScope != 'all' && item.scope != _toolScope) return false;
+        if (_toolLanguage != 'all' && item.language.apiValue != _toolLanguage) {
+          return false;
+        }
+        return true;
+      }).toList();
+    },
+  );
 }

@@ -4,11 +4,10 @@ import '../../utils/i18n.dart';
 import '../state/locale_controller.dart';
 import 'locale_loader.dart';
 
-typedef TranslationBundleLoader =
-    Future<Map<String, dynamic>> Function({
-      required String languageCode,
-      required String namespace,
-    });
+typedef TranslationBundleLoader = Future<Map<String, dynamic>> Function({
+  required String languageCode,
+  required String namespace,
+});
 
 /// Carga y mantiene actualizado un namespace i18n para una página, sin
 /// repetir el boilerplate de AppShell (_loadTexts en initState + listener

@@ -276,7 +276,7 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
           (component.effectiveType == 'tool' && !component.securityAccepted)) {
         return false;
       }
-      if (component.effectiveType == 'tool' && component.toolLanguage.isEmpty) {
+      if (component.effectiveType == 'tool' && component.toolLanguage == null) {
         return false;
       }
     }

@@ -11,7 +11,7 @@
 
 ## Requisitos
 
-Flutter SDK estable, con Dart 3.10 o superior. Cada plataforma de destino añade lo suyo: Android Studio y un JDK para Android, Xcode para iOS y macOS, Visual Studio con carga de trabajo de C++ para Windows.
+Flutter SDK estable, con Dart 3.13 o superior. Cada plataforma de destino añade lo suyo: Android Studio y un JDK para Android, Xcode para iOS y macOS, Visual Studio con carga de trabajo de C++ para Windows.
 
 Para comprobar qué falta:
 
@@ -39,7 +39,9 @@ flutter analyze
 flutter test
 ```
 
-Ambos deben pasar antes de dar un cambio por terminado. `flutter analyze` arrastra hoy una lista conocida de avisos de estilo, ninguno de ellos error; lo que importa es que tu cambio no la alargue.
+Ambos deben pasar antes de dar un cambio por terminado. `flutter analyze` debe
+finalizar sin avisos ni errores; una advertencia nueva es una regresión, no una
+línea base aceptada.
 
 ---
 

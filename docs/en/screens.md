@@ -52,7 +52,7 @@ Each has its English twin under the `/en` prefix.
 | Orchestrations | `/orchestrations` | Chain agents into a flow, with a visual editor |
 | Connections | `/connections` | AI, machine and database credentials, plus a Providers tab to link external accounts (Anthropic, OpenAI, GitHub Copilot, Ollama, NVIDIA, Google) and choose which models to bring in; Ollama connections can discover models live, and iAgents Hub connections can sync with the remote hub |
 | Memory | `/memory` | What the agents remember |
-| Knowledge | `/knowledge` | Documents and skills the agents consult |
+| Knowledge | `/knowledge` | Skills, Prompts, Tools, Documents, and Memory used by agents |
 | Explore | `/explore` | Community resources with type, category, language, and label filters |
 | Labels | `/labels` | Collapsible catalog and search for labels on your own resources through the shared toolbar and filter dialog, including content language |
 | Manager | `/manager` | Workspaces, groups and invitations |
@@ -69,6 +69,19 @@ apply or was not declared. Tools keep their programming language (Python,
 Shell, or C++) separate from content language. Explore and Labels reuse the
 Admin type dropdown and render multiple filters as dropdowns instead of rows of
 buttons.
+
+### Tools on the device
+
+A Tool may provide instructions and also a Python/Shell script or a native
+artifact historically identified as `cpp`. The app obtains the runtime catalog
+from the backend, checks operating-system and architecture compatibility, and
+verifies SHA-256 while downloading a binary.
+
+Automatic local execution is not enabled yet. A compatible Tool is one the
+device will be able to run once an isolated executor with explicit permissions
+exists; today it teaches the agent how to perform the task and provides its
+authorized implementation for download. The existing `review`, `approved`, and
+`quarantine` labels determine whether it can be shared or consumed.
 
 ---
 

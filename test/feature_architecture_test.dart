@@ -132,33 +132,30 @@ void main() {
     );
   });
 
-  test(
-    'los componentes de presentación mantienen responsabilidades acotadas',
-    () {
-      final oversized = <String>[];
-      for (final file in presentationFiles) {
-        final lines = file.readAsLinesSync().length;
-        if (lines > 600) oversized.add('${file.path}: $lines líneas');
-      }
+  test('los componentes de presentación mantienen responsabilidades acotadas', () {
+    final oversized = <String>[];
+    for (final file in presentationFiles) {
+      final lines = file.readAsLinesSync().length;
+      if (lines > 600) oversized.add('${file.path}: $lines líneas');
+    }
 
-      expect(
-        oversized,
-        isEmpty,
-        reason:
-            'Divide estado, secciones o componentes cuando superen 600 líneas:\n'
-            '${oversized.join('\n')}',
-      );
-    },
-  );
+    expect(
+      oversized,
+      isEmpty,
+      reason:
+          'Divide estado, secciones o componentes cuando superen 600 líneas:\n'
+          '${oversized.join('\n')}',
+    );
+  });
 
   test('toda mutación del cliente HTTP avisa del recurso que tocó', () {
     // La invalidación vive en un solo sitio a propósito: si un método nuevo
     // llama a la caché por su cuenta, las pantallas montadas no se enteran del
     // cambio y vuelve la desincronización que el mixin resuelve.
     final fuente = File('lib/core/network/api_client.dart').readAsStringSync();
-    final sueltas = RegExp(
-      r'_cache\.invalidateForMutation\(',
-    ).allMatches(fuente).length;
+    final sueltas = RegExp(r'_cache\.invalidateForMutation\(')
+        .allMatches(fuente)
+        .length;
 
     expect(
       sueltas,

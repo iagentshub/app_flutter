@@ -39,6 +39,7 @@ class LoginPage extends StatefulWidget {
     required this.sessionController,
     required this.localeController,
     required this.authRepository,
+    this.onLoadingChanged,
     super.key,
   });
 
@@ -46,6 +47,11 @@ class LoginPage extends StatefulWidget {
   final SessionController sessionController;
   final LocaleController localeController;
   final AuthRepository authRepository;
+
+  /// En producción, eleva la espera por encima del router para conservar el
+  /// mismo overlay durante el salto Login -> Dashboard. Los montajes aislados
+  /// siguen usando el overlay local.
+  final ValueChanged<bool>? onLoadingChanged;
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -196,12 +202,24 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
 
   @override
   void dispose() {
+    if (_loading && !widget.sessionController.isLoggedIn) {
+      widget.onLoadingChanged?.call(false);
+    }
     widget.localeController.removeListener(_onLocaleChanged);
     _backendPollTimer?.cancel();
     widget.backendController.removeListener(_onBackendConnectivityChanged);
     _identifierController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _setLoading(bool value) {
+    widget.onLoadingChanged?.call(value);
+    if (!mounted) return;
+    setState(() {
+      _loading = value;
+      if (value) _errorMessage = null;
+    });
   }
 
   Future<void> _loadPlatformSettings() async {
@@ -316,10 +334,7 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
 
     final texts = await _authTextsFuture;
 
-    setState(() {
-      _loading = true;
-      _errorMessage = null;
-    });
+    _setLoading(true);
 
     var authenticated = false;
     try {
@@ -346,9 +361,7 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
       // SessionController notifica al GoRouter y este desmonta LoginPage. No
       // ocultamos antes el overlay: hacerlo durante el fade-through dejaba un
       // fotograma sin logo antes de aparecer el cargador del destino.
-      if (mounted && !authenticated) {
-        setState(() => _loading = false);
-      }
+      if (!authenticated) _setLoading(false);
     }
   }
 
@@ -369,10 +382,7 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
     );
     if (result == null || !result.isReady) return;
 
-    setState(() {
-      _loading = true;
-      _errorMessage = null;
-    });
+    _setLoading(true);
     var authenticated = false;
     try {
       final token = result.gaToken!;
@@ -387,7 +397,7 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
       if (!mounted) return;
       setState(() => _errorMessage = tx('error_connection'));
     } finally {
-      if (mounted && !authenticated) setState(() => _loading = false);
+      if (!authenticated) _setLoading(false);
     }
   }
 
@@ -395,10 +405,7 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
     final themeController = ThemeControllerScope.of(context, listen: false);
     final texts = await _authTextsFuture;
 
-    setState(() {
-      _loading = true;
-      _errorMessage = null;
-    });
+    _setLoading(true);
 
     var authenticated = false;
     try {
@@ -418,9 +425,7 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
       if (!mounted) return;
       setState(() => _errorMessage = _txt(texts, 'guest_error'));
     } finally {
-      if (mounted && !authenticated) {
-        setState(() => _loading = false);
-      }
+      if (!authenticated) _setLoading(false);
     }
   }
 
@@ -429,7 +434,7 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
     return Scaffold(
       body: IAgentsLoadingOverlay(
         key: const Key('login-loading-overlay'),
-        loading: _loading,
+        loading: _loading && widget.onLoadingChanged == null,
         localeController: widget.localeController,
         logoSize: 96,
         child: Stack(

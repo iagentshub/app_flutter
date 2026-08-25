@@ -27,6 +27,9 @@ abstract final class AppRouter {
     required DashboardRepository dashboardRepository,
     required ApiClient apiClient,
     required DashboardEditState dashboardEditState,
+    required ValueChanged<bool> onLoginLoadingChanged,
+    required bool Function() hasLoginDashboardHandoff,
+    required VoidCallback onDashboardReady,
     required VoidCallback onRetrySession,
     required VoidCallback onUseAnotherAccount,
   }) {
@@ -114,6 +117,7 @@ abstract final class AppRouter {
           sessionController: sessionController,
           localeController: localeController,
           authRepository: authRepository,
+          onLoginLoadingChanged: onLoginLoadingChanged,
           onRetrySession: onRetrySession,
           onUseAnotherAccount: onUseAnotherAccount,
         ),
@@ -123,6 +127,8 @@ abstract final class AppRouter {
           authRepository: authRepository,
           dashboardRepository: dashboardRepository,
           dashboardEditState: dashboardEditState,
+          hasLoginDashboardHandoff: hasLoginDashboardHandoff,
+          onDashboardReady: onDashboardReady,
         ),
       ],
     );

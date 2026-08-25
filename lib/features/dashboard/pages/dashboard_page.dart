@@ -44,6 +44,8 @@ class DashboardPage extends StatefulWidget {
     required this.authRepository,
     required this.dashboardRepository,
     required this.dashboardEditState,
+    this.suppressInitialLoadingOverlay = false,
+    this.onInitialLoadFinished,
     super.key,
   });
 
@@ -51,6 +53,8 @@ class DashboardPage extends StatefulWidget {
   final AuthRepository authRepository;
   final DashboardRepository dashboardRepository;
   final DashboardEditState dashboardEditState;
+  final bool suppressInitialLoadingOverlay;
+  final VoidCallback? onInitialLoadFinished;
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -68,6 +72,7 @@ class _DashboardPageState extends State<DashboardPage> {
   List<DashboardWidgetInstance> _layout = defaultDashboardInstances();
   List<NotificationBanner> _banners = [];
   bool _loading = true;
+  bool _initialLoadFinished = false;
   bool _editing = false;
   String? _error;
 
@@ -100,6 +105,12 @@ class _DashboardPageState extends State<DashboardPage> {
     super.dispose();
   }
 
+  void _finishInitialLoad() {
+    if (_initialLoadFinished) return;
+    _initialLoadFinished = true;
+    widget.onInitialLoadFinished?.call();
+  }
+
   String? get _token => _services.sessionController.gaToken;
 
   Future<void> _load() async {
@@ -109,6 +120,7 @@ class _DashboardPageState extends State<DashboardPage> {
         _error = _tx('common.no_session');
         _loading = false;
       });
+      _finishInitialLoad();
       return;
     }
     setState(() {
@@ -140,6 +152,7 @@ class _DashboardPageState extends State<DashboardPage> {
         _banners = banners;
         _loading = false;
       });
+      _finishInitialLoad();
       if (!preferences.isVersioned) unawaited(_persistLayout());
     } catch (_) {
       if (!mounted) return;
@@ -147,6 +160,7 @@ class _DashboardPageState extends State<DashboardPage> {
         _error = _tx('dashboard.error_generic');
         _loading = false;
       });
+      _finishInitialLoad();
     }
   }
 
@@ -245,7 +259,9 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     if (_error != null || _data == null) {
       return IAgentsLoadingOverlay(
-        loading: _loading,
+        loading:
+            _loading &&
+            !(!_initialLoadFinished && widget.suppressInitialLoadingOverlay),
         localeController: _services.localeController,
         child: _loading
             ? const SizedBox.expand()

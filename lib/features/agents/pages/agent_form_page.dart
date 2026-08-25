@@ -14,7 +14,6 @@ import '../../../models/prompts/prompt_models.dart';
 import '../../../models/skills/skill_models.dart';
 import '../../../models/tools/tool_models.dart';
 import '../../../shared/labels/label_catalog.dart';
-import '../../../shared/tools/tool_language.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/grouped_label_picker.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
@@ -393,7 +392,7 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
               id: tool.id,
               type: AgentResourceType.tool,
               title: tool.name,
-              subtitle: toolLanguageLabel(widget.tx, tool.language),
+              subtitle: tool.languageLabel(widget.tx),
             ),
         ],
         initial: AgentResourceSelection(
