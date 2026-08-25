@@ -80,6 +80,26 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('editor fits a narrow screen without overflows', (tester) async {
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: LlmOrchestrationEditorPage(connections: _connections, tx: tr),
+      ),
+    );
+
+    expect(
+      find.byKey(const ValueKey('llm-orchestration-save')),
+      findsOneWidget,
+    );
+    expect(find.byIcon(Icons.drag_handle), findsNWidgets(2));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('shared orchestration maps private user connections', (
     tester,
   ) async {

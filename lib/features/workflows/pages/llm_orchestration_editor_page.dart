@@ -132,6 +132,7 @@ class _LlmOrchestrationEditorPageState
   Widget build(BuildContext context) {
     final tx = widget.tx;
     final colors = Theme.of(context).colorScheme;
+    final compactScreen = MediaQuery.sizeOf(context).width < 480;
     return Scaffold(
       backgroundColor: colors.surfaceContainerLowest,
       appBar: AppBar(
@@ -145,17 +146,25 @@ class _LlmOrchestrationEditorPageState
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12),
-            child: PrimaryButton.icon(
-              key: const ValueKey('llm-orchestration-save'),
-              onPressed: _save,
-              icon: const Icon(Icons.check, size: 18),
-              label: Text(tx('common.save')),
-            ),
+            child: compactScreen
+                ? AppIconButton.filled(
+                    key: const ValueKey('llm-orchestration-save'),
+                    onPressed: _save,
+                    icon: const Icon(Icons.check, size: 18),
+                    tooltip: tx('common.save'),
+                  )
+                : PrimaryButton.icon(
+                    key: const ValueKey('llm-orchestration-save'),
+                    onPressed: _save,
+                    icon: const Icon(Icons.check, size: 18),
+                    label: Text(tx('common.save')),
+                  ),
           ),
         ],
       ),
       body: SafeArea(
-        child: Center(
+        child: Align(
+          alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 900),
             child: Form(
@@ -194,9 +203,8 @@ class _LlmOrchestrationEditorPageState
                     const SizedBox(height: 12),
                     Text(
                       tx('llm_orchestrations.mode'),
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style: Theme.of(context).textTheme.labelLarge
+                          ?.copyWith(fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 8),
                     SizedBox(
@@ -278,6 +286,7 @@ class _LlmOrchestrationEditorPageState
                     ReorderableListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
+                      buildDefaultDragHandles: false,
                       itemCount: _candidates.length,
                       onReorderItem: (oldIndex, newIndex) {
                         setState(() {
@@ -291,14 +300,14 @@ class _LlmOrchestrationEditorPageState
                           key: ValueKey('${draft.connectionId}-$index'),
                           margin: const EdgeInsets.only(bottom: 8),
                           decoration: BoxDecoration(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.surfaceContainerLow,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerLow,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.outlineVariant,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .outlineVariant,
                             ),
                           ),
                           child: Padding(
@@ -364,12 +373,16 @@ class _LlmOrchestrationEditorPageState
                                   danger: true,
                                   tooltip: tx('common.delete'),
                                 );
+                                final dragHandle = ReorderableDragStartListener(
+                                  index: index,
+                                  child: const Icon(Icons.drag_handle),
+                                );
                                 if (compact) {
                                   return Column(
                                     children: [
                                       Row(
                                         children: [
-                                          const Icon(Icons.drag_handle),
+                                          dragHandle,
                                           const SizedBox(width: 8),
                                           Expanded(
                                             child: Text(
@@ -379,9 +392,9 @@ class _LlmOrchestrationEditorPageState
                                                 '{{position}}',
                                                 '${index + 1}',
                                               ),
-                                              style: Theme.of(
-                                                context,
-                                              ).textTheme.labelLarge,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .labelLarge,
                                             ),
                                           ),
                                           remove,
@@ -395,9 +408,9 @@ class _LlmOrchestrationEditorPageState
                                 return Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Padding(
+                                    Padding(
                                       padding: EdgeInsets.only(top: 12),
-                                      child: Icon(Icons.drag_handle),
+                                      child: dragHandle,
                                     ),
                                     const SizedBox(width: 10),
                                     Expanded(child: fields),
