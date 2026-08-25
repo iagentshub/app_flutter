@@ -193,6 +193,51 @@ void main() {
     );
   });
 
+  test('solo UserAvatar pide la imagen de un usuario', () {
+    // La foto de un usuario se montaba a mano en tres pantallas: el mismo
+    // `ClipOval` sobre un `Image` con `ResizeImage`, `errorBuilder` y
+    // `frameBuilder`, cada una con su propio círculo de iniciales. Y no eran
+    // copias idénticas: dos pasaban la ruta relativa que da el backend y la
+    // tercera una URL absoluta, que `authenticatedImage` volvía a prefijar.
+    // Esa pantalla pedía `http://host/http://host/api/…`, recibía un 404 y caía
+    // al respaldo sin decir nada, así que su avatar no se vio nunca —y el
+    // respaldo es exactamente lo que se ve cuando no hay foto, de ahí que
+    // nadie lo notara—.
+    //
+    // Con una sola llamada, esa divergencia no se puede escribir.
+    final infractores = <String>[];
+    final llamada = RegExp(r'\bauthenticatedImage\s*\(');
+    const permitido = 'lib/shared/widgets/user_avatar.dart';
+    for (final file
+        in Directory('lib')
+            .listSync(recursive: true)
+            .whereType<File>()
+            .where((file) => file.path.endsWith('.dart'))) {
+      final ruta = file.path.replaceAll(r'\', '/');
+      if (ruta == permitido) continue;
+      final lineas = file.readAsLinesSync();
+      for (var index = 0; index < lineas.length; index++) {
+        final linea = lineas[index].trimLeft();
+        // El de api_client.dart es la definición, no un uso; y las menciones en
+        // comentarios explican precisamente por qué existe esta regla.
+        if (linea.startsWith('//') || linea.startsWith('///')) continue;
+        if (linea.startsWith('ImageProvider authenticatedImage')) continue;
+        if (llamada.hasMatch(lineas[index])) {
+          infractores.add('$ruta:${index + 1}');
+        }
+      }
+    }
+
+    expect(
+      infractores,
+      isEmpty,
+      reason:
+          'Pinta la foto con UserAvatar (shared/widgets/user_avatar.dart), que '
+          'ya resuelve el respaldo de iniciales, el tamaño de decodificación y '
+          'la ruta relativa:\n${infractores.join('\n')}',
+    );
+  });
+
   test('solo shared/graph arma nodos y aristas de un grafo', () {
     // El grafo se dibujaba en un único sitio, pero *armarlo* estaba escrito
     // ocho veces —cuatro en Dart y cuatro en el backend—, y las copias habían

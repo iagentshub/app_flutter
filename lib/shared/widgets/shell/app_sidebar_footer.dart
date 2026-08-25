@@ -5,6 +5,10 @@ class _SidebarFooter extends StatelessWidget {
     required this.visibleName,
     required this.accountDetail,
     required this.initial,
+    required this.username,
+    required this.avatarUrl,
+    required this.apiClient,
+    required this.gaToken,
     required this.languageCode,
     required this.billingEnabled,
     required this.tx,
@@ -15,6 +19,10 @@ class _SidebarFooter extends StatelessWidget {
   final String visibleName;
   final String accountDetail;
   final String initial;
+  final String username;
+  final String? avatarUrl;
+  final ApiClient apiClient;
+  final String? gaToken;
   final String languageCode;
   final bool billingEnabled;
   final String Function(String key) tx;
@@ -24,7 +32,6 @@ class _SidebarFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     final tokens = _SidebarTokens.of(context);
 
     return Padding(
@@ -72,17 +79,15 @@ class _SidebarFooter extends StatelessWidget {
                     label: '$visibleName, $accountDetail',
                     child: Row(
                       children: [
-                        CircleAvatar(
-                          radius: 15,
-                          backgroundColor: scheme.primary,
-                          foregroundColor: scheme.onPrimary,
-                          child: Text(
-                            initial,
-                            style: const TextStyle(
-                              fontSize: FncFonts.size12,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
+                        // La foto del usuario en las pantallas donde
+                        // siempre está a la vista. Hasta ahora salía la
+                        // inicial y nada más, incluso teniendo foto puesta.
+                        UserAvatar(
+                          username: username,
+                          avatarUrl: avatarUrl,
+                          apiClient: apiClient,
+                          gaToken: gaToken,
+                          size: 30,
                         ),
                         const SizedBox(width: 10),
                         Expanded(

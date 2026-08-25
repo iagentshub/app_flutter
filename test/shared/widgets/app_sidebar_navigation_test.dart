@@ -1,17 +1,24 @@
 import 'package:app_flutter/app/router/internal_router.dart';
+import 'package:app_flutter/core/network/api_client.dart';
 import 'package:app_flutter/shared/services/native_app_icon_service.dart';
+import 'package:app_flutter/shared/state/backend_controller.dart';
 import 'package:app_flutter/shared/state/brand_icon_controller.dart';
 import 'package:app_flutter/shared/widgets/app_shell.dart';
 import 'package:app_flutter/shared/widgets/brand_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late BrandIconController brandIconController;
+  // El sidebar pinta la foto del usuario, así que necesita un cliente. Uno de
+  // mentira: aquí nunca hay avatarUrl, así que no llega a pedir nada.
+  late ApiClient apiClient;
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
@@ -21,6 +28,11 @@ void main() {
           (_) async => null,
         );
     brandIconController = await BrandIconController.bootstrap();
+    apiClient = ApiClient(
+      await BackendController.bootstrap(),
+      client: MockClient((_) async => http.Response('', 404)),
+    );
+    addTearDown(apiClient.close);
   });
 
   tearDown(() {
@@ -78,6 +90,9 @@ void main() {
               location: InternalRoutes.dashboard,
               username: 'jariv',
               displayName: 'Javier',
+              avatarUrl: null,
+              apiClient: apiClient,
+              gaToken: null,
               email: 'javier@example.com',
               role: role ?? (isAdmin ? 'admin' : 'user'),
               languageCode: languageCode,
@@ -322,6 +337,10 @@ void main() {
               isAdmin: isAdmin,
               location: InternalRoutes.dashboard,
               initial: 'J',
+              username: 'jariv',
+              avatarUrl: null,
+              apiClient: apiClient,
+              gaToken: null,
               tx: tx,
               onNavigate: onNavigate,
               onExpand: onExpand ?? () {},

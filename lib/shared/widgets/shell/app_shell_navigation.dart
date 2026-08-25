@@ -17,6 +17,9 @@ class AppSidebarNavigation extends StatelessWidget {
     required this.location,
     required this.username,
     required this.displayName,
+    required this.avatarUrl,
+    required this.apiClient,
+    required this.gaToken,
     required this.email,
     required this.role,
     required this.languageCode,
@@ -34,6 +37,9 @@ class AppSidebarNavigation extends StatelessWidget {
   final String location;
   final String username;
   final String? displayName;
+  final String? avatarUrl;
+  final ApiClient apiClient;
+  final String? gaToken;
   final String? email;
   final String role;
   final String languageCode;
@@ -102,6 +108,10 @@ class AppSidebarNavigation extends StatelessWidget {
           visibleName: visibleName,
           accountDetail: accountDetail,
           initial: initial,
+          username: username,
+          avatarUrl: avatarUrl,
+          apiClient: apiClient,
+          gaToken: gaToken,
           languageCode: languageCode,
           billingEnabled: billingEnabled,
           tx: tx,

@@ -10,6 +10,10 @@ class AppSidebarRail extends StatelessWidget {
     required this.isAdmin,
     required this.location,
     required this.initial,
+    required this.username,
+    required this.avatarUrl,
+    required this.apiClient,
+    required this.gaToken,
     required this.tx,
     required this.onNavigate,
     required this.onExpand,
@@ -19,6 +23,10 @@ class AppSidebarRail extends StatelessWidget {
   final bool isAdmin;
   final String location;
   final String initial;
+  final String username;
+  final String? avatarUrl;
+  final ApiClient apiClient;
+  final String? gaToken;
   final String Function(String key) tx;
   final ValueChanged<String> onNavigate;
   final VoidCallback onExpand;
@@ -26,7 +34,6 @@ class AppSidebarRail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final tokens = _SidebarTokens.of(context);
     final expandTooltip = tx('sidebar_show');
     final groups = <List<_NavItem>>[
@@ -74,17 +81,14 @@ class AppSidebarRail extends StatelessWidget {
           ),
         ),
         _RailDivider(color: tokens.border),
-        CircleAvatar(
-          radius: 15,
-          backgroundColor: scheme.primary,
-          foregroundColor: scheme.onPrimary,
-          child: Text(
-            initial,
-            style: const TextStyle(
-              fontSize: FncFonts.size12,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+        // La misma foto que el sidebar desplegado: es el mismo usuario, solo
+        // que aquí la barra está colapsada.
+        UserAvatar(
+          username: username,
+          avatarUrl: avatarUrl,
+          apiClient: apiClient,
+          gaToken: gaToken,
+          size: 30,
         ),
         Tooltip(
           message: tx('logout'),

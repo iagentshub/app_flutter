@@ -19,9 +19,12 @@ extension _AdminPeopleCards on _AdminPageState {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  radius: 16,
-                  child: Text(email.isNotEmpty ? email[0].toUpperCase() : '?'),
+                UserAvatar(
+                  username: (user['username'] ?? email).toString(),
+                  avatarUrl: user['avatar_url'] as String?,
+                  apiClient: _services.apiClient,
+                  gaToken: _services.sessionController.gaToken,
+                  size: 32,
                 ),
                 const SizedBox(width: 10),
                 Expanded(

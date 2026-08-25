@@ -8,7 +8,7 @@ class ProfileSession {
     this.authMethod,
     this.email,
     this.isEmailPublic = false,
-    this.hasAvatar = false,
+    this.avatarUrl,
   });
 
   final String id;
@@ -20,9 +20,10 @@ class ProfileSession {
   final String? email;
   final bool isEmailPublic;
 
-  /// Si hay foto subida. Llega del backend como booleano: la columna guarda el
-  /// fichero en base64 y no viaja en `/api/auth/me`.
-  final bool hasAvatar;
+  /// Ruta relativa de la foto, o `null` si no hay. Misma convención que el
+  /// perfil público. Lleva dentro la versión del contenido, así que cambiar la
+  /// foto cambia la URL y la caché deja de servir la anterior.
+  final String? avatarUrl;
 
   factory ProfileSession.fromJson(Map<String, dynamic> json) {
     return ProfileSession(
@@ -34,7 +35,7 @@ class ProfileSession {
       authMethod: json['auth_method'] as String?,
       email: json['email'] as String?,
       isEmailPublic: json['is_email_public'] == true,
-      hasAvatar: json['has_avatar'] == true,
+      avatarUrl: json['avatar_url'] as String?,
     );
   }
 }

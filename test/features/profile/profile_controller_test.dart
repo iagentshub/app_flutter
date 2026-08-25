@@ -423,33 +423,49 @@ void main() {
     },
   );
 
-  test(
-    'uploadAvatar comprime la imagen y rompe la caché al terminar',
-    () async {
-      final controller = await build(
-        (request) async => bundleResponse(request),
-      );
-      await controller.load();
-      final before = controller.avatarUrl;
+  test('uploadAvatar comprime la imagen y adopta la ruta del backend', () async {
+    const rutaNueva = '/api/users/alice/avatar?v=abc123def456';
+    final controller = await build((request) async {
+      if (request.url.path == '/api/auth/me/avatar') {
+        return http.Response(
+          jsonEncode({'ok': true, 'avatar_url': rutaNueva}),
+          200,
+        );
+      }
+      return bundleResponse(request);
+    });
+    await controller.load();
+    expect(controller.avatarUrl, isNull);
 
-      final result = await controller.uploadAvatar(
-        fileName: 'foto.png',
-        fileBytes: _fakeImageBytes(),
-      );
+    final result = await controller.uploadAvatar(
+      fileName: 'foto.png',
+      fileBytes: _fakeImageBytes(),
+    );
 
-      expect(result?.isError, isFalse);
-      expect(before, '/api/users/alice/avatar?v=0');
-      expect(controller.avatarUrl, '/api/users/alice/avatar?v=1');
-      expect(controller.uploadingAvatar, isFalse);
-    },
-  );
+    expect(result?.isError, isFalse);
+    // La ruta la publica el servidor, con la versión del contenido dentro. Se
+    // construía aquí con un contador local que volvía a cero al reconstruirse
+    // la pantalla, así que la URL reaparecía apuntando a la foto anterior.
+    expect(controller.avatarUrl, rutaNueva);
+    expect(controller.hasAvatar, isTrue);
+    expect(controller.uploadingAvatar, isFalse);
+  });
 
   test('la ruta del avatar es relativa y no duplica el origen', () async {
-    // Llevaba `effectiveBaseUrl` delante, de cuando la vista montaba un
-    // `Image.network` a pelo. `authenticatedImage` lo antepone otra vez, así
-    // que salía `http://host/http://host/api/users/…`: 404, `errorBuilder` y
-    // la inicial de siempre. La subida funcionaba y la foto no se veía nunca.
-    final controller = await build((request) async => bundleResponse(request));
+    // El repositorio le ponía `effectiveBaseUrl` delante, de cuando la vista
+    // montaba un `Image.network` a pelo. `authenticatedImage` lo antepone otra
+    // vez, así que salía `http://host/http://host/api/users/…`: 404,
+    // `errorBuilder` y la inicial de siempre. La subida funcionaba y la foto no
+    // se veía nunca.
+    final controller = await build(
+      (request) async => bundleResponse(
+        request,
+        sessionJson: {
+          ..._session(),
+          'avatar_url': '/api/users/alice/avatar?v=abc123',
+        },
+      ),
+    );
     await controller.load();
 
     final ruta = controller.avatarUrl!;
@@ -469,7 +485,7 @@ void main() {
       ),
     ]) {
       expect(resuelta.path, '/api/users/alice/avatar');
-      expect(resuelta.query, 'v=0');
+      expect(resuelta.query, 'v=abc123');
       expect(resuelta.toString(), isNot(contains('//api')));
       expect(
         'http'.allMatches(resuelta.toString()),
@@ -479,7 +495,7 @@ void main() {
     }
   });
 
-  test('removeAvatar quita la foto y rompe la caché', () async {
+  test('removeAvatar quita la foto', () async {
     final borradas = <String>[];
     final controller = await build((request) async {
       if (request.method == 'DELETE' &&
@@ -489,7 +505,10 @@ void main() {
       }
       return bundleResponse(
         request,
-        sessionJson: {..._session(), 'has_avatar': true},
+        sessionJson: {
+          ..._session(),
+          'avatar_url': '/api/users/alice/avatar?v=abc123',
+        },
       );
     });
     await controller.load();
@@ -500,8 +519,7 @@ void main() {
     expect(result?.isError, isFalse);
     expect(borradas, ['/api/auth/me/avatar']);
     expect(controller.hasAvatar, isFalse);
-    // Sin subir la versión, el `Image` seguiría enseñando la foto cacheada.
-    expect(controller.avatarUrl, contains('v=1'));
+    expect(controller.avatarUrl, isNull);
     expect(controller.uploadingAvatar, isFalse);
   });
 

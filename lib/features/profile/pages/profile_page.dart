@@ -22,6 +22,7 @@ import '../../../shared/widgets/iagents_async_view.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../../../shared/widgets/user_avatar.dart';
 import '../../../utils/i18n.dart';
 import '../controllers/profile_controller.dart';
 import '../dialogs/active_sessions_dialog.dart';

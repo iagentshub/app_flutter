@@ -85,7 +85,6 @@ class ProfileController extends ChangeNotifier {
   bool _savingProfile = false;
   bool _requestingDeletion = false;
   bool _uploadingAvatar = false;
-  int _avatarVersion = 0;
 
   // Borrador de los formularios: se rellena en `load` y sólo viaja al backend
   // cuando el usuario pulsa guardar.
@@ -129,17 +128,16 @@ class ProfileController extends ChangeNotifier {
   bool get hasLanguages => _selectedLanguages.isNotEmpty;
   bool hasLanguage(String id) => _selectedLanguages.contains(id);
 
-  /// Si hay foto que quitar. Se mantiene aparte del bundle porque quitarla no
-  /// recarga el perfil entero: bastan la bandera y el contador de versión.
-  bool _hasAvatar = false;
-  bool get hasAvatar => _hasAvatar;
-
-  /// `null` mientras no haya bundle cargado: el avatar cuelga del username.
-  String? get avatarUrl {
-    final username = _bundle?.session.username;
-    if (username == null || username.isEmpty) return null;
-    return _repository.avatarUrl(username, _avatarVersion);
-  }
+  /// Ruta de la foto tal y como la publica el backend, o `null` si no hay.
+  ///
+  /// Se mantiene aparte del bundle porque subirla o quitarla no recarga el
+  /// perfil entero. Lleva la versión del contenido dentro, así que no hace
+  /// falta ningún contador local para romper la caché — y el que había volvía a
+  /// cero al reconstruirse la pantalla, con lo que la URL reaparecía apuntando
+  /// a la foto anterior.
+  String? _avatarUrl;
+  String? get avatarUrl => _avatarUrl;
+  bool get hasAvatar => _avatarUrl != null;
 
   String? get token => _sessionController.gaToken;
 
@@ -193,7 +191,10 @@ class ProfileController extends ChangeNotifier {
       _language = bundle.settings.language;
       _savedTheme = bundle.settings.theme;
       _savedLanguage = bundle.settings.language;
-      _hasAvatar = bundle.session.hasAvatar;
+      _avatarUrl = bundle.session.avatarUrl;
+      // La sesión pudo cargarse antes de que hubiera foto —o con otra—: el
+      // bundle del perfil es la fuente fresca.
+      _sessionController.actualizarAvatar(_avatarUrl);
       bioController.text = bundle.social.bio ?? '';
       _isEmailPublic = bundle.session.isEmailPublic;
       githubController.text = githubUsernameFromUrl(bundle.social.github);
@@ -310,13 +311,14 @@ class ProfileController extends ChangeNotifier {
         );
       }
 
-      await _repository.uploadAvatar(
+      _avatarUrl = await _repository.uploadAvatar(
         token,
         fileName: compressed.fileName,
         fileBytes: compressed.bytes,
       );
-      _avatarVersion++;
-      _hasAvatar = true;
+      // El menú lateral pinta el avatar en todas las pantallas y lee la sesión,
+      // que se carga al entrar: sin avisarla, la foto nueva solo aparecía aquí.
+      _sessionController.actualizarAvatar(_avatarUrl);
       return ActionResult(_tx('profile.avatar_updated'));
     } on AvatarCompressionException {
       return ActionResult.error(_tx('profile.avatar_error'));
@@ -330,8 +332,7 @@ class ProfileController extends ChangeNotifier {
     }
   }
 
-  /// Quita la foto y deja la inicial. Sube el contador de versión igual que
-  /// una subida: sin él la imagen borrada seguiría en la caché del `Image`.
+  /// Quita la foto y deja la inicial.
   Future<ActionResult?> removeAvatar() async {
     final token = this.token;
     if (token == null || token.isEmpty) return null;
@@ -340,8 +341,8 @@ class ProfileController extends ChangeNotifier {
     _notify();
     try {
       await _repository.deleteAvatar(token);
-      _avatarVersion++;
-      _hasAvatar = false;
+      _avatarUrl = null;
+      _sessionController.actualizarAvatar(null);
       return ActionResult(_tx('profile.avatar_removed'));
     } on ApiError catch (error) {
       return ActionResult.error(error.message);

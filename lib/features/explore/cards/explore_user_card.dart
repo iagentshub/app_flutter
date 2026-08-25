@@ -3,7 +3,6 @@ part of '../pages/explore_page.dart';
 extension _ExploreUserCard on _ExplorePageState {
   Widget _buildUserCard(ExploreUserItem user) {
     final username = user.username;
-    final initial = username.isNotEmpty ? username[0].toUpperCase() : '?';
     final token = _token;
     // La ruta va tal cual al cliente: él la resuelve contra el backend activo
     // y, en web, contra el mismo origen —que es lo que hace que la cookie de
@@ -22,30 +21,12 @@ extension _ExploreUserCard on _ExplorePageState {
           children: [
             Row(
               children: [
-                ClipOval(
-                  child: SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: avatarPath == null
-                        ? _userAvatarFallback(initial)
-                        : Image(
-                            image: ResizeImage(
-                              _services.apiClient.authenticatedImage(
-                                avatarPath,
-                                gaToken: token,
-                              ),
-                              width: 80,
-                              height: 80,
-                            ),
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stack) =>
-                                _userAvatarFallback(initial),
-                            frameBuilder: (context, child, frame, _) =>
-                                frame == null
-                                ? _userAvatarFallback(initial)
-                                : child,
-                          ),
-                  ),
+                UserAvatar(
+                  username: username,
+                  avatarUrl: avatarPath,
+                  apiClient: _services.apiClient,
+                  gaToken: token,
+                  size: 40,
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -102,16 +83,4 @@ extension _ExploreUserCard on _ExplorePageState {
     );
   }
 
-  Widget _userAvatarFallback(String initial) {
-    return CircleAvatar(
-      radius: 20,
-      child: Text(
-        initial,
-        style: const TextStyle(
-          fontSize: FncFonts.size14,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
 }

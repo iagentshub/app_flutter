@@ -53,6 +53,30 @@ sido él; un «no hay resultados» tras una búsqueda que sí encontraba algo pa
 buscador roto. Explorar es el ejemplo montado: `relation` viaja en la URL y el backend
 devuelve `X-Linked-Count` para explicar el vacío.
 
+## La foto de un usuario se pide en un solo sitio
+
+`shared/widgets/user_avatar.dart` es el **único** fichero que puede llamar a
+`ApiClient.authenticatedImage`; `test/feature_architecture_test.dart` lo rechaza
+en cualquier otro. El widget resuelve el respaldo de iniciales, el tamaño al que
+se decodifica el bitmap y el `errorBuilder`.
+
+El mismo bloque estaba escrito a mano en tres pantallas, y no eran copias
+idénticas: dos pasaban la ruta **relativa** que da el backend y la tercera una
+URL absoluta, que `authenticatedImage` volvía a prefijar. Esa pantalla pedía
+`http://host/http://host/api/…`, recibía un 404 y caía al respaldo sin decir
+nada — y el respaldo es exactamente lo que se ve cuando no hay foto, así que el
+avatar del perfil no se vio nunca y nadie lo notó.
+
+- **Lo que se le pasa es la ruta relativa del backend** (`/api/users/…`), o
+  `null`. Lleva dentro el checksum del contenido, así que cambiar la foto cambia
+  la URL y la caché del navegador se entera sola. **No hace falta ningún
+  contador de versión en el cliente**: hubo uno, vivía en memoria y volvía a
+  cero al reconstruirse la pantalla, con lo que la URL reaparecía apuntando a la
+  foto anterior.
+- Los avatares del menú lateral salen de `SessionUser.avatarUrl`, y
+  `SessionController.actualizarAvatar()` es lo que los refresca al cambiar la
+  foto en Perfil, sin recargar la sesión entera.
+
 ## El grafo se arma en un solo sitio
 
 `shared/graph/resource_graph_builder.dart` es el **único** fichero que puede

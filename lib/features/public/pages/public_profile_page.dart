@@ -16,6 +16,7 @@ import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/resource_collection_view.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../../../shared/widgets/user_avatar.dart';
 import '../../explore/repositories/explore_repository.dart';
 import '../cards/public_resource_card.dart';
 import '../repositories/public_profile_repository.dart';
@@ -196,33 +197,13 @@ class _PublicProfilePageState extends State<PublicProfilePage>
     }
   }
 
-  Widget _avatarFallback() {
-    final initial = _cleanUsername.isEmpty
-        ? '?'
-        : _cleanUsername[0].toUpperCase();
-    return CircleAvatar(
-      radius: 36,
-      child: Text(initial, style: Theme.of(context).textTheme.headlineSmall),
-    );
-  }
-
   Widget _buildAvatar(SocialProfile profile) {
-    final path = profile.avatarUrl;
-    if (path == null || path.isEmpty) return _avatarFallback();
-    return ClipOval(
-      child: SizedBox(
-        width: 72,
-        height: 72,
-        child: Image(
-          image: ResizeImage(
-            _services.apiClient.authenticatedImage(path, gaToken: _token),
-            width: 144,
-            height: 144,
-          ),
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => _avatarFallback(),
-        ),
-      ),
+    return UserAvatar(
+      username: _cleanUsername,
+      avatarUrl: profile.avatarUrl,
+      apiClient: _services.apiClient,
+      gaToken: _token,
+      size: 72,
     );
   }
 

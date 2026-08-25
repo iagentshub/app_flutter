@@ -110,16 +110,12 @@ class _MembersDialogState extends State<_MembersDialog>
                               username != widget.currentUsername;
                           return Row(
                             children: [
-                              CircleAvatar(
-                                radius: 14,
-                                child: Text(
-                                  username.isNotEmpty
-                                      ? username[0].toUpperCase()
-                                      : '?',
-                                  style: const TextStyle(
-                                    fontSize: FncFonts.size12,
-                                  ),
-                                ),
+                              UserAvatar(
+                                username: username,
+                                avatarUrl: m['avatar_url'] as String?,
+                                apiClient: widget.apiClient,
+                                gaToken: widget.token,
+                                size: 28,
                               ),
                               const SizedBox(width: 10),
                               Expanded(

@@ -25,6 +25,7 @@ import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../../../shared/widgets/user_avatar.dart';
 import '../../../utils/i18n.dart';
 import '../../../utils/validators.dart';
 import '../repositories/admin_agents_repository.dart';

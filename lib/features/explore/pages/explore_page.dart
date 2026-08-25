@@ -26,6 +26,7 @@ import '../../../shared/widgets/resource_type_badge.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../../../shared/widgets/user_avatar.dart';
 import '../../../utils/i18n.dart';
 import '../../manager/repositories/manager_repository.dart';
 import '../controllers/explore_controller.dart';

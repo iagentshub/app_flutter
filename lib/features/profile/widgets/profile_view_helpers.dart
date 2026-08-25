@@ -95,49 +95,26 @@ extension _ProfileViewHelpers on _ProfilePageState {
   /// `Clip.none` la deje pintada. Quien tocaba la foto —que es lo que se toca—
   /// no obtenía nada, y de ahí el «no funciona». La insignia se queda como
   /// señal visual, sin `onTap` propio: el gesto lo recoge el envoltorio.
-  Widget _buildAvatar(String initial) {
+  Widget _buildAvatar() {
     return Tooltip(
       message: _tx('profile.avatar_change'),
       child: InkWell(
         onTap: _controller.uploadingAvatar ? null : _pickAndUploadAvatar,
         customBorder: const CircleBorder(),
-        child: _buildAvatarContent(initial),
+        child: _buildAvatarContent(),
       ),
     );
   }
 
-  Widget _buildAvatarContent(String initial) {
-    final token = _controller.token;
-    final url = _controller.avatarUrl;
+  Widget _buildAvatarContent() {
     return Stack(
-      clipBehavior: Clip.none,
       children: [
-        ClipOval(
-          child: SizedBox(
-            width: 64,
-            height: 64,
-            child: url == null
-                ? _avatarFallback(initial)
-                : Image(
-                    // El avatar subido puede pesar lo que el administrador
-                    // permita —por defecto, lo que sea—; decodificar solo a
-                    // 128px (2x el tamaño en pantalla) evita mantener un
-                    // bitmap gigante en memoria para un círculo de 64x64.
-                    image: ResizeImage(
-                      _services.apiClient.authenticatedImage(
-                        url,
-                        gaToken: token,
-                      ),
-                      width: 128,
-                      height: 128,
-                    ),
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stack) =>
-                        _avatarFallback(initial),
-                    frameBuilder: (context, child, frame, _) =>
-                        frame == null ? _avatarFallback(initial) : child,
-                  ),
-          ),
+        UserAvatar(
+          username: _controller.bundle?.session.username ?? '',
+          avatarUrl: _controller.avatarUrl,
+          apiClient: _services.apiClient,
+          gaToken: _controller.token,
+          size: 64,
         ),
         Positioned(
           right: 0,
@@ -168,19 +145,6 @@ extension _ProfileViewHelpers on _ProfilePageState {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _avatarFallback(String initial) {
-    return CircleAvatar(
-      radius: 32,
-      child: Text(
-        initial,
-        style: const TextStyle(
-          fontSize: FncFonts.size24,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
     );
   }
 }

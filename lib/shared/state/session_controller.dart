@@ -165,6 +165,19 @@ class SessionController extends ChangeNotifier {
   /// false (invitado, o "recordar cuenta" desmarcado en login), la sesión
   /// vive solo en memoria durante esta ejecución y se limpia cualquier
   /// sesión persistida anteriormente para evitar reutilizarla por error.
+  /// Cambia solo la foto del usuario en sesión.
+  ///
+  /// El menú lateral pinta el avatar en todas las pantallas, y la sesión se
+  /// carga al entrar: sin esto, cambiar la foto en Perfil dejaba el sidebar con
+  /// la anterior hasta el siguiente arranque. No toca `_epoch` —cambiar de foto
+  /// no es entrar— ni persiste nada: el valor vuelve de `/api/auth/me`.
+  void actualizarAvatar(String? url) {
+    final actual = _user;
+    if (actual == null || actual.avatarUrl == url) return;
+    _user = actual.conAvatar(url, dejarSinFoto: url == null);
+    notifyListeners();
+  }
+
   Future<void> login({
     required String token,
     required SessionUser user,

@@ -3,7 +3,6 @@ part of '../pages/profile_page.dart';
 extension _ProfileAccountSection on _ProfilePageState {
   Widget _buildAccountSection(ProfileBundle bundle) {
     final username = bundle.session.username;
-    final initial = username.isNotEmpty ? username[0].toUpperCase() : '?';
     // El rol y el tier son catálogos cerrados del backend, pero la clave se
     // arma con el valor: `trOr` deja que uno nuevo salga con su id crudo en vez
     // de romper la pantalla, que es exactamente lo que pasaba antes con todos.
@@ -25,7 +24,7 @@ extension _ProfileAccountSection on _ProfilePageState {
             padding: const EdgeInsets.all(20),
             child: Row(
               children: [
-                _buildAvatar(initial),
+                _buildAvatar(),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(

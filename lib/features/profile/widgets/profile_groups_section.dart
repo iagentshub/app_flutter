@@ -15,6 +15,7 @@ import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../../../shared/widgets/user_avatar.dart';
 import '../../manager/repositories/manager_repository.dart';
 
 part '../dialogs/group_members_dialog.dart';

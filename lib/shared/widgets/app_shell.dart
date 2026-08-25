@@ -22,6 +22,7 @@ import '../state/locale_controller.dart';
 import '../state/theme_controller.dart';
 import 'brand_icon.dart';
 import 'motion/app_modal.dart';
+import 'user_avatar.dart';
 
 part 'shell/app_shell_navigation.dart';
 part 'shell/app_sidebar_footer.dart';
@@ -208,6 +209,10 @@ class _AppShellState extends State<AppShell> {
                             'Usuario',
                         displayName:
                             _services.sessionController.user?.displayName,
+                        avatarUrl:
+                            _services.sessionController.user?.avatarUrl,
+                        apiClient: _services.apiClient,
+                        gaToken: _services.sessionController.gaToken,
                         email: _services.sessionController.user?.email,
                         role: _services.sessionController.user?.role ?? 'user',
                         languageCode: _services.localeController.languageCode,
@@ -271,6 +276,10 @@ class _AppShellState extends State<AppShell> {
                                   ? AppSidebarRail(
                                       isAdmin: isAdmin,
                                       location: location,
+                                      username: _services.sessionController.user?.username ?? '',
+                                      avatarUrl: _services.sessionController.user?.avatarUrl,
+                                      apiClient: _services.apiClient,
+                                      gaToken: _services.sessionController.gaToken,
                                       initial: sidebarAvatarInitial(
                                         sidebarVisibleName(
                                           _services

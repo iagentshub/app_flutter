@@ -107,39 +107,30 @@ class ProfileRepository extends ApiRepository {
     );
   }
 
-  /// Ruta del avatar del usuario, **relativa**: el origen lo pone
-  /// `ApiClient.authenticatedImage`, que es quien sabe si la app va contra el
-  /// mismo origen (web) o contra el backend elegido.
+  /// Sube la foto y devuelve la ruta que publica el backend, ya con la versión
+  /// del contenido dentro.
   ///
-  /// Aquí se anteponía `effectiveBaseUrl`, de cuando la vista montaba un
-  /// `Image.network` a pelo. Al migrar a `authenticatedImage` el prefijo se
-  /// quedó, así que se ponía dos veces: la URL salía
-  /// `http://host/http://host/api/users/…`, la petición era un 404 y el
-  /// `errorBuilder` caía a la inicial sin decir nada. La foto se subía bien
-  /// —el mensaje de éxito era cierto— y no se veía nunca.
-  ///
-  /// [version] es un contador que sube tras cada subida o borrado: sin él la
-  /// imagen queda cacheada y la foto nueva no se ve.
-  String avatarUrl(String username, int version) =>
-      '/api/users/${Uri.encodeComponent(username)}/avatar?v=$version';
-
-  Future<void> uploadAvatar(
+  /// La ruta la arma el servidor y no el cliente: aquí se construía a mano con
+  /// `effectiveBaseUrl` delante, y `ApiClient.authenticatedImage` volvía a
+  /// anteponer el origen, así que la petición salía con el host duplicado, daba
+  /// 404 y el avatar caía al respaldo sin ningún error visible.
+  Future<String?> uploadAvatar(
     String token, {
     required String fileName,
     required List<int> fileBytes,
   }) async {
-    await apiClient.postMultipart(
+    final response = await apiClient.postMultipart(
       '/api/auth/me/avatar',
       fieldName: 'avatar',
       fileName: fileName,
       fileBytes: fileBytes,
       gaToken: token,
     );
+    return response.json['avatar_url'] as String?;
   }
 
-  /// Quita la foto y deja la inicial. El backend pone la columna a NULL y
-  /// `GET …/avatar` vuelve a responder 204, que es lo que el `errorBuilder`
-  /// del avatar lee como «no hay foto».
+  /// Quita la foto y deja la inicial. El backend borra la fila y
+  /// `GET …/avatar` vuelve a responder 204.
   Future<void> deleteAvatar(String token) async {
     await apiClient.delete('/api/auth/me/avatar', gaToken: token);
   }
