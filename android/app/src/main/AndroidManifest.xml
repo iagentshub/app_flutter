@@ -1,5 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- La cámara la abre image_picker para la foto de perfil. `required=false`
+         porque un tablet sin cámara tiene que poder instalar la app igual: sin
+         él, Play Store la esconde en esos dispositivos. -->
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
     <application
         android:label="iAgents"
         android:name="${applicationName}"
@@ -164,6 +168,16 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- image_picker resuelve estas dos antes de lanzarlas. Desde Android
+             11 la visibilidad de paquetes está filtrada: sin declararlas,
+             `resolveActivity` devuelve null y el selector no abre nada. -->
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.GET_CONTENT"/>
+            <data android:mimeType="image/*"/>
         </intent>
     </queries>
 </manifest>

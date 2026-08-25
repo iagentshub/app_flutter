@@ -6,7 +6,9 @@ extension _ProfileAccountSection on _ProfilePageState {
     final initial = username.isNotEmpty ? username[0].toUpperCase() : '?';
     final planTier = bundle.license.tier;
     final planLabel = planTier == 'free' ? _tx('profile.plan_free') : planTier;
-    final memberSince = bundle.social.createdAt;
+    // El backend manda ISO-8601 completo, con segundos, microsegundos y zona.
+    // Se pintaba tal cual: veintitantos caracteres en UTC para decir un día.
+    final memberSince = formatDateTimeShort(bundle.social.createdAt);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,7 +61,7 @@ extension _ProfileAccountSection on _ProfilePageState {
                 _tx('profile.active_group_label'),
                 bundle.session.groupName ?? bundle.session.groupId ?? '-',
               ),
-              if (memberSince != null && memberSince.isNotEmpty) ...[
+              if (bundle.social.createdAt?.isNotEmpty ?? false) ...[
                 const Divider(height: 1),
                 _infoRow(
                   Icons.calendar_today_outlined,
@@ -199,7 +201,8 @@ extension _ProfileAccountSection on _ProfilePageState {
               children: [
                 Text(
                   bundle.deletion.scheduled
-                      ? '${_tx('profile.deletion_scheduled')}: ${bundle.deletion.deletionDate ?? '-'}'
+                      ? '${_tx('profile.deletion_scheduled')}: '
+                            '${formatDateTimeShort(bundle.deletion.deletionDate)}'
                       : _tx('profile.no_deletion_scheduled'),
                 ),
                 const SizedBox(height: 10),

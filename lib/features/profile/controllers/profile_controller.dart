@@ -256,6 +256,8 @@ class ProfileController extends ChangeNotifier {
   Future<ActionResult?> uploadAvatar({
     required String fileName,
     required List<int>? fileBytes,
+    int quarterTurns = 0,
+    AvatarCrop? crop,
   }) async {
     final token = this.token;
     if (token == null || token.isEmpty) return null;
@@ -272,7 +274,11 @@ class ProfileController extends ChangeNotifier {
     try {
       final compressed = await compute(
         compressAvatarBytes,
-        AvatarCompressionInput(Uint8List.fromList(fileBytes)),
+        AvatarCompressionInput(
+          Uint8List.fromList(fileBytes),
+          quarterTurns: quarterTurns,
+          crop: crop,
+        ),
       );
       if (UploadLimits.exceeds(compressed.bytes.length)) {
         return ActionResult.error(

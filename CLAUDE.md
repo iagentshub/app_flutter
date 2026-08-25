@@ -222,6 +222,10 @@ tema da el mismo «esto se abre hacia dentro» sin tocar nada.
 - **Tamaños** (`test/feature_architecture_test.dart`): páginas ≤ 700 líneas, componentes
   de presentación ≤ 600. Diálogos y cards fuera de `pages/`.
 - **Botones**: los de `shared/widgets/buttons/`, no los de Material directamente.
+- **Fechas**: `formatDateTimeShort` / `formatDateShort` de `shared/utils/date_format.dart`.
+  El backend manda ISO-8601 con microsegundos y zona; pintarlo crudo son veintitantos
+  caracteres en UTC para decir un día, y eso es lo que salía en «Miembro desde». El
+  mismo bloque de cuatro líneas llegó a estar copiado en cuatro sitios.
 - **Tamaño de subida**: nunca una constante propia. El límite lo pone el administrador
   y llega en `/api/settings/platform/public`; se lee con `UploadLimits.exceeds(bytes)`,
   que con 0 —sin límite, el default— no rechaza nada. Había tres copias del número en

@@ -41,7 +41,9 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Permite seleccionar imágenes para añadirlas a Conocimiento.</string>
+	<string>Permite seleccionar imágenes para tu foto de perfil y para añadirlas a Conocimiento.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Permite hacer una foto para usarla como foto de perfil.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

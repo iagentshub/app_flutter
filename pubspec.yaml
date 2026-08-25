@@ -73,6 +73,13 @@ dependencies:
   crypto: ^3.0.7
   mime: ^2.0.0
 
+  # Cámara y selector de fotos del sistema para el avatar. `file_picker` sigue
+  # siendo el de escritorio y web —y el único de los dos que filtra por
+  # extensión—, pero no sabe abrir una cámara y en un móvil obliga a rebuscar
+  # entre carpetas una foto que la galería enseña de primeras. Solo se usa en
+  # Android e iOS: en web añade ~60 KB al bundle y no se llama nunca.
+  image_picker: ^1.2.3
+
 dev_dependencies:
   analyzer: ^10.2.0
   flutter_test:

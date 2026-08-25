@@ -59,7 +59,25 @@ extension _ProfileViewHelpers on _ProfilePageState {
     );
   }
 
+  /// El avatar entero es el botón, no solo la insignia de la cámara.
+  ///
+  /// Antes lo tocable eran esos 26x26 de la esquina, y encima desplazados dos
+  /// píxeles fuera del `Stack`, que es zona muerta para el hit-test aunque el
+  /// `Clip.none` la deje pintada. Quien tocaba la foto —que es lo que se toca—
+  /// no obtenía nada, y de ahí el «no funciona». La insignia se queda como
+  /// señal visual, sin `onTap` propio: el gesto lo recoge el envoltorio.
   Widget _buildAvatar(String initial) {
+    return Tooltip(
+      message: _tx('profile.avatar_change'),
+      child: InkWell(
+        onTap: _controller.uploadingAvatar ? null : _pickAndUploadAvatar,
+        customBorder: const CircleBorder(),
+        child: _buildAvatarContent(initial),
+      ),
+    );
+  }
+
+  Widget _buildAvatarContent(String initial) {
     final token = _controller.token;
     final url = _controller.avatarUrl;
     return Stack(
@@ -93,11 +111,9 @@ extension _ProfileViewHelpers on _ProfilePageState {
           ),
         ),
         Positioned(
-          right: -2,
-          bottom: -2,
-          child: InkWell(
-            onTap: _controller.uploadingAvatar ? null : _pickAndUploadAvatar,
-            borderRadius: BorderRadius.circular(14),
+          right: 0,
+          bottom: 0,
+          child: IgnorePointer(
             child: Container(
               width: 26,
               height: 26,

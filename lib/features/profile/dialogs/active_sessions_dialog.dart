@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../models/profile/profile_models.dart';
+import '../../../shared/utils/date_format.dart';
 import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
@@ -208,15 +209,5 @@ class _ActiveSessionsDialogState extends State<_ActiveSessionsDialog>
     );
   }
 
-  /// Fecha legible sin traer una dependencia de formato: el backend devuelve
-  /// ISO-8601 y aquí basta con recortar los segundos y la zona.
-  String _fecha(String? iso) {
-    if (iso == null || iso.isEmpty) return '—';
-    final parsed = DateTime.tryParse(iso);
-    if (parsed == null) return iso;
-    final local = parsed.toLocal();
-    String dos(int v) => v.toString().padLeft(2, '0');
-    return '${dos(local.day)}/${dos(local.month)}/${local.year} '
-        '${dos(local.hour)}:${dos(local.minute)}';
-  }
+  String _fecha(String? iso) => formatDateTimeShort(iso);
 }

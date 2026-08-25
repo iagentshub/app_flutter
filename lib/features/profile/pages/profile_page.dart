@@ -1,4 +1,3 @@
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/router/router.dart';
@@ -11,6 +10,7 @@ import '../../../shared/state/action_result.dart';
 import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/state/brand_icon_controller.dart';
 import '../../../shared/state/theme_controller.dart';
+import '../../../shared/utils/date_format.dart';
 import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/brand_icon.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
@@ -22,6 +22,8 @@ import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../../utils/i18n.dart';
 import '../controllers/profile_controller.dart';
 import '../dialogs/active_sessions_dialog.dart';
+import '../dialogs/avatar_crop_dialog.dart';
+import '../dialogs/avatar_source_dialog.dart';
 import '../repositories/profile_repository.dart';
 import '../widgets/profile_groups_section.dart';
 
@@ -117,17 +119,34 @@ class _ProfilePageState extends State<ProfilePage>
     showMessage(result.message, isError: result.isError);
   }
 
+  /// Tres pasos, y los tres pueden cancelarse: de dónde sale la foto, elegirla
+  /// y encuadrarla. Antes era uno solo —un selector de archivos— y en el móvil
+  /// eso significaba rebuscar entre carpetas una foto que la galería enseña de
+  /// primeras, sin manera ninguna de hacerla en el momento.
   Future<void> _pickAndUploadAvatar() async {
-    final result = await FilePicker.pickFiles(
-      withData: true,
-      type: FileType.custom,
-      allowedExtensions: const ['jpg', 'jpeg', 'png', 'webp'],
-    );
-    if (result == null || result.files.isEmpty) return;
+    AvatarSource? source;
+    if (avatarSourceIsSelectable) {
+      source = await showAvatarSourceDialog(context: context, tx: _tx);
+      if (source == null) return;
+    }
 
-    final file = result.files.first;
+    final picked = await pickAvatarImage(source);
+    if (picked == null || !mounted) return;
+
+    final adjustment = await showAvatarCropDialog(
+      context: context,
+      bytes: picked.bytes,
+      tx: _tx,
+    );
+    if (adjustment == null) return;
+
     await _runAction(
-      _controller.uploadAvatar(fileName: file.name, fileBytes: file.bytes),
+      _controller.uploadAvatar(
+        fileName: picked.fileName,
+        fileBytes: picked.bytes,
+        quarterTurns: adjustment.quarterTurns,
+        crop: adjustment.crop,
+      ),
     );
   }
 
