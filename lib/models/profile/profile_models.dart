@@ -8,6 +8,7 @@ class ProfileSession {
     this.authMethod,
     this.email,
     this.isEmailPublic = false,
+    this.hasAvatar = false,
   });
 
   final String id;
@@ -19,6 +20,10 @@ class ProfileSession {
   final String? email;
   final bool isEmailPublic;
 
+  /// Si hay foto subida. Llega del backend como booleano: la columna guarda el
+  /// fichero en base64 y no viaja en `/api/auth/me`.
+  final bool hasAvatar;
+
   factory ProfileSession.fromJson(Map<String, dynamic> json) {
     return ProfileSession(
       id: json['id'] as String? ?? '',
@@ -29,6 +34,7 @@ class ProfileSession {
       authMethod: json['auth_method'] as String?,
       email: json['email'] as String?,
       isEmailPublic: json['is_email_public'] == true,
+      hasAvatar: json['has_avatar'] == true,
     );
   }
 }

@@ -39,6 +39,35 @@ extension _ProfileViewHelpers on _ProfilePageState {
     );
   }
 
+  /// Muestra del tema: el fondo que trae (claro u oscuro) y su color de acento.
+  /// Los ids son diez y se llaman `dark-red` o `marble`; el nombre traducido
+  /// dice de qué van, pero el color hay que verlo.
+  Widget _themeSwatch(String themeId) {
+    final claro = AppTheme.mode(themeId) == ThemeMode.light;
+    return Container(
+      width: 18,
+      height: 18,
+      decoration: BoxDecoration(
+        color: claro ? FncColors.white : FncColors.black,
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline,
+          width: 1,
+        ),
+      ),
+      child: Center(
+        child: Container(
+          width: 9,
+          height: 9,
+          decoration: BoxDecoration(
+            color: AppTheme.accent(themeId),
+            shape: BoxShape.circle,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _infoRow(IconData icon, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 
+import 'package:app_flutter/core/config/content_languages.dart';
 import 'package:app_flutter/features/profile/utils/avatar_compressor.dart';
+import 'package:app_flutter/shared/state/locale_controller.dart';
 import 'package:app_flutter/shared/utils/date_format.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
@@ -108,6 +110,32 @@ void main() {
       expect(formatDateTimeShort(null), '—');
       expect(formatDateTimeShort(''), '—');
       expect(formatDateTimeShort('nunca'), 'nunca');
+    });
+  });
+
+  group('los selectores del perfil salen de su catálogo', () {
+    // Los dos escribían sus opciones a mano. Con un idioma nuevo eso no falla:
+    // simplemente no aparece, que es la peor forma de fallar.
+    test('la interfaz ofrece todos los idiomas soportados', () {
+      expect(LocaleController.supportedLanguageCodes, contains('es'));
+      expect(LocaleController.supportedLanguageCodes, contains('en'));
+      for (final code in LocaleController.supportedLanguageCodes) {
+        expect(
+          LocaleController.languageName(code),
+          isNot(code.toUpperCase()),
+          reason: 'Falta el nombre nativo de «$code» en languageNames',
+        );
+      }
+    });
+
+    test('el perfil público ofrece los nueve idiomas de contenido', () {
+      // El backend valida contra los mismos nueve (CONTENT_LANGUAGE_SET). El
+      // perfil llegaba a dos, así que siete eran inalcanzables desde la app.
+      expect(ContentLanguages.codes, hasLength(9));
+      expect(
+        ContentLanguages.codes,
+        containsAll(<String>['es', 'en', 'fr', 'de', 'pt', 'it', 'zh', 'ja', 'ar']),
+      );
     });
   });
 }

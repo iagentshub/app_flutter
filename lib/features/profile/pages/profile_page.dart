@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/router/router.dart';
+import '../../../app/theme/app_theme.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
+import '../../../core/config/content_languages.dart';
 import '../../../features/connections/widgets/providers_section.dart';
 import '../../../models/profile/profile_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/action_result.dart';
 import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/state/brand_icon_controller.dart';
+import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/theme_controller.dart';
 import '../../../shared/utils/date_format.dart';
 import '../../../shared/widgets/animated_iagents_mark.dart';
@@ -33,10 +36,17 @@ part '../widgets/profile_groups_tab_section.dart';
 part '../widgets/profile_social_section.dart';
 part '../widgets/profile_view_helpers.dart';
 
-/// Idiomas disponibles para el perfil público. Por ahora la plataforma solo
-/// soporta Español e Inglés (a diferencia del listado más amplio de
-/// la interfaz web, aún no habilitado aquí).
-const _languageOptions = [('es', 'Español', '🇪🇸'), ('en', 'English', '🇬🇧')];
+/// Idiomas en los que el usuario declara publicar, del catálogo canónico:
+/// [ContentLanguages] tiene nueve y el backend valida contra los mismos nueve
+/// (`CONTENT_LANGUAGE_SET`). Aquí había dos escritos a mano —español e inglés,
+/// con su bandera— así que los otros siete eran inalcanzables desde la app
+/// aunque el backend los aceptara y sus etiquetas estuvieran traducidas.
+///
+/// Sin banderas a propósito: un idioma no es un país (el árabe no tiene
+/// bandera y el inglés tiene varias), y la etiqueta traducida ya lo dice.
+List<(String, String)> get _languageOptions => ContentLanguages.values
+    .map((item) => (item.code, trOr('labels.${item.labelKey}', item.code)))
+    .toList(growable: false);
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -124,10 +134,30 @@ class _ProfilePageState extends State<ProfilePage>
   /// eso significaba rebuscar entre carpetas una foto que la galería enseña de
   /// primeras, sin manera ninguna de hacerla en el momento.
   Future<void> _pickAndUploadAvatar() async {
+    final canRemove = _controller.hasAvatar;
     AvatarSource? source;
-    if (avatarSourceIsSelectable) {
-      source = await showAvatarSourceDialog(context: context, tx: _tx);
+    if (avatarNeedsSourceDialog(canRemove: canRemove)) {
+      source = await showAvatarSourceDialog(
+        context: context,
+        tx: _tx,
+        canRemove: canRemove,
+      );
       if (source == null) return;
+    }
+
+    if (source == AvatarSource.remove) {
+      if (!mounted) return;
+      final confirmed = await showConfirmActionDialog(
+        context,
+        title: _tx('profile.avatar_remove'),
+        message: _tx('profile.avatar_remove_confirm'),
+        confirmLabel: _tx('profile.avatar_remove'),
+        cancelLabel: _tx('common.cancel'),
+        destructive: true,
+      );
+      if (!confirmed) return;
+      await _runAction(_controller.removeAvatar());
+      return;
     }
 
     final picked = await pickAvatarImage(source);
@@ -162,11 +192,11 @@ class _ProfilePageState extends State<ProfilePage>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: _languageOptions.map((option) {
-                final (id, label, flag) = option;
+                final (id, label) = option;
                 return CheckboxListTile(
                   contentPadding: EdgeInsets.zero,
                   value: draft.contains(id),
-                  title: Text('$flag $label'),
+                  title: Text(label),
                   onChanged: (value) {
                     setDialogState(() {
                       if (value == true) {

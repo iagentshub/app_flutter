@@ -107,10 +107,20 @@ class ProfileRepository extends ApiRepository {
     );
   }
 
-  /// URL del avatar del usuario. [version] es un contador que sube tras cada
-  /// subida: sin él la imagen queda cacheada y la foto nueva no se ve.
+  /// Ruta del avatar del usuario, **relativa**: el origen lo pone
+  /// `ApiClient.authenticatedImage`, que es quien sabe si la app va contra el
+  /// mismo origen (web) o contra el backend elegido.
+  ///
+  /// Aquí se anteponía `effectiveBaseUrl`, de cuando la vista montaba un
+  /// `Image.network` a pelo. Al migrar a `authenticatedImage` el prefijo se
+  /// quedó, así que se ponía dos veces: la URL salía
+  /// `http://host/http://host/api/users/…`, la petición era un 404 y el
+  /// `errorBuilder` caía a la inicial sin decir nada. La foto se subía bien
+  /// —el mensaje de éxito era cierto— y no se veía nunca.
+  ///
+  /// [version] es un contador que sube tras cada subida o borrado: sin él la
+  /// imagen queda cacheada y la foto nueva no se ve.
   String avatarUrl(String username, int version) =>
-      '${apiClient.backendController.effectiveBaseUrl}'
       '/api/users/${Uri.encodeComponent(username)}/avatar?v=$version';
 
   Future<void> uploadAvatar(
@@ -125,6 +135,13 @@ class ProfileRepository extends ApiRepository {
       fileBytes: fileBytes,
       gaToken: token,
     );
+  }
+
+  /// Quita la foto y deja la inicial. El backend pone la columna a NULL y
+  /// `GET …/avatar` vuelve a responder 204, que es lo que el `errorBuilder`
+  /// del avatar lee como «no hay foto».
+  Future<void> deleteAvatar(String token) async {
+    await apiClient.delete('/api/auth/me/avatar', gaToken: token);
   }
 
   /// Sesiones abiertas del usuario, la actual marcada con `current`.

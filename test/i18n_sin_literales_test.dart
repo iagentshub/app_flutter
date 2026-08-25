@@ -55,8 +55,15 @@ void main() {
     // `features/public` entró aquí al borrarse las cinco páginas que llevaban
     // 29 ternarios: eran la versión Flutter de un sitio que sirve React y no las
     // montaba ninguna ruta, así que no había nada que traducir.
+    //
+    // `features/profile` entró al derivar sus dos selectores de la lista que
+    // toca: el de la interfaz de `LocaleController.supportedLanguageCodes` y el
+    // de idiomas de contenido de `ContentLanguages`. Escribía dos opciones a
+    // mano en cada uno, y el segundo dejaba fuera siete idiomas que el backend
+    // sí acepta.
     final limpias = [
       'lib/features/auth',
+      'lib/features/profile',
       'lib/features/public',
       'lib/shared/widgets',
       'lib/shared/i18n',

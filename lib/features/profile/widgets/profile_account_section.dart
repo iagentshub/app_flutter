@@ -4,8 +4,15 @@ extension _ProfileAccountSection on _ProfilePageState {
   Widget _buildAccountSection(ProfileBundle bundle) {
     final username = bundle.session.username;
     final initial = username.isNotEmpty ? username[0].toUpperCase() : '?';
+    // El rol y el tier son catálogos cerrados del backend, pero la clave se
+    // arma con el valor: `trOr` deja que uno nuevo salga con su id crudo en vez
+    // de romper la pantalla, que es exactamente lo que pasaba antes con todos.
+    final roleLabel = trOr(
+      'profile.role_${bundle.session.role}',
+      bundle.session.role,
+    );
     final planTier = bundle.license.tier;
-    final planLabel = planTier == 'free' ? _tx('profile.plan_free') : planTier;
+    final planLabel = trOr('profile.plan_$planTier', planTier);
     // El backend manda ISO-8601 completo, con segundos, microsegundos y zona.
     // Se pintaba tal cual: veintitantos caracteres en UTC para decir un día.
     final memberSince = formatDateTimeShort(bundle.social.createdAt);
@@ -37,7 +44,7 @@ extension _ProfileAccountSection on _ProfilePageState {
                         runSpacing: 6,
                         children: [
                           _badge(
-                            bundle.session.role,
+                            roleLabel,
                             color: Theme.of(context).colorScheme.primary,
                           ),
                           _badge(planLabel, color: FncColors.teal),
@@ -91,7 +98,14 @@ extension _ProfileAccountSection on _ProfilePageState {
                         .map(
                           (theme) => DropdownMenuItem<String>(
                             value: theme,
-                            child: Text(theme),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _themeSwatch(theme),
+                                const SizedBox(width: 10),
+                                Text(trOr('profile.theme_$theme', theme)),
+                              ],
+                            ),
                           ),
                         )
                         .toList(),
@@ -106,7 +120,18 @@ extension _ProfileAccountSection on _ProfilePageState {
                       labelText: _tx('profile.theme_label'),
                       helperText: _tx('profile.theme_managed_hint'),
                     ),
-                    child: Text(_controller.defaultTheme),
+                    child: Row(
+                      children: [
+                        _themeSwatch(_controller.defaultTheme),
+                        const SizedBox(width: 10),
+                        Text(
+                          trOr(
+                            'profile.theme_${_controller.defaultTheme}',
+                            _controller.defaultTheme,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
@@ -114,10 +139,17 @@ extension _ProfileAccountSection on _ProfilePageState {
                   decoration: InputDecoration(
                     labelText: _tx('profile.language_label'),
                   ),
-                  items: const [
-                    DropdownMenuItem(value: 'es', child: Text('Español')),
-                    DropdownMenuItem(value: 'en', child: Text('English')),
-                  ],
+                  // Derivado de la lista soportada, nunca una opción por
+                  // idioma escrita a mano: con un tercero, el escrito a mano no
+                  // falla —simplemente no aparece y nadie se entera.
+                  items: LocaleController.supportedLanguageCodes
+                      .map(
+                        (code) => DropdownMenuItem<String>(
+                          value: code,
+                          child: Text(LocaleController.languageName(code)),
+                        ),
+                      )
+                      .toList(),
                   onChanged: (value) {
                     if (value == null) return;
                     _controller.setLanguage(value);
@@ -138,16 +170,42 @@ extension _ProfileAccountSection on _ProfilePageState {
                 const SizedBox(height: 10),
                 _BrandIconSelector(tx: _tx),
                 const SizedBox(height: 12),
-                PrimaryButton.icon(
-                  onPressed: _controller.savingSettings
-                      ? null
-                      : () => _runAction(_controller.saveSettings()),
-                  icon: const Icon(Icons.save_outlined),
-                  label: Text(
-                    _controller.savingSettings
-                        ? _tx('profile.saving')
-                        : _tx('profile.save_preferences'),
-                  ),
+                // El tema y el idioma no se aplican al elegirlos, sólo al
+                // guardar. Sin este aviso la pantalla no daba ninguna señal:
+                // se elegía otro tema, no cambiaba nada a la vista y nada
+                // decía que faltase pulsar el botón.
+                Row(
+                  children: [
+                    if (_controller.preferencesDirty) ...[
+                      Icon(
+                        Icons.info_outline,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          _tx('profile.preferences_unsaved'),
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                    ] else
+                      const Spacer(),
+                    const SizedBox(width: 12),
+                    PrimaryButton.icon(
+                      onPressed:
+                          _controller.savingSettings ||
+                              !_controller.preferencesDirty
+                          ? null
+                          : () => _runAction(_controller.saveSettings()),
+                      icon: const Icon(Icons.save_outlined),
+                      label: Text(
+                        _controller.savingSettings
+                            ? _tx('profile.saving')
+                            : _tx('profile.save_preferences'),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

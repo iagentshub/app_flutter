@@ -62,9 +62,7 @@ extension _ProfileSocialSection on _ProfilePageState {
                                         _controller.hasLanguage(option.$1),
                                   )
                                   .map(
-                                    (option) => Chip(
-                                      label: Text('${option.$3} ${option.$2}'),
-                                    ),
+                                    (option) => Chip(label: Text(option.$2)),
                                   )
                                   .toList(),
                             ),

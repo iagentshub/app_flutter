@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:app_flutter/core/network/api_client.dart';
+import 'package:app_flutter/core/network/api_uri.dart';
 import 'package:app_flutter/features/profile/controllers/profile_controller.dart';
 import 'package:app_flutter/features/profile/repositories/profile_repository.dart';
 import 'package:app_flutter/shared/state/backend_controller.dart';
@@ -437,11 +438,142 @@ void main() {
       );
 
       expect(result?.isError, isFalse);
-      expect(before, contains('/api/users/alice/avatar?v=0'));
-      expect(controller.avatarUrl, contains('v=1'));
+      expect(before, '/api/users/alice/avatar?v=0');
+      expect(controller.avatarUrl, '/api/users/alice/avatar?v=1');
       expect(controller.uploadingAvatar, isFalse);
     },
   );
+
+  test('la ruta del avatar es relativa y no duplica el origen', () async {
+    // Llevaba `effectiveBaseUrl` delante, de cuando la vista montaba un
+    // `Image.network` a pelo. `authenticatedImage` lo antepone otra vez, así
+    // que salía `http://host/http://host/api/users/…`: 404, `errorBuilder` y
+    // la inicial de siempre. La subida funcionaba y la foto no se veía nunca.
+    final controller = await build((request) async => bundleResponse(request));
+    await controller.load();
+
+    final ruta = controller.avatarUrl!;
+    expect(ruta, startsWith('/api/'));
+
+    for (final resuelta in [
+      resolveApiUri(
+        baseUrl: 'http://localhost:8765',
+        path: ruta,
+        useSameOrigin: false,
+      ),
+      resolveApiUri(
+        baseUrl: 'http://localhost:8765',
+        path: ruta,
+        useSameOrigin: true,
+        browserBase: Uri.parse('https://app.iagentshub.com/app/'),
+      ),
+    ]) {
+      expect(resuelta.path, '/api/users/alice/avatar');
+      expect(resuelta.query, 'v=0');
+      expect(resuelta.toString(), isNot(contains('//api')));
+      expect(
+        'http'.allMatches(resuelta.toString()),
+        hasLength(1),
+        reason: 'el origen se está poniendo dos veces: $resuelta',
+      );
+    }
+  });
+
+  test('removeAvatar quita la foto y rompe la caché', () async {
+    final borradas = <String>[];
+    final controller = await build((request) async {
+      if (request.method == 'DELETE' &&
+          request.url.path == '/api/auth/me/avatar') {
+        borradas.add(request.url.path);
+        return http.Response(jsonEncode({'ok': true}), 200);
+      }
+      return bundleResponse(
+        request,
+        sessionJson: {..._session(), 'has_avatar': true},
+      );
+    });
+    await controller.load();
+    expect(controller.hasAvatar, isTrue);
+
+    final result = await controller.removeAvatar();
+
+    expect(result?.isError, isFalse);
+    expect(borradas, ['/api/auth/me/avatar']);
+    expect(controller.hasAvatar, isFalse);
+    // Sin subir la versión, el `Image` seguiría enseñando la foto cacheada.
+    expect(controller.avatarUrl, contains('v=1'));
+    expect(controller.uploadingAvatar, isFalse);
+  });
+
+  test('sin foto no hay nada que quitar', () async {
+    final controller = await build((request) async => bundleResponse(request));
+    await controller.load();
+    expect(controller.hasAvatar, isFalse);
+  });
+
+  group('las preferencias avisan de lo que queda sin guardar', () {
+    // El tema y el idioma NO se aplican al elegirlos, solo al guardar: sin
+    // esta bandera la pantalla no tenía forma de decir que faltaba pulsar el
+    // botón, y elegir otro tema no cambiaba nada a la vista.
+    test('recién cargado no hay nada pendiente', () async {
+      final controller = await build(
+        (request) async => bundleResponse(request),
+      );
+      await controller.load();
+      expect(controller.preferencesDirty, isFalse);
+    });
+
+    test('elegir otro tema o idioma lo marca pendiente', () async {
+      final controller = await build(
+        (request) async => bundleResponse(request),
+      );
+      await controller.load();
+
+      controller.setTheme('ocean');
+      expect(controller.preferencesDirty, isTrue);
+      // Volver al valor cargado también deshace el pendiente.
+      controller.setTheme('dark-red');
+      expect(controller.preferencesDirty, isFalse);
+
+      controller.setLanguage('en');
+      expect(controller.preferencesDirty, isTrue);
+    });
+
+    test('guardar deja de marcarlo pendiente', () async {
+      final controller = await build((request) async {
+        if (request.method == 'PUT' && request.url.path == '/api/settings') {
+          return http.Response(
+            jsonEncode(_settings(theme: 'ocean', language: 'en')),
+            200,
+          );
+        }
+        return bundleResponse(request);
+      });
+      await controller.load();
+      controller.setTheme('ocean');
+      controller.setLanguage('en');
+
+      await controller.saveSettings();
+
+      expect(controller.preferencesDirty, isFalse);
+    });
+
+    test('con el tema impuesto por el admin solo cuenta el idioma', () async {
+      final controller = await build(
+        (request) async =>
+            bundleResponse(request, settings: _settings(configurable: false)),
+      );
+      await controller.load();
+
+      // El desplegable ni siquiera se pinta; lo que llegue por ahí no puede
+      // habilitar un guardado que el backend va a ignorar.
+      controller.setTheme('ocean');
+      expect(controller.preferencesDirty, isFalse);
+
+      controller.setLanguage('en');
+      expect(controller.preferencesDirty, isTrue);
+    });
+  });
 
   test('requestDeletion devuelve el mensaje del backend', () async {
     final controller = await build((request) async {

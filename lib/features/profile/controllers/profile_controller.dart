@@ -95,6 +95,12 @@ class ProfileController extends ChangeNotifier {
   String _defaultTheme = 'dark-red';
   bool _themeConfigurable = true;
   String _language = 'es';
+  // Lo último que confirmó el backend. El tema y el idioma NO se aplican al
+  // elegirlos —sólo al guardar—, así que sin esta copia la pantalla no tenía
+  // forma de decir que quedaba algo pendiente: el usuario elegía otro tema, no
+  // veía cambiar nada y no había señal de que faltara pulsar Guardar.
+  String _savedTheme = 'dark-red';
+  String _savedLanguage = 'es';
 
   ProfileBundle? get bundle => _bundle;
   bool get loading => _loading;
@@ -105,6 +111,12 @@ class ProfileController extends ChangeNotifier {
   bool get uploadingAvatar => _uploadingAvatar;
 
   bool get isEmailPublic => _isEmailPublic;
+
+  /// Hay elecciones sin confirmar contra el backend.
+  bool get preferencesDirty =>
+      _language != _savedLanguage ||
+      (_themeConfigurable && _theme != _savedTheme);
+
   String get theme => _theme;
   String get defaultTheme => _defaultTheme;
   bool get themeConfigurable => _themeConfigurable;
@@ -116,6 +128,11 @@ class ProfileController extends ChangeNotifier {
   Set<String> get selectedLanguages => _selectedLanguages;
   bool get hasLanguages => _selectedLanguages.isNotEmpty;
   bool hasLanguage(String id) => _selectedLanguages.contains(id);
+
+  /// Si hay foto que quitar. Se mantiene aparte del bundle porque quitarla no
+  /// recarga el perfil entero: bastan la bandera y el contador de versión.
+  bool _hasAvatar = false;
+  bool get hasAvatar => _hasAvatar;
 
   /// `null` mientras no haya bundle cargado: el avatar cuelga del username.
   String? get avatarUrl {
@@ -174,6 +191,9 @@ class ProfileController extends ChangeNotifier {
       _defaultTheme = bundle.settings.defaultTheme;
       _themeConfigurable = bundle.settings.themeConfigurable;
       _language = bundle.settings.language;
+      _savedTheme = bundle.settings.theme;
+      _savedLanguage = bundle.settings.language;
+      _hasAvatar = bundle.session.hasAvatar;
       bioController.text = bundle.social.bio ?? '';
       _isEmailPublic = bundle.session.isEmailPublic;
       githubController.text = githubUsernameFromUrl(bundle.social.github);
@@ -209,6 +229,8 @@ class ProfileController extends ChangeNotifier {
       _defaultTheme = updated.defaultTheme;
       _themeConfigurable = updated.themeConfigurable;
       _language = updated.language;
+      _savedTheme = updated.theme;
+      _savedLanguage = updated.language;
       await _syncPreferences(updated.language, updated.theme);
       return ActionResult(_tx('profile.preferences_saved'));
     } on ApiError catch (error) {
@@ -294,9 +316,33 @@ class ProfileController extends ChangeNotifier {
         fileBytes: compressed.bytes,
       );
       _avatarVersion++;
+      _hasAvatar = true;
       return ActionResult(_tx('profile.avatar_updated'));
     } on AvatarCompressionException {
       return ActionResult.error(_tx('profile.avatar_error'));
+    } on ApiError catch (error) {
+      return ActionResult.error(error.message);
+    } catch (_) {
+      return ActionResult.error(_tx('profile.avatar_error'));
+    } finally {
+      _uploadingAvatar = false;
+      _notify();
+    }
+  }
+
+  /// Quita la foto y deja la inicial. Sube el contador de versión igual que
+  /// una subida: sin él la imagen borrada seguiría en la caché del `Image`.
+  Future<ActionResult?> removeAvatar() async {
+    final token = this.token;
+    if (token == null || token.isEmpty) return null;
+
+    _uploadingAvatar = true;
+    _notify();
+    try {
+      await _repository.deleteAvatar(token);
+      _avatarVersion++;
+      _hasAvatar = false;
+      return ActionResult(_tx('profile.avatar_removed'));
     } on ApiError catch (error) {
       return ActionResult.error(error.message);
     } catch (_) {
