@@ -82,3 +82,13 @@ Then choose `Localhost` in the server selector on the login page.
 |---|---|
 | 🇪🇸 Español | [docs/es/index.md](docs/es/index.md) |
 | 🇬🇧 English | [docs/en/index.md](docs/en/index.md) |
+
+---
+
+## License
+
+[GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0-only).
+
+Free to use, modify and distribute. If you modify this code and offer the
+result as a network service, section 13 requires you to make your version of
+the source available to its users.
