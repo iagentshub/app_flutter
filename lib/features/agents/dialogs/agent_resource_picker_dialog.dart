@@ -1,58 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../models/agents/agent_import_models.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
-
-enum AgentResourceType { skill, knowledgePack, knowledge, prompt, tool }
-
-class AgentResourceOption {
-  const AgentResourceOption({
-    required this.id,
-    required this.type,
-    required this.title,
-    this.subtitle = '',
-  });
-
-  final String id;
-  final AgentResourceType type;
-  final String title;
-  final String subtitle;
-}
-
-class AgentResourceSelection {
-  AgentResourceSelection({
-    Set<String> skillIds = const {},
-    Set<String> knowledgeIds = const {},
-    Set<String> knowledgePackIds = const {},
-    Set<String> promptIds = const {},
-    Set<String> toolIds = const {},
-  }) : skillIds = {...skillIds},
-       knowledgeIds = {...knowledgeIds},
-       knowledgePackIds = {...knowledgePackIds},
-       promptIds = {...promptIds},
-       toolIds = {...toolIds};
-
-  final Set<String> skillIds;
-  final Set<String> knowledgeIds;
-  final Set<String> knowledgePackIds;
-  final Set<String> promptIds;
-  final Set<String> toolIds;
-
-  int get length =>
-      skillIds.length +
-      knowledgePackIds.length +
-      knowledgeIds.length +
-      promptIds.length +
-      toolIds.length;
-
-  Set<String> idsFor(AgentResourceType type) => switch (type) {
-    AgentResourceType.skill => skillIds,
-    AgentResourceType.knowledgePack => knowledgePackIds,
-    AgentResourceType.knowledge => knowledgeIds,
-    AgentResourceType.prompt => promptIds,
-    AgentResourceType.tool => toolIds,
-  };
-}
 
 /// Selector acotado para catálogos grandes de recursos de agente.
 ///
@@ -63,12 +13,16 @@ class AgentResourcePickerDialog extends StatefulWidget {
     required this.options,
     required this.initial,
     required this.tx,
+    this.allowedTypes,
+    this.singleSelection = false,
     super.key,
   });
 
   final List<AgentResourceOption> options;
   final AgentResourceSelection initial;
   final String Function(String path) tx;
+  final Set<AgentResourceType>? allowedTypes;
+  final bool singleSelection;
 
   @override
   State<AgentResourcePickerDialog> createState() =>
@@ -103,6 +57,9 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
   List<AgentResourceOption> get _visibleOptions {
     final query = _query.trim().toLowerCase();
     return widget.options.where((option) {
+      if (widget.allowedTypes case final allowed?) {
+        if (!allowed.contains(option.type)) return false;
+      }
       if (_filter != null && option.type != _filter) return false;
       if (query.isEmpty) return true;
       return option.title.toLowerCase().contains(query) ||
@@ -130,6 +87,11 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
 
   void _toggle(AgentResourceOption option, bool selected) {
     setState(() {
+      if (widget.singleSelection) {
+        for (final type in AgentResourceType.values) {
+          _selection.idsFor(type).clear();
+        }
+      }
       final ids = _selection.idsFor(option.type);
       if (selected) {
         ids.add(option.id);
@@ -137,6 +99,7 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
         ids.remove(option.id);
       }
     });
+    if (widget.singleSelection && selected) _apply();
   }
 
   void _apply() => Navigator.of(context).pop(_selection);
@@ -188,7 +151,9 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
                 onSelected: (_) => setState(() => _filter = null),
               ),
               const SizedBox(width: 8),
-              for (final type in AgentResourceType.values) ...[
+              for (final type in AgentResourceType.values.where(
+                (type) => widget.allowedTypes?.contains(type) ?? true,
+              )) ...[
                 FilterChip(
                   avatar: Icon(_typeIcon(type), size: 16),
                   label: Text(_typeLabel(type)),

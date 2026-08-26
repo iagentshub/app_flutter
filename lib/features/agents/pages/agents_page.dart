@@ -1,8 +1,13 @@
+import 'dart:typed_data';
+
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_error.dart';
+import '../../../models/agents/agent_import_models.dart';
 import '../../../models/agents/agent_models.dart';
+import '../../../models/agents/agent_resource_catalog.dart';
 import '../../../models/connections/connection_models.dart';
 import '../../../models/explore/explore_models.dart';
 import '../../../models/knowledge/knowledge_models.dart';
@@ -11,9 +16,11 @@ import '../../../models/skills/skill_models.dart';
 import '../../../models/tools/tool_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/app_services_scope.dart';
+import '../../../shared/state/upload_limits.dart';
 import '../../../shared/state/watches_resource_changes.dart';
 import '../../../shared/utils/debouncer.dart';
 import '../../../shared/utils/memoized.dart';
+import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
@@ -29,11 +36,16 @@ import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../connections/repositories/connections_repository.dart';
 import '../../executions/controllers/resource_executions_controller.dart';
 import '../../explore/repositories/explore_repository.dart';
+import '../../knowledge/models/local_knowledge_file.dart';
 import '../../knowledge/repositories/knowledge_repository.dart';
 import '../../knowledge/repositories/prompts_repository.dart';
 import '../../knowledge/repositories/skills_repository.dart';
 import '../../knowledge/repositories/tools_repository.dart';
+import '../../knowledge/services/directory_picker.dart';
 import '../cards/agent_card.dart';
+import '../dialogs/agent_directory_import_dialog.dart';
+import '../dialogs/agent_import_preview_dialog.dart';
+import '../repositories/agent_import_repository.dart';
 import '../repositories/agents_repository.dart';
 import 'agent_builder_page.dart';
 import 'agent_form_page.dart';
@@ -41,6 +53,7 @@ import 'chat_page.dart';
 import 'public_agent_picker_page.dart';
 
 part '../widgets/agents_page_actions.dart';
+part '../widgets/agents_page_import_actions.dart';
 part '../widgets/agents_page_view.dart';
 
 class AgentsPage extends StatefulWidget {
@@ -57,6 +70,7 @@ class _AgentsPageState extends State<AgentsPage>
   late final _services = AppServicesScope.of(context);
 
   late final AgentsRepository _repository;
+  late final AgentImportRepository _agentImportRepository;
   late final SkillsRepository _skillsRepository;
   late final KnowledgeRepository _knowledgeRepository;
   late final PromptsRepository _promptsRepository;
@@ -67,6 +81,7 @@ class _AgentsPageState extends State<AgentsPage>
   final TextEditingController _queryController = TextEditingController();
   final Debouncer _searchDebouncer = Debouncer();
   List<AgentItem> _agents = const [];
+  AgentResourceCatalog _agentResourceCatalog = const AgentResourceCatalog();
 
   /// id → nombre, para resolver las skills/knowledge/prompts de un agente en
   /// el grafo de contenido (AgentCard) — el agente solo guarda IDs.
@@ -81,6 +96,8 @@ class _AgentsPageState extends State<AgentsPage>
   /// del id crudo de la conexión.
   Map<String, String> _connectionNames = const {};
   bool _loading = true;
+  bool _importingAgentFile = false;
+  bool _draggingAgentFile = false;
   String? _error;
   String _query = '';
   String? _activeGroupId;
@@ -182,6 +199,9 @@ class _AgentsPageState extends State<AgentsPage>
   void initState() {
     super.initState();
     _repository = AgentsRepository(apiClient: _services.apiClient);
+    _agentImportRepository = AgentImportRepository(
+      apiClient: _services.apiClient,
+    );
     _skillsRepository = SkillsRepository(apiClient: _services.apiClient);
     _knowledgeRepository = KnowledgeRepository(apiClient: _services.apiClient);
     _promptsRepository = PromptsRepository(apiClient: _services.apiClient);
@@ -277,6 +297,14 @@ class _AgentsPageState extends State<AgentsPage>
           for (final c in connections)
             c.id: c.model.isNotEmpty ? c.model : c.name,
         };
+        _agentResourceCatalog = AgentResourceCatalog(
+          connections: connections.where((item) => item.isActive).toList(),
+          skills: skills,
+          knowledge: knowledge,
+          packs: packs,
+          prompts: prompts,
+          tools: tools,
+        );
         _loading = false;
       });
     } on ApiError catch (error) {

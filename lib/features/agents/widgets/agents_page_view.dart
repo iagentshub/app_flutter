@@ -80,7 +80,7 @@ extension _AgentsPageView on _AgentsPageState {
       itemCount: filteredAgents.length,
       itemBuilder: (context, index) => _buildAgentCard(filteredAgents[index]),
     );
-    return IAgentsAsyncView(
+    final page = IAgentsAsyncView(
       loading: _loading,
       localeController: _services.localeController,
       error: _error,
@@ -88,6 +88,87 @@ extension _AgentsPageView on _AgentsPageState {
       retryLabel: _tx('common.retry'),
       onRetry: _load,
       child: content,
+    );
+    return DropTarget(
+      enable: !_importingAgentFile,
+      onDragEntered: (_) => refresh(() => _draggingAgentFile = true),
+      onDragExited: (_) => refresh(() => _draggingAgentFile = false),
+      onDragDone: _handleAgentDrop,
+      child: Stack(
+        children: [
+          page,
+          if (_draggingAgentFile)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: ColoredBox(
+                  color: Theme.of(context).colorScheme.primary
+                      .withValues(alpha: 0.12),
+                  child: Center(
+                    child: Semantics(
+                      liveRegion: true,
+                      label: _tx('agents.import_drop_overlay'),
+                      child: Card(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 28,
+                            vertical: 22,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.upload_file_outlined),
+                              const SizedBox(width: 12),
+                              Flexible(
+                                child: Text(
+                                  _tx('agents.import_drop_overlay'),
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          if (_importingAgentFile)
+            Positioned.fill(
+              child: AbsorbPointer(
+                child: ColoredBox(
+                  color: Theme.of(context).colorScheme.scrim
+                      .withValues(alpha: 0.28),
+                  child: Center(
+                    child: Semantics(
+                      liveRegion: true,
+                      label: _tx('agents.import_analyzing'),
+                      child: Card(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 18,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const IAgentsLoadingMark(),
+                              const SizedBox(width: 14),
+                              Text(_tx('agents.import_analyzing')),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 

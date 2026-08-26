@@ -38,6 +38,7 @@ extension _AgentsPageActions on _AgentsPageState {
           apiClient: _services.apiClient,
           token: token,
           tx: _tx,
+          resourceCatalog: _agentResourceCatalog,
         ),
       ),
     );
@@ -60,6 +61,20 @@ extension _AgentsPageActions on _AgentsPageState {
           ),
           _createChoiceOption(
             context,
+            icon: Icons.upload_file_outlined,
+            title: _tx('agents.create_choice_file'),
+            subtitle: _tx('agents.create_choice_file_desc'),
+            value: 'file',
+          ),
+          _createChoiceOption(
+            context,
+            icon: Icons.folder_open_outlined,
+            title: _tx('agents.create_choice_directory'),
+            subtitle: _tx('agents.create_choice_directory_desc'),
+            value: 'directory',
+          ),
+          _createChoiceOption(
+            context,
             icon: Icons.public,
             title: _tx('agents.create_choice_public'),
             subtitle: _tx('agents.create_choice_public_desc'),
@@ -79,6 +94,10 @@ extension _AgentsPageActions on _AgentsPageState {
     switch (choice) {
       case 'scratch':
         await _openCreateDialog();
+      case 'file':
+        await _pickAgentFile();
+      case 'directory':
+        await _pickAgentDirectory();
       case 'public':
         await _openCreateFromPublicDialog();
       case 'ai':
@@ -191,6 +210,7 @@ extension _AgentsPageActions on _AgentsPageState {
           token: currentToken,
           initial: template,
           tx: _tx,
+          resourceCatalog: _agentResourceCatalog,
         ),
       ),
     );
@@ -220,6 +240,7 @@ extension _AgentsPageActions on _AgentsPageState {
           token: token,
           initial: initial,
           tx: _tx,
+          resourceCatalog: _agentResourceCatalog,
         ),
       ),
     );

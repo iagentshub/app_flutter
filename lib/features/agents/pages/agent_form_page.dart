@@ -7,6 +7,8 @@ import '../../../features/knowledge/repositories/prompts_repository.dart';
 import '../../../features/knowledge/repositories/skills_repository.dart';
 import '../../../features/knowledge/repositories/tools_repository.dart';
 import '../../../features/memory/repositories/memory_repository.dart';
+import '../../../models/agents/agent_import_models.dart';
+import '../../../models/agents/agent_resource_catalog.dart';
 import '../../../models/connections/connection_models.dart';
 import '../../../models/knowledge/knowledge_models.dart';
 import '../../../models/memory/memory_models.dart';
@@ -35,6 +37,7 @@ class AgentFormPage extends StatefulWidget {
     required this.tx,
     this.initial,
     this.requireQualityPrompt = false,
+    this.resourceCatalog,
     super.key,
   });
 
@@ -43,6 +46,7 @@ class AgentFormPage extends StatefulWidget {
   final String Function(String path) tx;
   final Map<String, dynamic>? initial;
   final bool requireQualityPrompt;
+  final AgentResourceCatalog? resourceCatalog;
 
   @override
   State<AgentFormPage> createState() => _AgentFormPageState();
@@ -94,7 +98,7 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
   String get _scope =>
       _selectedLabels.contains('public') ? 'public' : 'private';
 
-  String get _title => widget.initial == null
+  String get _title => widget.initial?['id'] == null
       ? widget.tx('agents.new_title')
       : widget.tx('agents.edit_title');
 
@@ -188,24 +192,38 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
     Future<List<T>> opcional<T>(Future<List<T>> peticion) =>
         peticion.catchError((_) => <T>[]);
 
+    final shared = widget.resourceCatalog;
     final resultados = await Future.wait([
-      opcional(_connectionsRepository.listConnections(widget.token)),
+      if (shared == null)
+        opcional(_connectionsRepository.listConnections(widget.token)),
       opcional(_memoryRepository.listFiles(widget.token)),
-      opcional(_skillsRepository.listSkills(widget.token, scope: 'all')),
-      opcional(_knowledgeRepository.listItems(widget.token)),
-      opcional(_knowledgeRepository.listPacks(widget.token)),
-      opcional(_promptsRepository.listPrompts(widget.token, scope: 'all')),
-      opcional(_toolsRepository.listTools(widget.token, scope: 'all')),
+      if (shared == null) ...[
+        opcional(_skillsRepository.listSkills(widget.token, scope: 'all')),
+        opcional(_knowledgeRepository.listItems(widget.token)),
+        opcional(_knowledgeRepository.listPacks(widget.token)),
+        opcional(_promptsRepository.listPrompts(widget.token, scope: 'all')),
+        opcional(_toolsRepository.listTools(widget.token, scope: 'all')),
+      ],
     ]);
     if (!mounted) return;
     refresh(() {
-      _connections = resultados[0] as List<ConnectionItem>;
-      _memoryFiles = resultados[1] as List<MemoryFileItem>;
-      _skills = resultados[2] as List<SkillItem>;
-      _knowledgeItems = resultados[3] as List<KnowledgeItem>;
-      _knowledgePacks = resultados[4] as List<KnowledgePack>;
-      _prompts = resultados[5] as List<PromptItem>;
-      _tools = resultados[6] as List<ToolItem>;
+      if (shared != null) {
+        _connections = shared.connections;
+        _memoryFiles = resultados[0] as List<MemoryFileItem>;
+        _skills = shared.skills;
+        _knowledgeItems = shared.knowledge;
+        _knowledgePacks = shared.packs;
+        _prompts = shared.prompts;
+        _tools = shared.tools;
+      } else {
+        _connections = resultados[0] as List<ConnectionItem>;
+        _memoryFiles = resultados[1] as List<MemoryFileItem>;
+        _skills = resultados[2] as List<SkillItem>;
+        _knowledgeItems = resultados[3] as List<KnowledgeItem>;
+        _knowledgePacks = resultados[4] as List<KnowledgePack>;
+        _prompts = resultados[5] as List<PromptItem>;
+        _tools = resultados[6] as List<ToolItem>;
+      }
       _loadingCatalogs = false;
     });
   }

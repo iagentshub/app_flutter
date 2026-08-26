@@ -564,6 +564,28 @@ class ApiClient {
     timeout: timeout,
   );
 
+  /// Multipart autenticado que inspecciona un fichero sin mutar recursos.
+  ///
+  /// Construye los bytes de nuevo en cada intento para que una renovación de
+  /// sesión pueda repetir la petición; un stream ya consumido no serviría.
+  /// Tampoco invalida cachés ni emite eventos porque una vista previa no guarda
+  /// nada en el backend.
+  Future<ApiResponse> postMultipartPreview(
+    String path, {
+    required String fieldName,
+    required String fileName,
+    required List<int> fileBytes,
+    String? gaToken,
+    Duration? timeout,
+  }) => postMultipartFiles(
+    path,
+    fieldName: fieldName,
+    files: [(fileName: fileName, bytes: fileBytes)],
+    gaToken: gaToken,
+    timeout: timeout,
+    sideEffect: false,
+  );
+
   /// Variante multipart que conserva el fichero como flujo hasta la red.
   Future<ApiResponse> postMultipartStream(
     String path, {
@@ -668,6 +690,7 @@ class ApiClient {
     Map<String, String>? fields,
     String? gaToken,
     Duration? timeout,
+    bool sideEffect = true,
   }) async {
     http.MultipartRequest build(String? token) {
       final request = http.MultipartRequest('POST', _uri(path));
@@ -693,7 +716,17 @@ class ApiClient {
     }
 
     final streamed = await _send(build, gaToken: gaToken, timeout: timeout);
-    final response = await _readBoundedResponse(streamed);
+    final inputBytes = files.fold<int>(
+      0,
+      (sum, file) => sum + file.bytes.length,
+    );
+    final derivedLimit = inputBytes * 6 + 64 * 1024;
+    final response = await _readBoundedResponse(
+      streamed,
+      maxBytes: derivedLimit > _maxResponseBytes
+          ? derivedLimit
+          : _maxResponseBytes,
+    );
     final parsed = _parseBody(response.body);
     final apiResponse = ApiResponse(
       statusCode: response.statusCode,
@@ -701,7 +734,7 @@ class ApiClient {
       body: parsed,
     );
     if (!apiResponse.isOk) throw _toApiError(apiResponse);
-    _afterMutation(path);
+    if (sideEffect) _afterMutation(path);
     return apiResponse;
   }
 
@@ -809,6 +842,11 @@ class ApiClient {
           statusCode: response.statusCode,
           message: trErrorOr(code, fallback),
           code: code,
+          extra: {
+            for (final entry in detail.entries)
+              if (entry.key != 'code' && entry.key != 'message')
+                entry.key: entry.value,
+          },
         );
       }
     }
