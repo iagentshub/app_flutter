@@ -131,46 +131,6 @@ class KnowledgeRepository extends ApiRepository {
         .toList();
   }
 
-  Future<KnowledgePack> uploadPack(
-    String token, {
-    required String name,
-    required String description,
-    required List<LocalKnowledgeFile> files,
-    required String sourceMode,
-    List<String> labels = const ['private'],
-  }) async {
-    final response = await apiClient.postMultipartFiles(
-      '/api/knowledge/packs',
-      fieldName: 'files',
-      files: [
-        for (final file in files)
-          (
-            fileName: file.name,
-            bytes: sourceMode == 'reference'
-                ? const <int>[]
-                : file.bytes.toList(),
-          ),
-      ],
-      fields: {
-        'name': name,
-        'description': description,
-        'paths': jsonEncode(files.map((file) => file.relativePath).toList()),
-        'sizes': jsonEncode(files.map((file) => file.sizeBytes).toList()),
-        'checksums': jsonEncode(
-          files.map((file) => file.resolvedChecksum).toList(),
-        ),
-        'mime_types': jsonEncode(
-          files.map((file) => file.resolvedMimeType).toList(),
-        ),
-        'source_mode': sourceMode,
-        'labels': jsonEncode(labels),
-      },
-      gaToken: token,
-      timeout: const Duration(minutes: 5),
-    );
-    return KnowledgePack(raw: response.json);
-  }
-
   Future<KnowledgePack> createPackUploadSession(
     String token, {
     required String name,

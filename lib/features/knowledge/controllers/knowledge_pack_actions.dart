@@ -47,18 +47,16 @@ extension _KnowledgePackActions on _KnowledgePageState {
       showMessage(_tx('knowledge.pack_drop_one_directory'), isError: true);
       return;
     }
-    final files = <LocalKnowledgeFile>[];
-    final counters = [0, 0, 0];
     refresh(() {
       _uploading = true;
       _packOperationMessage = _tx('knowledge.pack_scanning');
     });
+    late final KnowledgeDirectorySelection selection;
     try {
-      await _collectDroppedFiles(
+      selection = await collectDroppedDirectory(
         directories.single.children,
-        '',
-        files,
-        counters,
+        kind: DirectoryImportKind.knowledgePack,
+        onProgress: _showPackProgress,
       );
     } catch (_) {
       if (!mounted) return;
@@ -74,50 +72,11 @@ extension _KnowledgePackActions on _KnowledgePageState {
       _uploading = false;
       _packOperationMessage = null;
     });
-    if (files.isEmpty) {
+    if (selection.files.isEmpty) {
       showMessage(_tx('knowledge.pack_no_compatible_files'), isError: true);
       return;
     }
-    await _reviewAndUploadPack(
-      KnowledgeDirectorySelection(files: files, ignoredCount: counters[1]),
-    );
-  }
-
-  Future<void> _collectDroppedFiles(
-    List<DropItem> entries,
-    String prefix,
-    List<LocalKnowledgeFile> output,
-    List<int> counters,
-  ) async {
-    for (final entry in entries) {
-      final relative = prefix.isEmpty ? entry.name : '$prefix/${entry.name}';
-      if (entry is DropItemDirectory) {
-        if (!DirectoryImportPolicy.ignoresDirectory(DirectoryImportKind.knowledgePack, entry.name)) {
-          await _collectDroppedFiles(entry.children, relative, output, counters);
-        }
-      } else {
-        counters[0]++;
-        if (!DirectoryImportPolicy.supportsPath(DirectoryImportKind.knowledgePack, relative)) {
-          counters[1]++;
-        } else {
-          final bytes = await entry.readAsBytes();
-          if (DirectoryImportPolicy.exceedsUploadLimit(bytes.length) ||
-              DirectoryImportPolicy.exceedsUploadLimit(counters[2] + bytes.length)) {
-            counters[1]++;
-          } else {
-            output.add(await createLocalKnowledgeFile( relativePath: relative, bytes: bytes));
-            counters[2] += bytes.length;
-          }
-        }
-        _showPackProgress(
-          KnowledgeDirectoryProgress(
-            processed: counters[0],
-            compatible: output.length,
-            ignored: counters[1],
-          ),
-        );
-      }
-    }
+    await _reviewAndUploadPack(selection);
   }
 
   Future<void> _reviewAndUploadPack(

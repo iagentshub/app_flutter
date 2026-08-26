@@ -104,13 +104,6 @@ void main() {
       ),
     ];
 
-    await repository.uploadPack(
-      'token',
-      name: 'Scripts',
-      description: '',
-      files: files,
-      sourceMode: 'reference',
-    );
     await repository.synchronizePack(
       'token',
       pack: const KnowledgePack(raw: {'id': 'pack-1', 'source_mode': 'sync'}),
@@ -135,29 +128,25 @@ void main() {
     await repository.completePackUploadSession('token', 'session-1');
     await repository.cancelPackUploadSession('token', 'session-2');
 
-    expect(requests[0].url.path, '/api/knowledge/packs');
-    expect(requests[0].body, contains('source_mode'));
-    expect(requests[0].body, contains('reference'));
-    expect(requests[0].body, contains('sizes'));
-    expect(requests[1].url.path, '/api/knowledge/packs/pack-1/sync-manifest');
-    expect(requests[1].body, contains('checksum'));
-    expect(requests[2].url.path, '/api/knowledge/packs/pack-1/sync');
-    expect(requests[2].body, contains('scripts/run.sh'));
-    expect(requests[2].body, contains('manifest'));
-    expect(requests[3].url.path, '/api/knowledge/packs/upload-sessions');
-    expect(jsonDecode(requests[3].body)['total_files'], 1);
+    expect(requests[0].url.path, '/api/knowledge/packs/pack-1/sync-manifest');
+    expect(requests[0].body, contains('checksum'));
+    expect(requests[1].url.path, '/api/knowledge/packs/pack-1/sync');
+    expect(requests[1].body, contains('scripts/run.sh'));
+    expect(requests[1].body, contains('manifest'));
+    expect(requests[2].url.path, '/api/knowledge/packs/upload-sessions');
+    expect(jsonDecode(requests[2].body)['total_files'], 1);
     expect(
-      requests[4].url.path,
+      requests[3].url.path,
       '/api/knowledge/packs/upload-sessions/session-1/files',
     );
-    expect(requests[4].body, contains('reported_checksum'));
-    expect(requests[4].body, contains('reported_mime_type'));
+    expect(requests[3].body, contains('reported_checksum'));
+    expect(requests[3].body, contains('reported_mime_type'));
     expect(progress, 1);
     expect(
-      requests[5].url.path,
+      requests[4].url.path,
       '/api/knowledge/packs/upload-sessions/session-1/complete',
     );
-    expect(requests[6].method, 'DELETE');
+    expect(requests[5].method, 'DELETE');
   });
 
   test('documentos y packs usan sus endpoints de activación', () async {

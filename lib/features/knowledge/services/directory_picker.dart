@@ -1,3 +1,4 @@
+import '../../../core/config/directory_import_policy.dart';
 import '../models/local_knowledge_file.dart';
 import 'directory_picker_io.dart'
     if (dart.library.js_interop) 'directory_picker_web.dart'
@@ -6,7 +7,9 @@ import 'directory_picker_io.dart'
 Future<KnowledgeDirectorySelection?> pickKnowledgeDirectory({
   KnowledgeDirectoryProgressCallback? onProgress,
   bool calculateChecksums = true,
+  DirectoryImportKind kind = DirectoryImportKind.knowledgePack,
 }) => implementation.pickKnowledgeDirectory(
   onProgress: onProgress,
   calculateChecksums: calculateChecksums,
+  kind: kind,
 );

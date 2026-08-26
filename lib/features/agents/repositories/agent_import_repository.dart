@@ -84,17 +84,52 @@ class AgentImportRepository extends ApiRepository {
     String token, {
     required List<LocalKnowledgeFile> files,
   }) async {
-    final response = await apiClient.postMultipartFiles(
-      '/api/agents/import/directory/preview',
-      fieldName: 'files',
-      files: _multipartFiles(files),
-      fields: {
-        'paths': jsonEncode(files.map((file) => file.relativePath).toList()),
-      },
+    final created = await apiClient.post(
+      '/api/agents/import/directory/upload-sessions',
+      body: {'total_files': files.length},
       gaToken: token,
       sideEffect: false,
     );
-    return AgentDirectoryImportPlan.fromJson(response.json);
+    final uploadSessionId = '${created.json['session_id']}';
+    try {
+      for (var index = 0; index < files.length; index++) {
+        final file = files[index];
+        final bytes = await file.readBytes();
+        await apiClient.postMultipartFiles(
+          '/api/agents/import/directory/upload-sessions/'
+          '${Uri.encodeComponent(uploadSessionId)}/files',
+          fieldName: 'file',
+          files: [(fileName: file.name, bytes: bytes)],
+          fields: {'file_index': '$index', 'relative_path': file.relativePath},
+          gaToken: token,
+          sideEffect: false,
+        );
+      }
+      final completed = await apiClient.post(
+        '/api/agents/import/directory/upload-sessions/'
+        '${Uri.encodeComponent(uploadSessionId)}/complete',
+        gaToken: token,
+        sideEffect: false,
+      );
+      final plan = AgentDirectoryImportPlan.fromJson(completed.json);
+      if (plan.sessionId == null || plan.sessionId!.isEmpty) {
+        throw const FormatException(
+          'Agent directory review session is missing',
+        );
+      }
+      return plan;
+    } catch (_) {
+      try {
+        await apiClient.delete(
+          '/api/agents/import/directory/upload-sessions/'
+          '${Uri.encodeComponent(uploadSessionId)}',
+          gaToken: token,
+        );
+      } catch (_) {
+        // El backend limpia igualmente las sesiones caducadas.
+      }
+      rethrow;
+    }
   }
 
   Future<AgentDirectoryImportResult> applyDirectory(

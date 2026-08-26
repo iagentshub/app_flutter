@@ -57,6 +57,7 @@ import '../repositories/prompts_repository.dart';
 import '../repositories/skills_repository.dart';
 import '../repositories/tools_repository.dart';
 import '../services/directory_picker.dart';
+import '../services/dropped_directory_collector.dart';
 import 'skill_builder_page.dart';
 
 part '../cards/knowledge_image_card.dart';

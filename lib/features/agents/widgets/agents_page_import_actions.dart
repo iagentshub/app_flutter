@@ -5,13 +5,20 @@ extension _AgentsPageImportActions on _AgentsPageState {
     final token = _token;
     if (token == null || token.isEmpty || _importingAgentFile) return;
     try {
-      final selection = await pickKnowledgeDirectory(calculateChecksums: false);
+      final selection = await pickKnowledgeDirectory(
+        calculateChecksums: false,
+        kind: DirectoryImportKind.agent,
+      );
       if (!mounted || selection == null) return;
-      if (selection.files.isEmpty) {
-        showMessage(_tx('agents.directory_empty'), isError: true);
-        return;
+      try {
+        if (selection.files.isEmpty) {
+          showMessage(_tx('agents.directory_empty'), isError: true);
+          return;
+        }
+        await _reviewAgentDirectoryFiles(selection.files);
+      } finally {
+        await selection.dispose();
       }
-      await _reviewAgentDirectoryFiles(selection.files);
     } catch (_) {
       if (mounted) {
         showMessage(_tx('agents.directory_import_failed'), isError: true);
@@ -19,17 +26,12 @@ extension _AgentsPageImportActions on _AgentsPageState {
     }
   }
 
-  Future<void> _reviewAgentDirectoryFiles(
-    List<LocalKnowledgeFile> files,
-  ) async {
+  Future<void> _reviewAgentDirectoryFiles(List<LocalKnowledgeFile> files) async {
     final token = _token;
     if (token == null || token.isEmpty || _importingAgentFile) return;
     refresh(() => _importingAgentFile = true);
     try {
-      final plan = await _agentImportRepository.previewDirectory(
-        token,
-        files: files,
-      );
+      final plan = await _agentImportRepository.previewDirectory(token, files: files);
       if (!mounted) return;
       if (!plan.components.any((item) => item.isAgent)) {
         showMessage(_tx('agents.directory_no_agents'), isError: true);
@@ -60,41 +62,6 @@ extension _AgentsPageImportActions on _AgentsPageState {
       }
     } finally {
       if (mounted) refresh(() => _importingAgentFile = false);
-    }
-  }
-
-  Future<void> _collectDroppedAgentDirectory(
-    List<DropItem> entries,
-    String prefix,
-    List<LocalKnowledgeFile> output,
-    List<int> totalBytes,
-  ) async {
-    for (final entry in entries) {
-      final relative = prefix.isEmpty ? entry.name : '$prefix/${entry.name}';
-      if (entry is DropItemDirectory) {
-        if (!DirectoryImportPolicy.ignoresDirectory(DirectoryImportKind.agent, entry.name)) {
-          await _collectDroppedAgentDirectory(
-            entry.children,
-            relative,
-            output,
-            totalBytes,
-          );
-        }
-        continue;
-      }
-      if (!DirectoryImportPolicy.supportsPath(DirectoryImportKind.agent, relative)) {
-        continue;
-      }
-      final bytes = await entry.readAsBytes();
-      if (UploadLimits.exceeds(totalBytes[0] + bytes.length)) continue;
-      output.add(
-        await createLocalKnowledgeFile(
-          relativePath: relative,
-          bytes: bytes,
-          calculateChecksum: false,
-        ),
-      );
-      totalBytes[0] += bytes.length;
     }
   }
 
@@ -129,15 +96,18 @@ extension _AgentsPageImportActions on _AgentsPageState {
   Future<void> _handleAgentDrop(DropDoneDetails details) async {
     if (mounted) refresh(() => _draggingAgentFile = false);
     if (details.files case [final DropItemDirectory directory]) {
-      final files = <LocalKnowledgeFile>[];
       try {
-        await _collectDroppedAgentDirectory(directory.children, '', files, [0]);
+        final selection = await collectDroppedDirectory(
+          directory.children,
+          kind: DirectoryImportKind.agent,
+          calculateChecksums: false,
+        );
         if (!mounted) return;
-        if (files.isEmpty) {
+        if (selection.files.isEmpty) {
           showMessage(_tx('agents.directory_empty'), isError: true);
           return;
         }
-        await _reviewAgentDirectoryFiles(files);
+        await _reviewAgentDirectoryFiles(selection.files);
       } catch (_) {
         if (mounted) {
           showMessage(_tx('agents.directory_import_failed'), isError: true);

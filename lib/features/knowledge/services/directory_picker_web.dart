@@ -10,6 +10,7 @@ import '../models/local_knowledge_file.dart';
 Future<KnowledgeDirectorySelection?> pickKnowledgeDirectory({
   KnowledgeDirectoryProgressCallback? onProgress,
   bool calculateChecksums = true,
+  DirectoryImportKind kind = DirectoryImportKind.knowledgePack,
 }) async {
   final completer = Completer<KnowledgeDirectorySelection?>();
   final input = web.HTMLInputElement()
@@ -26,6 +27,13 @@ Future<KnowledgeDirectorySelection?> pickKnowledgeDirectory({
     final files = <LocalKnowledgeFile>[];
     var ignored = 0;
     var totalBytes = 0;
+    final skipped = <DirectorySkipReason, int>{};
+
+    void registerSkip(DirectorySkipReason reason) {
+      ignored++;
+      skipped.update(reason, (count) => count + 1, ifAbsent: () => 1);
+    }
+
     for (var index = 0; index < selected.length; index++) {
       final file = selected.item(index);
       if (file == null) continue;
@@ -35,13 +43,26 @@ Future<KnowledgeDirectorySelection?> pickKnowledgeDirectory({
       }
       relative = relative.isEmpty ? file.name : relative;
       final size = file.size;
-      if (!DirectoryImportPolicy.supportsPath(
-            DirectoryImportKind.knowledgePack,
-            relative,
-          ) ||
-          DirectoryImportPolicy.exceedsUploadLimit(size) ||
+      final policyReason = DirectoryImportPolicy.skipReason(kind, relative);
+      if (policyReason != null) {
+        registerSkip(policyReason);
+      } else if (DirectoryImportPolicy.exceedsUploadLimit(size) ||
           DirectoryImportPolicy.exceedsUploadLimit(totalBytes + size)) {
-        ignored++;
+        registerSkip(DirectorySkipReason.uploadLimit);
+      } else if (kind == DirectoryImportKind.agent) {
+        files.add(
+          createDeferredLocalKnowledgeFile(
+            relativePath: relative,
+            readBytes: () async {
+              final buffer = await file.arrayBuffer().toDart;
+              return Uint8List.view(buffer.toDart);
+            },
+            originalSizeBytes: size,
+            mimeType: file.type,
+            modifiedAt: file.lastModified,
+          ),
+        );
+        totalBytes += size;
       } else {
         final buffer = await file.arrayBuffer().toDart;
         files.add(
@@ -65,7 +86,11 @@ Future<KnowledgeDirectorySelection?> pickKnowledgeDirectory({
       );
     }
     completer.complete(
-      KnowledgeDirectorySelection(files: files, ignoredCount: ignored),
+      KnowledgeDirectorySelection(
+        files: files,
+        ignoredCount: ignored,
+        skippedByReason: Map.unmodifiable(skipped),
+      ),
     );
   }
 

@@ -10,6 +10,7 @@ import '../models/local_knowledge_file.dart';
 Future<KnowledgeDirectorySelection?> pickKnowledgeDirectory({
   KnowledgeDirectoryProgressCallback? onProgress,
   bool calculateChecksums = true,
+  DirectoryImportKind kind = DirectoryImportKind.knowledgePack,
 }) async {
   final selected = Platform.isIOS
       ? await const MethodChannel('com.iagentshub.app/knowledge_directory')
@@ -23,6 +24,12 @@ Future<KnowledgeDirectorySelection?> pickKnowledgeDirectory({
   var processed = 0;
   var ignored = 0;
   var totalBytes = 0;
+  final skipped = <DirectorySkipReason, int>{};
+
+  void registerSkip(DirectorySkipReason reason) {
+    ignored++;
+    skipped.update(reason, (count) => count + 1, ifAbsent: () => 1);
+  }
 
   Future<void> scan(Directory directory) async {
     await for (final entity in directory.list(followLinks: false)) {
@@ -32,10 +39,7 @@ Future<KnowledgeDirectorySelection?> pickKnowledgeDirectory({
             .lastOrNull
             ?.toLowerCase();
         if (name != null &&
-            DirectoryImportPolicy.ignoresDirectory(
-              DirectoryImportKind.knowledgePack,
-              name,
-            )) {
+            DirectoryImportPolicy.ignoresDirectory(kind, name)) {
           continue;
         }
         await scan(entity);
@@ -47,32 +51,42 @@ Future<KnowledgeDirectorySelection?> pickKnowledgeDirectory({
           .replaceFirst(RegExp(r'^[\\/]'), '')
           .replaceAll(r'\', '/');
       processed++;
-      if (!DirectoryImportPolicy.supportsPath(
-        DirectoryImportKind.knowledgePack,
-        relative,
-      )) {
-        ignored++;
+      final policyReason = DirectoryImportPolicy.skipReason(kind, relative);
+      if (policyReason != null) {
+        registerSkip(policyReason);
       } else {
         try {
           final size = await entity.length();
           if (DirectoryImportPolicy.exceedsUploadLimit(size) ||
               DirectoryImportPolicy.exceedsUploadLimit(totalBytes + size)) {
-            ignored++;
+            registerSkip(DirectorySkipReason.uploadLimit);
           } else {
             final stat = await entity.stat();
-            files.add(
-              await createLocalKnowledgeFile(
-                relativePath: relative,
-                bytes: Uint8List.fromList(await entity.readAsBytes()),
-                originalSizeBytes: size,
-                modifiedAt: stat.modified.millisecondsSinceEpoch,
-                calculateChecksum: calculateChecksums,
-              ),
-            );
+            if (kind == DirectoryImportKind.agent) {
+              files.add(
+                createDeferredLocalKnowledgeFile(
+                  relativePath: relative,
+                  readBytes: () async =>
+                      Uint8List.fromList(await entity.readAsBytes()),
+                  originalSizeBytes: size,
+                  modifiedAt: stat.modified.millisecondsSinceEpoch,
+                ),
+              );
+            } else {
+              files.add(
+                await createLocalKnowledgeFile(
+                  relativePath: relative,
+                  bytes: Uint8List.fromList(await entity.readAsBytes()),
+                  originalSizeBytes: size,
+                  modifiedAt: stat.modified.millisecondsSinceEpoch,
+                  calculateChecksum: calculateChecksums,
+                ),
+              );
+            }
             totalBytes += size;
           }
         } on FileSystemException {
-          ignored++;
+          registerSkip(DirectorySkipReason.readFailure);
         }
       }
       onProgress?.call(
@@ -85,23 +99,40 @@ Future<KnowledgeDirectorySelection?> pickKnowledgeDirectory({
     }
   }
 
+  var preserveTemporaryDirectory = false;
   try {
     await scan(root);
-    return KnowledgeDirectorySelection(files: files, ignoredCount: ignored);
+    preserveTemporaryDirectory =
+        Platform.isIOS && kind == DirectoryImportKind.agent;
+    return KnowledgeDirectorySelection(
+      files: files,
+      ignoredCount: ignored,
+      skippedByReason: Map.unmodifiable(skipped),
+      onDispose: preserveTemporaryDirectory
+          ? () => _deleteTemporaryDirectory(root)
+          : null,
+    );
   } finally {
-    final temporaryCopy = root.parent;
-    if (Platform.isIOS &&
-        temporaryCopy.path.startsWith(Directory.systemTemp.path) &&
-        temporaryCopy.uri.pathSegments
-                .where((part) => part.isNotEmpty)
-                .lastOrNull
-                ?.startsWith('knowledge-directory-') ==
-            true) {
-      try {
-        await temporaryCopy.delete(recursive: true);
-      } on FileSystemException {
-        // iOS limpiará igualmente su directorio temporal.
-      }
+    if (!preserveTemporaryDirectory) {
+      await _deleteTemporaryDirectory(root);
     }
+  }
+}
+
+Future<void> _deleteTemporaryDirectory(Directory root) async {
+  final temporaryCopy = root.parent;
+  if (!Platform.isIOS ||
+      !temporaryCopy.path.startsWith(Directory.systemTemp.path) ||
+      temporaryCopy.uri.pathSegments
+              .where((part) => part.isNotEmpty)
+              .lastOrNull
+              ?.startsWith('knowledge-directory-') !=
+          true) {
+    return;
+  }
+  try {
+    await temporaryCopy.delete(recursive: true);
+  } on FileSystemException {
+    // iOS limpiará igualmente su directorio temporal.
   }
 }

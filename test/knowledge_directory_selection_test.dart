@@ -3,8 +3,10 @@ import 'dart:typed_data';
 import 'package:app_flutter/core/config/directory_import_policy.dart';
 import 'package:app_flutter/features/knowledge/dialogs/knowledge_pack_dialog.dart';
 import 'package:app_flutter/features/knowledge/models/local_knowledge_file.dart';
+import 'package:app_flutter/features/knowledge/services/dropped_directory_collector.dart';
 import 'package:app_flutter/shared/widgets/multi_select_dropdown.dart';
 import 'package:app_flutter/utils/i18n.dart';
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -54,6 +56,27 @@ void main() {
       ),
       isFalse,
     );
+    expect(
+      DirectoryImportPolicy.skipReason(
+        DirectoryImportKind.agent,
+        'vendor/package/agent.md',
+      ),
+      DirectorySkipReason.ignoredDirectory,
+    );
+    expect(
+      DirectoryImportPolicy.skipReason(
+        DirectoryImportKind.agent,
+        'config/.npmrc',
+      ),
+      DirectorySkipReason.possibleSecret,
+    );
+    expect(
+      DirectoryImportPolicy.supportsPath(
+        DirectoryImportKind.agent,
+        '.github/agents/reviewer.md',
+      ),
+      isTrue,
+    );
   });
 
   test('una importación de agentes puede omitir el checksum local', () async {
@@ -64,6 +87,30 @@ void main() {
     );
 
     expect(file.checksum, isEmpty);
+  });
+
+  test('el recolector común clasifica descartes sin leerlos', () async {
+    final selection = await collectDroppedDirectory(
+      [
+        DropItemFile.fromData(
+          Uint8List.fromList([35, 32, 65, 103, 101, 110, 116]),
+          path: 'agent.md',
+        ),
+        DropItemFile.fromData(
+          Uint8List.fromList([116, 111, 107, 101, 110]),
+          path: '.npmrc',
+        ),
+      ],
+      kind: DirectoryImportKind.agent,
+      calculateChecksums: false,
+    );
+
+    expect(selection.files.single.name, 'agent.md');
+    expect(selection.ignoredCount, 1);
+    expect(
+      selection.skippedByReason,
+      containsPair(DirectorySkipReason.possibleSecret, 1),
+    );
   });
 
   testWidgets('el diálogo avisa de los archivos que se omitirán', (

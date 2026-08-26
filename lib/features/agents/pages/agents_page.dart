@@ -39,6 +39,7 @@ import '../../executions/controllers/resource_executions_controller.dart';
 import '../../explore/repositories/explore_repository.dart';
 import '../../knowledge/models/local_knowledge_file.dart';
 import '../../knowledge/services/directory_picker.dart';
+import '../../knowledge/services/dropped_directory_collector.dart';
 import '../cards/agent_card.dart';
 import '../dialogs/agent_directory_import_dialog.dart';
 import '../dialogs/agent_import_preview_dialog.dart';

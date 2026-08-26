@@ -2,13 +2,20 @@ import '../../shared/state/upload_limits.dart';
 
 enum DirectoryImportKind { knowledgePack, agent }
 
+enum DirectorySkipReason {
+  ignoredDirectory,
+  possibleSecret,
+  uploadLimit,
+  readFailure,
+}
+
 /// Política local de seguridad y rendimiento para importar directorios.
 ///
 /// No es configuración administrable: evita subir metadatos, dependencias,
 /// artefactos generados y posibles secretos. El backend vuelve a validar todo;
 /// este filtro evita leer y transferir contenido descartable desde el cliente.
 abstract final class DirectoryImportPolicy {
-  static const Set<String> _ignoredDirectoryNames = {
+  static const Set<String> _commonIgnoredDirectoryNames = {
     '.git',
     '.svn',
     '.hg',
@@ -23,7 +30,9 @@ abstract final class DirectoryImportPolicy {
     '.mypy_cache',
   };
 
-  static const Set<String> _secretFileNames = {
+  static const Set<String> _agentIgnoredDirectoryNames = {'vendor'};
+
+  static const Set<String> _commonSecretFileNames = {
     'id_rsa',
     'id_dsa',
     'id_ecdsa',
@@ -33,16 +42,33 @@ abstract final class DirectoryImportPolicy {
     'secrets.json',
   };
 
+  static const Set<String> _agentSecretFileNames = {'.npmrc', '.pypirc'};
+
   static Set<String> ignoredDirectoryNames(DirectoryImportKind kind) =>
       switch (kind) {
-        DirectoryImportKind.knowledgePack => _ignoredDirectoryNames,
-        DirectoryImportKind.agent => _ignoredDirectoryNames,
+        DirectoryImportKind.knowledgePack => _commonIgnoredDirectoryNames,
+        DirectoryImportKind.agent => {
+          ..._commonIgnoredDirectoryNames,
+          ..._agentIgnoredDirectoryNames,
+        },
+      };
+
+  static Set<String> secretFileNames(DirectoryImportKind kind) =>
+      switch (kind) {
+        DirectoryImportKind.knowledgePack => _commonSecretFileNames,
+        DirectoryImportKind.agent => {
+          ..._commonSecretFileNames,
+          ..._agentSecretFileNames,
+        },
       };
 
   static bool ignoresDirectory(DirectoryImportKind kind, String name) =>
       ignoredDirectoryNames(kind).contains(name.toLowerCase());
 
-  static bool supportsPath(DirectoryImportKind kind, String path) {
+  static DirectorySkipReason? skipReason(
+    DirectoryImportKind kind,
+    String path,
+  ) {
     final normalized = path.replaceAll(r'\', '/').toLowerCase();
     final parts = normalized
         .split('/')
@@ -52,20 +78,23 @@ abstract final class DirectoryImportPolicy {
         parts
             .take(parts.length - 1)
             .any(ignoredDirectoryNames(kind).contains)) {
-      return false;
+      return DirectorySkipReason.ignoredDirectory;
     }
     final name = parts.last;
     if (name == '.env' ||
         (name.startsWith('.env.') && name != '.env.example') ||
-        _secretFileNames.contains(name) ||
+        secretFileNames(kind).contains(name) ||
         name.endsWith('.pem') ||
         name.endsWith('.key') ||
         name.endsWith('.p12') ||
         name.endsWith('.pfx')) {
-      return false;
+      return DirectorySkipReason.possibleSecret;
     }
-    return true;
+    return null;
   }
+
+  static bool supportsPath(DirectoryImportKind kind, String path) =>
+      skipReason(kind, path) == null;
 
   static bool exceedsUploadLimit(int bytes) => UploadLimits.exceeds(bytes);
 }
