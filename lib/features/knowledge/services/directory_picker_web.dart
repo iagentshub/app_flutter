@@ -8,6 +8,7 @@ import '../models/local_knowledge_file.dart';
 
 Future<KnowledgeDirectorySelection?> pickKnowledgeDirectory({
   KnowledgeDirectoryProgressCallback? onProgress,
+  bool calculateChecksums = true,
 }) async {
   final completer = Completer<KnowledgeDirectorySelection?>();
   final input = web.HTMLInputElement()
@@ -46,6 +47,7 @@ Future<KnowledgeDirectorySelection?> pickKnowledgeDirectory({
             originalSizeBytes: size,
             mimeType: file.type,
             modifiedAt: file.lastModified,
+            calculateChecksum: calculateChecksums,
           ),
         );
         totalBytes += size;

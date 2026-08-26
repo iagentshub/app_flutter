@@ -29,6 +29,37 @@ class AgentResourceOption {
   final String subtitle;
 }
 
+class AgentResourceOptionPage {
+  const AgentResourceOptionPage({required this.items, required this.hasMore});
+
+  factory AgentResourceOptionPage.fromJson(
+    Map<String, dynamic> json,
+    AgentResourceType type,
+  ) => AgentResourceOptionPage(
+    items: (json['items'] as List<dynamic>? ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .map(
+          (item) => AgentResourceOption(
+            id: item['id']?.toString() ?? '',
+            type: type,
+            title: item['name']?.toString() ?? item['id']?.toString() ?? '',
+          ),
+        )
+        .where((item) => item.id.isNotEmpty)
+        .toList(),
+    hasMore: json['has_more'] == true,
+  );
+
+  final List<AgentResourceOption> items;
+  final bool hasMore;
+}
+
+typedef AgentResourcePageLoader = Future<AgentResourceOptionPage> Function(
+  AgentResourceType type,
+  String query,
+  int offset,
+);
+
 class AgentResourceSelection {
   AgentResourceSelection({
     Set<String> skillIds = const {},
@@ -271,6 +302,7 @@ class AgentDirectoryImportPlan {
     required this.components,
     required this.issues,
     required this.ignoredPaths,
+    this.sessionId,
   });
 
   factory AgentDirectoryImportPlan.fromJson(Map<String, dynamic> json) =>
@@ -286,11 +318,13 @@ class AgentDirectoryImportPlan {
         ignoredPaths: (json['ignored_paths'] as List<dynamic>? ?? const [])
             .map((item) => item.toString())
             .toList(),
+        sessionId: json['session_id']?.toString(),
       );
 
   final List<AgentDirectoryComponent> components;
   final List<AgentImportIssue> issues;
   final List<String> ignoredPaths;
+  final String? sessionId;
 }
 
 class AgentDirectoryImportOptions {

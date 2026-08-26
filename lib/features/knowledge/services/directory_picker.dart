@@ -5,4 +5,8 @@ import 'directory_picker_io.dart'
 
 Future<KnowledgeDirectorySelection?> pickKnowledgeDirectory({
   KnowledgeDirectoryProgressCallback? onProgress,
-}) => implementation.pickKnowledgeDirectory(onProgress: onProgress);
+  bool calculateChecksums = true,
+}) => implementation.pickKnowledgeDirectory(
+  onProgress: onProgress,
+  calculateChecksums: calculateChecksums,
+);

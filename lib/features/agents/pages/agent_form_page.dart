@@ -22,6 +22,7 @@ import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../dialogs/agent_publish_dependencies_dialog.dart';
 import '../dialogs/agent_resource_picker_dialog.dart';
+import '../repositories/agent_import_repository.dart';
 
 part '../widgets/agent_form_sections.dart';
 
@@ -38,6 +39,7 @@ class AgentFormPage extends StatefulWidget {
     this.initial,
     this.requireQualityPrompt = false,
     this.resourceCatalog,
+    this.resourcePageLoader,
     super.key,
   });
 
@@ -47,6 +49,7 @@ class AgentFormPage extends StatefulWidget {
   final Map<String, dynamic>? initial;
   final bool requireQualityPrompt;
   final AgentResourceCatalog? resourceCatalog;
+  final AgentResourcePageLoader? resourcePageLoader;
 
   @override
   State<AgentFormPage> createState() => _AgentFormPageState();
@@ -68,6 +71,7 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
   late final KnowledgeRepository _knowledgeRepository;
   late final PromptsRepository _promptsRepository;
   late final ToolsRepository _toolsRepository;
+  late final AgentImportRepository _agentImportRepository;
 
   List<ConnectionItem> _connections = const [];
   String? _connectionId;
@@ -111,6 +115,7 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
     _knowledgeRepository = KnowledgeRepository(apiClient: widget.apiClient);
     _promptsRepository = PromptsRepository(apiClient: widget.apiClient);
     _toolsRepository = ToolsRepository(apiClient: widget.apiClient);
+    _agentImportRepository = AgentImportRepository(apiClient: widget.apiClient);
     final initial = widget.initial;
     _nameController = TextEditingController(
       text: initial?['name']?.toString() ?? '',
@@ -197,7 +202,7 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
       if (shared == null)
         opcional(_connectionsRepository.listConnections(widget.token)),
       opcional(_memoryRepository.listFiles(widget.token)),
-      if (shared == null) ...[
+      if (shared == null && widget.resourcePageLoader == null) ...[
         opcional(_skillsRepository.listSkills(widget.token, scope: 'all')),
         opcional(_knowledgeRepository.listItems(widget.token)),
         opcional(_knowledgeRepository.listPacks(widget.token)),
@@ -215,7 +220,7 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
         _knowledgePacks = shared.packs;
         _prompts = shared.prompts;
         _tools = shared.tools;
-      } else {
+      } else if (widget.resourcePageLoader == null) {
         _connections = resultados[0] as List<ConnectionItem>;
         _memoryFiles = resultados[1] as List<MemoryFileItem>;
         _skills = resultados[2] as List<SkillItem>;
@@ -421,15 +426,33 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
           toolIds: _selectedToolIds,
         ),
         tx: widget.tx,
+        pageLoader: widget.resourcePageLoader,
       ),
     );
     if (!mounted || selection == null) return;
+    final resolved = widget.resourcePageLoader == null
+        ? null
+        : await _agentImportRepository.resolveCatalog(widget.token, {
+            AgentResourceType.skill: selection.skillIds,
+            AgentResourceType.knowledge: selection.knowledgeIds,
+            AgentResourceType.knowledgePack: selection.knowledgePackIds,
+            AgentResourceType.prompt: selection.promptIds,
+            AgentResourceType.tool: selection.toolIds,
+          });
+    if (!mounted) return;
     refresh(() {
       _selectedSkillIds = selection.skillIds;
       _selectedKnowledgeIds = selection.knowledgeIds;
       _selectedKnowledgePackIds = selection.knowledgePackIds;
       _selectedPromptIds = selection.promptIds;
       _selectedToolIds = selection.toolIds;
+      if (resolved != null) {
+        _skills = resolved.skills;
+        _knowledgeItems = resolved.knowledge;
+        _knowledgePacks = resolved.packs;
+        _prompts = resolved.prompts;
+        _tools = resolved.tools;
+      }
     });
   }
 

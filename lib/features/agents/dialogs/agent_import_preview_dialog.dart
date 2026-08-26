@@ -11,12 +11,14 @@ Future<AgentResourceSelection?> showAgentImportPreviewDialog({
   required AgentImportPreview preview,
   required String Function(String path) tx,
   List<AgentResourceOption> resourceOptions = const [],
+  AgentResourcePageLoader? pageLoader,
 }) async => showAppDialog<AgentResourceSelection>(
   context: context,
   builder: (_) => _AgentImportPreviewDialog(
     preview: preview,
     resourceOptions: resourceOptions,
     tx: tx,
+    pageLoader: pageLoader,
   ),
 );
 
@@ -25,11 +27,13 @@ class _AgentImportPreviewDialog extends StatefulWidget {
     required this.preview,
     required this.resourceOptions,
     required this.tx,
+    this.pageLoader,
   });
 
   final AgentImportPreview preview;
   final List<AgentResourceOption> resourceOptions;
   final String Function(String path) tx;
+  final AgentResourcePageLoader? pageLoader;
 
   @override
   State<_AgentImportPreviewDialog> createState() =>
@@ -74,6 +78,7 @@ class _AgentImportPreviewDialogState extends State<_AgentImportPreviewDialog> {
         tx: tx,
         allowedTypes: {type},
         singleSelection: true,
+        pageLoader: widget.pageLoader,
       ),
     );
     if (!mounted || result == null) return;

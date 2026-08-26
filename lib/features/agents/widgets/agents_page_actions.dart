@@ -39,6 +39,7 @@ extension _AgentsPageActions on _AgentsPageState {
           token: token,
           tx: _tx,
           resourceCatalog: _agentResourceCatalog,
+          resourcePageLoader: _loadAgentResourcePage,
         ),
       ),
     );
@@ -211,6 +212,7 @@ extension _AgentsPageActions on _AgentsPageState {
           initial: template,
           tx: _tx,
           resourceCatalog: _agentResourceCatalog,
+          resourcePageLoader: _loadAgentResourcePage,
         ),
       ),
     );
@@ -241,6 +243,7 @@ extension _AgentsPageActions on _AgentsPageState {
           initial: initial,
           tx: _tx,
           resourceCatalog: _agentResourceCatalog,
+          resourcePageLoader: _loadAgentResourcePage,
         ),
       ),
     );

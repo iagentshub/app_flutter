@@ -37,10 +37,6 @@ import '../../connections/repositories/connections_repository.dart';
 import '../../executions/controllers/resource_executions_controller.dart';
 import '../../explore/repositories/explore_repository.dart';
 import '../../knowledge/models/local_knowledge_file.dart';
-import '../../knowledge/repositories/knowledge_repository.dart';
-import '../../knowledge/repositories/prompts_repository.dart';
-import '../../knowledge/repositories/skills_repository.dart';
-import '../../knowledge/repositories/tools_repository.dart';
 import '../../knowledge/services/directory_picker.dart';
 import '../cards/agent_card.dart';
 import '../dialogs/agent_directory_import_dialog.dart';
@@ -71,16 +67,13 @@ class _AgentsPageState extends State<AgentsPage>
 
   late final AgentsRepository _repository;
   late final AgentImportRepository _agentImportRepository;
-  late final SkillsRepository _skillsRepository;
-  late final KnowledgeRepository _knowledgeRepository;
-  late final PromptsRepository _promptsRepository;
-  late final ToolsRepository _toolsRepository;
   late final ConnectionsRepository _connectionsRepository;
   late final TranslatedTexts _t;
   late final ResourceExecutionsController? _executionState;
   final TextEditingController _queryController = TextEditingController();
   final Debouncer _searchDebouncer = Debouncer();
   List<AgentItem> _agents = const [];
+  List<ConnectionItem> _connections = const [];
   AgentResourceCatalog _agentResourceCatalog = const AgentResourceCatalog();
 
   /// id → nombre, para resolver las skills/knowledge/prompts de un agente en
@@ -202,10 +195,6 @@ class _AgentsPageState extends State<AgentsPage>
     _agentImportRepository = AgentImportRepository(
       apiClient: _services.apiClient,
     );
-    _skillsRepository = SkillsRepository(apiClient: _services.apiClient);
-    _knowledgeRepository = KnowledgeRepository(apiClient: _services.apiClient);
-    _promptsRepository = PromptsRepository(apiClient: _services.apiClient);
-    _toolsRepository = ToolsRepository(apiClient: _services.apiClient);
     _connectionsRepository = ConnectionsRepository(
       apiClient: _services.apiClient,
     );
@@ -262,48 +251,27 @@ class _AgentsPageState extends State<AgentsPage>
     });
 
     try {
-      final results = await Future.wait([
+      final coreResults = await Future.wait([
         _repository.listAgents(
           token,
           groupId: _activeGroupId,
           includeInactive: true,
         ),
-        _skillsRepository.listSkills(token),
-        _knowledgeRepository.listItems(token),
-        _knowledgeRepository.listPacks(token),
-        _promptsRepository.listPrompts(token),
-        _toolsRepository.listTools(token),
         _connectionsRepository.listConnections(token, includeInactive: true),
       ]);
+      final agents = coreResults[0] as List<AgentItem>;
+      final catalog = await _resolveCatalogForAgents(token, agents);
       if (!mounted) return;
-      final skills = results[1] as List<SkillItem>;
-      final knowledge = results[2] as List<KnowledgeItem>;
-      final packs = results[3] as List<KnowledgePack>;
-      final prompts = results[4] as List<PromptItem>;
-      final tools = results[5] as List<ToolItem>;
-      final connections = results[6] as List<ConnectionItem>;
+      final connections = coreResults[1] as List<ConnectionItem>;
       setState(() {
-        _agents = results[0] as List<AgentItem>;
-        _skillNames = {for (final s in skills) s.id: s.name};
-        _knowledgeNames = {for (final k in knowledge) k.id: k.name};
-        _knowledgePackNames = {for (final pack in packs) pack.id: pack.name};
-        _knowledgePackItems = {
-          for (final pack in packs)
-            pack.id: knowledge.where((item) => item.packId == pack.id).toList(),
-        };
-        _promptNames = {for (final p in prompts) p.id: p.name};
-        _toolNames = {for (final t in tools) t.id: t.name};
-        _connectionNames = {
-          for (final c in connections)
-            c.id: c.model.isNotEmpty ? c.model : c.name,
-        };
-        _agentResourceCatalog = AgentResourceCatalog(
-          connections: connections.where((item) => item.isActive).toList(),
-          skills: skills,
-          knowledge: knowledge,
-          packs: packs,
-          prompts: prompts,
-          tools: tools,
+        _installLoadedData(
+          agents: agents,
+          connections: connections,
+          skills: catalog.skills,
+          knowledge: catalog.knowledge,
+          packs: catalog.packs,
+          prompts: catalog.prompts,
+          tools: catalog.tools,
         );
         _loading = false;
       });
@@ -320,6 +288,76 @@ class _AgentsPageState extends State<AgentsPage>
         _loading = false;
       });
     }
+  }
+
+  Future<AgentResourceCatalog> _resolveCatalogForAgents(
+    String token,
+    List<AgentItem> agents,
+  ) => _agentImportRepository.resolveCatalog(token, {
+    AgentResourceType.skill: agents.expand((item) => item.skills),
+    AgentResourceType.knowledge: agents.expand((item) => item.knowledge),
+    AgentResourceType.knowledgePack: agents.expand(
+      (item) => item.knowledgePacks,
+    ),
+    AgentResourceType.prompt: agents.expand((item) => item.prompts),
+    AgentResourceType.tool: agents.expand((item) => item.tools),
+  });
+
+  void _installLoadedData({
+    required List<AgentItem> agents,
+    required List<ConnectionItem> connections,
+    required List<SkillItem> skills,
+    required List<KnowledgeItem> knowledge,
+    required List<KnowledgePack> packs,
+    required List<PromptItem> prompts,
+    required List<ToolItem> tools,
+  }) {
+    _agents = agents;
+    _connections = connections;
+    _skillNames = {for (final item in skills) item.id: item.name};
+    _knowledgeNames = {for (final item in knowledge) item.id: item.name};
+    _knowledgePackNames = {for (final item in packs) item.id: item.name};
+    _knowledgePackItems = {
+      for (final pack in packs)
+        pack.id: knowledge.where((item) => item.packId == pack.id).toList(),
+    };
+    _promptNames = {for (final item in prompts) item.id: item.name};
+    _toolNames = {for (final item in tools) item.id: item.name};
+    _connectionNames = {
+      for (final item in connections)
+        item.id: item.model.isNotEmpty ? item.model : item.name,
+    };
+    _agentResourceCatalog = AgentResourceCatalog(
+      connections: connections.where((item) => item.isActive).toList(),
+      skills: skills,
+      knowledge: knowledge,
+      packs: packs,
+      prompts: prompts,
+      tools: tools,
+    );
+  }
+
+  Future<void> _reloadAfterDirectoryImport() async {
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+    final agents = await _repository.listAgents(
+      token,
+      groupId: _activeGroupId,
+      includeInactive: true,
+    );
+    final catalog = await _resolveCatalogForAgents(token, agents);
+    if (!mounted) return;
+    setState(() {
+      _installLoadedData(
+        agents: agents,
+        skills: catalog.skills,
+        knowledge: catalog.knowledge,
+        packs: catalog.packs,
+        prompts: catalog.prompts,
+        tools: catalog.tools,
+        connections: _connections,
+      );
+    });
   }
 
   void _onGroupSelect(String? groupId) {

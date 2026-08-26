@@ -408,17 +408,81 @@ void main() {
     expect(result?.skillIds, {'skill-a'});
   });
 
+  testWidgets('el selector consulta y pagina un catálogo remoto por tipo', (
+    tester,
+  ) async {
+    final calls = <(AgentResourceType, String, int)>[];
+    final preview = AgentImportPreview.fromJson({
+      ..._previewJson,
+      'references': [
+        {
+          'key': 'skills:0',
+          'kind': 'skill',
+          'source': 'Remota',
+          'status': 'missing',
+          'candidates': <Object>[],
+        },
+      ],
+    });
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showAgentImportPreviewDialog(
+              context: context,
+              preview: preview,
+              tx: (path) => tr(path),
+              pageLoader: (type, query, offset) async {
+                calls.add((type, query, offset));
+                return AgentResourceOptionPage(
+                  items: [
+                    AgentResourceOption(
+                      id: offset == 0 ? 'remote-a' : 'remote-b',
+                      type: type,
+                      title: offset == 0 ? 'Remota A' : 'Remota B',
+                    ),
+                  ],
+                  hasMore: offset == 0,
+                );
+              },
+            ),
+            child: const Text('Abrir'),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Abrir'));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('agent-import-resource-skills:0')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Remota A'), findsOneWidget);
+    await tester.tap(find.text('Cargar más'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Remota B'), findsOneWidget);
+    expect(calls, [
+      (AgentResourceType.skill, '', 0),
+      (AgentResourceType.skill, '', 1),
+    ]);
+  });
+
   testWidgets('el directorio permite seleccionar varios agentes y recursos', (
     tester,
   ) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     AgentDirectoryImportOptions? result;
     final plan = AgentDirectoryImportPlan.fromJson({
       'components': [
         {
           'component_id': 'x',
           'kind': 'agent',
-          'name': 'Agent X',
-          'source_path': 'agents/x.md',
+          'name': 'Agent X con un nombre suficientemente largo para móvil',
+          'source_path': 'agents/equipo/revisores/especializados/x.md',
           'references': <Object>[],
         },
         {
@@ -459,8 +523,12 @@ void main() {
 
     await tester.tap(find.text('Abrir'));
     await tester.pumpAndSettle();
-    expect(find.text('Agent X'), findsOneWidget);
+    expect(
+      find.text('Agent X con un nombre suficientemente largo para móvil'),
+      findsOneWidget,
+    );
     expect(find.text('Agent Y'), findsOneWidget);
+    expect(tester.takeException(), isNull);
     await tester.tap(find.byKey(const ValueKey('directory-import-apply')));
     await tester.pumpAndSettle();
 

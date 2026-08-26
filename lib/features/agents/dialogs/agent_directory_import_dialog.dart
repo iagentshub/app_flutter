@@ -11,12 +11,14 @@ Future<AgentDirectoryImportOptions?> showAgentDirectoryImportDialog({
   required AgentDirectoryImportPlan plan,
   required List<AgentResourceOption> resourceOptions,
   required String Function(String path) tx,
+  AgentResourcePageLoader? pageLoader,
 }) => showAppDialog<AgentDirectoryImportOptions>(
   context: context,
   builder: (_) => _AgentDirectoryImportDialog(
     plan: plan,
     resourceOptions: resourceOptions,
     tx: tx,
+    pageLoader: pageLoader,
   ),
 );
 
@@ -25,11 +27,13 @@ class _AgentDirectoryImportDialog extends StatefulWidget {
     required this.plan,
     required this.resourceOptions,
     required this.tx,
+    this.pageLoader,
   });
 
   final AgentDirectoryImportPlan plan;
   final List<AgentResourceOption> resourceOptions;
   final String Function(String path) tx;
+  final AgentResourcePageLoader? pageLoader;
 
   @override
   State<_AgentDirectoryImportDialog> createState() =>
@@ -89,6 +93,7 @@ class _AgentDirectoryImportDialogState
         tx: widget.tx,
         allowedTypes: {type},
         singleSelection: true,
+        pageLoader: widget.pageLoader,
       ),
     );
     if (!mounted || selection == null) return;

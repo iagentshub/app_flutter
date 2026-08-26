@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../models/agents/agent_import_models.dart';
@@ -15,6 +17,7 @@ class AgentResourcePickerDialog extends StatefulWidget {
     required this.tx,
     this.allowedTypes,
     this.singleSelection = false,
+    this.pageLoader,
     super.key,
   });
 
@@ -23,6 +26,7 @@ class AgentResourcePickerDialog extends StatefulWidget {
   final String Function(String path) tx;
   final Set<AgentResourceType>? allowedTypes;
   final bool singleSelection;
+  final AgentResourcePageLoader? pageLoader;
 
   @override
   State<AgentResourcePickerDialog> createState() =>
@@ -34,6 +38,12 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
   late final AgentResourceSelection _selection;
   AgentResourceType? _filter;
   String _query = '';
+  Timer? _searchTimer;
+  List<AgentResourceOption> _remoteOptions = const [];
+  final Map<AgentResourceType, int> _offsets = {};
+  final Map<AgentResourceType, bool> _hasMore = {};
+  bool _loading = false;
+  int _requestGeneration = 0;
 
   @override
   void initState() {
@@ -46,32 +56,109 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
       promptIds: widget.initial.promptIds,
       toolIds: widget.initial.toolIds,
     );
+    _remoteOptions = widget.options;
+    if (widget.pageLoader != null) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _loadRemote(reset: true),
+      );
+    }
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _searchTimer?.cancel();
     super.dispose();
   }
 
   List<AgentResourceOption> get _visibleOptions {
     final query = _query.trim().toLowerCase();
-    return widget.options.where((option) {
+    final options = widget.pageLoader == null ? widget.options : _remoteOptions;
+    return options.where((option) {
       if (widget.allowedTypes case final allowed?) {
         if (!allowed.contains(option.type)) return false;
       }
       if (_filter != null && option.type != _filter) return false;
+      if (widget.pageLoader != null) return true;
       if (query.isEmpty) return true;
       return option.title.toLowerCase().contains(query) ||
           option.subtitle.toLowerCase().contains(query);
     }).toList();
   }
 
+  Iterable<AgentResourceType> get _requestedTypes => _filter == null
+      ? AgentResourceType.values.where(
+          (type) => widget.allowedTypes?.contains(type) ?? true,
+        )
+      : [_filter!];
+
+  Future<void> _loadRemote({required bool reset}) async {
+    final loader = widget.pageLoader;
+    if (loader == null || (_loading && !reset)) return;
+    final generation = reset ? ++_requestGeneration : _requestGeneration;
+    final types = _requestedTypes
+        .where((type) => reset || (_hasMore[type] ?? true))
+        .toList();
+    if (types.isEmpty) return;
+    setState(() => _loading = true);
+    try {
+      final pages = await Future.wait([
+        for (final type in types)
+          loader(type, _query, reset ? 0 : (_offsets[type] ?? 0)),
+      ]);
+      if (!mounted || generation != _requestGeneration) return;
+      setState(() {
+        if (reset) {
+          _remoteOptions = [
+            for (final option in widget.options)
+              if (_selection.idsFor(option.type).contains(option.id)) option,
+          ];
+          _offsets.clear();
+          _hasMore.clear();
+        }
+        final byKey = {
+          for (final item in _remoteOptions)
+            '${item.type.apiValue}:${item.id}': item,
+        };
+        for (var index = 0; index < types.length; index++) {
+          final type = types[index];
+          final page = pages[index];
+          for (final item in page.items) {
+            byKey['${item.type.apiValue}:${item.id}'] = item;
+          }
+          _offsets[type] = (_offsets[type] ?? 0) + page.items.length;
+          _hasMore[type] = page.hasMore;
+        }
+        _remoteOptions = byKey.values.toList();
+      });
+    } catch (_) {
+      // La selección ya existente sigue siendo utilizable aunque una página
+      // remota falle; una nueva búsqueda permite reintentar sin cerrar.
+    } finally {
+      if (mounted && generation == _requestGeneration) {
+        setState(() => _loading = false);
+      }
+    }
+  }
+
+  void _changeQuery(String value) {
+    setState(() => _query = value);
+    if (widget.pageLoader == null) return;
+    _searchTimer?.cancel();
+    _searchTimer = Timer(
+      const Duration(milliseconds: 250),
+      () => _loadRemote(reset: true),
+    );
+  }
+
+  void _changeFilter(AgentResourceType? value) {
+    setState(() => _filter = value);
+    if (widget.pageLoader != null) _loadRemote(reset: true);
+  }
+
   String _typeLabel(AgentResourceType type) => switch (type) {
     AgentResourceType.skill => widget.tx('agents.field_skills'),
-    AgentResourceType.knowledgePack => widget.tx(
-      'agents.field_knowledge_packs',
-    ),
+    AgentResourceType.knowledgePack => widget.tx('agents.field_knowledge_packs'),
     AgentResourceType.knowledge => widget.tx('agents.field_knowledge'),
     AgentResourceType.prompt => widget.tx('agents.field_prompts'),
     AgentResourceType.tool => widget.tx('agents.field_tools'),
@@ -132,13 +219,13 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
                 : AppIconButton(
                     onPressed: () {
                       _searchController.clear();
-                      setState(() => _query = '');
+                      _changeQuery('');
                     },
                     icon: const Icon(Icons.close),
                     tooltip: widget.tx('agents.resources_clear_search'),
                   ),
           ),
-          onChanged: (value) => setState(() => _query = value),
+          onChanged: _changeQuery,
         ),
         const SizedBox(height: 12),
         SingleChildScrollView(
@@ -148,7 +235,7 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
               FilterChip(
                 label: Text(widget.tx('agents.resources_all')),
                 selected: _filter == null,
-                onSelected: (_) => setState(() => _filter = null),
+                onSelected: (_) => _changeFilter(null),
               ),
               const SizedBox(width: 8),
               for (final type in AgentResourceType.values.where(
@@ -158,7 +245,7 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
                   avatar: Icon(_typeIcon(type), size: 16),
                   label: Text(_typeLabel(type)),
                   selected: _filter == type,
-                  onSelected: (_) => setState(() => _filter = type),
+                  onSelected: (_) => _changeFilter(type),
                 ),
                 const SizedBox(width: 8),
               ],
@@ -168,7 +255,9 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
         if (mobile) ...[const SizedBox(height: 10), _selectionCount(theme)],
         const SizedBox(height: 8),
         Expanded(
-          child: visible.isEmpty
+          child: _loading && visible.isEmpty
+              ? const Center(child: CircularProgressIndicator())
+              : visible.isEmpty
               ? Center(
                   child: Text(
                     widget.tx('agents.resources_no_match'),
@@ -180,12 +269,24 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
                 )
               : ListView.separated(
                   key: const ValueKey('agent-resources-list'),
-                  itemCount: visible.length,
+                  itemCount:
+                      visible.length +
+                      (_hasMore.values.any((value) => value) ? 1 : 0),
                   separatorBuilder: (context, index) => Divider(
                     height: 1,
                     color: theme.colorScheme.outlineVariant,
                   ),
                   itemBuilder: (context, index) {
+                    if (index == visible.length) {
+                      return Center(
+                        child: TertiaryButton(
+                          onPressed: _loading
+                              ? null
+                              : () => _loadRemote(reset: false),
+                          child: Text(widget.tx('explore.load_more')),
+                        ),
+                      );
+                    }
                     final option = visible[index];
                     final selected = _selection
                         .idsFor(option.type)

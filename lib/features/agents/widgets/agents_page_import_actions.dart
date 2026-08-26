@@ -5,7 +5,7 @@ extension _AgentsPageImportActions on _AgentsPageState {
     final token = _token;
     if (token == null || token.isEmpty || _importingAgentFile) return;
     try {
-      final selection = await pickKnowledgeDirectory();
+      final selection = await pickKnowledgeDirectory(calculateChecksums: false);
       if (!mounted || selection == null) return;
       if (selection.files.isEmpty) {
         showMessage(_tx('agents.directory_empty'), isError: true);
@@ -40,19 +40,18 @@ extension _AgentsPageImportActions on _AgentsPageState {
         plan: plan,
         resourceOptions: _agentImportResourceOptions(),
         tx: _tx,
+        pageLoader: _loadAgentResourcePage,
       );
       if (!mounted || options == null) return;
       final result = await _agentImportRepository.applyDirectory(
         token,
         files: files,
+        sessionId: plan.sessionId,
         options: options,
       );
       if (!mounted) return;
-      showMessage(
-        _tx('agents.directory_imported_count')
-            .replaceAll('{{count}}', '${result.agentCount}'),
-      );
-      await _load();
+      showMessage(_tx('agents.directory_imported_count').replaceAll('{{count}}', '${result.agentCount}'));
+      await _reloadAfterDirectoryImport();
     } on ApiError catch (error) {
       if (mounted) showMessage(error.message, isError: true);
     } catch (_) {
@@ -89,7 +88,11 @@ extension _AgentsPageImportActions on _AgentsPageState {
       final bytes = await entry.readAsBytes();
       if (UploadLimits.exceeds(totalBytes[0] + bytes.length)) continue;
       output.add(
-        await createLocalKnowledgeFile(relativePath: relative, bytes: bytes),
+        await createLocalKnowledgeFile(
+          relativePath: relative,
+          bytes: bytes,
+          calculateChecksum: false,
+        ),
       );
       totalBytes[0] += bytes.length;
     }
@@ -227,6 +230,7 @@ extension _AgentsPageImportActions on _AgentsPageState {
       preview: preview,
       tx: _tx,
       resourceOptions: _agentImportResourceOptions(),
+      pageLoader: _loadAgentResourcePage,
     );
     if (linkedResources == null || !mounted) return;
 
@@ -242,11 +246,31 @@ extension _AgentsPageImportActions on _AgentsPageState {
           ),
           tx: _tx,
           resourceCatalog: _agentResourceCatalog,
+          resourcePageLoader: _loadAgentResourcePage,
         ),
       ),
     );
     if (payload == null) return;
     await _saveAgent(payload);
+  }
+
+  Future<AgentResourceOptionPage> _loadAgentResourcePage(
+    AgentResourceType type,
+    String query,
+    int offset,
+  ) {
+    final token = _token;
+    if (token == null || token.isEmpty) {
+      return Future.value(
+        const AgentResourceOptionPage(items: [], hasMore: false),
+      );
+    }
+    return _agentImportRepository.searchCatalog(
+      token,
+      type,
+      query: query,
+      offset: offset,
+    );
   }
 
   List<AgentResourceOption> _agentImportResourceOptions() => [

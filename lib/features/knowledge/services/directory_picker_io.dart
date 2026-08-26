@@ -8,6 +8,7 @@ import '../models/local_knowledge_file.dart';
 
 Future<KnowledgeDirectorySelection?> pickKnowledgeDirectory({
   KnowledgeDirectoryProgressCallback? onProgress,
+  bool calculateChecksums = true,
 }) async {
   final selected = Platform.isIOS
       ? await const MethodChannel('com.iagentshub.app/knowledge_directory')
@@ -57,6 +58,7 @@ Future<KnowledgeDirectorySelection?> pickKnowledgeDirectory({
                 bytes: Uint8List.fromList(await entity.readAsBytes()),
                 originalSizeBytes: size,
                 modifiedAt: stat.modified.millisecondsSinceEpoch,
+                calculateChecksum: calculateChecksums,
               ),
             );
             totalBytes += size;

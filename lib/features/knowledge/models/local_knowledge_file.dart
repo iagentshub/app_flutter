@@ -39,11 +39,12 @@ Future<LocalKnowledgeFile> createLocalKnowledgeFile({
   int? originalSizeBytes,
   String mimeType = '',
   int? modifiedAt,
+  bool calculateChecksum = true,
 }) async => LocalKnowledgeFile(
   relativePath: relativePath,
   bytes: bytes,
   originalSizeBytes: originalSizeBytes,
-  checksum: await compute(_sha256ForBytes, bytes),
+  checksum: calculateChecksum ? await compute(_sha256ForBytes, bytes) : '',
   mimeType: mimeType.isNotEmpty
       ? mimeType
       : lookupMimeType(relativePath, headerBytes: bytes.take(16).toList()) ??

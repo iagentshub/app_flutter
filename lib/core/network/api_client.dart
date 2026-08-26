@@ -303,9 +303,10 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? body,
     String? gaToken,
+    bool sideEffect = true,
   }) async {
     final response = await _request('POST', path, body: body, gaToken: gaToken);
-    _afterMutation(path);
+    if (sideEffect) _afterMutation(path);
     return response;
   }
 
