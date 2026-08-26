@@ -72,9 +72,7 @@ extension _AgentsPageImportActions on _AgentsPageState {
     for (final entry in entries) {
       final relative = prefix.isEmpty ? entry.name : '$prefix/${entry.name}';
       if (entry is DropItemDirectory) {
-        if (!knowledgePackIgnoredDirectoryNames.contains(
-          entry.name.toLowerCase(),
-        )) {
+        if (!DirectoryImportPolicy.ignoresDirectory(DirectoryImportKind.agent, entry.name)) {
           await _collectDroppedAgentDirectory(
             entry.children,
             relative,
@@ -84,7 +82,9 @@ extension _AgentsPageImportActions on _AgentsPageState {
         }
         continue;
       }
-      if (!isSupportedKnowledgePackPath(relative)) continue;
+      if (!DirectoryImportPolicy.supportsPath(DirectoryImportKind.agent, relative)) {
+        continue;
+      }
       final bytes = await entry.readAsBytes();
       if (UploadLimits.exceeds(totalBytes[0] + bytes.length)) continue;
       output.add(

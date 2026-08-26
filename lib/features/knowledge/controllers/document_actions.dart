@@ -40,7 +40,10 @@ extension _DocumentActions on _KnowledgePageState {
     if (result == null || result.files.isEmpty) return;
 
     final file = result.files.first;
-    if (!isSupportedKnowledgePackPath(file.name)) {
+    if (!DirectoryImportPolicy.supportsPath(
+      DirectoryImportKind.knowledgePack,
+      file.name,
+    )) {
       showMessage(_tx('knowledge.document_unsupported'), isError: true);
       return;
     }
@@ -49,12 +52,8 @@ extension _DocumentActions on _KnowledgePageState {
       showMessage(_tx('knowledge.msg_file_unreadable'), isError: true);
       return;
     }
-    if (excedeElLimiteDeSubida(bytes.length)) {
-      showMessage(
-        _tx('knowledge.document_too_large')
-            .replaceAll('{limit}', UploadLimits.formatted),
-        isError: true,
-      );
+    if (DirectoryImportPolicy.exceedsUploadLimit(bytes.length)) {
+      showMessage(_tx('knowledge.document_too_large').replaceAll('{limit}', UploadLimits.formatted),  isError: true);
       return;
     }
 
@@ -72,10 +71,7 @@ extension _DocumentActions on _KnowledgePageState {
         fileBytes: bytes,
         labels: labels.toList(),
       );
-      showMessage(
-        _tx('knowledge.msg_document_uploaded')
-            .replaceAll('{{nombre}}', file.name),
-      );
+      showMessage( _tx('knowledge.msg_document_uploaded').replaceAll('{{nombre}}', file.name));
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {

@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:web/web.dart' as web;
 
+import '../../../core/config/directory_import_policy.dart';
 import '../models/local_knowledge_file.dart';
 
 Future<KnowledgeDirectorySelection?> pickKnowledgeDirectory({
@@ -34,9 +35,12 @@ Future<KnowledgeDirectorySelection?> pickKnowledgeDirectory({
       }
       relative = relative.isEmpty ? file.name : relative;
       final size = file.size;
-      if (!isSupportedKnowledgePackPath(relative) ||
-          excedeElLimiteDeSubida(size) ||
-          excedeElLimiteDeSubida(totalBytes + size)) {
+      if (!DirectoryImportPolicy.supportsPath(
+            DirectoryImportKind.knowledgePack,
+            relative,
+          ) ||
+          DirectoryImportPolicy.exceedsUploadLimit(size) ||
+          DirectoryImportPolicy.exceedsUploadLimit(totalBytes + size)) {
         ignored++;
       } else {
         final buffer = await file.arrayBuffer().toDart;

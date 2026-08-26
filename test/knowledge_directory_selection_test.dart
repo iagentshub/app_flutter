@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:app_flutter/core/config/directory_import_policy.dart';
 import 'package:app_flutter/features/knowledge/dialogs/knowledge_pack_dialog.dart';
 import 'package:app_flutter/features/knowledge/models/local_knowledge_file.dart';
 import 'package:app_flutter/shared/widgets/multi_select_dropdown.dart';
@@ -13,20 +14,56 @@ void main() {
   setUp(cargarTraduccionesDePrueba);
 
   test('clasifica documentos, código e imágenes sin incluir secretos', () {
-    expect(isSupportedKnowledgePackPath('docs/README.md'), isTrue);
-    expect(isSupportedKnowledgePackPath('scripts/deploy.py'), isTrue);
-    expect(isSupportedKnowledgePackPath('skills/SKILL.md'), isTrue);
-    expect(isSupportedKnowledgePackPath('photos/diagram.png'), isTrue);
-    expect(isSupportedKnowledgePackPath('photos/large-image.jpg'), isTrue);
-    expect(isSupportedKnowledgePackPath('photos/capture.heic'), isTrue);
-    expect(isSupportedKnowledgePackPath('archive/project.zip'), isTrue);
-    expect(isSupportedKnowledgePackPath('design/model.blend'), isTrue);
+    bool supports(String path) => DirectoryImportPolicy.supportsPath(
+      DirectoryImportKind.knowledgePack,
+      path,
+    );
+
+    expect(supports('docs/README.md'), isTrue);
+    expect(supports('scripts/deploy.py'), isTrue);
+    expect(supports('skills/SKILL.md'), isTrue);
+    expect(supports('photos/diagram.png'), isTrue);
+    expect(supports('photos/large-image.jpg'), isTrue);
+    expect(supports('photos/capture.heic'), isTrue);
+    expect(supports('archive/project.zip'), isTrue);
+    expect(supports('design/model.blend'), isTrue);
+    expect(supports('node_modules/package/index.js'), isFalse);
+    expect(supports('.env'), isFalse);
+    expect(supports('private/key.pem'), isFalse);
+  });
+
+  test('la política tipada conserva las reglas para agentes', () {
     expect(
-      isSupportedKnowledgePackPath('node_modules/package/index.js'),
+      DirectoryImportPolicy.supportsPath(
+        DirectoryImportKind.agent,
+        'agents/reviewer.md',
+      ),
+      isTrue,
+    );
+    expect(
+      DirectoryImportPolicy.supportsPath(
+        DirectoryImportKind.agent,
+        'node_modules/package/agent.md',
+      ),
       isFalse,
     );
-    expect(isSupportedKnowledgePackPath('.env'), isFalse);
-    expect(isSupportedKnowledgePackPath('private/key.pem'), isFalse);
+    expect(
+      DirectoryImportPolicy.supportsPath(
+        DirectoryImportKind.agent,
+        'private/id_ed25519',
+      ),
+      isFalse,
+    );
+  });
+
+  test('una importación de agentes puede omitir el checksum local', () async {
+    final file = await createLocalKnowledgeFile(
+      relativePath: 'agents/reviewer.md',
+      bytes: Uint8List.fromList([35, 32, 65, 103, 101, 110, 116]),
+      calculateChecksum: false,
+    );
+
+    expect(file.checksum, isEmpty);
   });
 
   testWidgets('el diálogo avisa de los archivos que se omitirán', (

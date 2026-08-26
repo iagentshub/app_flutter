@@ -92,32 +92,20 @@ extension _KnowledgePackActions on _KnowledgePageState {
     for (final entry in entries) {
       final relative = prefix.isEmpty ? entry.name : '$prefix/${entry.name}';
       if (entry is DropItemDirectory) {
-        if (!knowledgePackIgnoredDirectoryNames.contains(
-          entry.name.toLowerCase(),
-        )) {
-          await _collectDroppedFiles(
-            entry.children,
-            relative,
-            output,
-            counters,
-          );
+        if (!DirectoryImportPolicy.ignoresDirectory(DirectoryImportKind.knowledgePack, entry.name)) {
+          await _collectDroppedFiles(entry.children, relative, output, counters);
         }
       } else {
         counters[0]++;
-        if (!isSupportedKnowledgePackPath(relative)) {
+        if (!DirectoryImportPolicy.supportsPath(DirectoryImportKind.knowledgePack, relative)) {
           counters[1]++;
         } else {
           final bytes = await entry.readAsBytes();
-          if (excedeElLimiteDeSubida(bytes.length) ||
-              excedeElLimiteDeSubida(counters[2] + bytes.length)) {
+          if (DirectoryImportPolicy.exceedsUploadLimit(bytes.length) ||
+              DirectoryImportPolicy.exceedsUploadLimit(counters[2] + bytes.length)) {
             counters[1]++;
           } else {
-            output.add(
-              await createLocalKnowledgeFile(
-                relativePath: relative,
-                bytes: bytes,
-              ),
-            );
+            output.add(await createLocalKnowledgeFile( relativePath: relative, bytes: bytes));
             counters[2] += bytes.length;
           }
         }

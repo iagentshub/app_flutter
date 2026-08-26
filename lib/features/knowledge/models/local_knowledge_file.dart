@@ -2,8 +2,6 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mime/mime.dart';
 
-import '../../../shared/state/upload_limits.dart';
-
 String _sha256ForBytes(Uint8List bytes) => sha256.convert(bytes).toString();
 
 class LocalKnowledgeFile {
@@ -77,58 +75,3 @@ class KnowledgeDirectoryProgress {
 typedef KnowledgeDirectoryProgressCallback = void Function(
   KnowledgeDirectoryProgress progress,
 );
-
-/// Si un fichero de un pack no cabe en el límite que fija el administrador.
-///
-/// Antes eran dos constantes de aquí —10 MB por fichero, 50 MB por tanda— que
-/// no las conocía nadie más: el backend cortaba en 2 MB y nginx en 1 MB, así
-/// que un fichero que este filtro aceptaba se rechazaba después con un error
-/// que no hablaba de tamaño. El número es ahora uno solo y viene del servidor
-/// (ver [UploadLimits]). La tanda entera se sube en una petición, así que el
-/// mismo techo la limita a ella y a cada fichero suelto.
-bool excedeElLimiteDeSubida(int bytes) => UploadLimits.exceeds(bytes);
-
-const knowledgePackIgnoredDirectoryNames = {
-  '.git',
-  '.svn',
-  '.hg',
-  'node_modules',
-  'build',
-  'dist',
-  '.dart_tool',
-  '.idea',
-  '.vscode',
-  '__pycache__',
-  '.pytest_cache',
-  '.mypy_cache',
-};
-
-bool isSupportedKnowledgePackPath(String path) {
-  final normalized = path.replaceAll(r'\', '/').toLowerCase();
-  final parts = normalized.split('/').where((part) => part.isNotEmpty).toList();
-  if (parts.isEmpty ||
-      parts
-          .take(parts.length - 1)
-          .any(knowledgePackIgnoredDirectoryNames.contains)) {
-    return false;
-  }
-  final name = normalized.split('/').last;
-  if (name == '.env' ||
-      (name.startsWith('.env.') && name != '.env.example') ||
-      const {
-        'id_rsa',
-        'id_dsa',
-        'id_ecdsa',
-        'id_ed25519',
-        'credentials',
-        'credentials.json',
-        'secrets.json',
-      }.contains(name) ||
-      name.endsWith('.pem') ||
-      name.endsWith('.key') ||
-      name.endsWith('.p12') ||
-      name.endsWith('.pfx')) {
-    return false;
-  }
-  return true;
-}

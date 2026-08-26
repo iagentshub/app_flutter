@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
 
+import '../../../core/config/directory_import_policy.dart';
 import '../../../utils/i18n.dart';
 import '../models/local_knowledge_file.dart';
 
@@ -30,7 +31,11 @@ Future<KnowledgeDirectorySelection?> pickKnowledgeDirectory({
             .where((part) => part.isNotEmpty)
             .lastOrNull
             ?.toLowerCase();
-        if (name != null && knowledgePackIgnoredDirectoryNames.contains(name)) {
+        if (name != null &&
+            DirectoryImportPolicy.ignoresDirectory(
+              DirectoryImportKind.knowledgePack,
+              name,
+            )) {
           continue;
         }
         await scan(entity);
@@ -42,13 +47,16 @@ Future<KnowledgeDirectorySelection?> pickKnowledgeDirectory({
           .replaceFirst(RegExp(r'^[\\/]'), '')
           .replaceAll(r'\', '/');
       processed++;
-      if (!isSupportedKnowledgePackPath(relative)) {
+      if (!DirectoryImportPolicy.supportsPath(
+        DirectoryImportKind.knowledgePack,
+        relative,
+      )) {
         ignored++;
       } else {
         try {
           final size = await entity.length();
-          if (excedeElLimiteDeSubida(size) ||
-              excedeElLimiteDeSubida(totalBytes + size)) {
+          if (DirectoryImportPolicy.exceedsUploadLimit(size) ||
+              DirectoryImportPolicy.exceedsUploadLimit(totalBytes + size)) {
             ignored++;
           } else {
             final stat = await entity.stat();
