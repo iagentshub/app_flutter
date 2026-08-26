@@ -1,3 +1,4 @@
+import 'package:app_flutter/core/config/security_contract.dart';
 import 'package:app_flutter/core/network/api_client.dart';
 import 'package:app_flutter/core/network/csrf_token.dart';
 import 'package:app_flutter/shared/state/backend_controller.dart';
@@ -21,6 +22,47 @@ void main() {
   });
 
   tearDown(forgetCsrfToken);
+
+  test('el contrato CSRF distingue la cookie exacta en cualquier posición', () {
+    expect(
+      SecurityContract.readCookieValue('ga_csrf=inicio', SecurityCookieId.csrf),
+      'inicio',
+    );
+    expect(
+      SecurityContract.readCookieValue(
+        'a=1;  ga_csrf=medio; b=2',
+        SecurityCookieId.csrf,
+      ),
+      'medio',
+    );
+    expect(
+      SecurityContract.readCookieValue(
+        'otra_ga_csrf=falsa',
+        SecurityCookieId.csrf,
+      ),
+      isNull,
+    );
+    expect(
+      SecurityContract.readCookieValue('ga_csrf=', SecurityCookieId.csrf),
+      isNull,
+    );
+  });
+
+  test(
+    'el lector tipado extrae access y refresh de una cabecera combinada',
+    () {
+      const source = 'ga_token=access; Path=/, ga_refresh=refresh; HttpOnly';
+
+      expect(
+        SecurityContract.readCookieValue(source, SecurityCookieId.access),
+        'access',
+      );
+      expect(
+        SecurityContract.readCookieValue(source, SecurityCookieId.refresh),
+        'refresh',
+      );
+    },
+  );
 
   /// Cliente que anota las cabeceras de cada petición y devuelve la cookie
   /// `ga_csrf` en la primera respuesta, como hace el backend al iniciar sesión.

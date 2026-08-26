@@ -10,6 +10,7 @@ import '../../shared/state/backend_controller.dart';
 import '../../shared/state/resource_events.dart';
 import '../../utils/i18n.dart';
 import '../config/backend_defaults.dart';
+import '../config/security_contract.dart';
 import 'api_error.dart';
 import 'api_response.dart';
 import 'api_response_cache.dart';
@@ -875,14 +876,16 @@ class ApiClient {
         gaToken != browserCookieSessionToken;
     return NetworkImage(
       _uri(path).toString(),
-      headers: sendCookie ? {'Cookie': 'ga_token=$gaToken'} : null,
+      headers: sendCookie
+          ? {'Cookie': '${SecurityCookieId.access.value}=$gaToken'}
+          : null,
     );
   }
 
   static String? _csrfFromSetCookie(Map<String, String> headers) {
     final setCookie = headers['set-cookie'];
     if (setCookie == null || setCookie.isEmpty) return null;
-    return RegExp(r'ga_csrf=([^;]+)').firstMatch(setCookie)?.group(1);
+    return SecurityContract.readCookieValue(setCookie, SecurityCookieId.csrf);
   }
 
   /// Cabeceras comunes a todas las peticiones.
@@ -900,12 +903,12 @@ class ApiClient {
   }) {
     final headers = <String, String>{'Accept': accept};
     if (!kIsWeb && gaToken != null && gaToken.isNotEmpty) {
-      final cookies = <String>['ga_token=$gaToken'];
+      final cookies = <String>['${SecurityCookieId.access.value}=$gaToken'];
       // Solo en la petición que lo canjea: el backend acota su cookie a
       // `path=/api/auth` por lo mismo — es la credencial de largo recorrido y
       // no tiene por qué viajar en el resto de rutas.
       if (refreshToken != null && refreshToken.isNotEmpty) {
-        cookies.add('ga_refresh=$refreshToken');
+        cookies.add('${SecurityCookieId.refresh.value}=$refreshToken');
       }
       headers['Cookie'] = cookies.join('; ');
     }
@@ -921,7 +924,10 @@ class ApiClient {
   String? _refreshFromSetCookie(Map<String, String> headers) {
     final setCookie = headers['set-cookie'];
     if (setCookie == null || setCookie.isEmpty) return null;
-    return RegExp(r'ga_refresh=([^;]+)').firstMatch(setCookie)?.group(1);
+    return SecurityContract.readCookieValue(
+      setCookie,
+      SecurityCookieId.refresh,
+    );
   }
 
   String? extractGaToken(Map<String, String> headers) {
@@ -934,8 +940,7 @@ class ApiClient {
     final setCookie = headers['set-cookie'];
     if (setCookie == null || setCookie.isEmpty) return null;
 
-    final match = RegExp(r'ga_token=([^;]+)').firstMatch(setCookie);
-    return match?.group(1);
+    return SecurityContract.readCookieValue(setCookie, SecurityCookieId.access);
   }
 
   String? _sanitizeDownloadFilename(String? raw) {
