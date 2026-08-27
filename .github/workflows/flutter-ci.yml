@@ -26,10 +26,8 @@ jobs:
       - name: Install Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
         with:
-          # La versión sale del pubspec de la app, que es donde la leen también
-          # los `docker-publish` de iAgents y backend_fastapi. Escrita aquí a
-          # mano, este CI validaba 3.44.8 mientras la imagen que se despliega se
-          # construía con lo que `channel: stable` diera ese día.
+          # La version sale del pubspec de la app, que es donde la leen tambien
+          # los docker-publish de iAgents y frontend_react.
           flutter-version-file: pubspec.yaml
           channel: stable
           cache: true
@@ -46,113 +44,15 @@ jobs:
       - name: Build web
         run: tool/build_web.sh
 
-      # El bundle es tiempo hasta la primera interacción y crece sin que nadie
-      # lo note: un import sin `deferred` devuelve un módulo entero al bundle
-      # principal y ningún test de comportamiento cambia.
-      - name: Presupuesto de tamaño del bundle web
+      # El bundle es tiempo hasta la primera interaccion y crece sin que nadie
+      # lo note: un import sin deferred devuelve un modulo entero al bundle
+      # principal y ningun test de comportamiento cambia.
+      - name: Presupuesto de tamano del bundle web
         run: tool/check_web_bundle_size.sh
 
       - name: Build Android
         run: flutter build apk --debug
 
-  publish-unified:
-    if: github.event_name == 'push'
-    needs: validate
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - name: Checkout Flutter app
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          path: app_flutter
-
-      - name: Checkout iAgents
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          repository: iagentshub/iAgents
-          path: iagentshub
-
-      - name: Checkout backend
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          repository: iagentshub/backend_fastapi
-          path: backend
-
-      - name: Checkout React frontend
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          repository: iagentshub/frontend_react
-          path: frontend
-
-      - name: Install Flutter
-        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
-        with:
-          # La versión sale del pubspec de la app, que es donde la leen también
-          # los `docker-publish` de iAgents y backend_fastapi. Escrita aquí a
-          # mano, este CI validaba 3.44.8 mientras la imagen que se despliega se
-          # construía con lo que `channel: stable` diera ese día.
-          # Este job saca el repo en app_flutter/, y la ruta es relativa al
-          # workspace, no al working-directory del paso que compila.
-          flutter-version-file: app_flutter/pubspec.yaml
-          channel: stable
-          cache: true
-
-      - name: Build Flutter Web under /app/
-        working-directory: app_flutter
-        run: |
-          flutter pub get
-          tool/build_web.sh --base-href /app/
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Prepare build context
-        run: |
-          mkdir -p build-ctx
-          cp -r backend/ build-ctx/backend
-          cp -r frontend/ build-ctx/frontend
-          cp -r app_flutter/build/web build-ctx/flutter-web
-          cp iagentshub/docker/Dockerfile.unified build-ctx/Dockerfile
-          cp iagentshub/docker/supervisord.conf build-ctx/supervisord.conf
-          cp iagentshub/docker/entrypoint-unified.sh build-ctx/entrypoint-unified.sh
-          # Docker solo lee el .dockerignore de la raíz del contexto, así que
-          # el de backend_fastapi no aplica aquí. Sin este, el COPY backend/
-          # se lleva docs/, .git y basura del runner; tests/ sí se incluye
-          # deliberadamente para Centinel.
-          cp iagentshub/docker/dockerignore.unified build-ctx/.dockerignore
-
-      - name: Generate build version
-        id: version
-        run: echo "value=$(date -u +%Y%m%d%H%M%S)" >> "$GITHUB_OUTPUT"
-
-      - name: Read bundled commits
-        id: shas
-        run: |
-          echo "backend=$(git -C backend rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
-          echo "frontend=$(git -C frontend rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
-
-      - name: Build and push multi-platform image
-        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25
-        with:
-          context: build-ctx
-          platforms: linux/amd64,linux/arm64
-          push: true
-          build-args: |
-            GAIA_VERSION=${{ steps.version.outputs.value }}
-            BACKEND_COMMIT=${{ steps.shas.outputs.backend }}
-            FRONTEND_COMMIT=${{ steps.shas.outputs.frontend }}
-          tags: |
-            ghcr.io/iagentshub/app:latest
-            ghcr.io/iagentshub/app:react-${{ steps.version.outputs.value }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+  # La imagen unificada tiene una sola fuente de verdad: iagentshub/iAgents.
+  # Ese workflow fija y verifica los SHAs de app, backend y frontend antes de
+  # publicar; este repositorio ya no puede sobrescribir latest por su cuenta.

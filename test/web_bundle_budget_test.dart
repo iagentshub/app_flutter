@@ -15,9 +15,9 @@ void main() {
     expect(script.existsSync(), isTrue, reason: 'Falta ${script.path}');
 
     final fuente = script.readAsStringSync();
-    final umbral = RegExp(
-      r'MAX_MAIN_BUNDLE_BYTES:-(\d+)',
-    ).firstMatch(fuente)?.group(1);
+    final umbral = RegExp(r'MAX_MAIN_BUNDLE_BYTES:-(\d+)')
+        .firstMatch(fuente)
+        ?.group(1);
 
     expect(
       umbral,
@@ -86,7 +86,7 @@ void main() {
       isNotNull,
       reason:
           'pubspec.yaml tiene que declarar `flutter: X.Y.Z` exacto en '
-          '`environment`: es lo que leen los tres workflows.',
+          '`environment`: es lo que leen los workflows que compilan la app.',
     );
 
     final fuente = workflow.readAsStringSync();
@@ -99,11 +99,14 @@ void main() {
     );
     expect(
       'flutter-version-file'.allMatches(fuente).length,
-      2,
+      1,
       reason:
-          'Los dos jobs que instalan Flutter tienen que leer el pubspec: el '
-          'que valida y el que publica la imagen unificada.',
+          'Este repo solo valida Flutter. La imagen unificada se publica desde '
+          'iAgents y no debe existir un segundo instalador aqui.',
     );
+    expect(fuente, isNot(contains('publish-unified:')));
+    expect(fuente, isNot(contains('packages: write')));
+    expect(fuente, isNot(contains('ghcr.io/iagentshub/app')));
   });
 
   test('CI ejecuta el presupuesto después de construir la web', () {
