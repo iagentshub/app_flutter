@@ -117,5 +117,13 @@
       "no_folder": "No folder",
       "loading": "Loading folders…"
     }
+  },
+  "common": {
+    "coming_soon": "Coming soon",
+    "event_too_large": "A server event exceeds the allowed limit",
+    "no_session": "No active session",
+    "response_too_large": "The server response exceeds the allowed limit",
+    "unnamed": "(unnamed)",
+    "untitled": "(untitled)"
   }
 }

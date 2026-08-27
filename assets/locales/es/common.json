@@ -117,5 +117,13 @@
       "no_folder": "Sin carpeta",
       "loading": "Cargando carpetas…"
     }
+  },
+  "common": {
+    "coming_soon": "Próximamente",
+    "event_too_large": "Un evento del servidor supera el límite permitido",
+    "no_session": "No hay sesión activa",
+    "response_too_large": "La respuesta del servidor supera el límite permitido",
+    "unnamed": "(sin nombre)",
+    "untitled": "(sin título)"
   }
 }

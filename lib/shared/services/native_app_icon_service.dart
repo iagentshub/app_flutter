@@ -19,10 +19,16 @@ class NativeAppIconService {
   static Future<bool> setIcon(String? iconName, String assetPath) async {
     if (!isSupportedPlatform) return false;
     try {
-      await _channel.invokeMethod<void>('setIcon', {
+      final aplicado = await _channel.invokeMethod<bool>('setIcon', {
         'name': iconName,
         'assetPath': assetPath,
       });
+      // El canal devolvía void, así que «no ha cambiado nada» y «el sistema lo
+      // rechazó» eran indistinguibles desde aquí.
+      if (aplicado == false) {
+        debugPrint('El sistema no aplicó el icono $assetPath.');
+        return false;
+      }
       return true;
     } on MissingPluginException {
       // Los widget tests y plataformas aún no configuradas mantienen la

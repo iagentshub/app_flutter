@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart' show Locale;
 
 import '../../core/storage/local_store.dart';
+import 'notificacion_diferida.dart';
 
 /// Idioma de la app, compartido por toda la UI (nav, login, etc.). Se
 /// persiste localmente para que sobreviva a reinicios y se sincroniza con
@@ -12,7 +13,7 @@ import '../../core/storage/local_store.dart';
 /// booleano viajaba por veinte ficheros y añadir un tercer idioma obligaba a
 /// tocar la firma de todo lo que lo pasaba, cuando la infraestructura de
 /// traducción (un directorio por idioma en `assets/locales/`) ya lo admite.
-class LocaleController extends ChangeNotifier {
+class LocaleController extends ChangeNotifier with NotificacionDiferida {
   LocaleController._(this._languageCode);
 
   static const _key = 'app_language';
@@ -52,7 +53,7 @@ class LocaleController extends ChangeNotifier {
     final normalized = _normalize(languageCode);
     if (_languageCode == normalized) return;
     _languageCode = normalized;
-    notifyListeners();
+    notificarFueraDelBuild();
     final prefs = await LocalStore.instance();
     await prefs.setString(_key, normalized);
   }

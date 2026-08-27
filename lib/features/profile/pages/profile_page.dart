@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../app/router/router.dart';
 import '../../../app/theme/app_theme.dart';
@@ -161,7 +162,21 @@ class _ProfilePageState extends State<ProfilePage>
       return;
     }
 
-    final picked = await pickAvatarImage(source);
+    // El selector nativo puede fallar por su cuenta —en macOS, sin el
+    // entitlement de ficheros el canal responde ENTITLEMENT_NOT_FOUND— y la
+    // excepción subía sin tocar la interfaz: se pulsaba la foto y no pasaba
+    // absolutamente nada, ni un mensaje.
+    final PickedAvatar? picked;
+    try {
+      picked = await pickAvatarImage(source);
+    } on PlatformException catch (error) {
+      if (!mounted) return;
+      showMessage(
+        '${_tx('profile.avatar_error')}: ${error.message}',
+        isError: true,
+      );
+      return;
+    }
     if (picked == null || !mounted) return;
 
     final adjustment = await showAvatarCropDialog(

@@ -28,7 +28,6 @@
     "uploading": "Uploading",
     "completed": "Completed",
     "error": "Error",
-    "no_session": "No active session",
     "owner": "Owner",
     "linked": "Link",
     "fork": "Fork",
@@ -54,12 +53,7 @@
     "refresh": "Refresh",
     "select_all": "Select all",
     "status": "Status",
-    "type": "Type",
-    "unnamed": "(unnamed)",
-    "untitled": "(untitled)",
-    "response_too_large": "The server response exceeds the allowed limit",
-    "event_too_large": "A server event exceeds the allowed limit",
-    "coming_soon": "Coming soon"
+    "type": "Type"
   },
   "groups": {
     "title": "GROUPS",
@@ -1898,15 +1892,5 @@
     "prompt": "Prompt",
     "skill": "Skill",
     "tool": "Tool"
-  },
-  "auth": {
-    "session_cookie_missing": "The backend did not return the ga_token session cookie",
-    "identifier_required": "Username or email is required",
-    "email_required": "Email is required",
-    "email_invalid": "Invalid email",
-    "username_required": "Username is required",
-    "backend_url_required": "The backend URL is required",
-    "backend_not_json": "The response is not valid iAgents Hub JSON",
-    "backend_incompatible": "The server does not expose a compatible iAgents Hub API"
   }
 }

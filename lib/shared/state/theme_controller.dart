@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/storage/local_store.dart';
+import 'notificacion_diferida.dart';
 
 const kThemeIds = [
   'dark-red',
@@ -21,7 +22,7 @@ const kThemeIds = [
 
 /// Tema efectivo de la aplicación. El backend decide si procede de la
 /// preferencia del usuario o del valor forzado por administración.
-class ThemeController extends ChangeNotifier {
+class ThemeController extends ChangeNotifier with NotificacionDiferida {
   ThemeController._(this._themeId);
 
   static const storageKey = 'effective_theme';
@@ -38,7 +39,7 @@ class ThemeController extends ChangeNotifier {
   Future<void> syncFromBackend(String? themeId) async {
     if (themeId == null || themeId.isEmpty || themeId == _themeId) return;
     _themeId = themeId;
-    notifyListeners();
+    notificarFueraDelBuild();
     final prefs = await LocalStore.instance();
     await prefs.setString(storageKey, themeId);
   }

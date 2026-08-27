@@ -143,6 +143,10 @@ class ChatMessageBubble extends StatelessWidget {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(14),
                   onLongPress: () => _showActions(context),
+                  // En escritorio y web el gesto natural es el botón derecho;
+                  // mantener pulsado con el ratón funciona pero no se le ocurre
+                  // a nadie, así que las acciones del mensaje no existían ahí.
+                  onSecondaryTap: () => _showActions(context),
                   child: bubble,
                 ),
               )

@@ -1,28 +1,60 @@
 part of '../pages/profile_page.dart';
 
-class _BrandIconSelector extends StatelessWidget {
+class _BrandIconSelector extends StatefulWidget {
   const _BrandIconSelector({required this.tx});
 
   final String Function(String path) tx;
 
   @override
+  State<_BrandIconSelector> createState() => _BrandIconSelectorState();
+}
+
+class _BrandIconSelectorState extends State<_BrandIconSelector> {
+  final _scroll = ScrollController();
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final controller = BrandIconScope.watch(context);
+    // La barra es lo único que dice, en escritorio, que hay más iconos a la
+    // derecha: en un móvil se descubren deslizando, pero con ratón la tira
+    // parecía terminar donde termina la ventana. El arrastre en sí lo habilita
+    // `AppScrollBehavior`.
     return SizedBox(
-      height: 78,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: BrandIconVariant.values.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 10),
-        itemBuilder: (context, index) {
-          final variant = BrandIconVariant.values[index];
-          return BrandIconChoice(
-            variant: variant,
-            label: _variantLabel(variant),
-            selected: controller.selected == variant,
-            onSelected: controller.select,
-          );
-        },
+      height: BrandIconChoice.alturaTira,
+      child: Scrollbar(
+        controller: _scroll,
+        thumbVisibility: true,
+        child: ListView.separated(
+          controller: _scroll,
+          scrollDirection: Axis.horizontal,
+          // La barra se pinta sobre el borde inferior del viewport, así que el
+          // carril tiene que ser hueco: sin este espacio queda cruzada por
+          // encima de los iconos.
+          padding: const EdgeInsets.only(bottom: BrandIconChoice.carrilBarra),
+          itemCount: BrandIconVariant.values.length,
+          separatorBuilder: (_, _) => const SizedBox(width: 10),
+          itemBuilder: (context, index) {
+            final variant = BrandIconVariant.values[index];
+            // Un ListView horizontal impone su altura al hijo, y estirarlo se
+            // comía el hueco de la barra. `Align` afloja esa restricción y deja
+            // el icono en su tamaño, arriba.
+            return Align(
+              alignment: Alignment.topCenter,
+              child: BrandIconChoice(
+                variant: variant,
+                label: _variantLabel(variant),
+                selected: controller.selected == variant,
+                onSelected: controller.select,
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -52,6 +84,22 @@ class BrandIconChoice extends StatelessWidget {
     super.key,
   });
 
+  /// Lado del cuadrado, en px.
+  static const lado = 68.0;
+
+  /// Hueco bajo los iconos para la barra de desplazamiento, que se pinta sobre
+  /// el borde inferior del viewport. Sin él la barra queda cruzada por encima.
+  static const carrilBarra = 16.0;
+
+  /// Alto de la tira, la suma exacta de los dos anteriores.
+  ///
+  /// Un `ListView` horizontal impone su altura al hijo: con 90 y un carril de
+  /// 12 el icono se estiraba a 78 —medido— y la barra le quedaba cruzada por
+  /// encima. Lo que lo sostiene es el `Align` del `itemBuilder`, que afloja esa
+  /// restricción; que la suma cuadre es la segunda red, por si el `Align`
+  /// desaparece en una refactorización.
+  static const alturaTira = lado + carrilBarra;
+
   final BrandIconVariant variant;
   final String label;
   final bool selected;
@@ -67,8 +115,8 @@ class BrandIconChoice extends StatelessWidget {
       excludeSemantics: true,
       onTap: () => onSelected(variant),
       child: SizedBox(
-        width: 68,
-        height: 68,
+        width: lado,
+        height: lado,
         child: Material(
           color: selected
               ? colorScheme.primaryContainer.withValues(alpha: 0.35)

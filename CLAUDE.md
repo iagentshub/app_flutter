@@ -296,8 +296,19 @@ aviso en consola (`[i18n] falta la clave «…»`). La única excepción es
 (`trOr('labels.$etiqueta', etiqueta)`): ahí la ausencia es normal y el
 identificador sería peor que el nombre crudo.
 
-Tres guardas cubren esto, y cada una ve lo que las otras no: que toda clave
-usada exista (`i18n_claves_existentes_test.dart`), que no quede texto español
+**El primer tramo del id es el namespace donde vive la clave.** `tr()` solo
+ve los namespaces cargados, y una pantalla carga el suyo, no los cinco: ocho
+claves `auth.*` y seis `common.*` estaban declaradas en `resources.json`, así
+que el login enseñaba el identificador en el campo de usuario y en el aviso de
+«próximamente». Comprobar que la clave existe no basta —el guard funde los seis
+ficheros y pierde de vista de cuál salió cada una—, y por eso hay una segunda
+prueba en ese mismo fichero. Solo mira `tr()` y `trOr()`: `_tx`, `_txt` y
+`.text` llevan delante el bundle que la pantalla acaba de cargar, así que una
+clave suya se encuentra ahí diga lo que diga su prefijo.
+
+Cuatro guardas cubren esto, y cada una ve lo que las otras no: que toda clave
+usada exista y que esté en el namespace que anuncia
+(`i18n_claves_existentes_test.dart`, dos pruebas), que no quede texto español
 escrito en el código (`i18n_sin_literales_test.dart`) y que es/en tengan las
 mismas claves. **Los mensajes de excepción se quedan en el código**: van a
 `throw` y el usuario no los lee.
@@ -344,6 +355,57 @@ Al subir de versión: cambiar el pubspec, comprobar `flutter analyze` y
 versión con la que se midió. `iAgents/tests/test_docker_contexto.py` vigila que
 ningún workflow vuelva a decidir la suya, y `web_bundle_budget_test.dart` que
 este repo siga declarándola.
+
+## Lo que solo se rompe en escritorio y en web
+
+La app se prueba en móvil y la suite corre sin plataforma, así que aquí caben
+fallos que no rompen nada visible en ninguno de los dos sitios.
+`test/escritorio_y_web_test.dart` fija los tres que ya pasaron:
+
+- **macOS lleva el sandbox activado**, y sin
+  `com.apple.security.files.user-selected.read-write` en los **dos**
+  `.entitlements` cualquier selector de ficheros responde
+  `ENTITLEMENT_NOT_FOUND`. La `PlatformException` sube sin tocar la interfaz: se
+  pulsa y no pasa nada, ni un mensaje. Se llevaba por delante la foto de perfil,
+  importar agentes, subir documentos y packs, el `desktop_drop` de esas mismas
+  pantallas y todos los `FilePicker.saveFile`. **Una llamada a un selector va
+  dentro de un `try`** que enseñe el fallo; en móvil nunca falla y por eso
+  nadie lo escribe.
+- **El ratón no arrastra listas si no se le deja.** Flutter lo excluye a
+  propósito, y eso dejaba quietas las tiras horizontales —el selector de icono
+  de marca, las tablas de Admin— y sin disparar los trece `RefreshIndicator`,
+  que son el único modo de recargar esas pantallas. Lo abre
+  `AppScrollBehavior`, declarado en el `MaterialApp` de `app/app.dart`. Una
+  tira horizontal además lleva `Scrollbar`: con ratón, lo que no se ve no se
+  sabe que se puede desplazar.
+- **En macOS, `FlutterDartProject.lookupKey(forAsset:)` devuelve la ruta desde
+  la raíz de `Bundle.main`** —`Contents/Frameworks/App.framework/Resources/
+  flutter_assets/assets/…`—, no una clave relativa a `Resources`. Las dos
+  formas que parecen naturales fallan: `path(forResource:)` mira dentro de
+  `Contents/Resources`, donde los assets de Flutter no están, y componerla
+  sobre `resourceURL` duplica el tramo que la clave ya trae. Se compone sobre
+  `bundleURL`. Los nueve iconos de marca fallaban siempre, con el error
+  atrapado en un `debugPrint`. **Un error de canal nativo lleva dentro lo que
+  intentó**: «no se encontró el recurso» no distingue el bundle equivocado de
+  la clave equivocada, y fue enseñar las rutas probadas lo que lo resolvió.
+
+Y la regla general: **un gesto táctil necesita su equivalente de escritorio**.
+Mantener pulsado con el ratón funciona pero no se le ocurre a nadie, así que
+las acciones de un mensaje del chat también salen con `onSecondaryTap`.
+
+Dos más que salieron con estos, y que no son de plataforma:
+
+- **Tema e idioma no notifican en mitad de un build.** La caché de arranque
+  (`BootPlatformCache`) resuelve sin `await`, así que el login los aplica desde
+  su `initState`: notificar ahí ensucia el `InheritedNotifier` que el framework
+  está construyendo, la excepción se lleva el frame y el valor no se aplica. La
+  guarda es el mixin `NotificacionDiferida`, y vive en el notificador porque hay
+  ocho sitios que sincronizan tema o idioma.
+- **`LocaleLoader.load` registra el bundle en `I18n`**, no solo
+  `TranslatedTexts`. El login carga su namespace por la vía directa, así que
+  `auth` no llegaba nunca a `I18n._bundles` y `tr('auth.identifier_required')`
+  salía como identificador crudo en el campo de usuario. Ese `load` es el único
+  punto por el que pasan las dos formas de cargar un bundle.
 
 ## Antes de dar algo por terminado
 

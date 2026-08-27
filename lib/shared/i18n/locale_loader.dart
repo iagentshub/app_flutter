@@ -14,7 +14,10 @@ abstract final class LocaleLoader {
     final locale = languageCode;
     final key = '$locale/$namespace';
     final cached = _cache[key];
-    if (cached != null) return cached;
+    if (cached != null) {
+      I18n.registrar(namespace, cached);
+      return cached;
+    }
 
     final raw = await rootBundle.loadString(
       'assets/locales/$locale/$namespace.json',
@@ -22,6 +25,12 @@ abstract final class LocaleLoader {
     final decoded = jsonDecode(raw);
     if (decoded is Map<String, dynamic>) {
       _cache[key] = decoded;
+      // Registrar aquí y no solo en `TranslatedTexts`: el login carga su
+      // namespace por esta vía directa, así que `auth` nunca llegaba a
+      // `I18n._bundles` y `tr('auth.identifier_required')` —el aviso del campo
+      // de usuario vacío— salía como identificador crudo en pantalla. Este es
+      // el único punto por el que pasan las dos formas de cargar un bundle.
+      I18n.registrar(namespace, decoded);
       return decoded;
     }
     return <String, dynamic>{};

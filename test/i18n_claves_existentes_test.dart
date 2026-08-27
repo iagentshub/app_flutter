@@ -18,18 +18,6 @@ void main() {
   setUp(cargarTraduccionesDePrueba);
 
   test('toda clave que usa el código existe en los locales', () {
-    Iterable<String> aplanar(Map<String, dynamic> m, [String pre = '']) sync* {
-      for (final e in m.entries) {
-        final ruta = '$pre${e.key}';
-        final v = e.value;
-        if (v is Map<String, dynamic>) {
-          yield* aplanar(v, '$ruta.');
-        } else {
-          yield ruta;
-        }
-      }
-    }
-
     final declaradas = <String, Set<String>>{};
     for (final idioma in const ['es', 'en']) {
       final claves = <String>{};
@@ -37,36 +25,14 @@ void main() {
         'assets/locales/$idioma',
       ).listSync().whereType<File>()) {
         final json = jsonDecode(f.readAsStringSync()) as Map<String, dynamic>;
-        claves.addAll(aplanar(json));
+        claves.addAll(_aplanar(json));
       }
       declaradas[idioma] = claves;
     }
 
-    // `tr('clave', …)`, `_txt(bundle, 'clave', …)` y `.text('clave', …)`.
-    final patrones = [
-      RegExp(r"tr\(\s*'([a-zA-Z0-9_.]+)'"),
-      RegExp(r"_txt\(\s*\w+\s*,\s*'([a-zA-Z0-9_.]+)'"),
-      RegExp(r"\.text\(\s*'([a-zA-Z0-9_.]+)'"),
-      // `_tx('clave')`, el atajo de página sobre `TranslatedTexts.text`. Sin
-      // esto el guardián no veía ninguna pantalla que lo use: el rediseño de
-      // /register se subió con tres claves del hero sin declarar y la página
-      // enseñaba «register.hero_headline» en el titular.
-      RegExp(r"_tx\(\s*'([a-zA-Z0-9_.]+)'"),
-    ];
-
-    final sinDeclarar = <String>{};
-    for (final f in Directory(
-      'lib',
-    ).listSync(recursive: true).whereType<File>()) {
-      if (!f.path.endsWith('.dart')) continue;
-      final texto = _sinComentarios(f.readAsStringSync());
-      for (final p in patrones) {
-        for (final m in p.allMatches(texto)) {
-          final clave = m.group(1)!;
-          if (!declaradas['es']!.contains(clave)) sinDeclarar.add(clave);
-        }
-      }
-    }
+    final sinDeclarar = _clavesUsadas()
+        .where((c) => !declaradas['es']!.contains(c))
+        .toSet();
 
     expect(
       sinDeclarar.toList()..sort(),
@@ -77,6 +43,96 @@ void main() {
           '${(sinDeclarar.toList()..sort()).join('\n')}',
     );
   });
+
+  /// Que la clave exista en *algún* fichero no basta: `tr()` solo ve los
+  /// namespaces que alguien haya cargado. La pantalla de login carga `auth`,
+  /// así que `tr('auth.identifier_required')` —declarado en `resources.json`—
+  /// enseñaba el identificador en el campo de usuario, y lo mismo el aviso de
+  /// «próximamente». El test de arriba no lo veía porque funde los seis
+  /// ficheros en un único conjunto y pierde de vista de cuál salió cada clave.
+  ///
+  /// La regla que lo cierra: **si el primer tramo del id es el nombre de un
+  /// namespace, la clave vive en ese fichero**. Una clave `auth.x` guardada en
+  /// `resources.json` solo se resuelve mientras `resources` esté cargado, que
+  /// es justo lo que no ocurre en las pantallas de auth.
+  test('una clave con prefijo de namespace vive en ese namespace', () {
+    final porNamespace = <String, Set<String>>{};
+    for (final f in Directory(
+      'assets/locales/es',
+    ).listSync().whereType<File>()) {
+      final namespace = f.uri.pathSegments.last.replaceAll('.json', '');
+      final json = jsonDecode(f.readAsStringSync()) as Map<String, dynamic>;
+      porNamespace[namespace] = _aplanar(json).toSet();
+    }
+
+    final descolocadas = <String>{};
+    for (final clave in _clavesUsadas(soloGlobales: true)) {
+      final prefijo = clave.split('.').first;
+      if (!porNamespace.containsKey(prefijo)) continue; // no es un namespace
+      final donde = porNamespace.entries
+          .where((e) => e.value.contains(clave))
+          .map((e) => e.key)
+          .toSet();
+      if (donde.isNotEmpty && !donde.contains(prefijo)) {
+        descolocadas.add('$clave → declarada en ${donde.join(', ')}');
+      }
+    }
+
+    expect(
+      descolocadas.toList()..sort(),
+      isEmpty,
+      reason:
+          'Estas claves solo se resuelven si además está cargado el namespace\n'
+          'donde viven, no el que anuncia su prefijo. Muévelas a su fichero.\n'
+          '${(descolocadas.toList()..sort()).join('\n')}',
+    );
+  });
+}
+
+/// Todas las rutas de hoja de un bundle: `{"a":{"b":"x"}}` → `a.b`.
+Iterable<String> _aplanar(Map<String, dynamic> m, [String pre = '']) sync* {
+  for (final e in m.entries) {
+    final ruta = '$pre${e.key}';
+    final v = e.value;
+    if (v is Map<String, dynamic>) {
+      yield* _aplanar(v, '$ruta.');
+    } else {
+      yield ruta;
+    }
+  }
+}
+
+/// Las claves que el código pide: `tr('clave')`, `_txt(bundle, 'clave')`,
+/// `.text('clave')` y `_tx('clave')`, el atajo de página sobre
+/// `TranslatedTexts.text`. Sin este último el guardián no veía ninguna
+/// pantalla que lo use: el rediseño de /register se subió con tres claves del
+/// hero sin declarar y la página enseñaba «register.hero_headline» en el
+/// titular.
+///
+/// Con [soloGlobales] quedan las que se resuelven **sin** bundle de página:
+/// `tr()` y `trOr()`. Las otras tres formas llevan delante el bundle que la
+/// pantalla acaba de cargar, así que una clave suya se encuentra ahí aunque su
+/// prefijo anuncie otro namespace.
+Set<String> _clavesUsadas({bool soloGlobales = false}) {
+  final patrones = [
+    RegExp(r"tr\(\s*'([a-zA-Z0-9_.]+)'"),
+    if (!soloGlobales) ...[
+      RegExp(r"_txt\(\s*\w+\s*,\s*'([a-zA-Z0-9_.]+)'"),
+      RegExp(r"\.text\(\s*'([a-zA-Z0-9_.]+)'"),
+      RegExp(r"_tx\(\s*'([a-zA-Z0-9_.]+)'"),
+    ],
+  ];
+  final claves = <String>{};
+  for (final f in Directory(
+    'lib',
+  ).listSync(recursive: true).whereType<File>()) {
+    if (!f.path.endsWith('.dart')) continue;
+    final texto = _sinComentarios(f.readAsStringSync());
+    for (final p in patrones) {
+      claves.addAll(p.allMatches(texto).map((m) => m.group(1)!));
+    }
+  }
+  return claves;
 }
 
 /// Los ejemplos de los comentarios no son llamadas: `i18n.dart` documenta

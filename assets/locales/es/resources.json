@@ -28,7 +28,6 @@
     "uploading": "Subiendo",
     "completed": "Completado",
     "error": "Error",
-    "no_session": "No hay sesión activa",
     "owner": "Propietario",
     "linked": "Enlace",
     "fork": "Fork",
@@ -54,12 +53,7 @@
     "refresh": "Actualizar",
     "select_all": "Seleccionar todo",
     "status": "Estado",
-    "type": "Tipo",
-    "unnamed": "(sin nombre)",
-    "untitled": "(sin título)",
-    "response_too_large": "La respuesta del servidor supera el límite permitido",
-    "event_too_large": "Un evento del servidor supera el límite permitido",
-    "coming_soon": "Próximamente"
+    "type": "Tipo"
   },
   "groups": {
     "title": "GRUPOS",
@@ -1898,15 +1892,5 @@
     "prompt": "Prompt",
     "skill": "Skill",
     "tool": "Tool"
-  },
-  "auth": {
-    "session_cookie_missing": "El backend no devolvió la cookie de sesión ga_token",
-    "identifier_required": "El usuario o email es obligatorio",
-    "email_required": "El email es obligatorio",
-    "email_invalid": "Email no válido",
-    "username_required": "El usuario es obligatorio",
-    "backend_url_required": "La URL del backend es obligatoria",
-    "backend_not_json": "La respuesta no es JSON válido de iAgents Hub",
-    "backend_incompatible": "El servidor no expone una API compatible de iAgents Hub"
   }
 }

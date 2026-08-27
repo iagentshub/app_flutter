@@ -15,7 +15,6 @@ import 'shared/widgets/animated_iagents_mark.dart';
 import 'shared/widgets/brand_icon.dart';
 import 'shared/widgets/launch_splash.dart';
 import 'shared/widgets/terminal_view_transition.dart';
-import 'utils/i18n.dart';
 
 Future<void> main() async {
   configureUrlStrategy();
@@ -47,15 +46,22 @@ Future<void> main() async {
   final brandIconController = results[3] as BrandIconController;
   final themeController = results[4] as ThemeController;
 
-  // El cargador de marca puede aparecer en el primer frame de App (por
-  // ejemplo al restaurar sesión). Se precarga su pequeño bundle durante el
-  // splash para que el logo y «Cargando…» nazcan juntos, sin un fotograma
-  // inicial vacío ni textos duplicados en Dart.
-  final commonTexts = await LocaleLoader.load(
-    languageCode: localeController.languageCode,
-    namespace: 'common',
-  );
-  I18n.registrar('common', commonTexts);
+  // Los dos namespaces que se pintan en el primer frame de App se precargan
+  // durante el splash: `common` porque el cargador de marca puede aparecer ya
+  // ahí (al restaurar sesión), y `auth` porque el login es la primera pantalla
+  // cuando no hay sesión. Sin esto su bundle llega un frame tarde y el titular
+  // sale como identificador —«headline_1», «hero_sub»— antes de asentarse.
+  // Son 15 KB de assets ya empaquetados, y van en paralelo.
+  //
+  // Registrarlos lo hace `LocaleLoader.load`, que es por donde pasan las dos
+  // formas de cargar un bundle.
+  await Future.wait([
+    for (final namespace in const ['common', 'auth'])
+      LocaleLoader.load(
+        languageCode: localeController.languageCode,
+        namespace: namespace,
+      ),
+  ]);
 
   runApp(
     _BootApp(
