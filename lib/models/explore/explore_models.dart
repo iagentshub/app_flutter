@@ -17,6 +17,12 @@ class ExploreItem {
   /// solo se sabía dentro de la sesión, así que al recargar un recurso ya
   /// enlazado volvía a ofrecerse como nuevo.
   bool get linkedByMe => raw['linked_by_me'] == true;
+
+  /// La estrella que este usuario ya puso sobre la fila. Mismo caso que
+  /// `linkedByMe`: hasta que el catálogo empezó a mandarla, el icono aparecía
+  /// apagado al recargar aunque la estrella siguiera guardada.
+  bool get starred => raw['starred'] == true;
+
   List<ExploreDependency> get dependencies {
     final value = raw['dependencies'];
     if (value is! List) return const [];

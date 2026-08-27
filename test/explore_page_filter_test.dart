@@ -170,12 +170,12 @@ void main() {
 
       expect(find.text('Official Analyst'), findsOneWidget);
       expect(find.text('Community Analyst'), findsOneWidget);
-      // Mismo juego de botones y mismos datos en ambas: propietario, favoritos,
+      // Mismo juego de botones y mismos datos en ambas: propietario, estrella,
       // vista previa, grafo, enlazar. Lo único distinto es el chip de origen.
       expect(find.byIcon(Icons.visibility_outlined), findsNWidgets(2));
       expect(find.byIcon(Icons.hub_outlined), findsNWidgets(2));
       expect(find.byIcon(Icons.link_outlined), findsNWidgets(2));
-      expect(find.byIcon(Icons.bookmark_outline), findsNWidgets(4));
+      expect(find.byIcon(Icons.star_border), findsNWidgets(4));
       expect(find.byIcon(Icons.person_outline), findsNWidgets(2));
       expect(find.text('iAgentsHub'), findsOneWidget);
       expect(find.text('grace'), findsOneWidget);

@@ -63,7 +63,10 @@ class ExploreController extends ChangeNotifier {
   final Map<String, int> _typeCounts = <String, int>{};
   final Set<String> _busyKeys = <String>{};
   final Set<String> _linkedKeys = <String>{};
-  final Set<String> _starredKeys = <String>{};
+  // La estrella se puede poner y quitar, así que no basta un conjunto de
+  // «marcados en esta pantalla»: el override guarda los dos sentidos sobre lo
+  // que trajo el catálogo.
+  final Map<String, bool> _starOverride = <String, bool>{};
   final Set<String> _busyPackIds = <String>{};
   int _resourceLoadGeneration = 0;
   Timer? _resourceFilterTimer;
@@ -101,7 +104,8 @@ class ExploreController extends ChangeNotifier {
   /// la siguiente carga.
   bool isLinked(ExploreItem item) =>
       item.linkedByMe || _linkedKeys.contains(itemKey(item));
-  bool isStarred(ExploreItem item) => _starredKeys.contains(itemKey(item));
+  bool isStarred(ExploreItem item) =>
+      _starOverride[itemKey(item)] ?? item.starred;
   bool isPackBusy(ExploreOfficialPack pack) =>
       _busyPackIds.contains(pack.sourceId);
 
@@ -391,7 +395,7 @@ class ExploreController extends ChangeNotifier {
     final token = _token;
     if (token == null || token.isEmpty) return null;
     final key = itemKey(item);
-    final remove = _starredKeys.contains(key);
+    final remove = isStarred(item);
     _busyKeys.add(key);
     _notify();
     try {
@@ -413,11 +417,7 @@ class ExploreController extends ChangeNotifier {
             element.resourceId == item.resourceId,
       );
       if (index >= 0) _items[index].raw['stars_count'] = stars;
-      if (remove) {
-        _starredKeys.remove(key);
-      } else {
-        _starredKeys.add(key);
-      }
+      _starOverride[key] = !remove;
       return ActionResult(
         remove ? _tx('explore.star_removed') : _tx('explore.star_added'),
       );

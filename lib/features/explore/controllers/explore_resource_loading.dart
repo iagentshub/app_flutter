@@ -62,6 +62,9 @@ extension ExploreResourceLoading on ExploreController {
           results[0]
               as ({List<ExploreItem> items, int total, int linkedMatches});
       _items = resourcePage.items;
+      // La página recién llegada ya trae `starred` por fila: el override de la
+      // pantalla anterior sobra y solo podría contradecirla.
+      _starOverride.clear();
       _resourcesOffset = _items.length;
       _resourcesHasMore = _resourcesOffset < resourcePage.total;
       _officialPacks = results[1] as List<ExploreOfficialPack>;

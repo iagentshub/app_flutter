@@ -26,6 +26,7 @@ Map<String, dynamic> _resource({
   String name = 'Agente A',
   String category = 'Coding',
   int stars = 3,
+  bool starred = false,
 }) => {
   'resource_type': type,
   'resource_id': id,
@@ -33,6 +34,7 @@ Map<String, dynamic> _resource({
   'name': name,
   'category': category,
   'stars_count': stars,
+  'starred': starred,
 };
 
 void main() {
@@ -287,13 +289,32 @@ void main() {
     final item = controller.items.single;
 
     final added = await controller.toggleStar(item);
-    expect(added?.message, 'Añadido a favoritos');
+    expect(added?.message, 'Estrella añadida');
     expect(added?.isError, isFalse);
     expect(controller.isStarred(item), isTrue);
     expect(controller.items.single.stars, 4);
 
     final removed = await controller.toggleStar(item);
-    expect(removed?.message, 'Quitado de favoritos');
+    expect(removed?.message, 'Estrella quitada');
+    expect(controller.isStarred(item), isFalse);
+  });
+
+  test('la estrella del catálogo se ve sin haber pulsado nada', () async {
+    final controller = await build((request) async {
+      if (request.url.path.endsWith('/star')) {
+        return http.Response(jsonEncode({'stars': 2}), 200);
+      }
+      return http.Response(jsonEncode([_resource(starred: true)]), 200);
+    });
+    await controller.load();
+    final item = controller.items.single;
+
+    // Sin esto el icono salía apagado tras recargar y el primer clic hacía un
+    // alta idempotente: decía «añadida» y el contador no se movía.
+    expect(controller.isStarred(item), isTrue);
+
+    final quitada = await controller.toggleStar(item);
+    expect(quitada?.message, 'Estrella quitada');
     expect(controller.isStarred(item), isFalse);
   });
 

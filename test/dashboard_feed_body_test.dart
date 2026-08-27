@@ -57,7 +57,7 @@ void main() {
     );
   });
 
-  testWidgets('hace visible el fallo al actualizar Favoritos', (tester) async {
+  testWidgets('hace visible el fallo al actualizar la estrella', (tester) async {
     final client = ApiClient(
       backendController,
       client: MockClient((request) async {
@@ -84,10 +84,10 @@ void main() {
 
     await tester.pumpWidget(_app(client));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Marcar o quitar de favoritos'));
+    await tester.tap(find.byTooltip('Poner o quitar la estrella'));
     await tester.pump();
 
-    expect(find.text('No se pudo actualizar Favoritos'), findsOneWidget);
+    expect(find.text('No se pudo actualizar la estrella'), findsOneWidget);
     expect(find.text('Agente de prueba'), findsOneWidget);
   });
 }

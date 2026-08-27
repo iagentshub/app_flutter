@@ -17,6 +17,7 @@ class ActionIconButton extends StatelessWidget {
     required this.tooltip,
     required this.onPressed,
     this.danger = false,
+    this.color,
     super.key,
   });
 
@@ -24,6 +25,10 @@ class ActionIconButton extends StatelessWidget {
   final String tooltip;
   final VoidCallback? onPressed;
   final bool danger;
+
+  /// Tinta el icono cuando el estado ya no es neutro —la estrella puesta, por
+  /// ejemplo—. `danger` manda por encima: es una advertencia, no un matiz.
+  final Color? color;
 
   /// Lo que ocupa el botón a la vista (y el área que se ilumina al pasar por
   /// encima). El blanco táctil es mayor, ver [visualSize] vs 48.
@@ -34,7 +39,7 @@ class ActionIconButton extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final baseColor = danger
         ? FncColors.materialRed.shade400
-        : scheme.onSurfaceVariant;
+        : (color ?? scheme.onSurfaceVariant);
 
     return IconButton(
       icon: Icon(icon, size: 18),

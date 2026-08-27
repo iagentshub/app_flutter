@@ -57,7 +57,7 @@ extension _ExploreResourceCard on _ExplorePageState {
                 ),
                 const SizedBox(width: 10),
                 Icon(
-                  Icons.bookmark_outline,
+                  Icons.star_border,
                   size: 14,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -135,7 +135,10 @@ extension _ExploreResourceCard on _ExplorePageState {
                   ),
                 const Spacer(),
                 ActionIconButton(
-                  icon: starred ? Icons.bookmark : Icons.bookmark_outline,
+                  icon: starred ? Icons.star : Icons.star_border,
+                  // Mismo par icono/color que el feed del panel: la estrella
+                  // es una sola cosa aunque se pinte en dos pantallas.
+                  color: starred ? FncColors.materialAmber : null,
                   tooltip: starred
                       ? _tx('explore.unstar')
                       : _tx('explore.star'),
