@@ -4,7 +4,7 @@ import '../../app/theme/fnc_colors.dart';
 import '../../app/theme/fnc_fonts.dart';
 
 /// Firma de la empresa desarrolladora. El símbolo `<·>` se abre y su punto
-/// revela el nombre de Dakreo.
+/// revela el nombre de Datakreo.
 class DakreoSignature extends StatelessWidget {
   const DakreoSignature({Animation<double>? animation, super.key})
     : animation = animation ?? const AlwaysStoppedAnimation<double>(1);
@@ -12,12 +12,28 @@ class DakreoSignature extends StatelessWidget {
   final Animation<double> animation;
 
   static const _markWidth = 42.0;
-  static const _wordWidth = 104.0;
+  static const _word = 'DATAKREO';
+  static final _wordStyle = FncFonts.code.copyWith(
+    color: FncColors.white,
+    fontSize: FncFonts.size14,
+    fontWeight: FontWeight.w500,
+    letterSpacing: 4,
+  );
 
   @override
   Widget build(BuildContext context) {
+    // Medido en vez de fijado a mano: con el ancho literal anterior, cambiar
+    // el largo de la palabra dejaba el cursor y el recorte fuera de sitio.
+    final wordWidth =
+        (TextPainter(
+              text: TextSpan(text: _word, style: _wordStyle),
+              textDirection: TextDirection.ltr,
+              textScaler: MediaQuery.textScalerOf(context),
+            )..layout())
+            .width;
+
     return Semantics(
-      label: 'By Dakreo',
+      label: 'By Datakreo',
       image: true,
       child: ExcludeSemantics(
         child: AnimatedBuilder(
@@ -40,10 +56,10 @@ class DakreoSignature extends StatelessWidget {
               const Interval(0.88, 1).transform(progress),
             );
             final contentWidth =
-                _markWidth + ((_wordWidth - _markWidth) * expansion);
+                _markWidth + ((wordWidth - _markWidth) * expansion);
             final cursorLeft =
                 (_markWidth * 0.5) +
-                (((_wordWidth - 7) - (_markWidth * 0.5)) * wordReveal);
+                (((wordWidth - 7) - (_markWidth * 0.5)) * wordReveal);
 
             return Opacity(
               key: const Key('dakreo-signature-opacity'),
@@ -86,16 +102,11 @@ class DakreoSignature extends StatelessWidget {
                             alignment: Alignment.centerLeft,
                             widthFactor: wordReveal,
                             child: Text(
-                              'DAKREO',
+                              _word,
                               key: const Key('dakreo-word'),
                               maxLines: 1,
                               softWrap: false,
-                              style: FncFonts.code.copyWith(
-                                color: FncColors.white,
-                                fontSize: FncFonts.size14,
-                                fontWeight: FontWeight.w500,
-                                letterSpacing: 4,
-                              ),
+                              style: _wordStyle,
                             ),
                           ),
                         ),

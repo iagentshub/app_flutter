@@ -38,7 +38,7 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
-  testWidgets('sitúa la animación de Dakreo entre el centro y el pie', (
+  testWidgets('sitúa la animación de Datakreo entre el centro y el pie', (
     tester,
   ) async {
     SharedPreferences.setMockInitialValues({});
@@ -104,8 +104,8 @@ void main() {
 
     expect(find.byKey(const Key('iagents-mark-static')), findsOneWidget);
     expect(find.text('By'), findsOneWidget);
-    expect(find.text('DAKREO'), findsOneWidget);
-    expect(find.bySemanticsLabel('By Dakreo'), findsOneWidget);
+    expect(find.text('DATAKREO'), findsOneWidget);
+    expect(find.bySemanticsLabel('By Datakreo'), findsOneWidget);
     expect(
       tester
           .widget<Opacity>(find.byKey(const Key('dakreo-mark-opacity')))
