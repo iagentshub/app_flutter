@@ -14,6 +14,11 @@ void main() {
     type: 'recent',
     size: DashboardWidgetSize.medium,
   );
+  DashboardWidgetInstance compactWithId(String id) => DashboardWidgetInstance(
+    id: id,
+    type: 'token-kpi',
+    size: DashboardWidgetSize.compact,
+  );
   const full = DashboardWidgetInstance(
     id: 'full',
     type: 'summary',
@@ -84,18 +89,105 @@ void main() {
   testWidgets('limita el ultrawide a cuatro columnas', (tester) async {
     await tester.binding.setSurfaceSize(const Size(1600, 1000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    await pumpGrid(tester, width: 1600, items: const [compact, full]);
+    await pumpGrid(
+      tester,
+      width: 1600,
+      items: [for (var i = 0; i < 4; i++) compactWithId('c$i'), full],
+    );
 
     const column = (1600 - 36) / 4;
-    expect(
-      tester
-          .getSize(find.byKey(const ValueKey('dashboard-slot-compact')))
-          .width,
-      closeTo(column, 0.01),
-    );
+    for (var i = 0; i < 4; i++) {
+      expect(
+        tester.getSize(find.byKey(ValueKey('dashboard-slot-c$i'))).width,
+        closeTo(column, 0.01),
+      );
+    }
     expect(
       tester.getSize(find.byKey(const ValueKey('dashboard-slot-full'))).width,
       closeTo(1600, 0.01),
+    );
+  });
+
+  testWidgets('iguala la altura de las tarjetas de una misma fila', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await pumpGrid(tester, width: 800);
+
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey('dashboard-slot-compact')))
+          .height,
+      closeTo(140, 0.01),
+    );
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey('dashboard-slot-medium')))
+          .height,
+      closeTo(140, 0.01),
+    );
+  });
+
+  testWidgets('admite cuerpos con GridView y LayoutBuilder', (tester) async {
+    // El motivo de que la fila iguale alturas con Table y no con
+    // IntrinsicHeight: estos dos no saben responder dimensiones intrínsecas y
+    // los cuerpos reales del dashboard los llevan.
+    await tester.binding.setSurfaceSize(const Size(800, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ResponsiveDashboardGrid(
+            items: const [compact, medium],
+            itemBuilder: (_, instance, _) => instance.id == 'compact'
+                ? GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    children: const [SizedBox(), SizedBox()],
+                  )
+                : LayoutBuilder(
+                    builder: (_, _) => const SizedBox(height: 200),
+                  ),
+          ),
+        ),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey('dashboard-slot-compact')))
+          .height,
+      tester.getSize(find.byKey(const ValueKey('dashboard-slot-medium'))).height,
+    );
+  });
+
+  testWidgets('reparte el sobrante en vez de dejar un hueco al final', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    // medium(2) + compact(1) llenan la fila de 3; el segundo medium no cabe y
+    // se queda solo, ocupando el ancho entero.
+    await pumpGrid(
+      tester,
+      width: 800,
+      items: const [
+        medium,
+        compact,
+        DashboardWidgetInstance(
+          id: 'medium-2',
+          type: 'recent',
+          size: DashboardWidgetSize.medium,
+        ),
+      ],
+    );
+
+    expect(
+      tester.getSize(find.byKey(const ValueKey('dashboard-slot-medium-2'))).width,
+      closeTo(800, 0.01),
     );
   });
 }
