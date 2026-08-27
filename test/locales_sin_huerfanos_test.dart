@@ -48,4 +48,37 @@ void main() {
       );
     }
   });
+
+  test('pricing distingue los asientos del cloud de la licencia AGPL', () {
+    final ambiguas = <String, List<RegExp>>{
+      'es': [
+        RegExp('licencia única', caseSensitive: false),
+        RegExp('licencias ilimitadas', caseSensitive: false),
+        RegExp('precio por licencia', caseSensitive: false),
+        RegExp('gestión de licencias', caseSensitive: false),
+        RegExp('licencia Soldado', caseSensitive: false),
+      ],
+      'en': [
+        RegExp('single license', caseSensitive: false),
+        RegExp('unlimited licenses', caseSensitive: false),
+        RegExp('per-license price', caseSensitive: false),
+        RegExp('license management', caseSensitive: false),
+        RegExp('Soldier license', caseSensitive: false),
+      ],
+    };
+
+    for (final idioma in const ['es', 'en']) {
+      final copy = File('assets/locales/$idioma/pricing.json')
+          .readAsStringSync();
+      for (final patron in ambiguas[idioma]!) {
+        expect(
+          copy,
+          isNot(matches(patron)),
+          reason: '$idioma todavía usa $patron',
+        );
+      }
+      expect(copy, contains('AGPL-3.0'));
+      expect(copy.toLowerCase(), contains(idioma == 'es' ? 'asiento' : 'seat'));
+    }
+  });
 }
