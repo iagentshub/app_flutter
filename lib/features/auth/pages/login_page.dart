@@ -439,6 +439,7 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
         logoSize: 96,
         child: Stack(
           children: [
+            const Positioned.fill(child: _LoginBackground()),
             Positioned.fill(
               child: SafeArea(
                 child: LayoutBuilder(

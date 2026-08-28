@@ -4,8 +4,16 @@ extension _LoginForm on _LoginPageState {
   Widget _buildFormCard(BuildContext context) {
     return Card(
       key: const Key('login-form-card'),
+      elevation: 10,
+      shadowColor: FncColors.black.withValues(alpha: 0.28),
+      // M3 tiñe la superficie con la elevación; aquí solo queremos la sombra.
+      surfaceTintColor: FncColors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: FncColors.borderSubtle(context)),
+      ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+        padding: const EdgeInsets.fromLTRB(28, 28, 28, 20),
         child: FutureBuilder<Map<String, dynamic>>(
           future: _authTextsFuture,
           builder: (context, snapshot) {
@@ -114,7 +122,6 @@ extension _LoginForm on _LoginPageState {
                     textCapitalization: TextCapitalization.none,
                     decoration: InputDecoration(
                       labelText: fieldIdentifier,
-                      border: const OutlineInputBorder(),
                       prefixIcon: const Icon(Icons.person_outline, size: 20),
                     ),
                   ),
@@ -128,7 +135,6 @@ extension _LoginForm on _LoginPageState {
                     ),
                     decoration: InputDecoration(
                       labelText: fieldPassword,
-                      border: const OutlineInputBorder(),
                       prefixIcon: const Icon(Icons.lock_outline, size: 20),
                       suffixIcon: AppIconButton(
                         // Sin tooltip, un lector de pantalla anunciaba solo

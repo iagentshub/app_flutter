@@ -1,5 +1,31 @@
 part of '../pages/login_page.dart';
 
+/// Fondo de la pantalla: degradado muy suave sobre el color de página, con un
+/// toque del acento en las esquinas. Plano se veía como un folio en blanco.
+class _LoginBackground extends StatelessWidget {
+  const _LoginBackground();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final base = theme.scaffoldBackgroundColor;
+    final accent = theme.colorScheme.primary;
+    Color tint(double alpha) =>
+        Color.alphaBlend(accent.withValues(alpha: alpha), base);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [tint(0.05), base, tint(0.09)],
+          stops: const [0, 0.55, 1],
+        ),
+      ),
+    );
+  }
+}
+
 class _OauthDivider extends StatelessWidget {
   const _OauthDivider({required this.text});
 
