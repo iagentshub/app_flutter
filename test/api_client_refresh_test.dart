@@ -166,4 +166,45 @@ void main() {
 
     expect(vistos, ['iar_delogin']);
   });
+
+  test('un multipart que renueva la sesión se reintenta con el cuerpo entero', () async {
+    // `_send` reconstruye la petición para el segundo intento, pero el cuerpo
+    // del multipart llegaba como un `Stream` de una sola suscripción creado una
+    // vez: al reintentar ya iba consumido y saltaba un `StateError` que el
+    // llamador enseñaba como «no se pudo actualizar la foto», sin causa. Solo
+    // pasaba con el access caducado, o sea cada 30 minutos.
+    var intentos = 0;
+    final cuerpos = <int>[];
+    final mock = MockClient((request) async {
+      if (request.url.path.endsWith('/auth/refresh')) {
+        return http.Response(
+          '{"ok":true}',
+          200,
+          headers: {'set-cookie': 'ga_token=nuevo; ga_refresh=iar_nuevo'},
+        );
+      }
+      intentos += 1;
+      cuerpos.add(request.bodyBytes.length);
+      if (intentos == 1) return http.Response('{"detail":{}}', 401);
+      return http.Response('{"avatar_url":"/api/users/x/avatar"}', 200);
+    });
+
+    final client = construir(mock);
+    final respuesta = await client.postMultipart(
+      '/api/auth/me/avatar',
+      fieldName: 'avatar',
+      fileName: 'avatar.jpg',
+      fileBytes: List<int>.filled(2048, 7),
+      gaToken: 'token',
+    );
+
+    expect(intentos, 2, reason: 'el 401 debe reintentarse');
+    expect(
+      cuerpos.last,
+      greaterThanOrEqualTo(2048),
+      reason:
+          'el reintento viajó sin el fichero: el stream ya estaba consumido',
+    );
+    expect(respuesta.json['avatar_url'], '/api/users/x/avatar');
+  });
 }

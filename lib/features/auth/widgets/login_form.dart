@@ -237,7 +237,7 @@ extension _LoginForm on _LoginPageState {
                       child: Text(_loading ? loginBtnLoading : loginBtn),
                     ),
                   ),
-                  if (_errorMessage != null) ...[
+                  if (_errorVisible != null) ...[
                     const SizedBox(height: 10),
                     Container(
                       width: double.infinity,
@@ -257,7 +257,7 @@ extension _LoginForm on _LoginPageState {
                         ),
                       ),
                       child: Text(
-                        _errorMessage!,
+                        _errorVisible!,
                         style: const TextStyle(
                           color: FncColors.materialRedAccent,
                         ),

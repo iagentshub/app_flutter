@@ -132,9 +132,8 @@ class _VsCodeAuthPageState extends State<VsCodeAuthPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            _tx(
-              'vscode_auth.connect_prompt',
-            ).replaceAll('{{username}}', username),
+            _tx('vscode_auth.connect_prompt')
+                .replaceAll('{{username}}', username),
           ),
           if (_error != null) ...[
             const SizedBox(height: 8),

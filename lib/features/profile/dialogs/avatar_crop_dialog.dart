@@ -82,32 +82,50 @@ class _AvatarCropDialogState extends State<_AvatarCropDialog> {
   }
 
   Future<void> _decodePreview() async {
-    ui.ImmutableBuffer? buffer;
-    ui.ImageDescriptor? descriptor;
+    // `ui.ImageDescriptor` leería el tamaño sin decodificar nada, que es justo
+    // lo que quiere este método. Pero **en web `descriptor.width` lanza
+    // `UnsupportedError`** —medido en Chrome—, así que el diálogo se quedaba en
+    // negro con «no se pudo actualizar la foto» y sin ninguna pista: aquí no
+    // falla el formato de la imagen, falla la API. `instantiateImageCodec` sí
+    // está en las dos plataformas.
+    //
+    // El precio es decodificar una vez a tamaño completo para saber cuánto
+    // mide. Solo se paga con imágenes grandes, y `image_picker` ya acota a
+    // 2048 px lo que entra desde el móvil.
+    ui.Image? completa;
     try {
-      buffer = await ui.ImmutableBuffer.fromUint8List(widget.bytes);
-      descriptor = await ui.ImageDescriptor.encoded(buffer);
-      final longest = descriptor.width > descriptor.height
-          ? descriptor.width
-          : descriptor.height;
-      final ratio = longest > _maxPreviewSide ? _maxPreviewSide / longest : 1.0;
-      final codec = await descriptor.instantiateCodec(
-        targetWidth: (descriptor.width * ratio).round(),
-        targetHeight: (descriptor.height * ratio).round(),
-      );
-      final frame = await codec.getNextFrame();
-      if (!mounted) {
-        frame.image.dispose();
+      completa = (await (await ui.instantiateImageCodec(
+        widget.bytes,
+      )).getNextFrame()).image;
+
+      final longest = completa.width > completa.height
+          ? completa.width
+          : completa.height;
+      if (longest <= _maxPreviewSide) {
+        if (!mounted) return;
+        setState(() => _preview = completa);
+        completa = null; // lo conserva el estado; no se libera aquí
         return;
       }
-      setState(() => _preview = frame.image);
-    } catch (_) {
-      // Formato que el códec de Flutter no sabe leer. No se registra: el
-      // usuario ve el aviso en el propio diálogo y la subida ni se intenta.
+
+      final ratio = _maxPreviewSide / longest;
+      final reducida = (await (await ui.instantiateImageCodec(
+        widget.bytes,
+        targetWidth: (completa.width * ratio).round(),
+        targetHeight: (completa.height * ratio).round(),
+      )).getNextFrame()).image;
+      if (!mounted) {
+        reducida.dispose();
+        return;
+      }
+      setState(() => _preview = reducida);
+    } catch (error) {
+      // Se registra: con el aviso a secas, un formato que el códec no sabe leer
+      // y una API que no existe en la plataforma se ven exactamente igual.
+      debugPrint('Avatar: no se pudo decodificar la vista previa: $error');
       if (mounted) setState(() => _failed = true);
     } finally {
-      descriptor?.dispose();
-      buffer?.dispose();
+      completa?.dispose();
     }
   }
 
@@ -134,10 +152,7 @@ class _AvatarCropDialogState extends State<_AvatarCropDialog> {
     final size = _rotatedSize;
     final maxX = (size.width * scale - viewport) / 2;
     final maxY = (size.height * scale - viewport) / 2;
-    return Offset(
-      offset.dx.clamp(-maxX, maxX),
-      offset.dy.clamp(-maxY, maxY),
-    );
+    return Offset(offset.dx.clamp(-maxX, maxX), offset.dy.clamp(-maxY, maxY));
   }
 
   void _rotate(double viewport) {
@@ -324,10 +339,9 @@ class _CircleMaskPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
     final circulo = Path()
-      ..addOval(Rect.fromCircle(
-        center: rect.center,
-        radius: size.shortestSide / 2,
-      ));
+      ..addOval(
+        Rect.fromCircle(center: rect.center, radius: size.shortestSide / 2),
+      );
     canvas.drawPath(
       Path.combine(PathOperation.difference, Path()..addRect(rect), circulo),
       Paint()..color = FncColors.black.withValues(alpha: 0.55),

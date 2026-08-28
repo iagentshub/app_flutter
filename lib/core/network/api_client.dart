@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/painting.dart' show ImageProvider, NetworkImage;
+import 'package:flutter/painting.dart' show ImageProvider;
 import 'package:http/http.dart' as http;
 
 import '../../shared/state/backend_controller.dart';
@@ -18,6 +18,7 @@ import 'api_uri.dart';
 import 'bounded_line_transformer.dart';
 import 'csrf_token.dart';
 import 'http_client_factory.dart';
+import 'session_image.dart';
 
 export 'api_response.dart';
 
@@ -559,7 +560,13 @@ class ApiClient {
     path,
     fieldName: fieldName,
     fileName: fileName,
-    fileStream: Stream.value(fileBytes),
+    // Una **factoría**, no un stream ya hecho: `_send` reconstruye la petición
+    // entera para reintentarla tras renovar la sesión, y un `Stream.value` de
+    // una sola suscripción ya iba consumido en ese segundo intento. Reventaba
+    // con un `StateError` que el llamador enseñaba como «no se pudo actualizar
+    // la foto», sin más — y solo cuando el access token había caducado, que es
+    // cada 30 minutos.
+    fileStream: () => Stream.value(fileBytes),
     fileLength: fileBytes.length,
     fields: fields,
     gaToken: gaToken,
@@ -589,11 +596,16 @@ class ApiClient {
   );
 
   /// Variante multipart que conserva el fichero como flujo hasta la red.
+  ///
+  /// [fileStream] es una **factoría**: `_send` reconstruye la petición para
+  /// reintentarla tras renovar la sesión, y un stream de una sola suscripción
+  /// no se puede volver a escuchar. Pasar el stream hecho compila igual y solo
+  /// falla cuando toca renovar.
   Future<ApiResponse> postMultipartStream(
     String path, {
     required String fieldName,
     required String fileName,
-    required Stream<List<int>> fileStream,
+    required Stream<List<int>> Function() fileStream,
     required int fileLength,
     Map<String, String>? fields,
     String? gaToken,
@@ -615,7 +627,7 @@ class ApiClient {
       request.files.add(
         http.MultipartFile(
           fieldName,
-          http.ByteStream(fileStream),
+          http.ByteStream(fileStream()),
           fileLength,
           filename: fileName,
         ),
@@ -863,8 +875,13 @@ class ApiClient {
   /// Las vistas montaban `Image.network(url, headers: {'Cookie': ...})`, pero
   /// `Cookie` es un *forbidden header name*: en web el navegador la descarta
   /// y el avatar privado caía al fallback de iniciales sin ningún error
-  /// visible. Ahí la cookie HttpOnly ya viaja sola en las peticiones
-  /// same-origin, así que la cabecera sobra; fuera de web sí hace falta.
+  /// visible.
+  ///
+  /// Quitarla no bastaba. `NetworkImage` tampoco pide credenciales en web, así
+  /// que la cookie solo viajaba sola **same-origin**; con la aplicación en un
+  /// puerto y el backend en otro, el 401 devolvía otra vez el respaldo de
+  /// iniciales, que es idéntico a no tener foto y por eso no lo nota nadie.
+  /// [SessionImage] descarga con este mismo cliente, que sí las pide.
   ///
   /// De paso, el token deja de circular por widgets de presentación y la URL
   /// pasa por [_uri], heredando la resolución same-origin del resto de
@@ -875,8 +892,9 @@ class ApiClient {
         gaToken != null &&
         gaToken.isNotEmpty &&
         gaToken != browserCookieSessionToken;
-    return NetworkImage(
+    return SessionImage(
       _uri(path).toString(),
+      client: _client,
       headers: sendCookie
           ? {'Cookie': '${SecurityCookieId.access.value}=$gaToken'}
           : null,
@@ -936,7 +954,19 @@ class ApiClient {
     // seguridad nunca exponen Set-Cookie a JavaScript. El marcador mantiene
     // el contrato de sesión interno; BrowserClient enviará la cookie real en
     // todas las peticiones same-origin bajo /app/.
-    if (kIsWeb) return browserCookieSessionToken;
+    //
+    // Devolver el marcador a ciegas daba por hecho que el navegador había
+    // guardado la sesión, y no siempre lo hace: las tres cookies son
+    // `SameSite=Lax`, así que con un backend en **otro sitio** —un túnel de
+    // desarrollo frente a `localhost`— el login responde 200, el navegador
+    // descarta el `Set-Cookie` entero y la app se cree dentro. La siguiente
+    // petición vuelve con «No autenticado» y nada apunta a la causa.
+    //
+    // `ga_csrf` viaja en el mismo `Set-Cookie` y es la única de las tres sin
+    // `HttpOnly`: si no está, ninguna se guardó.
+    if (kIsWeb) {
+      return readCsrfToken() == null ? null : browserCookieSessionToken;
+    }
 
     final setCookie = headers['set-cookie'];
     if (setCookie == null || setCookie.isEmpty) return null;

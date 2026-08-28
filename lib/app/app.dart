@@ -19,7 +19,6 @@ import '../shared/state/locale_controller.dart';
 import '../shared/state/session_controller.dart';
 import '../shared/state/theme_controller.dart';
 import '../shared/widgets/iagents_loading_indicator.dart';
-import 'app_scroll_behavior.dart';
 import 'router/router.dart';
 import 'theme/app_theme.dart';
 
@@ -252,7 +251,6 @@ class _AppState extends State<App> {
         resourceExecutionsController: _resourceExecutionsController,
         child: MaterialApp.router(
           debugShowCheckedModeBanner: false,
-          scrollBehavior: const AppScrollBehavior(),
           title: 'iAgents',
           theme: AppTheme.light(widget.themeController.themeId),
           darkTheme: AppTheme.dark(widget.themeController.themeId),

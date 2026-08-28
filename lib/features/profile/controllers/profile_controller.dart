@@ -320,11 +320,17 @@ class ProfileController extends ChangeNotifier {
       // que se carga al entrar: sin avisarla, la foto nueva solo aparecía aquí.
       _sessionController.actualizarAvatar(_avatarUrl);
       return ActionResult(_tx('profile.avatar_updated'));
-    } on AvatarCompressionException {
+    } on AvatarCompressionException catch (error) {
+      // El compresor sí sabe qué falló —el decodificador, el recorte— y ese
+      // detalle se perdía entero: al usuario le queda «no se pudo actualizar la
+      // foto» y en el log no quedaba nada con lo que empezar a mirar.
+      debugPrint('Avatar: falló la compresión de $fileName: ${error.message}');
       return ActionResult.error(_tx('profile.avatar_error'));
     } on ApiError catch (error) {
+      debugPrint('Avatar: el backend rechazó $fileName: ${error.message}');
       return ActionResult.error(error.message);
-    } catch (_) {
+    } catch (error, stack) {
+      debugPrint('Avatar: fallo inesperado con $fileName: $error\n$stack');
       return ActionResult.error(_tx('profile.avatar_error'));
     } finally {
       _uploadingAvatar = false;
