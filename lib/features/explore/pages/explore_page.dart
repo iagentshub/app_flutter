@@ -1,4 +1,3 @@
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
@@ -22,8 +21,8 @@ import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/multi_select_dropdown.dart';
 import '../../../shared/widgets/resource_collection_view.dart';
+import '../../../shared/widgets/resource_preview_dialog.dart';
 import '../../../shared/widgets/resource_type_badge.dart';
-import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../../shared/widgets/user_avatar.dart';
@@ -36,7 +35,6 @@ import 'official_pack_page.dart';
 part '../cards/explore_official_pack_card.dart';
 part '../cards/explore_resource_card.dart';
 part '../cards/explore_user_card.dart';
-part '../dialogs/preview_dialog.dart';
 part '../widgets/explore_collection_views.dart';
 
 class ExplorePage extends StatefulWidget {
@@ -108,10 +106,13 @@ class _ExplorePageState extends State<ExplorePage>
       item,
       present: (payload) async {
         if (!mounted) return;
-        await showAppDialog<void>(
+        await showResourcePreviewDialog(
           context: context,
-          builder: (context) =>
-              _PreviewDialog(title: item.name, jsonPayload: payload, tx: _tx),
+          payload: payload,
+          title: item.name,
+          typeLabel: _typeChipLabel(item.resourceType),
+          stars: item.stars,
+          categoryLabel: _categoryChipLabel(item.category),
         );
       },
     ),

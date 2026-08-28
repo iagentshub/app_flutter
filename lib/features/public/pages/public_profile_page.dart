@@ -1,8 +1,6 @@
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
-import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/explore/explore_models.dart';
 import '../../../models/profile/profile_models.dart';
@@ -10,11 +8,9 @@ import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/widgets/async_state_panel.dart';
-import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/explore_search_toolbar.dart';
-import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/resource_collection_view.dart';
-import '../../../shared/widgets/responsive_dialog.dart';
+import '../../../shared/widgets/resource_preview_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../../shared/widgets/user_avatar.dart';
 import '../../explore/repositories/explore_repository.dart';
@@ -217,26 +213,15 @@ class _PublicProfilePageState extends State<PublicProfilePage>
         resourceId: item.resourceId,
       );
       if (!mounted) return;
-      await showAppDialog<void>(
+      // La misma ficha que Explorar: dos copias del diálogo eran dos copias
+      // del JSON, y divergían.
+      await showResourcePreviewDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          title: Text(item.name),
-          content: SizedBox(
-            width: dialogContentWidth(context, 740),
-            child: SingleChildScrollView(
-              child: SelectableText(
-                const JsonEncoder.withIndent('  ').convert(preview),
-                style: FncFonts.code,
-              ),
-            ),
-          ),
-          actions: [
-            PrimaryButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(_tx('common.close')),
-            ),
-          ],
-        ),
+        payload: preview,
+        title: item.name,
+        typeLabel: _typeLabel(item.resourceType),
+        stars: item.stars,
+        categoryLabel: item.category,
       );
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
