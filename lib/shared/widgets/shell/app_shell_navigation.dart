@@ -225,9 +225,10 @@ class _NavigationSection extends StatelessWidget {
 }
 
 class _ShellTopBar extends StatelessWidget {
-  const _ShellTopBar({required this.title});
+  const _ShellTopBar({required this.title, required this.notifications});
 
   final String title;
+  final NotificationsController notifications;
 
   @override
   Widget build(BuildContext context) {
@@ -261,6 +262,7 @@ class _ShellTopBar extends StatelessWidget {
             ),
           ),
           const Spacer(),
+          NotificationsBell(controller: notifications),
         ],
       ),
     );

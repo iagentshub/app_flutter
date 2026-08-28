@@ -11,6 +11,10 @@ import '../../app/theme/fnc_colors.dart';
 import '../../app/theme/fnc_fonts.dart';
 import '../../core/network/api_client.dart';
 import '../../features/auth/repositories/auth_repository.dart';
+import '../../features/manager/repositories/manager_repository.dart';
+import '../../features/notifications/controllers/notifications_controller.dart';
+import '../../features/notifications/repositories/notifications_repository.dart';
+import '../../features/notifications/widgets/notifications_bell.dart';
 import '../../models/dashboard/dashboard_widget_config.dart';
 import '../../models/dashboard/dashboard_widget_registry.dart';
 import '../../utils/i18n.dart';
@@ -77,6 +81,9 @@ class _AppShellState extends State<AppShell> {
   bool _billingEnabled = false;
   Timer? _platformFlagsTimer;
 
+  late final NotificationsController _notifications;
+  Timer? _notificationsTimer;
+
   @override
   void initState() {
     super.initState();
@@ -92,11 +99,26 @@ class _AppShellState extends State<AppShell> {
       const Duration(minutes: 5),
       (_) => _loadPlatformFlags(),
     );
+    _notifications = NotificationsController(
+      repository: NotificationsRepository(apiClient: _services.apiClient),
+      manager: ManagerRepository(apiClient: _services.apiClient),
+      session: _services.sessionController,
+    );
+    _notifications.load();
+    // Un minuto es el retraso máximo con el que alguien se entera de que le han
+    // invitado a un grupo teniendo la app abierta y quieta. Sondear la BD sale
+    // más barato que mantener un stream abierto por usuario en cada worker.
+    _notificationsTimer = Timer.periodic(
+      const Duration(seconds: 60),
+      (_) => _notifications.load(),
+    );
   }
 
   @override
   void dispose() {
     _platformFlagsTimer?.cancel();
+    _notificationsTimer?.cancel();
+    _notifications.dispose();
     _t.dispose();
     super.dispose();
   }
@@ -313,6 +335,7 @@ class _AppShellState extends State<AppShell> {
                             children: [
                               _ShellTopBar(
                                 title: _titleForLocation(location, _tx),
+                                notifications: _notifications,
                               ),
                               Expanded(child: body),
                             ],
@@ -334,6 +357,12 @@ class _AppShellState extends State<AppShell> {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
+                    // La barra ancha y esta no comparten widget, así que la
+                    // campana hay que ponerla en los dos sitios.
+                    actions: [
+                      NotificationsBell(controller: _notifications),
+                      const SizedBox(width: 4),
+                    ],
                   ),
                   drawer: Drawer(
                     width: _drawerWidth,
