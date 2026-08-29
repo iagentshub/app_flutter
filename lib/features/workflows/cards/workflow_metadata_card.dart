@@ -52,9 +52,12 @@ class WorkflowMetadataCard extends StatelessWidget {
           final name = TextFormField(
             controller: nameController,
             maxLength: maxLabelLength,
-            buildCounter:
-                (_, {required currentLength, required isFocused, maxLength}) =>
-                    null,
+            buildCounter: (
+              _, {
+              required currentLength,
+              required isFocused,
+              maxLength,
+            }) => null,
             decoration: InputDecoration(
               labelText: tx('workflow_editor.name_label'),
               prefixIcon: const Icon(Icons.badge_outlined, size: 19),
@@ -134,9 +137,8 @@ class WorkflowMetadataCard extends StatelessWidget {
   Widget _visibility(BuildContext context) {
     final label = Text(
       tx('workflow_editor.labels_label'),
-      style: Theme.of(
-        context,
-      ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
+      style: Theme.of(context).textTheme.bodySmall
+          ?.copyWith(fontWeight: FontWeight.w700),
     );
     final selector = SegmentedButton<bool>(
       expandedInsets: EdgeInsets.zero,
@@ -163,7 +165,20 @@ class WorkflowMetadataCard extends StatelessWidget {
             children: [label, const SizedBox(height: 8), selector],
           );
         }
-        return Row(children: [label, const SizedBox(width: 12), selector]);
+        // `selector` lleva `expandedInsets: EdgeInsets.zero`, así que quiere
+        // todo el ancho que le den. Suelto en un `Row` lo que le llega es
+        // ancho **no acotado**, y el SegmentedButton lanza «BoxConstraints
+        // forces an infinite width»: la excepción aborta la maquetación y el
+        // editor entero se queda sin pintar —cabecera y negro—. En la rama
+        // estrecha no pasaba porque la `Column` con `stretch` sí lo acota, y
+        // por eso la prueba de 360 px lo daba por bueno.
+        return Row(
+          children: [
+            label,
+            const SizedBox(width: 12),
+            Expanded(child: selector),
+          ],
+        );
       },
     );
   }
