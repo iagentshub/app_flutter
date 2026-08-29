@@ -46,17 +46,18 @@ Future<void> main() async {
   final brandIconController = results[3] as BrandIconController;
   final themeController = results[4] as ThemeController;
 
-  // Los dos namespaces que se pintan en el primer frame de App se precargan
+  // Los tres namespaces que se pintan en el primer frame de App se precargan
   // durante el splash: `common` porque el cargador de marca puede aparecer ya
-  // ahí (al restaurar sesión), y `auth` porque el login es la primera pantalla
-  // cuando no hay sesión. Sin esto su bundle llega un frame tarde y el titular
-  // sale como identificador —«headline_1», «hero_sub»— antes de asentarse.
-  // Son 15 KB de assets ya empaquetados, y van en paralelo.
+  // ahí (al restaurar sesión), `auth` porque el login es la primera pantalla
+  // cuando no hay sesión, y `nav` porque el menú lateral y su campana salen en
+  // todas las demás. Sin esto su bundle llega un frame tarde y lo que se pinta
+  // es el identificador —«headline_1», «hero_sub», «notifications»— antes de
+  // asentarse. Son 18 KB de assets ya empaquetados, y van en paralelo.
   //
   // Registrarlos lo hace `LocaleLoader.load`, que es por donde pasan las dos
   // formas de cargar un bundle.
   await Future.wait([
-    for (final namespace in const ['common', 'auth'])
+    for (final namespace in const ['common', 'auth', 'nav'])
       LocaleLoader.load(
         languageCode: localeController.languageCode,
         namespace: namespace,

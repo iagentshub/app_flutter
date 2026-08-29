@@ -33,7 +33,10 @@ extension _RegisterChrome on _RegisterPageState {
                     const SizedBox(width: 32),
                     _enlaceMenu(_tx('register.nav_home'), '/'),
                     const SizedBox(width: 24),
-                    _enlaceMenu(_tx('register.nav_about'), ExternalRoutes.about),
+                    _enlaceMenu(
+                      _tx('register.nav_about'),
+                      ExternalRoutes.about,
+                    ),
                     const SizedBox(width: 24),
                     _enlaceMenu(_tx('register.nav_docs'), ExternalRoutes.docs),
                     const SizedBox(width: 24),
@@ -200,11 +203,7 @@ extension _RegisterChrome on _RegisterPageState {
           children: [
             Text(
               titulo,
-              style: _texto(
-                FncFonts.size14,
-                550,
-                color: FncColors.publicText,
-              ),
+              style: _texto(FncFonts.size14, 550, color: FncColors.publicText),
             ),
             const SizedBox(height: 2),
             Text(

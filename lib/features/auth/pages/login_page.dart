@@ -65,6 +65,16 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
   bool _showPassword = false;
   bool _rememberAccount = false;
   String? _errorMessage;
+
+  /// El código del error, cuando lo trae. El texto de un `ApiError` se resuelve
+  /// en el `throw`, así que guardarlo tal cual congela el idioma: cambiar de
+  /// idioma con un error en pantalla lo dejaba en el anterior. Con el código,
+  /// `_errorVisible` lo vuelve a traducir en cada repintado.
+  String? _errorCode;
+
+  /// El error en el idioma activo ahora mismo.
+  String? get _errorVisible =>
+      _errorMessage == null ? null : trErrorOr(_errorCode, _errorMessage!);
   late Future<Map<String, dynamic>> _authTextsFuture;
   bool _platformLoaded = false;
   bool _guestEnabled = false;
@@ -218,7 +228,10 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
     if (!mounted) return;
     setState(() {
       _loading = value;
-      if (value) _errorMessage = null;
+      if (value) {
+        _errorMessage = null;
+        _errorCode = null;
+      }
     });
   }
 
@@ -353,10 +366,16 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
       unawaited(_syncUserSettings(token, themeController));
     } on ApiError catch (error) {
       if (!mounted) return;
-      setState(() => _errorMessage = error.message);
+      setState(() {
+        _errorMessage = error.message;
+        _errorCode = error.code;
+      });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _errorMessage = _txt(texts, 'error_connection'));
+      setState(() {
+        _errorMessage = _txt(texts, 'error_connection');
+        _errorCode = null;
+      });
     } finally {
       // SessionController notifica al GoRouter y este desmonta LoginPage. No
       // ocultamos antes el overlay: hacerlo durante el fade-through dejaba un
@@ -392,10 +411,16 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
       unawaited(_syncUserSettings(token, themeController));
     } on ApiError catch (error) {
       if (!mounted) return;
-      setState(() => _errorMessage = error.message);
+      setState(() {
+        _errorMessage = error.message;
+        _errorCode = error.code;
+      });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _errorMessage = tx('error_connection'));
+      setState(() {
+        _errorMessage = tx('error_connection');
+        _errorCode = null;
+      });
     } finally {
       if (!authenticated) _setLoading(false);
     }
@@ -420,10 +445,16 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
       await _syncUserSettings(token, themeController);
     } on ApiError catch (error) {
       if (!mounted) return;
-      setState(() => _errorMessage = error.message);
+      setState(() {
+        _errorMessage = error.message;
+        _errorCode = error.code;
+      });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _errorMessage = _txt(texts, 'guest_error'));
+      setState(() {
+        _errorMessage = _txt(texts, 'guest_error');
+        _errorCode = null;
+      });
     } finally {
       if (!authenticated) _setLoading(false);
     }

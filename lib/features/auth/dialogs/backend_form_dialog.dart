@@ -213,12 +213,15 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
               ],
               if (insecureTransport) ...[
                 const SizedBox(height: 12),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.errorContainer
-                        .withValues(alpha: 0.45),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                // `Material` y no un `DecoratedBox`: un `ListTile` pinta su
+                // fondo y sus ondas de tinta sobre el `Material` ancestro más
+                // cercano, así que una caja de color por medio las tapa. El
+                // framework lo avisa con una aserción en cada repintado.
+                Material(
+                  color: Theme.of(context).colorScheme.errorContainer
+                      .withValues(alpha: 0.45),
+                  borderRadius: BorderRadius.circular(10),
+                  clipBehavior: Clip.antiAlias,
                   child: CheckboxListTile(
                     value: _insecureTransportAccepted,
                     onChanged: (value) => setState(

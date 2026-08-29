@@ -371,13 +371,16 @@ fallos que no rompen nada visible en ninguno de los dos sitios.
   pantallas y todos los `FilePicker.saveFile`. **Una llamada a un selector va
   dentro de un `try`** que enseñe el fallo; en móvil nunca falla y por eso
   nadie lo escribe.
-- **El ratón no arrastra listas si no se le deja.** Flutter lo excluye a
-  propósito, y eso dejaba quietas las tiras horizontales —el selector de icono
-  de marca, las tablas de Admin— y sin disparar los trece `RefreshIndicator`,
-  que son el único modo de recargar esas pantallas. Lo abre
-  `AppScrollBehavior`, declarado en el `MaterialApp` de `app/app.dart`. Una
-  tira horizontal además lleva `Scrollbar`: con ratón, lo que no se ve no se
-  sabe que se puede desplazar.
+- **No metas `PointerDeviceKind.mouse` en `dragDevices`.** Parece la forma de
+  que el ratón arrastre las tiras horizontales y dispare los trece
+  `RefreshIndicator`; el precio, medido, es que rompe **cualquier** tap dentro
+  de un scrollable. Para el ratón el umbral de arrastre es de 1 px, así que el
+  arrastre gana la arena de gestos y el tap se cancela: con un ratón real es
+  casi imposible pulsar sin mover tres píxeles, y el desplegable de tema de
+  Perfil dejó de abrirse —clic y nada—. Por eso Flutter lo excluye. Una tira
+  horizontal se resuelve con `Scrollbar`, que sí se arrastra con ratón; el
+  `RefreshIndicator` sigue sin poder dispararse con un ratón de escritorio, y
+  lo que toca ahí es un botón de recargar, no abrir el arrastre.
 - **En macOS, `FlutterDartProject.lookupKey(forAsset:)` devuelve la ruta desde
   la raíz de `Bundle.main`** —`Contents/Frameworks/App.framework/Resources/
   flutter_assets/assets/…`—, no una clave relativa a `Resources`. Las dos
@@ -393,6 +396,15 @@ Y la regla general: **un gesto táctil necesita su equivalente de escritorio**.
 Mantener pulsado con el ratón funciona pero no se le ocurre a nadie, así que
 las acciones de un mensaje del chat también salen con `onSecondaryTap`.
 
+- **Un multipart se reconstruye entero en cada intento.** `ApiClient._send`
+  vuelve a llamar a `build()` para reintentar tras renovar la sesión, así que el
+  cuerpo no puede ser un `Stream` de una sola suscripción ya creado: al segundo
+  intento va consumido y salta un `StateError`. `postMultipartStream` recibe una
+  **factoría** de streams por eso. Compilaba igual y solo fallaba con el access
+  caducado —cada 30 minutos—, y el llamador lo enseñaba como «no se pudo
+  actualizar la foto», sin causa: **un `catch` que traga la excepción sin
+  registrarla convierte un fallo concreto en un misterio**.
+
 Dos más que salieron con estos, y que no son de plataforma:
 
 - **Tema e idioma no notifican en mitad de un build.** La caché de arranque
@@ -401,11 +413,69 @@ Dos más que salieron con estos, y que no son de plataforma:
   está construyendo, la excepción se lleva el frame y el valor no se aplica. La
   guarda es el mixin `NotificacionDiferida`, y vive en el notificador porque hay
   ocho sitios que sincronizan tema o idioma.
+- **`NetworkImage` no pide credenciales en web**, así que la cookie de sesión
+  solo viaja sola en peticiones **same-origin**: con la aplicación en un puerto
+  y el backend en otro, el avatar privado se descargaba sin sesión, el backend
+  respondía 401 y la foto caía al respaldo de iniciales — que es exactamente lo
+  que se ve cuando alguien no tiene foto, y por eso no lo nota nadie. La
+  descarga va por `SessionImage`, que usa el cliente HTTP de la aplicación.
+- **`ui.ImageDescriptor` no sirve en web**: lee el tamaño de una imagen sin
+  decodificarla, que es justo lo que quiere una vista previa, pero
+  `descriptor.width` lanza `UnsupportedError` allí —medido en Chrome—. El
+  recorte del avatar se quedaba en negro con «no se pudo actualizar la foto», y
+  el `catch` mudo hacía que un formato ilegible y una API que no existe se
+  vieran idénticos. `ui.instantiateImageCodec` está en las dos plataformas.
+- **Un `ListTile` con fondo propio va dentro de un `Material`, no de un
+  `DecoratedBox`.** Pinta su color y sus ondas de tinta sobre el `Material`
+  ancestro más cercano, así que una caja de color por medio las tapa; el
+  framework lo avisa con una aserción en cada repintado.
 - **`LocaleLoader.load` registra el bundle en `I18n`**, no solo
   `TranslatedTexts`. El login carga su namespace por la vía directa, así que
   `auth` no llegaba nunca a `I18n._bundles` y `tr('auth.identifier_required')`
   salía como identificador crudo en el campo de usuario. Ese `load` es el único
   punto por el que pasan las dos formas de cargar un bundle.
+
+## `flutter run -d chrome` necesita el puerto fijo
+
+```bash
+flutter run -d chrome --web-port=8010
+```
+
+Sin `--web-port` el dev server toma **un puerto aleatorio**, y eso rompe dos
+cosas a la vez sin decir cuál:
+
+- El backend solo responde con `Access-Control-Allow-Origin` a los orígenes de
+  `GAIA_CORS_ORIGINS` (`iAgents/.env`: `http://localhost:8007` y
+  `http://localhost:8010`). Desde cualquier otro puerto el navegador bloquea
+  todas las peticiones por CORS.
+- **El almacén del navegador es por origen**, así que cada puerto nuevo estrena
+  `localStorage`: se pierden el backend elegido y la sesión, y la app cae al de
+  fábrica —`BackendDefaults`, que solo trae `www.iagentshub.com`—. El síntoma es
+  desconcertante, porque parece que la app ignora el backend local que sí está
+  guardado.
+
+**Y el backend elegido tiene que ser del mismo sitio que la app.** Las tres
+cookies de sesión son `SameSite=Lax`, así que no cruzan de un sitio a otro: con
+la app en `localhost:8010` y el backend en un túnel de desarrollo
+(`*.devtunnels.ms`) o en `127.0.0.1` —que para las cookies es un sitio distinto
+de `localhost`—, el login responde 200 y el navegador **descarta el
+`Set-Cookie` entero**. La petición siguiente llega sin cookie y el backend
+contesta `not_authenticated`, «No autenticado», que parece un problema de
+credenciales y no lo es. Medido con Chrome: same-site las tres cookies viajan,
+cross-site no llega ninguna. `http://localhost:8007` es el backend correcto para
+desarrollar en `--web-port=8010`.
+
+`extractGaToken` es quien lo detecta —`ga_csrf` es la única de las tres sin
+`HttpOnly`, así que su ausencia significa que no se guardó ninguna—; antes
+devolvía el marcador de sesión a ciegas y la app se creía dentro.
+
+Dos mensajes de esa consola no son fallos. `env.js` lo sirve solo nginx
+(`location = /env.js` en `frontend_react/nginx.react.conf`); con `flutter run`
+el dev server devuelve el `index.html` como fallback y Chrome rechaza el script
+por su MIME. Lo único que lleva dentro es `STRIPE_PUBLISHABLE_KEY`, así que en
+dev no hay Stripe y ya está. Y un 404 de `/api/…` contra el propio dev server
+significa que el backend seleccionado es «mismo origen»: ahí no hay proxy, a
+diferencia de Vite.
 
 ## Antes de dar algo por terminado
 

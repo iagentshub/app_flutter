@@ -2,6 +2,7 @@ import '../../../core/config/tool_runtimes.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_error.dart';
 import '../../../core/network/csrf_token.dart';
+import '../../../core/network/page_origin.dart';
 import '../../../models/auth/auth_result.dart';
 import '../../../models/auth/session_user.dart';
 import '../../../models/github/github_device_flow.dart';
@@ -32,6 +33,25 @@ class AuthRepository {
 
   final ApiClient _apiClient;
 
+  /// El navegador no guardó la sesión que acaba de emitir el backend.
+  ///
+  /// El mensaje lleva **los dos orígenes** porque sin verlos juntos el caso es
+  /// indistinguible: `http://127.0.0.1:8007` y `http://localhost:8007` son la
+  /// misma máquina y el mismo servidor, pero sitios distintos para las cookies,
+  /// y `SameSite=Lax` no cruza de uno a otro. El texto se resuelve al pintarlo
+  /// —de ahí el `code`—; traducirlo aquí lo congelaría en el idioma que hubiera
+  /// en el momento del `throw`.
+  ApiError _sesionDescartada() {
+    final backend = _apiClient.backendController.effectiveBaseUrl;
+    return ApiError(
+      statusCode: 500,
+      code: 'session_cookie_discarded',
+      message: trErrorOr('session_cookie_discarded', '')
+          .replaceAll('{backend}', backend)
+          .replaceAll('{app}', pageOrigin ?? '-'),
+    );
+  }
+
   Future<(AuthResult, String)> login({
     required String identifier,
     required String password,
@@ -43,10 +63,7 @@ class AuthRepository {
 
     final token = _apiClient.extractGaToken(response.headers);
     if (token == null || token.isEmpty) {
-      throw ApiError(
-        statusCode: 500,
-        message: tr('auth.session_cookie_missing'),
-      );
+      throw _sesionDescartada();
     }
 
     final result = AuthResult.fromJson(response.json);
@@ -57,10 +74,7 @@ class AuthRepository {
     final response = await _apiClient.post('/api/auth/guest');
     final token = _apiClient.extractGaToken(response.headers);
     if (token == null || token.isEmpty) {
-      throw ApiError(
-        statusCode: 500,
-        message: tr('auth.session_cookie_missing'),
-      );
+      throw _sesionDescartada();
     }
 
     final result = AuthResult.fromJson(response.json);
@@ -87,10 +101,7 @@ class AuthRepository {
     }
     final gaToken = _apiClient.extractGaToken(response.headers);
     if (gaToken == null || gaToken.isEmpty) {
-      throw ApiError(
-        statusCode: 500,
-        message: tr('auth.session_cookie_missing'),
-      );
+      throw _sesionDescartada();
     }
     return GithubLoginPollResult(
       tokenResult: tokenResult,

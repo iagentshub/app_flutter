@@ -94,7 +94,9 @@ extension _ToolActions on _KnowledgePageState {
             savedScope,
             savedId,
             fileName: artifact.fileName,
-            fileStream: artifact.openRead(),
+            // La función, no su resultado: el reintento tras renovar la
+            // sesión necesita un stream nuevo.
+            fileStream: artifact.openRead,
             fileLength: artifact.size,
           );
         }

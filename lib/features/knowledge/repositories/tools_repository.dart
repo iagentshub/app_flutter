@@ -43,7 +43,7 @@ class ToolsRepository extends ScopedResourceRepository<ToolItem> {
     String scope,
     String toolId, {
     required String fileName,
-    required Stream<List<int>> fileStream,
+    required Stream<List<int>> Function() fileStream,
     required int fileLength,
   }) async {
     final response = await apiClient.postMultipartStream(

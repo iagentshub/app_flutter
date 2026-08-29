@@ -1,4 +1,5 @@
 {
   "credential_unreadable": "The stored credential cannot be read. Edit it and enter it again.",
-  "resource_execution_in_progress": "This resource is already in progress for your user. Wait for it to finish or stop the current execution."
+  "resource_execution_in_progress": "This resource is already in progress for your user. Wait for it to finish or stop the current execution.",
+  "session_cookie_discarded": "The browser discarded the session: the app is served from {app} and the selected backend is {backend}. Session cookies are SameSite=Lax and do not travel across sites — and \"127.0.0.1\" is a different site from \"localhost\" even on the same machine. Pick a backend with the same host as the app."
 }
