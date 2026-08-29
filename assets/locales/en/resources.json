@@ -978,6 +978,8 @@
     "fixed_iterations_label": "Fixed rounds",
     "input_port": "Input",
     "inspector_title": "Step configuration",
+    "panel_settings": "Settings",
+    "panel_step": "Step",
     "instruction_label": "Instruction for this step",
     "invalid_connection": "The connection would create a cycle or already exists",
     "issues_suffix": "problems",

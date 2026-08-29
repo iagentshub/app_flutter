@@ -24,6 +24,14 @@ abstract final class Breakpoints {
   /// que sobre.
   static const double extraAncho = 1600;
 
+  /// Una tarjeta de candidata que baja de esto pierde la fila de cabecera y
+  /// apila su asa de arrastre sobre los campos.
+  static const double candidataCompacta = 520;
+
+  /// A partir de aquí los dos campos de una candidata caben uno al lado del
+  /// otro en vez de apilarse.
+  static const double candidataEnFila = 640;
+
   /// Ancho máximo de una columna de lectura: texto corrido, formularios y la
   /// conversación del chat.
   ///

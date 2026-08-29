@@ -978,6 +978,8 @@
     "fixed_iterations_label": "Vueltas fijas",
     "input_port": "Entrada",
     "inspector_title": "Configuración del paso",
+    "panel_settings": "Ajustes",
+    "panel_step": "Paso",
     "instruction_label": "Instrucción para este paso",
     "invalid_connection": "La conexión crearía un ciclo o ya existe",
     "issues_suffix": "problemas",

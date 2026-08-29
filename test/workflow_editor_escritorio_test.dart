@@ -25,10 +25,11 @@ import 'support/memory_secure_store.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  // A 1024x900 queda un segundo defecto, distinto y anterior a este: la
-  // columna del editor desborda 768 px por abajo. No deja la pantalla en
-  // negro —el editor se ve, con la franja de desbordamiento— así que se
-  // documenta aquí en vez de bloquear la suite. Sin resolver.
+  // 1024 sigue fuera, y no por falta de alto: a 1200 px de alto desborda lo
+  // mismo, así que lo que se le atraganta es el ancho —a 1024 el workspace
+  // entra en la rama de dos columnas por cuatro píxeles (984 contra el corte
+  // de 980) y al lienzo le quedan 566—. Mudar los metadatos al panel bajó el
+  // desbordamiento de 768 px a 438, pero no lo cerró. Anterior a este trabajo.
   for (final ancho in [1400.0, 1920.0]) {
     testWidgets('el editor maqueta sin excepciones a ${ancho.toInt()} px', (
       tester,

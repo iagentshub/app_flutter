@@ -22,6 +22,8 @@ class WorkflowMetadataCard extends StatelessWidget {
     required this.selectedLanguageLabels,
     required this.onLanguageLabelsChanged,
     required this.tx,
+    this.mostrarNombre = true,
+    this.conSuperficie = true,
     super.key,
   });
 
@@ -37,16 +39,31 @@ class WorkflowMetadataCard extends StatelessWidget {
   final ValueChanged<Set<String>> onLanguageLabelsChanged;
   final String Function(String path) tx;
 
+  /// Si el nombre lo pinta otro (la cabecera del editor), aquí sobra.
+  ///
+  /// El campo no se esconde: **se muda**. Ver la nota de arriba sobre el
+  /// `ExpansionTile` — lo que no puede pasar es que el error de validación de
+  /// un campo obligatorio quede fuera de la vista.
+  final bool mostrarNombre;
+
+  /// Dentro de un panel que ya tiene fondo y borde, el suyo sobra: dos cajas
+  /// anidadas con el mismo trazo se leen como un error de maquetación.
+  final bool conSuperficie;
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.outlineVariant),
-      ),
+      padding: conSuperficie
+          ? const EdgeInsets.fromLTRB(16, 14, 16, 16)
+          : EdgeInsets.zero,
+      decoration: conSuperficie
+          ? BoxDecoration(
+              color: colors.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: colors.outlineVariant),
+            )
+          : null,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final name = TextFormField(
@@ -79,7 +96,9 @@ class WorkflowMetadataCard extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (constraints.maxWidth >= 720)
+              if (!mostrarNombre)
+                description
+              else if (constraints.maxWidth >= 720)
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

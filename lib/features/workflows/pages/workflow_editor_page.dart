@@ -30,6 +30,14 @@ part '../cards/workflow_step_editor_card.dart';
 part '../widgets/workflow_editor_mobile.dart';
 part 'workflow_editor_graph_actions.dart';
 part 'workflow_editor_resources.dart';
+part '../widgets/workflow_editor_settings_panel.dart';
+
+/// Suelo de altura del lienzo en escritorio.
+///
+/// Por debajo de esto el `fitToView` del editor de nodos encoge las tarjetas
+/// —260x140 cada una— hasta que dejan de leerse, que es peor que recortar el
+/// diagrama y dejar que el usuario lo desplace.
+const double _altoMinimoLienzo = 420;
 
 class WorkflowEditorPage extends StatefulWidget {
   const WorkflowEditorPage({
@@ -351,7 +359,25 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: colors.outlineVariant),
       ),
-      child: _buildInspector(),
+      child: DefaultTabController(
+        length: 2,
+        child: Column(
+          children: [
+            TabBar(
+              tabs: [
+                Tab(text: _tx('workflow_editor.panel_step')),
+                Tab(text: _tx('workflow_editor.panel_settings')),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: TabBarView(
+                children: [_buildInspector(), _buildSettingsPanel()],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
 
     return LayoutBuilder(
@@ -360,7 +386,20 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(child: canvas),
+              // El lienzo no tenía suelo en ninguna parte de la cadena, y como
+              // `fitToView` encoge los nodos hasta que quepan, una ventana baja
+              // lo dejaba ilegible en vez de recortado.
+              // El lienzo no tenía suelo en ninguna parte de la cadena, y como
+              // `fitToView` encoge los nodos hasta que quepan, una ventana baja
+              // lo dejaba ilegible en vez de recortado.
+              Expanded(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minHeight: _altoMinimoLienzo,
+                  ),
+                  child: canvas,
+                ),
+              ),
               const SizedBox(width: 18),
               SizedBox(width: 400, child: inspector),
             ],
@@ -440,11 +479,17 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
       child: Scaffold(
         backgroundColor: colors.surfaceContainerLowest,
         appBar: AppBar(
-          title: Text(
-            widget.initial == null
-                ? _tx('workflow_editor.title_new')
-                : _tx('workflow_editor.title_edit'),
-          ),
+          // En escritorio el nombre vive aquí, no en el formulario: es
+          // obligatorio, y su error de validación tiene que verse pase lo que
+          // pase con el panel de ajustes. En móvil se queda donde estaba, en
+          // la pestaña de detalles.
+          title: compact
+              ? Text(
+                  widget.initial == null
+                      ? _tx('workflow_editor.title_new')
+                      : _tx('workflow_editor.title_edit'),
+                )
+              : _buildTituloEditable(),
           actions: _appBarActions(compact: compact),
         ),
         body: _loadingAgents
@@ -469,40 +514,6 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
                         ),
                         const SizedBox(height: 10),
                       ],
-                      WorkflowMetadataCard(
-                        nameController: _nameController,
-                        descriptionController: _descriptionController,
-                        llmOrchestrations: _llmOrchestrations,
-                        llmOrchestrationConnectionId:
-                            _llmOrchestrationConnectionId,
-                        onLlmOrchestrationChanged: (value) => _refresh(
-                          () => _llmOrchestrationConnectionId = value,
-                        ),
-                        isPublic: _labels.contains('public'),
-                        onChanged: () => setState(() {}),
-                        onVisibilityChanged: (isPublic) => _refresh(() {
-                          // Se conservan las etiquetas propias del usuario;
-                          // solo cambia el par private/public.
-                          _labels = [
-                            for (final label in _labels)
-                              if (label != 'private' && label != 'public')
-                                label,
-                            isPublic ? 'public' : 'private',
-                          ];
-                        }),
-                        selectedLanguageLabels: _labels
-                            .where(isLanguageLabel)
-                            .toSet(),
-                        onLanguageLabelsChanged: (next) => _refresh(() {
-                          _labels = [
-                            for (final label in _labels)
-                              if (!isLanguageLabel(label)) label,
-                            ...next,
-                          ];
-                        }),
-                        tx: _tx,
-                      ),
-                      const SizedBox(height: 16),
                       WorkflowEditorToolbar(
                         title: _tx('workflow_editor.canvas_title'),
                         subtitle: _tx('workflow_editor.canvas_subtitle'),
