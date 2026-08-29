@@ -116,7 +116,19 @@ class ResourceCollectionView extends StatelessWidget {
           if (empty == null)
             const SliverToBoxAdapter(child: SizedBox.shrink())
           else if (emptyFillsViewport)
-            SliverFillRemaining(hasScrollBody: false, child: empty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              // Centrado en vertical, a ancho completo: quien pide llenar el
+              // viewport lo hace porque no hay nada más en la pantalla, y el
+              // panel pegado al borde de arriba deja medio pantallazo de vacío
+              // debajo. El centrado es de quien lo coloca, no del panel, que
+              // también se usa embebido bajo una lista.
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [empty!],
+              ),
+            )
           else
             SliverPadding(
               padding: gridPadding,

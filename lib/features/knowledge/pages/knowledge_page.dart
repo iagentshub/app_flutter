@@ -43,6 +43,7 @@ import '../../../shared/widgets/origin_badge.dart';
 import '../../../shared/widgets/resource_collection_view.dart';
 import '../../../shared/widgets/resource_graph_button.dart';
 import '../../../shared/widgets/resource_history_dialog.dart';
+import '../../../shared/widgets/resource_toolbar.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/share_to_group_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';

@@ -172,11 +172,10 @@ extension _ExploreCollectionViews on _ExplorePageState {
         ),
         onChanged: (_) => _controller.onUserSearchChanged(),
       ),
-      empty: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(_tx('explore.users_empty')),
-        ),
+      empty: AsyncStatePanel.empty(
+        icon: Icons.person_search_outlined,
+        title: _tx('explore.users_empty'),
+        message: _tx('explore.users_empty_description'),
       ),
       itemCount: users.length,
       itemBuilder: (context, index) => _buildUserCard(users[index]),

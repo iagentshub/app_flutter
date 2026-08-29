@@ -23,37 +23,31 @@ extension _ToolSections on _KnowledgePageState {
       items: filteredTools,
       itemBuilder: _buildToolCard,
       emptyText: _tx('knowledge.no_tools'),
-      toolbar: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              AppIconButton.filled(
-                onPressed: _openCreateToolDialog,
-                icon: const Icon(Icons.add),
-                tooltip: _tx('knowledge.new_tool'),
-              ),
-              AppIconButton.outlined(
-                onPressed: _loadTools,
-                icon: const Icon(Icons.refresh),
-                tooltip: _tx('common.update'),
-              ),
-              FilterButton(
-                activeCount: _toolFilterCount,
-                tooltip: _tx('common.filters'),
-                onPressed: _openToolFiltersDialog,
-              ),
-              ..._groupsButtons(),
-            ],
+      emptyDescription: _tx('knowledge.no_tools_description'),
+      emptyIcon: Icons.build_outlined,
+      toolbar: ResourceToolbar(
+        actions: [
+          AppIconButton.filled(
+            onPressed: _openCreateToolDialog,
+            icon: const Icon(Icons.add),
+            tooltip: _tx('knowledge.new_tool'),
           ),
-          const SizedBox(height: 12),
-          Text(
-            '${_tx('knowledge.tab_tools')}: ${filteredTools.length}',
-            style: Theme.of(context).textTheme.bodyMedium,
+          AppIconButton.outlined(
+            onPressed: _loadTools,
+            icon: const Icon(Icons.refresh),
+            tooltip: _tx('common.update'),
           ),
+          FilterButton(
+            activeCount: _toolFilterCount,
+            tooltip: _tx('common.filters'),
+            onPressed: _openToolFiltersDialog,
+          ),
+          ..._groupsButtons(),
         ],
+        summary: Text(
+          '${_tx('knowledge.tab_tools')}: ${filteredTools.length}',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
       ),
     );
   }

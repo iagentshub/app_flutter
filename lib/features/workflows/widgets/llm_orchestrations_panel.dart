@@ -211,7 +211,13 @@ class _LlmOrchestrationsPanelState extends State<LlmOrchestrationsPanel>
         ),
       ),
       emptyFillsViewport: true,
-      empty: Center(child: Text(widget.tx('llm_orchestrations.empty'))),
+      empty: AsyncStatePanel.empty(
+        icon: Icons.account_tree_outlined,
+        title: widget.tx('llm_orchestrations.empty_title'),
+        message: widget.tx('llm_orchestrations.empty'),
+        actionLabel: widget.tx('llm_orchestrations.empty_action'),
+        onAction: () => _edit(),
+      ),
       itemCount: _items.length,
       itemBuilder: (context, index) {
         final item = _items[index];

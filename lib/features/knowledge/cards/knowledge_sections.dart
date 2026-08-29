@@ -32,104 +32,88 @@ extension _KnowledgeSections on _KnowledgePageState {
                 ? _buildPackCard(entry)
                 : _buildItemCard(entry as KnowledgeItem),
             emptyText: _tx('knowledge.documents_empty'),
-            toolbar: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: [
-                    AppIconButton.filled(
-                      onPressed: _uploading
-                          ? null
-                          : () async {
-                              final box =
-                                  context.findRenderObject() as RenderBox?;
-                              final selected = await showMenu<String>(
-                                context: context,
-                                position: box == null
-                                    ? const RelativeRect.fromLTRB(16, 80, 16, 0)
-                                    : const RelativeRect.fromLTRB(
-                                        16,
-                                        80,
-                                        16,
-                                        0,
-                                      ),
-                                items: [
-                                  PopupMenuItem(
-                                    value: 'text',
-                                    child: Text(
-                                      _tx('knowledge.add_text_title'),
-                                    ),
-                                  ),
-                                  PopupMenuItem(
-                                    value: 'document',
-                                    child: Text(
-                                      _tx('knowledge.upload_document'),
-                                    ),
-                                  ),
-                                  PopupMenuItem(
-                                    value: 'image',
-                                    child: Text(_tx('knowledge.upload_image')),
-                                  ),
-                                  PopupMenuItem(
-                                    value: 'url',
-                                    child: Text(_tx('knowledge.import_url')),
-                                  ),
-                                  PopupMenuItem(
-                                    value: 'directory',
-                                    child: Text(
-                                      _tx('knowledge.include_directory'),
-                                    ),
-                                  ),
-                                ],
-                              );
-                              if (selected == 'text') {
-                                await _openAddTextDialog();
-                              }
-                              if (selected == 'document') {
-                                await _uploadDocument();
-                              }
-                              if (selected == 'image') {
-                                await _uploadDocument(imageOnly: true);
-                              }
-                              if (selected == 'url') {
-                                await _openAddUrlDialog();
-                              }
-                              if (selected == 'directory') {
-                                await _pickKnowledgeDirectory();
-                              }
-                            },
-                      icon: _uploading
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: IAgentsLoadingMark(),
-                            )
-                          : const Icon(Icons.add),
-                      tooltip: _tx('knowledge.add_content'),
-                    ),
-                    AppIconButton.outlined(
-                      onPressed: _load,
-                      icon: const Icon(Icons.refresh),
-                      tooltip: 'Actualizar',
-                    ),
-                    FilterButton(
-                      activeCount: _knowledgeFilterCount,
-                      tooltip: _tx('common.filters'),
-                      onPressed: _openKnowledgeFiltersDialog,
-                    ),
-                    ..._groupsButtons(),
-                  ],
+            emptyDescription: _tx('knowledge.documents_empty_description'),
+            emptyIcon: Icons.description_outlined,
+            toolbar: ResourceToolbar(
+              actions: [
+                AppIconButton.filled(
+                  onPressed: _uploading
+                      ? null
+                      : () async {
+                          final box = context.findRenderObject() as RenderBox?;
+                          final selected = await showMenu<String>(
+                            context: context,
+                            position: box == null
+                                ? const RelativeRect.fromLTRB(16, 80, 16, 0)
+                                : const RelativeRect.fromLTRB(16, 80, 16, 0),
+                            items: [
+                              PopupMenuItem(
+                                value: 'text',
+                                child: Text(_tx('knowledge.add_text_title')),
+                              ),
+                              PopupMenuItem(
+                                value: 'document',
+                                child: Text(_tx('knowledge.upload_document')),
+                              ),
+                              PopupMenuItem(
+                                value: 'image',
+                                child: Text(_tx('knowledge.upload_image')),
+                              ),
+                              PopupMenuItem(
+                                value: 'url',
+                                child: Text(_tx('knowledge.import_url')),
+                              ),
+                              PopupMenuItem(
+                                value: 'directory',
+                                child: Text(_tx('knowledge.include_directory')),
+                              ),
+                            ],
+                          );
+                          if (selected == 'text') {
+                            await _openAddTextDialog();
+                          }
+                          if (selected == 'document') {
+                            await _uploadDocument();
+                          }
+                          if (selected == 'image') {
+                            await _uploadDocument(imageOnly: true);
+                          }
+                          if (selected == 'url') {
+                            await _openAddUrlDialog();
+                          }
+                          if (selected == 'directory') {
+                            await _pickKnowledgeDirectory();
+                          }
+                        },
+                  icon: _uploading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: IAgentsLoadingMark(),
+                        )
+                      : const Icon(Icons.add),
+                  tooltip: _tx('knowledge.add_content'),
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  _hasMoreKnowledge
-                      ? '${collection.length}+'
-                      : '${collection.length}',
-                  style: Theme.of(context).textTheme.bodyMedium,
+                AppIconButton.outlined(
+                  onPressed: _load,
+                  icon: const Icon(Icons.refresh),
+                  tooltip: 'Actualizar',
                 ),
+                FilterButton(
+                  activeCount: _knowledgeFilterCount,
+                  tooltip: _tx('common.filters'),
+                  onPressed: _openKnowledgeFiltersDialog,
+                ),
+                ..._groupsButtons(),
               ],
+              summary: Text(
+                // Decía solo el número. Suelto bajo la barra pasaba por un
+                // detalle; dentro de ella, al lado de los botones, un «0» sin
+                // sujeto no se entiende — las otras pestañas sí se nombran.
+                '${_tx('knowledge.tab_documents')}: '
+                '${collection.length}${_hasMoreKnowledge ? '+' : ''}',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
             ),
           ),
           if (_draggingDirectory)
@@ -202,6 +186,8 @@ extension _KnowledgeSections on _KnowledgePageState {
     required List<T> items,
     required Widget Function(T) itemBuilder,
     required String emptyText,
+    required String emptyDescription,
+    required IconData emptyIcon,
     required Future<void> Function() onRefresh,
     Future<void> Function()? onLoadMore,
     bool hasMore = false,
@@ -215,11 +201,10 @@ extension _KnowledgeSections on _KnowledgePageState {
       loadingMore: loadingMore,
       itemCount: items.length,
       itemBuilder: (context, index) => itemBuilder(items[index]),
-      empty: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(emptyText),
-        ),
+      empty: AsyncStatePanel.empty(
+        icon: emptyIcon,
+        title: emptyText,
+        message: emptyDescription,
       ),
     );
   }
@@ -244,37 +229,31 @@ extension _KnowledgeSections on _KnowledgePageState {
       items: filteredSkills,
       itemBuilder: _buildSkillCard,
       emptyText: tr('knowledge.no_skills'),
-      toolbar: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              AppIconButton.filled(
-                onPressed: _openCreateSkillChoiceDialog,
-                icon: const Icon(Icons.add),
-                tooltip: 'Nueva skill',
-              ),
-              AppIconButton.outlined(
-                onPressed: _loadSkills,
-                icon: const Icon(Icons.refresh),
-                tooltip: 'Actualizar',
-              ),
-              FilterButton(
-                activeCount: _skillFilterCount,
-                tooltip: _tx('common.filters'),
-                onPressed: _openSkillFiltersDialog,
-              ),
-              ..._groupsButtons(),
-            ],
+      emptyDescription: tr('knowledge.no_skills_description'),
+      emptyIcon: Icons.auto_awesome_outlined,
+      toolbar: ResourceToolbar(
+        actions: [
+          AppIconButton.filled(
+            onPressed: _openCreateSkillChoiceDialog,
+            icon: const Icon(Icons.add),
+            tooltip: 'Nueva skill',
           ),
-          const SizedBox(height: 12),
-          Text(
-            'Skills: ${filteredSkills.length}',
-            style: Theme.of(context).textTheme.bodyMedium,
+          AppIconButton.outlined(
+            onPressed: _loadSkills,
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Actualizar',
           ),
+          FilterButton(
+            activeCount: _skillFilterCount,
+            tooltip: _tx('common.filters'),
+            onPressed: _openSkillFiltersDialog,
+          ),
+          ..._groupsButtons(),
         ],
+        summary: Text(
+          'Skills: ${filteredSkills.length}',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
       ),
     );
   }

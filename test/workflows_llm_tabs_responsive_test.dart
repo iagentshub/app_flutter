@@ -5,6 +5,7 @@ import 'package:app_flutter/shared/state/app_services_scope.dart';
 import 'package:app_flutter/shared/state/backend_controller.dart';
 import 'package:app_flutter/shared/state/locale_controller.dart';
 import 'package:app_flutter/shared/state/session_controller.dart';
+import 'package:app_flutter/shared/widgets/resource_toolbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -59,12 +60,28 @@ void main() {
 
       expect(find.text('Agentes'), findsOneWidget);
       expect(find.text('APIs LLM'), findsOneWidget);
-      expect(find.byIcon(Icons.account_tree_outlined), findsNothing);
-      expect(find.byIcon(Icons.hub_outlined), findsNothing);
-      expect(find.byIcon(Icons.add), findsOneWidget);
-      expect(find.byIcon(Icons.motion_photos_on_outlined), findsOneWidget);
-      expect(find.byIcon(Icons.refresh), findsOneWidget);
-      expect(find.byIcon(Icons.filter_list), findsOneWidget);
+
+      // Las dos pestañas van sin icono, solo con su nombre. La comprobación se
+      // acota al `TabBar` y no a la página entera porque estos mismos iconos
+      // son legítimos fuera de él: el del estado vacío ilustra la sección.
+      Finder enLasPestanas(IconData icono) => find.descendant(
+        of: find.byType(TabBar),
+        matching: find.byIcon(icono),
+      );
+      expect(enLasPestanas(Icons.account_tree_outlined), findsNothing);
+      expect(enLasPestanas(Icons.hub_outlined), findsNothing);
+
+      // Igual con las acciones: el botón del estado vacío repite el «+» de la
+      // barra a propósito —es la misma acción— así que contarlos en toda la
+      // página daría dos y no diría nada de la barra.
+      Finder enLaBarra(IconData icono) => find.descendant(
+        of: find.byType(ResourceToolbar),
+        matching: find.byIcon(icono),
+      );
+      expect(enLaBarra(Icons.add), findsOneWidget);
+      expect(enLaBarra(Icons.motion_photos_on_outlined), findsOneWidget);
+      expect(enLaBarra(Icons.refresh), findsOneWidget);
+      expect(enLaBarra(Icons.filter_list), findsOneWidget);
       await tester.tap(find.text('APIs LLM'));
       await tester.pump(const Duration(milliseconds: 500));
       expect(tester.takeException(), isNull);

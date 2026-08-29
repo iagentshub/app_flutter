@@ -20,6 +20,7 @@ import '../../../models/workflows/workflow_models.dart';
 import '../../../shared/graph/resource_graph_builder.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/app_services_scope.dart';
+import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
@@ -454,6 +455,14 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
     final content = ResourceCollectionView(
       header: toolbar,
       onRefresh: _load,
+      emptyFillsViewport: true,
+      empty: AsyncStatePanel.empty(
+        icon: Icons.account_tree_outlined,
+        title: _tx('workflows.empty_title'),
+        message: _tx('workflows.empty_description'),
+        actionLabel: _tx('workflows.empty_action'),
+        onAction: _openCreateDialog,
+      ),
       itemCount: filteredWorkflows.length,
       itemBuilder: (context, index) {
         final item = filteredWorkflows[index];

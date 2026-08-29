@@ -356,11 +356,10 @@ class _PublicProfilePageState extends State<PublicProfilePage>
     return ResourceCollectionView(
       header: header,
       onRefresh: _load,
-      empty: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(_tx('public_profile.empty_resources')),
-        ),
+      empty: AsyncStatePanel.empty(
+        icon: Icons.inbox_outlined,
+        title: _tx('public_profile.empty_resources'),
+        message: _tx('public_profile.empty_resources_description'),
       ),
       itemCount: filteredResources.length,
       itemBuilder: (context, index) {

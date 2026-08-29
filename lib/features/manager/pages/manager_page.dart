@@ -6,6 +6,7 @@ import '../../../models/manager/group_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/action_result.dart';
 import '../../../shared/state/app_services_scope.dart';
+import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
@@ -202,11 +203,12 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
           ),
         ],
       ),
-      empty: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(_tx('manager.empty_groups')),
-        ),
+      empty: AsyncStatePanel.empty(
+        icon: Icons.groups_outlined,
+        title: _tx('manager.empty_groups'),
+        message: _tx('manager.empty_groups_description'),
+        actionLabel: _tx('manager.empty_groups_action'),
+        onAction: _createGroup,
       ),
       itemCount: groups.length,
       itemBuilder: (context, index) => _buildGroupCard(groups[index]),

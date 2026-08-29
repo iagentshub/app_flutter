@@ -25,37 +25,31 @@ extension _PromptSections on _KnowledgePageState {
       items: filteredPrompts,
       itemBuilder: _buildPromptCard,
       emptyText: _tx('knowledge.no_prompts'),
-      toolbar: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              AppIconButton.filled(
-                onPressed: _openCreatePromptDialog,
-                icon: const Icon(Icons.add),
-                tooltip: _tx('knowledge.new_prompt'),
-              ),
-              AppIconButton.outlined(
-                onPressed: _loadPrompts,
-                icon: const Icon(Icons.refresh),
-                tooltip: _tx('common.update'),
-              ),
-              FilterButton(
-                activeCount: _promptFilterCount,
-                tooltip: _tx('common.filters'),
-                onPressed: _openPromptFiltersDialog,
-              ),
-              ..._groupsButtons(),
-            ],
+      emptyDescription: _tx('knowledge.no_prompts_description'),
+      emptyIcon: Icons.chat_bubble_outline,
+      toolbar: ResourceToolbar(
+        actions: [
+          AppIconButton.filled(
+            onPressed: _openCreatePromptDialog,
+            icon: const Icon(Icons.add),
+            tooltip: _tx('knowledge.new_prompt'),
           ),
-          const SizedBox(height: 12),
-          Text(
-            'Prompts: ${filteredPrompts.length}',
-            style: Theme.of(context).textTheme.bodyMedium,
+          AppIconButton.outlined(
+            onPressed: _loadPrompts,
+            icon: const Icon(Icons.refresh),
+            tooltip: _tx('common.update'),
           ),
+          FilterButton(
+            activeCount: _promptFilterCount,
+            tooltip: _tx('common.filters'),
+            onPressed: _openPromptFiltersDialog,
+          ),
+          ..._groupsButtons(),
         ],
+        summary: Text(
+          'Prompts: ${filteredPrompts.length}',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
       ),
     );
   }
