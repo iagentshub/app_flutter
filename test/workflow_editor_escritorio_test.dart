@@ -14,7 +14,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/memory_secure_store.dart';
 
-/// El editor se abre en blanco en la web de escritorio.
+/// El editor de orquestación, maquetado en anchos de escritorio.
+///
+/// Cubre dos fallos que solo salían aquí, porque la única prueba que existía
+/// montaba 360 px y los dos viven por encima de ese corte.
 ///
 /// `workflow_editor_mobile_test.dart` cubre 360 px y pasa, así que el fallo no
 /// se veía: a partir de 980 px el editor cambia a la disposición de dos
@@ -22,15 +25,18 @@ import 'support/memory_secure_store.dart';
 /// forces an infinite width», seguido de «Cannot hit test a render box with no
 /// size». El resultado para quien lo abre es una pantalla negra con la
 /// cabecera y nada más.
+///
+/// El segundo solo se veía entre ~980 y ~1050 px: el `Wrap` de acciones de la
+/// barra iba suelto en un `Row`, recibía ancho no acotado y aplastaba al
+/// título, que pasaba a envolver casi letra a letra. La barra llegaba a pedir
+/// 1139 px de alto en lugar de ~86 y desbordaba la columna por abajo.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  // 1024 sigue fuera, y no por falta de alto: a 1200 px de alto desborda lo
-  // mismo, así que lo que se le atraganta es el ancho —a 1024 el workspace
-  // entra en la rama de dos columnas por cuatro píxeles (984 contra el corte
-  // de 980) y al lienzo le quedan 566—. Mudar los metadatos al panel bajó el
-  // desbordamiento de 768 px a 438, pero no lo cerró. Anterior a este trabajo.
-  for (final ancho in [1400.0, 1920.0]) {
+  // 1024 estuvo fuera de esta lista mientras la barra del editor se comía la
+  // columna. Ahora entra, y es el ancho que importa: por debajo de ~1050 es
+  // donde el `Wrap` de acciones aplastaba al título.
+  for (final ancho in [1024.0, 1400.0, 1920.0]) {
     testWidgets('el editor maqueta sin excepciones a ${ancho.toInt()} px', (
       tester,
     ) async {

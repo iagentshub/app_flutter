@@ -88,11 +88,17 @@ class WorkflowEditorToolbar extends StatelessWidget {
             children: [heading, const SizedBox(height: 12), actions],
           );
         }
+        // `actions` es un `Wrap`, y un hijo no flexible de un `Row` recibe
+        // ancho **no acotado**: así el Wrap no envuelve nunca, se estira a lo
+        // que pidan los botones y al `Expanded` del título le quedan las
+        // migas, con lo que su texto envuelve casi letra a letra. Medido a
+        // 1024 px de ventana: la barra pedía 1139 px de alto en vez de ~50, se
+        // comía la columna del editor y la dejaba desbordada por abajo.
         return Row(
           children: [
             Expanded(child: heading),
             const SizedBox(width: 20),
-            actions,
+            Flexible(child: actions),
           ],
         );
       },
