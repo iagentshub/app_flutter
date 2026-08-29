@@ -13,6 +13,7 @@ import '../../../models/connections/connection_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/utils/breakpoints.dart';
 import '../../../shared/utils/scroll_to_end.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
@@ -306,7 +307,9 @@ class _SkillBuilderPageState extends State<SkillBuilderPage>
           return Center(
             child: ConstrainedBox(
               // Ancho de lectura, no de pantalla: el texto es el contenido.
-              constraints: const BoxConstraints(maxWidth: 760),
+              constraints: const BoxConstraints(
+                maxWidth: Breakpoints.anchoLectura,
+              ),
               child: Padding(
                 padding: EdgeInsets.symmetric(
                   horizontal: compact

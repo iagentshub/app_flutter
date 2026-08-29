@@ -17,6 +17,7 @@ import '../../../models/prompts/prompt_models.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
+import '../../../shared/utils/breakpoints.dart';
 import '../../../shared/utils/scroll_to_end.dart';
 import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
@@ -256,7 +257,16 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
                     child: _buildHistoryPanel(),
                   ),
                 ),
-              Expanded(child: _buildChatColumn()),
+              Expanded(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: Breakpoints.anchoLectura,
+                    ),
+                    child: _buildChatColumn(),
+                  ),
+                ),
+              ),
             ],
           );
         },

@@ -8,12 +8,19 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('la tipografía usa recursos del sistema sin descarga en runtime', () {
-    final expected = ThemeData.light(useMaterial3: true).textTheme;
-    final actual = FncFonts.textTheme(Brightness.light);
-
-    expect(actual.bodyMedium?.fontFamily, expected.bodyMedium?.fontFamily);
-    expect(actual.titleLarge?.fontFamily, expected.titleLarge?.fontFamily);
+  // Antes esta prueba fijaba lo contrario —que el tema heredase la fuente del
+  // sistema para no descargar nada al arrancar—, y con ella la app entera se
+  // veía en Roboto mientras Geist, ya declarada en el pubspec y ya pesando en
+  // el bundle, la usaba solo /register. El coste se paga al declarar la
+  // familia, no al usarla, así que la restricción no ahorraba nada y sí dejaba
+  // un salto de tipografía al cruzar desde la landing.
+  test('la tipografía de la app es Geist en los dos brillos', () {
+    for (final brightness in Brightness.values) {
+      final actual = FncFonts.textTheme(brightness);
+      expect(actual.bodyMedium?.fontFamily, FncFonts.geist);
+      expect(actual.titleLarge?.fontFamily, FncFonts.geist);
+      expect(actual.labelSmall?.fontFamily, FncFonts.geist);
+    }
   });
 
   test('selecciona correctamente el modo claro u oscuro', () {

@@ -6,7 +6,6 @@
     "background_color": "#D90429",
     "theme_color": "#D90429",
     "description": "Create, manage and collaborate with AI agents.",
-    "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
         {

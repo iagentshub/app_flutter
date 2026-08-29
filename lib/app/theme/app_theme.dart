@@ -54,6 +54,12 @@ abstract final class AppTheme {
       error: FncColors.errorLight,
       onError: FncColors.white,
       outline: FncColors.outlineLight,
+      // Sin estos dos, M3 los resuelve a su baseline: un gris con tinte lila
+      // ajeno a la paleta, que salía en cada texto secundario y cada divisor
+      // de la app. `_SidebarTokens` ya los sustituía, pero solo dentro del
+      // menú lateral; aquí se corrigen en el origen, con la misma derivación.
+      onSurfaceVariant: FncColors.black.withValues(alpha: 0.60),
+      outlineVariant: FncColors.black.withValues(alpha: 0.08),
       surfaceTint: accentColor,
       inverseSurface: FncColors.black,
       onInverseSurface: FncColors.white,
@@ -69,6 +75,10 @@ abstract final class AppTheme {
       scaffoldBackgroundColor: pageBackground,
       cardColor: cardColor,
       useMaterial3: true,
+      // En escritorio y web los controles venían con el tamaño táctil de
+      // móvil, que con ratón sobra: `adaptivePlatformDensity` los compacta
+      // solo ahí y deja Android e iOS como estaban.
+      visualDensity: VisualDensity.adaptivePlatformDensity,
       // Las páginas que se abren con `Navigator.push` toman su transición de
       // aquí, no de cada llamada — ver app_page_transitions.dart.
       pageTransitionsTheme: appPageTransitionsTheme,
@@ -151,6 +161,9 @@ abstract final class AppTheme {
       error: FncColors.errorDark,
       onError: FncColors.black,
       outline: FncColors.outlineDark,
+      // Ver la nota del tema claro.
+      onSurfaceVariant: FncColors.white.withValues(alpha: 0.60),
+      outlineVariant: FncColors.white.withValues(alpha: 0.08),
       surfaceTint: accentColor,
     );
 
@@ -164,6 +177,8 @@ abstract final class AppTheme {
       scaffoldBackgroundColor: FncColors.black,
       cardColor: cardColor,
       useMaterial3: true,
+      // Ver la nota del tema claro.
+      visualDensity: VisualDensity.adaptivePlatformDensity,
       pageTransitionsTheme: appPageTransitionsTheme,
       cardTheme: CardThemeData(
         color: cardColor,

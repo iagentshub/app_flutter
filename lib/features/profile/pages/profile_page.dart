@@ -14,6 +14,7 @@ import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/state/brand_icon_controller.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/theme_controller.dart';
+import '../../../shared/utils/breakpoints.dart';
 import '../../../shared/utils/date_format.dart';
 import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/brand_icon.dart';
@@ -382,7 +383,9 @@ class _ProfilePageState extends State<ProfilePage>
                     child: Align(
                       alignment: Alignment.topCenter,
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 700),
+                        constraints: const BoxConstraints(
+                          maxWidth: Breakpoints.anchoLectura,
+                        ),
                         child: ListView(
                           physics: const AlwaysScrollableScrollPhysics(),
                           padding: const EdgeInsets.all(16),

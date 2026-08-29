@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 /// literal — siempre una constante de aquí.
 ///
 /// - Texto con un rol Material natural (título, cuerpo, etiqueta) usa
-///   `Theme.of(context).textTheme.X`, que hereda la familia del sistema y
-///   reacciona al color del tema activo automáticamente, sin descargar una
-///   fuente durante el arranque.
+///   `Theme.of(context).textTheme.X`, que hereda Geist —la familia que
+///   `textTheme()` aplica al tema— y reacciona al color del tema activo
+///   automáticamente.
 /// - `FncFonts.X` (estático) se usa para: construir `ThemeData` en
 ///   `app_theme.dart` (sin `BuildContext`), los roles con nombre que no
 ///   tienen slot Material (`badge`/`overline`/`code*`), y cualquier
@@ -21,10 +21,13 @@ abstract final class FncFonts {
   // .woff2 que frontend_react carga con @fontsource-variable, convertidos a
   // TTF porque Flutter no lee woff2.
   //
-  // Las usa **solo** /register: es la pantalla a la que se llega desde la
-  // landing, y hasta ahora cambiaba de tipografía al cruzarla. El resto de la
-  // app sigue con la fuente del sistema a propósito (ver la nota de arriba):
-  // esto suma ~108 KB al bundle, no 108 KB por pantalla.
+  // Las usa **toda** la app, vía `textTheme()`. Empezó siendo solo de
+  // /register —la pantalla a la que se llega desde la landing, que era donde
+  // más cantaba el cambio de tipografía al cruzarla— con el resto en la fuente
+  // del sistema para no descargar nada al arrancar. Pero el peso se paga al
+  // declararla en el pubspec, no al usarla: eran ~108 KB ya dentro del bundle
+  // que disfrutaba una sola pantalla, mientras las otras cuarenta seguían en
+  // Roboto y la app entera se veía prestada. Extenderla no añade un byte.
   // -----------------------------------------------------------------------
   static const String geist = 'Geist';
   static const String geistMono = 'Geist Mono';
@@ -42,7 +45,7 @@ abstract final class FncFonts {
     final base = brightness == Brightness.dark
         ? ThemeData.dark(useMaterial3: true).textTheme
         : ThemeData.light(useMaterial3: true).textTheme;
-    return base;
+    return base.apply(fontFamily: geist);
   }
 
   // -----------------------------------------------------------------------
