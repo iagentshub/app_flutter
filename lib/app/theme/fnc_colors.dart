@@ -166,6 +166,13 @@ abstract final class FncColors {
 
   static Color borderSubtle(BuildContext context) =>
       Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08);
+
+  /// Borde de un control secundario que acompaña a la acción principal sin
+  /// competir con ella. El `side` de `outlinedButtonTheme` es un color fijo
+  /// —blanco entero en oscuro— igual en todos los estados, así que un botón
+  /// secundario pesaba en pantalla lo mismo que el primario.
+  static Color borderQuiet(BuildContext context) =>
+      Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.22);
   static Color textMuted(BuildContext context) =>
       Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.60);
   static Color hoverOverlay(BuildContext context) =>
@@ -240,6 +247,18 @@ abstract final class FncColors {
   static const overlayRedAccent40 = Color(0x66D90429);
   static const overlayMaroon40 = Color(0x667A0C1C);
   static const overlayRedAccent20 = Color(0x33D90429);
+  static const overlayBlack20 = Color(0x33000000);
+
+  // Panel de marca del login. No depende del brightness: el panel es oscuro
+  // en ambos temas —vive pegado al degradado de la página pero no lo hereda—
+  // así que estos tres son constantes, no funciones de ColorScheme.
+  static const loginPanelTop = Color(0xFF1A1A1D);
+  static const loginPanelDeep = Color(0xFF14060A);
+
+  /// Núcleo del nodo donde convergen los arcos de la marca. El rojo puro no
+  /// se distingue de su propio halo a ese tamaño; este es el mismo tono un
+  /// paso más claro, para que el punto se lea como punto.
+  static const loginNode = Color(0xFFFF3B57);
 
   // Observatorio tecnológico · modo galaxia del grafo de recursos.
   // Es una superficie deliberadamente oscura en ambos temas para mantener

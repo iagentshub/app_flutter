@@ -87,8 +87,8 @@ List<String>? topologicalOrder(List<WorkflowStepDraft> steps) {
 /// solapa nodos.
 Map<String, Offset> layeredLayout(
   List<WorkflowStepDraft> steps, {
-  double columnWidth = 310,
-  double rowHeight = 200,
+  double columnWidth = 288,
+  double rowHeight = 172,
   double origin = 80,
 }) {
   final order = topologicalOrder(steps);

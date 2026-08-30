@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,6 +13,7 @@ import '../../../core/network/api_error.dart';
 import '../../../core/storage/local_store.dart';
 import '../../../models/auth/session_user.dart';
 import '../../../models/github/github_device_flow.dart';
+import '../../../shared/branding/brand_mark_geometry.dart';
 import '../../../shared/i18n/locale_loader.dart';
 import '../../../shared/state/backend_controller.dart';
 import '../../../shared/state/boot_platform_cache.dart';
@@ -22,6 +24,7 @@ import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/iagents_loading_indicator.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
+import '../../../shared/widgets/motion/app_motion.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../../utils/i18n.dart';
@@ -79,9 +82,6 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
   bool _platformLoaded = false;
   bool _guestEnabled = false;
   bool _showRegister = false;
-  bool _oauthGoogleEnabled = false;
-  bool _oauthAppleEnabled = false;
-  bool _oauthMicrosoftEnabled = false;
   bool _oauthGithubEnabled = false;
   _BackendStatus _backendStatus = _BackendStatus.checking;
 
@@ -266,9 +266,6 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
         _backendStatus = _BackendStatus.ok;
         _guestEnabled = platform['guest_enabled'] == true;
         _showRegister = registration == 'open' && !billingEnabled;
-        _oauthGoogleEnabled = platform['oauth_google_enabled'] != false;
-        _oauthAppleEnabled = platform['oauth_apple_enabled'] != false;
-        _oauthMicrosoftEnabled = platform['oauth_microsoft_enabled'] != false;
         _oauthGithubEnabled = platform['oauth_github_enabled'] == true;
       });
       unawaited(
@@ -283,9 +280,6 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
         _backendStatus = _BackendStatus.down;
         _guestEnabled = false;
         _showRegister = false;
-        _oauthGoogleEnabled = false;
-        _oauthAppleEnabled = false;
-        _oauthMicrosoftEnabled = false;
         _oauthGithubEnabled = false;
       });
     }
@@ -306,11 +300,7 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
     setState(() {});
   }
 
-  bool get _showAnyOauth =>
-      _oauthGoogleEnabled ||
-      _oauthAppleEnabled ||
-      _oauthMicrosoftEnabled ||
-      _oauthGithubEnabled;
+  bool get _showAnyOauth => _oauthGithubEnabled;
 
   Future<void> _syncUserSettings(
     String token,
@@ -480,7 +470,7 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.fromLTRB(24, 56, 24, 32),
                         child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 480),
+                          constraints: const BoxConstraints(maxWidth: 456),
                           child: _buildFormCard(context),
                         ),
                       ),
@@ -498,9 +488,9 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
                               children: [
                                 Align(
                                   alignment: Alignment.centerRight,
-                                  child: TertiaryButton(
+                                  child: _LanguageSwitcher(
                                     onPressed: _toggleLanguage,
-                                    child: Text(_siguienteIdioma.toUpperCase()),
+                                    languageCode: _siguienteIdioma,
                                   ),
                                 ),
                                 _buildHeroPanel(context, compact: true),
@@ -515,30 +505,30 @@ class _LoginPageState extends State<LoginPage> with StateMessaging {
                     return Stack(
                       key: const Key('login-desktop-layout'),
                       children: [
-                        Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 32),
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 1360),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    flex: 5,
-                                    child: _buildHeroPanel(context),
-                                  ),
-                                  const SizedBox(width: 48),
-                                  Expanded(flex: 6, child: formArea),
-                                ],
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // El panel va a sangre: sin margen, sin radio y
+                            // hasta el borde de la ventana. Ancho fijo y no
+                            // un `Expanded` con flex porque en un monitor
+                            // ultrapanorámico un 43% son 900 px de panel y
+                            // el formulario se queda perdido a la derecha.
+                            SizedBox(
+                              width: (constraints.maxWidth * 0.43).clamp(
+                                420.0,
+                                720.0,
                               ),
+                              child: _buildHeroPanel(context),
                             ),
-                          ),
+                            Expanded(child: formArea),
+                          ],
                         ),
                         Positioned(
                           top: 8,
                           right: 16,
-                          child: TertiaryButton(
+                          child: _LanguageSwitcher(
                             onPressed: _toggleLanguage,
-                            child: Text(_siguienteIdioma.toUpperCase()),
+                            languageCode: _siguienteIdioma,
                           ),
                         ),
                       ],

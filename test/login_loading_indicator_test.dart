@@ -81,6 +81,12 @@ void main() {
     final fields = find.byType(TextFormField);
     await tester.enterText(fields.at(0), 'usuario');
     await tester.enterText(fields.at(1), 'secreto');
+    // El login es una sola columna que scrollea: en el alto de prueba
+    // (600 px) el botón cae por debajo del pliegue, igual que en un
+    // teléfono real. Lo que se comprueba aquí es el overlay de espera,
+    // no dónde queda el botón.
+    await tester.ensureVisible(find.text('Entrar'));
+    await tester.pump();
     await tester.tap(find.text('Entrar'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 150));
@@ -141,6 +147,12 @@ void main() {
     final fields = find.byType(TextFormField);
     await tester.enterText(fields.at(0), 'usuario');
     await tester.enterText(fields.at(1), 'secreto');
+    // El login es una sola columna que scrollea: en el alto de prueba
+    // (600 px) el botón cae por debajo del pliegue, igual que en un
+    // teléfono real. Lo que se comprueba aquí es el overlay de espera,
+    // no dónde queda el botón.
+    await tester.ensureVisible(find.text('Entrar'));
+    await tester.pump();
     await tester.tap(find.text('Entrar'));
     await tester.pump();
     repository.loginCompleter.complete((

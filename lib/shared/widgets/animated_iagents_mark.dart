@@ -187,6 +187,32 @@ const _sequence = [
   _MarkState.logo,
 ];
 
+/// La marca quieta, sin animación ni ciclo de morfeo.
+///
+/// El login la necesitaba y solo había dos formas de pintarla: `BrandIcon`,
+/// que carga el PNG que el usuario haya elegido en su perfil —no la marca
+/// canónica, y en el login todavía no hay usuario—, o los painters privados
+/// de este archivo. Vive aquí porque aquí está la geometría; duplicarla en
+/// la pantalla de acceso la habría dejado a merced del siguiente retoque
+/// del logo.
+class IAgentsMarkTile extends StatelessWidget {
+  const IAgentsMarkTile({this.size = 44, super.key});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'iAgents Hub',
+      image: true,
+      child: _MarkTile(
+        size: size,
+        child: const CustomPaint(painter: _EntrancePainter(progress: 1)),
+      ),
+    );
+  }
+}
+
 class _LoadingMarkCanvas extends StatelessWidget {
   const _LoadingMarkCanvas({
     required this.size,

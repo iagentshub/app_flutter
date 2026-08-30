@@ -8,8 +8,11 @@ import '../cards/workflow_node_card.dart';
 import '../models/workflow_graph_validation.dart';
 import '../models/workflow_step_draft.dart';
 
-typedef WorkflowConnectionCallback =
-    void Function(String sourceId, String targetId, String type);
+typedef WorkflowConnectionCallback = void Function(
+  String sourceId,
+  String targetId,
+  String type,
+);
 
 void _ignoreConnection(String _, String _, String _) {}
 
@@ -31,7 +34,6 @@ class WorkflowVisualCanvas extends StatefulWidget {
     required this.fitTooltip,
     required this.zoomInTooltip,
     required this.zoomOutTooltip,
-    required this.connectionHint,
     required this.inputLabel,
     required this.outputLabel,
     required this.missingAgentLabel,
@@ -63,7 +65,6 @@ class WorkflowVisualCanvas extends StatefulWidget {
   final String fitTooltip;
   final String zoomInTooltip;
   final String zoomOutTooltip;
-  final String connectionHint;
   final String inputLabel;
   final String outputLabel;
   final String missingAgentLabel;
@@ -89,7 +90,7 @@ class WorkflowVisualCanvas extends StatefulWidget {
 }
 
 class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
-  static const _nodeSize = Size(260, 140);
+  static const _nodeSize = Size(240, 120);
   static const _inputPort = 'input';
   static const _outputPort = 'output';
 
@@ -280,12 +281,12 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final base = isDark ? NodeFlowTheme.dark : NodeFlowTheme.light;
     final connection = base.connectionTheme.copyWith(
-      color: colors.outline,
+      color: colors.outline.withValues(alpha: .78),
       selectedColor: colors.primary,
       highlightColor: colors.primary,
       highlightBorderColor: colors.primary,
-      strokeWidth: 1.7,
-      selectedStrokeWidth: 2.4,
+      strokeWidth: 1.5,
+      selectedStrokeWidth: 2.2,
       endPoint: ConnectionEndPoint.triangle,
       endpointColor: colors.outline,
       endpointBorderColor: colors.outline,
@@ -310,116 +311,76 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
         borderWidth: 1.5,
       ),
       gridTheme: base.gridTheme.copyWith(
-        color: colors.outlineVariant.withValues(alpha: .55),
+        color: colors.outlineVariant.withValues(alpha: .34),
         size: 24,
-        thickness: .75,
+        thickness: .65,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: colors.surfaceContainerLowest,
-          border: Border.all(color: colors.outlineVariant),
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Stack(
-          children: [
-            NodeFlowEditor<WorkflowStepDraft, String>(
-              controller: _controller,
-              theme: _canvasTheme(context),
-              nodeBuilder: _buildNode,
-              behavior: widget.behavior,
-              events: NodeFlowEvents<WorkflowStepDraft, String>(
-                onInit: () => WidgetsBinding.instance.addPostFrameCallback(
-                  (_) => _controller.fitToView(),
-                ),
-                node: NodeEvents<WorkflowStepDraft>(
-                  onTap: (node) => widget.onStepSelected(node.id),
-                  onSelected: (node) {
-                    if (node != null) widget.onStepSelected(node.id);
-                  },
-                  onDragStop: (node) {
-                    final position = node.visualPosition.value;
-                    _controller.setNodePosition(node.id, position);
-                    widget.onStepMoved?.call(node.id, position);
-                  },
-                  onBeforeDelete: (node) async =>
-                      widget.behavior.canDelete && widget.steps.length > 1,
-                  onDeleted: (node) {
-                    if (!_syncing) widget.onStepDeleted?.call(node.id);
-                  },
-                ),
-                connection: ConnectionEvents<WorkflowStepDraft, String>(
-                  onCreated: _handleConnectionCreated,
-                  onDeleted: _handleConnectionDeleted,
-                  onBeforeComplete: (connection) {
-                    final allowed =
-                        widget.behavior.canCreate &&
-                        (widget.canCreateConnection?.call(
-                              connection.sourceNode.id,
-                              connection.targetNode.id,
-                            ) ??
-                            true);
-                    return allowed
-                        ? const ConnectionValidationResult.allow()
-                        : ConnectionValidationResult.deny(
-                            reason: widget.invalidConnectionMessage,
-                            showMessage: true,
-                          );
-                  },
-                ),
-              ),
+    return Stack(
+      children: [
+        NodeFlowEditor<WorkflowStepDraft, String>(
+          controller: _controller,
+          theme: _canvasTheme(context),
+          nodeBuilder: _buildNode,
+          behavior: widget.behavior,
+          events: NodeFlowEvents<WorkflowStepDraft, String>(
+            onInit: () => WidgetsBinding.instance.addPostFrameCallback(
+              (_) => _controller.fitToView(),
             ),
-            Positioned(
-              top: 12,
-              right: 12,
-              child: _CanvasControls(
-                fitTooltip: widget.fitTooltip,
-                zoomInTooltip: widget.zoomInTooltip,
-                zoomOutTooltip: widget.zoomOutTooltip,
-                onFit: _controller.fitToView,
-                onZoomIn: () => _controller.zoomBy(.15),
-                onZoomOut: () => _controller.zoomBy(-.15),
-              ),
+            node: NodeEvents<WorkflowStepDraft>(
+              onTap: (node) => widget.onStepSelected(node.id),
+              onSelected: (node) {
+                if (node != null) widget.onStepSelected(node.id);
+              },
+              onDragStop: (node) {
+                final position = node.visualPosition.value;
+                _controller.setNodePosition(node.id, position);
+                widget.onStepMoved?.call(node.id, position);
+              },
+              onBeforeDelete: (node) async =>
+                  widget.behavior.canDelete && widget.steps.length > 1,
+              onDeleted: (node) {
+                if (!_syncing) widget.onStepDeleted?.call(node.id);
+              },
             ),
-            // La pista de "arrastra para conectar" solo aplica al editor.
-            if (widget.behavior.canCreate)
-              Positioned(
-                left: 16,
-                right: 16,
-                bottom: 12,
-                child: IgnorePointer(
-                  child: Center(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: colors.surface.withValues(alpha: .9),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: colors.outlineVariant),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 7,
-                        ),
-                        child: Text(
-                          widget.connectionHint,
-                          style: Theme.of(context).textTheme.bodySmall,
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-          ],
+            connection: ConnectionEvents<WorkflowStepDraft, String>(
+              onCreated: _handleConnectionCreated,
+              onDeleted: _handleConnectionDeleted,
+              onBeforeComplete: (connection) {
+                final allowed =
+                    widget.behavior.canCreate &&
+                    (widget.canCreateConnection?.call(
+                          connection.sourceNode.id,
+                          connection.targetNode.id,
+                        ) ??
+                        true);
+                return allowed
+                    ? const ConnectionValidationResult.allow()
+                    : ConnectionValidationResult.deny(
+                        reason: widget.invalidConnectionMessage,
+                        showMessage: true,
+                      );
+              },
+            ),
+          ),
         ),
-      ),
+        Positioned(
+          top: 12,
+          right: 12,
+          child: _CanvasControls(
+            fitTooltip: widget.fitTooltip,
+            zoomInTooltip: widget.zoomInTooltip,
+            zoomOutTooltip: widget.zoomOutTooltip,
+            onFit: _controller.fitToView,
+            onZoomIn: () => _controller.zoomBy(.15),
+            onZoomOut: () => _controller.zoomBy(-.15),
+          ),
+        ),
+      ],
     );
   }
 
@@ -460,10 +421,13 @@ class _CanvasControls extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     return Material(
       color: colors.surface.withValues(alpha: .94),
-      elevation: 3,
-      borderRadius: BorderRadius.circular(12),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(color: colors.outlineVariant),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(4),
+        padding: const EdgeInsets.all(2),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

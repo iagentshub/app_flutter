@@ -172,7 +172,6 @@ class _RunProgressDialogState extends State<RunProgressDialog> {
       fitTooltip: _tx('workflow_editor.fit_view'),
       zoomInTooltip: _tx('workflow_editor.zoom_in'),
       zoomOutTooltip: _tx('workflow_editor.zoom_out'),
-      connectionHint: '',
       inputLabel: _tx('workflow_editor.input_port'),
       outputLabel: _tx('workflow_editor.output_port'),
       missingAgentLabel: _tx('workflow_editor.no_agent'),

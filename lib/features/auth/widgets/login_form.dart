@@ -2,15 +2,21 @@ part of '../pages/login_page.dart';
 
 extension _LoginForm on _LoginPageState {
   Widget _buildFormCard(BuildContext context) {
+    final theme = Theme.of(context);
+    final dark = theme.brightness == Brightness.dark;
     return Card(
       key: const Key('login-form-card'),
-      elevation: 10,
-      shadowColor: FncColors.black.withValues(alpha: 0.28),
-      // M3 tiñe la superficie con la elevación; aquí solo queremos la sombra.
+      margin: EdgeInsets.zero,
+      color: theme.colorScheme.surface.withValues(alpha: dark ? 0.88 : 0.94),
+      elevation: 0,
+      // La transparencia deja entrar el fondo continuo sin sacrificar el
+      // contraste del formulario; el borde sustituye a una sombra pesada.
       surfaceTintColor: FncColors.transparent,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: FncColors.borderSubtle(context)),
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.10),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(28, 28, 28, 20),
@@ -58,17 +64,21 @@ extension _LoginForm on _LoginPageState {
                   Center(
                     child: Text(
                       cardTitle,
+                      // w800 a 22 px se lee tosco, y con la entradilla al
+                      // mismo blanco que él las dos líneas competían.
                       style: const TextStyle(
                         fontSize: FncFonts.size22,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -0.3,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 5),
                   Center(
                     child: Text(
                       cardSub,
-                      style: Theme.of(context).textTheme.bodyMedium,
+                      style: Theme.of(context).textTheme.bodyMedium
+                          ?.copyWith(color: FncColors.textMuted(context)),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -233,6 +243,16 @@ extension _LoginForm on _LoginPageState {
                     width: double.infinity,
                     height: 48,
                     child: PrimaryButton(
+                      // La pastilla es el `StadiumBorder` que M3 pone solo, y
+                      // no casaba con nada más de la tarjeta: campos y botones
+                      // OAuth van a radio 10. Aquí se iguala para que los
+                      // radios de la pantalla sean un sistema y no la suma de
+                      // tres valores por defecto.
+                      style: FilledButton.styleFrom(
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(10)),
+                        ),
+                      ),
                       onPressed: (_loading || backendDown) ? null : _submit,
                       child: Text(_loading ? loginBtnLoading : loginBtn),
                     ),
@@ -275,24 +295,6 @@ extension _LoginForm on _LoginPageState {
                         alignment: WrapAlignment.center,
                         runSpacing: 8,
                         children: [
-                          if (_oauthGoogleEnabled)
-                            const _OauthButton(
-                              label: 'Google',
-                              icon: FaIcon(FontAwesomeIcons.google, size: 17),
-                            ),
-                          if (_oauthAppleEnabled)
-                            const _OauthButton(
-                              label: 'Apple',
-                              icon: FaIcon(FontAwesomeIcons.apple, size: 18),
-                            ),
-                          if (_oauthMicrosoftEnabled)
-                            const _OauthButton(
-                              label: 'Microsoft',
-                              icon: FaIcon(
-                                FontAwesomeIcons.microsoft,
-                                size: 17,
-                              ),
-                            ),
                           if (_oauthGithubEnabled)
                             _OauthButton(
                               label: 'GitHub',
@@ -309,6 +311,19 @@ extension _LoginForm on _LoginPageState {
                       SizedBox(
                         width: double.infinity,
                         child: SecondaryButton(
+                          // Con el borde blanco entero del tema, el acceso de
+                          // invitado pesaba en pantalla lo mismo que «Entrar».
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(
+                              color: FncColors.borderQuiet(context),
+                            ),
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(10),
+                              ),
+                            ),
+                            minimumSize: const Size.fromHeight(44),
+                          ),
                           onPressed: (_loading || backendDown)
                               ? null
                               : _submitGuest,
@@ -355,7 +370,10 @@ extension _LoginForm on _LoginPageState {
                             child: Text(
                               widget.backendController.selectedOption.label,
                               overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.bodySmall,
+                              // Es un host, no una frase: en monoespaciada se
+                              // lee como lo que es.
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(fontFamily: FncFonts.geistMono),
                             ),
                           ),
                           Icon(

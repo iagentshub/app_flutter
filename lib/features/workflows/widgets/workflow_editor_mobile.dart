@@ -2,32 +2,20 @@ part of '../pages/workflow_editor_page.dart';
 
 extension _WorkflowEditorMobile on _WorkflowEditorPageState {
   Widget _buildMobileCanvasToolbar() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              '${_steps.length} ${_tx('workflows.steps_suffix')} · '
-              '${_steps.connectionCount} '
-              '${_tx('workflows.connections_suffix')}',
-              style: Theme.of(context).textTheme.labelMedium,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          AppIconButton.outlined(
-            onPressed: _autoLayout,
-            icon: const Icon(Icons.auto_awesome_mosaic_outlined),
-            tooltip: _tx('workflow_editor.auto_layout'),
-          ),
-          const SizedBox(width: 6),
-          AppIconButton.filled(
-            onPressed: _addStep,
-            icon: const Icon(Icons.add_rounded),
-            tooltip: _tx('workflow_editor.add_step_btn'),
-          ),
-        ],
-      ),
+    return WorkflowEditorToolbar(
+      stepCount: _steps.length,
+      connectionCount: _steps.connectionCount,
+      issueCount: _issues.length,
+      stepsLabel: _tx('workflows.steps_suffix'),
+      connectionsLabel: _tx('workflows.connections_suffix'),
+      issuesLabel: _tx('workflow_editor.issues_suffix'),
+      autoLayoutLabel: _tx('workflow_editor.auto_layout'),
+      onAutoLayout: _autoLayout,
+      addLabel: _tx('workflow_editor.add_step_btn'),
+      onAdd: _addStep,
+      onIssuesPressed: _issues.isEmpty
+          ? null
+          : () => _refresh(() => _mobileSection = 0),
     );
   }
 

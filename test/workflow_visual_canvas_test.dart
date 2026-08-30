@@ -46,7 +46,6 @@ Widget _testCanvas({
           fitTooltip: 'Encajar',
           zoomInTooltip: 'Acercar',
           zoomOutTooltip: 'Alejar',
-          connectionHint: 'Conecta los nodos',
           inputLabel: 'Entrada',
           outputLabel: 'Salida',
           missingAgentLabel: 'Sin agente',

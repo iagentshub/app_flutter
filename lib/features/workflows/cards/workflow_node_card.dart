@@ -66,7 +66,7 @@ class WorkflowNodeCard extends StatelessWidget {
     return AnimatedContainer(
       key: ValueKey('workflow-node-${step.id}'),
       duration: const Duration(milliseconds: 220),
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 13),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 11),
       decoration: BoxDecoration(
         color: status == WorkflowNodeVisualStatus.waiting
             ? colors.surfaceContainerLow
@@ -79,9 +79,9 @@ class WorkflowNodeCard extends StatelessWidget {
         boxShadow: [
           if (_highlighted)
             BoxShadow(
-              color: accent.withValues(alpha: .16),
-              blurRadius: 18,
-              offset: const Offset(0, 6),
+              color: accent.withValues(alpha: .12),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
         ],
       ),
@@ -96,7 +96,7 @@ class WorkflowNodeCard extends StatelessWidget {
                 evaluator: step.isEvaluator,
                 hasIssue: hasIssue,
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 9),
               Expanded(
                 child: Text(
                   label,
@@ -126,7 +126,7 @@ class WorkflowNodeCard extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Text(
             agentName,
             maxLines: 1,
@@ -175,18 +175,18 @@ class _NodeGlyph extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 32,
-      height: 32,
+      width: 28,
+      height: 28,
       decoration: BoxDecoration(
         color: accent.withValues(alpha: .15),
         borderRadius: BorderRadius.circular(9),
       ),
       child: status == WorkflowNodeVisualStatus.running
           ? const Padding(
-              padding: EdgeInsets.all(8),
+              padding: EdgeInsets.all(7),
               child: IAgentsLoadingMark(),
             )
-          : Icon(_icon, size: 18, color: accent),
+          : Icon(_icon, size: 17, color: accent),
     );
   }
 }

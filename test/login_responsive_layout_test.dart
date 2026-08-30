@@ -62,15 +62,27 @@ void main() {
     expect(find.byKey(const Key('login-desktop-layout')), findsOneWidget);
     expect(find.byKey(const Key('login-mobile-layout')), findsNothing);
     expect(find.byKey(const Key('login-desktop-hero')), findsOneWidget);
+    expect(find.byKey(const Key('login-atmosphere-animated')), findsOneWidget);
 
     final heroRect = tester.getRect(
       find.byKey(const Key('login-desktop-hero')),
     );
     final formRect = tester.getRect(find.byKey(const Key('login-form-card')));
+    final atmosphereRect = tester.getRect(
+      find.byKey(const Key('login-atmosphere')),
+    );
 
     expect(heroRect.center.dx, lessThan(formRect.center.dx));
     expect(formRect.width, inInclusiveRange(440, 480));
     expect(formRect.right, lessThan(1500));
+    expect(atmosphereRect, const Rect.fromLTWH(0, 0, 1600, 900));
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('login-desktop-hero')),
+        matching: find.byKey(const Key('login-atmosphere')),
+      ),
+      findsNothing,
+    );
   });
 
   testWidgets('muestra todo el contenido en una columna desplazable en movil', (
@@ -83,6 +95,10 @@ void main() {
     expect(find.byKey(const Key('login-desktop-layout')), findsNothing);
     expect(find.byKey(const Key('login-mobile-hero')), findsOneWidget);
     expect(find.byKey(const Key('login-form-card')), findsOneWidget);
+    expect(
+      tester.getRect(find.byKey(const Key('login-atmosphere'))),
+      const Rect.fromLTWH(0, 0, 320, 568),
+    );
 
     final backendSelector = find.byKey(const Key('login-backend-selector'));
     await tester.ensureVisible(backendSelector);
@@ -90,6 +106,20 @@ void main() {
 
     expect(backendSelector, findsOneWidget);
     expect(tester.getBottomRight(backendSelector).dy, lessThanOrEqualTo(568));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('detiene la atmósfera cuando se reduce el movimiento', (
+    tester,
+  ) async {
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+    final loginPage = await _buildLoginPage();
+    await _pumpLoginAt(tester, loginPage, const Size(1200, 800));
+
+    expect(find.byKey(const Key('login-atmosphere-static')), findsOneWidget);
+    expect(find.byKey(const Key('login-atmosphere-animated')), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

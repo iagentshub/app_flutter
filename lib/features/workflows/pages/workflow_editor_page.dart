@@ -28,6 +28,7 @@ import '../widgets/workflow_visual_canvas.dart';
 
 part '../cards/workflow_step_editor_card.dart';
 part '../widgets/workflow_editor_mobile.dart';
+part '../widgets/workflow_editor_inspector.dart';
 part 'workflow_editor_graph_actions.dart';
 part 'workflow_editor_resources.dart';
 part '../widgets/workflow_editor_settings_panel.dart';
@@ -61,7 +62,8 @@ class WorkflowEditorPage extends StatefulWidget {
   State<WorkflowEditorPage> createState() => _WorkflowEditorPageState();
 }
 
-class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
+class _WorkflowEditorPageState extends State<WorkflowEditorPage>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _descriptionController;
@@ -74,6 +76,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
   List<WorkflowIssue> _issues = const [];
   int _stepCounter = 0;
   int _mobileSection = 0;
+  late final TabController _inspectorTabs;
 
   List<AgentItem> _agents = const [];
   List<ConnectionItem> _llmOrchestrations = const [];
@@ -96,6 +99,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
   @override
   void initState() {
     super.initState();
+    _inspectorTabs = TabController(length: 3, vsync: this);
     _ownsWorkflowRuns = widget.workflowRunsController == null;
     _workflowRuns =
         widget.workflowRunsController ??
@@ -166,6 +170,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
     _t.dispose();
     _nameController.dispose();
     _descriptionController.dispose();
+    _inspectorTabs.dispose();
     super.dispose();
   }
 
@@ -294,34 +299,6 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
 
   // ── Composición ────────────────────────────────────────────────────────────
 
-  Widget _buildInspector() {
-    final index = _steps.indexWhere((step) => step.id == _selectedStepId);
-    if (index < 0) {
-      return Center(child: Text(_tx('workflow_editor.select_node_hint')));
-    }
-    return ListView(
-      padding: EdgeInsets.zero,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                _tx('workflow_editor.inspector_title'),
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-            Text(
-              '${index + 1}/${_steps.length}',
-              style: Theme.of(context).textTheme.labelMedium,
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        _buildStepCard(index, key: ValueKey('inspector-${_steps[index].id}')),
-      ],
-    );
-  }
-
   Widget _buildCanvas() => WorkflowVisualCanvas(
     steps: _steps,
     agents: _agents,
@@ -330,7 +307,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
       for (final issue in _issues)
         if (issue.nodeId != null) issue.nodeId!,
     },
-    onStepSelected: (id) => _refresh(() => _selectedStepId = id),
+    onStepSelected: _selectStep,
     onStepMoved: _moveStep,
     onStepDeleted: _removeStepById,
     onConnectionCreated: _createConnection,
@@ -339,7 +316,6 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
     fitTooltip: _tx('workflow_editor.fit_view'),
     zoomInTooltip: _tx('workflow_editor.zoom_in'),
     zoomOutTooltip: _tx('workflow_editor.zoom_out'),
-    connectionHint: _tx('workflow_editor.visual_hint'),
     inputLabel: _tx('workflow_editor.input_port'),
     outputLabel: _tx('workflow_editor.output_port'),
     missingAgentLabel: _tx('workflow_editor.no_agent'),
@@ -353,30 +329,61 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
     final canvas = _buildCanvas();
     final colors = Theme.of(context).colorScheme;
     final inspector = Container(
+      key: const ValueKey('workflow-editor-inspector'),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.outlineVariant),
-      ),
-      child: DefaultTabController(
-        length: 2,
-        child: Column(
-          children: [
-            TabBar(
-              tabs: [
-                Tab(text: _tx('workflow_editor.panel_step')),
-                Tab(text: _tx('workflow_editor.panel_settings')),
+      color: colors.surfaceContainerLow,
+      child: Column(
+        children: [
+          TabBar(
+            key: const ValueKey('workflow-inspector-tabs'),
+            controller: _inspectorTabs,
+            tabs: [
+              Tab(text: _tx('workflow_editor.panel_step')),
+              Tab(text: _tx('workflow_editor.panel_settings')),
+              Tab(text: _tx('workflow_editor.panel_issues')),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: TabBarView(
+              controller: _inspectorTabs,
+              children: [
+                KeyedSubtree(
+                  key: const ValueKey('workflow-inspector-step'),
+                  child: _buildInspector(),
+                ),
+                _buildSettingsPanel(),
+                _buildIssuesInspector(),
               ],
             ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: TabBarView(
-                children: [_buildInspector(), _buildSettingsPanel()],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
+      ),
+    );
+
+    final canvasPane = ColoredBox(
+      key: const ValueKey('workflow-editor-canvas-pane'),
+      color: colors.surfaceContainerLowest,
+      child: Column(
+        children: [
+          WorkflowEditorToolbar(
+            stepCount: _steps.length,
+            connectionCount: _steps.connectionCount,
+            issueCount: _issues.length,
+            stepsLabel: _tx('workflows.steps_suffix'),
+            connectionsLabel: _tx('workflows.connections_suffix'),
+            issuesLabel: _tx('workflow_editor.issues_suffix'),
+            autoLayoutLabel: _tx('workflow_editor.auto_layout'),
+            onAutoLayout: _autoLayout,
+            addLabel: _tx('workflow_editor.add_step_btn'),
+            onAdd: _addStep,
+            onIssuesPressed: _issues.isEmpty
+                ? null
+                : () => _inspectorTabs.animateTo(2),
+          ),
+          Divider(height: 1, color: colors.outlineVariant),
+          Expanded(child: canvas),
+        ],
       ),
     );
 
@@ -397,18 +404,18 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
                   constraints: const BoxConstraints(
                     minHeight: _altoMinimoLienzo,
                   ),
-                  child: canvas,
+                  child: canvasPane,
                 ),
               ),
-              const SizedBox(width: 18),
+              VerticalDivider(width: 1, color: colors.outlineVariant),
               SizedBox(width: 400, child: inspector),
             ],
           );
         }
         return Column(
           children: [
-            Expanded(flex: 3, child: canvas),
-            const SizedBox(height: 16),
+            Expanded(flex: 3, child: canvasPane),
+            Divider(height: 1, color: colors.outlineVariant),
             Expanded(flex: 2, child: inspector),
           ],
         );
@@ -498,47 +505,20 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage> {
             ? _buildMobileEditor()
             : Form(
                 key: _formKey,
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      if (_error != null) ...[
-                        MaterialBanner(
-                          content: Text(_error!),
-                          actions: [
-                            TertiaryButton(
-                              onPressed: () => setState(() => _error = null),
-                              child: Text(_tx('common.close')),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                      ],
-                      WorkflowEditorToolbar(
-                        title: _tx('workflow_editor.canvas_title'),
-                        subtitle: _tx('workflow_editor.canvas_subtitle'),
-                        stepCount: _steps.length,
-                        connectionCount: _steps.connectionCount,
-                        issueCount: _issues.length,
-                        stepsLabel: _tx('workflows.steps_suffix'),
-                        connectionsLabel: _tx('workflows.connections_suffix'),
-                        issuesLabel: _tx('workflow_editor.issues_suffix'),
-                        autoLayoutLabel: _tx('workflow_editor.auto_layout'),
-                        onAutoLayout: _autoLayout,
-                        addLabel: _tx('workflow_editor.add_step_btn'),
-                        onAdd: _addStep,
+                child: Column(
+                  children: [
+                    if (_error != null)
+                      MaterialBanner(
+                        content: Text(_error!),
+                        actions: [
+                          TertiaryButton(
+                            onPressed: () => setState(() => _error = null),
+                            child: Text(_tx('common.close')),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 14),
-                      WorkflowIssuesPanel(
-                        issues: _issues,
-                        title: _tx('workflow_editor.issues_title'),
-                        translate: _tx,
-                        onSelectNode: (id) =>
-                            _refresh(() => _selectedStepId = id),
-                      ),
-                      Expanded(child: _buildWorkspace()),
-                    ],
-                  ),
+                    Expanded(child: _buildWorkspace()),
+                  ],
                 ),
               ),
         bottomNavigationBar: compact && !_loadingAgents

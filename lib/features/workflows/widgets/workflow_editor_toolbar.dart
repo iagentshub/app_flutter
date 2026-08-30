@@ -4,8 +4,6 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 
 class WorkflowEditorToolbar extends StatelessWidget {
   const WorkflowEditorToolbar({
-    required this.title,
-    required this.subtitle,
     required this.stepCount,
     required this.connectionCount,
     required this.stepsLabel,
@@ -16,11 +14,10 @@ class WorkflowEditorToolbar extends StatelessWidget {
     this.issuesLabel = '',
     this.autoLayoutLabel = '',
     this.onAutoLayout,
+    this.onIssuesPressed,
     super.key,
   });
 
-  final String title;
-  final String subtitle;
   final int stepCount;
   final int connectionCount;
   final String stepsLabel;
@@ -31,26 +28,35 @@ class WorkflowEditorToolbar extends StatelessWidget {
   final String issuesLabel;
   final String autoLayoutLabel;
   final VoidCallback? onAutoLayout;
+  final VoidCallback? onIssuesPressed;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final heading = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final metrics = Wrap(
+      spacing: 8,
+      runSpacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Text(
-          title,
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          '$stepCount $stepsLabel · $connectionCount $connectionsLabel',
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: colors.onSurfaceVariant,
+            fontWeight: FontWeight.w600,
+          ),
         ),
-        const SizedBox(height: 3),
-        Text(
-          subtitle,
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant),
-        ),
+        if (issueCount > 0)
+          TertiaryButton.icon(
+            key: const ValueKey('workflow-issues-button'),
+            onPressed: onIssuesPressed,
+            style: TextButton.styleFrom(
+              foregroundColor: colors.error,
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+            ),
+            icon: const Icon(Icons.error_outline_rounded, size: 17),
+            label: Text('$issueCount $issuesLabel'),
+          ),
       ],
     );
     final actions = Wrap(
@@ -58,16 +64,8 @@ class WorkflowEditorToolbar extends StatelessWidget {
       runSpacing: 8,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        _EditorMetric(value: stepCount, label: stepsLabel),
-        _EditorMetric(value: connectionCount, label: connectionsLabel),
-        if (issueCount > 0)
-          _EditorMetric(
-            value: issueCount,
-            label: issuesLabel,
-            color: colors.error,
-          ),
         if (onAutoLayout != null)
-          SecondaryButton.icon(
+          TertiaryButton.icon(
             onPressed: onAutoLayout,
             icon: const Icon(Icons.auto_awesome_mosaic_outlined, size: 18),
             label: Text(autoLayoutLabel),
@@ -82,56 +80,39 @@ class WorkflowEditorToolbar extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth < 720) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [heading, const SizedBox(height: 12), actions],
-          );
-        }
-        // `actions` es un `Wrap`, y un hijo no flexible de un `Row` recibe
-        // ancho **no acotado**: así el Wrap no envuelve nunca, se estira a lo
-        // que pidan los botones y al `Expanded` del título le quedan las
-        // migas, con lo que su texto envuelve casi letra a letra. Medido a
-        // 1024 px de ventana: la barra pedía 1139 px de alto en vez de ~50, se
-        // comía la columna del editor y la dejaba desbordada por abajo.
-        return Row(
-          children: [
-            Expanded(child: heading),
-            const SizedBox(width: 20),
-            Flexible(child: actions),
-          ],
+        final compact = constraints.maxWidth < 560;
+        return Padding(
+          key: const ValueKey('workflow-editor-toolbar'),
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? 12 : 16,
+            vertical: 8,
+          ),
+          child: Row(
+            children: [
+              Expanded(child: metrics),
+              const SizedBox(width: 8),
+              if (compact) ...[
+                if (onAutoLayout != null)
+                  AppIconButton(
+                    onPressed: onAutoLayout,
+                    tooltip: autoLayoutLabel,
+                    icon: const Icon(
+                      Icons.auto_awesome_mosaic_outlined,
+                      size: 19,
+                    ),
+                  ),
+                const SizedBox(width: 4),
+                AppIconButton.filledTonal(
+                  onPressed: onAdd,
+                  tooltip: addLabel,
+                  icon: const Icon(Icons.add_rounded),
+                ),
+              ] else
+                actions,
+            ],
+          ),
         );
       },
-    );
-  }
-}
-
-class _EditorMetric extends StatelessWidget {
-  const _EditorMetric({required this.value, required this.label, this.color});
-
-  final int value;
-  final String label;
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final accent = color ?? colors.onSurfaceVariant;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: color == null
-            ? colors.surfaceContainerHigh
-            : color!.withValues(alpha: .12),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Text(
-        '$value $label',
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: accent,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
     );
   }
 }
