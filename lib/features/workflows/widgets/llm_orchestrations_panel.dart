@@ -210,13 +210,18 @@ class _LlmOrchestrationsPanelState extends State<LlmOrchestrationsPanel>
           '${widget.tx('llm_orchestrations.count')}: ${_items.length}',
         ),
       ),
-      emptyFillsViewport: true,
-      empty: AsyncStatePanel.empty(
-        icon: Icons.account_tree_outlined,
-        title: widget.tx('llm_orchestrations.empty_title'),
-        message: widget.tx('llm_orchestrations.empty'),
-        actionLabel: widget.tx('llm_orchestrations.empty_action'),
-        onAction: () => _edit(),
+      empty: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 680),
+          child: AsyncStatePanel.empty(
+            icon: Icons.hub_outlined,
+            title: widget.tx('llm_orchestrations.empty_title'),
+            message: widget.tx('llm_orchestrations.empty'),
+            actionLabel: widget.tx('llm_orchestrations.empty_action'),
+            onAction: () => _edit(),
+          ),
+        ),
       ),
       itemCount: _items.length,
       itemBuilder: (context, index) {

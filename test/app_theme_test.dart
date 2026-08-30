@@ -45,6 +45,17 @@ void main() {
     expect(AppTheme.mode('dusk'), ThemeMode.dark);
   });
 
+  test('las confirmaciones son flotantes y no crean una barra blanca', () {
+    final lightSnackBar = AppTheme.light().snackBarTheme;
+    final darkSnackBar = AppTheme.dark().snackBarTheme;
+
+    expect(lightSnackBar.behavior, SnackBarBehavior.floating);
+    expect(darkSnackBar.behavior, SnackBarBehavior.floating);
+    expect(darkSnackBar.backgroundColor, isNot(Colors.white));
+    expect(darkSnackBar.contentTextStyle?.color, Colors.white);
+    expect(darkSnackBar.shape, isA<RoundedRectangleBorder>());
+  });
+
   test('todos los acentos mantienen contraste AA en botones rellenos', () {
     for (final themeId in kThemeIds) {
       final theme = AppTheme.mode(themeId) == ThemeMode.light

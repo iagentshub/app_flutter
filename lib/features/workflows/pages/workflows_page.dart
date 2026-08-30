@@ -455,13 +455,18 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
     final content = ResourceCollectionView(
       header: toolbar,
       onRefresh: _load,
-      emptyFillsViewport: true,
-      empty: AsyncStatePanel.empty(
-        icon: Icons.account_tree_outlined,
-        title: _tx('workflows.empty_title'),
-        message: _tx('workflows.empty_description'),
-        actionLabel: _tx('workflows.empty_action'),
-        onAction: _openCreateDialog,
+      empty: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 680),
+          child: AsyncStatePanel.empty(
+            icon: Icons.account_tree_outlined,
+            title: _tx('workflows.empty_title'),
+            message: _tx('workflows.empty_description'),
+            actionLabel: _tx('workflows.empty_action'),
+            onAction: _openCreateDialog,
+          ),
+        ),
       ),
       itemCount: filteredWorkflows.length,
       itemBuilder: (context, index) {
@@ -532,11 +537,16 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
         children: [
           Material(
             color: Theme.of(context).colorScheme.surface,
-            child: TabBar(
-              tabs: [
-                Tab(text: _tx('workflows.tab_agents')),
-                Tab(text: _tx('workflows.tab_llm_apis')),
-              ],
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: TabBar(
+                  tabs: [
+                    Tab(text: _tx('workflows.tab_agents')),
+                    Tab(text: _tx('workflows.tab_llm_apis')),
+                  ],
+                ),
+              ),
             ),
           ),
           Expanded(

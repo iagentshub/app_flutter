@@ -82,6 +82,23 @@ void main() {
       expect(enLaBarra(Icons.motion_photos_on_outlined), findsOneWidget);
       expect(enLaBarra(Icons.refresh), findsOneWidget);
       expect(enLaBarra(Icons.filter_list), findsOneWidget);
+
+      final tabBarWidth = tester.getSize(find.byType(TabBar)).width;
+      expect(tabBarWidth, lessThanOrEqualTo(560));
+      if (width > 560) {
+        expect(tabBarWidth, closeTo(560, 0.1));
+      }
+
+      final toolbarBottom = tester
+          .getBottomLeft(find.byType(ResourceToolbar))
+          .dy;
+      final emptyPanelTop = tester.getTopLeft(find.byType(Card).last).dy;
+      expect(emptyPanelTop - toolbarBottom, lessThan(48));
+      expect(
+        tester.getSize(find.byType(Card).last).width,
+        lessThanOrEqualTo(680),
+      );
+
       await tester.tap(find.text('APIs LLM'));
       await tester.pump(const Duration(milliseconds: 500));
       expect(tester.takeException(), isNull);

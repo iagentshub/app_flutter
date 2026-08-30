@@ -141,6 +141,11 @@ abstract final class AppTheme {
       snackBarTheme: const SnackBarThemeData(
         backgroundColor: FncColors.black,
         contentTextStyle: TextStyle(color: FncColors.white),
+        behavior: SnackBarBehavior.floating,
+        elevation: 8,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+        ),
       ),
     );
   }
@@ -210,9 +215,8 @@ abstract final class AppTheme {
         ),
         labelStyle: const TextStyle(color: FncColors.hintTextDark),
       ),
-      textTheme: FncFonts.textTheme(
-        Brightness.dark,
-      ).apply(bodyColor: FncColors.white, displayColor: FncColors.white),
+      textTheme: FncFonts.textTheme(Brightness.dark)
+          .apply(bodyColor: FncColors.white, displayColor: FncColors.white),
       appBarTheme: const AppBarTheme(
         backgroundColor: FncColors.black,
         foregroundColor: FncColors.white,
@@ -238,8 +242,14 @@ abstract final class AppTheme {
         shape: const StadiumBorder(),
       ),
       snackBarTheme: const SnackBarThemeData(
-        backgroundColor: FncColors.white,
-        contentTextStyle: TextStyle(color: FncColors.black),
+        backgroundColor: FncColors.surfaceAltDark,
+        contentTextStyle: TextStyle(color: FncColors.white),
+        behavior: SnackBarBehavior.floating,
+        elevation: 8,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+          side: BorderSide(color: FncColors.dividerLineDark),
+        ),
       ),
     );
   }
