@@ -30,34 +30,45 @@ class AgentResourceOption {
 }
 
 class AgentResourceOptionPage {
-  const AgentResourceOptionPage({required this.items, required this.hasMore});
+  const AgentResourceOptionPage({
+    required this.items,
+    required this.hasMore,
+    this.nextCursor,
+  });
 
   factory AgentResourceOptionPage.fromJson(
     Map<String, dynamic> json,
     AgentResourceType type,
-  ) => AgentResourceOptionPage(
-    items: (json['items'] as List<dynamic>? ?? const [])
-        .whereType<Map<String, dynamic>>()
-        .map(
-          (item) => AgentResourceOption(
-            id: item['id']?.toString() ?? '',
-            type: type,
-            title: item['name']?.toString() ?? item['id']?.toString() ?? '',
-          ),
-        )
-        .where((item) => item.id.isNotEmpty)
-        .toList(),
-    hasMore: json['has_more'] == true,
-  );
+  ) {
+    final page = json['page'] is Map<String, dynamic>
+        ? json['page'] as Map<String, dynamic>
+        : json;
+    return AgentResourceOptionPage(
+      items: (json['items'] as List<dynamic>? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(
+            (item) => AgentResourceOption(
+              id: item['id']?.toString() ?? '',
+              type: type,
+              title: item['name']?.toString() ?? item['id']?.toString() ?? '',
+            ),
+          )
+          .where((item) => item.id.isNotEmpty)
+          .toList(),
+      hasMore: page['has_more'] == true,
+      nextCursor: page['next_cursor']?.toString(),
+    );
+  }
 
   final List<AgentResourceOption> items;
   final bool hasMore;
+  final String? nextCursor;
 }
 
 typedef AgentResourcePageLoader = Future<AgentResourceOptionPage> Function(
   AgentResourceType type,
   String query,
-  int offset,
+  String? cursor,
 );
 
 class AgentResourceSelection {

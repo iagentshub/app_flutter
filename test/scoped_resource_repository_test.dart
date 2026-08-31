@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:app_flutter/core/network/api_client.dart';
+import 'package:app_flutter/core/network/cursor_page_collector.dart';
+import 'package:app_flutter/features/agents/repositories/agents_repository.dart';
 import 'package:app_flutter/features/knowledge/repositories/prompts_repository.dart';
 import 'package:app_flutter/features/knowledge/repositories/skills_repository.dart';
 import 'package:app_flutter/features/knowledge/repositories/tools_repository.dart';
@@ -9,6 +11,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'support/i18n_de_prueba.dart';
 
 /// Los repositorios de skills, prompts y tools eran el mismo fichero repetido:
 /// cada cambio del contrato había que aplicarlo tres veces y era fácil olvidar
@@ -25,7 +29,9 @@ void main() {
   });
 
   /// Devuelve el cliente y la lista de URLs que ha pedido.
-  (ApiClient, List<Uri>) clienteEspia({String body = '[]'}) {
+  (ApiClient, List<Uri>) clienteEspia({
+    String body = '{"items":[],"page":{"has_more":false}}',
+  }) {
     final peticiones = <Uri>[];
     final mock = MockClient((request) async {
       peticiones.add(request.url);
@@ -52,15 +58,30 @@ void main() {
 
     expect(peticiones, hasLength(3));
     expect(peticiones.map((uri) => uri.path).toList(), [
-      '/api/skills',
-      '/api/prompts',
-      '/api/tools',
+      '/api/v2/skills',
+      '/api/v2/prompts',
+      '/api/v2/tools',
     ]);
     // El mismo contrato para los tres, sin depender de cómo cada repositorio
     // arme la query a mano.
     for (final uri in peticiones) {
       expect(uri.queryParameters['scope'], 'group');
       expect(uri.queryParameters['group_id'], 'ORANGE JAZZTEL/2026');
+      expect(uri.queryParameters.containsKey('include_total'), isFalse);
+    }
+  });
+
+  test('los cuatro catálogos omiten el total exacto por defecto', () async {
+    final (client, peticiones) = clienteEspia();
+
+    await AgentsRepository(apiClient: client).listAgents('token');
+    await SkillsRepository(apiClient: client).listSkills('token');
+    await PromptsRepository(apiClient: client).listPrompts('token');
+    await ToolsRepository(apiClient: client).listTools('token');
+
+    expect(peticiones, hasLength(4));
+    for (final uri in peticiones) {
+      expect(uri.queryParameters.containsKey('include_total'), isFalse);
     }
   });
 
@@ -69,11 +90,148 @@ void main() {
 
     await SkillsRepository(apiClient: client).listSkills('token');
 
-    expect(peticiones.single.queryParameters, {
-      'scope': 'all',
-      'limit': '100',
-      'offset': '0',
+    expect(peticiones.single.queryParameters, {'scope': 'all', 'limit': '100'});
+  });
+
+  test('el listado completo avanza con el cursor opaco del backend', () async {
+    final peticiones = <Uri>[];
+    var llamada = 0;
+    final mock = MockClient((request) async {
+      peticiones.add(request.url);
+      llamada++;
+      return http.Response(
+        jsonEncode({
+          'items': [
+            {'id': 'skill-$llamada', 'name': 'Skill $llamada'},
+          ],
+          'page': {
+            'has_more': llamada == 1,
+            if (llamada == 1) 'next_cursor': 'cursor-opaco-2',
+          },
+        }),
+        200,
+        headers: {'content-type': 'application/json'},
+      );
     });
+    final client = ApiClient(backendController, client: mock);
+    addTearDown(client.close);
+
+    final skills = await SkillsRepository(apiClient: client)
+        .listSkills('token');
+
+    expect(skills, hasLength(2));
+    expect(peticiones, hasLength(2));
+    expect(peticiones.first.queryParameters.containsKey('cursor'), isFalse);
+    expect(peticiones.last.queryParameters['cursor'], 'cursor-opaco-2');
+    expect(
+      peticiones.every((uri) => !uri.queryParameters.containsKey('offset')),
+      isTrue,
+    );
+  });
+
+  test(
+    'agents tambien recorre paginas por cursor y nunca por offset',
+    () async {
+      final peticiones = <Uri>[];
+      var llamada = 0;
+      final mock = MockClient((request) async {
+        peticiones.add(request.url);
+        llamada++;
+        return http.Response(
+          jsonEncode({
+            'items': [
+              {'id': 'agent-$llamada', 'name': 'Agent $llamada'},
+            ],
+            'page': {
+              'has_more': llamada == 1,
+              if (llamada == 1) 'next_cursor': 'agents-cursor-2',
+            },
+          }),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+      final client = ApiClient(backendController, client: mock);
+      addTearDown(client.close);
+
+      final agents = await AgentsRepository(apiClient: client)
+          .listAgents('token');
+
+      expect(agents, hasLength(2));
+      expect(peticiones.last.queryParameters['cursor'], 'agents-cursor-2');
+      expect(
+        peticiones.every((uri) => !uri.queryParameters.containsKey('offset')),
+        isTrue,
+      );
+    },
+  );
+
+  test('hasMore sin nextCursor se rechaza con codigo estable', () async {
+    final mock = MockClient(
+      (_) async => http.Response(
+        '{"items":[{"id":"skill-1","name":"Skill"}],"page":{"has_more":true}}',
+        200,
+        headers: {'content-type': 'application/json'},
+      ),
+    );
+    final client = ApiClient(backendController, client: mock);
+    addTearDown(client.close);
+
+    await expectLater(
+      SkillsRepository(apiClient: client).listSkills('token'),
+      throwsA(
+        isA<CursorPaginationException>().having(
+          (error) => error.code,
+          'code',
+          'pagination_missing_next_cursor',
+        ),
+      ),
+    );
+  });
+
+  test('un cursor repetido se rechaza sin entrar en bucle', () async {
+    final mock = MockClient(
+      (_) async => http.Response(
+        '{"items":[],"page":{"has_more":true,"next_cursor":"igual"}}',
+        200,
+        headers: {'content-type': 'application/json'},
+      ),
+    );
+    final client = ApiClient(backendController, client: mock);
+    addTearDown(client.close);
+
+    await expectLater(
+      SkillsRepository(apiClient: client).listSkills('token'),
+      throwsA(
+        isA<CursorPaginationException>().having(
+          (error) => error.code,
+          'code',
+          'pagination_repeated_cursor',
+        ),
+      ),
+    );
+  });
+
+  test('los errores cursor se resuelven en el idioma activo', () {
+    cargarTraduccionesDePrueba();
+    expect(
+      const CursorPaginationException.repeatedCursor().message,
+      'El backend repitió el cursor de paginación.',
+    );
+    expect(
+      const CursorPaginationException.missingNextCursor().message,
+      'El backend indicó que hay más resultados, pero no proporcionó el cursor siguiente.',
+    );
+
+    cargarTraduccionesDePrueba(idioma: 'en');
+    expect(
+      const CursorPaginationException.repeatedCursor().message,
+      'The backend repeated the pagination cursor.',
+    );
+    expect(
+      const CursorPaginationException.missingNextCursor().message,
+      'The backend reported more results but did not provide the next cursor.',
+    );
   });
 
   test('el id y el scope se codifican en la ruta', () async {
@@ -96,12 +254,19 @@ void main() {
     ]);
   });
 
-  test('el listado ignora una respuesta que no sea una lista', () async {
+  test('el listado v2 rechaza un envelope inválido', () async {
     final (client, _) = clienteEspia(body: '{"error":"vaya"}');
 
-    final skills = await SkillsRepository(apiClient: client).listSkills('t');
-
-    expect(skills, isEmpty);
+    await expectLater(
+      SkillsRepository(apiClient: client).listSkills('t'),
+      throwsA(
+        isA<CursorPaginationException>().having(
+          (error) => error.code,
+          'code',
+          'pagination_invalid_response',
+        ),
+      ),
+    );
   });
 
   test('skills y prompts envían las labels de idioma sin alterar', () async {

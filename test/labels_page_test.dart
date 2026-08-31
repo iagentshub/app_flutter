@@ -76,15 +76,24 @@ void main() {
     );
 
     final client = MockClient((request) async {
-      if (request.url.path == '/api/agents') {
-        return _json([
-          {
-            'id': 'agent-1',
-            'name': 'Agente Español',
-            'description': 'Ayuda con textos',
-            'labels': ['private', 'lang_es'],
-          },
-        ]);
+      if (request.url.path == '/api/v2/agents') {
+        return _json({
+          'items': [
+            {
+              'id': 'agent-1',
+              'name': 'Agente Español',
+              'description': 'Ayuda con textos',
+              'labels': ['private', 'lang_es'],
+            },
+          ],
+          'page': {'has_more': false},
+        });
+      }
+      if (request.url.path.startsWith('/api/v2/')) {
+        return _json({
+          'items': <Object>[],
+          'page': {'has_more': false},
+        });
       }
       return _json([]);
     });

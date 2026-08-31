@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import '../../../core/network/api_repository.dart';
+import '../../../core/network/cursor_page_collector.dart';
 import '../../../core/network/page_result.dart';
 import '../../../models/agents/agent_models.dart';
 
@@ -11,38 +12,31 @@ class AgentsRepository extends ApiRepository {
     String token, {
     String? groupId,
     bool includeInactive = false,
-  }) async {
-    final items = <AgentItem>[];
-    var offset = 0;
-    while (true) {
-      final page = await listAgentPage(
-        token,
-        groupId: groupId,
-        includeInactive: includeInactive,
-        limit: 100,
-        offset: offset,
-      );
-      items.addAll(page.items);
-      if (!page.hasMore || page.items.isEmpty) return items;
-      offset += page.items.length;
-    }
-  }
+  }) => collectCursorPages(
+    (cursor) => listAgentPage(
+      token,
+      groupId: groupId,
+      includeInactive: includeInactive,
+      limit: 100,
+      cursor: cursor,
+    ),
+  );
 
   Future<PageResult<AgentItem>> listAgentPage(
     String token, {
     String? groupId,
     bool includeInactive = false,
     int limit = 50,
-    int offset = 0,
+    String? cursor,
   }) async {
     final uri = Uri(
-      path: '/api/agents',
+      path: '/api/v2/agents',
       queryParameters: {
         'scope': 'all',
         if (groupId != null && groupId.isNotEmpty) 'group_id': groupId,
         if (includeInactive) 'include_inactive': 'true',
         'limit': '$limit',
-        'offset': '$offset',
+        if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
       },
     );
     final response = await apiClient.get(
@@ -50,7 +44,10 @@ class AgentsRepository extends ApiRepository {
       gaToken: token,
       cache: false,
     );
-    return PageResult.fromResponse(response, (item) => AgentItem(raw: item));
+    return PageResult.fromCursorV2Response(
+      response,
+      (item) => AgentItem(raw: item),
+    );
   }
 
   Future<Map<String, dynamic>> getAgent(String token, String id) async {

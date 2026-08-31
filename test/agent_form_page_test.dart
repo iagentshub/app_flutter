@@ -28,28 +28,43 @@ void main() {
 
       final backend = await BackendController.bootstrap();
       final httpClient = MockClient((request) async {
-        if (request.url.path == '/api/skills') {
-          return _json([
-            for (var index = 0; index < 200; index++)
-              {
-                'id': 'skill-$index',
-                'name': 'Skill $index',
-                'category': index.isEven ? 'productividad' : 'desarrollo',
-              },
-          ]);
+        if (request.url.path == '/api/v2/skills') {
+          return _json({
+            'items': [
+              for (var index = 0; index < 200; index++)
+                {
+                  'id': 'skill-$index',
+                  'name': 'Skill $index',
+                  'category': index.isEven ? 'productividad' : 'desarrollo',
+                },
+            ],
+            'page': {'has_more': false},
+          });
         }
-        if (request.url.path == '/api/tools') {
-          return _json([
-            {'id': 'tool-python', 'name': 'Tool Python', 'language': 'python'},
-          ]);
+        if (request.url.path == '/api/v2/tools') {
+          return _json({
+            'items': [
+              {
+                'id': 'tool-python',
+                'name': 'Tool Python',
+                'language': 'python',
+              },
+            ],
+            'page': {'has_more': false},
+          });
+        }
+        if (request.url.path == '/api/memory') {
+          return _json([]);
         }
         if ({
-          '/api/connections',
-          '/api/memory',
-          '/api/knowledge',
-          '/api/prompts',
+          '/api/v2/connections',
+          '/api/v2/knowledge',
+          '/api/v2/prompts',
         }.contains(request.url.path)) {
-          return _json([]);
+          return _json({
+            'items': [],
+            'page': {'has_more': false},
+          });
         }
         return _json({}, statusCode: 404);
       });
@@ -126,7 +141,15 @@ void main() {
     SharedPreferences.setMockInitialValues({});
 
     final backend = await BackendController.bootstrap();
-    final httpClient = MockClient((request) async => _json([]));
+    final httpClient = MockClient((request) async {
+      if (request.url.path.startsWith('/api/v2/')) {
+        return _json({
+          'items': [],
+          'page': {'has_more': false},
+        });
+      }
+      return _json([]);
+    });
     await tester.pumpWidget(
       MaterialApp(
         home: AgentFormPage(
@@ -159,32 +182,43 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final backend = await BackendController.bootstrap();
     final httpClient = MockClient((request) async {
-      if (request.url.path == '/api/skills') {
-        return _json([
-          {
-            'id': 'skill-publicable',
-            'name': 'Skill publicable',
-            'labels': ['private'],
-            'scope': 'private',
-          },
-        ]);
+      if (request.url.path == '/api/v2/skills') {
+        return _json({
+          'items': [
+            {
+              'id': 'skill-publicable',
+              'name': 'Skill publicable',
+              'labels': ['private'],
+              'scope': 'private',
+            },
+          ],
+          'page': {'has_more': false},
+        });
       }
-      if (request.url.path == '/api/connections') {
-        return _json([
-          {
-            'id': 'secret-connection',
-            'name': 'Conexión secreta',
-            'type': 'openai',
-          },
-        ]);
+      if (request.url.path == '/api/v2/connections') {
+        return _json({
+          'items': [
+            {
+              'id': 'secret-connection',
+              'name': 'Conexión secreta',
+              'type': 'openai',
+            },
+          ],
+          'page': {'has_more': false},
+        });
+      }
+      if (request.url.path == '/api/memory') {
+        return _json([]);
       }
       if ({
-        '/api/memory',
-        '/api/knowledge',
-        '/api/prompts',
-        '/api/tools',
+        '/api/v2/knowledge',
+        '/api/v2/prompts',
+        '/api/v2/tools',
       }.contains(request.url.path)) {
-        return _json([]);
+        return _json({
+          'items': [],
+          'page': {'has_more': false},
+        });
       }
       return _json({}, statusCode: 404);
     });

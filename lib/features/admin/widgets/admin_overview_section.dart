@@ -1,9 +1,9 @@
 part of '../pages/admin_page.dart';
 
 extension _AdminPageSections on _AdminPageState {
-  String _pctLabel(double progress) => _tx(
-    'admin.stat_pct_of_total',
-  ).replaceAll('{pct}', '${(progress * 100).round()}');
+  String _pctLabel(double progress) =>
+      _tx('admin.stat_pct_of_total')
+          .replaceAll('{pct}', '${(progress * 100).round()}');
 
   static const _healthOkColor = FncColors.success;
 
@@ -162,9 +162,8 @@ extension _AdminPageSections on _AdminPageState {
           progress: (stats.cpuLoadPct! / 100).clamp(0.0, 1.0),
           progressLabel: stats.cpuCores == null
               ? null
-              : _tx(
-                  'admin.stat_cpu_cores',
-                ).replaceAll('{n}', '${stats.cpuCores}'),
+              : _tx('admin.stat_cpu_cores')
+                    .replaceAll('{n}', '${stats.cpuCores}'),
         ),
     ];
 
@@ -207,9 +206,8 @@ extension _AdminPageSections on _AdminPageState {
             sliver: SliverToBoxAdapter(
               child: Text(
                 _tx('admin.stat_section_health'),
-                style: Theme.of(
-                  context,
-                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                style: Theme.of(context).textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w700),
               ),
             ),
           ),
@@ -227,9 +225,8 @@ extension _AdminPageSections on _AdminPageState {
               sliver: SliverToBoxAdapter(
                 child: Text(
                   _tx('admin.stat_section_server'),
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                  style: Theme.of(context).textTheme.titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w700),
                 ),
               ),
             ),
@@ -259,9 +256,11 @@ extension _AdminPageSections on _AdminPageState {
     required List<T> items,
     required Widget Function(T) itemBuilder,
     required String emptyText,
+    Future<void> Function()? onRefresh,
+    Widget? footer,
   }) {
     return RefreshIndicator(
-      onRefresh: _load,
+      onRefresh: onRefresh ?? _load,
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
@@ -281,6 +280,11 @@ extension _AdminPageSections on _AdminPageState {
                 itemCount: items.length,
                 itemBuilder: (context, index) => itemBuilder(items[index]),
               ),
+            ),
+          if (footer != null)
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              sliver: SliverToBoxAdapter(child: footer),
             ),
         ],
       ),

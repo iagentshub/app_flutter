@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../../core/network/cursor_page_collector.dart';
 import '../../../models/agents/agent_import_models.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
@@ -40,7 +41,7 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
   String _query = '';
   Timer? _searchTimer;
   List<AgentResourceOption> _remoteOptions = const [];
-  final Map<AgentResourceType, int> _offsets = {};
+  final Map<AgentResourceType, String> _cursors = {};
   final Map<AgentResourceType, bool> _hasMore = {};
   bool _loading = false;
   int _requestGeneration = 0;
@@ -104,7 +105,7 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
     try {
       final pages = await Future.wait([
         for (final type in types)
-          loader(type, _query, reset ? 0 : (_offsets[type] ?? 0)),
+          loader(type, _query, reset ? null : _cursors[type]),
       ]);
       if (!mounted || generation != _requestGeneration) return;
       setState(() {
@@ -113,7 +114,7 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
             for (final option in widget.options)
               if (_selection.idsFor(option.type).contains(option.id)) option,
           ];
-          _offsets.clear();
+          _cursors.clear();
           _hasMore.clear();
         }
         final byKey = {
@@ -126,7 +127,15 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
           for (final item in page.items) {
             byKey['${item.type.apiValue}:${item.id}'] = item;
           }
-          _offsets[type] = (_offsets[type] ?? 0) + page.items.length;
+          final nextCursor = page.nextCursor;
+          if (page.hasMore && (nextCursor == null || nextCursor.isEmpty)) {
+            throw const CursorPaginationException.missingNextCursor();
+          }
+          if (nextCursor == null) {
+            _cursors.remove(type);
+          } else {
+            _cursors[type] = nextCursor;
+          }
           _hasMore[type] = page.hasMore;
         }
         _remoteOptions = byKey.values.toList();
@@ -158,7 +167,9 @@ class _AgentResourcePickerDialogState extends State<AgentResourcePickerDialog> {
 
   String _typeLabel(AgentResourceType type) => switch (type) {
     AgentResourceType.skill => widget.tx('agents.field_skills'),
-    AgentResourceType.knowledgePack => widget.tx('agents.field_knowledge_packs'),
+    AgentResourceType.knowledgePack => widget.tx(
+      'agents.field_knowledge_packs',
+    ),
     AgentResourceType.knowledge => widget.tx('agents.field_knowledge'),
     AgentResourceType.prompt => widget.tx('agents.field_prompts'),
     AgentResourceType.tool => widget.tx('agents.field_tools'),

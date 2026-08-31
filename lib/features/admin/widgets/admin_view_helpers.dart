@@ -102,7 +102,7 @@ extension _AdminViewHelpers on _AdminPageState {
       title: _tx('common.filters'),
       clearLabel: _tx('common.clear_filters'),
       closeLabel: _tx('common.close'),
-      onClear: () => refresh(() {
+      onClear: () => _setExploreFilter(() {
         _knowledgeType = '';
         _knowledgeOwner = '';
       }),
@@ -117,7 +117,7 @@ extension _AdminViewHelpers on _AdminPageState {
             ('document', _tx('admin.type_document')),
           ],
           onChanged: (v) {
-            refresh(() => _knowledgeType = v);
+            _setExploreFilter(() => _knowledgeType = v);
             setDialogState(() {});
           },
         ),
@@ -131,7 +131,7 @@ extension _AdminViewHelpers on _AdminPageState {
             ..._ownersOf(_knowledge).map((o) => (o, o)),
           ],
           onChanged: (v) {
-            refresh(() => _knowledgeOwner = v);
+            _setExploreFilter(() => _knowledgeOwner = v);
             setDialogState(() {});
           },
         ),

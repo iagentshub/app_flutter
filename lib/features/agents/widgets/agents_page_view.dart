@@ -5,6 +5,9 @@ extension _AgentsPageView on _AgentsPageState {
     final filteredAgents = _filteredAgents;
     final content = ResourceCollectionView(
       onRefresh: _load,
+      onLoadMore: _loadMoreAgents,
+      hasMore: _hasMoreAgents,
+      loadingMore: _loadingMoreAgents,
       header: ResourceToolbar(
         search: TextField(
           controller: _queryController,
@@ -55,7 +58,8 @@ extension _AgentsPageView on _AgentsPageState {
             ),
         ],
         summary: Text(
-          '${_tx('agents.count_label')}: ${filteredAgents.length}',
+          '${_tx('agents.count_label')}: ${filteredAgents.length}'
+          '${_hasMoreAgents ? '+' : ''}',
           style: Theme.of(context).textTheme.bodyMedium,
         ),
       ),

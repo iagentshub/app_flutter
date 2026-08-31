@@ -22,7 +22,8 @@ class _TableDataDialogState extends State<_TableDataDialog> {
   MetadataPageData? _data;
   bool _loading = true;
   String? _error;
-  int _page = 1;
+  final List<String?> _cursorHistory = [null];
+  int _cursorIndex = 0;
 
   @override
   void initState() {
@@ -45,8 +46,8 @@ class _TableDataDialogState extends State<_TableDataDialog> {
       final data = await widget.repository.tableData(
         widget.token,
         tableName: widget.table.name,
-        page: _page,
         query: _queryController.text,
+        cursor: _cursorHistory[_cursorIndex],
       );
       if (!mounted) return;
       setState(() {
@@ -109,7 +110,7 @@ class _TableDataDialogState extends State<_TableDataDialog> {
                         labelText: widget.tx('admin.metadata_search_in_table'),
                       ),
                       onSubmitted: (_) {
-                        _page = 1;
+                        _resetCursorHistory();
                         _load();
                       },
                     ),
@@ -117,7 +118,7 @@ class _TableDataDialogState extends State<_TableDataDialog> {
                   const SizedBox(width: 8),
                   PrimaryButton(
                     onPressed: () {
-                      _page = 1;
+                      _resetCursorHistory();
                       _load();
                     },
                     child: Text(widget.tx('common.search')),
@@ -200,24 +201,31 @@ class _TableDataDialogState extends State<_TableDataDialog> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '${widget.tx('admin.table_count')}: ${data.total} · ${data.page}/${data.pages == 0 ? 1 : data.pages}',
+                      '${widget.tx('admin.table_count')}: ${data.total ?? widget.table.rows} · ${_cursorIndex + 1}',
                     ),
                     Wrap(
                       spacing: 8,
                       children: [
                         SecondaryButton(
-                          onPressed: data.page > 1
+                          onPressed: _cursorIndex > 0
                               ? () {
-                                  _page = data.page - 1;
+                                  _cursorIndex--;
                                   _load();
                                 }
                               : null,
                           child: const Text('‹'),
                         ),
                         SecondaryButton(
-                          onPressed: data.page < data.pages
+                          onPressed: data.hasMore && data.nextCursor != null
                               ? () {
-                                  _page = data.page + 1;
+                                  final next = data.nextCursor;
+                                  if (_cursorHistory.length >
+                                      _cursorIndex + 1) {
+                                    _cursorHistory[_cursorIndex + 1] = next;
+                                  } else {
+                                    _cursorHistory.add(next);
+                                  }
+                                  _cursorIndex++;
                                   _load();
                                 }
                               : null,
@@ -233,5 +241,12 @@ class _TableDataDialogState extends State<_TableDataDialog> {
         ),
       ),
     );
+  }
+
+  void _resetCursorHistory() {
+    _cursorHistory
+      ..clear()
+      ..add(null);
+    _cursorIndex = 0;
   }
 }

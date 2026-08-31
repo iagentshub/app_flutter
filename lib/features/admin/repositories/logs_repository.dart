@@ -1,10 +1,12 @@
 import '../../../core/network/api_repository.dart';
+import '../../../core/network/page_result.dart';
 import '../../../models/logs/log_models.dart';
 
 class LogsRepository extends ApiRepository {
   LogsRepository({required super.apiClient});
 
   static const _basePath = '/api/admin/logs';
+  static const _listPath = '/api/v2/admin/logs';
 
   Future<LogsPage> list(
     String token, {
@@ -20,12 +22,14 @@ class LogsRepository extends ApiRepository {
     String? resourceId,
     String? outcome,
     String? query,
-    int page = 1,
+    String? cursor,
+    int pageNumber = 1,
     int pageSize = 50,
   }) async {
     final params = <String, String>{
-      'page': '$page',
-      'page_size': '$pageSize',
+      'limit': '$pageSize',
+      'include_total': 'true',
+      'cursor': ?cursor,
       if (dateFrom != null && dateFrom.isNotEmpty) 'date_from': dateFrom,
       if (dateTo != null && dateTo.isNotEmpty) 'date_to': dateTo,
       if (ip != null && ip.isNotEmpty) 'ip': ip,
@@ -41,9 +45,13 @@ class LogsRepository extends ApiRepository {
       if (outcome != null && outcome.isNotEmpty) 'outcome': outcome,
       if (query != null && query.isNotEmpty) 'q': query,
     };
-    final path = Uri(path: _basePath, queryParameters: params).toString();
+    final path = Uri(path: _listPath, queryParameters: params).toString();
     final response = await apiClient.get(path, gaToken: token);
-    return LogsPage(raw: response.json);
+    final page = PageResult<LogEntry>.fromCursorV2Response(
+      response,
+      (item) => LogEntry(raw: item),
+    );
+    return LogsPage(result: page, page: pageNumber, pageSize: pageSize);
   }
 
   Future<List<LogsSummaryDay>> summary(String token) async {

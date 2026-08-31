@@ -317,8 +317,12 @@ Future<void> _pumpConfigTab(
       return _json({'id': 'banner-1'});
     }
     if (path == '/api/admin/stats') return _json(const {});
-    if (path == '/api/admin/explore') {
-      return _json(const {'items': [], 'total': 0, 'counts': {}});
+    if (path == '/api/v2/admin/explore') {
+      return _json(const {
+        'items': [],
+        'page': {'has_more': false, 'total': 0},
+        'counts': {},
+      });
     }
     return _json(const {});
   });

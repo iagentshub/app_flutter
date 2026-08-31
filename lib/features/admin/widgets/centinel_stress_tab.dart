@@ -18,10 +18,10 @@ part '../centinel/stress_results.dart';
 
 const _predefinedEndpoints = [
   '/api/auth/me',
-  '/api/agents',
+  '/api/v2/agents',
   '/api/connections',
-  '/api/skills/private',
-  '/api/knowledge',
+  '/api/v2/skills?scope=private',
+  '/api/v2/knowledge',
 ];
 
 /// Pestaña "Rendimiento" de Centinel: prueba de estrés configurable con
@@ -322,11 +322,20 @@ class _CentinelStressTabState extends State<CentinelStressTab>
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     initialValue: _endpoint == 'RANDOM' ? 'RANDOM' : _method,
-                    items: const [
-                      DropdownMenuItem(value: 'GET', child: Text('GET')),
-                      DropdownMenuItem(value: 'POST', child: Text('POST')),
-                      DropdownMenuItem(value: 'DELETE', child: Text('DELETE')),
-                      DropdownMenuItem(value: 'RANDOM', child: Text('Random')),
+                    items: [
+                      const DropdownMenuItem(value: 'GET', child: Text('GET')),
+                      const DropdownMenuItem(
+                        value: 'POST',
+                        child: Text('POST'),
+                      ),
+                      const DropdownMenuItem(
+                        value: 'DELETE',
+                        child: Text('DELETE'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'RANDOM',
+                        child: Text(widget.tx('centinel.stress_method_random')),
+                      ),
                     ],
                     onChanged: (disabled || _endpoint == 'RANDOM')
                         ? null

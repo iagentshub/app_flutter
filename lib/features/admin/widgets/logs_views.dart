@@ -287,7 +287,7 @@ extension _LogsViews on _LogsPageViewState {
                     child: Text(_tx('logs.prev')),
                   ),
                   SecondaryButton(
-                    onPressed: data.page < data.pages
+                    onPressed: data.hasMore
                         ? () => _loadViewer(page: data.page + 1)
                         : null,
                     child: Text(_tx('logs.next')),

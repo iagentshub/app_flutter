@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:app_flutter/core/network/api_client.dart';
 import 'package:app_flutter/features/agents/repositories/agent_import_repository.dart';
 import 'package:app_flutter/features/knowledge/models/local_knowledge_file.dart';
+import 'package:app_flutter/models/agents/agent_import_models.dart';
 import 'package:app_flutter/shared/state/backend_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -11,6 +12,44 @@ import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  test('pagina el catálogo de importación con cursor opaco', () async {
+    SharedPreferences.setMockInitialValues({});
+    final backend = await BackendController.bootstrap();
+    late Uri requested;
+    final client = ApiClient(
+      backend,
+      client: MockClient((request) async {
+        requested = request.url;
+        return _json({
+          'items': [
+            {'id': 'skill-1', 'name': 'Skill 1'},
+          ],
+          'page': {'has_more': true, 'next_cursor': 'next opaque/2'},
+        });
+      }),
+    );
+    addTearDown(client.close);
+
+    final page = await AgentImportRepository(apiClient: client).searchCatalog(
+      'token',
+      AgentResourceType.skill,
+      query: 'Security',
+      cursor: 'opaque+/= 1',
+      limit: 25,
+    );
+
+    expect(requested.queryParameters, {
+      'q': 'Security',
+      'limit': '25',
+      'cursor': 'opaque+/= 1',
+    });
+    expect(requested.path, '/api/v2/agents/import/catalog/skill');
+    expect(requested.queryParameters.containsKey('offset'), isFalse);
+    expect(page.items.single.id, 'skill-1');
+    expect(page.hasMore, isTrue);
+    expect(page.nextCursor, 'next opaque/2');
+  });
+
   test(
     'sube un directorio progresivamente y lee un archivo cada vez',
     () async {

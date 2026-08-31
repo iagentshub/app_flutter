@@ -64,29 +64,34 @@ void main() {
 
     // Primera página: todo dentro de packs, así que el modo packs —el de
     // entrada— la filtra entera. El documento suelto está en la segunda.
-    final offsetsPedidos = <String>[];
+    final cursorsPedidos = <String>[];
     final client = MockClient((request) async {
       final path = request.url.path;
-      if (path == '/api/knowledge') {
-        final offset = request.url.queryParameters['offset'] ?? '0';
-        offsetsPedidos.add(offset);
-        if (offset == '0') {
-          return _json(
-            [for (var i = 0; i < 5; i++) _item('en-pack-$i', packId: 'p1')],
-            headers: {'x-has-more': 'true', 'x-total-count': '6'},
-          );
+      if (path == '/api/v2/knowledge') {
+        final cursor = request.url.queryParameters['cursor'] ?? 'first';
+        cursorsPedidos.add(cursor);
+        if (cursor == 'first') {
+          return _json({
+            'items': [
+              for (var i = 0; i < 5; i++) _item('en-pack-$i', packId: 'p1'),
+            ],
+            'page': {'has_more': true, 'next_cursor': 'page-2'},
+          });
         }
-        return _json(
-          [_item('suelto')],
-          headers: {'x-has-more': 'false', 'x-total-count': '6'},
-        );
+        return _json({
+          'items': [_item('suelto')],
+          'page': {'has_more': false},
+        });
       }
-      if (path == '/api/knowledge/packs') return _json([]);
-      if (path == '/api/agents' ||
-          path == '/api/skills' ||
-          path == '/api/prompts' ||
-          path == '/api/tools') {
-        return _json([], headers: {'x-has-more': 'false'});
+      if (path == '/api/v2/knowledge-packs' ||
+          path == '/api/v2/agents' ||
+          path == '/api/v2/skills' ||
+          path == '/api/v2/prompts' ||
+          path == '/api/v2/tools') {
+        return _json({
+          'items': [],
+          'page': {'has_more': false},
+        });
       }
       return _json({});
     });
@@ -111,9 +116,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      offsetsPedidos,
-      containsAll(<String>['0', '5']),
-      reason: 'la segunda página no se llegó a pedir: $offsetsPedidos',
+      cursorsPedidos,
+      containsAll(<String>['first', 'page-2']),
+      reason: 'la segunda página no se llegó a pedir: $cursorsPedidos',
     );
     expect(find.text('Documento suelto'), findsOneWidget);
   });

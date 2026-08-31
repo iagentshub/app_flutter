@@ -40,12 +40,12 @@ void main() {
     String? requestedType;
     List<String> requestedLanguages = const [];
     final client = MockClient((request) async {
-      if (request.url.path == '/api/explore') {
+      if (request.url.path == '/api/v2/explore') {
         requestedType = request.url.queryParameters['type'];
         requestedLanguages = request.url.queryParametersAll['language'] ?? [];
-        return _json([]);
+        return _page([]);
       }
-      if (request.url.path == '/api/users') return _json([]);
+      if (request.url.path == '/api/v2/users') return _page([]);
       return _json({}, statusCode: 404);
     });
 
@@ -126,8 +126,8 @@ void main() {
           linkedPath = request.url.path;
           return _json({'name': 'Official Analyst'});
         }
-        if (request.url.path == '/api/explore') {
-          return _json([
+        if (request.url.path == '/api/v2/explore') {
+          return _page([
             {
               'resource_type': 'agent',
               'resource_id': 'agent-oficial',
@@ -150,7 +150,7 @@ void main() {
             },
           ]);
         }
-        if (request.url.path == '/api/users') return _json([]);
+        if (request.url.path == '/api/v2/users') return _page([]);
         return _json({}, statusCode: 404);
       });
 
@@ -229,8 +229,8 @@ void main() {
       if (request.url.path == '/api/explore/official-packs') {
         return _json([_pack()]);
       }
-      if (request.url.path == '/api/explore') {
-        return _json([
+      if (request.url.path == '/api/v2/explore') {
+        return _page([
           {
             'resource_type': 'agent',
             'resource_id': 'agent-graph',
@@ -251,7 +251,7 @@ void main() {
           },
         ]);
       }
-      if (request.url.path == '/api/users') return _json([]);
+      if (request.url.path == '/api/v2/users') return _page([]);
       return _json({}, statusCode: 404);
     });
 
@@ -336,7 +336,7 @@ void main() {
       if (request.url.path == '/api/explore/official-packs') {
         return _json([_pack()]);
       }
-      if (request.url.path == '/api/explore') {
+      if (request.url.path == '/api/v2/explore') {
         communityRequestExcludedOfficial =
             request.url.queryParameters['include_official'] == 'false';
         final resources = <Map<String, dynamic>>[
@@ -357,9 +357,9 @@ void main() {
             'labels': ['official'],
           });
         }
-        return _json(resources);
+        return _page(resources);
       }
-      if (request.url.path == '/api/users') return _json([]);
+      if (request.url.path == '/api/v2/users') return _page([]);
       return _json({}, statusCode: 404);
     });
 
@@ -452,4 +452,17 @@ http.Response _json(Object body, {int statusCode = 200}) {
     statusCode,
     headers: {'content-type': 'application/json'},
   );
+}
+
+http.Response _page(List<Object?> items, {int linkedMatches = 0}) {
+  return _json({
+    'items': items,
+    'page': {
+      'limit': 40,
+      'has_more': false,
+      'next_cursor': null,
+      'total': items.length,
+    },
+    'linked_matches': linkedMatches,
+  });
 }

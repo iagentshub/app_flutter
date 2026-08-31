@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 
 import '../../../core/network/api_error.dart';
+import '../../../core/network/cursor_pagination_exception.dart';
+import '../../../core/network/page_result.dart';
 import '../../../models/explore/explore_models.dart';
 import '../../../models/manager/group_models.dart';
 import '../../../shared/graph/resource_graph_builder.dart';
@@ -52,7 +54,8 @@ class ExploreController extends ChangeNotifier {
   bool _loading = true;
   bool _resourcesLoadingMore = false;
   bool _resourcesHasMore = false;
-  int _resourcesOffset = 0;
+  String? _nextResourcesCursor;
+  final Set<String> _seenResourceCursors = <String>{};
   String? _error;
   String _type = 'all';
   String _relation = ExploreRelation.nuevo;
@@ -136,7 +139,8 @@ class ExploreController extends ChangeNotifier {
   bool _usersLoadingMore = false;
   String? _usersError;
   bool _usersHasMore = false;
-  int _usersOffset = 0;
+  String? _nextUsersCursor;
+  final Set<String> _seenUserCursors = <String>{};
   final Set<String> _invitingUsernames = <String>{};
 
   List<ExploreUserItem> get users => _users;
@@ -265,9 +269,8 @@ class ExploreController extends ChangeNotifier {
       );
       await load();
       return ActionResult(
-        _tx(
-          'explore.pack_link_ok',
-        ).replaceAll('{{count}}', '${result.createdCount}'),
+        _tx('explore.pack_link_ok')
+            .replaceAll('{{count}}', '${result.createdCount}'),
       );
     } on ApiError catch (error) {
       return ActionResult.error(error.message);
@@ -377,9 +380,8 @@ class ExploreController extends ChangeNotifier {
       );
       _linkedKeys.add(key);
       return ActionResult(
-        _tx(
-          'explore.link_ok',
-        ).replaceAll('{{name}}', '${result['name'] ?? item.name}'),
+        _tx('explore.link_ok')
+            .replaceAll('{{name}}', '${result['name'] ?? item.name}'),
       );
     } on ApiError catch (error) {
       return ActionResult.error(error.message);
@@ -454,11 +456,12 @@ class ExploreController extends ChangeNotifier {
         token,
         query: userQueryController.text,
         limit: usersPageSize,
-        offset: 0,
       );
-      _users = users;
-      _usersOffset = users.length;
-      _usersHasMore = users.length >= usersPageSize;
+      _users = users.items;
+      _seenUserCursors.clear();
+      _nextUsersCursor = users.nextCursor;
+      if (_nextUsersCursor != null) _seenUserCursors.add(_nextUsersCursor!);
+      _usersHasMore = users.hasMore;
       _usersLoading = false;
     } on ApiError catch (error) {
       _usersError = error.message;
@@ -482,11 +485,19 @@ class ExploreController extends ChangeNotifier {
         token,
         query: userQueryController.text,
         limit: usersPageSize,
-        offset: _usersOffset,
+        cursor: _nextUsersCursor,
       );
-      _users = [..._users, ...next];
-      _usersOffset += next.length;
-      _usersHasMore = next.length >= usersPageSize;
+      final nextCursor = next.nextCursor;
+      if (nextCursor != null && !_seenUserCursors.add(nextCursor)) {
+        throw const CursorPaginationException.repeatedCursor();
+      }
+      final known = _users.map((user) => user.username).toSet();
+      _users = [
+        ..._users,
+        ...next.items.where((user) => known.add(user.username)),
+      ];
+      _nextUsersCursor = nextCursor;
+      _usersHasMore = next.hasMore;
       return null;
     } on ApiError catch (error) {
       return ActionResult.error(error.message);

@@ -32,15 +32,15 @@ class AgentImportRepository extends ApiRepository {
     String token,
     AgentResourceType type, {
     String query = '',
-    int offset = 0,
+    String? cursor,
     int limit = 50,
   }) async {
     final uri = Uri(
-      path: '/api/agents/import/catalog/${type.apiValue}',
+      path: '/api/v2/agents/import/catalog/${type.apiValue}',
       queryParameters: {
         if (query.trim().isNotEmpty) 'q': query.trim(),
         'limit': '$limit',
-        'offset': '$offset',
+        'cursor': ?cursor,
       },
     );
     final response = await apiClient.get(uri.toString(), gaToken: token);

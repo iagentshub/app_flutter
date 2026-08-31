@@ -26,12 +26,17 @@ extension _AgentsPageImportActions on _AgentsPageState {
     }
   }
 
-  Future<void> _reviewAgentDirectoryFiles(List<LocalKnowledgeFile> files) async {
+  Future<void> _reviewAgentDirectoryFiles(
+    List<LocalKnowledgeFile> files,
+  ) async {
     final token = _token;
     if (token == null || token.isEmpty || _importingAgentFile) return;
     refresh(() => _importingAgentFile = true);
     try {
-      final plan = await _agentImportRepository.previewDirectory(token, files: files);
+      final plan = await _agentImportRepository.previewDirectory(
+        token,
+        files: files,
+      );
       if (!mounted) return;
       if (!plan.components.any((item) => item.isAgent)) {
         showMessage(_tx('agents.directory_no_agents'), isError: true);
@@ -52,7 +57,10 @@ extension _AgentsPageImportActions on _AgentsPageState {
         options: options,
       );
       if (!mounted) return;
-      showMessage(_tx('agents.directory_imported_count').replaceAll('{{count}}', '${result.agentCount}'));
+      showMessage(
+        _tx('agents.directory_imported_count')
+            .replaceAll('{{count}}', '${result.agentCount}'),
+      );
       await _reloadAfterDirectoryImport();
     } on ApiError catch (error) {
       if (mounted) showMessage(error.message, isError: true);
@@ -227,7 +235,7 @@ extension _AgentsPageImportActions on _AgentsPageState {
   Future<AgentResourceOptionPage> _loadAgentResourcePage(
     AgentResourceType type,
     String query,
-    int offset,
+    String? cursor,
   ) {
     final token = _token;
     if (token == null || token.isEmpty) {
@@ -239,7 +247,7 @@ extension _AgentsPageImportActions on _AgentsPageState {
       token,
       type,
       query: query,
-      offset: offset,
+      cursor: cursor,
     );
   }
 

@@ -36,6 +36,7 @@ WorkflowCard _card({required WorkflowItem item, required VoidCallback onRun}) {
     graphQuickViewNoDescriptionLabel: 'Sin descripción',
     graphQuickViewConnectionsLabel: 'Conexiones',
     graphQuickViewNoConnectionsLabel: 'Sin conexiones',
+    inProgressLabel: 'En curso',
     inactiveLabel: 'Desactivado',
     activateTooltip: 'Activar',
     deactivateTooltip: 'Desactivar',

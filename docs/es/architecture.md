@@ -19,14 +19,37 @@ El código se organiza por **áreas funcionales**, no por tipo de fichero. Cada 
 
 ## Carga incremental
 
-`core/network/page_result.dart` es el contrato común de páginas HTTP y lee
-`X-Total-Count`, `X-Has-More` y `X-Next-Cursor`. Los repositorios exponen una
+`core/network/page_result.dart` es el contrato común de páginas HTTP. Los
+catálogos propios exigen el cuerpo v2 `items + page` (`has_more`, `next_cursor`,
+`total`, `snapshot_at`); una lista legacy en una ruta v2 es un error de contrato.
+Solo Chat conserva un decodificador separado para su contrato cursor mediante
+cabeceras. Los repositorios exponen una
 operación de página para vistas largas y recorren todas las páginas solo en
 selectores que realmente necesitan el catálogo accesible completo.
 
-Knowledge carga páginas offset al acercarse al final. Chat carga conversaciones
-por cursor y antepone mensajes antiguos preservando la posición de scroll. Los
-listados de servidor usan builders/slivers para construir solo lo visible.
+Agents, Skills, Prompts, Tools, Knowledge y Knowledge Packs consumen `/api/v2`
+con cursor. Las pantallas de Agents y Knowledge avanzan página a
+página al acercarse al final; el Dashboard obtiene una sola muestra de hasta
+100 recursos y pide el total exacto solo para sus KPI. El colector
+`core/network/cursor_page_collector.dart` queda para consumidores que necesitan
+el conjunto completo. El selector remoto conserva un cursor independiente por
+tipo y búsqueda. Chat
+carga conversaciones por cursor y antepone mensajes antiguos preservando la
+posición de scroll. Los listados de servidor usan builders/slivers para
+construir solo lo visible.
+
+Explore público y la búsqueda de usuarios guardan únicamente el siguiente
+cursor y deduplican cada página. El visor de logs conserva la navegación
+Anterior/Siguiente con un historial local de cursores, y los borradores
+oficiales grandes se hidratan con el colector cursor. Ninguno de estos clientes
+envía `offset`; un cursor repetido se convierte en un error traducible.
+
+Connections consume `/api/v2/connections` y pagina su pantalla. Los selectores
+que necesitan el catálogo completo recorren los cursores con el colector común
+y aplanan localmente las variantes de modelo anidadas. Admin Explore se carga
+solo al abrir su pestaña, avanza incrementalmente y reinicia el cursor al
+cambiar búsqueda o filtros. El visor de tablas mantiene una pila local de
+cursores para Anterior/Siguiente; nunca calcula una posición global.
 
 Las pestañas de Skills, Prompts y Tools sí recorren todas las páginas a
 propósito: filtran por categoría o lenguaje en cliente, y una página suelta
@@ -91,7 +114,7 @@ Las rutas se dividen en **públicas** —portada, precios, documentación, sopor
 
 ## Idiomas
 
-La app viene en español e inglés. Los textos no están escritos dentro de las pantallas: viven en ficheros de traducción separados por idioma y por área, y se cargan bajo demanda la primera vez que hacen falta. Cambiar de idioma no requiere reiniciar.
+La app viene en español e inglés. Los textos no están escritos dentro de las pantallas: viven en ficheros de traducción separados por idioma y por área, y se cargan bajo demanda la primera vez que hacen falta. Cambiar de idioma no requiere reiniciar. `test/i18n_claves_existentes_test.dart` verifica que las claves existan en ambos idiomas, que estén en su namespace y que los sumideros visibles (`Text`, tooltips, ayudas, diálogos, mensajes y errores) no reciban literales naturales. Los widgets reutilizables reciben sus etiquetas traducidas como parámetros obligatorios.
 
 Las rutas en inglés llevan el prefijo `/en` , igual que en la web.
 

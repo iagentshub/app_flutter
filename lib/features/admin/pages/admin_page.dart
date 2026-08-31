@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
@@ -161,6 +163,11 @@ class _AdminPageState extends State<AdminPage>
   final _filteredMemoriesMemo = Memoized<List<Map<String, dynamic>>>();
 
   bool _loading = true;
+  bool _exploreLoaded = false;
+  bool _exploreLoading = false;
+  bool _exploreHasMore = false;
+  String? _exploreCursor;
+  int _exploreGeneration = 0;
   String? _error;
 
   String _tx(String path) => _t.text(path);
@@ -199,7 +206,11 @@ class _AdminPageState extends State<AdminPage>
   }
 
   void _onTabChanged() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    setState(() {});
+    if (_tabController.index == 1 && !_exploreLoaded && !_exploreLoading) {
+      unawaited(_loadExplore(reset: true));
+    }
   }
 
   void _onTextsChanged() {
@@ -211,7 +222,7 @@ class _AdminPageState extends State<AdminPage>
   /// la reconstrucción de tarjetas en cada pulsación.
   void _onSearchChanged() {
     _searchDebouncer.run(() {
-      if (mounted) setState(() {});
+      if (mounted) unawaited(_loadExplore(reset: true));
     });
   }
 
@@ -244,32 +255,13 @@ class _AdminPageState extends State<AdminPage>
     try {
       final results = await Future.wait([
         _statsRepository.getStats(token),
-        _statsRepository.explore(token),
         _platformRepository.getPlatformSettings(token),
       ]);
 
       if (!mounted) return;
-      final explore = results[1] as AdminExploreResult;
-      List<Map<String, dynamic>> ofType(AdminResourceType type) => explore.items
-          .where((item) => item.type == type)
-          .map((item) => item.data)
-          .toList(growable: false);
       setState(() {
         _stats = results[0] as AdminStats;
-        _exploreItems = explore.items;
-        _exploreCounts = explore.counts;
-        _users = ofType(AdminResourceType.user);
-        _groups = ofType(AdminResourceType.group);
-        _agents = ofType(AdminResourceType.agent);
-        _connections = ofType(AdminResourceType.connection);
-        _knowledge = ofType(AdminResourceType.knowledge);
-        _workflows = ofType(AdminResourceType.workflow);
-        _llmOrchestrations = ofType(AdminResourceType.llmOrchestration);
-        _skills = ofType(AdminResourceType.skill);
-        _memories = ofType(AdminResourceType.memory);
-        _prompts = ofType(AdminResourceType.prompt);
-        _tools = ofType(AdminResourceType.tool);
-        _platformSettings = results[2] as Map<String, dynamic>;
+        _platformSettings = results[1] as Map<String, dynamic>;
         _loading = false;
       });
     } on ApiError catch (error) {
@@ -287,6 +279,82 @@ class _AdminPageState extends State<AdminPage>
     }
   }
 
+  Future<void> _loadExplore({required bool reset}) async {
+    final token = _token;
+    if (token == null || token.isEmpty || (_exploreLoading && !reset)) return;
+    final generation = reset ? ++_exploreGeneration : _exploreGeneration;
+    setState(() => _exploreLoading = true);
+    try {
+      final selectedType = _exploreTypes.length == 1
+          ? _exploreTypes.single
+          : null;
+      final owner = switch (selectedType) {
+        AdminResourceType.agent => _agentOwner,
+        AdminResourceType.connection => _connOwner,
+        AdminResourceType.knowledge => _knowledgeOwner,
+        AdminResourceType.workflow => _workflowOwner,
+        AdminResourceType.llmOrchestration => _llmOrchestrationOwner,
+        AdminResourceType.skill => _skillOwner,
+        AdminResourceType.memory => _memoryOwner,
+        AdminResourceType.prompt => _promptOwner,
+        AdminResourceType.tool => _toolOwner,
+        _ => '',
+      };
+      final page = await _statsRepository.explorePage(
+        token,
+        cursor: reset ? null : _exploreCursor,
+        query: _exploreSearchController.text,
+        types: _exploreTypes,
+        owner: owner,
+        role: selectedType == AdminResourceType.user ? _userRole : '',
+        active: selectedType == AdminResourceType.user ? _userActive : '',
+        verified: selectedType == AdminResourceType.user ? _userVerified : '',
+        knowledgeType: selectedType == AdminResourceType.knowledge
+            ? _knowledgeType
+            : '',
+      );
+      if (!mounted || generation != _exploreGeneration) return;
+      final items = reset ? page.items : [..._exploreItems, ...page.items];
+      List<Map<String, dynamic>> ofType(AdminResourceType type) => items
+          .where((item) => item.type == type)
+          .map((item) => item.data)
+          .toList(growable: false);
+      setState(() {
+        _exploreItems = items;
+        _exploreCounts = page.counts;
+        _exploreCursor = page.nextCursor;
+        _exploreHasMore = page.hasMore;
+        _exploreLoaded = true;
+        _exploreLoading = false;
+        _users = ofType(AdminResourceType.user);
+        _groups = ofType(AdminResourceType.group);
+        _agents = ofType(AdminResourceType.agent);
+        _connections = ofType(AdminResourceType.connection);
+        _knowledge = ofType(AdminResourceType.knowledge);
+        _workflows = ofType(AdminResourceType.workflow);
+        _llmOrchestrations = ofType(AdminResourceType.llmOrchestration);
+        _skills = ofType(AdminResourceType.skill);
+        _memories = ofType(AdminResourceType.memory);
+        _prompts = ofType(AdminResourceType.prompt);
+        _tools = ofType(AdminResourceType.tool);
+      });
+    } on ApiError catch (error) {
+      if (mounted && generation == _exploreGeneration) {
+        setState(() {
+          _error = error.message;
+          _exploreLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted && generation == _exploreGeneration) {
+        setState(() {
+          _error = _tx('admin.error_generic');
+          _exploreLoading = false;
+        });
+      }
+    }
+  }
+
   Future<void> _run(
     Future<void> Function() action,
     String successMessage,
@@ -296,6 +364,7 @@ class _AdminPageState extends State<AdminPage>
       _services.apiClient.invalidateCache();
       showMessage(successMessage);
       await _load();
+      if (_exploreLoaded) await _loadExplore(reset: true);
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {

@@ -14,9 +14,9 @@ class _SummaryBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final counts = <String, int>{
-      'agents': data.agents.length,
+      'agents': data.agentTotal,
       'connections': data.connections.length,
-      'skills': data.skills.length,
+      'skills': data.skillTotal,
       'memory': data.memory.length,
       'knowledge': data.knowledge.length,
       'workflows': data.workflows.length,
@@ -105,9 +105,9 @@ class _ActivityBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          tx(
-            'total_tokens_days',
-          ).replaceAll('{{total}}', '$total').replaceAll('{{days}}', '$days'),
+          tx('total_tokens_days')
+              .replaceAll('{{total}}', '$total')
+              .replaceAll('{{days}}', '$days'),
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         const SizedBox(height: 10),
@@ -119,7 +119,8 @@ class _ActivityBody extends StatelessWidget {
               final ratio = max > 0 ? point.tokens / max : 0.0;
               return Expanded(
                 child: Tooltip(
-                  message: '${point.day}: ${point.tokens} tokens',
+                  message:
+                      '${point.day}: ${tx('tokens_value').replaceAll('{{count}}', '${point.tokens}')}',
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 1.5),
                     child: FractionallySizedBox(
@@ -250,9 +251,9 @@ class _TokenUsageBody extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: entry.value / max,
                   minHeight: 6,
-                  backgroundColor: Theme.of(
-                    context,
-                  ).colorScheme.surfaceContainerHighest,
+                  backgroundColor: Theme.of(context)
+                      .colorScheme
+                      .surfaceContainerHighest,
                 ),
               ),
             ],

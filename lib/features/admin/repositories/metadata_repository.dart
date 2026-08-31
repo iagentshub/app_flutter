@@ -1,17 +1,17 @@
 import '../../../core/network/api_repository.dart';
 
+int _asInt(Object? value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return 0;
+}
+
 class MetadataTable {
   const MetadataTable({required this.raw});
 
   final Map<String, dynamic> raw;
 
   String get name => raw['name'] as String? ?? '';
-
-  int _asInt(Object? value) {
-    if (value is int) return value;
-    if (value is num) return value.toInt();
-    return 0;
-  }
 
   int get rows => _asInt(raw['rows']);
   int get colCount => _asInt(raw['col_count']);
@@ -32,7 +32,7 @@ class MetadataPageData {
   }
 
   List<List<String?>> get rows {
-    final value = raw['rows'];
+    final value = raw['items'];
     if (value is! List) return const [];
     return value.map((row) {
       if (row is! List) return <String?>[];
@@ -40,16 +40,14 @@ class MetadataPageData {
     }).toList();
   }
 
-  int _asInt(Object? value) {
-    if (value is int) return value;
-    if (value is num) return value.toInt();
-    return 0;
-  }
+  Map<String, dynamic> get _page => raw['page'] is Map<String, dynamic>
+      ? raw['page'] as Map<String, dynamic>
+      : const {};
 
-  int get total => _asInt(raw['total']);
-  int get page => _asInt(raw['page']);
-  int get pageSize => _asInt(raw['page_size']);
-  int get pages => _asInt(raw['pages']);
+  int? get total =>
+      _page['total'] is num ? (_page['total'] as num).toInt() : null;
+  bool get hasMore => _page['has_more'] == true;
+  String? get nextCursor => _page['next_cursor']?.toString();
 }
 
 class MetadataRepository extends ApiRepository {
@@ -72,17 +70,19 @@ class MetadataRepository extends ApiRepository {
   Future<MetadataPageData> tableData(
     String token, {
     required String tableName,
-    required int page,
     int pageSize = 50,
     String query = '',
+    String? cursor,
   }) async {
     final params = <String, String>{
-      'page': '$page',
-      'page_size': '$pageSize',
+      'limit': '$pageSize',
+      'include_total': 'true',
+      if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
       if (query.trim().isNotEmpty) 'q': query.trim(),
     };
     final path = Uri(
-      path: '/api/admin/metadata/tables/${Uri.encodeComponent(tableName)}/data',
+      path:
+          '/api/v2/admin/metadata/tables/${Uri.encodeComponent(tableName)}/data',
       queryParameters: params,
     ).toString();
     final response = await apiClient.get(path, gaToken: token);

@@ -65,6 +65,7 @@ class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
   String? _dateFilter;
 
   LogsPage? _logsPage;
+  final List<String?> _logPageCursors = <String?>[null];
   bool _viewerLoading = false;
   bool _exporting = false;
   String? _viewerError;
@@ -147,6 +148,19 @@ class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
       _viewerError = null;
     });
     try {
+      String? cursor;
+      if (page <= 1) {
+        _logPageCursors
+          ..clear()
+          ..add(null);
+      } else if (page - 1 < _logPageCursors.length) {
+        cursor = _logPageCursors[page - 1];
+      } else if (_logsPage != null && page == _logsPage!.page + 1) {
+        cursor = _logsPage!.nextCursor;
+      } else {
+        if (mounted) setState(() => _viewerLoading = false);
+        return;
+      }
       final result = await _repository.list(
         token,
         dateFrom: _dateFilter,
@@ -161,10 +175,18 @@ class _LogsPageViewState extends State<LogsPageView> with StateMessaging {
         resourceType: _resourceTypeController.text.trim(),
         resourceId: _resourceIdController.text.trim(),
         outcome: _outcome,
-        page: page,
+        cursor: cursor,
+        pageNumber: page,
       );
       if (!mounted) return;
       setState(() {
+        if (result.nextCursor != null) {
+          if (_logPageCursors.length == page) {
+            _logPageCursors.add(result.nextCursor);
+          } else if (_logPageCursors.length > page) {
+            _logPageCursors[page] = result.nextCursor;
+          }
+        }
         _logsPage = result;
         _viewerLoading = false;
       });

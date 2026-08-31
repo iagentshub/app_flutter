@@ -32,11 +32,17 @@ void main() {
     final client = ApiClient(
       backendController,
       client: MockClient((request) async {
-        expect(request.url.path, '/api/feed');
+        expect(request.url.path, '/api/v2/feed');
         attempts++;
         return attempts == 1
             ? http.Response('fallo', 503)
-            : http.Response('[]', 200);
+            : http.Response(
+                jsonEncode({
+                  'items': <Object>[],
+                  'page': {'has_more': false},
+                }),
+                200,
+              );
       }),
     );
     addTearDown(client.close);
@@ -57,20 +63,25 @@ void main() {
     );
   });
 
-  testWidgets('hace visible el fallo al actualizar la estrella', (tester) async {
+  testWidgets('hace visible el fallo al actualizar la estrella', (
+    tester,
+  ) async {
     final client = ApiClient(
       backendController,
       client: MockClient((request) async {
-        if (request.url.path == '/api/feed') {
+        if (request.url.path == '/api/v2/feed') {
           return http.Response(
-            jsonEncode([
-              {
-                'resource_type': 'agent',
-                'resource_id': 'agent-1',
-                'name': 'Agente de prueba',
-                'starred': false,
-              },
-            ]),
+            jsonEncode({
+              'items': [
+                {
+                  'resource_type': 'agent',
+                  'resource_id': 'agent-1',
+                  'name': 'Agente de prueba',
+                  'starred': false,
+                },
+              ],
+              'page': {'has_more': false},
+            }),
             200,
           );
         }

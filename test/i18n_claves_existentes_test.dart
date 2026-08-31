@@ -87,6 +87,118 @@ void main() {
           '${(descolocadas.toList()..sort()).join('\n')}',
     );
   });
+
+  test('detecta literales visibles que no pasan por i18n', () {
+    const ejemplo = """
+Text('Guardar')
+tooltip: 'Actualizar'
+showMessage('Operación terminada')
+_error = 'No se pudo cargar'
+this.busyLabel = 'En curso'
+""";
+
+    expect(
+      _literalesVisibles(ejemplo).map((item) => item.literal),
+      containsAll(<String>[
+        'Guardar',
+        'Actualizar',
+        'Operación terminada',
+        'No se pudo cargar',
+        'En curso',
+      ]),
+    );
+  });
+
+  test('el código de producción no contiene textos visibles hardcodeados', () {
+    final hallazgos = <String>[];
+    for (final archivo in Directory(
+      'lib',
+    ).listSync(recursive: true).whereType<File>()) {
+      if (!archivo.path.endsWith('.dart')) continue;
+      final lineas = archivo.readAsLinesSync();
+      for (var indice = 0; indice < lineas.length; indice++) {
+        for (final item in _literalesVisibles(lineas[indice])) {
+          if (_esLiteralTecnico(item.literal)) continue;
+          hallazgos.add(
+            '${archivo.path}:${indice + 1}: ${item.sink} → ${item.literal}',
+          );
+        }
+      }
+    }
+
+    expect(
+      hallazgos,
+      isEmpty,
+      reason:
+          'Estos textos llegan a la interfaz sin pasar por tr/_tx/tx. '
+          'Añade una clave ES/EN y pásala al widget.\n${hallazgos.join('\n')}',
+    );
+  });
+}
+
+typedef _LiteralVisible = ({String sink, String literal});
+
+Iterable<_LiteralVisible> _literalesVisibles(String fuente) sync* {
+  final patrones = <({String sink, RegExp patron})>[
+    (
+      sink: 'Text',
+      patron: RegExp(
+        r'''\b(?:Text|SelectableText)\(\s*(?:const\s+)?(['"])(.*?)\1''',
+      ),
+    ),
+    (
+      sink: 'propiedad visible',
+      patron: RegExp(
+        r'''\b(?:tooltip|labelText|hintText|helperText|errorText|semanticLabel|cancelLabel|confirmLabel|retryLabel|emptyText)\s*:\s*(['"])(.*?)\1''',
+      ),
+    ),
+    (
+      sink: 'showMessage',
+      patron: RegExp(r'''\bshowMessage\(\s*(['"])(.*?)\1'''),
+    ),
+    (
+      sink: 'estado de error',
+      patron: RegExp(r'''\b_?error\s*=\s*(['"])(.*?)\1'''),
+    ),
+    (
+      sink: 'valor por defecto visible',
+      patron: RegExp(
+        r'''\bthis\.[A-Za-z0-9_]*(?:Label|Tooltip|Text)\s*=\s*(['"])(.*?)\1''',
+      ),
+    ),
+  ];
+
+  final codigo = _sinComentarios(fuente);
+  for (final entrada in patrones) {
+    for (final match in entrada.patron.allMatches(codigo)) {
+      yield (sink: entrada.sink, literal: match.group(2)!);
+    }
+  }
+}
+
+bool _esLiteralTecnico(String literal) {
+  if (literal.isEmpty || literal.startsWith(r'$') || literal.startsWith('@')) {
+    return true;
+  }
+  if (literal.startsWith('http://') ||
+      literal.startsWith('https://') ||
+      literal.startsWith('/api/')) {
+    return true;
+  }
+  if (!RegExp(r'[A-Za-zÀ-ÿ]').hasMatch(literal)) return true;
+  return const {
+    'GET',
+    'POST',
+    'DELETE',
+    'generic',
+    'claude',
+    'openai',
+    'github',
+    'ollama',
+    r'ID: ${item.id}',
+    't (s)',
+    's',
+  }.contains(literal);
 }
 
 /// Todas las rutas de hoja de un bundle: `{"a":{"b":"x"}}` → `a.b`.

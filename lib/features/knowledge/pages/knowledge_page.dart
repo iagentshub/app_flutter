@@ -10,6 +10,7 @@ import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/config/directory_import_policy.dart';
 import '../../../core/config/tool_runtimes.dart';
 import '../../../core/network/api_error.dart';
+import '../../../core/network/cursor_pagination_exception.dart';
 import '../../../core/network/page_result.dart';
 import '../../../features/memory/pages/memory_page.dart';
 import '../../../models/agents/agent_models.dart';
@@ -171,6 +172,8 @@ class _KnowledgePageState extends State<KnowledgePage>
   List<KnowledgeItem> _items = const [];
   bool _hasMoreKnowledge = false;
   bool _loadingMoreKnowledge = false;
+  String? _nextKnowledgeCursor;
+  final Set<String> _seenKnowledgeCursors = {};
   List<KnowledgePack> _packs = const [];
   Future<List<AgentItem>>? _graphRelations;
   bool _loading = true;

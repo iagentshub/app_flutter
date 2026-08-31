@@ -27,11 +27,11 @@ class AgentBuilderChatPanel extends StatelessWidget {
     required this.sendTooltip,
     required this.stopTooltip,
     required this.suggestions,
-    this.assistantLabel = 'Asistente IA',
-    this.userLabel = 'Tú',
-    this.readyLabel = 'Disponible',
-    this.workingLabel = 'Generando respuesta',
-    this.thinkingLabel = 'Analizando tu solicitud…',
+    required this.assistantLabel,
+    required this.userLabel,
+    required this.readyLabel,
+    required this.workingLabel,
+    required this.thinkingLabel,
     this.partialReply = '',
     this.draft,
     this.draftTitle = '',
@@ -187,9 +187,8 @@ class _ChatHeader extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                  style: Theme.of(context).textTheme.titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w600),
                 ),
                 if (!compact) ...[
                   const SizedBox(height: 2),
@@ -197,9 +196,8 @@ class _ChatHeader extends StatelessWidget {
                     subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                    ),
+                    style: Theme.of(context).textTheme.bodySmall
+                        ?.copyWith(color: colors.onSurfaceVariant),
                   ),
                 ],
               ],
@@ -255,10 +253,8 @@ class _EmptyConversation extends StatelessWidget {
         children: [
           Text(
             intro,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              height: 1.6,
-              color: colors.onSurfaceVariant,
-            ),
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(height: 1.6, color: colors.onSurfaceVariant),
           ),
           if (suggestions.isNotEmpty) ...[
             const SizedBox(height: 20),
@@ -330,9 +326,8 @@ class _ErrorNotice extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: colors.error),
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(color: colors.error),
             ),
           ),
         ],
@@ -383,14 +378,12 @@ class _Composer extends StatelessWidget {
                 maxLines: compact ? 3 : 6,
                 textInputAction: TextInputAction.send,
                 textCapitalization: TextCapitalization.sentences,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(height: 1.5),
+                style: Theme.of(context).textTheme.bodyMedium
+                    ?.copyWith(height: 1.5),
                 decoration: InputDecoration(
                   hintText: hint,
-                  hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colors.onSurfaceVariant,
-                  ),
+                  hintStyle: Theme.of(context).textTheme.bodyMedium
+                      ?.copyWith(color: colors.onSurfaceVariant),
                   filled: true,
                   fillColor: colors.surfaceContainerLowest,
                   border: OutlineInputBorder(

@@ -66,16 +66,25 @@ void main() {
     List<Map<String, dynamic>>? connections,
   }) {
     switch (request.url.path) {
-      case '/api/connections':
-        return _json(connections ?? [_connection()]);
-      case '/api/skills':
-        return _json([
-          {'id': 'skill-1', 'name': 'Soporte'},
-        ]);
-      case '/api/knowledge':
-        return _json([
-          {'id': 'knowledge-1', 'title': 'Manual'},
-        ]);
+      case '/api/v2/connections':
+        return _json({
+          'items': connections ?? [_connection()],
+          'page': {'has_more': false},
+        });
+      case '/api/v2/skills':
+        return _json({
+          'items': [
+            {'id': 'skill-1', 'name': 'Soporte'},
+          ],
+          'page': {'has_more': false},
+        });
+      case '/api/v2/knowledge':
+        return _json({
+          'items': [
+            {'id': 'knowledge-1', 'title': 'Manual'},
+          ],
+          'page': {'has_more': false},
+        });
       default:
         return _json({});
     }
@@ -130,7 +139,7 @@ void main() {
 
   test('el fallo de un catálogo no impide usar los demás', () async {
     final controller = await build((request) async {
-      if (request.url.path == '/api/skills') {
+      if (request.url.path == '/api/v2/skills') {
         return _json({'detail': 'Skills caído'}, statusCode: 503);
       }
       return resourcesResponse(request);
@@ -235,13 +244,16 @@ void main() {
   test('el 404 restaura el prompt y descarta la conexión obsoleta', () async {
     var connectionRequests = 0;
     final controller = await build((request) async {
-      if (request.url.path == '/api/connections') {
+      if (request.url.path == '/api/v2/connections') {
         connectionRequests++;
-        return _json([
-          connectionRequests == 1
-              ? _connection(id: 'stale', name: 'Antigua')
-              : _connection(id: 'available', name: 'Disponible'),
-        ]);
+        return _json({
+          'items': [
+            connectionRequests == 1
+                ? _connection(id: 'stale', name: 'Antigua')
+                : _connection(id: 'available', name: 'Disponible'),
+          ],
+          'page': {'has_more': false},
+        });
       }
       if (request.url.path == '/api/agent-builder/chat') {
         return _json({

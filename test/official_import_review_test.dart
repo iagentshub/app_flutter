@@ -322,8 +322,9 @@ void main() {
       }
       if (request.method == 'GET' && request.url.path.endsWith('/components')) {
         pages += 1;
-        final offset = int.parse(request.url.queryParameters['offset']!);
-        final length = offset == 0 ? 500 : 1;
+        final cursor = request.url.queryParameters['cursor'];
+        final offset = cursor == null ? 0 : 500;
+        final length = cursor == null ? 500 : 1;
         return _json({
           'items': List.generate(length, (index) {
             final id = offset + index;
@@ -339,6 +340,12 @@ void main() {
               'variants': <Object>[],
             };
           }),
+          'page': {
+            'limit': 500,
+            'has_more': cursor == null,
+            'next_cursor': cursor == null ? 'page-2' : null,
+            'total': 501,
+          },
         });
       }
       return _json({}, statusCode: 404);
