@@ -1,33 +1,10 @@
 import '../../../core/network/api_repository.dart';
 
-/// Gestión de usuarios desde Admin (`/api/admin/users`): listado con
+/// Gestión de usuarios desde Admin (`/api/v2/admin/users`): listado con
 /// filtros, alta, baja y el `PATCH` genérico que cubre rol/actividad/reset
 /// de contraseña.
 class AdminUsersRepository extends ApiRepository {
   AdminUsersRepository({required super.apiClient});
-
-  Future<List<Map<String, dynamic>>> listUsers(
-    String token, {
-    String query = '',
-    String role = '',
-    String active = '',
-    String verified = '',
-  }) async {
-    final params = <String, String>{
-      if (query.trim().isNotEmpty) 'q': query.trim(),
-      if (role.trim().isNotEmpty) 'role': role.trim(),
-      if (active.trim().isNotEmpty) 'active': active.trim(),
-      if (verified.trim().isNotEmpty) 'verified': verified.trim(),
-    };
-    final path = Uri(
-      path: '/api/admin/users',
-      queryParameters: params,
-    ).toString();
-    final response = await apiClient.get(path, gaToken: token, cache: true);
-    final payload = response.body;
-    if (payload is! List) return const [];
-    return payload.whereType<Map<String, dynamic>>().toList();
-  }
 
   Future<void> patchUser(
     String token,
