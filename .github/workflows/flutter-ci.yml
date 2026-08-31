@@ -53,6 +53,23 @@ jobs:
       - name: Build Android
         run: flutter build apk --debug
 
+      # El preflight de iAgents espera igualmente a que este check "validate"
+      # termine en verde, así que basta con avisar desde dentro; un job aparte
+      # solo gastaría otro runner para lo mismo. Su cron
+      # de respaldo está declarado horario pero GitHub lo atrasa de 3 a 7 h:
+      # un cambio solo de Flutter tardaba media tarde en llegar a la imagen, y
+      # el panel de Admin lo enseñaba como "App (Flutter): desactualizado".
+      # continue-on-error a propósito — que falte el secreto no puede poner en
+      # rojo un CI correcto, y el cron sigue de respaldo.
+      - name: Avisar a iAgents para reconstruir la imagen unificada
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.IAGENTS_DISPATCH_TOKEN }}
+        run: |
+          test -n "$GH_TOKEN"
+          gh api -X POST repos/iagentshub/iAgents/dispatches -f event_type=upstream-push
+
   # La imagen unificada tiene una sola fuente de verdad: iagentshub/iAgents.
   # Ese workflow fija y verifica los SHAs de app, backend y frontend antes de
   # publicar; este repositorio ya no puede sobrescribir latest por su cuenta.

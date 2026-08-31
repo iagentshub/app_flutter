@@ -1638,6 +1638,7 @@
     "config_banners_invalid_id": "The banner does not have a valid identifier.",
     "config_section_updates": "Updates",
     "config_auto_update": "Automatic updates (Watchtower)",
+    "config_auto_update_unavailable": "Watchtower is not available on this installation: updates are deployed from outside (GitHub Actions, or `docker compose pull && up -d`).",
     "config_check_update_btn": "Check for updates",
     "config_check_update_loading": "Checking...",
     "config_update_now_btn": "Update now",

@@ -11,12 +11,20 @@ class _AdminUpdatesCard extends StatefulWidget {
     required this.repository,
     required this.token,
     required this.initialAutoUpdate,
+    required this.autoUpdateAvailable,
     required this.tx,
   });
 
   final AdminPlatformRepository repository;
   final String token;
   final bool initialAutoUpdate;
+
+  /// Si esta instalación puede gobernar Watchtower de verdad. En producción no
+  /// puede: el despliegue fija un tag inmutable y deja "watchtower" y
+  /// "docker-proxy" en el perfil `manual-updates`, sin arrancar. El
+  /// interruptor salía igualmente encendido —lee la preferencia guardada, que
+  /// por defecto es True— y solo confesaba con un 502 al tocarlo.
+  final bool autoUpdateAvailable;
   final String Function(String path) tx;
 
   @override
@@ -208,13 +216,20 @@ class _AdminUpdatesCardState extends State<_AdminUpdatesCard> {
 
   @override
   Widget build(BuildContext context) {
+    final available = widget.autoUpdateAvailable;
     return _sectionCard(_tx('admin.config_section_updates'), [
-      SwitchListTile(
-        contentPadding: EdgeInsets.zero,
-        title: Text(_tx('admin.config_auto_update')),
-        value: _autoUpdate,
-        onChanged: _toggleAutoUpdate,
-      ),
+      if (available)
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(_tx('admin.config_auto_update')),
+          value: _autoUpdate,
+          onChanged: _toggleAutoUpdate,
+        )
+      else
+        Text(
+          _tx('admin.config_auto_update_unavailable'),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
       if (_autoUpdateResult != null)
         Text(_autoUpdateResult!, style: Theme.of(context).textTheme.bodySmall),
       const SizedBox(height: 8),
@@ -222,6 +237,8 @@ class _AdminUpdatesCardState extends State<_AdminUpdatesCard> {
         spacing: 8,
         runSpacing: 8,
         children: [
+          // "Buscar actualización" se queda siempre: pregunta a GHCR y no
+          // depende de Watchtower para nada.
           SecondaryButton(
             onPressed: _checkingUpdate ? null : _checkUpdate,
             child: Text(
@@ -230,14 +247,15 @@ class _AdminUpdatesCardState extends State<_AdminUpdatesCard> {
                   : _tx('admin.config_check_update_btn'),
             ),
           ),
-          SecondaryButton(
-            onPressed: _triggeringUpdate ? null : _triggerUpdateNow,
-            child: Text(
-              _triggeringUpdate
-                  ? _tx('admin.config_update_now_loading')
-                  : _tx('admin.config_update_now_btn'),
+          if (available)
+            SecondaryButton(
+              onPressed: _triggeringUpdate ? null : _triggerUpdateNow,
+              child: Text(
+                _triggeringUpdate
+                    ? _tx('admin.config_update_now_loading')
+                    : _tx('admin.config_update_now_btn'),
+              ),
             ),
-          ),
         ],
       ),
       if (_checkResult != null) ...[

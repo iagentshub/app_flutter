@@ -321,6 +321,8 @@ class _AdminConfigTabState extends State<_AdminConfigTab> with StateMessaging {
         token: widget.token,
         initialAutoUpdate:
             widget.initialSettings['auto_update_enabled'] != false,
+        autoUpdateAvailable:
+            widget.initialSettings['auto_update_available'] != false,
         tx: _tx,
       ),
     ];
