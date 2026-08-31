@@ -1,26 +1,44 @@
 import '../../../core/network/api_repository.dart';
+import '../../../core/network/cursor_page_collector.dart';
+import '../../../core/network/page_result.dart';
 import '../models/official_import_models.dart';
 
-/// Gestión de conexiones desde Admin (`/api/admin/connections`): listado y
+/// Gestión de conexiones desde Admin (`/api/v2/admin/connections`): listado y
 /// borrado administrativo (sin pasar por el dueño de la conexión).
 class AdminConnectionsRepository extends ApiRepository {
   AdminConnectionsRepository({required super.apiClient});
 
-  Future<List<Map<String, dynamic>>> listAdminConnections(String token) async {
-    final response = await apiClient.get(
-      '/api/admin/connections',
-      gaToken: token,
-      cache: true,
+  Future<PageResult<Map<String, dynamic>>> listAdminConnections(
+    String token, {
+    String? cursor,
+    int limit = 50,
+    String? query,
+  }) async {
+    final params = <String, String>{
+      'limit': '$limit',
+      'cursor': ?cursor,
+      if (query != null && query.trim().isNotEmpty) 'q': query.trim(),
+    };
+    final path = Uri(
+      path: '/api/v2/admin/connections',
+      queryParameters: params,
+    ).toString();
+    final response = await apiClient.get(path, gaToken: token);
+    return PageResult<Map<String, dynamic>>.fromCursorV2Response(
+      response,
+      (item) => item,
     );
-    final payload = response.body;
-    if (payload is! List) return const [];
-    return payload.whereType<Map<String, dynamic>>().toList();
   }
 
   Future<List<OfficialImportLlmConnection>> listLlmConnections(
     String token,
   ) async {
-    final values = await listAdminConnections(token);
+    // La importación oficial necesita el catálogo entero, no una página:
+    // una conexión compatible que se quedara fuera del corte no aparecería
+    // como opción y nadie sabría por qué. Ver `collectCursorPages`.
+    final values = await collectCursorPages<Map<String, dynamic>>(
+      (cursor) => listAdminConnections(token, cursor: cursor, limit: 100),
+    );
     return values
         .where((item) => item['is_active'] != false)
         .map(OfficialImportLlmConnection.fromJson)

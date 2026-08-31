@@ -72,7 +72,8 @@ void main() {
       apiClient: ApiClient(
         backend,
         client: MockClient(
-          (_) async => _json([
+          (_) async => _json({
+            'items': [
             {
               'id': 'future-1',
               'name': 'Future',
@@ -95,7 +96,9 @@ void main() {
               'supports_chat': true,
               'is_active': false,
             },
-          ]),
+            ],
+            'page': {'limit': 100, 'has_more': false, 'next_cursor': null},
+          }),
         ),
       ),
     );

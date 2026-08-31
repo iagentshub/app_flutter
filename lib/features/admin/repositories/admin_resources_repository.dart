@@ -39,17 +39,6 @@ class AdminResourcesRepository extends ApiRepository {
 
   // ── Orquestaciones (workflows) ───────────────────────────────────────
 
-  Future<List<Map<String, dynamic>>> listAdminWorkflows(String token) async {
-    final response = await apiClient.get(
-      '/api/admin/workflows',
-      gaToken: token,
-      cache: true,
-    );
-    final payload = response.body;
-    if (payload is! List) return const [];
-    return payload.whereType<Map<String, dynamic>>().toList();
-  }
-
   Future<void> deleteAdminWorkflow(String token, String workflowId) async {
     await apiClient.delete(
       '/api/admin/workflows/${Uri.encodeComponent(workflowId)}',
