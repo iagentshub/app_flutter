@@ -58,6 +58,55 @@ void main() {
     expect(find.byType(SimpleDialogOption), findsNWidgets(5));
   });
 
+  testWidgets('el listado principal avanza por cursor al acercarse al final', (
+    tester,
+  ) async {
+    final agentRequests = <Uri>[];
+    await _pumpAgentsPage(
+      tester,
+      onRequest: (request) {
+        if (request.url.path == '/api/v2/agents') {
+          agentRequests.add(request.url);
+          final second = request.url.queryParameters['cursor'] != null;
+          return _json({
+            'items': [
+              for (var index = 0; index < 12; index++)
+                {
+                  'id': 'agent-${second ? index + 13 : index + 1}',
+                  'name': 'Agent ${second ? index + 13 : index + 1}',
+                  'scope': 'private',
+                },
+            ],
+            'page': {
+              'has_more': !second,
+              if (!second) 'next_cursor': 'agents-page-2',
+            },
+          });
+        }
+        if (request.url.path == '/api/agents/import/catalog/resolve') {
+          return _json({});
+        }
+        return null;
+      },
+    );
+
+    expect(agentRequests, hasLength(1));
+    expect(agentRequests.single.queryParameters['limit'], '50');
+    expect(find.text('Agent 1'), findsOneWidget);
+
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -4000));
+    await tester.pumpAndSettle();
+
+    expect(agentRequests, hasLength(2));
+    expect(agentRequests.last.queryParameters['cursor'], 'agents-page-2');
+    await tester.scrollUntilVisible(
+      find.text('Agent 24'),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Agent 24'), findsOneWidget);
+  });
+
   testWidgets(
     'arrastrar un md lo revisa y solo guarda después del formulario',
     (tester) async {
@@ -67,14 +116,14 @@ void main() {
       await _pumpAgentsPage(
         tester,
         onRequest: (request) {
-          if (request.url.path == '/api/skills') {
-            return _json(
-              [
+          if (request.url.path == '/api/v2/skills') {
+            return _json({
+              'items': [
                 {'id': 'skill-a', 'name': 'A'},
                 {'id': 'skill-b', 'name': 'B'},
               ],
-              headers: {'x-has-more': 'false'},
-            );
+              'page': {'has_more': false},
+            });
           }
           if (request.url.path == '/api/agents/import/preview') {
             previewRequests++;
@@ -411,7 +460,7 @@ void main() {
   testWidgets('el selector consulta y pagina un catálogo remoto por tipo', (
     tester,
   ) async {
-    final calls = <(AgentResourceType, String, int)>[];
+    final calls = <(AgentResourceType, String, String?)>[];
     final preview = AgentImportPreview.fromJson({
       ..._previewJson,
       'references': [
@@ -432,17 +481,18 @@ void main() {
               context: context,
               preview: preview,
               tx: (path) => tr(path),
-              pageLoader: (type, query, offset) async {
-                calls.add((type, query, offset));
+              pageLoader: (type, query, cursor) async {
+                calls.add((type, query, cursor));
                 return AgentResourceOptionPage(
                   items: [
                     AgentResourceOption(
-                      id: offset == 0 ? 'remote-a' : 'remote-b',
+                      id: cursor == null ? 'remote-a' : 'remote-b',
                       type: type,
-                      title: offset == 0 ? 'Remota A' : 'Remota B',
+                      title: cursor == null ? 'Remota A' : 'Remota B',
                     ),
                   ],
-                  hasMore: offset == 0,
+                  hasMore: cursor == null,
+                  nextCursor: cursor == null ? 'opaque-1' : null,
                 );
               },
             ),
@@ -464,8 +514,8 @@ void main() {
 
     expect(find.text('Remota B'), findsOneWidget);
     expect(calls, [
-      (AgentResourceType.skill, '', 0),
-      (AgentResourceType.skill, '', 1),
+      (AgentResourceType.skill, '', null),
+      (AgentResourceType.skill, '', 'opaque-1'),
     ]);
   });
 
@@ -560,16 +610,13 @@ Future<void> _pumpAgentsPage(
   final client = MockClient((request) async {
     final custom = onRequest?.call(request);
     if (custom != null) return custom;
-    if ({
-      '/api/agents',
-      '/api/skills',
-      '/api/knowledge',
-      '/api/knowledge/packs',
-      '/api/prompts',
-      '/api/tools',
-      '/api/connections',
-      '/api/memory',
-    }.contains(request.url.path)) {
+    if (request.url.path.startsWith('/api/v2/')) {
+      return _json({
+        'items': [],
+        'page': {'has_more': false},
+      });
+    }
+    if ({'/api/connections', '/api/memory'}.contains(request.url.path)) {
       return _json([], headers: {'x-has-more': 'false'});
     }
     return _json({});

@@ -58,25 +58,36 @@ class AdminStats {
 class AdminStatsRepository extends ApiRepository {
   AdminStatsRepository({required super.apiClient});
 
-  Future<AdminExploreResult> explore(String token) async {
-    const pageSize = 200;
-    var offset = 0;
-    var total = 0;
-    var counts = const <AdminResourceType, int>{};
-    final items = <AdminExploreItem>[];
-    do {
-      final response = await apiClient.get(
-        '/api/admin/explore?limit=$pageSize&offset=$offset',
-        gaToken: token,
-      );
-      final page = AdminExploreResult.fromJson(response.json);
-      total = page.total;
-      counts = page.counts;
-      items.addAll(page.items);
-      offset += page.items.length;
-      if (page.items.isEmpty) break;
-    } while (items.length < total);
-    return AdminExploreResult(items: items, total: total, counts: counts);
+  Future<AdminExploreResult> explorePage(
+    String token, {
+    String? cursor,
+    String query = '',
+    Set<AdminResourceType> types = const {},
+    String owner = '',
+    String role = '',
+    String active = '',
+    String verified = '',
+    String knowledgeType = '',
+    int limit = 100,
+  }) async {
+    final params = <String, dynamic>{
+      'limit': '$limit',
+      'include_total': 'true',
+      'include_counts': 'true',
+      if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+      if (query.trim().isNotEmpty) 'q': query.trim(),
+      if (types.isNotEmpty) 'type': types.map((type) => type.wireName).toList(),
+      if (owner.isNotEmpty) 'owner': owner,
+      if (role.isNotEmpty) 'role': role,
+      if (active.isNotEmpty) 'active': active,
+      if (verified.isNotEmpty) 'verified': verified,
+      if (knowledgeType.isNotEmpty) 'knowledge_type': knowledgeType,
+    };
+    final response = await apiClient.get(
+      Uri(path: '/api/v2/admin/explore', queryParameters: params).toString(),
+      gaToken: token,
+    );
+    return AdminExploreResult.fromJson(response.json);
   }
 
   Future<AdminStats> getStats(String token) async {

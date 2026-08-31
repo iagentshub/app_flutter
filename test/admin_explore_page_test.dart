@@ -51,7 +51,7 @@ void main() {
           'agents_private': 1,
         });
       }
-      if (path == '/api/admin/explore') {
+      if (path == '/api/v2/admin/explore') {
         return _json({
           'items': [
             {
@@ -108,7 +108,7 @@ void main() {
               'candidate_count': 3,
             },
           ],
-          'total': 7,
+          'page': {'has_more': false, 'total': 7},
           'counts': {
             'user': 1,
             'group': 1,
@@ -235,7 +235,7 @@ void main() {
           'agents_private': 0,
         });
       }
-      if (path == '/api/admin/explore') {
+      if (path == '/api/v2/admin/explore') {
         return _json({
           'items': [
             {
@@ -251,7 +251,7 @@ void main() {
               'official_version': 'v1',
             },
           ],
-          'total': 1,
+          'page': {'has_more': false, 'total': 1},
           'counts': {'skill': 1},
         });
       }

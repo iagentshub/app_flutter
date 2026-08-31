@@ -1,6 +1,11 @@
 part of '../pages/admin_page.dart';
 
 extension _AdminExploreTab on _AdminPageState {
+  void _setExploreFilter(VoidCallback update) {
+    refresh(update);
+    unawaited(_loadExplore(reset: true));
+  }
+
   String _resourceTypeLabel(AdminResourceType? type) {
     return switch (type) {
       AdminResourceType.user => _tx('admin.type_user'),
@@ -120,13 +125,13 @@ extension _AdminExploreTab on _AdminPageState {
         _openOwnerFilterDialog(
           owners: _ownersOf(_agents),
           currentOwner: _agentOwner,
-          onChanged: (value) => refresh(() => _agentOwner = value),
+          onChanged: (value) => _setExploreFilter(() => _agentOwner = value),
         );
       case AdminResourceType.connection:
         _openOwnerFilterDialog(
           owners: _ownersOf(_connections),
           currentOwner: _connOwner,
-          onChanged: (value) => refresh(() => _connOwner = value),
+          onChanged: (value) => _setExploreFilter(() => _connOwner = value),
         );
       case AdminResourceType.knowledge:
         _openKnowledgeFiltersDialog();
@@ -134,37 +139,38 @@ extension _AdminExploreTab on _AdminPageState {
         _openOwnerFilterDialog(
           owners: _ownersOf(_workflows),
           currentOwner: _workflowOwner,
-          onChanged: (value) => refresh(() => _workflowOwner = value),
+          onChanged: (value) => _setExploreFilter(() => _workflowOwner = value),
         );
       case AdminResourceType.llmOrchestration:
         _openOwnerFilterDialog(
           owners: _ownersOf(_llmOrchestrations),
           currentOwner: _llmOrchestrationOwner,
-          onChanged: (value) => refresh(() => _llmOrchestrationOwner = value),
+          onChanged: (value) =>
+              _setExploreFilter(() => _llmOrchestrationOwner = value),
         );
       case AdminResourceType.skill:
         _openOwnerFilterDialog(
           owners: _ownersOf(_skills),
           currentOwner: _skillOwner,
-          onChanged: (value) => refresh(() => _skillOwner = value),
+          onChanged: (value) => _setExploreFilter(() => _skillOwner = value),
         );
       case AdminResourceType.memory:
         _openOwnerFilterDialog(
           owners: _ownersOf(_memories),
           currentOwner: _memoryOwner,
-          onChanged: (value) => refresh(() => _memoryOwner = value),
+          onChanged: (value) => _setExploreFilter(() => _memoryOwner = value),
         );
       case AdminResourceType.prompt:
         _openOwnerFilterDialog(
           owners: _ownersOf(_prompts),
           currentOwner: _promptOwner,
-          onChanged: (value) => refresh(() => _promptOwner = value),
+          onChanged: (value) => _setExploreFilter(() => _promptOwner = value),
         );
       case AdminResourceType.tool:
         _openOwnerFilterDialog(
           owners: _ownersOf(_tools),
           currentOwner: _toolOwner,
-          onChanged: (value) => refresh(() => _toolOwner = value),
+          onChanged: (value) => _setExploreFilter(() => _toolOwner = value),
         );
       case AdminResourceType.group:
         return;
@@ -184,6 +190,9 @@ extension _AdminExploreTab on _AdminPageState {
 
   Widget _buildExploreTab() {
     final items = _filteredExploreItems;
+    if (_exploreLoading && !_exploreLoaded) {
+      return const Center(child: IAgentsLoadingMark());
+    }
     return _buildFilterableList<AdminExploreItem>(
       items: items,
       itemBuilder: _buildExploreCard,
@@ -198,15 +207,18 @@ extension _AdminExploreTab on _AdminPageState {
         typeFilterTooltip: _tx('admin.explore_filter_type'),
         multipleTypesLabel: (count) =>
             _tx('admin.explore_types_selected').replaceAll('{count}', '$count'),
-        onTypesChanged: (values) => refresh(() {
-          _exploreTypes
-            ..clear()
-            ..addAll(values.map(AdminResourceType.fromWireName).whereType());
-        }),
+        onTypesChanged: (values) {
+          refresh(() {
+            _exploreTypes
+              ..clear()
+              ..addAll(values.map(AdminResourceType.fromWireName).whereType());
+          });
+          unawaited(_loadExplore(reset: true));
+        },
         selectorKey: const Key('exploreTypeDropdown'),
         actions: [
           AppIconButton.outlined(
-            onPressed: _load,
+            onPressed: () => unawaited(_loadExplore(reset: true)),
             icon: const Icon(Icons.refresh),
             tooltip: _tx('admin.refresh'),
           ),
@@ -228,6 +240,23 @@ extension _AdminExploreTab on _AdminPageState {
             ),
         ],
       ),
+      onRefresh: () => _loadExplore(reset: true),
+      footer: _exploreHasMore
+          ? Center(
+              child: SecondaryButton(
+                onPressed: _exploreLoading
+                    ? null
+                    : () => unawaited(_loadExplore(reset: false)),
+                child: _exploreLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: IAgentsLoadingMark(),
+                      )
+                    : Text(_tx('explore.load_more')),
+              ),
+            )
+          : null,
     );
   }
 

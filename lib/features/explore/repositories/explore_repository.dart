@@ -1,5 +1,6 @@
 import '../../../core/network/api_error.dart';
 import '../../../core/network/api_repository.dart';
+import '../../../core/network/page_result.dart';
 import '../../../models/explore/explore_models.dart';
 import '../../../shared/graph/resource_graph_builder.dart';
 import '../../../utils/i18n.dart';
@@ -22,6 +23,11 @@ abstract final class ExploreRelation {
 class ExploreRepository extends ApiRepository {
   ExploreRepository({required super.apiClient});
 
+  void _invalidateExplore() {
+    apiClient.invalidateCache('/api/v2/explore');
+    apiClient.invalidateCache('/api/explore');
+  }
+
   Future<List<ExploreItem>> listResources(
     String token, {
     required String type,
@@ -33,7 +39,7 @@ class ExploreRepository extends ApiRepository {
     bool? packMode,
     String relation = ExploreRelation.todo,
     int limit = 40,
-    int offset = 0,
+    String? cursor,
   }) async {
     final page = await listResourcePage(
       token,
@@ -46,16 +52,15 @@ class ExploreRepository extends ApiRepository {
       packMode: packMode,
       relation: relation,
       limit: limit,
-      offset: offset,
+      cursor: cursor,
     );
-    return page.items;
+    return page.page.items;
   }
 
   /// Una página del catálogo. `linkedMatches` solo llega cuando `relation` es
   /// `new` y la página sale vacía: es lo que el filtro dejó fuera por estar ya
   /// enlazado, y sirve para explicar el vacío sin una segunda petición.
-  Future<({List<ExploreItem> items, int total, int linkedMatches})>
-  listResourcePage(
+  Future<({PageResult<ExploreItem> page, int linkedMatches})> listResourcePage(
     String token, {
     required String type,
     String query = '',
@@ -66,7 +71,7 @@ class ExploreRepository extends ApiRepository {
     bool? packMode,
     String relation = ExploreRelation.todo,
     int limit = 40,
-    int offset = 0,
+    String? cursor,
   }) async {
     final params = <String, dynamic>{
       'type': type,
@@ -78,9 +83,9 @@ class ExploreRepository extends ApiRepository {
       if (packMode != null) 'pack_mode': '$packMode',
       if (relation != ExploreRelation.todo) 'relation': relation,
       'limit': '$limit',
-      'offset': '$offset',
+      'cursor': ?cursor,
     };
-    final uri = Uri(path: '/api/explore', queryParameters: params);
+    final uri = Uri(path: '/api/v2/explore', queryParameters: params);
     final response = await apiClient.get(
       uri.toString(),
       gaToken: token,
@@ -88,20 +93,16 @@ class ExploreRepository extends ApiRepository {
       // puede invalidarse cuando otra sesión publica o retira un recurso.
       cache: false,
     );
-    final payload = response.body;
-    if (payload is! List) {
-      return (items: const <ExploreItem>[], total: 0, linkedMatches: 0);
-    }
-    final items = payload
-        .whereType<Map<String, dynamic>>()
-        .map((item) => ExploreItem(raw: item))
-        .toList();
-    final total = int.tryParse(response.headers['x-total-count'] ?? '');
+    final page = PageResult<ExploreItem>.fromCursorV2Response(
+      response,
+      (item) => ExploreItem(raw: item),
+    );
+    final payload = response.json;
     return (
-      items: items,
-      total: total ?? offset + items.length,
-      linkedMatches:
-          int.tryParse(response.headers['x-linked-count'] ?? '') ?? 0,
+      page: page,
+      linkedMatches: payload['linked_matches'] is num
+          ? (payload['linked_matches'] as num).toInt()
+          : 0,
     );
   }
 
@@ -195,29 +196,27 @@ class ExploreRepository extends ApiRepository {
         'commit_sha': commitSha,
       },
     );
-    apiClient.invalidateCache('/api/explore');
+    _invalidateExplore();
     return ExploreOfficialPackLinkResult.fromJson(response.json);
   }
 
-  Future<List<ExploreUserItem>> searchUsers(
+  Future<PageResult<ExploreUserItem>> searchUsers(
     String token, {
     String query = '',
     int limit = 20,
-    int offset = 0,
+    String? cursor,
   }) async {
     final params = <String, String>{
       if (query.trim().isNotEmpty) 'q': query.trim(),
       'limit': '$limit',
-      'offset': '$offset',
+      'cursor': ?cursor,
     };
-    final uri = Uri(path: '/api/users', queryParameters: params);
+    final uri = Uri(path: '/api/v2/users', queryParameters: params);
     final response = await apiClient.get(uri.toString(), gaToken: token);
-    final payload = response.body;
-    if (payload is! List) return const [];
-    return payload
-        .whereType<Map<String, dynamic>>()
-        .map((item) => ExploreUserItem(raw: item))
-        .toList();
+    return PageResult<ExploreUserItem>.fromCursorV2Response(
+      response,
+      (item) => ExploreUserItem(raw: item),
+    );
   }
 
   Future<Map<String, dynamic>> getPreview(
@@ -241,7 +240,7 @@ class ExploreRepository extends ApiRepository {
       '/api/${Uri.encodeComponent(resourceType)}/${Uri.encodeComponent(resourceId)}/star',
       gaToken: token,
     );
-    apiClient.invalidateCache('/api/explore');
+    _invalidateExplore();
     apiClient.invalidateCache('/api/feed');
     final payload = response.json;
     final stars = payload['stars'];
@@ -259,7 +258,7 @@ class ExploreRepository extends ApiRepository {
       '/api/${Uri.encodeComponent(resourceType)}/${Uri.encodeComponent(resourceId)}/star',
       gaToken: token,
     );
-    apiClient.invalidateCache('/api/explore');
+    _invalidateExplore();
     apiClient.invalidateCache('/api/feed');
     final payload = response.json;
     final stars = payload['stars'];

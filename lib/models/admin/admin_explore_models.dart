@@ -47,11 +47,15 @@ class AdminExploreResult {
     required this.items,
     required this.total,
     required this.counts,
+    required this.hasMore,
+    this.nextCursor,
   });
 
   final List<AdminExploreItem> items;
   final int total;
   final Map<AdminResourceType, int> counts;
+  final bool hasMore;
+  final String? nextCursor;
 
   factory AdminExploreResult.fromJson(Map<String, dynamic> json) {
     final rawItems = json['items'];
@@ -70,11 +74,17 @@ class AdminExploreResult {
         if (type != null && value is num) counts[type] = value.toInt();
       }
     }
-    final rawTotal = json['total'];
+    final rawPage = json['page'];
+    final page = rawPage is Map<String, dynamic>
+        ? rawPage
+        : const <String, dynamic>{};
+    final rawTotal = page['total'] ?? json['total'];
     return AdminExploreResult(
       items: items,
       total: rawTotal is num ? rawTotal.toInt() : items.length,
       counts: counts,
+      hasMore: page['has_more'] == true,
+      nextCursor: page['next_cursor']?.toString(),
     );
   }
 }

@@ -35,20 +35,26 @@ void main() {
       remember: false,
     );
     final client = MockClient((request) async {
-      if (request.url.path == '/api/agents') {
-        return _json([
-          {'id': 'agent-1', 'name': 'Agente móvil'},
-        ]);
+      if (request.url.path == '/api/v2/agents') {
+        return _json({
+          'items': [
+            {'id': 'agent-1', 'name': 'Agente móvil'},
+          ],
+          'page': {'has_more': false},
+        });
       }
-      if (request.url.path == '/api/connections') {
-        return _json([
-          {
-            'id': 'llm-orchestration:shared-route',
-            'name': 'Ruta LLM del grupo',
-            'type': 'llm_orchestration',
-            'is_virtual': true,
-          },
-        ]);
+      if (request.url.path == '/api/v2/connections') {
+        return _json({
+          'items': [
+            {
+              'id': 'llm-orchestration:shared-route',
+              'name': 'Ruta LLM del grupo',
+              'type': 'llm_orchestration',
+              'is_virtual': true,
+            },
+          ],
+          'page': {'has_more': false},
+        });
       }
       return _json({}, statusCode: 404);
     });

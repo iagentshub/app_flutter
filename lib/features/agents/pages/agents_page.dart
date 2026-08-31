@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/config/directory_import_policy.dart';
 import '../../../core/network/api_error.dart';
+import '../../../core/network/page_result.dart';
 import '../../../models/agents/agent_import_models.dart';
 import '../../../models/agents/agent_models.dart';
 import '../../../models/agents/agent_resource_catalog.dart';
@@ -91,6 +92,9 @@ class _AgentsPageState extends State<AgentsPage>
   /// del id crudo de la conexión.
   Map<String, String> _connectionNames = const {};
   bool _loading = true;
+  bool _loadingMoreAgents = false;
+  bool _hasMoreAgents = false;
+  String? _nextAgentCursor;
   bool _importingAgentFile = false;
   bool _draggingAgentFile = false;
   String? _error;
@@ -254,14 +258,16 @@ class _AgentsPageState extends State<AgentsPage>
 
     try {
       final coreResults = await Future.wait([
-        _repository.listAgents(
+        _repository.listAgentPage(
           token,
           groupId: _activeGroupId,
           includeInactive: true,
+          limit: 50,
         ),
         _connectionsRepository.listConnections(token, includeInactive: true),
       ]);
-      final agents = coreResults[0] as List<AgentItem>;
+      final agentPage = coreResults[0] as PageResult<AgentItem>;
+      final agents = agentPage.items;
       final catalog = await _resolveCatalogForAgents(token, agents);
       if (!mounted) return;
       final connections = coreResults[1] as List<ConnectionItem>;
@@ -275,6 +281,9 @@ class _AgentsPageState extends State<AgentsPage>
           prompts: catalog.prompts,
           tools: catalog.tools,
         );
+        _hasMoreAgents = agentPage.hasMore;
+        _nextAgentCursor = agentPage.nextCursor;
+        _loadingMoreAgents = false;
         _loading = false;
       });
     } on ApiError catch (error) {
@@ -289,6 +298,59 @@ class _AgentsPageState extends State<AgentsPage>
         _error = _tx('agents.error_generic');
         _loading = false;
       });
+    }
+  }
+
+  Future<void> _loadMoreAgents() async {
+    final token = _token;
+    final cursor = _nextAgentCursor;
+    if (token == null ||
+        token.isEmpty ||
+        !_hasMoreAgents ||
+        cursor == null ||
+        _loading ||
+        _loadingMoreAgents) {
+      return;
+    }
+    setState(() => _loadingMoreAgents = true);
+    try {
+      final page = await _repository.listAgentPage(
+        token,
+        groupId: _activeGroupId,
+        includeInactive: true,
+        limit: 50,
+        cursor: cursor,
+      );
+      if (!mounted) return;
+      final ids = _agents.map((item) => item.id).toSet();
+      final agents = [
+        ..._agents,
+        ...page.items.where((item) => ids.add(item.id)),
+      ];
+      final catalog = await _resolveCatalogForAgents(token, agents);
+      if (!mounted) return;
+      setState(() {
+        _installLoadedData(
+          agents: agents,
+          connections: _connections,
+          skills: catalog.skills,
+          knowledge: catalog.knowledge,
+          packs: catalog.packs,
+          prompts: catalog.prompts,
+          tools: catalog.tools,
+        );
+        _hasMoreAgents = page.hasMore;
+        _nextAgentCursor = page.nextCursor;
+        _loadingMoreAgents = false;
+      });
+    } on ApiError catch (error) {
+      if (!mounted) return;
+      setState(() => _loadingMoreAgents = false);
+      showMessage(error.message, isError: true);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loadingMoreAgents = false);
+      showMessage(_tx('agents.error_generic'), isError: true);
     }
   }
 
@@ -340,26 +402,7 @@ class _AgentsPageState extends State<AgentsPage>
   }
 
   Future<void> _reloadAfterDirectoryImport() async {
-    final token = _token;
-    if (token == null || token.isEmpty) return;
-    final agents = await _repository.listAgents(
-      token,
-      groupId: _activeGroupId,
-      includeInactive: true,
-    );
-    final catalog = await _resolveCatalogForAgents(token, agents);
-    if (!mounted) return;
-    setState(() {
-      _installLoadedData(
-        agents: agents,
-        skills: catalog.skills,
-        knowledge: catalog.knowledge,
-        packs: catalog.packs,
-        prompts: catalog.prompts,
-        tools: catalog.tools,
-        connections: _connections,
-      );
-    });
+    await _load();
   }
 
   void _onGroupSelect(String? groupId) {

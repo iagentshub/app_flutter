@@ -37,9 +37,9 @@ void main() {
     final client = MockClient((request) async {
       await loadGate.future;
       final Object body = switch (request.url.path) {
-        '/api/admin/explore' => const {
+        '/api/v2/admin/explore' => const {
           'items': <Object>[],
-          'total': 0,
+          'page': {'has_more': false, 'total': 0},
           'counts': <String, Object>{},
         },
         _ => const <String, Object>{},

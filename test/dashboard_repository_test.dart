@@ -49,9 +49,8 @@ void main() {
     final client = ApiClient(backendController, client: mock);
     addTearDown(client.close);
 
-    final preferences = await DashboardRepository(
-      client,
-    ).getPreferences('token');
+    final preferences = await DashboardRepository(client)
+        .getPreferences('token');
 
     expect(preferences.isVersioned, isTrue);
     expect(preferences.instances.map((item) => item.id), ['kpi-a', 'kpi-b']);
@@ -85,6 +84,40 @@ void main() {
     expect(data.tokenDaily.single.tokens, 42);
     expect(data.conversations.single['id'], 'conversation-a');
     expect(data.agents, isEmpty);
+  });
+
+  test('el dashboard carga una muestra cursor y reutiliza su total', () async {
+    final requests = <Uri>[];
+    final mock = MockClient((request) async {
+      requests.add(request.url);
+      return http.Response(
+        jsonEncode({
+          'items': [
+            {'id': 'agent-1'},
+          ],
+          'page': {
+            'has_more': true,
+            'next_cursor': 'opaque cursor/2',
+            'total': 250,
+          },
+        }),
+        200,
+        headers: {'content-type': 'application/json'},
+      );
+    });
+    final client = ApiClient(backendController, client: mock);
+    addTearDown(client.close);
+
+    final data = await DashboardRepository(client)
+        .fetchData(gaToken: 'token', sources: {DashboardDataSource.agents});
+
+    expect(data.agents.map((item) => item['id']), ['agent-1']);
+    expect(data.agentTotal, 250);
+    expect(requests, hasLength(1));
+    expect(requests.first.path, '/api/v2/agents');
+    expect(requests.first.queryParameters.containsKey('offset'), isFalse);
+    expect(requests.single.queryParameters['include_total'], 'true');
+    expect(requests.single.queryParameters['limit'], '100');
   });
 
   test(

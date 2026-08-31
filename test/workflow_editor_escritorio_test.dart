@@ -57,13 +57,19 @@ void main() {
         remember: false,
       );
       final client = MockClient((request) async {
-        if (request.url.path == '/api/agents') {
-          return _json([
-            {'id': 'agent-1', 'name': 'Agente de escritorio'},
-          ]);
+        if (request.url.path == '/api/v2/agents') {
+          return _json({
+            'items': [
+              {'id': 'agent-1', 'name': 'Agente de escritorio'},
+            ],
+            'page': {'has_more': false},
+          });
         }
-        if (request.url.path == '/api/connections') {
-          return _json([]);
+        if (request.url.path == '/api/v2/connections') {
+          return _json({
+            'items': [],
+            'page': {'has_more': false},
+          });
         }
         return _json({}, statusCode: 404);
       });

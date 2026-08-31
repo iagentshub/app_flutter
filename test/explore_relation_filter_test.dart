@@ -56,15 +56,15 @@ void main() {
   ) async {
     final relaciones = <String?>[];
     final client = MockClient((request) async {
-      if (request.url.path == '/api/explore') {
+      if (request.url.path == '/api/v2/explore') {
         relaciones.add(request.url.queryParameters['relation']);
-        return _json([_recurso('agent-nuevo', 'Agente nuevo')]);
+        return _page([_recurso('agent-nuevo', 'Agente nuevo')]);
       }
       if (request.url.path == '/api/explore/official-packs') {
         relaciones.add(request.url.queryParameters['relation']);
         return _json([]);
       }
-      if (request.url.path == '/api/users') return _json([]);
+      if (request.url.path == '/api/v2/users') return _page([]);
       return _json({}, statusCode: 404);
     });
 
@@ -77,9 +77,9 @@ void main() {
   testWidgets('el filtro de relación cambia a lo ya enlazado', (tester) async {
     String? ultimaRelacion;
     final client = MockClient((request) async {
-      if (request.url.path == '/api/explore') {
+      if (request.url.path == '/api/v2/explore') {
         ultimaRelacion = request.url.queryParameters['relation'];
-        return _json([
+        return _page([
           if (ultimaRelacion == 'linked')
             _recurso('agent-mio', 'Agente ya enlazado', linkedByMe: true)
           else
@@ -87,7 +87,7 @@ void main() {
         ]);
       }
       if (request.url.path == '/api/explore/official-packs') return _json([]);
-      if (request.url.path == '/api/users') return _json([]);
+      if (request.url.path == '/api/v2/users') return _page([]);
       return _json({}, statusCode: 404);
     });
 
@@ -115,18 +115,18 @@ void main() {
   ) async {
     String? ultimaRelacion;
     final client = MockClient((request) async {
-      if (request.url.path == '/api/explore') {
+      if (request.url.path == '/api/v2/explore') {
         ultimaRelacion = request.url.queryParameters['relation'];
         if (ultimaRelacion == 'linked') {
-          return _json([
+          return _page([
             _recurso('agent-mio', 'Agente ya enlazado', linkedByMe: true),
           ]);
         }
         // Vacío, pero el backend cuenta lo que dejó fuera.
-        return _json([], linked: '4');
+        return _page([], linkedMatches: 4);
       }
       if (request.url.path == '/api/explore/official-packs') return _json([]);
-      if (request.url.path == '/api/users') return _json([]);
+      if (request.url.path == '/api/v2/users') return _page([]);
       return _json({}, statusCode: 404);
     });
 
@@ -148,11 +148,11 @@ void main() {
     tester,
   ) async {
     final client = MockClient((request) async {
-      if (request.url.path == '/api/explore') {
-        return _json([_recurso('agent-nuevo', 'Agente nuevo')]);
+      if (request.url.path == '/api/v2/explore') {
+        return _page([_recurso('agent-nuevo', 'Agente nuevo')]);
       }
       if (request.url.path == '/api/explore/official-packs') return _json([]);
-      if (request.url.path == '/api/users') return _json([]);
+      if (request.url.path == '/api/v2/users') return _page([]);
       return _json({}, statusCode: 404);
     });
 
@@ -171,9 +171,9 @@ void main() {
     tester,
   ) async {
     final client = MockClient((request) async {
-      if (request.url.path == '/api/explore') return _json([]);
+      if (request.url.path == '/api/v2/explore') return _page([]);
       if (request.url.path == '/api/explore/official-packs') return _json([]);
-      if (request.url.path == '/api/users') return _json([]);
+      if (request.url.path == '/api/v2/users') return _page([]);
       return _json({}, statusCode: 404);
     });
 
@@ -200,10 +200,21 @@ Map<String, dynamic> _recurso(
   'linked_by_me': linkedByMe,
 };
 
-http.Response _json(Object body, {int statusCode = 200, String? linked}) {
+http.Response _json(Object body, {int statusCode = 200}) {
   return http.Response(
     jsonEncode(body),
     statusCode,
-    headers: {'content-type': 'application/json', 'x-linked-count': ?linked},
+    headers: {'content-type': 'application/json'},
   );
 }
+
+http.Response _page(List<Object?> items, {int linkedMatches = 0}) => _json({
+  'items': items,
+  'page': {
+    'limit': 40,
+    'has_more': false,
+    'next_cursor': null,
+    'total': items.length,
+  },
+  'linked_matches': linkedMatches,
+});

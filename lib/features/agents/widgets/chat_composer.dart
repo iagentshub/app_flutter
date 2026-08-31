@@ -19,7 +19,7 @@ class ChatComposer extends StatelessWidget {
     required this.onRemoveKnowledge,
     required this.streaming,
     this.busy = false,
-    this.busyLabel = 'En curso',
+    required this.busyLabel,
     required this.onSend,
     required this.onStop,
     required this.sendTooltip,

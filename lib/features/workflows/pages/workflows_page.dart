@@ -226,7 +226,7 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'No se pudieron cargar workflows';
+        _error = _tx('workflows.load_error');
         _loading = false;
       });
     }

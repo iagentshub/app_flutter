@@ -204,13 +204,16 @@ Future<void> _openNewToolDialog(
     final custom = onRequest(request);
     if (custom != null) return custom;
     if ({
-      '/api/skills',
-      '/api/prompts',
-      '/api/tools',
-      '/api/knowledge',
-      '/api/knowledge/packs',
+      '/api/v2/skills',
+      '/api/v2/prompts',
+      '/api/v2/tools',
+      '/api/v2/knowledge',
+      '/api/v2/knowledge-packs',
     }.contains(request.url.path)) {
-      return _json([]);
+      return _json({
+        'items': [],
+        'page': {'has_more': false},
+      });
     }
     return _json({});
   });

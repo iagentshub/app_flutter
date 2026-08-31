@@ -1,5 +1,8 @@
 {
   "credential_unreadable": "La credencial guardada no se puede leer. Edítala e introdúcela de nuevo.",
+  "pagination_invalid_response": "El backend devolvió una página de resultados con un formato no válido.",
+  "pagination_missing_next_cursor": "El backend indicó que hay más resultados, pero no proporcionó el cursor siguiente.",
+  "pagination_repeated_cursor": "El backend repitió el cursor de paginación.",
   "resource_execution_in_progress": "Este recurso ya está en curso para tu usuario. Espera a que termine o detén la ejecución actual.",
   "session_cookie_discarded": "El navegador ha descartado la sesión: la aplicación se sirve desde {app} y el backend elegido es {backend}. Las cookies de sesión son SameSite=Lax y no cruzan de un sitio a otro — y «127.0.0.1» es un sitio distinto de «localhost» aunque sean la misma máquina. Elige un backend con el mismo host que la aplicación."
 }

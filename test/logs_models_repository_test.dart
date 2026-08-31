@@ -51,10 +51,12 @@ void main() {
         return http.Response(
           jsonEncode({
             'items': <Object>[],
-            'total': 0,
-            'page': 1,
-            'page_size': 50,
-            'pages': 0,
+            'page': {
+              'limit': 50,
+              'has_more': false,
+              'next_cursor': null,
+              'total': 0,
+            },
           }),
           200,
           headers: {'content-type': 'application/json'},
@@ -138,10 +140,12 @@ void main() {
                 'details_json': '{}',
               },
             ],
-            'total': 1,
-            'page': 1,
-            'page_size': 50,
-            'pages': 1,
+            'page': {
+              'limit': 50,
+              'has_more': false,
+              'next_cursor': null,
+              'total': 1,
+            },
           }),
           200,
           headers: {'content-type': 'application/json'},

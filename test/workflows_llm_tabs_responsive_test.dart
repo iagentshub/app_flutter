@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:app_flutter/core/network/api_client.dart';
 import 'package:app_flutter/features/workflows/pages/workflows_page.dart';
 import 'package:app_flutter/models/auth/session_user.dart';
@@ -37,9 +39,17 @@ void main() {
         remember: false,
       );
       final client = MockClient((request) async {
-        if (request.url.path == '/api/workflows' ||
-            request.url.path == '/api/agents') {
+        if (request.url.path == '/api/workflows') {
           return http.Response('[]', 200);
+        }
+        if (request.url.path == '/api/v2/agents') {
+          return http.Response(
+            jsonEncode({
+              'items': <Object>[],
+              'page': {'has_more': false},
+            }),
+            200,
+          );
         }
         return http.Response('{}', 404);
       });

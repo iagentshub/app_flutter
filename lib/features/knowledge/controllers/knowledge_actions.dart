@@ -200,7 +200,7 @@ extension _KnowledgeActions on _KnowledgePageState {
       title: _tx('knowledge.delete_skill_dialog_title'),
       message: _tx('common.delete_confirm_body')
           .replaceAll('{{nombre}}', item.name),
-      cancelLabel: 'Cancelar',
+      cancelLabel: _tx('common.cancel'),
       confirmLabel: _tx('common.delete'),
       destructive: true,
     );
@@ -268,6 +268,10 @@ extension _KnowledgeActions on _KnowledgePageState {
         final page = results[0] as PageResult<KnowledgeItem>;
         _items = page.items;
         _hasMoreKnowledge = page.hasMore;
+        _nextKnowledgeCursor = page.nextCursor;
+        _seenKnowledgeCursors
+          ..clear()
+          ..addAll(page.nextCursor == null ? const [] : [page.nextCursor!]);
         _loadingMoreKnowledge = false;
         _packs = results[1] as List<KnowledgePack>;
         _loading = false;
@@ -282,7 +286,7 @@ extension _KnowledgeActions on _KnowledgePageState {
     } catch (_) {
       if (!mounted) return;
       refresh(() {
-        _error = 'No se pudo cargar Knowledge';
+        _error = _tx('knowledge.load_error');
         _loading = false;
       });
     }
@@ -301,13 +305,20 @@ extension _KnowledgeActions on _KnowledgePageState {
       final page = await _repository.listItemPage(
         token,
         groupId: _activeGroupId,
-        offset: _items.length,
+        cursor: _nextKnowledgeCursor,
       );
       if (!mounted) return;
+      final nextCursor = page.nextCursor;
+      if (page.hasMore &&
+          nextCursor != null &&
+          !_seenKnowledgeCursors.add(nextCursor)) {
+        throw const CursorPaginationException.repeatedCursor();
+      }
       final known = _items.map((item) => item.id).toSet();
       refresh(() {
         _items = [..._items, ...page.items.where((item) => known.add(item.id))];
         _hasMoreKnowledge = page.hasMore;
+        _nextKnowledgeCursor = nextCursor;
         _loadingMoreKnowledge = false;
       });
     } catch (_) {
@@ -399,7 +410,7 @@ extension _KnowledgeActions on _KnowledgePageState {
       title: _tx('knowledge.delete_item_dialog_title'),
       message: _tx('common.delete_confirm_body')
           .replaceAll('{{nombre}}', item.title),
-      cancelLabel: 'Cancelar',
+      cancelLabel: _tx('common.cancel'),
       confirmLabel: _tx('common.delete'),
       destructive: true,
     );

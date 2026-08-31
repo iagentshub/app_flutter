@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../../../core/network/api_error.dart';
+import '../../../core/network/page_result.dart';
 import '../../../models/connections/connection_models.dart';
 import '../../../shared/state/action_result.dart';
 import '../../../shared/state/session_controller.dart';
@@ -12,12 +13,11 @@ const connectionCategoryIds = ['llm', 'machine', 'database'];
 
 enum ConnectionTestStatus { ok, error, pending }
 
-typedef ConnectionFormPresenter =
-    Future<Map<String, dynamic>?> Function(
-      List<ConnectionProvider> providers,
-      Map<String, dynamic>? initial,
-      Future<List<String>> Function(String host) discoverOllamaModels,
-    );
+typedef ConnectionFormPresenter = Future<Map<String, dynamic>?> Function(
+  List<ConnectionProvider> providers,
+  Map<String, dynamic>? initial,
+  Future<List<String>> Function(String host) discoverOllamaModels,
+);
 
 class ConnectionsMassTestSummary {
   const ConnectionsMassTestSummary({
@@ -57,6 +57,9 @@ class ConnectionsController extends ChangeNotifier {
   List<ConnectionProvider> _providers = const [];
   bool _loading = true;
   bool _testingAll = false;
+  bool _loadingMore = false;
+  bool _hasMore = false;
+  String? _nextCursor;
   String? _error;
   String _query = '';
   String? _activeGroupId;
@@ -70,6 +73,8 @@ class ConnectionsController extends ChangeNotifier {
   List<ConnectionProvider> get providers => _providers;
   bool get loading => _loading;
   bool get testingAll => _testingAll;
+  bool get loadingMore => _loadingMore;
+  bool get hasMore => _hasMore;
   String? get error => _error;
   String? get activeGroupId => _activeGroupId;
   String get providerFilter => _providerFilter;
@@ -161,15 +166,19 @@ class ConnectionsController extends ChangeNotifier {
     _notify();
     try {
       final results = await Future.wait([
-        _repository.listConnections(
+        _repository.listConnectionPage(
           token,
           groupId: _activeGroupId,
           includeInactive: true,
+          limit: 50,
         ),
         _repository.listProviders(token),
       ]);
       if (_disposed) return;
-      _connections = results[0] as List<ConnectionItem>;
+      final page = results[0] as PageResult<ConnectionItem>;
+      _connections = page.items;
+      _hasMore = page.hasMore;
+      _nextCursor = page.nextCursor;
       _providers = results[1] as List<ConnectionProvider>;
       _loading = false;
     } on ApiError catch (error) {
@@ -182,6 +191,36 @@ class ConnectionsController extends ChangeNotifier {
       _loading = false;
     }
     _notify();
+  }
+
+  Future<void> loadMore() async {
+    final token = this.token;
+    final cursor = _nextCursor;
+    if (_loadingMore || !_hasMore || token == null || cursor == null) return;
+    _loadingMore = true;
+    _notify();
+    try {
+      final page = await _repository.listConnectionPage(
+        token,
+        groupId: _activeGroupId,
+        includeInactive: true,
+        limit: 50,
+        cursor: cursor,
+      );
+      if (_disposed) return;
+      _connections = [..._connections, ...page.items];
+      _hasMore = page.hasMore;
+      _nextCursor = page.nextCursor;
+    } on ApiError catch (error) {
+      if (!_disposed) _error = error.message;
+    } catch (_) {
+      if (!_disposed) _error = _tx('connections.error_generic');
+    } finally {
+      if (!_disposed) {
+        _loadingMore = false;
+        _notify();
+      }
+    }
   }
 
   Future<ActionResult?> createConnection({

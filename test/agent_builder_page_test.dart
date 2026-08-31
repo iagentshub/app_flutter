@@ -39,10 +39,10 @@ void main() {
 
     var connectionRequests = 0;
     final httpClient = MockClient((request) async {
-      if (request.url.path == '/api/connections') {
+      if (request.url.path == '/api/v2/connections') {
         connectionRequests += 1;
-        return _json(
-          connectionRequests == 1
+        return _json({
+          'items': connectionRequests == 1
               ? [
                   {
                     'id': 'stale-connection',
@@ -59,11 +59,15 @@ void main() {
                     'model': 'modelo-disponible',
                   },
                 ],
-        );
+          'page': {'has_more': false},
+        });
       }
-      if (request.url.path == '/api/skills' ||
-          request.url.path == '/api/knowledge') {
-        return _json([]);
+      if (request.url.path == '/api/v2/skills' ||
+          request.url.path == '/api/v2/knowledge') {
+        return _json({
+          'items': [],
+          'page': {'has_more': false},
+        });
       }
       if (request.url.path == '/api/agent-builder/chat') {
         return _json({
@@ -132,19 +136,25 @@ void main() {
       remember: false,
     );
     final httpClient = MockClient((request) async {
-      if (request.url.path == '/api/connections') {
-        return _json([
-          {
-            'id': 'mobile-connection',
-            'name': 'Conexión móvil',
-            'type': 'openai',
-            'model': 'modelo-móvil',
-          },
-        ]);
+      if (request.url.path == '/api/v2/connections') {
+        return _json({
+          'items': [
+            {
+              'id': 'mobile-connection',
+              'name': 'Conexión móvil',
+              'type': 'openai',
+              'model': 'modelo-móvil',
+            },
+          ],
+          'page': {'has_more': false},
+        });
       }
-      if (request.url.path == '/api/skills' ||
-          request.url.path == '/api/knowledge') {
-        return _json([]);
+      if (request.url.path == '/api/v2/skills' ||
+          request.url.path == '/api/v2/knowledge') {
+        return _json({
+          'items': [],
+          'page': {'has_more': false},
+        });
       }
       return _json({}, statusCode: 404);
     });

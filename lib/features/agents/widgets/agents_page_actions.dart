@@ -276,7 +276,7 @@ extension _AgentsPageActions on _AgentsPageState {
       title: _tx('agents.delete_dialog_title'),
       message: _tx('common.delete_confirm_body')
           .replaceAll('{{nombre}}', item.name),
-      cancelLabel: 'Cancelar',
+      cancelLabel: _tx('common.cancel'),
       confirmLabel: _tx('common.delete'),
       destructive: true,
     );
@@ -300,7 +300,9 @@ extension _AgentsPageActions on _AgentsPageState {
     final activate = !item.isActive;
     try {
       await _repository.setAgentActive(token, item.id, activate);
-      showMessage(activate ? 'Agente activado' : 'Agente desactivado');
+      showMessage(
+        _tx(activate ? 'agents.msg_activated' : 'agents.msg_deactivated'),
+      );
     } on ApiError catch (error) {
       showMessage(error.message, isError: true);
     } catch (_) {

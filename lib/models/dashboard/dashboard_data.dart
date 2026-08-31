@@ -48,6 +48,9 @@ class DashboardData {
     required this.skills,
     required this.memory,
     required this.tokenDaily,
+    this.agentTotalOverride,
+    this.skillTotalOverride,
+    this.toolTotalOverride,
     this.groups = const [],
     this.invitations = const [],
     this.conversations = const [],
@@ -65,6 +68,14 @@ class DashboardData {
   final List<Map<String, dynamic>> groups;
   final List<Map<String, dynamic>> invitations;
   final List<Map<String, dynamic>> conversations;
+  final int? agentTotalOverride;
+  final int? skillTotalOverride;
+  final int? toolTotalOverride;
+
+  int get agentTotal => agentTotalOverride ?? agents.length;
+  int get skillTotal => skillTotalOverride ?? skills.length;
+  int get toolTotal => toolTotalOverride ?? tools.length;
+  bool get agentsAreComplete => agentTotal == agents.length;
 
   List<MapEntry<Map<String, dynamic>, int>> get connectionsByTokens {
     final rows = connections

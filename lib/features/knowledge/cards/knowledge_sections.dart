@@ -97,7 +97,7 @@ extension _KnowledgeSections on _KnowledgePageState {
                 AppIconButton.outlined(
                   onPressed: _load,
                   icon: const Icon(Icons.refresh),
-                  tooltip: 'Actualizar',
+                  tooltip: _tx('common.refresh'),
                 ),
                 FilterButton(
                   activeCount: _knowledgeFilterCount,
@@ -236,12 +236,12 @@ extension _KnowledgeSections on _KnowledgePageState {
           AppIconButton.filled(
             onPressed: _openCreateSkillChoiceDialog,
             icon: const Icon(Icons.add),
-            tooltip: 'Nueva skill',
+            tooltip: _tx('knowledge.new_skill_title'),
           ),
           AppIconButton.outlined(
             onPressed: _loadSkills,
             icon: const Icon(Icons.refresh),
-            tooltip: 'Actualizar',
+            tooltip: _tx('common.refresh'),
           ),
           FilterButton(
             activeCount: _skillFilterCount,

@@ -205,7 +205,7 @@ class _GroupBody extends StatelessWidget {
         ListTile(
           contentPadding: EdgeInsets.zero,
           leading: const CircleAvatar(child: Icon(Icons.groups_outlined)),
-          title: Text(active['name']?.toString() ?? 'Grupo'),
+          title: Text(active['name']?.toString() ?? tx('default_group_name')),
           subtitle: Text(active['role']?.toString() ?? tx('group_member')),
         ),
         Row(
@@ -248,9 +248,8 @@ class _GroupStat extends StatelessWidget {
       children: [
         Text(
           value,
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+          style: Theme.of(context).textTheme.titleLarge
+              ?.copyWith(fontWeight: FontWeight.w800),
         ),
         Text(label, style: Theme.of(context).textTheme.bodySmall),
       ],

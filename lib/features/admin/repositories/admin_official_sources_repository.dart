@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import '../../../core/network/api_repository.dart';
+import '../../../core/network/cursor_page_collector.dart';
+import '../../../core/network/page_result.dart';
 import '../../../shared/graph/resource_graph_builder.dart';
 import '../models/official_import_models.dart';
 
@@ -151,21 +153,23 @@ class AdminOfficialSourcesRepository extends ApiRepository {
         draft.components.length;
     if (draft.components.length >= total) return draft;
 
-    const pageSize = 500;
-    final components = <ImportComponent>[];
-    for (var offset = 0; offset < total; offset += pageSize) {
+    final components = await collectCursorPages<ImportComponent>((
+      cursor,
+    ) async {
       final response = await apiClient.get(
-        '/api/admin/official-source-drafts/${Uri.encodeComponent(draft.id)}/'
-        'components?offset=$offset&limit=$pageSize',
+        Uri(
+          path:
+              '/api/v2/admin/official-source-drafts/'
+              '${Uri.encodeComponent(draft.id)}/components',
+          queryParameters: <String, String>{'limit': '100', 'cursor': ?cursor},
+        ).toString(),
         gaToken: token,
       );
-      final items = response.json['items'] as List? ?? const [];
-      components.addAll(
-        items.whereType<Map>().map(
-          (item) => ImportComponent.fromJson(item.cast<String, dynamic>()),
-        ),
+      return PageResult<ImportComponent>.fromCursorV2Response(
+        response,
+        ImportComponent.fromJson,
       );
-    }
+    });
     return draft.withComponents(components);
   }
 
@@ -270,6 +274,7 @@ class AdminOfficialSourcesRepository extends ApiRepository {
 
   void _invalidate() {
     apiClient.invalidateCache('/api/admin/official-sources');
+    apiClient.invalidateCache('/api/v2/explore');
     apiClient.invalidateCache('/api/explore');
     apiClient.invalidateCache('/api/admin/explore');
   }

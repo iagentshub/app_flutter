@@ -43,7 +43,6 @@ extension ExploreResourceLoading on ExploreController {
         packMode: _officialPacksMode,
         relation: _relation,
         limit: ExploreController.resourcesPageSize,
-        offset: 0,
       );
       final packsFuture = _officialPacksMode
           ? _repository.listOfficialPacks(
@@ -58,20 +57,26 @@ extension ExploreResourceLoading on ExploreController {
           : Future<List<ExploreOfficialPack>>.value(const []);
       final results = await Future.wait([resourcesFuture, packsFuture]);
       if (generation != _resourceLoadGeneration || _disposed) return;
-      final resourcePage =
-          results[0]
-              as ({List<ExploreItem> items, int total, int linkedMatches});
+      final resourceResult =
+          results[0] as ({PageResult<ExploreItem> page, int linkedMatches});
+      final resourcePage = resourceResult.page;
       _items = resourcePage.items;
       // La página recién llegada ya trae `starred` por fila: el override de la
       // pantalla anterior sobra y solo podría contradecirla.
       _starOverride.clear();
-      _resourcesOffset = _items.length;
-      _resourcesHasMore = _resourcesOffset < resourcePage.total;
+      _seenResourceCursors.clear();
+      _nextResourcesCursor = resourcePage.nextCursor;
+      if (_nextResourcesCursor != null) {
+        _seenResourceCursors.add(_nextResourcesCursor!);
+      }
+      _resourcesHasMore = resourcePage.hasMore;
       _officialPacks = results[1] as List<ExploreOfficialPack>;
       // Solo la envía el backend cuando el filtro dejó la página vacía; con
       // packs en pantalla no hay vacío que explicar, y los packs son de la
       // carga que acaba de llegar, no de la anterior.
-      _linkedMatches = _officialPacks.isEmpty ? resourcePage.linkedMatches : 0;
+      _linkedMatches = _officialPacks.isEmpty
+          ? resourceResult.linkedMatches
+          : 0;
       if (_type == 'all') {
         _typeCounts.clear();
         for (final item in _items) {
@@ -130,16 +135,20 @@ extension ExploreResourceLoading on ExploreController {
         packMode: _officialPacksMode,
         relation: _relation,
         limit: ExploreController.resourcesPageSize,
-        offset: _resourcesOffset,
+        cursor: _nextResourcesCursor,
       );
       if (generation != _resourceLoadGeneration || _disposed) return null;
       final known = _items.map(itemKey).toSet();
       _items = [
         ..._items,
-        ...page.items.where((item) => known.add(itemKey(item))),
+        ...page.page.items.where((item) => known.add(itemKey(item))),
       ];
-      _resourcesOffset += page.items.length;
-      _resourcesHasMore = _resourcesOffset < page.total;
+      final nextCursor = page.page.nextCursor;
+      if (nextCursor != null && !_seenResourceCursors.add(nextCursor)) {
+        throw const CursorPaginationException.repeatedCursor();
+      }
+      _nextResourcesCursor = nextCursor;
+      _resourcesHasMore = page.page.hasMore;
       return null;
     } on ApiError catch (error) {
       return ActionResult.error(error.message);

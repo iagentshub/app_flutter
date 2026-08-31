@@ -84,8 +84,11 @@ void main() {
     if (request.url.path == '/api/connections/providers') {
       return _json(providers());
     }
-    if (request.url.path == '/api/connections') {
-      return _json(connections());
+    if (request.url.path == '/api/v2/connections') {
+      return _json({
+        'items': connections(),
+        'page': {'has_more': false},
+      });
     }
     return _json({});
   }
@@ -108,7 +111,7 @@ void main() {
   test('load trae conexiones inactivas y catálogo de proveedores', () async {
     Uri? listUri;
     final controller = await build((request) async {
-      if (request.url.path == '/api/connections') listUri = request.url;
+      if (request.url.path == '/api/v2/connections') listUri = request.url;
       return listResponse(request);
     });
 
@@ -163,7 +166,7 @@ void main() {
   test('selectGroup recarga el listado con el group_id elegido', () async {
     Uri? listUri;
     final controller = await build((request) async {
-      if (request.url.path == '/api/connections') listUri = request.url;
+      if (request.url.path == '/api/v2/connections') listUri = request.url;
       return listResponse(request);
     });
 

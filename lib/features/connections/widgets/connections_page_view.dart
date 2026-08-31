@@ -123,6 +123,26 @@ extension _ConnectionsPageView on _ConnectionsPageState {
                     else
                       for (final group in _controller.connectionsByProvider)
                         ..._buildProviderGroupSlivers(group.key, group.value),
+                    if (_controller.hasMore)
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                        sliver: SliverToBoxAdapter(
+                          child: Center(
+                            child: SecondaryButton(
+                              onPressed: _controller.loadingMore
+                                  ? null
+                                  : _controller.loadMore,
+                              child: _controller.loadingMore
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: IAgentsLoadingMark(),
+                                    )
+                                  : Text(_tx('explore.load_more')),
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               );

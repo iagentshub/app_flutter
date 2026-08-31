@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../../../core/network/api_repository.dart';
+import '../../../core/network/cursor_page_collector.dart';
 import '../../../core/network/page_result.dart';
 import '../../../models/knowledge/knowledge_models.dart';
 import '../models/local_knowledge_file.dart';
@@ -12,37 +13,30 @@ class KnowledgeRepository extends ApiRepository {
     String token, {
     String? type,
     String? groupId,
-  }) async {
-    final items = <KnowledgeItem>[];
-    var offset = 0;
-    while (true) {
-      final page = await listItemPage(
-        token,
-        type: type,
-        groupId: groupId,
-        limit: 100,
-        offset: offset,
-      );
-      items.addAll(page.items);
-      if (!page.hasMore || page.items.isEmpty) return items;
-      offset += page.items.length;
-    }
-  }
+  }) => collectCursorPages(
+    (cursor) => listItemPage(
+      token,
+      type: type,
+      groupId: groupId,
+      limit: 100,
+      cursor: cursor,
+    ),
+  );
 
   Future<PageResult<KnowledgeItem>> listItemPage(
     String token, {
     String? type,
     String? groupId,
     int limit = 50,
-    int offset = 0,
+    String? cursor,
   }) async {
     final uri = Uri(
-      path: '/api/knowledge',
+      path: '/api/v2/knowledge',
       queryParameters: {
         if (type != null && type.isNotEmpty) 'type': type,
         if (groupId != null && groupId.isNotEmpty) 'group_id': groupId,
         'limit': '$limit',
-        'offset': '$offset',
+        if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
       },
     );
     final response = await apiClient.get(
@@ -50,7 +44,7 @@ class KnowledgeRepository extends ApiRepository {
       gaToken: token,
       cache: false,
     );
-    return PageResult.fromResponse(
+    return PageResult.fromCursorV2Response(
       response,
       (item) => KnowledgeItem(raw: item),
     );
@@ -114,21 +108,35 @@ class KnowledgeRepository extends ApiRepository {
     return response.json;
   }
 
-  Future<List<KnowledgePack>> listPacks(String token, {String? groupId}) async {
-    final query = groupId == null || groupId.isEmpty
-        ? ''
-        : '?group_id=${Uri.encodeQueryComponent(groupId)}';
+  Future<List<KnowledgePack>> listPacks(String token, {String? groupId}) =>
+      collectCursorPages(
+        (cursor) =>
+            listPackPage(token, groupId: groupId, limit: 100, cursor: cursor),
+      );
+
+  Future<PageResult<KnowledgePack>> listPackPage(
+    String token, {
+    String? groupId,
+    int limit = 50,
+    String? cursor,
+  }) async {
+    final uri = Uri(
+      path: '/api/v2/knowledge-packs',
+      queryParameters: {
+        if (groupId != null && groupId.isNotEmpty) 'group_id': groupId,
+        'limit': '$limit',
+        if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+      },
+    );
     final response = await apiClient.get(
-      '/api/knowledge/packs$query',
+      uri.toString(),
       gaToken: token,
       cache: true,
     );
-    final payload = response.body;
-    if (payload is! List) return const [];
-    return payload
-        .whereType<Map<String, dynamic>>()
-        .map((raw) => KnowledgePack(raw: raw))
-        .toList();
+    return PageResult.fromCursorV2Response(
+      response,
+      (raw) => KnowledgePack(raw: raw),
+    );
   }
 
   Future<KnowledgePack> createPackUploadSession(

@@ -115,7 +115,10 @@ class OfficialImportComponentTile extends StatelessWidget {
         style: const TextStyle(fontFamily: FncFonts.monospace),
       ),
       if (component.variants.isNotEmpty)
-        Text('${component.variants.length} variantes agrupadas'),
+        Text(
+          tx('official.variants_grouped')
+              .replaceAll('{count}', '${component.variants.length}'),
+        ),
       if (component.dependencies.isNotEmpty)
         Text('${tr('admin.depends_on')}: ${component.dependencies.join(', ')}'),
       for (final relation in component.relations)
@@ -137,14 +140,35 @@ class OfficialImportComponentTile extends StatelessWidget {
             isExpanded: true,
             initialValue: component.forcedType,
             decoration: InputDecoration(labelText: tx('official.classify_as')),
-            items: const [
-              DropdownMenuItem(value: 'agent', child: Text('agent')),
-              DropdownMenuItem(value: 'skill', child: Text('skill')),
-              DropdownMenuItem(value: 'prompt', child: Text('prompt')),
-              DropdownMenuItem(value: 'knowledge', child: Text('knowledge')),
-              DropdownMenuItem(value: 'tool', child: Text('tool')),
-              DropdownMenuItem(value: 'memory', child: Text('memory')),
-              DropdownMenuItem(value: 'workflow', child: Text('workflow')),
+            items: [
+              DropdownMenuItem(
+                value: 'agent',
+                child: Text(tx('official.type_agent')),
+              ),
+              DropdownMenuItem(
+                value: 'skill',
+                child: Text(tx('official.type_skill')),
+              ),
+              DropdownMenuItem(
+                value: 'prompt',
+                child: Text(tx('official.type_prompt')),
+              ),
+              DropdownMenuItem(
+                value: 'knowledge',
+                child: Text(tx('official.type_knowledge')),
+              ),
+              DropdownMenuItem(
+                value: 'tool',
+                child: Text(tx('official.type_tool')),
+              ),
+              DropdownMenuItem(
+                value: 'memory',
+                child: Text(tx('official.type_memory')),
+              ),
+              DropdownMenuItem(
+                value: 'workflow',
+                child: Text(tx('official.type_workflow')),
+              ),
             ],
             onChanged: busy ? null : onClassify,
           ),

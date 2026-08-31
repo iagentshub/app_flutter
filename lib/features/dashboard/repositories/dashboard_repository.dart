@@ -1,4 +1,5 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/network/page_result.dart';
 import '../../../models/dashboard/dashboard_data.dart';
 import '../../../models/dashboard/dashboard_feed_item.dart';
 import '../../../models/dashboard/dashboard_widget_config.dart';
@@ -16,15 +17,27 @@ class DashboardPreferences {
   final bool isVersioned;
 }
 
+class _LoadedSource {
+  _LoadedSource(this.items, {int? total}) : total = total ?? items.length;
+
+  final List<Map<String, dynamic>> items;
+  final int total;
+}
+
 class DashboardRepository {
   DashboardRepository(this._apiClient);
 
   final ApiClient _apiClient;
 
-  Future<List<Map<String, dynamic>>> _safeList(
-    String path,
-    String gaToken,
-  ) async {
+  static const _cursorSources = {
+    DashboardDataSource.agents,
+    DashboardDataSource.connections,
+    DashboardDataSource.knowledge,
+    DashboardDataSource.skills,
+    DashboardDataSource.tools,
+  };
+
+  Future<_LoadedSource> _safeList(String path, String gaToken) async {
     try {
       final response = await _apiClient.get(
         path,
@@ -32,15 +45,40 @@ class DashboardRepository {
         cache: true,
       );
       final body = response.body;
-      if (body is List) return body.whereType<Map<String, dynamic>>().toList();
-      if (body is Map<String, dynamic> && body['data'] is List) {
-        return (body['data'] as List)
-            .whereType<Map<String, dynamic>>()
-            .toList();
+      if (body is List) {
+        return _LoadedSource(body.whereType<Map<String, dynamic>>().toList());
       }
-      return const [];
+      if (body is Map<String, dynamic> && body['data'] is List) {
+        return _LoadedSource(
+          (body['data'] as List).whereType<Map<String, dynamic>>().toList(),
+        );
+      }
+      return _LoadedSource(const []);
     } catch (_) {
-      return const [];
+      return _LoadedSource(const []);
+    }
+  }
+
+  Future<_LoadedSource> _safeCursorSummary(String path, String gaToken) async {
+    try {
+      final uri = Uri.parse(path);
+      final response = await _apiClient.get(
+        uri
+            .replace(
+              queryParameters: {
+                ...uri.queryParameters,
+                'limit': '100',
+                'include_total': 'true',
+              },
+            )
+            .toString(),
+        gaToken: gaToken,
+        cache: true,
+      );
+      final page = PageResult.fromCursorV2Response(response, (item) => item);
+      return _LoadedSource(page.items, total: page.total);
+    } catch (_) {
+      return _LoadedSource(const []);
     }
   }
 
@@ -48,11 +86,11 @@ class DashboardRepository {
   /// el idioma del usuario — lista vacía si falla, es un aviso informativo,
   /// no debe romper el resto del dashboard.
   Future<List<NotificationBanner>> getActiveBanners(String gaToken) async {
-    final items = await _safeList(
+    final source = await _safeList(
       '/api/settings/notification-banners/active',
       gaToken,
     );
-    return items.map(NotificationBanner.fromJson).toList();
+    return source.items.map(NotificationBanner.fromJson).toList();
   }
 
   Future<DashboardData> fetchData({
@@ -60,17 +98,22 @@ class DashboardRepository {
     required Set<DashboardDataSource> sources,
   }) async {
     final results = await Future.wait([
-      _loadSource(sources, DashboardDataSource.agents, '/api/agents', gaToken),
+      _loadSource(
+        sources,
+        DashboardDataSource.agents,
+        '/api/v2/agents',
+        gaToken,
+      ),
       _loadSource(
         sources,
         DashboardDataSource.connections,
-        '/api/connections',
+        '/api/v2/connections',
         gaToken,
       ),
       _loadSource(
         sources,
         DashboardDataSource.knowledge,
-        '/api/knowledge',
+        '/api/v2/knowledge',
         gaToken,
       ),
       _loadSource(
@@ -79,7 +122,12 @@ class DashboardRepository {
         '/api/workflows',
         gaToken,
       ),
-      _loadSource(sources, DashboardDataSource.skills, '/api/skills', gaToken),
+      _loadSource(
+        sources,
+        DashboardDataSource.skills,
+        '/api/v2/skills',
+        gaToken,
+      ),
       _loadSource(sources, DashboardDataSource.memory, '/api/memory', gaToken),
       _loadSource(
         sources,
@@ -100,32 +148,39 @@ class DashboardRepository {
         '/api/chats/recent?limit=8',
         gaToken,
       ),
-      _loadSource(sources, DashboardDataSource.tools, '/api/tools', gaToken),
+      _loadSource(sources, DashboardDataSource.tools, '/api/v2/tools', gaToken),
     ]);
 
     return DashboardData(
-      agents: results[0],
-      connections: results[1],
-      knowledge: results[2],
-      workflows: results[3],
-      skills: results[4],
-      memory: results[5],
-      tokenDaily: results[6].map(TokenDailyPoint.fromJson).toList(),
-      groups: results[7],
-      invitations: results[8],
-      conversations: results[9],
-      tools: results[10],
+      agents: results[0].items,
+      agentTotalOverride: results[0].total,
+      connections: results[1].items,
+      knowledge: results[2].items,
+      workflows: results[3].items,
+      skills: results[4].items,
+      skillTotalOverride: results[4].total,
+      memory: results[5].items,
+      tokenDaily: results[6].items.map(TokenDailyPoint.fromJson).toList(),
+      groups: results[7].items,
+      invitations: results[8].items,
+      conversations: results[9].items,
+      tools: results[10].items,
+      toolTotalOverride: results[10].total,
     );
   }
 
-  Future<List<Map<String, dynamic>>> _loadSource(
+  Future<_LoadedSource> _loadSource(
     Set<DashboardDataSource> sources,
     DashboardDataSource source,
     String path,
     String gaToken,
   ) {
-    if (!sources.contains(source)) return Future.value(const []);
-    return _safeList(path, gaToken);
+    if (!sources.contains(source)) {
+      return Future.value(_LoadedSource(const []));
+    }
+    return _cursorSources.contains(source)
+        ? _safeCursorSummary(path, gaToken)
+        : _safeList(path, gaToken);
   }
 
   Future<List<ConnectionTestResult>> testAllConnections(
@@ -274,15 +329,14 @@ class DashboardRepository {
     final multiplier = single != null ? 1 : (types?.length ?? 1).clamp(1, 3);
     final fetchLimit = (limit * multiplier).clamp(1, 100);
     final path = Uri(
-      path: '/api/feed',
+      path: '/api/v2/feed',
       queryParameters: {'limit': '$fetchLimit', 'type': ?single},
     ).toString();
     final response = await _apiClient.get(path, gaToken: gaToken, cache: true);
-    final body = response.body;
-    if (body is! List) return const [];
-    return body
-        .whereType<Map<String, dynamic>>()
-        .map(DashboardFeedItem.fromJson)
-        .toList();
+    final page = PageResult.fromCursorV2Response(
+      response,
+      DashboardFeedItem.fromJson,
+    );
+    return page.items;
   }
 }

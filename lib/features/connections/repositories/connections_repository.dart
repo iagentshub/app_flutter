@@ -1,4 +1,5 @@
 import '../../../core/network/api_repository.dart';
+import '../../../core/network/cursor_page_collector.dart';
 import '../../../core/network/page_result.dart';
 import '../../../models/connections/connection_models.dart';
 
@@ -11,38 +12,36 @@ class ConnectionsRepository extends ApiRepository {
     bool includeInactive = false,
     bool cache = true,
   }) async {
-    final items = <ConnectionItem>[];
-    var offset = 0;
-    while (true) {
-      final page = await listConnectionPage(
+    return collectCursorPages(
+      (cursor) => listConnectionPage(
         token,
         groupId: groupId,
         includeInactive: includeInactive,
+        includeModels: true,
         cache: cache,
         limit: 100,
-        offset: offset,
-      );
-      items.addAll(page.items);
-      if (!page.hasMore || page.items.isEmpty) return items;
-      offset += page.items.length;
-    }
+        cursor: cursor,
+      ),
+    );
   }
 
   Future<PageResult<ConnectionItem>> listConnectionPage(
     String token, {
     String? groupId,
     bool includeInactive = false,
+    bool includeModels = false,
     bool cache = true,
     int limit = 50,
-    int offset = 0,
+    String? cursor,
   }) async {
     final uri = Uri(
-      path: '/api/connections',
+      path: '/api/v2/connections',
       queryParameters: {
         if (groupId != null && groupId.isNotEmpty) 'group_id': groupId,
         if (includeInactive) 'include_inactive': 'true',
+        if (includeModels) 'include_models': 'true',
         'limit': '$limit',
-        'offset': '$offset',
+        if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
       },
     );
     final response = await apiClient.get(
@@ -50,9 +49,30 @@ class ConnectionsRepository extends ApiRepository {
       gaToken: token,
       cache: cache,
     );
-    return PageResult.fromResponse(
+    final page = PageResult.fromCursorV2Response(
       response,
       (item) => ConnectionItem(raw: item),
+    );
+    if (!includeModels) return page;
+    final flattened = <ConnectionItem>[];
+    for (final item in page.items) {
+      final variants = item.raw['model_variants'];
+      if (variants is! List || variants.isEmpty) {
+        flattened.add(item);
+        continue;
+      }
+      flattened.addAll(
+        variants.whereType<Map<String, dynamic>>().map(
+          (variant) => ConnectionItem(raw: {...item.raw, ...variant}),
+        ),
+      );
+    }
+    return PageResult(
+      items: flattened,
+      hasMore: page.hasMore,
+      total: page.total,
+      nextCursor: page.nextCursor,
+      snapshotAt: page.snapshotAt,
     );
   }
 

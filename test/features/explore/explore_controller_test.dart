@@ -68,7 +68,39 @@ void main() {
     Future<http.Response> Function(http.Request request) handler, {
     String? token = 'token',
   }) async {
-    final client = ApiClient(backendController, client: MockClient(handler));
+    final client = ApiClient(
+      backendController,
+      client: MockClient((request) async {
+        final response = await handler(request);
+        if (request.url.path == '/api/v2/explore' ||
+            request.url.path == '/api/v2/users') {
+          final decoded = jsonDecode(response.body);
+          if (decoded is List) {
+            final total = int.tryParse(response.headers['x-total-count'] ?? '');
+            final hasMore =
+                total != null &&
+                request.url.queryParameters['cursor'] == null &&
+                decoded.length < total;
+            return http.Response(
+              jsonEncode({
+                'items': decoded,
+                'page': {
+                  'limit': decoded.length,
+                  'has_more': hasMore,
+                  'next_cursor': hasMore ? 'next-page' : null,
+                  'total': total,
+                },
+                'linked_matches':
+                    int.tryParse(response.headers['x-linked-count'] ?? '') ?? 0,
+              }),
+              response.statusCode,
+              headers: {'content-type': 'application/json'},
+            );
+          }
+        }
+        return response;
+      }),
+    );
     addTearDown(client.close);
     final controller = ExploreController(
       repository: ExploreRepository(apiClient: client),
@@ -189,12 +221,13 @@ void main() {
       if (request.url.path.endsWith('/official-packs')) {
         return http.Response('[]', 200);
       }
-      final offset = int.parse(request.url.queryParameters['offset'] ?? '0');
-      final count = offset == 0 ? 40 : 1;
+      final cursor = request.url.queryParameters['cursor'];
+      final start = cursor == null ? 0 : 40;
+      final count = cursor == null ? 40 : 1;
       return http.Response(
         jsonEncode([
           for (var index = 0; index < count; index++)
-            _resource(id: 'agent-${offset + index}'),
+            _resource(id: 'agent-${start + index}'),
         ]),
         200,
         headers: {'x-total-count': '41'},
@@ -248,7 +281,7 @@ void main() {
   test('agrupa cambios rápidos de filtros en una sola carga', () async {
     var exploreCalls = 0;
     final controller = await build((request) async {
-      if (request.url.path == '/api/explore') exploreCalls++;
+      if (request.url.path == '/api/v2/explore') exploreCalls++;
       return http.Response('[]', 200);
     });
 
@@ -471,8 +504,13 @@ void main() {
       ],
     };
     final controller = await build((request) async {
-      final offset = int.parse(request.url.queryParameters['offset'] ?? '0');
-      return http.Response(jsonEncode(pages[offset] ?? []), 200);
+      final cursor = request.url.queryParameters['cursor'];
+      final offset = cursor == null ? 0 : 20;
+      return http.Response(
+        jsonEncode(pages[offset] ?? []),
+        200,
+        headers: {'x-total-count': '21'},
+      );
     });
 
     await controller.loadUsers();

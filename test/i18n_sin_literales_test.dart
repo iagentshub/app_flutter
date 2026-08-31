@@ -217,20 +217,14 @@ void main() {
     },
   );
 
-  test('las pantallas auditadas no introducen literales directos en UI', () {
-    const auditedFiles = [
-      'lib/features/public/pages/checkout_page.dart',
-      'lib/features/public/pages/not_found_page.dart',
-      'lib/features/billing/widgets/payment_element_stub.dart',
-      'lib/features/knowledge/dialogs/add_url_dialog.dart',
-      'lib/features/knowledge/dialogs/add_text_dialog.dart',
-      'lib/features/knowledge/dialogs/skill_form_dialog.dart',
-      'lib/features/agents/widgets/chat_composer.dart',
-      'lib/features/connections/dialogs/connection_form_dialog.dart',
-    ];
+  test('el AST de todo lib no contiene literales directos en UI', () {
     final violations = <String>[];
 
-    for (final path in auditedFiles) {
+    for (final file in Directory(
+      'lib',
+    ).listSync(recursive: true).whereType<File>()) {
+      if (!file.path.endsWith('.dart')) continue;
+      final path = file.path;
       final source = File(path).readAsStringSync();
       final unit = parseString(content: source, path: path).unit;
       unit.accept(_UiLiteralVisitor(path, source, violations));
@@ -253,10 +247,17 @@ class _UiLiteralVisitor extends RecursiveAstVisitor<void> {
   final String source;
   final List<String> violations;
 
-  static const _namedSinks = {
-    'InputDecoration': {'labelText', 'hintText', 'helperText', 'errorText'},
-    'Tooltip': {'message'},
-    'Semantics': {'label', 'value', 'hint'},
+  static const _visibleArguments = {
+    'tooltip',
+    'labelText',
+    'hintText',
+    'helperText',
+    'errorText',
+    'semanticLabel',
+    'cancelLabel',
+    'confirmLabel',
+    'retryLabel',
+    'emptyText',
   };
 
   @override
@@ -266,28 +267,90 @@ class _UiLiteralVisitor extends RecursiveAstVisitor<void> {
     if (type == 'Text' && arguments.isNotEmpty) {
       _recordIfLiteral(arguments.first);
     }
-    final names = _namedSinks[type];
-    if (names != null) {
-      for (final argument in arguments.whereType<NamedExpression>()) {
-        if (names.contains(argument.name.label.name)) {
-          _recordIfLiteral(argument.expression);
-        }
+    for (final argument in arguments.whereType<NamedExpression>()) {
+      if (_visibleArguments.contains(argument.name.label.name)) {
+        _recordIfLiteral(argument.expression);
       }
     }
     super.visitInstanceCreationExpression(node);
   }
 
   @override
-  void visitReturnStatement(ReturnStatement node) {
-    _recordIfLiteral(node.expression);
-    super.visitReturnStatement(node);
+  void visitMethodInvocation(MethodInvocation node) {
+    final name = node.methodName.name;
+    if (name == 'showMessage' && node.argumentList.arguments.isNotEmpty) {
+      _recordIfLiteral(node.argumentList.arguments.first);
+    }
+    for (final argument
+        in node.argumentList.arguments.whereType<NamedExpression>()) {
+      if (_visibleArguments.contains(argument.name.label.name) ||
+          (name == 'showConfirmActionDialog' &&
+              {'title', 'message'}.contains(argument.name.label.name))) {
+        _recordIfLiteral(argument.expression);
+      }
+    }
+    super.visitMethodInvocation(node);
   }
 
   void _recordIfLiteral(Expression? expression) {
-    if (expression is! SimpleStringLiteral || expression.value.isEmpty) return;
-    final line =
-        '\n'.allMatches(source.substring(0, expression.offset)).length + 1;
-    violations.add('$path:$line → ${expression.value}');
+    if (expression == null) return;
+    if (expression is ParenthesizedExpression) {
+      _recordIfLiteral(expression.expression);
+      return;
+    }
+    if (expression is ConditionalExpression) {
+      _recordIfLiteral(expression.thenExpression);
+      _recordIfLiteral(expression.elseExpression);
+      return;
+    }
+    if (expression is BinaryExpression &&
+        {'??', '+'}.contains(expression.operator.lexeme)) {
+      if (expression.operator.lexeme == '+') {
+        _recordIfLiteral(expression.leftOperand);
+      }
+      _recordIfLiteral(expression.rightOperand);
+      return;
+    }
+    if (expression is StringInterpolation) {
+      for (final element
+          in expression.elements.whereType<InterpolationString>()) {
+        _recordValue(element.value, element.offset);
+      }
+      return;
+    }
+    if (expression is SimpleStringLiteral) {
+      _recordValue(expression.value, expression.offset);
+    }
+  }
+
+  void _recordValue(String value, int offset) {
+    final literal = value.trim();
+    if (_isTechnicalLiteral(literal)) return;
+    final line = '\n'.allMatches(source.substring(0, offset)).length + 1;
+    violations.add('$path:$line → $literal');
+  }
+
+  bool _isTechnicalLiteral(String value) {
+    if (value.isEmpty || !RegExp(r'[A-Za-zÀ-ÿ]').hasMatch(value)) return true;
+    if (value.startsWith('http://') ||
+        value.startsWith('https://') ||
+        value.startsWith('/api/')) {
+      return true;
+    }
+    return const {
+      'GET',
+      'POST',
+      'DELETE',
+      'generic',
+      'claude',
+      'openai',
+      'github',
+      'ollama',
+      'ID:',
+      't (s)',
+      's',
+      'ms',
+    }.contains(value);
   }
 }
 

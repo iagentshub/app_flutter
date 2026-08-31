@@ -1,4 +1,5 @@
 import 'api_repository.dart';
+import 'cursor_page_collector.dart';
 import 'page_result.dart';
 
 /// Repositorio de un recurso con scope: `/api/<recurso>/<scope>/<id>`.
@@ -42,41 +43,31 @@ class ScopedResourceRepository<T> extends ApiRepository {
   /// dejaría resultados incompletos sin manera de saberlo. Para un listado con
   /// scroll que solo enseña lo visible, usa [listPage] y carga bajo demanda,
   /// como hace la pestaña de Documentos.
-  Future<List<T>> list(
-    String token, {
-    String scope = 'all',
-    String? groupId,
-  }) async {
-    final items = <T>[];
-    var offset = 0;
-    while (true) {
-      final page = await listPage(
-        token,
-        scope: scope,
-        groupId: groupId,
-        limit: 100,
-        offset: offset,
+  Future<List<T>> list(String token, {String scope = 'all', String? groupId}) =>
+      collectCursorPages(
+        (cursor) => listPage(
+          token,
+          scope: scope,
+          groupId: groupId,
+          limit: 100,
+          cursor: cursor,
+        ),
       );
-      items.addAll(page.items);
-      if (!page.hasMore || page.items.isEmpty) return items;
-      offset += page.items.length;
-    }
-  }
 
   Future<PageResult<T>> listPage(
     String token, {
     String scope = 'all',
     String? groupId,
     int limit = 50,
-    int offset = 0,
+    String? cursor,
   }) async {
     final uri = Uri(
-      path: '/api/$basePath',
+      path: '/api/v2/$basePath',
       queryParameters: {
         'scope': scope,
         if (groupId != null && groupId.isNotEmpty) 'group_id': groupId,
         'limit': '$limit',
-        'offset': '$offset',
+        if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
       },
     );
     final response = await apiClient.get(
@@ -84,7 +75,7 @@ class ScopedResourceRepository<T> extends ApiRepository {
       gaToken: token,
       cache: true,
     );
-    return PageResult.fromResponse(response, parse);
+    return PageResult.fromCursorV2Response(response, parse);
   }
 
   Future<Map<String, dynamic>> get(

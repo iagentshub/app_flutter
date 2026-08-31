@@ -306,7 +306,7 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
                         ? widget.tx('providers.password_label')
                         : _meta.provider == 'github'
                         ? widget.tx('providers.github_token_label')
-                        : 'API Key',
+                        : widget.tx('providers.api_key_label'),
                     hintText: _isEdit ? widget.existing?.apiKeyMasked : null,
                   ),
                 ),
@@ -337,7 +337,7 @@ class _AccountFormDialogState extends State<_AccountFormDialog> {
                   decoration: InputDecoration(
                     labelText: _isOllama
                         ? widget.tx('providers.ollama_host_custom')
-                        : 'Host',
+                        : widget.tx('providers.host_label'),
                   ),
                 ),
                 if (_isOllama) ...[

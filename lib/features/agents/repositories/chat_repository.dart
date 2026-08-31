@@ -32,7 +32,7 @@ class ChatRepository extends ApiRepository {
       gaToken: token,
       cache: false,
     );
-    return PageResult.fromResponse(response, ChatConversation.fromJson);
+    return PageResult.fromLegacyResponse(response, ChatConversation.fromJson);
   }
 
   Future<ChatConversation> createConversation(
@@ -72,7 +72,7 @@ class ChatRepository extends ApiRepository {
       },
     );
     final response = await apiClient.get(uri.toString(), gaToken: token);
-    return PageResult.fromResponse(response, ChatMessage.fromJson);
+    return PageResult.fromLegacyResponse(response, ChatMessage.fromJson);
   }
 
   Future<void> deleteConversation(

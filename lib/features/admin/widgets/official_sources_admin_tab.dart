@@ -160,8 +160,8 @@ class _OfficialSourcesAdminTabState extends State<OfficialSourcesAdminTab> {
                       decoration: InputDecoration(
                         labelText: widget.tx('official.llm_connection'),
                         helperText: llmConnections.isEmpty
-                            ? 'No hay conexiones LLM activas compatibles.'
-                            : 'Puede realizar varias llamadas y consumir tokens.',
+                            ? widget.tx('official.llm_no_connections')
+                            : widget.tx('official.llm_usage_hint'),
                       ),
                       items: [
                         for (final connection in llmConnections)
