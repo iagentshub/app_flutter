@@ -53,21 +53,42 @@ jobs:
       - name: Build Android
         run: flutter build apk --debug
 
-      # El preflight de iAgents espera igualmente a que este check "validate"
-      # termine en verde, así que basta con avisar desde dentro; un job aparte
-      # solo gastaría otro runner para lo mismo. Su cron
-      # de respaldo está declarado horario pero GitHub lo atrasa de 3 a 7 h:
-      # un cambio solo de Flutter tardaba media tarde en llegar a la imagen, y
-      # el panel de Admin lo enseñaba como "App (Flutter): desactualizado".
-      # Que falte o caduque el secreto no pone en rojo un CI correcto, pero
-      # deja una anotación visible; el cron sigue de respaldo.
+  # El aviso vivía como un paso más de `validate`, con el argumento de que un
+  # job aparte gastaba otro runner para lo mismo. Dejó de ser cierto cuando el
+  # aviso pasó a fallar ante un token caducado o sin permisos: `validate` es
+  # **el check que el preflight de iAgents exige en verde** para meter este
+  # commit en la imagen, así que una avería de la cadena de entrega tumbaba el
+  # veredicto sobre el código y el preflight retrocedía al commit anterior de
+  # Flutter mientras durase. Son dos preguntas distintas —¿vale el código? y
+  # ¿llegó el aviso?— y necesitan dos respuestas separadas.
+  #
+  # El cron de iAgents está declarado horario pero GitHub lo atrasa de 3 a 8 h:
+  # un cambio solo de Flutter tardaba media tarde en llegar a la imagen, y el
+  # panel de Admin lo enseñaba como "App (Flutter): desactualizado".
+  #
+  # Sin secreto es una instalación que no participa en el aviso: anotación y
+  # seguir. Con secreto y respuesta 401/403 el job falla, porque es una avería
+  # real y hoy se veía igual que no tenerlo — el mismo warning amarillo dentro
+  # de un job verde, que nadie mira. Este llevaba meses dando 403 en cada push
+  # sin que constara en ninguna parte. El cron sigue de respaldo.
+  avisar-a-iagents:
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
       - name: Avisar a iAgents para reconstruir la imagen unificada
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ secrets.IAGENTS_DISPATCH_TOKEN }}
         run: |
-          if [ -z "$GH_TOKEN" ] || ! gh api -X POST repos/iagentshub/iAgents/dispatches -f event_type=upstream-push; then
-            echo "::warning::No se pudo avisar a iAgents; la imagen esperará al cron."
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::Sin IAGENTS_DISPATCH_TOKEN: la imagen esperará al cron."
+            exit 0
+          fi
+          if ! salida=$(gh api -X POST repos/iagentshub/iAgents/dispatches \
+              -f event_type=upstream-push --silent 2>&1); then
+            echo "::error::El aviso a iAgents falló con el token configurado: $salida"
+            exit 1
           fi
 
   # La imagen unificada tiene una sola fuente de verdad: iagentshub/iAgents.
