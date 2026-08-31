@@ -37,7 +37,7 @@ part 'shell/widget_picker_drawer.dart';
 /// En viewports estrechos la navegación vive en un drawer; desde 960 px se
 /// convierte en un sidebar persistente para aprovechar el espacio web.
 const _wideNavBreakpoint = 960.0;
-const _sidebarWidth = 276.0;
+const _sidebarWidth = 240.0;
 
 /// Ancho contraído. El sidebar no desaparece: queda un rail de iconos, así la
 /// navegación sigue a un clic en vez de esconderse tras la barra superior.
