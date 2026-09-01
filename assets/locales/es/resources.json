@@ -419,7 +419,10 @@
       "cancel_reply_tooltip": "Cancelar respuesta",
       "msg_create_failed": "No se pudo crear la conversación",
       "msg_delete_failed": "No se pudo borrar la conversación",
-      "jump_to_last": "Último mensaje"
+      "jump_to_last": "Último mensaje",
+      "context_warning": "El agente ha tenido que limitar parte del contexto.",
+      "context_truncated": "Parte del contexto se recortó para respetar el límite del modelo.",
+      "knowledge_retrieval_fallback": "No hubo coincidencias claras; se usó una muestra acotada del conocimiento enlazado."
     },
     "msg_not_editable": "Este agente no es editable (público o compartido)",
     "msg_saved": "Agente guardado",

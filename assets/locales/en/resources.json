@@ -419,7 +419,10 @@
       "cancel_reply_tooltip": "Cancel reply",
       "msg_create_failed": "Could not create the conversation",
       "msg_delete_failed": "Could not delete the conversation",
-      "jump_to_last": "Latest message"
+      "jump_to_last": "Latest message",
+      "context_warning": "The agent had to limit part of the context.",
+      "context_truncated": "Part of the context was trimmed to respect the model limit.",
+      "knowledge_retrieval_fallback": "No clear matches were found; a limited sample of linked knowledge was used."
     },
     "msg_not_editable": "This agent is not editable (public or shared)",
     "msg_saved": "Agent saved",

@@ -97,6 +97,7 @@ class ChatStreamEvent {
     this.tokensOut,
     this.code,
     this.message,
+    this.sources = const [],
   });
 
   final String type;
@@ -106,6 +107,7 @@ class ChatStreamEvent {
   final int? tokensOut;
   final String? code;
   final String? message;
+  final List<String> sources;
 
   factory ChatStreamEvent.fromJson(Map<String, dynamic> json) {
     final tokens = json['tokens'];
@@ -123,6 +125,11 @@ class ChatStreamEvent {
       tokensOut: tokensOut,
       code: json['code']?.toString(),
       message: json['message']?.toString(),
+      sources: json['sources'] is List
+          ? (json['sources'] as List)
+                .map((source) => source.toString())
+                .toList(growable: false)
+          : const [],
     );
   }
 }
