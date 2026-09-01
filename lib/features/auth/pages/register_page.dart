@@ -10,6 +10,7 @@ import '../../../app/router/router.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_error.dart';
+import '../../../models/auth/legal_contract.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/widgets/animated_iagents_mark.dart';
@@ -97,6 +98,7 @@ class _RegisterPageState extends State<RegisterPage> with StateMessaging {
   bool _configLoaded = false;
   bool _registrationEnabled = false;
   bool _legalAccepted = false;
+  LegalContract _legalContract = const LegalContract.empty();
   bool _showPassword = false;
   String? _message;
   bool _messageIsError = true;
@@ -184,6 +186,9 @@ class _RegisterPageState extends State<RegisterPage> with StateMessaging {
         username: _usernameController.text,
         email: _emailController.text,
         password: _passwordController.text,
+        legalAcceptance: _legalContract.canAccept
+            ? _legalContract.acceptancePayload(_languageCode)
+            : null,
       );
       if (!mounted) return;
       if (resultado['ok'] != true) return;
@@ -215,9 +220,14 @@ class _RegisterPageState extends State<RegisterPage> with StateMessaging {
       if (!mounted) return;
       final registration = (platform['registration'] ?? '').toString();
       final billingEnabled = platform['billing_enabled'] == true;
+      final legalContract = LegalContract.fromPlatform(platform);
       setState(() {
         _configLoaded = true;
-        _registrationEnabled = registration == 'open' && !billingEnabled;
+        _legalContract = legalContract;
+        _registrationEnabled =
+            registration == 'open' &&
+            !billingEnabled &&
+            (!legalContract.required || legalContract.canAccept);
       });
     } catch (_) {
       if (!mounted) return;

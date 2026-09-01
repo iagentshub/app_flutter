@@ -178,6 +178,12 @@ class SessionController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void actualizarUsuario(SessionUser user) {
+    if (_user == null) return;
+    _user = user;
+    notifyListeners();
+  }
+
   Future<void> login({
     required String token,
     required SessionUser user,

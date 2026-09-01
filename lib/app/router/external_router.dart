@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/pages/backend_config_page.dart';
 import '../../features/auth/pages/forgot_password_page.dart';
+import '../../features/auth/pages/legal_acceptance_page.dart';
 import '../../features/auth/pages/login_page.dart';
 import '../../features/auth/pages/register_page.dart';
 import '../../features/auth/pages/reset_password_page.dart';
@@ -34,6 +35,7 @@ abstract final class ExternalRoutes {
   static const forgotPassword = '/forgot-password';
   static const resetPassword = '/reset-password';
   static const verify = '/verify';
+  static const legalAcceptance = '/legal-acceptance';
   static const backendConfig = '/backend';
   static const sessionRestore = '/session/restore';
   static const sessionUnavailable = '/session/unavailable';
@@ -114,6 +116,17 @@ List<RouteBase> externalRoutes({
         key: state.pageKey,
         child: RegisterPage(
           authRepository: authRepository,
+          localeController: localeController,
+        ),
+      ),
+    ),
+    GoRoute(
+      path: ExternalRoutes.legalAcceptance,
+      pageBuilder: (context, state) => fadeThroughPage(
+        key: state.pageKey,
+        child: LegalAcceptancePage(
+          authRepository: authRepository,
+          sessionController: sessionController,
           localeController: localeController,
         ),
       ),

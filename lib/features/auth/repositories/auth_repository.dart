@@ -46,9 +46,10 @@ class AuthRepository {
     return ApiError(
       statusCode: 500,
       code: 'session_cookie_discarded',
-      message: trErrorOr('session_cookie_discarded', '')
-          .replaceAll('{backend}', backend)
-          .replaceAll('{app}', pageOrigin ?? '-'),
+      message: trErrorOr(
+        'session_cookie_discarded',
+        '',
+      ).replaceAll('{backend}', backend).replaceAll('{app}', pageOrigin ?? '-'),
     );
   }
 
@@ -142,16 +143,29 @@ class AuthRepository {
     required String username,
     required String email,
     required String password,
+    Map<String, dynamic>? legalAcceptance,
   }) async {
-    final response = await _apiClient.post(
-      '/api/auth/register',
-      body: {
-        'username': username.trim().toLowerCase(),
-        'email': email.trim().toLowerCase(),
-        'password': password,
-      },
-    );
+    final body = <String, dynamic>{
+      'username': username.trim().toLowerCase(),
+      'email': email.trim().toLowerCase(),
+      'password': password,
+    };
+    if (legalAcceptance != null) {
+      body['legal_acceptance'] = legalAcceptance;
+    }
+    final response = await _apiClient.post('/api/auth/register', body: body);
     return response.json;
+  }
+
+  Future<void> acceptLegal(
+    String gaToken,
+    Map<String, dynamic> acceptance,
+  ) async {
+    await _apiClient.post(
+      '/api/auth/legal-acceptances',
+      gaToken: gaToken,
+      body: acceptance,
+    );
   }
 
   Future<bool> forgotPassword({required String email}) async {
