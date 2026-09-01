@@ -51,7 +51,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
   int get _seats => int.tryParse(widget.queryParameters['seats'] ?? '') ?? 0;
   String get _interval =>
       widget.queryParameters['interval'] == 'year' ? 'year' : 'month';
-  bool get _selfHosted =>
+  /// El add-on de soporte con SLA. La página de precios de React lo manda como
+  /// `slaSupport`, y `selfHosted` es como se llamaba cuando el producto era el
+  /// permiso de despliegue: se sigue leyendo porque el checkout se abre desde
+  /// una URL que puede venir de un bundle cacheado.
+  bool get _slaSupport =>
+      const {'1', 'true'}.contains(widget.queryParameters['slaSupport']) ||
       const {'1', 'true'}.contains(widget.queryParameters['selfHosted']);
   bool get _valid =>
       (_tier == 'developer' && _seats == 1) ||
@@ -131,7 +136,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     'tier': _tier,
     'seats': _seats,
     'interval': _interval,
-    'self_hosted': _selfHosted,
+    'sla_support': _slaSupport,
   };
 
   /// Precio sin impuestos, para poder enseñar algo mientras se elige el país.
