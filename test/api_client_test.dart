@@ -306,6 +306,8 @@ void main() {
         200,
         headers: {
           'content-disposition': 'attachment; filename="../../secret.zip"',
+          'x-iagentshub-export-complete': 'false',
+          'x-iagentshub-export-warning-count': '2',
         },
       ),
     );
@@ -315,35 +317,34 @@ void main() {
     final result = await client.getBytes('/api/export');
 
     expect(result.filename, 'secret.zip');
+    expect(result.headers['x-iagentshub-export-complete'], 'false');
+    expect(result.headers['x-iagentshub-export-warning-count'], '2');
   });
 
-  test(
-    'invoca onUnauthorized cuando el backend responde 401, sin importar el verbo',
-    () async {
-      var unauthorizedCalls = 0;
-      final mock = MockClient(
-        (request) async => http.Response('{"detail":"expirado"}', 401),
-      );
-      final client = ApiClient(
-        backendController,
-        client: mock,
-        onUnauthorized: () => unauthorizedCalls += 1,
-      );
-      addTearDown(client.close);
+  test('invoca onUnauthorized cuando el backend responde 401, sin importar el verbo', () async {
+    var unauthorizedCalls = 0;
+    final mock = MockClient(
+      (request) async => http.Response('{"detail":"expirado"}', 401),
+    );
+    final client = ApiClient(
+      backendController,
+      client: mock,
+      onUnauthorized: () => unauthorizedCalls += 1,
+    );
+    addTearDown(client.close);
 
-      await expectLater(
-        client.get('/api/items', gaToken: 'session'),
-        throwsA(isA<ApiError>()),
-      );
-      expect(unauthorizedCalls, 1);
+    await expectLater(
+      client.get('/api/items', gaToken: 'session'),
+      throwsA(isA<ApiError>()),
+    );
+    expect(unauthorizedCalls, 1);
 
-      await expectLater(
-        client.post('/api/items', gaToken: 'session', body: {}),
-        throwsA(isA<ApiError>()),
-      );
-      expect(unauthorizedCalls, 2);
-    },
-  );
+    await expectLater(
+      client.post('/api/items', gaToken: 'session', body: {}),
+      throwsA(isA<ApiError>()),
+    );
+    expect(unauthorizedCalls, 2);
+  });
 
   test('no invoca onUnauthorized en respuestas distintas de 401', () async {
     var unauthorizedCalls = 0;

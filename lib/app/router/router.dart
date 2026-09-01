@@ -14,6 +14,22 @@ import '../../utils/safe_redirect.dart';
 import 'external_router.dart';
 import 'internal_router.dart';
 
+String? legalAcceptanceRedirect({
+  required bool isLoggedIn,
+  required bool acceptanceRequired,
+  required String location,
+}) {
+  if (!isLoggedIn) return null;
+  final isAcceptancePage = location == ExternalRoutes.legalAcceptance;
+  if (acceptanceRequired && !isAcceptancePage) {
+    return ExternalRoutes.legalAcceptance;
+  }
+  if (!acceptanceRequired && isAcceptancePage) {
+    return InternalRoutes.dashboard;
+  }
+  return null;
+}
+
 /// Punto único del router de la app: construye el [GoRouter] combinando las
 /// rutas de [externalRoutes] y [buildShellRoute], y expone las funciones de
 /// navegación (`toX`) que el resto del código debe usar para desplazarse en
@@ -97,6 +113,14 @@ abstract final class AppRouter {
           final redirect = Uri.encodeComponent(state.uri.toString());
           return '${ExternalRoutes.login}?redirect=$redirect';
         }
+
+        final legalRedirect = legalAcceptanceRedirect(
+          isLoggedIn: sessionController.isLoggedIn,
+          acceptanceRequired:
+              sessionController.user?.legalAcceptanceRequired == true,
+          location: location,
+        );
+        if (legalRedirect != null) return legalRedirect;
 
         if (sessionController.isLoggedIn &&
             (location == ExternalRoutes.login ||

@@ -131,4 +131,79 @@ void main() {
       locale.dispose();
     },
   );
+
+  testWidgets('muestra los avisos de contexto sin terminar el stream', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({'app_language': 'es'});
+    final backend = await BackendController.bootstrap();
+    final locale = await LocaleController.bootstrap();
+    final session = await SessionController.bootstrap(
+      secureStore: MemorySecureStore(),
+    );
+    await session.login(
+      token: 'user-token',
+      user: const SessionUser(username: 'ada', role: 'user'),
+      remember: false,
+    );
+    final apiClient = ApiClient(
+      backend,
+      client: MockClient(
+        (_) async => http.Response(
+          jsonEncode(<Object>[]),
+          200,
+          headers: {'content-type': 'application/json'},
+        ),
+      ),
+    );
+    final repository = _ControllableChatRepository(apiClient: apiClient);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ChatPage(
+          agent: const AgentItem(
+            raw: {'id': 'agent-1', 'name': 'Agente de prueba'},
+          ),
+          apiClient: apiClient,
+          sessionController: session,
+          localeController: locale,
+          chatRepository: repository,
+        ),
+      ),
+    );
+    for (
+      var attempt = 0;
+      attempt < 20 && find.byIcon(Icons.send).evaluate().isEmpty;
+      attempt += 1
+    ) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    await tester.enterText(find.byType(TextField).last, 'hola');
+    await tester.tap(find.byIcon(Icons.send));
+    await tester.pump();
+
+    repository.events.add(
+      const ChatStreamEvent(
+        type: 'context_warning',
+        code: 'context_truncated',
+        message: 'fallback',
+        sources: ['Knowledge: handbook'],
+      ),
+    );
+    await tester.pump();
+
+    expect(
+      find.text(
+        'Parte del contexto se recortó para respetar el límite del modelo.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Knowledge: handbook'), findsOneWidget);
+    expect(find.byIcon(Icons.stop), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await repository.events.close();
+    session.dispose();
+    locale.dispose();
+  });
 }

@@ -115,6 +115,7 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
   bool _thinking = false;
   String? _error;
   String? _routingNotice;
+  final Map<String, ChatStreamEvent> _contextWarnings = {};
   StreamSubscription<ChatStreamEvent>? _subscription;
   Completer<void>? _streamCompleter;
 
@@ -393,6 +394,39 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
                 const SizedBox(width: 8),
                 Expanded(child: Text(_routingNotice!)),
               ],
+            ),
+          ),
+        for (final warning in _contextWarnings.values)
+          Semantics(
+            liveRegion: true,
+            child: Container(
+              width: double.infinity,
+              margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.tertiaryContainer,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.info_outline, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(_contextWarningText(warning)),
+                        if (warning.sources.isNotEmpty)
+                          Text(
+                            warning.sources.join(' · '),
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ChatComposer(

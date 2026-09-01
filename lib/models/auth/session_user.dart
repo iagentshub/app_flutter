@@ -6,6 +6,7 @@ class SessionUser {
     this.email,
     this.displayName,
     this.avatarUrl,
+    this.legalAcceptanceRequired = false,
   });
 
   final String id;
@@ -17,6 +18,7 @@ class SessionUser {
   /// Ruta relativa de la foto de perfil, o `null` si no hay. La publica
   /// `/api/auth/me` con la versión del contenido dentro.
   final String? avatarUrl;
+  final bool legalAcceptanceRequired;
 
   factory SessionUser.fromJson(Map<String, dynamic> json) {
     return SessionUser(
@@ -26,6 +28,7 @@ class SessionUser {
       email: json['email'] as String?,
       displayName: json['display_name'] as String?,
       avatarUrl: json['avatar_url'] as String?,
+      legalAcceptanceRequired: json['legal_acceptance_required'] == true,
     );
   }
 
@@ -39,6 +42,19 @@ class SessionUser {
       email: email,
       displayName: displayName,
       avatarUrl: dejarSinFoto ? null : (url ?? avatarUrl),
+      legalAcceptanceRequired: legalAcceptanceRequired,
+    );
+  }
+
+  SessionUser conAceptacionLegalRequerida(bool required) {
+    return SessionUser(
+      id: id,
+      username: username,
+      role: role,
+      email: email,
+      displayName: displayName,
+      avatarUrl: avatarUrl,
+      legalAcceptanceRequired: required,
     );
   }
 }

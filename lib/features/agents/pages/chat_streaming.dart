@@ -21,6 +21,7 @@ extension _ChatStreaming on _ChatPageState {
     refresh(() {
       _error = null;
       _routingNotice = null;
+      _contextWarnings.clear();
       _messages = [
         ..._messages,
         ChatMessage(
@@ -90,6 +91,11 @@ extension _ChatStreaming on _ChatPageState {
                 ),
                 completer,
               );
+            } else if (event.type == 'context_warning') {
+              final key = event.code?.trim().isNotEmpty == true
+                  ? event.code!
+                  : event.message ?? 'context_warning';
+              refresh(() => _contextWarnings[key] = event);
             } else if (event.type == 'routing_selected' ||
                 event.type == 'routing_warning' ||
                 event.type == 'routing_failover') {
@@ -156,6 +162,20 @@ extension _ChatStreaming on _ChatPageState {
   void _setReply(ChatMessage message) => refresh(() => _replyTo = message);
 
   void _cancelReply() => refresh(() => _replyTo = null);
+
+  String _contextWarningText(ChatStreamEvent warning) {
+    switch (warning.code) {
+      case 'context_truncated':
+        return _tx('agents.chat.context_truncated');
+      case 'knowledge_retrieval_fallback':
+        return _tx('agents.chat.knowledge_retrieval_fallback');
+      default:
+        final fallback = warning.message?.trim();
+        return fallback?.isNotEmpty == true
+            ? fallback!
+            : _tx('agents.chat.context_warning');
+    }
+  }
 
   String _replyLabelFor(ChatMessage message) =>
       message.isUser ? _tx('agents.chat.reply_you') : widget.agent.name;

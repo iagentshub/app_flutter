@@ -360,10 +360,8 @@ class ApiClient {
   /// Descarga un recurso binario (p. ej. un export en .zip) sin pasar el
   /// cuerpo por el decodificador UTF-8/JSON de [_request], que corrompería
   /// bytes no textuales.
-  Future<({Uint8List bytes, String? filename})> getBytes(
-    String path, {
-    String? gaToken,
-  }) async {
+  Future<({Uint8List bytes, String? filename, Map<String, String> headers})>
+  getBytes(String path, {String? gaToken}) async {
     http.Request build(String? token) {
       final request = http.Request('GET', _uri(path));
       request.followRedirects = false;
@@ -396,6 +394,7 @@ class ApiClient {
     return (
       bytes: response.bodyBytes,
       filename: _sanitizeDownloadFilename(match?.group(1)),
+      headers: Map<String, String>.unmodifiable(response.headers),
     );
   }
 

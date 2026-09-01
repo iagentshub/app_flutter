@@ -315,6 +315,18 @@ extension _AgentsPageActions on _AgentsPageState {
     if (token == null || token.isEmpty) return;
     try {
       final result = await _repository.exportAgent(token, item.id, format);
+      if (!result.complete) {
+        if (!mounted) return;
+        final confirm = await showConfirmActionDialog(
+          context,
+          title: _tx('agents.export_incomplete_title'),
+          message: _tx('agents.export_incomplete_body')
+              .replaceAll('{{count}}', result.warningCount.toString()),
+          cancelLabel: _tx('common.cancel'),
+          confirmLabel: _tx('agents.export_incomplete_confirm'),
+        );
+        if (!confirm) return;
+      }
       await FilePicker.saveFile(
         dialogTitle: _tx('agents.export_dialog_title'),
         fileName: result.filename ?? '${item.id}-$format.zip',

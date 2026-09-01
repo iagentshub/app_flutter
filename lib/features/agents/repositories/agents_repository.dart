@@ -82,14 +82,23 @@ class AgentsRepository extends ApiRepository {
 
   /// Exporta el agente en el formato dado (openai/claude/github/mcp) como un
   /// paquete .zip con el propio agente, sus skills, knowledge y memoria.
-  Future<({Uint8List bytes, String? filename})> exportAgent(
-    String token,
-    String id,
-    String format,
-  ) async {
-    return apiClient.getBytes(
+  Future<({Uint8List bytes, String? filename, bool complete, int warningCount})>
+  exportAgent(String token, String id, String format) async {
+    final result = await apiClient.getBytes(
       '/api/agents/${Uri.encodeComponent(id)}/export/${Uri.encodeComponent(format)}',
       gaToken: token,
+    );
+    return (
+      bytes: result.bytes,
+      filename: result.filename,
+      complete:
+          result.headers['x-iagentshub-export-complete']?.toLowerCase() !=
+          'false',
+      warningCount:
+          int.tryParse(
+            result.headers['x-iagentshub-export-warning-count'] ?? '',
+          ) ??
+          0,
     );
   }
 

@@ -82,6 +82,19 @@ void main() {
     expect(builder.code, 'credential_unreadable');
   });
 
+  test('context warning SSE preserves its code and sources', () {
+    final event = ChatStreamEvent.fromJson({
+      'type': 'context_warning',
+      'code': 'context_truncated',
+      'message': 'fallback',
+      'sources': ['Knowledge: handbook', 'Chat history'],
+    });
+
+    expect(event.type, 'context_warning');
+    expect(event.code, 'context_truncated');
+    expect(event.sources, ['Knowledge: handbook', 'Chat history']);
+  });
+
   test('admin explore accepts private LLM orchestrations', () {
     final item = AdminExploreItem.fromJson({
       'resource_type': 'llm_orchestration',

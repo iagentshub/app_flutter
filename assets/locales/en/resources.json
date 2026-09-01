@@ -391,6 +391,9 @@
     "export_mcp": "MCP Server",
     "export_dialog_title": "Save export",
     "export_error": "Couldn't export the agent",
+    "export_incomplete_title": "Export with omitted dependencies",
+    "export_incomplete_body": "The package is safe, but {{count}} dependency or dependencies could not be included. The embedded manifest explains each omission.",
+    "export_incomplete_confirm": "Save anyway",
     "preferences_tooltip": "Connection preference",
     "preferences_title": "Connection preference",
     "preferences_use_default": "Use the agent's connection",
@@ -419,7 +422,10 @@
       "cancel_reply_tooltip": "Cancel reply",
       "msg_create_failed": "Could not create the conversation",
       "msg_delete_failed": "Could not delete the conversation",
-      "jump_to_last": "Latest message"
+      "jump_to_last": "Latest message",
+      "context_warning": "The agent had to limit part of the context.",
+      "context_truncated": "Part of the context was trimmed to respect the model limit.",
+      "knowledge_retrieval_fallback": "No clear matches were found; a limited sample of linked knowledge was used."
     },
     "msg_not_editable": "This agent is not editable (public or shared)",
     "msg_saved": "Agent saved",
