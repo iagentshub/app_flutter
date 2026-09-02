@@ -201,6 +201,8 @@ class _AgentBuilderPageState extends State<AgentBuilderPage>
                       connections: _controller.connections,
                       connectionId: _controller.connectionId,
                       onConnectionChanged: _controller.setConnectionId,
+                      mode: _controller.mode,
+                      onModeChanged: _controller.setMode,
                       tx: _tx,
                     ),
                     Expanded(child: chat),

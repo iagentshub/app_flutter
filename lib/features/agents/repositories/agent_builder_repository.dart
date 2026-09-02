@@ -15,6 +15,7 @@ class AgentBuilderRepository extends ApiRepository {
     required List<ChatMessage> messages,
     List<Map<String, String>> skills = const [],
     List<Map<String, String>> knowledge = const [],
+    String mode = 'auto',
   }) async* {
     final lines = apiClient.postStream(
       '/api/agent-builder/chat',
@@ -23,7 +24,7 @@ class AgentBuilderRepository extends ApiRepository {
         'connection_id': connectionId,
         'messages': messages.map((m) => m.toJson()).toList(),
         'resources': {'skills': skills, 'knowledge': knowledge},
-        'mode': 'auto',
+        'mode': mode,
       },
     );
 

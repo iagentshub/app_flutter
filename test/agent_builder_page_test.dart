@@ -174,6 +174,15 @@ void main() {
       find.byKey(const ValueKey('builder-connection-mobile')),
       findsOneWidget,
     );
+    // El selector de modo cabe en la pantalla estrecha con su pista, que es
+    // donde un tercer control mal puesto rompería la barra.
+    expect(find.byKey(const ValueKey('builder-mode')), findsOneWidget);
+    expect(
+      find.text(
+        'Te haré una pregunta corta solo si tu descripción se queda corta.',
+      ),
+      findsOneWidget,
+    );
     expect(
       find.byKey(const ValueKey('agent-builder-composer')),
       findsOneWidget,

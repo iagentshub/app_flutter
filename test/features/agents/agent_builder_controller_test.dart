@@ -222,6 +222,38 @@ void main() {
     });
   });
 
+  test('el modo elegido viaja en cada turno', () async {
+    // El repositorio mandaba 'auto' fijo, así que los modos guiado y experto
+    // del backend eran inalcanzables desde la aplicación.
+    final modos = <String?>[];
+    final controller = await build((request) async {
+      if (request.url.path == '/api/agent-builder/chat') {
+        final body = jsonDecode(request.body) as Map<String, dynamic>;
+        modos.add(body['mode'] as String?);
+        return _sse([
+          {
+            'type': 'builder_done',
+            'status': 'collecting',
+            'assistant_message': '¿Qué debe hacer?',
+          },
+        ]);
+      }
+      return resourcesResponse(request);
+    });
+    await controller.load();
+
+    expect(controller.mode, 'auto');
+    controller.textController.text = 'Un agente de soporte';
+    await controller.send();
+
+    controller.setMode('expert');
+    expect(controller.mode, 'expert');
+    controller.textController.text = 'Eres un agente senior de Python';
+    await controller.send();
+
+    expect(modos, ['auto', 'expert']);
+  });
+
   test('un error SSE queda visible hasta el siguiente envío', () async {
     final controller = await build((request) async {
       if (request.url.path == '/api/agent-builder/chat') {

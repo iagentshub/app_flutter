@@ -55,6 +55,7 @@ class AgentBuilderController extends ChangeNotifier {
   List<ConnectionItem> _connections = const [];
   bool _loadingConnections = true;
   String? _connectionId;
+  String _mode = 'auto';
   List<Map<String, String>> _skillsCatalog = const [];
   List<Map<String, String>> _knowledgeCatalog = const [];
   final List<ChatMessage> _messages = [];
@@ -74,6 +75,10 @@ class AgentBuilderController extends ChangeNotifier {
   List<ChatMessage> get messages => _messages;
   bool get loadingConnections => _loadingConnections;
   String? get connectionId => _connectionId;
+
+  /// `auto`, `guided` o `expert`. Viaja en cada turno: el backend no guarda
+  /// conversación, así que cambiarlo a mitad afecta ya al siguiente mensaje.
+  String get mode => _mode;
   bool get streaming => _streaming;
   bool get thinking => _thinking;
   String get partialReply => _partialReply;
@@ -87,6 +92,12 @@ class AgentBuilderController extends ChangeNotifier {
   void setConnectionId(String? value) {
     if (_streaming || value == _connectionId) return;
     _connectionId = value;
+    _notify();
+  }
+
+  void setMode(String value) {
+    if (_streaming || value == _mode) return;
+    _mode = value;
     _notify();
   }
 
@@ -198,6 +209,7 @@ class AgentBuilderController extends ChangeNotifier {
           messages: _messages,
           skills: _skillsCatalog,
           knowledge: _knowledgeCatalog,
+          mode: _mode,
         )
         .listen(
           _handleEvent,
