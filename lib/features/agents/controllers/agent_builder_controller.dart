@@ -234,7 +234,14 @@ class AgentBuilderController extends ChangeNotifier {
     if (event.type == 'progress') {
       final visible = event.assistantMessage ?? '';
       _stage = event.stage;
-      if (visible.isNotEmpty) _partialReply = visible;
+      if (event.stage == null) {
+        // Un `progress` sin fase es la señal de que el backend empieza otro
+        // intento. Sin limpiar aquí, el mensaje parcial del intento que acaba
+        // de fallar se quedaba en pantalla durante todo el segundo.
+        _partialReply = '';
+      } else if (visible.isNotEmpty) {
+        _partialReply = visible;
+      }
     } else if (event.type == 'error') {
       _error = trErrorOr(
         event.code,
