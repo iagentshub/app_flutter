@@ -352,6 +352,44 @@ void main() {
     },
   );
 
+  test('con varias conexiones el agente no hereda la del constructor', () async {
+    // La del constructor se elige por rapidez para redactar, no para ejecutar
+    // el agente; heredarla en silencio dejaba al agente corriendo en el modelo
+    // pequeño con el que se diseñó.
+    final controller = await build((request) async {
+      if (request.url.path == '/api/agent-builder/chat') {
+        return _sse([
+          {
+            'type': 'builder_done',
+            'status': 'ready',
+            'draft': {'name': 'Agente Ventas Norte'},
+          },
+        ]);
+      }
+      return resourcesResponse(
+        request,
+        connections: [
+          _connection(),
+          _connection(id: 'connection-2', name: 'Anthropic'),
+        ],
+      );
+    });
+    await controller.load();
+    controller.textController.text = 'Crea el agente';
+    await controller.send();
+    Map<String, dynamic>? presentedInitial;
+
+    await controller.reviewDraft(
+      present: (initial, token) async {
+        presentedInitial = initial;
+        return null;
+      },
+    );
+
+    expect(controller.connectionId, 'connection-1');
+    expect(presentedInitial?['connection_id'], '');
+  });
+
   test('reviewDraft cancelado no llama al backend', () async {
     var saves = 0;
     final controller = await build((request) async {

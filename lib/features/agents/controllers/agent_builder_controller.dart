@@ -17,11 +17,10 @@ import '../../knowledge/repositories/skills_repository.dart';
 import '../repositories/agent_builder_repository.dart';
 import '../repositories/agents_repository.dart';
 
-typedef AgentDraftPresenter =
-    Future<Map<String, dynamic>?> Function(
-      Map<String, dynamic> initial,
-      String token,
-    );
+typedef AgentDraftPresenter = Future<Map<String, dynamic>?> Function(
+  Map<String, dynamic> initial,
+  String token,
+);
 
 /// Orquesta el constructor de agentes: recursos, conversación SSE, borrador y
 /// guardado final.
@@ -342,9 +341,17 @@ class AgentBuilderController extends ChangeNotifier {
         .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
         .replaceAll(RegExp(r'^-+|-+$'), '');
     final useMemory = draft['use_memory'] == true;
+    // La conexión del constructor se elige por rapidez para redactar, no para
+    // ejecutar el agente, y se heredaba sin decirlo: quien usaba un modelo
+    // pequeño para diseñar acababa con el agente corriendo en él. Se hereda
+    // solo cuando no hay nada que decidir; con varias, la elige el usuario en
+    // el formulario, igual que al crear un agente a mano.
+    final inheritedConnection = _connections.length == 1
+        ? _connections.single.id
+        : '';
     final initial = <String, dynamic>{
       ...draft,
-      'connection_id': _connectionId ?? '',
+      'connection_id': inheritedConnection,
       'memory_file': useMemory && slug.isNotEmpty ? '$slug.md' : '',
     };
 
