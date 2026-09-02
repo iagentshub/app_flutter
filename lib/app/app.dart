@@ -19,6 +19,8 @@ import '../shared/state/locale_controller.dart';
 import '../shared/state/session_controller.dart';
 import '../shared/state/theme_controller.dart';
 import '../shared/widgets/iagents_loading_indicator.dart';
+import 'router/external_router.dart';
+import 'router/internal_router.dart';
 import 'router/router.dart';
 import 'theme/app_theme.dart';
 
@@ -117,6 +119,10 @@ class _AppState extends State<App> {
       onUseAnotherAccount: _discardPersistedSession,
     );
     _router.routeInformationProvider.addListener(_onRouteChanged);
+    // El delegate es el que se entera de los redirects: el provider guarda la
+    // ruta que se **pidió**, así que un `/login?redirect=…` resuelto nunca le
+    // llega y sin este listener la espera de abajo no se reevaluaba jamás.
+    _router.routerDelegate.addListener(_onRouteChanged);
     final initialLocation = widget.initialLocation;
     if (initialLocation != null &&
         initialLocation !=
@@ -135,11 +141,34 @@ class _AppState extends State<App> {
     _setLoginDashboardHandoff(false);
   }
 
+  /// La ruta que el router está montando de verdad, ya resueltos los
+  /// redirects, o null mientras todavía no hay ninguna.
+  ///
+  /// No vale `routeInformationProvider.value`: ese guarda la ruta **pedida**.
+  /// Al entrar desde `/login?redirect=…` sigue diciendo `/login` mientras en
+  /// pantalla está el destino, y la condición de abajo lo leía como «el login
+  /// aún no ha terminado» — la espera se quedaba encendida para siempre en
+  /// todo destino que no fuera el panel, que es el único que la apaga por su
+  /// cuenta. Lo veía cualquiera que entrara con un enlace de vuelta: el de la
+  /// extensión de VS Code (`/vscode-auth`), el de checkout o el de una
+  /// notificación.
+  String? get _rutaMontada {
+    final configuracion = _router.routerDelegate.currentConfiguration;
+    if (configuracion.isEmpty) return null;
+    return configuracion.uri.path;
+  }
+
   void _onRouteChanged() {
     if (!_loginDashboardHandoff) return;
-    final path = _router.routeInformationProvider.value.uri.path;
-    if (path == '/dashboard') return;
-    if (path == '/login' && widget.sessionController.isLoggedIn) return;
+    final path = _rutaMontada;
+    if (path == null) return;
+    // El panel la apaga solo cuando termina su carga inicial
+    // (`onDashboardReady`); soltarla aquí dejaría un fotograma sin logo entre
+    // el login y sus datos.
+    if (path == InternalRoutes.dashboard) return;
+    // Todavía en el login: o la petición sigue en vuelo, o el redirect al
+    // destino aún no se ha aplicado.
+    if (path == ExternalRoutes.login) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _finishLoginDashboardHandoff();
     });
@@ -222,6 +251,7 @@ class _AppState extends State<App> {
   @override
   void dispose() {
     _router.routeInformationProvider.removeListener(_onRouteChanged);
+    _router.routerDelegate.removeListener(_onRouteChanged);
     _router.dispose();
     _errorTexts.dispose();
     _dashboardEditState.dispose();
