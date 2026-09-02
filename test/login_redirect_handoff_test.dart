@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:app_flutter/app/app.dart';
+import 'package:app_flutter/features/agents/pages/agents_page.dart';
+import 'package:app_flutter/features/auth/pages/vscode_auth_page.dart';
 import 'package:app_flutter/features/dashboard/pages/dashboard_page.dart';
 import 'package:app_flutter/shared/state/backend_controller.dart';
 import 'package:app_flutter/shared/state/boot_platform_cache.dart';
@@ -22,15 +24,19 @@ void main() {
   // Code y una pestaña que el navegador restauró en una sección interna. Las
   // dos pasan por `/login?redirect=…` y ninguna termina en el panel, que es el
   // único que sabe apagar la espera por su cuenta.
-  const destinos = <String, String>{
-    'el enlace de VS Code':
-        '/vscode-auth?state=a0d1c6b3-c41e-4826-ab4f-ea8c437d013f'
-        '&callback=vscode://iagentshub.iagentshub/auth?windowId=1',
-    'una sección interna': '/agents',
-  };
+  const destinos = <({String nombre, String ruta, Type pantalla})>[
+    (
+      nombre: 'el enlace de VS Code',
+      ruta:
+          '/vscode-auth?state=a0d1c6b3-c41e-4826-ab4f-ea8c437d013f'
+          '&callback=vscode://iagentshub.iagentshub/auth?windowId=1',
+      pantalla: VsCodeAuthPage,
+    ),
+    (nombre: 'una sección interna', ruta: '/agents', pantalla: AgentsPage),
+  ];
 
-  for (final entry in destinos.entries) {
-    testWidgets('el overlay del login se apaga al volver a ${entry.key}', (
+  for (final destino in destinos) {
+    testWidgets('el overlay del login se apaga al volver a ${destino.nombre}', (
       tester,
     ) async {
       await tester.binding.setSurfaceSize(const Size(800, 900));
@@ -79,8 +85,6 @@ void main() {
         }
       });
 
-      final destino = entry.value;
-
       await tester.pumpWidget(
         ThemeControllerScope(
           controller: theme,
@@ -90,7 +94,7 @@ void main() {
             localeController: locale,
             themeController: theme,
             httpClient: client,
-            initialLocation: destino,
+            initialLocation: destino.ruta,
           ),
         ),
       );
@@ -116,10 +120,18 @@ void main() {
       }
 
       expect(session.isLoggedIn, isTrue);
+      // Que llegue al destino —y no de vuelta al login o al panel— es parte de
+      // lo que se comprueba: el `redirect` viaja codificado y el callback de VS
+      // Code lleva su propio `?` dentro.
+      expect(
+        find.byType(destino.pantalla),
+        findsOneWidget,
+        reason: 'el redirect tiene que llevar al destino pedido',
+      );
       expect(
         find.byType(DashboardPage),
         findsNothing,
-        reason: 'el destino no es el panel, que es quien apaga la espera',
+        reason: 'el panel es el único que sabe apagar la espera por su cuenta',
       );
       // El overlay envuelve siempre a la aplicación; lo que no puede quedarse
       // encendido es su espera.

@@ -118,10 +118,12 @@ class _AppState extends State<App> {
       onRetrySession: _revalidatePersistedSession,
       onUseAnotherAccount: _discardPersistedSession,
     );
-    _router.routeInformationProvider.addListener(_onRouteChanged);
-    // El delegate es el que se entera de los redirects: el provider guarda la
-    // ruta que se **pidió**, así que un `/login?redirect=…` resuelto nunca le
-    // llega y sin este listener la espera de abajo no se reevaluaba jamás.
+    // Se escucha al delegate y no a `routeInformationProvider` porque es del
+    // delegate de donde se lee la ruta: el provider avisa cuando cambia la
+    // ruta **pedida**, y en ese instante el delegate todavía tiene la
+    // anterior, así que el listener leería una ruta a medio cambiar. Además el
+    // provider no se entera de un redirect resuelto, que es justo el caso que
+    // hay que atender.
     _router.routerDelegate.addListener(_onRouteChanged);
     final initialLocation = widget.initialLocation;
     if (initialLocation != null &&
@@ -250,7 +252,6 @@ class _AppState extends State<App> {
 
   @override
   void dispose() {
-    _router.routeInformationProvider.removeListener(_onRouteChanged);
     _router.routerDelegate.removeListener(_onRouteChanged);
     _router.dispose();
     _errorTexts.dispose();

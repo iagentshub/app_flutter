@@ -194,8 +194,40 @@ class SessionController extends ChangeNotifier {
     _status = SessionStatus.authenticated;
     _epoch += 1;
 
-    final prefs = await LocalStore.instance();
-    if (remember) {
+    // El aviso va **antes** de tocar el almacenamiento, y no después.
+    //
+    // Abrir la sesión es lo que acaba de ocurrir aquí, en memoria; guardarla
+    // solo decide si sobrevive a cerrar la aplicación. Con el aviso al final,
+    // el router —que escucha este notificador— dependía de que el almacén
+    // contestara: si no lo hacía, la sesión quedaba abierta y nadie se
+    // enteraba, así que la aplicación se quedaba en la espera del login para
+    // siempre, sin error y sin salida. Ese almacén es el Keychain en
+    // escritorio y `localStorage` + WebCrypto en el navegador, y ninguno de
+    // los dos tiene tiempo máximo.
+    notifyListeners();
+
+    await _persistSession(token: token, user: user, remember: remember);
+  }
+
+  /// Guarda —o retira— la sesión del almacenamiento local.
+  ///
+  /// **No propaga nada**: para cuando corre, la sesión ya está abierta y
+  /// avisada, y lo único que se pierde si falla es que no sobreviva a cerrar
+  /// la aplicación. El `try` de fuera cubre `LocalStore.instance()`, que
+  /// estaba fuera de todo resguardo: al fallar —almacenamiento del navegador
+  /// bloqueado, cuota agotada— se llevaba por delante el aviso.
+  Future<void> _persistSession({
+    required String token,
+    required SessionUser user,
+    required bool remember,
+  }) async {
+    try {
+      final prefs = await LocalStore.instance();
+      if (!remember) {
+        await _deleteSecureToken();
+        await _clearPersistedMetadata(prefs);
+        return;
+      }
       try {
         await _secureStore.write(_tokenKey, token);
         // `_refreshToken` ya lo puso `rememberRefreshToken` con el Set-Cookie
@@ -210,12 +242,9 @@ class SessionController extends ChangeNotifier {
         // token a almacenamiento sin cifrar.
         await _clearPersistedMetadata(prefs);
       }
-    } else {
-      await _deleteSecureToken();
-      await _clearPersistedMetadata(prefs);
+    } on Object {
+      // Sin almacén local la sesión de esta ejecución sigue siendo válida.
     }
-
-    notifyListeners();
   }
 
   Future<void> logout() async {
@@ -229,11 +258,19 @@ class SessionController extends ChangeNotifier {
     _user = null;
     _epoch += 1;
 
-    final prefs = await LocalStore.instance();
-    await _deleteSecureToken();
-    await _clearPersistedMetadata(prefs);
-
+    // Mismo orden que en `login()`, y aquí importa más: con el aviso al final,
+    // un almacén que fallara dejaba la sesión cerrada en memoria y al router
+    // creyendo que el usuario sigue dentro.
     notifyListeners();
+
+    await _deleteSecureToken();
+    try {
+      await _clearPersistedMetadata(await LocalStore.instance());
+    } on Object {
+      // Si las credenciales sobreviven en disco, el próximo arranque las
+      // presenta a `/api/auth/me` y el 401 de una sesión ya revocada vuelve a
+      // cerrarlas. Lo que no puede quedar es esta ejecución sin avisar.
+    }
   }
 
   Future<void> _deleteSecureToken() async {
