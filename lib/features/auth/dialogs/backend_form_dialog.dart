@@ -169,6 +169,7 @@ class _BackendFormDialogState extends State<_BackendFormDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TextFormField(
+                autofocus: true,
                 controller: _nameController,
                 decoration: InputDecoration(
                   labelText: _tx('backend_config.field_name'),

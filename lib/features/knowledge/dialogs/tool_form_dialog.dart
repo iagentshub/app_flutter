@@ -325,6 +325,7 @@ class _ToolFormDialogState extends State<_ToolFormDialog> {
             shrinkWrap: true,
             children: [
               TextFormField(
+                autofocus: true,
                 controller: _nameController,
                 decoration: InputDecoration(
                   labelText: _tx('agents.field_name'),

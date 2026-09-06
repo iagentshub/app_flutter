@@ -66,6 +66,7 @@ class _AgentEditDialogState extends State<_AgentEditDialog> {
           shrinkWrap: true,
           children: [
             TextField(
+              autofocus: true,
               controller: _nameController,
               decoration: InputDecoration(
                 labelText: widget.tx('admin.field_name'),

@@ -91,6 +91,7 @@ class _SkillFormDialogState extends State<_SkillFormDialog> {
             shrinkWrap: true,
             children: [
               TextFormField(
+                autofocus: true,
                 controller: _nameController,
                 decoration: InputDecoration(
                   labelText: widget.tx('knowledge.name_label'),

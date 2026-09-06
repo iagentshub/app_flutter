@@ -157,6 +157,7 @@ class _ConnectionFormDialogState extends State<_ConnectionFormDialog> {
                   shrinkWrap: true,
                   children: [
                     TextFormField(
+                      autofocus: true,
                       controller: _nameController,
                       decoration: InputDecoration(
                         labelText: widget.tx('connections.name_label'),

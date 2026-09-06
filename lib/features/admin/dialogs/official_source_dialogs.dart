@@ -57,6 +57,7 @@ Future<Map<String, dynamic>?> showOfficialSourceEditDialog(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
+                  autofocus: true,
                   controller: name,
                   decoration: InputDecoration(labelText: tx('official.name')),
                 ),

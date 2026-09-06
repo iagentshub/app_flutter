@@ -46,6 +46,7 @@ class _AddTextDialogState extends State<_AddTextDialog> {
             shrinkWrap: true,
             children: [
               TextFormField(
+                autofocus: true,
                 controller: _titleController,
                 decoration: InputDecoration(
                   labelText: widget.tx('knowledge.title_label'),

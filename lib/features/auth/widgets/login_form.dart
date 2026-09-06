@@ -130,6 +130,7 @@ extension _LoginForm on _LoginPageState {
                     ),
                     autocorrect: false,
                     textCapitalization: TextCapitalization.none,
+                    textInputAction: TextInputAction.next,
                     decoration: InputDecoration(
                       labelText: fieldIdentifier,
                       prefixIcon: const Icon(Icons.person_outline, size: 20),
@@ -139,6 +140,11 @@ extension _LoginForm on _LoginPageState {
                   TextFormField(
                     controller: _passwordController,
                     obscureText: !_showPassword,
+                    // Enter aquí no hacía nada: el campo soltaba el foco y el
+                    // botón seguía esperando un clic. Misma condición que él.
+                    onFieldSubmitted: (_) {
+                      if (!_loading && !backendDown) _submit();
+                    },
                     validator: (value) => Validators.requiredField(
                       value,
                       message: fieldPasswordRequired,

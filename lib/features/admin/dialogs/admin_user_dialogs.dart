@@ -34,6 +34,7 @@ class _OwnerPickerDialogState extends State<_OwnerPickerDialog> {
           onSelected: (value) => setState(() => _selected = value),
           fieldViewBuilder: (context, controller, focusNode, onSubmit) {
             return TextField(
+              autofocus: true,
               controller: controller,
               focusNode: focusNode,
               decoration: InputDecoration(

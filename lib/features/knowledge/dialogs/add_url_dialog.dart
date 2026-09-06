@@ -43,7 +43,9 @@ class _AddUrlDialogState extends State<_AddUrlDialog> {
             shrinkWrap: true,
             children: [
               TextFormField(
+                autofocus: true,
                 controller: _urlController,
+                onFieldSubmitted: (_) => _submit(),
                 decoration: InputDecoration(
                   labelText: widget.tx('knowledge.url_label'),
                 ),
@@ -67,6 +69,7 @@ class _AddUrlDialogState extends State<_AddUrlDialog> {
               ),
               TextFormField(
                 controller: _titleController,
+                onFieldSubmitted: (_) => _submit(),
                 decoration: InputDecoration(
                   labelText: widget.tx('knowledge.optional_title'),
                 ),
