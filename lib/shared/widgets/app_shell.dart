@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../app/router/external_router.dart';
 import '../../app/router/internal_router.dart';
 import '../../app/router/router.dart';
+import '../../app/theme/app_icons.dart';
 import '../../app/theme/fnc_colors.dart';
 import '../../app/theme/fnc_fonts.dart';
 import '../../core/network/api_client.dart';
@@ -26,7 +27,9 @@ import '../state/locale_controller.dart';
 import '../state/theme_controller.dart';
 import 'brand_icon.dart';
 import 'motion/app_modal.dart';
+import 'shell/skip_link.dart';
 import 'user_avatar.dart';
+import 'web_content_frame.dart';
 
 part 'shell/app_shell_navigation.dart';
 part 'shell/app_sidebar_footer.dart';
@@ -78,6 +81,22 @@ class _AppShellState extends State<AppShell> {
   late final TranslatedTexts _t;
   bool _sidebarCollapsed = false;
 
+  /// Destino del enlace «saltar al contenido»: envuelve el Navigator del
+  /// shell para que el foco entre en la página sin pasar por el menú.
+  ///
+  /// `parentScope` y no el `closedLoop` por defecto: cada ruta del Navigator
+  /// es un ámbito que, al agotar sus controles, sube al que lo envuelve. Con
+  /// el valor por defecto este ámbito devolvía el foco al principio de la
+  /// página y Tab no llegaba nunca al menú. Se vio en el navegador.
+  final _contentScope = FocusScopeNode(
+    debugLabel: 'contenido',
+    traversalEdgeBehavior: TraversalEdgeBehavior.parentScope,
+  );
+
+  /// Destino del enlace «Ir al menú». No es una parada: el enlace da el
+  /// foco al primer control del menú que hay debajo.
+  final _menuFocus = FocusNode(debugLabel: 'menu', skipTraversal: true);
+
   bool _billingEnabled = false;
   Timer? _platformFlagsTimer;
 
@@ -120,6 +139,8 @@ class _AppShellState extends State<AppShell> {
     _notificationsTimer?.cancel();
     _notifications.dispose();
     _t.dispose();
+    _contentScope.dispose();
+    _menuFocus.dispose();
     super.dispose();
   }
 
@@ -231,8 +252,7 @@ class _AppShellState extends State<AppShell> {
                             'Usuario',
                         displayName:
                             _services.sessionController.user?.displayName,
-                        avatarUrl:
-                            _services.sessionController.user?.avatarUrl,
+                        avatarUrl: _services.sessionController.user?.avatarUrl,
                         apiClient: _services.apiClient,
                         gaToken: _services.sessionController.gaToken,
                         email: _services.sessionController.user?.email,
@@ -267,7 +287,28 @@ class _AppShellState extends State<AppShell> {
                       // se pinta hasta que algo fuerza un frame. La transición
                       // entre secciones la hace el router, dentro del
                       // Navigator: ver internal_router.dart.
-                      Expanded(child: widget.child),
+                      Expanded(
+                        child: WebContentFrame(
+                          child: FocusScope(
+                            node: _contentScope,
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                widget.child,
+                                if (kIsWeb)
+                                  Positioned(
+                                    top: 0,
+                                    left: 0,
+                                    child: SkipLink(
+                                      label: _tx('skip_to_menu'),
+                                      target: _menuFocus,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 );
@@ -278,69 +319,109 @@ class _AppShellState extends State<AppShell> {
                   final collapsed =
                       _sidebarCollapsed && !widget.dashboardEditState.editing;
                   final tokens = _SidebarTokens.of(context);
+                  // Con el texto al 200 % los 240 px dejaban «Orquestaci…» y
+                  // «Conocimie…»: el menú crece con la escala, hasta 340 px,
+                  // en vez de recortar los nombres de las secciones.
+                  final sidebarWidth =
+                      (_sidebarWidth *
+                              MediaQuery.textScalerOf(context).scale(1))
+                          .clamp(_sidebarWidth, 340.0);
                   return Scaffold(
-                    body: Row(
+                    body: Stack(
                       children: [
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 180),
-                          curve: Curves.easeOutCubic,
-                          width: collapsed ? _railWidth : _sidebarWidth,
-                          decoration: BoxDecoration(
-                            color: tokens.surface,
-                            border: Border(
-                              right: BorderSide(color: tokens.border),
-                            ),
-                          ),
-                          child: ClipRect(
-                            child: SafeArea(
-                              right: false,
-                              child: collapsed
-                                  ? AppSidebarRail(
-                                      isAdmin: isAdmin,
-                                      location: location,
-                                      username: _services.sessionController.user?.username ?? '',
-                                      avatarUrl: _services.sessionController.user?.avatarUrl,
-                                      apiClient: _services.apiClient,
-                                      gaToken: _services.sessionController.gaToken,
-                                      initial: sidebarAvatarInitial(
-                                        sidebarVisibleName(
-                                          _services
+                        Row(
+                          children: [
+                            Focus(
+                              focusNode: _menuFocus,
+                              skipTraversal: true,
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                curve: Curves.easeOutCubic,
+                                width: collapsed ? _railWidth : sidebarWidth,
+                                decoration: BoxDecoration(
+                                  color: tokens.surface,
+                                  border: Border(
+                                    right: BorderSide(color: tokens.border),
+                                  ),
+                                ),
+                                child: ClipRect(
+                                  child: WebSidebarViewport(
+                                    width: collapsed
+                                        ? _railWidth
+                                        : sidebarWidth,
+                                    child: SafeArea(
+                                      right: false,
+                                      child: collapsed
+                                          ? AppSidebarRail(
+                                              isAdmin: isAdmin,
+                                              location: location,
+                                              username:
+                                                  _services
+                                                      .sessionController
+                                                      .user
+                                                      ?.username ??
+                                                  '',
+                                              avatarUrl: _services
                                                   .sessionController
                                                   .user
-                                                  ?.username ??
-                                              'Usuario',
-                                          _services
-                                              .sessionController
-                                              .user
-                                              ?.displayName,
-                                        ),
-                                      ),
-                                      tx: _tx,
-                                      onNavigate: (route) => _navigateTo(
-                                        context,
-                                        route,
-                                        wide: wide,
-                                      ),
-                                      onExpand: () => setState(
-                                        () => _sidebarCollapsed = false,
-                                      ),
-                                      onLogout: () => _logout(context),
-                                    )
-                                  : navContent,
+                                                  ?.avatarUrl,
+                                              apiClient: _services.apiClient,
+                                              gaToken: _services
+                                                  .sessionController
+                                                  .gaToken,
+                                              initial: sidebarAvatarInitial(
+                                                sidebarVisibleName(
+                                                  _services
+                                                          .sessionController
+                                                          .user
+                                                          ?.username ??
+                                                      'Usuario',
+                                                  _services
+                                                      .sessionController
+                                                      .user
+                                                      ?.displayName,
+                                                ),
+                                              ),
+                                              tx: _tx,
+                                              onNavigate: (route) =>
+                                                  _navigateTo(
+                                                    context,
+                                                    route,
+                                                    wide: wide,
+                                                  ),
+                                              onExpand: () => setState(
+                                                () => _sidebarCollapsed = false,
+                                              ),
+                                              onLogout: () => _logout(context),
+                                            )
+                                          : navContent,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  _ShellTopBar(
+                                    title: _titleForLocation(location, _tx),
+                                    notifications: _notifications,
+                                  ),
+                                  Expanded(child: body),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (kIsWeb)
+                          Positioned(
+                            top: 0,
+                            left: 0,
+                            child: SkipLink(
+                              label: _tx('skip_to_content'),
+                              target: _contentScope,
                             ),
                           ),
-                        ),
-                        Expanded(
-                          child: Column(
-                            children: [
-                              _ShellTopBar(
-                                title: _titleForLocation(location, _tx),
-                                notifications: _notifications,
-                              ),
-                              Expanded(child: body),
-                            ],
-                          ),
-                        ),
                       ],
                     ),
                   );

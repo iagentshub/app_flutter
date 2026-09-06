@@ -14,6 +14,8 @@
   "logout": "Log out",
   "sidebar_hide": "Hide menu",
   "sidebar_show": "Show menu",
+  "skip_to_content": "Skip to content",
+  "skip_to_menu": "Go to menu",
   "logout_confirm_title": "Log out",
   "logout_confirm_body": "Are you sure you want to log out?",
   "cancel": "Cancel",

@@ -159,7 +159,7 @@ class _SidebarBrand extends StatelessWidget {
             IconButton(
               tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
               onPressed: () => Navigator.of(context).maybePop(),
-              icon: const Icon(Icons.close_rounded),
+              icon: const Icon(Icons.close),
               color: tokens.muted,
             ),
           if (!showCloseButton && onCollapse != null)
@@ -237,33 +237,42 @@ class _ShellTopBar extends StatelessWidget {
     final tokens = _SidebarTokens.of(context);
     return Container(
       height: 68,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: kIsWeb
+          ? EdgeInsets.zero
+          : const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
         color: scheme.surface,
         border: Border(bottom: BorderSide(color: tokens.border)),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 4,
-            height: 24,
-            decoration: BoxDecoration(
-              color: scheme.primary,
-              borderRadius: BorderRadius.circular(99),
+      child: WebContentFrame(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        compactPadding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: [
+            Container(
+              width: 4,
+              height: 24,
+              decoration: BoxDecoration(
+                color: scheme.primary,
+                borderRadius: BorderRadius.circular(99),
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            title,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontSize: FncFonts.size19,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.2,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontSize: FncFonts.size19,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.2,
+                ),
+              ),
             ),
-          ),
-          const Spacer(),
-          NotificationsBell(controller: notifications),
-        ],
+            NotificationsBell(controller: notifications),
+          ],
+        ),
       ),
     );
   }
@@ -402,12 +411,12 @@ class _NavItem {
 /// Workflows queda cerrado al invitado en el backend (`require_auth`, sin
 /// rama `is_guest`): se oculta aquí para no llevarlo a un 403.
 const _mainItems = [
-  _NavItem(InternalRoutes.dashboard, 'dashboard', Icons.dashboard_outlined),
-  _NavItem(InternalRoutes.explore, 'explore', Icons.travel_explore_outlined),
-  _NavItem(InternalRoutes.agents, 'agents', Icons.smart_toy_outlined),
-  _NavItem(InternalRoutes.orchestrations, 'workflows', Icons.hub_outlined),
-  _NavItem(InternalRoutes.knowledge, 'knowledge', Icons.school_outlined),
-  _NavItem(InternalRoutes.connections, 'connections', Icons.cable_outlined),
+  _NavItem(InternalRoutes.dashboard, 'dashboard', AppIcons.dashboard),
+  _NavItem(InternalRoutes.explore, 'explore', AppIcons.explore),
+  _NavItem(InternalRoutes.agents, 'agents', AppIcons.agents),
+  _NavItem(InternalRoutes.orchestrations, 'workflows', AppIcons.workflows),
+  _NavItem(InternalRoutes.knowledge, 'knowledge', AppIcons.knowledge),
+  _NavItem(InternalRoutes.connections, 'connections', AppIcons.connections),
 ];
 
 const _secondaryItems = [
