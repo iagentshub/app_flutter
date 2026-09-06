@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../shared/widgets/motion/app_page_transitions.dart';
 import 'fnc_colors.dart';
 import 'fnc_fonts.dart';
+import 'web_theme.dart';
 
 abstract final class AppTheme {
   static String canonicalId(String themeId) => switch (themeId) {
@@ -70,81 +71,83 @@ abstract final class AppTheme {
     const surface2 = FncColors.surfaceAltLight;
     const line = FncColors.dividerLineLight;
 
-    return ThemeData(
-      colorScheme: scheme,
-      scaffoldBackgroundColor: pageBackground,
-      cardColor: cardColor,
-      useMaterial3: true,
-      // En escritorio y web los controles venían con el tamaño táctil de
-      // móvil, que con ratón sobra: `adaptivePlatformDensity` los compacta
-      // solo ahí y deja Android e iOS como estaban.
-      visualDensity: VisualDensity.adaptivePlatformDensity,
-      // Las páginas que se abren con `Navigator.push` toman su transición de
-      // aquí, no de cada llamada — ver app_page_transitions.dart.
-      pageTransitionsTheme: appPageTransitionsTheme,
-      textTheme: FncFonts.textTheme(Brightness.light),
-      cardTheme: CardThemeData(
-        color: cardColor,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: line),
+    return webTheme(
+      ThemeData(
+        colorScheme: scheme,
+        scaffoldBackgroundColor: pageBackground,
+        cardColor: cardColor,
+        useMaterial3: true,
+        // En escritorio y web los controles venían con el tamaño táctil de
+        // móvil, que con ratón sobra: `adaptivePlatformDensity` los compacta
+        // solo ahí y deja Android e iOS como estaban.
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+        // Las páginas que se abren con `Navigator.push` toman su transición de
+        // aquí, no de cada llamada — ver app_page_transitions.dart.
+        pageTransitionsTheme: appPageTransitionsTheme,
+        textTheme: FncFonts.textTheme(Brightness.light),
+        cardTheme: CardThemeData(
+          color: cardColor,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: line),
+          ),
         ),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: surface2,
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 12,
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: surface2,
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 12,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: line),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: line),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: accentColor, width: 1.4),
+          ),
+          labelStyle: const TextStyle(color: FncColors.hintTextLight),
         ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: line),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: FncColors.black,
+          foregroundColor: FncColors.white,
+          elevation: 0,
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: line),
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            backgroundColor: accentColor,
+            foregroundColor: onAccentColor,
+          ),
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: accentColor, width: 1.4),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: FncColors.black,
+            side: const BorderSide(color: FncColors.black),
+          ),
         ),
-        labelStyle: const TextStyle(color: FncColors.hintTextLight),
-      ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: FncColors.black,
-        foregroundColor: FncColors.white,
-        elevation: 0,
-      ),
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          backgroundColor: accentColor,
-          foregroundColor: onAccentColor,
+        chipTheme: ChipThemeData(
+          backgroundColor: accentColor.withValues(alpha: 0.08),
+          selectedColor: accentColor.withValues(alpha: 0.18),
+          side: BorderSide(color: accentColor.withValues(alpha: 0.28)),
+          labelStyle: const TextStyle(color: FncColors.black),
+          shape: const StadiumBorder(),
         ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: FncColors.black,
-          side: const BorderSide(color: FncColors.black),
-        ),
-      ),
-      chipTheme: ChipThemeData(
-        backgroundColor: accentColor.withValues(alpha: 0.08),
-        selectedColor: accentColor.withValues(alpha: 0.18),
-        side: BorderSide(color: accentColor.withValues(alpha: 0.28)),
-        labelStyle: const TextStyle(color: FncColors.black),
-        shape: const StadiumBorder(),
-      ),
-      dividerTheme: const DividerThemeData(color: FncColors.dividerLight),
-      snackBarTheme: const SnackBarThemeData(
-        backgroundColor: FncColors.black,
-        contentTextStyle: TextStyle(color: FncColors.white),
-        behavior: SnackBarBehavior.floating,
-        elevation: 8,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(12)),
+        dividerTheme: const DividerThemeData(color: FncColors.dividerLight),
+        snackBarTheme: const SnackBarThemeData(
+          backgroundColor: FncColors.black,
+          contentTextStyle: TextStyle(color: FncColors.white),
+          behavior: SnackBarBehavior.floating,
+          elevation: 8,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(12)),
+          ),
         ),
       ),
     );
@@ -176,79 +179,81 @@ abstract final class AppTheme {
     const surface2 = FncColors.surfaceAltDark;
     const line = FncColors.dividerLineDark;
 
-    return ThemeData(
-      brightness: Brightness.dark,
-      colorScheme: scheme,
-      scaffoldBackgroundColor: FncColors.black,
-      cardColor: cardColor,
-      useMaterial3: true,
-      // Ver la nota del tema claro.
-      visualDensity: VisualDensity.adaptivePlatformDensity,
-      pageTransitionsTheme: appPageTransitionsTheme,
-      cardTheme: CardThemeData(
-        color: cardColor,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: line),
+    return webTheme(
+      ThemeData(
+        brightness: Brightness.dark,
+        colorScheme: scheme,
+        scaffoldBackgroundColor: FncColors.black,
+        cardColor: cardColor,
+        useMaterial3: true,
+        // Ver la nota del tema claro.
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+        pageTransitionsTheme: appPageTransitionsTheme,
+        cardTheme: CardThemeData(
+          color: cardColor,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: line),
+          ),
         ),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: surface2,
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 12,
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: surface2,
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 12,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: line),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: line),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: accentColor, width: 1.4),
+          ),
+          labelStyle: const TextStyle(color: FncColors.hintTextDark),
         ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: line),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: line),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: accentColor, width: 1.4),
-        ),
-        labelStyle: const TextStyle(color: FncColors.hintTextDark),
-      ),
-      textTheme: FncFonts.textTheme(Brightness.dark)
-          .apply(bodyColor: FncColors.white, displayColor: FncColors.white),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: FncColors.black,
-        foregroundColor: FncColors.white,
-        elevation: 0,
-      ),
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          backgroundColor: accentColor,
-          foregroundColor: onAccentColor,
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
+        textTheme: FncFonts.textTheme(Brightness.dark)
+            .apply(bodyColor: FncColors.white, displayColor: FncColors.white),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: FncColors.black,
           foregroundColor: FncColors.white,
-          side: const BorderSide(color: FncColors.white),
+          elevation: 0,
         ),
-      ),
-      chipTheme: ChipThemeData(
-        backgroundColor: accentColor.withValues(alpha: 0.12),
-        selectedColor: accentColor.withValues(alpha: 0.24),
-        side: BorderSide(color: accentColor.withValues(alpha: 0.36)),
-        labelStyle: const TextStyle(color: FncColors.white),
-        shape: const StadiumBorder(),
-      ),
-      snackBarTheme: const SnackBarThemeData(
-        backgroundColor: FncColors.surfaceAltDark,
-        contentTextStyle: TextStyle(color: FncColors.white),
-        behavior: SnackBarBehavior.floating,
-        elevation: 8,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(12)),
-          side: BorderSide(color: FncColors.dividerLineDark),
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            backgroundColor: accentColor,
+            foregroundColor: onAccentColor,
+          ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: FncColors.white,
+            side: const BorderSide(color: FncColors.white),
+          ),
+        ),
+        chipTheme: ChipThemeData(
+          backgroundColor: accentColor.withValues(alpha: 0.12),
+          selectedColor: accentColor.withValues(alpha: 0.24),
+          side: BorderSide(color: accentColor.withValues(alpha: 0.36)),
+          labelStyle: const TextStyle(color: FncColors.white),
+          shape: const StadiumBorder(),
+        ),
+        snackBarTheme: const SnackBarThemeData(
+          backgroundColor: FncColors.surfaceAltDark,
+          contentTextStyle: TextStyle(color: FncColors.white),
+          behavior: SnackBarBehavior.floating,
+          elevation: 8,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(12)),
+            side: BorderSide(color: FncColors.dividerLineDark),
+          ),
         ),
       ),
     );

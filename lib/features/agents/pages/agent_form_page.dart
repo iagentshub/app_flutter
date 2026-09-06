@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_client.dart';
@@ -20,6 +21,7 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/grouped_label_picker.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../../../shared/widgets/web_form_section.dart';
 import '../dialogs/agent_publish_dependencies_dialog.dart';
 import '../dialogs/agent_resource_picker_dialog.dart';
 import '../repositories/agent_import_repository.dart';
@@ -480,7 +482,7 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
         body: SafeArea(
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 960),
+              constraints: const BoxConstraints(maxWidth: kIsWeb ? 1280 : 960),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                 child: Card(

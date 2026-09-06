@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 /// Acción principal de una vista o bloque.
@@ -309,7 +310,13 @@ class AppIconButton extends StatelessWidget {
         icon: icon,
         onPressed: onPressed,
         tooltip: tooltip,
-        style: style,
+        style: kIsWeb
+            ? IconButton.styleFrom(
+                side: BorderSide(
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                ),
+              ).merge(style)
+            : style,
         visualDensity: visualDensity,
         isSelected: isSelected,
         selectedIcon: selectedIcon,

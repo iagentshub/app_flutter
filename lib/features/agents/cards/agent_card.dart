@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_fonts.dart';
@@ -11,6 +12,7 @@ import '../../../shared/widgets/buttons/overflow_menu_button.dart';
 import '../../../shared/widgets/inactive_badge.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/origin_badge.dart';
+import '../../../shared/widgets/resource_card_body.dart';
 import '../../../shared/widgets/resource_graph_button.dart';
 import '../../../shared/widgets/token_usage_badge.dart';
 import '../../../utils/i18n.dart';
@@ -157,9 +159,8 @@ class AgentCard extends StatelessWidget {
     final card = Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.all(kIsWeb ? 16 : 12),
+        child: ResourceCardBody(
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -191,7 +192,14 @@ class AgentCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 6),
-            Text(subtitleParts.join(' · ')),
+            Text(
+              subtitleParts.join(' · '),
+              style: kIsWeb
+                  ? Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    )
+                  : null,
+            ),
             if (item.description.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
@@ -219,26 +227,23 @@ class AgentCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-            Row(
-              children: [
-                Tooltip(
-                  message: !item.isActive
-                      ? tx('agents.chat_inactive')
-                      : item.connectionId.isEmpty
-                      ? tx('agents.chat_no_connection')
-                      : '',
-                  child: PrimaryButton.icon(
-                    onPressed:
-                        !item.isActive ||
-                            item.connectionId.isEmpty ||
-                            inProgress
-                        ? null
-                        : onChat,
-                    icon: const Icon(Icons.chat_bubble_outline),
-                    label: Text(tx('agents.chat_action')),
-                  ),
+            ResourceCardActions(
+              primary: Tooltip(
+                message: !item.isActive
+                    ? tx('agents.chat_inactive')
+                    : item.connectionId.isEmpty
+                    ? tx('agents.chat_no_connection')
+                    : '',
+                child: PrimaryButton.icon(
+                  onPressed:
+                      !item.isActive || item.connectionId.isEmpty || inProgress
+                      ? null
+                      : onChat,
+                  icon: const Icon(Icons.chat_bubble_outline),
+                  label: Text(tx('agents.chat_action')),
                 ),
-                const Spacer(),
+              ),
+              actions: [
                 if (!item.readOnly)
                   ActionIconButton(
                     icon: Icons.edit_outlined,

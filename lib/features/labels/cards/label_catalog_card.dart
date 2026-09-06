@@ -135,9 +135,8 @@ class _LabelEntryCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(
-          context,
-        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest
+            .withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(

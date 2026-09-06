@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
@@ -20,16 +21,20 @@ class ResponsiveSliverMasonryGrid extends StatelessWidget {
     required this.itemCount,
     required this.itemBuilder,
     this.density = ResponsiveCardDensity.detailed,
+    this.alignRows = kIsWeb,
     this.minCardWidth,
     this.maxColumns,
-    this.crossAxisSpacing = 12,
-    this.mainAxisSpacing = 12,
+    this.crossAxisSpacing = kIsWeb ? 16 : 12,
+    this.mainAxisSpacing = kIsWeb ? 16 : 12,
     super.key,
   });
 
   final int itemCount;
   final IndexedWidgetBuilder itemBuilder;
   final ResponsiveCardDensity density;
+
+  /// Desactivar para tarjetas expandibles que cambian de altura internamente.
+  final bool alignRows;
   final double? minCardWidth;
   final int? maxColumns;
   final double crossAxisSpacing;
@@ -58,6 +63,47 @@ class ResponsiveSliverMasonryGrid extends StatelessWidget {
           spacing: crossAxisSpacing,
           maxColumns: maxColumns ?? density.maxColumns,
         );
+        if (alignRows) {
+          // Filas alineadas en web, con la altura del contenido más alto.
+          // Table mide las celdas sin exigir alturas fijas ni dimensiones
+          // intrínsecas a las tarjetas que contienen LayoutBuilder.
+          return SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, row) => Padding(
+                padding: EdgeInsets.only(top: row == 0 ? 0 : mainAxisSpacing),
+                child: Table(
+                  defaultVerticalAlignment:
+                      TableCellVerticalAlignment.intrinsicHeight,
+                  columnWidths: {
+                    for (var column = 1; column < columns * 2 - 1; column += 2)
+                      column: FixedColumnWidth(crossAxisSpacing),
+                  },
+                  children: [
+                    TableRow(
+                      children: [
+                        for (var column = 0; column < columns; column++) ...[
+                          if (column > 0) const SizedBox.shrink(),
+                          if (row * columns + column < itemCount)
+                            IndexedSemantics(
+                              index: row * columns + column,
+                              child: itemBuilder(
+                                context,
+                                row * columns + column,
+                              ),
+                            )
+                          else
+                            const SizedBox.shrink(),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              childCount: (itemCount / columns).ceil(),
+              addSemanticIndexes: false,
+            ),
+          );
+        }
         return SliverMasonryGrid.count(
           crossAxisCount: columns,
           crossAxisSpacing: crossAxisSpacing,

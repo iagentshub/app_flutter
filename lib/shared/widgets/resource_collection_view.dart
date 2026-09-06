@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'animated_iagents_mark.dart';
@@ -13,6 +14,7 @@ class ResourceGridSliver extends StatelessWidget {
     required this.itemCount,
     required this.itemBuilder,
     this.density = ResponsiveCardDensity.detailed,
+    this.alignRows = kIsWeb,
     this.padding = const EdgeInsets.fromLTRB(16, 0, 16, 16),
     super.key,
   });
@@ -20,6 +22,9 @@ class ResourceGridSliver extends StatelessWidget {
   final int itemCount;
   final IndexedWidgetBuilder itemBuilder;
   final ResponsiveCardDensity density;
+
+  /// Desactivar para tarjetas expandibles que cambian de altura internamente.
+  final bool alignRows;
   final EdgeInsetsGeometry padding;
 
   @override
@@ -30,6 +35,7 @@ class ResourceGridSliver extends StatelessWidget {
         itemCount: itemCount,
         itemBuilder: itemBuilder,
         density: density,
+        alignRows: alignRows,
       ),
     );
   }
@@ -58,6 +64,7 @@ class ResourceCollectionView extends StatelessWidget {
     this.hasMore = false,
     this.loadingMore = false,
     this.density = ResponsiveCardDensity.detailed,
+    this.alignRows = kIsWeb,
     this.headerPadding = const EdgeInsets.fromLTRB(16, 16, 16, 12),
     this.gridPadding = const EdgeInsets.fromLTRB(16, 0, 16, 16),
     this.scrollController,
@@ -91,6 +98,9 @@ class ResourceCollectionView extends StatelessWidget {
   final bool loadingMore;
 
   final ResponsiveCardDensity density;
+
+  /// Desactivar para tarjetas expandibles que cambian de altura internamente.
+  final bool alignRows;
   final EdgeInsetsGeometry headerPadding;
   final EdgeInsetsGeometry gridPadding;
   final ScrollController? scrollController;
@@ -132,13 +142,30 @@ class ResourceCollectionView extends StatelessWidget {
           else
             SliverPadding(
               padding: gridPadding,
-              sliver: SliverToBoxAdapter(child: empty),
+              sliver: SliverToBoxAdapter(
+                child: kIsWeb
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 24),
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 640),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: empty,
+                            ),
+                          ),
+                        ),
+                      )
+                    : empty,
+              ),
             )
         else
           ResourceGridSliver(
             itemCount: itemCount,
             itemBuilder: itemBuilder,
             density: density,
+            alignRows: alignRows,
             padding: gridPadding,
           ),
         ...trailingSlivers,

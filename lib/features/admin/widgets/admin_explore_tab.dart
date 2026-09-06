@@ -360,7 +360,7 @@ extension _AdminExploreTab on _AdminPageState {
     Map<String, dynamic> item,
   ) {
     return ActionIconButton(
-      icon: Icons.hub_outlined,
+      icon: AppIcons.graph,
       tooltip: _tx('admin.action_graph'),
       onPressed: () => _openResourceGraph(type, item),
     );

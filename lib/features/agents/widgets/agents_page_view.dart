@@ -23,10 +23,9 @@ extension _AgentsPageView on _AgentsPageState {
           },
         ),
         actions: [
-          AppIconButton.filled(
+          ResourceCreateButton(
             onPressed: _openCreateChoiceDialog,
-            icon: const Icon(Icons.add),
-            tooltip: _tx('agents.new'),
+            label: _tx('agents.new'),
           ),
           AppIconButton.outlined(
             onPressed: _load,
@@ -69,7 +68,7 @@ extension _AgentsPageView on _AgentsPageState {
       empty: _agents.isEmpty
           ? AsyncStatePanel.empty(
               padding: EdgeInsets.zero,
-              icon: Icons.smart_toy_outlined,
+              icon: AppIcons.agents,
               title: _tx('agents.empty_title'),
               message: _tx('agents.empty'),
               actionLabel: _tx('agents.empty_action'),

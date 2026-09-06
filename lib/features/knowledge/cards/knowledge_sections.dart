@@ -230,13 +230,12 @@ extension _KnowledgeSections on _KnowledgePageState {
       itemBuilder: _buildSkillCard,
       emptyText: tr('knowledge.no_skills'),
       emptyDescription: tr('knowledge.no_skills_description'),
-      emptyIcon: Icons.auto_awesome_outlined,
+      emptyIcon: AppIcons.skills,
       toolbar: ResourceToolbar(
         actions: [
-          AppIconButton.filled(
+          ResourceCreateButton(
             onPressed: _openCreateSkillChoiceDialog,
-            icon: const Icon(Icons.add),
-            tooltip: _tx('knowledge.new_skill_title'),
+            label: _tx('knowledge.new_skill_title'),
           ),
           AppIconButton.outlined(
             onPressed: _loadSkills,
@@ -265,9 +264,8 @@ extension _KnowledgeSections on _KnowledgePageState {
     final card = Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.all(kIsWeb ? 16 : 12),
+        child: ResourceCardBody(
           children: [
             Row(
               children: [
@@ -310,9 +308,8 @@ extension _KnowledgeSections on _KnowledgePageState {
               ],
             ),
             const SizedBox(height: 10),
-            Row(
+            ResourceTrailingActions(
               children: [
-                const Spacer(),
                 _buildResourceGraphButton(
                   resourceId: item.id,
                   resourceName: item.name,
@@ -385,9 +382,8 @@ extension _KnowledgeSections on _KnowledgePageState {
     final card = Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.all(kIsWeb ? 16 : 12),
+        child: ResourceCardBody(
           children: [
             Row(
               children: [
@@ -439,9 +435,8 @@ extension _KnowledgeSections on _KnowledgePageState {
               ],
             ),
             const SizedBox(height: 10),
-            Row(
+            ResourceTrailingActions(
               children: [
-                const Spacer(),
                 _buildKnowledgeItemGraphButton(item),
                 if (!item.readOnly)
                   OverflowMenuButton(

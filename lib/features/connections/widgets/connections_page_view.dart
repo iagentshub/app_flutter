@@ -44,12 +44,11 @@ extension _ConnectionsPageView on _ConnectionsPageState {
                             onChanged: _controller.setQuery,
                           ),
                           actions: [
-                            AppIconButton.filled(
+                            ResourceCreateButton(
                               onPressed: _controller.providers.isEmpty
                                   ? null
                                   : _openCreateDialog,
-                              icon: const Icon(Icons.add),
-                              tooltip: _tx('connections.new'),
+                              label: _tx('connections.new'),
                             ),
                             AppIconButton.outlined(
                               onPressed: _controller.load,

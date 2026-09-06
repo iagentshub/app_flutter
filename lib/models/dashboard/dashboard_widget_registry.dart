@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app/theme/app_icons.dart';
 import 'dashboard_widget_config.dart';
 import 'dashboard_widget_instance.dart';
 
@@ -89,7 +90,7 @@ const dashboardWidgetDefinitions = [
   ),
   DashboardWidgetDefinition(
     type: 'recent',
-    icon: Icons.smart_toy_outlined,
+    icon: AppIcons.agents,
     defaultSize: DashboardWidgetSize.medium,
     supportedSizes: {DashboardWidgetSize.medium, DashboardWidgetSize.wide},
     dataSources: {DashboardDataSource.agents},

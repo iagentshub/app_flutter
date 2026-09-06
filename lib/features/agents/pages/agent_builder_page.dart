@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_client.dart';
@@ -184,7 +185,7 @@ class _AgentBuilderPageState extends State<AgentBuilderPage>
               // Ancho de lectura, no de pantalla: el texto es el contenido.
               // 1040 en vez de 760 para no desperdiciar tanto margen en
               // pantallas anchas mientras las líneas siguen siendo legibles.
-              constraints: const BoxConstraints(maxWidth: 1040),
+              constraints: const BoxConstraints(maxWidth: kIsWeb ? 1280 : 1040),
               child: Padding(
                 padding: EdgeInsets.symmetric(
                   horizontal: compact

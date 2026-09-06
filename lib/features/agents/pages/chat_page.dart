@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
@@ -217,61 +218,72 @@ class _ChatPageState extends State<ChatPage> with StateMessaging {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.agent.name),
-        actions: [
-          AppIconButton(
-            icon: const Icon(Icons.tune),
-            tooltip: _tx('agents.preferences_tooltip'),
-            onPressed: _openPreferences,
-          ),
-          Builder(
-            builder: (context) => LayoutBuilder(
-              builder: (context, constraints) {
-                if (MediaQuery.of(context).size.width >= 760) {
-                  return const SizedBox.shrink();
-                }
-                return AppIconButton(
-                  icon: const Icon(Icons.history),
-                  tooltip: _tx('agents.chat.history_tooltip'),
-                  onPressed: () => Scaffold.of(context).openEndDrawer(),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-      endDrawer: MediaQuery.of(context).size.width >= 760
-          ? null
-          : Drawer(child: _buildHistoryPanel()),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final wide = constraints.maxWidth >= 760;
-          return Row(
-            children: [
-              if (wide)
-                SizedBox(
-                  width: 260,
-                  child: Material(
-                    color: Theme.of(context).colorScheme.surfaceContainerLow,
-                    child: _buildHistoryPanel(),
-                  ),
-                ),
-              Expanded(
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxWidth: Breakpoints.anchoLectura,
-                    ),
-                    child: _buildChatColumn(),
-                  ),
+    return LayoutBuilder(
+      builder: (context, pageConstraints) {
+        final showHistoryRail =
+            (kIsWeb
+                ? pageConstraints.maxWidth
+                : MediaQuery.sizeOf(context).width) >=
+            760;
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(widget.agent.name),
+            actions: [
+              AppIconButton(
+                icon: const Icon(Icons.tune),
+                tooltip: _tx('agents.preferences_tooltip'),
+                onPressed: _openPreferences,
+              ),
+              Builder(
+                builder: (context) => LayoutBuilder(
+                  builder: (context, constraints) {
+                    if (showHistoryRail) {
+                      return const SizedBox.shrink();
+                    }
+                    return AppIconButton(
+                      icon: const Icon(Icons.history),
+                      tooltip: _tx('agents.chat.history_tooltip'),
+                      onPressed: () => Scaffold.of(context).openEndDrawer(),
+                    );
+                  },
                 ),
               ),
             ],
-          );
-        },
-      ),
+          ),
+          endDrawer: showHistoryRail
+              ? null
+              : Drawer(child: _buildHistoryPanel()),
+          body: LayoutBuilder(
+            builder: (context, constraints) {
+              final wide = constraints.maxWidth >= 760;
+              return Row(
+                children: [
+                  if (wide)
+                    SizedBox(
+                      width: 260,
+                      child: Material(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerLow,
+                        child: _buildHistoryPanel(),
+                      ),
+                    ),
+                  Expanded(
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          maxWidth: Breakpoints.anchoLectura,
+                        ),
+                        child: _buildChatColumn(),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      },
     );
   }
 

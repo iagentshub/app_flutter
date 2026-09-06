@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/router/internal_router.dart';
 import '../../../app/router/router.dart';
+import '../../../app/theme/app_icons.dart';
 import '../../../models/dashboard/dashboard_data.dart';
 import '../../../models/dashboard/dashboard_widget_config.dart';
 import '../dashboard_formatters.dart';
@@ -20,12 +21,12 @@ class DashboardQuickActionsBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final definitions = <String, ({IconData icon, String label, String route})>{
       'agent': (
-        icon: Icons.smart_toy_outlined,
+        icon: AppIcons.agents,
         label: tx('action_agent'),
         route: InternalRoutes.agents,
       ),
       'connection': (
-        icon: Icons.cable_outlined,
+        icon: AppIcons.connections,
         label: tx('action_connection'),
         route: InternalRoutes.connections,
       ),
@@ -119,9 +120,8 @@ class DashboardTokenKpiBody extends StatelessWidget {
             Expanded(
               child: Text(
                 formatCompactDashboardInt(current),
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+                style: Theme.of(context).textTheme.headlineMedium
+                    ?.copyWith(fontWeight: FontWeight.w800),
               ),
             ),
             if (delta != null)

@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../models/memory/memory_models.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
+import '../../../shared/widgets/resource_card_body.dart';
 
 class MemoryFileCard extends StatelessWidget {
   const MemoryFileCard({
@@ -27,9 +29,8 @@ class MemoryFileCard extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.all(kIsWeb ? 16 : 12),
+        child: ResourceCardBody(
           children: [
             Text(
               file.filename,
@@ -44,9 +45,8 @@ class MemoryFileCard extends StatelessWidget {
               '${file.updatedAt.isEmpty ? '' : ' · ${file.updatedAt}'}',
             ),
             const SizedBox(height: 10),
-            Row(
+            ResourceTrailingActions(
               children: [
-                const Spacer(),
                 ActionIconButton(
                   icon: Icons.edit_outlined,
                   tooltip: editTooltip,

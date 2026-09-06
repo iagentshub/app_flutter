@@ -9,6 +9,7 @@ import '../../../shared/state/session_controller.dart';
 import '../../../shared/state/watches_resource_changes.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/buttons/resource_create_button.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/resource_collection_view.dart';
 import '../../../shared/widgets/resource_toolbar.dart';
@@ -195,10 +196,9 @@ class _LlmOrchestrationsPanelState extends State<LlmOrchestrationsPanel>
       onRefresh: _load,
       header: ResourceToolbar(
         actions: [
-          AppIconButton.filled(
+          ResourceCreateButton(
             onPressed: () => _edit(),
-            icon: const Icon(Icons.add),
-            tooltip: widget.tx('llm_orchestrations.create'),
+            label: widget.tx('llm_orchestrations.create'),
           ),
           AppIconButton.outlined(
             onPressed: _load,

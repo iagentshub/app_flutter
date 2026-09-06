@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/connections/connection_models.dart';
@@ -54,6 +55,87 @@ class BuilderConnectionBar extends StatelessWidget {
       for (final connection in connections)
         connection.id: _connectionLabel(connection),
     };
+    if (kIsWeb) {
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final inline =
+              constraints.maxWidth /
+                  MediaQuery.textScalerOf(context).scale(1) >=
+              680;
+          final hasMode = selectedMode != null && onMode != null;
+          final modeWidth = inline ? 260.0 : constraints.maxWidth;
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    SizedBox(
+                      width: inline && hasMode
+                          ? constraints.maxWidth - modeWidth - 12
+                          : constraints.maxWidth,
+                      child: loadingConnections
+                          ? const LinearProgressIndicator(minHeight: 2)
+                          : _BarDropdown(
+                              fieldKey: const ValueKey(
+                                'builder-connection-web',
+                              ),
+                              compact: true,
+                              label: tx('agents.field_connection'),
+                              value: connectionId,
+                              entries: connectionEntries,
+                              onChanged: streaming ? null : onConnectionChanged,
+                            ),
+                    ),
+                    if (hasMode)
+                      SizedBox(
+                        width: modeWidth,
+                        child: _BarDropdown(
+                          fieldKey: const ValueKey('builder-mode'),
+                          compact: true,
+                          label: tx('agents.builder_mode'),
+                          value: selectedMode,
+                          entries: {
+                            for (final value in builderModes)
+                              value: tx('agents.builder_mode_$value'),
+                          },
+                          onChanged: streaming
+                              ? null
+                              : (value) {
+                                  if (value != null) onMode(value);
+                                },
+                        ),
+                      ),
+                  ],
+                ),
+                if (hasMode) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    tx('agents.builder_mode_${selectedMode}_hint'),
+                    style: Theme.of(context).textTheme.bodySmall
+                        ?.copyWith(color: colors.onSurfaceVariant),
+                  ),
+                ],
+                if (!loadingConnections && connections.isEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    trOr(
+                      emptyMessagePath,
+                      tr('agents.builder_needs_connection'),
+                    ),
+                    style: Theme.of(context).textTheme.bodySmall
+                        ?.copyWith(color: colors.error),
+                  ),
+                ],
+              ],
+            ),
+          );
+        },
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

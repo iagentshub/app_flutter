@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_client.dart';
@@ -312,7 +313,7 @@ class _SkillBuilderPageState extends State<SkillBuilderPage>
             child: ConstrainedBox(
               // Ancho de lectura, no de pantalla: el texto es el contenido.
               constraints: const BoxConstraints(
-                maxWidth: Breakpoints.anchoLectura,
+                maxWidth: kIsWeb ? 1280 : Breakpoints.anchoLectura,
               ),
               child: Padding(
                 padding: EdgeInsets.symmetric(

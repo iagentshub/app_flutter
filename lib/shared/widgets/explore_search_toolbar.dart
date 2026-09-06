@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'multi_select_dropdown.dart';
+import 'resource_toolbar.dart';
 
 /// Opción visual del selector de tipos usado por los exploradores público y
 /// administrativo. [count] es opcional porque no todos los endpoints devuelven
@@ -108,8 +110,18 @@ class ExploreSearchToolbar extends StatelessWidget {
                 return next;
               },
               onChanged: onTypesChanged,
-              width: compact ? double.infinity : 220,
+              width: kIsWeb
+                  ? (constraints.maxWidth - 24).clamp(0.0, 220.0)
+                  : compact
+                  ? double.infinity
+                  : 220,
             );
+            if (kIsWeb) {
+              return ResourceToolbar(
+                search: search,
+                actions: [selector, ...actions],
+              );
+            }
             if (compact) {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -126,7 +138,7 @@ class ExploreSearchToolbar extends StatelessWidget {
             );
           },
         ),
-        if (actions.isNotEmpty) ...[
+        if (!kIsWeb && actions.isNotEmpty) ...[
           const SizedBox(height: 10),
           Wrap(
             spacing: 6,

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../app/theme/fnc_colors.dart';
@@ -38,32 +39,70 @@ class ResourceToolbar extends StatelessWidget {
         border: Border.all(color: FncColors.borderSubtle(context)),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (search != null) ...[search!, SizedBox(height: sectionSpacing)],
-          Wrap(
-            spacing: actionSpacing,
-            runSpacing: actionSpacing,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              ...actions,
-              if (summary != null)
-                Padding(
-                  // Separa el contador del último botón lo justo para que no se
-                  // lea como uno más de la fila.
-                  padding: EdgeInsets.only(
-                    left: sectionSpacing - actionSpacing,
-                  ),
-                  child: DefaultTextStyle.merge(
-                    style: TextStyle(color: FncColors.textMuted(context)),
-                    child: summary!,
-                  ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Se usa el ancho local: una barra dentro de una tarjeta no dispone
+          // de todo el viewport. El texto ampliado necesita volver a apilar.
+          final inline =
+              kIsWeb &&
+              constraints.maxWidth /
+                      MediaQuery.textScalerOf(context).scale(1) >=
+                  760;
+          if (kIsWeb && search != null) {
+            final searchWidth = inline
+                ? (constraints.maxWidth * 0.4).clamp(260.0, 420.0)
+                : constraints.maxWidth;
+            // La búsqueda permanece en la misma rama al redimensionar, para
+            // conservar el texto, la selección y el foco del campo.
+            return Wrap(
+              spacing: sectionSpacing,
+              runSpacing: sectionSpacing,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                SizedBox(width: searchWidth, child: search),
+                SizedBox(
+                  width: inline
+                      ? constraints.maxWidth - searchWidth - sectionSpacing
+                      : constraints.maxWidth,
+                  child: _actionGroup(context, trailing: inline),
                 ),
+              ],
+            );
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (search != null) ...[
+                search!,
+                SizedBox(height: sectionSpacing),
+              ],
+              _actionGroup(context),
             ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }
+
+  Widget _actionGroup(BuildContext context, {bool trailing = false}) => Wrap(
+    alignment: trailing ? WrapAlignment.end : WrapAlignment.start,
+    spacing: actionSpacing,
+    runSpacing: actionSpacing,
+    crossAxisAlignment: WrapCrossAlignment.center,
+    children: [
+      ...actions,
+      if (summary != null)
+        Padding(
+          // Separa el contador del último botón lo justo para que no se
+          // lea como uno más de la fila.
+          padding: EdgeInsets.only(
+            left: (sectionSpacing - actionSpacing).clamp(0.0, double.infinity),
+          ),
+          child: DefaultTextStyle.merge(
+            style: TextStyle(color: FncColors.textMuted(context)),
+            child: summary!,
+          ),
+        ),
+    ],
+  );
 }

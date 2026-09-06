@@ -57,51 +57,53 @@ extension _AgentFormSections on _AgentFormPageState {
   Widget _buildConnectionTab() {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _loadingCatalogs
-              ? const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: LinearProgressIndicator(minHeight: 2),
-                )
-              : DropdownButtonFormField<String>(
-                  initialValue: _connectionId,
-                  isExpanded: true,
-                  decoration: InputDecoration(
-                    labelText: widget.tx('agents.field_connection'),
-                  ),
-                  items: [
-                    DropdownMenuItem<String>(
-                      value: null,
-                      child: Text(widget.tx('agents.no_connection')),
+      child: WebFormSection(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _loadingCatalogs
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: LinearProgressIndicator(minHeight: 2),
+                  )
+                : DropdownButtonFormField<String>(
+                    initialValue: _connectionId,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      labelText: widget.tx('agents.field_connection'),
                     ),
-                    ..._connections.map(
-                      (conn) => DropdownMenuItem<String>(
-                        value: conn.id,
-                        child: Text(
-                          '${conn.name} (${conn.type == 'llm_orchestration' ? (conn.model == 'balanced' ? widget.tx('llm_orchestrations.balanced') : widget.tx('llm_orchestrations.stack')) : conn.type})',
-                          overflow: TextOverflow.ellipsis,
+                    items: [
+                      DropdownMenuItem<String>(
+                        value: null,
+                        child: Text(widget.tx('agents.no_connection')),
+                      ),
+                      ..._connections.map(
+                        (conn) => DropdownMenuItem<String>(
+                          value: conn.id,
+                          child: Text(
+                            '${conn.name} (${conn.type == 'llm_orchestration' ? (conn.model == 'balanced' ? widget.tx('llm_orchestrations.balanced') : widget.tx('llm_orchestrations.stack')) : conn.type})',
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                  onChanged: (value) => refresh(() => _connectionId = value),
-                ),
-          const SizedBox(height: 20),
-          Text(
-            '${widget.tx('agents.field_temperature')}: ${_temperature.toStringAsFixed(2)}',
-            style: Theme.of(context).textTheme.labelMedium,
-          ),
-          Slider(
-            value: _temperature,
-            min: 0,
-            max: 1,
-            divisions: 20,
-            label: _temperature.toStringAsFixed(2),
-            onChanged: (value) => refresh(() => _temperature = value),
-          ),
-        ],
+                    ],
+                    onChanged: (value) => refresh(() => _connectionId = value),
+                  ),
+            const SizedBox(height: 20),
+            Text(
+              '${widget.tx('agents.field_temperature')}: ${_temperature.toStringAsFixed(2)}',
+              style: Theme.of(context).textTheme.labelMedium,
+            ),
+            Slider(
+              value: _temperature,
+              min: 0,
+              max: 1,
+              divisions: 20,
+              label: _temperature.toStringAsFixed(2),
+              onChanged: (value) => refresh(() => _temperature = value),
+            ),
+          ],
+        ),
       ),
     );
   }

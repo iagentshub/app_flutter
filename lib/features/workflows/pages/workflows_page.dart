@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_error.dart';
@@ -23,6 +24,7 @@ import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
+import '../../../shared/widgets/buttons/resource_create_button.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/iagents_async_view.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
@@ -425,10 +427,9 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
     final filteredWorkflows = _filteredWorkflows;
     final toolbar = ResourceToolbar(
       actions: [
-        AppIconButton.filled(
+        ResourceCreateButton(
           onPressed: _openCreateDialog,
-          icon: const Icon(Icons.add),
-          tooltip: _tx('workflows.create_action'),
+          label: _tx('workflows.create_action'),
         ),
         WorkflowRunsButton(
           controller: _workflowRuns,

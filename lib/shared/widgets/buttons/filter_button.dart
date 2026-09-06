@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../motion/app_modal.dart';
@@ -29,7 +30,13 @@ class FilterButton extends StatelessWidget {
       tooltip: tooltip,
       icon: Icon(Icons.filter_list, size: 18, color: color),
       style: IconButton.styleFrom(
-        side: BorderSide(color: active ? scheme.error : scheme.outline),
+        side: BorderSide(
+          color: active
+              ? scheme.error
+              : kIsWeb
+              ? scheme.outlineVariant
+              : scheme.outline,
+        ),
       ),
     );
     if (!active) return button;

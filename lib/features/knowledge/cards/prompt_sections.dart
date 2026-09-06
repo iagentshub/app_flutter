@@ -29,10 +29,9 @@ extension _PromptSections on _KnowledgePageState {
       emptyIcon: Icons.chat_bubble_outline,
       toolbar: ResourceToolbar(
         actions: [
-          AppIconButton.filled(
+          ResourceCreateButton(
             onPressed: _openCreatePromptDialog,
-            icon: const Icon(Icons.add),
-            tooltip: _tx('knowledge.new_prompt'),
+            label: _tx('knowledge.new_prompt'),
           ),
           AppIconButton.outlined(
             onPressed: _loadPrompts,
@@ -58,9 +57,8 @@ extension _PromptSections on _KnowledgePageState {
     final card = Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.all(kIsWeb ? 16 : 12),
+        child: ResourceCardBody(
           children: [
             Row(
               children: [
@@ -104,9 +102,8 @@ extension _PromptSections on _KnowledgePageState {
               ],
             ),
             const SizedBox(height: 10),
-            Row(
+            ResourceTrailingActions(
               children: [
-                const Spacer(),
                 _buildResourceGraphButton(
                   resourceId: item.id,
                   resourceName: item.name,

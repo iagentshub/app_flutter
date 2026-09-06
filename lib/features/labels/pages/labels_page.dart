@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/agents/agent_models.dart';
@@ -355,6 +356,8 @@ class _LabelsPageState extends State<LabelsPage>
     ];
     return ResourceCollectionView(
       header: LabelCatalogIntro(text: _tx),
+      // Cada grupo debe poder crecer sin quedar limitado por su fila.
+      alignRows: false,
       headerPadding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
       density: ResponsiveCardDensity.marketing,
       itemCount: groups.length,

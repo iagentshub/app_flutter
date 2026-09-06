@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_fonts.dart';
@@ -9,6 +10,7 @@ import '../../../shared/widgets/buttons/overflow_menu_button.dart';
 import '../../../shared/widgets/inactive_badge.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/origin_badge.dart';
+import '../../../shared/widgets/resource_card_body.dart';
 import '../../../shared/widgets/status_dot.dart';
 import '../../../shared/widgets/token_usage_badge.dart';
 
@@ -107,9 +109,8 @@ class ConnectionCard extends StatelessWidget {
     final card = Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.all(kIsWeb ? 16 : 12),
+        child: ResourceCardBody(
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -194,14 +195,13 @@ class ConnectionCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-            Row(
-              children: [
-                SecondaryButton.icon(
-                  onPressed: item.isVirtual ? null : onTest,
-                  icon: const Icon(Icons.health_and_safety_outlined),
-                  label: Text(tx('connections.test')),
-                ),
-                const Spacer(),
+            ResourceCardActions(
+              primary: SecondaryButton.icon(
+                onPressed: item.isVirtual ? null : onTest,
+                icon: const Icon(Icons.health_and_safety_outlined),
+                label: Text(tx('connections.test')),
+              ),
+              actions: [
                 if (!item.readOnly)
                   ActionIconButton(
                     icon: Icons.edit_outlined,

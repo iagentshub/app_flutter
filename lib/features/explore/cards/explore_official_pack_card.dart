@@ -100,7 +100,7 @@ extension _ExploreOfficialPackCard on _ExplorePageState {
                 ),
                 ActionIconButton(
                   key: ValueKey('explore-pack-graph-${pack.sourceId}'),
-                  icon: Icons.hub_outlined,
+                  icon: AppIcons.graph,
                   tooltip: _tx('explore.pack_graph'),
                   onPressed: busy ? null : () => _showOfficialPackGraph(pack),
                 ),

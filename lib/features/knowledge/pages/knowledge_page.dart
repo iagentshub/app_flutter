@@ -3,8 +3,10 @@ import 'dart:typed_data';
 
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/app_icons.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/config/directory_import_policy.dart';
@@ -34,6 +36,7 @@ import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/buttons/overflow_menu_button.dart';
+import '../../../shared/widgets/buttons/resource_create_button.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/group_filter_panel.dart';
 import '../../../shared/widgets/grouped_label_picker.dart';
@@ -41,6 +44,7 @@ import '../../../shared/widgets/inactive_badge.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/origin_badge.dart';
+import '../../../shared/widgets/resource_card_body.dart';
 import '../../../shared/widgets/resource_collection_view.dart';
 import '../../../shared/widgets/resource_graph_button.dart';
 import '../../../shared/widgets/resource_history_dialog.dart';

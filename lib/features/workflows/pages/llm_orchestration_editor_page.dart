@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/connections/connection_models.dart';
@@ -133,99 +134,111 @@ class _LlmOrchestrationEditorPageState
   Widget build(BuildContext context) {
     final tx = widget.tx;
     final colors = Theme.of(context).colorScheme;
-    final anchoVentana = MediaQuery.sizeOf(context).width;
-    final compactScreen = anchoVentana < 480;
-    // Dos columnas solo cuando de verdad hay sitio: por debajo, la pila única
-    // de siempre. En una ventana ancha esa pila dejaba ~510 px de vacío a cada
-    // lado y hacía que la pantalla se leyera como una app de móvil estirada.
-    final dosColumnas = anchoVentana >= Breakpoints.ancho;
-    return Scaffold(
-      backgroundColor: colors.surfaceContainerLowest,
-      appBar: AppBar(
-        title: Text(
-          widget.configureBinding
-              ? tx('llm_orchestrations.configure_connections')
-              : widget.initial == null
-              ? tx('llm_orchestrations.create')
-              : tx('llm_orchestrations.edit'),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: compactScreen
-                ? AppIconButton.filled(
-                    key: const ValueKey('llm-orchestration-save'),
-                    onPressed: _save,
-                    icon: const Icon(Icons.check, size: 18),
-                    tooltip: tx('common.save'),
-                  )
-                : PrimaryButton.icon(
-                    key: const ValueKey('llm-orchestration-save'),
-                    onPressed: _save,
-                    icon: const Icon(Icons.check, size: 18),
-                    label: Text(tx('common.save')),
-                  ),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: dosColumnas
-                  ? Breakpoints.extraAncho
-                  : Breakpoints.anchoLectura,
+    return LayoutBuilder(
+      builder: (context, pageConstraints) {
+        final anchoVentana = kIsWeb
+            ? pageConstraints.maxWidth
+            : MediaQuery.sizeOf(context).width;
+        final compactScreen = anchoVentana < 480;
+        // Dos columnas solo cuando de verdad hay sitio: por debajo, la pila única
+        // de siempre. En una ventana ancha esa pila dejaba ~510 px de vacío a cada
+        // lado y hacía que la pantalla se leyera como una app de móvil estirada.
+        final dosColumnas =
+            (kIsWeb
+                ? anchoVentana / MediaQuery.textScalerOf(context).scale(1)
+                : anchoVentana) >=
+            Breakpoints.ancho;
+        return Scaffold(
+          backgroundColor: colors.surfaceContainerLowest,
+          appBar: AppBar(
+            title: Text(
+              widget.configureBinding
+                  ? tx('llm_orchestrations.configure_connections')
+                  : widget.initial == null
+                  ? tx('llm_orchestrations.create')
+                  : tx('llm_orchestrations.edit'),
             ),
-            child: Form(
-              key: _formKey,
-              child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(
-                  anchoVentana < Breakpoints.compacto ? 16 : 24,
-                  20,
-                  anchoVentana < Breakpoints.compacto ? 16 : 24,
-                  32,
-                ),
-                child: dosColumnas
-                    ? Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // La configuración es texto y desplegables: se lee
-                          // mejor estrecha, así que no se estira con la ventana.
-                          SizedBox(
-                            width: 480,
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: _camposConfiguracion(),
-                            ),
-                          ),
-                          const SizedBox(width: 32),
-                          // Las candidatas son la lista de trabajo: se quedan
-                          // con el ancho que sobre.
-                          Expanded(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: _seccionCandidatas(),
-                            ),
-                          ),
-                        ],
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: compactScreen
+                    ? AppIconButton.filled(
+                        key: const ValueKey('llm-orchestration-save'),
+                        onPressed: _save,
+                        icon: const Icon(Icons.check, size: 18),
+                        tooltip: tx('common.save'),
                       )
-                    : Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ..._camposConfiguracion(),
-                          const SizedBox(height: 16),
-                          ..._seccionCandidatas(),
-                        ],
+                    : PrimaryButton.icon(
+                        key: const ValueKey('llm-orchestration-save'),
+                        onPressed: _save,
+                        icon: const Icon(Icons.check, size: 18),
+                        label: Text(tx('common.save')),
                       ),
+              ),
+            ],
+          ),
+          body: SafeArea(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: dosColumnas
+                      ? Breakpoints.extraAncho
+                      : Breakpoints.anchoLectura,
+                ),
+                child: Form(
+                  key: _formKey,
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.fromLTRB(
+                      anchoVentana < Breakpoints.compacto ? 16 : 24,
+                      20,
+                      anchoVentana < Breakpoints.compacto ? 16 : 24,
+                      32,
+                    ),
+                    child: dosColumnas
+                        ? Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // La configuración es texto y desplegables: se lee
+                              // mejor estrecha, así que no se estira con la ventana.
+                              SizedBox(
+                                width: kIsWeb
+                                    ? (anchoVentana * 0.36).clamp(360.0, 480.0)
+                                    : 480,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: _camposConfiguracion(),
+                                ),
+                              ),
+                              const SizedBox(width: 32),
+                              // Las candidatas son la lista de trabajo: se quedan
+                              // con el ancho que sobre.
+                              Expanded(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: _seccionCandidatas(),
+                                ),
+                              ),
+                            ],
+                          )
+                        : Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ..._camposConfiguracion(),
+                              const SizedBox(height: 16),
+                              ..._seccionCandidatas(),
+                            ],
+                          ),
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

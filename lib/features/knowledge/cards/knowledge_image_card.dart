@@ -10,9 +10,8 @@ extension _KnowledgeImageCard on _KnowledgePageState {
     final card = Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.all(kIsWeb ? 16 : 12),
+        child: ResourceCardBody(
           children: [
             Row(
               children: [
@@ -42,8 +41,7 @@ extension _KnowledgeImageCard on _KnowledgePageState {
             ),
             if (!item.readOnly) ...[
               const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              ResourceTrailingActions(
                 children: [
                   _buildKnowledgeItemGraphButton(item),
                   OverflowMenuButton(
@@ -81,7 +79,8 @@ extension _KnowledgeImageCard on _KnowledgePageState {
                   ),
                 ],
               ),
-            ],
+            ] else if (kIsWeb)
+              const SizedBox.shrink(),
           ],
         ),
       ),

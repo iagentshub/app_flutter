@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
@@ -9,10 +10,12 @@ import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/buttons/resource_create_button.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/iagents_async_view.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/resource_collection_view.dart';
+import '../../../shared/widgets/resource_toolbar.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../controllers/manager_controller.dart';
 import '../repositories/manager_repository.dart';
@@ -177,32 +180,47 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
     final content = ResourceCollectionView(
       onRefresh: _controller.load,
       gridPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-      header: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              AppIconButton.filled(
-                onPressed: _createGroup,
-                icon: const Icon(Icons.add),
-                tooltip: _tx('manager.new_group_tooltip'),
-              ),
-              AppIconButton.outlined(
-                onPressed: _controller.load,
-                icon: const Icon(Icons.refresh),
-                tooltip: _tx('manager.refresh_tooltip'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            '${_tx('manager.groups_count')}: ${groups.length}',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-        ],
-      ),
+      header: kIsWeb
+          ? ResourceToolbar(
+              actions: [
+                ResourceCreateButton(
+                  onPressed: _createGroup,
+                  label: _tx('manager.new_group_tooltip'),
+                ),
+                AppIconButton.outlined(
+                  onPressed: _controller.load,
+                  icon: const Icon(Icons.refresh),
+                  tooltip: _tx('manager.refresh_tooltip'),
+                ),
+              ],
+              summary: Text('${_tx('manager.groups_count')}: ${groups.length}'),
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    AppIconButton.filled(
+                      onPressed: _createGroup,
+                      icon: const Icon(Icons.add),
+                      tooltip: _tx('manager.new_group_tooltip'),
+                    ),
+                    AppIconButton.outlined(
+                      onPressed: _controller.load,
+                      icon: const Icon(Icons.refresh),
+                      tooltip: _tx('manager.refresh_tooltip'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  '${_tx('manager.groups_count')}: ${groups.length}',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ],
+            ),
       empty: AsyncStatePanel.empty(
         icon: Icons.groups_outlined,
         title: _tx('manager.empty_groups'),

@@ -8,6 +8,7 @@ import '../../../shared/state/async_section.dart';
 import '../../../shared/widgets/async_section_builder.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/buttons/resource_create_button.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/resource_collection_view.dart';
@@ -141,9 +142,8 @@ class _MemoryPageState extends State<MemoryPage> with StateMessaging {
     final confirm = await showConfirmActionDialog(
       context,
       title: _tx('memory.delete_dialog_title'),
-      message: _tx(
-        'memory.delete_dialog_body',
-      ).replaceAll('{{filename}}', file.filename),
+      message: _tx('memory.delete_dialog_body')
+          .replaceAll('{{filename}}', file.filename),
       cancelLabel: _tx('common.cancel'),
       confirmLabel: _tx('common.delete'),
       destructive: true,
@@ -176,10 +176,9 @@ class _MemoryPageState extends State<MemoryPage> with StateMessaging {
   Widget _buildContent(BuildContext context) {
     final toolbar = ResourceToolbar(
       actions: [
-        AppIconButton.filled(
+        ResourceCreateButton(
           onPressed: _createFile,
-          icon: const Icon(Icons.add),
-          tooltip: _tx('memory.new_file_tooltip'),
+          label: _tx('memory.new_file_tooltip'),
         ),
         AppIconButton.outlined(
           onPressed: _load,

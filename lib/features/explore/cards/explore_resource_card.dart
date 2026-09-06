@@ -119,7 +119,7 @@ extension _ExploreResourceCard on _ExplorePageState {
                     key: ValueKey(
                       'explore-graph-${item.resourceType}-${item.resourceId}',
                     ),
-                    icon: Icons.hub_outlined,
+                    icon: AppIcons.graph,
                     tooltip: _tx('explore.graph'),
                     onPressed: busy ? null : () => _showResourceGraph(item),
                   ),

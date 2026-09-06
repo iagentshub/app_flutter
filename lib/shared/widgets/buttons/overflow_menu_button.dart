@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/app_icons.dart';
+
 /// Una acción del menú «⋮» de una tarjeta.
 class OverflowMenuAction {
   const OverflowMenuAction({
@@ -49,7 +51,7 @@ class OverflowMenuButton extends StatelessWidget {
     final theme = Theme.of(context);
     return PopupMenuButton<int>(
       tooltip: tooltip,
-      icon: const Icon(Icons.more_vert, size: 18),
+      icon: const Icon(AppIcons.more, size: 18),
       onSelected: (index) => actions[index].onSelected(),
       itemBuilder: (context) {
         final items = <PopupMenuEntry<int>>[];

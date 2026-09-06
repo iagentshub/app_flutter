@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../app/theme/app_icons.dart';
+
 import '../graph/graph_dialog.dart';
 import '../graph/resource_graph_builder.dart';
 import 'buttons/action_icon_button.dart';
@@ -62,7 +64,7 @@ class ResourceGraphButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ActionIconButton(
-      icon: Icons.hub_outlined,
+      icon: AppIcons.graph,
       tooltip: tooltip,
       onPressed: () async {
         final graph = await buildGraph();
