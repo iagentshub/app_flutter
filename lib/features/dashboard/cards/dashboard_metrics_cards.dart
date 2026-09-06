@@ -30,9 +30,9 @@ class _SummaryBody extends StatelessWidget {
       'workflows': InternalRoutes.orchestrations,
     };
     final icons = <String, IconData>{
-      'agents': Icons.smart_toy_outlined,
-      'connections': Icons.cable_outlined,
-      'skills': Icons.auto_awesome_outlined,
+      'agents': AppIcons.agents,
+      'connections': AppIcons.connections,
+      'skills': AppIcons.skills,
       'memory': Icons.description_outlined,
       'knowledge': Icons.menu_book_outlined,
       'workflows': Icons.account_tree_outlined,
@@ -51,25 +51,51 @@ class _SummaryBody extends StatelessWidget {
     };
     final items = config.items ?? kSummaryItems;
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 220,
-        mainAxisExtent: 90,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-      ),
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return KpiRowTile(
-          label: summaryItemLabel(item, tx),
-          value: counts[item] ?? 0,
-          icon: icons[item] ?? Icons.circle_outlined,
-          tint: tints[item] ?? scheme.primary,
-          onTap: () =>
-              AppRouter.go(context, routes[item] ?? InternalRoutes.dashboard),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final scale = MediaQuery.textScalerOf(context).scale(1);
+        // 140 y no 160: a 360 px de ancho quedan 312 útiles, y con 160 salía
+        // una columna y seis filas en web mientras nativo, con 220 de máximo,
+        // ya daba dos. Un indicador cabe en 140: icono, cifra y una palabra.
+        final availableColumns =
+            ((constraints.maxWidth + 12) / (140 * scale + 12)).floor().clamp(
+              1,
+              items.isEmpty ? 1 : items.length,
+            );
+        // Evita una fila de cinco y un indicador aislado debajo: reparte el
+        // resumen en el menor número de filas con longitudes equilibradas.
+        final rows = (items.length / availableColumns).ceil().clamp(1, 6);
+        final columns = (items.length / rows).ceil().clamp(1, availableColumns);
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: kIsWeb
+              ? SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: columns,
+                  mainAxisExtent: 90 * scale,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                )
+              : const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 220,
+                  mainAxisExtent: 90,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                ),
+          itemCount: items.length,
+          itemBuilder: (context, index) {
+            final item = items[index];
+            return KpiRowTile(
+              label: summaryItemLabel(item, tx),
+              value: counts[item] ?? 0,
+              icon: icons[item] ?? Icons.circle_outlined,
+              tint: tints[item] ?? scheme.primary,
+              onTap: () => AppRouter.go(
+                context,
+                routes[item] ?? InternalRoutes.dashboard,
+              ),
+            );
+          },
         );
       },
     );
