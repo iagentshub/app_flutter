@@ -191,7 +191,7 @@ class LlmOrchestrationCard extends StatelessWidget {
                   ),
                 if (item.shared)
                   ActionIconButton(
-                    icon: Icons.tune_outlined,
+                    icon: Icons.tune,
                     tooltip: tx('llm_orchestrations.configure_connections'),
                     onPressed: onConfigure,
                   ),

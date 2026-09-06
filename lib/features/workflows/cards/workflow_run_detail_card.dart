@@ -154,7 +154,7 @@ class WorkflowRunDetailCard extends StatelessWidget {
         ),
         if (body != null && body.trim().isNotEmpty)
           AppIconButton(
-            icon: const Icon(Icons.copy_rounded, size: 18),
+            icon: const Icon(Icons.copy_outlined, size: 18),
             tooltip: tx('workflows.copy_output'),
             onPressed: () async {
               await Clipboard.setData(ClipboardData(text: body));

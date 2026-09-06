@@ -97,7 +97,7 @@ void main() {
       find.byKey(const ValueKey('agent-builder-composer')),
       prompt,
     );
-    await tester.tap(find.byIcon(Icons.arrow_upward_rounded));
+    await tester.tap(find.byIcon(Icons.send));
     await tester.pumpAndSettle();
 
     expect(connectionRequests, 2);

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:app_flutter/app/theme/app_icons.dart';
 import 'package:app_flutter/core/network/api_client.dart';
 import 'package:app_flutter/features/explore/pages/official_pack_page.dart';
 import 'package:app_flutter/features/explore/repositories/explore_repository.dart';
@@ -126,7 +127,7 @@ void main() {
   testWidgets('construye el grafo con el detalle ya cargado', (tester) async {
     final graphRequests = await pumpPage(tester, count: 3);
 
-    await tester.tap(find.byIcon(Icons.account_tree_outlined));
+    await tester.tap(find.byIcon(AppIcons.graph));
     await tester.pump();
 
     expect(graphRequests(), 0);

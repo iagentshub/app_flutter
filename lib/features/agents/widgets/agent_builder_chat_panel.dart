@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/fnc_colors.dart';
@@ -76,78 +77,108 @@ class AgentBuilderChatPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final size = MediaQuery.sizeOf(context);
-    final compact = size.width < 600 || size.height < 700;
     final pendingDraft = draft;
-    return Material(
-      key: const ValueKey('agent-builder-chat-panel'),
-      color: colors.surface,
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(compact ? 0 : 12),
-        side: compact
-            ? BorderSide.none
-            : BorderSide(color: colors.outlineVariant),
-      ),
-      child: Column(
-        children: [
-          _ChatHeader(
-            title: title,
-            subtitle: subtitle,
-            active: enabled,
-            busy: streaming,
-            readyLabel: readyLabel,
-            workingLabel: workingLabel,
-            compact: compact,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = kIsWeb
+            ? constraints.maxWidth < 600 || constraints.maxHeight < 500
+            : size.width < 600 || size.height < 700;
+        return Material(
+          key: const ValueKey('agent-builder-chat-panel'),
+          color: colors.surface,
+          clipBehavior: Clip.antiAlias,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(compact ? 0 : 12),
+            side: compact
+                ? BorderSide.none
+                : BorderSide(color: colors.outlineVariant),
           ),
-          Divider(height: 1, thickness: 1, color: colors.outlineVariant),
-          Expanded(
-            child: messages.isEmpty && !streaming
-                ? _EmptyConversation(
-                    intro: intro,
-                    suggestions: suggestions,
-                    enabled: enabled,
-                    onSuggestion: onSuggestion,
-                  )
-                : AgentBuilderMessageList(
-                    messages: messages,
-                    streaming: streaming,
-                    thinking: thinking,
-                    scrollController: scrollController,
-                    assistantLabel: assistantLabel,
-                    userLabel: userLabel,
-                    thinkingLabel: thinkingLabel,
-                    partialReply: partialReply,
-                  ),
-          ),
-          if (pendingDraft != null && onReviewDraft != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: BuilderDraftCard(
-                draft: pendingDraft,
-                title: draftTitle,
-                actionLabel: draftActionLabel,
-                onReview: onReviewDraft!,
+          child: Column(
+            children: [
+              _ChatHeader(
+                title: title,
+                subtitle: subtitle,
+                active: enabled,
+                busy: streaming,
+                readyLabel: readyLabel,
+                workingLabel: workingLabel,
+                compact: compact,
               ),
-            ),
-          if (error != null && error!.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _ErrorNotice(message: error!),
-            ),
-          Divider(height: 1, thickness: 1, color: colors.outlineVariant),
-          _Composer(
-            controller: textController,
-            enabled: enabled && !streaming,
-            streaming: streaming,
-            hint: inputHint,
-            sendTooltip: sendTooltip,
-            stopTooltip: stopTooltip,
-            onSend: onSend,
-            onStop: onStop,
-            compact: compact,
+              Divider(height: 1, thickness: 1, color: colors.outlineVariant),
+              Expanded(
+                child: messages.isEmpty && !streaming
+                    ? _EmptyConversation(
+                        intro: intro,
+                        suggestions: suggestions,
+                        enabled: enabled,
+                        onSuggestion: onSuggestion,
+                      )
+                    : AgentBuilderMessageList(
+                        messages: messages,
+                        streaming: streaming,
+                        thinking: thinking,
+                        scrollController: scrollController,
+                        assistantLabel: assistantLabel,
+                        userLabel: userLabel,
+                        thinkingLabel: thinkingLabel,
+                        partialReply: partialReply,
+                      ),
+              ),
+              if (kIsWeb &&
+                  ((pendingDraft != null && onReviewDraft != null) ||
+                      (error?.isNotEmpty ?? false)))
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: constraints.maxHeight * 0.32,
+                  ),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      children: [
+                        if (pendingDraft != null && onReviewDraft != null)
+                          BuilderDraftCard(
+                            draft: pendingDraft,
+                            title: draftTitle,
+                            actionLabel: draftActionLabel,
+                            onReview: onReviewDraft!,
+                          ),
+                        if (error?.isNotEmpty ?? false)
+                          _ErrorNotice(message: error!),
+                      ],
+                    ),
+                  ),
+                ),
+              if (!kIsWeb && pendingDraft != null && onReviewDraft != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: BuilderDraftCard(
+                    draft: pendingDraft,
+                    title: draftTitle,
+                    actionLabel: draftActionLabel,
+                    onReview: onReviewDraft!,
+                  ),
+                ),
+              if (!kIsWeb && error != null && error!.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _ErrorNotice(message: error!),
+                ),
+              Divider(height: 1, thickness: 1, color: colors.outlineVariant),
+              _Composer(
+                controller: textController,
+                enabled: enabled && !streaming,
+                streaming: streaming,
+                hint: inputHint,
+                sendTooltip: sendTooltip,
+                stopTooltip: stopTooltip,
+                onSend: onSend,
+                onStop: onStop,
+                compact: compact,
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -258,15 +289,43 @@ class _EmptyConversation extends StatelessWidget {
           ),
           if (suggestions.isNotEmpty) ...[
             const SizedBox(height: 20),
-            for (final suggestion in suggestions)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: _SuggestionRow(
-                  label: suggestion,
-                  enabled: enabled,
-                  onPressed: () => onSuggestion(suggestion),
+            if (kIsWeb)
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final columns =
+                      (constraints.maxWidth /
+                              (260 * MediaQuery.textScalerOf(context).scale(1)))
+                          .floor()
+                          .clamp(1, 3);
+                  return Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      for (final suggestion in suggestions)
+                        SizedBox(
+                          width:
+                              (constraints.maxWidth - (columns - 1) * 12) /
+                              columns,
+                          child: _SuggestionRow(
+                            label: suggestion,
+                            enabled: enabled,
+                            onPressed: () => onSuggestion(suggestion),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              )
+            else
+              for (final suggestion in suggestions)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _SuggestionRow(
+                    label: suggestion,
+                    enabled: enabled,
+                    onPressed: () => onSuggestion(suggestion),
+                  ),
                 ),
-              ),
           ],
         ],
       ),
@@ -412,13 +471,13 @@ class _Composer extends StatelessWidget {
               AppIconButton.filledTonal(
                 tooltip: stopTooltip,
                 onPressed: onStop,
-                icon: const Icon(Icons.stop_rounded, size: 20),
+                icon: const Icon(Icons.stop, size: 20),
               )
             else
               AppIconButton.filled(
                 tooltip: sendTooltip,
                 onPressed: enabled ? onSend : null,
-                icon: const Icon(Icons.arrow_upward_rounded, size: 20),
+                icon: const Icon(Icons.send, size: 20),
               ),
           ],
         ),

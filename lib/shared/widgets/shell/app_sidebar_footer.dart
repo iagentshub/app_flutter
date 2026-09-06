@@ -177,6 +177,6 @@ const _publicItems = [
   _PublicNavItem(
     ruta: ExternalRoutes.about,
     labelKey: 'public_about',
-    icon: Icons.info_outline_rounded,
+    icon: Icons.info_outline,
   ),
 ];

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_client.dart';
@@ -389,7 +390,10 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage>
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth >= 980) {
+        final layoutWidth = kIsWeb
+            ? constraints.maxWidth / MediaQuery.textScalerOf(context).scale(1)
+            : constraints.maxWidth;
+        if (layoutWidth >= 980) {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -408,7 +412,12 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage>
                 ),
               ),
               VerticalDivider(width: 1, color: colors.outlineVariant),
-              SizedBox(width: 400, child: inspector),
+              SizedBox(
+                width: kIsWeb
+                    ? (constraints.maxWidth * 0.30).clamp(320.0, 400.0)
+                    : 400,
+                child: inspector,
+              ),
             ],
           );
         }
@@ -439,7 +448,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage>
         if (_workflowId != null)
           AppIconButton.outlined(
             onPressed: canRun ? _testRun : null,
-            icon: const Icon(Icons.play_arrow_rounded),
+            icon: const Icon(Icons.play_arrow),
             tooltip: runTooltip,
           ),
         Padding(
@@ -447,7 +456,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage>
           child: AppIconButton.filled(
             key: const ValueKey('workflow-save-mobile'),
             onPressed: _issues.isEmpty ? _save : null,
-            icon: const Icon(Icons.check_rounded),
+            icon: const Icon(Icons.check),
             tooltip: _tx('workflow_editor.save_btn'),
           ),
         ),
@@ -461,14 +470,14 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage>
             message: runTooltip,
             child: SecondaryButton.icon(
               onPressed: canRun ? _testRun : null,
-              icon: const Icon(Icons.play_arrow_rounded, size: 18),
+              icon: const Icon(Icons.play_arrow, size: 18),
               label: Text(_tx('workflow_editor.test_run_btn')),
             ),
           ),
         ),
       PrimaryButton.icon(
         onPressed: _issues.isEmpty ? _save : null,
-        icon: const Icon(Icons.check_rounded, size: 18),
+        icon: const Icon(Icons.check, size: 18),
         label: Text(_tx('workflow_editor.save_btn')),
       ),
     ];
@@ -528,7 +537,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage>
                     setState(() => _mobileSection = index),
                 destinations: [
                   NavigationDestination(
-                    icon: const Icon(Icons.tune_outlined),
+                    icon: const Icon(Icons.tune),
                     label: _tx('workflow_editor.mobile_details'),
                   ),
                   NavigationDestination(

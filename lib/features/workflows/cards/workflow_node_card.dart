@@ -164,11 +164,11 @@ class _NodeGlyph extends StatelessWidget {
   final bool hasIssue;
 
   IconData get _icon {
-    if (hasIssue) return Icons.priority_high_rounded;
+    if (hasIssue) return Icons.priority_high;
     return switch (status) {
-      WorkflowNodeVisualStatus.done => Icons.check_rounded,
-      WorkflowNodeVisualStatus.error => Icons.priority_high_rounded,
-      _ => evaluator ? Icons.rule_rounded : Icons.smart_toy_outlined,
+      WorkflowNodeVisualStatus.done => Icons.check,
+      WorkflowNodeVisualStatus.error => Icons.priority_high,
+      _ => evaluator ? Icons.rule : Icons.smart_toy_outlined,
     };
   }
 

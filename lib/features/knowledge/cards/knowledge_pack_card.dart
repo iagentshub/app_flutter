@@ -5,9 +5,8 @@ extension _KnowledgePackCard on _KnowledgePageState {
     final card = Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.all(kIsWeb ? 16 : 12),
+        child: ResourceCardBody(
           children: [
             Row(
               children: [
@@ -58,9 +57,8 @@ extension _KnowledgePackCard on _KnowledgePageState {
               ],
             ),
             const SizedBox(height: 10),
-            Row(
+            ResourceTrailingActions(
               children: [
-                const Spacer(),
                 _buildKnowledgePackGraphButton(pack),
                 if (!pack.readOnly)
                   OverflowMenuButton(
@@ -68,7 +66,7 @@ extension _KnowledgePackCard on _KnowledgePageState {
                     actions: [
                       if (pack.canSynchronize)
                         OverflowMenuAction(
-                          icon: Icons.sync_outlined,
+                          icon: Icons.sync,
                           label: _tx('knowledge.pack_sync_action'),
                           onSelected: () => _synchronizePack(pack),
                         ),

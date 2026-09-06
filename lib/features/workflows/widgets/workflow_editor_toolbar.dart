@@ -72,7 +72,7 @@ class WorkflowEditorToolbar extends StatelessWidget {
           ),
         PrimaryButton.tonalIcon(
           onPressed: onAdd,
-          icon: const Icon(Icons.add_rounded),
+          icon: const Icon(Icons.add),
           label: Text(addLabel),
         ),
       ],
@@ -105,7 +105,7 @@ class WorkflowEditorToolbar extends StatelessWidget {
                 AppIconButton.filledTonal(
                   onPressed: onAdd,
                   tooltip: addLabel,
-                  icon: const Icon(Icons.add_rounded),
+                  icon: const Icon(Icons.add),
                 ),
               ] else
                 actions,

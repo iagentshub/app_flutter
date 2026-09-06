@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/app_icons.dart';
 import '../../../core/network/api_error.dart';
 import '../../../models/explore/explore_models.dart';
 import '../../../shared/graph/graph_dialog.dart';
@@ -224,7 +225,7 @@ class _OfficialPackPageState extends State<OfficialPackPage> {
           AppIconButton(
             onPressed: _loading ? null : _showGraph,
             tooltip: _tx('explore.pack_graph'),
-            icon: const Icon(Icons.account_tree_outlined),
+            icon: const Icon(AppIcons.graph),
           ),
         ],
       ),

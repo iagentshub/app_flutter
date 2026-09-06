@@ -193,7 +193,7 @@ void main() {
       Icons.sell_outlined,
       Icons.menu_book_outlined,
       Icons.support_agent_outlined,
-      Icons.info_outline_rounded,
+      Icons.info_outline,
     ]) {
       await tester.tap(find.byIcon(icon));
     }
@@ -219,7 +219,7 @@ void main() {
       Icons.sell_outlined,
       Icons.menu_book_outlined,
       Icons.support_agent_outlined,
-      Icons.info_outline_rounded,
+      Icons.info_outline,
     ]) {
       await tester.tap(find.byIcon(icon));
     }

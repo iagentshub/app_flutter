@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/app_icons.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../models/official_import_models.dart';
 import 'official_import_message_box.dart';
@@ -156,7 +157,7 @@ class OfficialImportReviewToolbar extends StatelessWidget {
           ),
           TertiaryButton.icon(
             onPressed: busy ? null : onShowGraph,
-            icon: const Icon(Icons.account_tree_outlined),
+            icon: const Icon(AppIcons.graph),
             label: Text(tx('official.preview_graph')),
           ),
         ],
