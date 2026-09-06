@@ -357,7 +357,7 @@ extension _CentinelFunctionalResults on _CentinelFunctionalTabState {
         builder: (dialogContext, setDialogState) => AlertDialog(
           title: Text(_tx('centinel.history_title')),
           content: SizedBox(
-            width: 480,
+            width: dialogContentWidth(dialogContext, 480),
             child: _buildHistoryList(setDialogState),
           ),
           actions: [

@@ -151,8 +151,7 @@ extension _CentinelProbeResults on _CentinelProbeTabState {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
+            WideTable(
               child: DataTable(
                 columns: [
                   DataColumn(label: Text(_tx('centinel.probe_col_users'))),

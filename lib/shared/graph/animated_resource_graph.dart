@@ -9,6 +9,7 @@ import '../../app/theme/fnc_colors.dart';
 import '../../app/theme/fnc_fonts.dart';
 import '../labels/label_catalog.dart';
 import '../widgets/motion/app_modal.dart';
+import '../widgets/responsive_dialog.dart';
 import 'galaxy_background_painter.dart';
 import 'graph_edge_painter.dart';
 import 'graph_models.dart';
@@ -1449,7 +1450,7 @@ class _AnimatedResourceGraphState extends State<AnimatedResourceGraph>
           ],
         ),
         content: SizedBox(
-          width: 320,
+          width: dialogContentWidth(dialogContext, 320),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,

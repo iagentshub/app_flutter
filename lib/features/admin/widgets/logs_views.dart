@@ -24,6 +24,73 @@ extension _LogsViews on _LogsPageViewState {
     if (_summary.isEmpty) {
       return Center(child: Text(_tx('logs.empty')));
     }
+    Widget buildCard(BuildContext context, int index) {
+      final day = _summary[index];
+      return Card(
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => _openDay(day.date),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: ResourceCardBody(
+              children: [
+                Text(
+                  day.date,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: FncFonts.size15,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(_tx('logs.lines_count').replaceAll('{n}', '${day.lines}')),
+                const SizedBox(height: 4),
+                Text(
+                  _tx('logs.be_summary')
+                      .replaceAll('{warn}', '${day.beWarnings}')
+                      .replaceAll('{err}', '${day.beErrors}'),
+                ),
+                Text(
+                  _tx('logs.fe_summary')
+                      .replaceAll('{warn}', '${day.feWarnings}')
+                      .replaceAll('{err}', '${day.feErrors}'),
+                ),
+                Text(
+                  _tx('logs.audit_count').replaceAll('{n}', '${day.audits}'),
+                ),
+                if (!kIsWeb) const Spacer() else const SizedBox(height: 12),
+                Row(
+                  children: [
+                    if (day.errors > 0)
+                      Icon(
+                        Icons.error_outline,
+                        size: 16,
+                        color: FncColors.materialRed.shade700,
+                      ),
+                    if (day.warnings > 0) ...[
+                      const SizedBox(width: 6),
+                      Icon(
+                        Icons.warning_amber_outlined,
+                        size: 16,
+                        color: FncColors.materialOrange.shade800,
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (kIsWeb) {
+      return ResourceCollectionView(
+        onRefresh: _loadSummary,
+        density: ResponsiveCardDensity.marketing,
+        itemCount: _summary.length,
+        itemBuilder: buildCard,
+      );
+    }
     return RefreshIndicator(
       onRefresh: _loadSummary,
       child: GridView.builder(
@@ -35,68 +102,7 @@ extension _LogsViews on _LogsPageViewState {
           mainAxisSpacing: 12,
         ),
         itemCount: _summary.length,
-        itemBuilder: (context, index) {
-          final day = _summary[index];
-          return Card(
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: () => _openDay(day.date),
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      day.date,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: FncFonts.size15,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _tx('logs.lines_count').replaceAll('{n}', '${day.lines}'),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _tx('logs.be_summary')
-                          .replaceAll('{warn}', '${day.beWarnings}')
-                          .replaceAll('{err}', '${day.beErrors}'),
-                    ),
-                    Text(
-                      _tx('logs.fe_summary')
-                          .replaceAll('{warn}', '${day.feWarnings}')
-                          .replaceAll('{err}', '${day.feErrors}'),
-                    ),
-                    Text(
-                      _tx('logs.audit_count')
-                          .replaceAll('{n}', '${day.audits}'),
-                    ),
-                    const Spacer(),
-                    Row(
-                      children: [
-                        if (day.errors > 0)
-                          Icon(
-                            Icons.error_outline,
-                            size: 16,
-                            color: FncColors.materialRed.shade700,
-                          ),
-                        if (day.warnings > 0) ...[
-                          const SizedBox(width: 6),
-                          Icon(
-                            Icons.warning_amber_outlined,
-                            size: 16,
-                            color: FncColors.materialOrange.shade800,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
+        itemBuilder: buildCard,
       ),
     );
   }
@@ -172,8 +178,7 @@ extension _LogsViews on _LogsPageViewState {
         else ...[
           Expanded(
             child: SingleChildScrollView(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
+              child: WideTable(
                 child: DataTable(
                   columns: [
                     DataColumn(label: Text(_tx('logs.col_date'))),

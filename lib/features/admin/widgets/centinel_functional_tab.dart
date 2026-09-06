@@ -11,6 +11,7 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/lazy_expansion_tile.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
+import '../../../shared/widgets/responsive_dialog.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../../utils/i18n.dart';
 import '../repositories/centinel_repository.dart';

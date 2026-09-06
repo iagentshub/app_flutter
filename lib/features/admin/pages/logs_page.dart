@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/app_theme.dart';
@@ -16,7 +16,11 @@ import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
+import '../../../shared/widgets/resource_card_body.dart';
+import '../../../shared/widgets/resource_collection_view.dart';
+import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../../../shared/widgets/wide_table.dart';
 import '../repositories/logs_repository.dart';
 
 part '../widgets/logs_views.dart';

@@ -315,8 +315,7 @@ extension _CentinelStressResults on _CentinelStressTabState {
             SizedBox(
               height: 260,
               child: SingleChildScrollView(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
+                child: WideTable(
                   child: DataTable(
                     columns: [
                       const DataColumn(label: Text('t (s)')),

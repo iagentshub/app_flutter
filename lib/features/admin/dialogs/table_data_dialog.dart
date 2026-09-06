@@ -139,8 +139,7 @@ class _TableDataDialogState extends State<_TableDataDialog> {
               else if (data != null) ...[
                 Flexible(
                   child: SingleChildScrollView(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
+                    child: WideTable(
                       child: DataTable(
                         columns: data.columns
                             .map((c) => DataColumn(label: Text(c)))

@@ -4,6 +4,7 @@ import '../../../app/theme/fnc_fonts.dart';
 import '../../../shared/graph/graph_dialog.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
+import '../../../shared/widgets/responsive_dialog.dart';
 import '../models/official_import_models.dart';
 import '../repositories/admin_official_sources_repository.dart';
 import '../widgets/official_import_groups.dart';
@@ -140,8 +141,8 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
         builder: (context, setDialogState) => AlertDialog(
           title: Text(widget.tx('official.review_tool')),
           content: SizedBox(
-            width: 760,
-            height: 520,
+            width: dialogContentWidth(context, 760),
+            height: dialogContentHeight(context, 520),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -224,8 +225,8 @@ class _OfficialImportReviewPageState extends State<OfficialImportReviewPage> {
         builder: (context, setDialogState) => AlertDialog(
           title: Text(widget.tx('official.relations')),
           content: SizedBox(
-            width: 560,
-            height: 460,
+            width: dialogContentWidth(context, 560),
+            height: dialogContentHeight(context, 460),
             child: ListView(
               children: [
                 for (final candidate in candidates)

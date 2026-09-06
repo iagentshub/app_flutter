@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/responsive_dialog.dart';
 import '../controllers/workflow_runs_controller.dart';
 import '../models/workflow_run.dart';
 
@@ -56,8 +57,8 @@ class WorkflowRunsPanel extends StatelessWidget {
   Widget build(BuildContext context) => AlertDialog(
     title: Text(tx('workflows.run_history_title')),
     content: SizedBox(
-      width: 620,
-      height: 520,
+      width: dialogContentWidth(context, 620),
+      height: dialogContentHeight(context, 520),
       child: ListenableBuilder(
         listenable: controller,
         builder: (context, _) {

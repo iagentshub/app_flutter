@@ -8,6 +8,7 @@ import '../../../app/theme/fnc_fonts.dart';
 import '../../../core/network/api_error.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
+import '../../../shared/widgets/wide_table.dart';
 import '../repositories/centinel_repository.dart';
 import 'centinel_chart.dart';
 

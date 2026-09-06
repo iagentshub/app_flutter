@@ -9,6 +9,7 @@ import '../../../shared/utils/file_size_formatter.dart';
 import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
+import '../../../shared/widgets/wide_table.dart';
 import '../repositories/metadata_repository.dart';
 import 'logs_page.dart';
 
@@ -256,8 +257,7 @@ class _MetadataPageState extends State<MetadataPage>
           ),
           const SizedBox(height: 12),
           Card(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
+            child: WideTable(
               child: DataTable(
                 sortColumnIndex: _sortColumnIndex,
                 sortAscending: _sortAscending,
