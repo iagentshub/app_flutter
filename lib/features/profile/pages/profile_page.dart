@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -23,6 +24,7 @@ import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/iagents_async_view.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/responsive_dialog.dart';
+import '../../../shared/widgets/settings_stack.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';
 import '../../../shared/widgets/user_avatar.dart';
 import '../../../utils/i18n.dart';
