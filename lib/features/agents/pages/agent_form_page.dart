@@ -17,6 +17,7 @@ import '../../../models/prompts/prompt_models.dart';
 import '../../../models/skills/skill_models.dart';
 import '../../../models/tools/tool_models.dart';
 import '../../../shared/labels/label_catalog.dart';
+import '../../../shared/widgets/app_section_tabs.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/grouped_label_picker.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
@@ -494,7 +495,7 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
                       children: [
                         Material(
                           color: colors.surfaceContainerLow,
-                          child: TabBar(
+                          child: AppSectionTabs(
                             isScrollable: true,
                             tabAlignment: TabAlignment.start,
                             tabs: [

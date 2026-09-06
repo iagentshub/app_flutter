@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -17,6 +18,7 @@ import '../../../shared/state/theme_controller.dart';
 import '../../../shared/utils/breakpoints.dart';
 import '../../../shared/utils/date_format.dart';
 import '../../../shared/widgets/animated_iagents_mark.dart';
+import '../../../shared/widgets/app_section_tabs.dart';
 import '../../../shared/widgets/brand_icon.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
@@ -358,13 +360,18 @@ class _ProfilePageState extends State<ProfilePage>
 
       content = Column(
         children: [
-          Material(
-            color: FncColors.transparent,
-            child: TabBar(
-              controller: _tabController,
-              isScrollable: true,
-              tabAlignment: TabAlignment.start,
-              tabs: tabLabels.map((label) => Tab(text: label)).toList(),
+          Padding(
+            padding: kIsWeb
+                ? const EdgeInsets.fromLTRB(16, 16, 16, 0)
+                : EdgeInsets.zero,
+            child: Material(
+              color: FncColors.transparent,
+              child: AppSectionTabs(
+                controller: _tabController,
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
+                tabs: tabLabels.map((label) => Tab(text: label)).toList(),
+              ),
             ),
           ),
           Expanded(

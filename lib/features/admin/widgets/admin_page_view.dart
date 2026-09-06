@@ -16,7 +16,7 @@ extension _AdminPageView on _AdminPageState {
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
           child: Material(
             color: FncColors.transparent,
-            child: TabBar(
+            child: AppSectionTabs(
               controller: _tabController,
               isScrollable: true,
               tabAlignment: TabAlignment.start,

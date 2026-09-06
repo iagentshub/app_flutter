@@ -11,6 +11,7 @@ import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/locale_controller.dart';
 import '../../../shared/state/session_controller.dart';
 import '../../../shared/widgets/animated_iagents_mark.dart';
+import '../../../shared/widgets/app_section_tabs.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
@@ -335,7 +336,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage>
       color: colors.surfaceContainerLow,
       child: Column(
         children: [
-          TabBar(
+          AppSectionTabs(
             key: const ValueKey('workflow-inspector-tabs'),
             controller: _inspectorTabs,
             tabs: [

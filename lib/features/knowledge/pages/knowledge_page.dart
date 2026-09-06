@@ -30,6 +30,7 @@ import '../../../shared/utils/file_size_formatter.dart';
 import '../../../shared/utils/memoized.dart';
 import '../../../shared/utils/streamed_file_saver.dart';
 import '../../../shared/widgets/animated_iagents_mark.dart';
+import '../../../shared/widgets/app_section_tabs.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/attention_badge.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
@@ -518,7 +519,7 @@ class _KnowledgePageState extends State<KnowledgePage>
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
           child: Material(
             color: FncColors.transparent,
-            child: TabBar(
+            child: AppSectionTabs(
               controller: _tabController,
               isScrollable: true,
               tabAlignment: TabAlignment.start,

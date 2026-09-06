@@ -8,6 +8,7 @@ import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/action_result.dart';
 import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/widgets/animated_iagents_mark.dart';
+import '../../../shared/widgets/app_section_tabs.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
 import '../../../shared/widgets/buttons/resource_create_button.dart';

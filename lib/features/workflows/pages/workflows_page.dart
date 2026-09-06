@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_error.dart';
@@ -20,6 +21,7 @@ import '../../../models/workflows/workflow_models.dart';
 import '../../../shared/graph/resource_graph_builder.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/app_services_scope.dart';
+import '../../../shared/widgets/app_section_tabs.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
@@ -537,14 +539,22 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
         children: [
           Material(
             color: Theme.of(context).colorScheme.surface,
-            child: Center(
+            child: Align(
+              alignment: kIsWeb ? Alignment.centerLeft : Alignment.center,
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 560),
-                child: TabBar(
-                  tabs: [
-                    Tab(text: _tx('workflows.tab_agents')),
-                    Tab(text: _tx('workflows.tab_llm_apis')),
-                  ],
+                constraints: const BoxConstraints(
+                  maxWidth: kIsWeb ? double.infinity : 560,
+                ),
+                child: Padding(
+                  padding: kIsWeb
+                      ? const EdgeInsets.fromLTRB(16, 16, 16, 0)
+                      : EdgeInsets.zero,
+                  child: AppSectionTabs(
+                    tabs: [
+                      Tab(text: _tx('workflows.tab_agents')),
+                      Tab(text: _tx('workflows.tab_llm_apis')),
+                    ],
+                  ),
                 ),
               ),
             ),

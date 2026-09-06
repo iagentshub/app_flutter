@@ -12,6 +12,7 @@ import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/action_result.dart';
 import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/widgets/animated_iagents_mark.dart';
+import '../../../shared/widgets/app_section_tabs.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
@@ -423,7 +424,7 @@ class _ExplorePageState extends State<ExplorePage>
       children: [
         Material(
           color: Theme.of(context).colorScheme.surface,
-          child: TabBar(
+          child: AppSectionTabs(
             controller: _tabController,
             tabs: [
               Tab(text: _tx('explore.tab_resources')),

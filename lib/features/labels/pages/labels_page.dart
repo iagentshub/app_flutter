@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/agents/agent_models.dart';
@@ -10,6 +11,7 @@ import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/labels/label_catalog.dart';
 import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/widgets/animated_iagents_mark.dart';
+import '../../../shared/widgets/app_section_tabs.dart';
 import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
@@ -454,12 +456,19 @@ class _LabelsPageState extends State<LabelsPage>
 
     return Column(
       children: [
-        TabBar(
-          controller: _tabController,
-          tabs: [
-            Tab(text: _tx('labels.tab_catalog')),
-            Tab(text: _tx('labels.tab_search')),
-          ],
+        Padding(
+          padding: kIsWeb
+              ? const EdgeInsets.fromLTRB(16, 16, 16, 0)
+              : EdgeInsets.zero,
+          child: AppSectionTabs(
+            controller: _tabController,
+            isScrollable: kIsWeb,
+            tabAlignment: kIsWeb ? TabAlignment.start : null,
+            tabs: [
+              Tab(text: _tx('labels.tab_catalog')),
+              Tab(text: _tx('labels.tab_search')),
+            ],
+          ),
         ),
         Expanded(
           child: TabBarView(

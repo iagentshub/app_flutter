@@ -7,6 +7,7 @@ import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/app_services_scope.dart';
 import '../../../shared/utils/file_size_formatter.dart';
 import '../../../shared/widgets/animated_iagents_mark.dart';
+import '../../../shared/widgets/app_section_tabs.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/wide_table.dart';
@@ -172,7 +173,7 @@ class _MetadataPageState extends State<MetadataPage>
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
           child: Material(
             color: FncColors.transparent,
-            child: TabBar(
+            child: AppSectionTabs(
               controller: _tabController,
               isScrollable: true,
               tabAlignment: TabAlignment.start,

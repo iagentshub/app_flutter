@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/theme/fnc_colors.dart';
 import '../../../shared/i18n/translated_texts.dart';
 import '../../../shared/state/app_services_scope.dart';
+import '../../../shared/widgets/app_section_tabs.dart';
 import '../repositories/centinel_repository.dart';
 import '../widgets/centinel_functional_tab.dart';
 import '../widgets/centinel_probe_tab.dart';
@@ -79,7 +80,7 @@ class _CentinelPageState extends State<CentinelPage>
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
           child: Material(
             color: FncColors.transparent,
-            child: TabBar(
+            child: AppSectionTabs(
               controller: _tabController,
               isScrollable: true,
               tabAlignment: TabAlignment.start,

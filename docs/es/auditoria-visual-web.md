@@ -108,6 +108,10 @@ Las propuestas de esta tabla son trabajo pendiente salvo cuando se indica una co
 
 ## Prioridades para completar la homogeneidad
 
+### Pestañas de sección: acabado visual compartido
+
+`AppSectionTabs` sustituye los TabBar de Conexiones, Conocimiento, Etiquetas, Perfil, Explorar, Administración, Sistema, Centinel y editores. En web agrupa las opciones en una superficie con borde tenue, selección roja redondeada, estados de hover/foco y desplazamiento horizontal. El grupo se alinea al inicio del contenido. Las variantes nativas conservan TabBar y sus parámetros. Se mantienen los controladores y TabBarView existentes. Suite de 739 pruebas pasadas, una omitida; revisión visual del menú de Conexiones.
+
 ### Novena tanda: Perfil › Mi cuenta en una sola pila
 
 - Decisión de producto: las secciones de «Mi cuenta» —resumen, identidad, preferencias, seguridad y zona de peligro— vuelven a ir en **una sola columna, de arriba abajo**, también en web. La distribución a dos columnas de la tercera tanda repartía los ajustes en varios sitios a la vez y se ha retirado a petición. La pestaña recupera el ancho de lectura común del perfil (`Breakpoints.anchoLectura`) en lugar de los 1280 px que necesitaban las dos columnas.

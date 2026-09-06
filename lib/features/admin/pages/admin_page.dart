@@ -16,6 +16,7 @@ import '../../../shared/state/theme_controller.dart';
 import '../../../shared/utils/debouncer.dart';
 import '../../../shared/utils/memoized.dart';
 import '../../../shared/widgets/animated_iagents_mark.dart';
+import '../../../shared/widgets/app_section_tabs.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/buttons/filter_button.dart';
