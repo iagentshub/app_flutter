@@ -9,6 +9,7 @@ import 'package:app_flutter/shared/state/locale_controller.dart';
 import 'package:app_flutter/shared/state/session_controller.dart';
 import 'package:app_flutter/shared/widgets/animated_iagents_mark.dart';
 import 'package:app_flutter/shared/widgets/async_state_panel.dart';
+import 'package:app_flutter/shared/widgets/page_loading_skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -25,6 +26,29 @@ void main() {
   setUp(DeferredPage.forgetLoadedForTest);
   tearDown(DeferredPage.forgetLoadedForTest);
 
+  testWidgets('el esqueleto cabe en móvil y escritorio con texto ampliado', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    for (final width in [320.0, 600.0, 1280.0]) {
+      tester.view.physicalSize = Size(width, 800);
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: MediaQuery(
+            data: MediaQueryData(textScaler: TextScaler.linear(2)),
+            child: Scaffold(
+              body: PageLoadingSkeleton(label: 'Cargando contenido'),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(find.text('Cargando contenido'), findsOneWidget);
+      expect(tester.takeException(), isNull, reason: '$width px');
+    }
+  });
+
   testWidgets('muestra el indicador de carga hasta que llega la parte', (
     tester,
   ) async {
@@ -32,6 +56,7 @@ void main() {
     await _pump(tester, name: 'demo', loader: () => parte.future);
 
     expect(find.byType(IAgentsLoadingMark), findsOneWidget);
+    expect(find.byType(PageLoadingSkeleton), findsOneWidget);
     expect(find.text('Página cargada'), findsNothing);
 
     parte.complete();

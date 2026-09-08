@@ -6,6 +6,7 @@ import '../../core/diagnostics/app_diagnostics.dart';
 import '../../shared/i18n/translated_texts.dart';
 import '../../shared/state/app_services_scope.dart';
 import '../../shared/widgets/async_state_panel.dart';
+import '../../shared/widgets/page_loading_skeleton.dart';
 
 /// `prefijo.loadLibrary` de una importación `deferred as`.
 typedef DeferredLibraryLoader = Future<void> Function();
@@ -129,7 +130,13 @@ class _DeferredPageState extends State<DeferredPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const AsyncStatePanel.loading();
+    if (_loading) {
+      return ListenableBuilder(
+        listenable: _t,
+        builder: (context, _) =>
+            PageLoadingSkeleton(label: _t.text('loading_messages.loading')),
+      );
+    }
     if (_failed) {
       return ListenableBuilder(
         listenable: _t,

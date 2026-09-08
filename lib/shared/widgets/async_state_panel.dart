@@ -89,30 +89,40 @@ class AsyncStatePanel extends StatelessWidget {
       child: Card(
         margin: EdgeInsets.zero,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (icon != null) ...[
-                Icon(
-                  icon,
-                  color: onRetry != null
-                      ? Theme.of(context).colorScheme.error
-                      : Theme.of(context).colorScheme.primary,
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 24,
+                    color: onRetry != null
+                        ? Theme.of(context).colorScheme.error
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 16),
               ],
               if (title != null) ...[
-                Text(
-                  title!,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
+                Text(title!, style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
               ],
-              Text(message!),
+              Text(
+                message!,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
               if (onRetry != null) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 24),
                 PrimaryButton.icon(
                   onPressed: onRetry,
                   icon: const Icon(Icons.refresh),
@@ -120,7 +130,7 @@ class AsyncStatePanel extends StatelessWidget {
                 ),
               ],
               if (_onAction != null && _actionLabel != null) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 24),
                 PrimaryButton.icon(
                   onPressed: _onAction,
                   icon: const Icon(Icons.add),
