@@ -39,7 +39,8 @@ class KpiRowTile extends StatelessWidget {
                   '$value',
                   style: const TextStyle(
                     fontSize: FncFonts.size22,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
+                    fontFeatures: [FontFeature.tabularFigures()],
                     height: 1.1,
                   ),
                 ),

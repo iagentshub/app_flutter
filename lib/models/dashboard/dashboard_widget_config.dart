@@ -18,9 +18,9 @@ const kDefaultDashboardLayout = [
   'summary',
   'quick-actions',
   'token-kpi',
-  'token-usage',
+  'activity',
+  'recent-conversations',
   'conn-status',
-  'recent',
 ];
 
 const kSummaryItems = [

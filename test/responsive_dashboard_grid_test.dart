@@ -68,7 +68,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await pumpGrid(tester, width: 800);
 
-    const column = (800 - 24) / 3;
+    const column = (800 - 32) / 3;
     expect(
       tester
           .getSize(find.byKey(const ValueKey('dashboard-slot-compact')))
@@ -77,7 +77,7 @@ void main() {
     );
     expect(
       tester.getSize(find.byKey(const ValueKey('dashboard-slot-medium'))).width,
-      closeTo(column * 2 + 12, 0.01),
+      closeTo(column * 2 + 16, 0.01),
     );
     expect(
       tester.getSize(find.byKey(const ValueKey('dashboard-slot-full'))).width,
@@ -95,7 +95,7 @@ void main() {
       items: [for (var i = 0; i < 4; i++) compactWithId('c$i'), full],
     );
 
-    const column = (1600 - 36) / 4;
+    const column = (1600 - 48) / 4;
     for (var i = 0; i < 4; i++) {
       expect(
         tester.getSize(find.byKey(ValueKey('dashboard-slot-c$i'))).width,
@@ -147,9 +147,7 @@ void main() {
                     crossAxisCount: 2,
                     children: const [SizedBox(), SizedBox()],
                   )
-                : LayoutBuilder(
-                    builder: (_, _) => const SizedBox(height: 200),
-                  ),
+                : LayoutBuilder(builder: (_, _) => const SizedBox(height: 200)),
           ),
         ),
       ),
@@ -160,7 +158,9 @@ void main() {
       tester
           .getSize(find.byKey(const ValueKey('dashboard-slot-compact')))
           .height,
-      tester.getSize(find.byKey(const ValueKey('dashboard-slot-medium'))).height,
+      tester
+          .getSize(find.byKey(const ValueKey('dashboard-slot-medium')))
+          .height,
     );
   });
 
@@ -186,7 +186,9 @@ void main() {
     );
 
     expect(
-      tester.getSize(find.byKey(const ValueKey('dashboard-slot-medium-2'))).width,
+      tester
+          .getSize(find.byKey(const ValueKey('dashboard-slot-medium-2')))
+          .width,
       closeTo(800, 0.01),
     );
   });

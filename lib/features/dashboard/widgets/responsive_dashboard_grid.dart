@@ -24,7 +24,7 @@ class ResponsiveDashboardGrid extends StatelessWidget {
     required this.itemBuilder,
     this.minColumnWidth = 240,
     this.maxColumns = 4,
-    this.spacing = 12,
+    this.spacing = 16,
     super.key,
   });
 
@@ -44,7 +44,10 @@ class ResponsiveDashboardGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final columns =
-            ((constraints.maxWidth + spacing) / (minColumnWidth + spacing))
+            ((constraints.maxWidth + spacing) /
+                    (minColumnWidth *
+                            MediaQuery.textScalerOf(context).scale(1) +
+                        spacing))
                 .floor()
                 .clamp(1, maxColumns);
         final columnWidth =

@@ -41,7 +41,7 @@ class DashboardWidgetCard extends StatelessWidget {
       key: ValueKey(instanceId),
       margin: inGrid ? EdgeInsets.zero : const EdgeInsets.only(bottom: 12),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -60,7 +60,7 @@ class DashboardWidgetCard extends StatelessWidget {
                     title,
                     style: const TextStyle(
                       fontSize: FncFonts.size16,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
@@ -78,7 +78,7 @@ class DashboardWidgetCard extends StatelessWidget {
                   ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 24),
             body,
           ],
         ),

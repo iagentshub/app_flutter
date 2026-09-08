@@ -58,7 +58,7 @@ class _SummaryBody extends StatelessWidget {
         // una columna y seis filas en web mientras nativo, con 220 de máximo,
         // ya daba dos. Un indicador cabe en 140: icono, cifra y una palabra.
         final availableColumns =
-            ((constraints.maxWidth + 12) / (140 * scale + 12)).floor().clamp(
+            ((constraints.maxWidth + 16) / (140 * scale + 16)).floor().clamp(
               1,
               items.isEmpty ? 1 : items.length,
             );
@@ -69,19 +69,12 @@ class _SummaryBody extends StatelessWidget {
         return GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: kIsWeb
-              ? SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: columns,
-                  mainAxisExtent: 90 * scale,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                )
-              : const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 220,
-                  mainAxisExtent: 90,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                ),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            mainAxisExtent: 96 * scale,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+          ),
           itemCount: items.length,
           itemBuilder: (context, index) {
             final item = items[index];
@@ -138,7 +131,7 @@ class _ActivityBody extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         SizedBox(
-          height: 90,
+          height: 120,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: daily.map((point) {

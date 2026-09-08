@@ -43,18 +43,42 @@ class DashboardQuickActionsBody extends StatelessWidget {
     };
     final items = config.items ?? kQuickActionItems;
 
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        for (final item in items)
-          if (definitions[item] case final action?)
-            ActionChip(
-              avatar: Icon(action.icon, size: 18),
-              label: Text(action.label),
-              onPressed: () => AppRouter.go(context, action.route),
-            ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final twoColumns =
+            constraints.maxWidth / MediaQuery.textScalerOf(context).scale(1) >=
+            440;
+        final width = twoColumns
+            ? (constraints.maxWidth - 8) / 2
+            : constraints.maxWidth;
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final item in items)
+              if (definitions[item] case final action?)
+                SizedBox(
+                  width: width,
+                  child: Material(
+                    color: Theme.of(context).colorScheme.surfaceContainer,
+                    borderRadius: BorderRadius.circular(10),
+                    child: ListTile(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      leading: Icon(action.icon, size: 20),
+                      title: Text(
+                        action.label,
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
+                      trailing: const Icon(Icons.arrow_forward, size: 16),
+                      onTap: () => AppRouter.go(context, action.route),
+                    ),
+                  ),
+                ),
+          ],
+        );
+      },
     );
   }
 }
@@ -120,8 +144,10 @@ class DashboardTokenKpiBody extends StatelessWidget {
             Expanded(
               child: Text(
                 formatCompactDashboardInt(current),
-                style: Theme.of(context).textTheme.headlineMedium
-                    ?.copyWith(fontWeight: FontWeight.w800),
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
               ),
             ),
             if (delta != null)

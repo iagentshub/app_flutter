@@ -184,7 +184,11 @@ List<DashboardWidgetInstance> migrateLegacyDashboardLayout(
 List<DashboardWidgetInstance> defaultDashboardInstances() {
   return migrateLegacyDashboardLayout(
     kDefaultDashboardLayout,
-    const <String, DashboardWidgetConfig>{},
+    const <String, DashboardWidgetConfig>{
+      'summary': DashboardWidgetConfig(
+        items: ['agents', 'connections', 'workflows'],
+      ),
+    },
   );
 }
 
