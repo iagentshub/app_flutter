@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../app/theme/fnc_colors.dart';
 import '../../app/theme/fnc_fonts.dart';
 
 /// "16.4K", "820", "1.2M" — mismo formato compacto usado en el panel de
@@ -28,31 +27,30 @@ class TokenUsageBadge extends StatelessWidget {
   final int tokensOut;
   final String? tooltip;
 
-  static const _color = FncColors.teal;
-
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final total = tokensIn + tokensOut;
     if (total <= 0) return const SizedBox.shrink();
 
     final badge = Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: _color.withValues(alpha: 0.15),
+        color: scheme.surfaceContainer,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _color.withValues(alpha: 0.4)),
+        border: Border.all(color: scheme.outlineVariant),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.bolt, size: 12, color: _color),
+          Icon(Icons.bolt, size: 12, color: scheme.onSurfaceVariant),
           const SizedBox(width: 3),
           Text(
             formatTokenCount(total),
-            style: const TextStyle(
-              fontSize: FncFonts.size11,
-              fontWeight: FontWeight.w700,
-              color: _color,
+            style: TextStyle(
+              fontSize: FncFonts.size12,
+              fontWeight: FontWeight.w500,
+              color: scheme.onSurfaceVariant,
             ),
           ),
         ],

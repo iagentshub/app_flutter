@@ -34,6 +34,27 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  testWidgets(
+    'wide previews open on the side and close without leaving the collection',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(1280, 900);
+      addTearDown(tester.view.reset);
+      await abrir(tester, {'resource_type': 'agent', 'name': 'Side preview'});
+      final rect = tester.getRect(
+        find.byKey(const ValueKey('resource-preview-panel')),
+      );
+      expect(rect.left, greaterThan(500));
+      expect(rect.right, lessThanOrEqualTo(1280));
+      expect(find.byType(AlertDialog), findsNothing);
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pumpAndSettle();
+      expect(find.text('abrir'), findsOneWidget);
+      expect(find.text('Side preview'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('un agente se explica en palabras, no en JSON', (tester) async {
     await abrir(tester, {
       'resource_type': 'agent',

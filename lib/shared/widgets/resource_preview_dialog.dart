@@ -31,6 +31,7 @@ Future<void> showResourcePreviewDialog({
   String categoryLabel = '',
 }) => showAppDialog<void>(
   context: context,
+  fullscreenSurface: MediaQuery.sizeOf(context).width >= 1000,
   builder: (context) => ResourcePreviewDialog(
     payload: payload,
     title: title,
@@ -70,60 +71,105 @@ class ResourcePreviewDialog extends StatelessWidget {
     final descripcion = _texto(payload['description']);
     final autor = _texto(payload['owner_username']);
 
-    return AlertDialog(
-      title: _Cabecera(
-        title: title,
-        type: _type,
-        typeLabel: typeLabel,
-        autor: autor,
-        stars: stars,
+    final heading = _Cabecera(
+      title: title,
+      type: _type,
+      typeLabel: typeLabel,
+      autor: autor,
+      stars: stars,
+    );
+    final content = SizedBox(
+      width: dialogContentWidth(context, 620),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              descripcion.isEmpty
+                  ? tr('explore.preview_no_description')
+                  : descripcion,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: descripcion.isEmpty
+                    ? theme.colorScheme.onSurfaceVariant
+                    : null,
+                fontStyle: descripcion.isEmpty ? FontStyle.italic : null,
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 12),
+            LabelChipsRow(
+              labels: _listaDeTextos(payload['labels']),
+              // El catálogo solo publica recursos públicos: la etiqueta
+              // «public» no distingue a ninguno de los demás.
+              hide: const ['public', 'private'],
+              labelText: (label) => trOr('labels.$label', label),
+              leading: [
+                if (categoryLabel.trim().isNotEmpty)
+                  _CategoriaChip(texto: categoryLabel),
+              ],
+            ),
+            ..._secciones(context),
+          ],
+        ),
       ),
-      content: SizedBox(
-        width: dialogContentWidth(context, 620),
-        child: SingleChildScrollView(
+    );
+    final actions = <Widget>[
+      PrimaryButton(
+        onPressed: () => Navigator.of(context).pop(),
+        // Clave propia y no `common.close`: esa vive en `resources.json` y
+        // `tr()` exige que una clave con prefijo de namespace esté en el
+        // fichero que anuncia. Lo vigila i18n_claves_existentes_test.
+        child: Text(tr('explore.preview_close')),
+      ),
+    ];
+    if (MediaQuery.sizeOf(context).width >= 1000) {
+      return Dialog(
+        alignment: AlignmentDirectional.centerEnd,
+        insetPadding: const EdgeInsets.all(16),
+        child: SizedBox(
+          key: const ValueKey('resource-preview-panel'),
+          width: 640,
+          height: dialogContentHeight(context, double.infinity, margin: 32),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                descripcion.isEmpty
-                    ? tr('explore.preview_no_description')
-                    : descripcion,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: descripcion.isEmpty
-                      ? theme.colorScheme.onSurfaceVariant
-                      : null,
-                  fontStyle: descripcion.isEmpty ? FontStyle.italic : null,
-                  height: 1.45,
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: heading),
+                    IconButton(
+                      tooltip: MaterialLocalizations.of(context)
+                          .closeButtonTooltip,
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 12),
-              LabelChipsRow(
-                labels: _listaDeTextos(payload['labels']),
-                // El catálogo solo publica recursos públicos: la etiqueta
-                // «public» no distingue a ninguno de los demás.
-                hide: const ['public', 'private'],
-                labelText: (label) => trOr('labels.$label', label),
-                leading: [
-                  if (categoryLabel.trim().isNotEmpty)
-                    _CategoriaChip(texto: categoryLabel),
-                ],
+              const Divider(height: 1),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: content,
+                ),
               ),
-              ..._secciones(context),
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: OverflowBar(
+                  alignment: MainAxisAlignment.end,
+                  children: actions,
+                ),
+              ),
             ],
           ),
         ),
-      ),
-      actions: [
-        PrimaryButton(
-          onPressed: () => Navigator.of(context).pop(),
-          // Clave propia y no `common.close`: esa vive en `resources.json` y
-          // `tr()` exige que una clave con prefijo de namespace esté en el
-          // fichero que anuncia. Lo vigila i18n_claves_existentes_test.
-          child: Text(tr('explore.preview_close')),
-        ),
-      ],
-    );
+      );
+    }
+    return AlertDialog(title: heading, content: content, actions: actions);
   }
 
   /// Lo que se enseña de cada tipo de recurso, en lenguaje de quien decide.
@@ -159,11 +205,7 @@ class ResourcePreviewDialog extends StatelessWidget {
           valores: prompts,
         ),
       if (tools.isNotEmpty)
-        _Recuento(
-          icono: Icons.build_outlined,
-          nombre: 'tools',
-          valores: tools,
-        ),
+        _Recuento(icono: Icons.build_outlined, nombre: 'tools', valores: tools),
       if (knowledge.isNotEmpty)
         _Recuento(
           icono: Icons.menu_book_outlined,
@@ -296,9 +338,8 @@ class ResourcePreviewDialog extends StatelessWidget {
             _Dato(
               icono: Icons.straighten,
               etiqueta: tr('explore.preview_length'),
-              valor: tr(
-                'explore.preview_characters',
-              ).replaceAll('{{count}}', _conSeparadores(caracteres.toInt())),
+              valor: tr('explore.preview_characters')
+                  .replaceAll('{{count}}', _conSeparadores(caracteres.toInt())),
             ),
         ],
       ),

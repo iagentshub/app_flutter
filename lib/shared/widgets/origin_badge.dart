@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../app/theme/fnc_colors.dart';
 import '../../app/theme/fnc_fonts.dart';
 
 /// Chip de propiedad del recurso: propietario, enlace de solo lectura o fork
@@ -21,24 +20,25 @@ class OriginBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (color, text) = switch (propertyType) {
-      'fork' => (FncColors.labelFork, forkLabel),
-      'linked' => (FncColors.labelLinked, linkedLabel),
-      _ => (FncColors.labelOwner, ownerLabel),
+    final scheme = Theme.of(context).colorScheme;
+    final text = switch (propertyType) {
+      'fork' => forkLabel,
+      'linked' => linkedLabel,
+      _ => ownerLabel,
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color,
+        color: scheme.surfaceContainer,
+        border: Border.all(color: scheme.outlineVariant),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         text,
-        style: const TextStyle(
-          color: FncColors.white,
-          fontSize: FncFonts.size10,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.2,
+        style: TextStyle(
+          color: scheme.onSurfaceVariant,
+          fontSize: FncFonts.size12,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );

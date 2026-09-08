@@ -4,8 +4,7 @@ import '../../app/theme/fnc_colors.dart';
 import '../../app/theme/fnc_fonts.dart';
 import '../labels/label_catalog.dart';
 
-/// Fila de chips de labels de un recurso, igual a `.label-chip` en
-/// Píldora de color fijo por clave con un punto antes del texto.
+/// Etiquetas neutras; el punto conserva el color de cada categoría.
 /// [leading] permite insertar otros chips (p. ej. OriginBadge) en la misma
 /// fila, igual que el originChip que va junto a los label-chips en web.
 class LabelChipsRow extends StatelessWidget {
@@ -24,12 +23,13 @@ class LabelChipsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final visible = labels.where((l) => !hide.contains(l)).toList();
     if (visible.isEmpty && leading.isEmpty) return const SizedBox.shrink();
 
     return Wrap(
-      spacing: 4,
-      runSpacing: 4,
+      spacing: 8,
+      runSpacing: 8,
       children: [
         ...leading,
         ...visible.map((label) {
@@ -37,7 +37,8 @@ class LabelChipsRow extends StatelessWidget {
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: color,
+              color: scheme.surfaceContainer,
+              border: Border.all(color: scheme.outlineVariant),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -47,18 +48,20 @@ class LabelChipsRow extends StatelessWidget {
                   width: 5,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: FncColors.white.withValues(alpha: 0.7),
+                    color: FncColors.statusColor(
+                      color,
+                      scheme.surfaceContainer,
+                    ),
                     shape: BoxShape.circle,
                   ),
                 ),
                 const SizedBox(width: 4),
                 Text(
                   labelText?.call(label) ?? label,
-                  style: const TextStyle(
-                    color: FncColors.white,
-                    fontSize: FncFonts.size10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.2,
+                  style: TextStyle(
+                    color: scheme.onSurfaceVariant,
+                    fontSize: FncFonts.size12,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
