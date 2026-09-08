@@ -21,6 +21,12 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: ResourceToolbar(
+            title: 'Tus agentes',
+            description: 'Crea, organiza y ejecuta tus asistentes de IA.',
+            primaryAction: ResourceCreateButton(
+              onPressed: () {},
+              label: 'Crear agente',
+            ),
             search: TextField(focusNode: focus),
             actions: const [Text('Acciones')],
           ),
@@ -72,15 +78,17 @@ void main() {
           WebContentFrame(
             child: ResourceCollectionView(
               header: ResourceToolbar(
+                title: 'Tus agentes',
+                description: 'Crea, organiza y ejecuta tus asistentes de IA.',
+                primaryAction: ResourceCreateButton(
+                  onPressed: () => created++,
+                  label: 'Crear agente',
+                ),
                 search: const TextField(
                   key: Key('search'),
                   decoration: InputDecoration(labelText: 'Buscar agente'),
                 ),
                 actions: [
-                  ResourceCreateButton(
-                    onPressed: () => created++,
-                    label: 'Crear agente',
-                  ),
                   IconButton(
                     onPressed: () {},
                     icon: const Icon(Icons.refresh),

@@ -182,11 +182,11 @@ class _ManagerPageState extends State<ManagerPage> with StateMessaging {
       gridPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       header: kIsWeb
           ? ResourceToolbar(
+              primaryAction: ResourceCreateButton(
+                onPressed: _createGroup,
+                label: _tx('manager.new_group_tooltip'),
+              ),
               actions: [
-                ResourceCreateButton(
-                  onPressed: _createGroup,
-                  label: _tx('manager.new_group_tooltip'),
-                ),
                 AppIconButton.outlined(
                   onPressed: _controller.load,
                   icon: const Icon(Icons.refresh),

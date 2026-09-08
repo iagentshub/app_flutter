@@ -28,11 +28,11 @@ extension _PromptSections on _KnowledgePageState {
       emptyDescription: _tx('knowledge.no_prompts_description'),
       emptyIcon: Icons.chat_bubble_outline,
       toolbar: ResourceToolbar(
+        primaryAction: ResourceCreateButton(
+          onPressed: _openCreatePromptDialog,
+          label: _tx('knowledge.new_prompt'),
+        ),
         actions: [
-          ResourceCreateButton(
-            onPressed: _openCreatePromptDialog,
-            label: _tx('knowledge.new_prompt'),
-          ),
           AppIconButton.outlined(
             onPressed: _loadPrompts,
             icon: const Icon(Icons.refresh),

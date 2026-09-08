@@ -293,6 +293,8 @@ class _ProfilePageState extends State<ProfilePage>
               child: Text(_tx('common.cancel')),
             ),
             PrimaryButton.icon(
+              busy: submitting,
+              busyLabel: _tx('profile.updating'),
               onPressed: submitting
                   ? null
                   : () async {
@@ -307,11 +309,7 @@ class _ProfilePageState extends State<ProfilePage>
                       }
                     },
               icon: const Icon(Icons.lock_reset_outlined),
-              label: Text(
-                submitting
-                    ? _tx('profile.updating')
-                    : _tx('profile.change_password'),
-              ),
+              label: Text(_tx('profile.change_password')),
             ),
           ],
         ),

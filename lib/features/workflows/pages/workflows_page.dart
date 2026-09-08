@@ -427,11 +427,13 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
   Widget _buildAgentWorkflows(BuildContext context) {
     final filteredWorkflows = _filteredWorkflows;
     final toolbar = ResourceToolbar(
+      title: _tx('workflows.header_title'),
+      description: _tx('workflows.header_description'),
+      primaryAction: ResourceCreateButton(
+        onPressed: _openCreateDialog,
+        label: _tx('workflows.create_action'),
+      ),
       actions: [
-        ResourceCreateButton(
-          onPressed: _openCreateDialog,
-          label: _tx('workflows.create_action'),
-        ),
         WorkflowRunsButton(
           controller: _workflowRuns,
           onPressed: _openRunsPanel,

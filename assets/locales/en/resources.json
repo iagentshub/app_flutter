@@ -494,6 +494,8 @@
     "assistant_title": "Design assistant"
   },
   "connections": {
+    "header_title": "Your connections",
+    "header_description": "Manage the models and services your agents use.",
     "credential_unreadable_badge": "Needs attention",
     "credential_unreadable_hint": "The stored credential cannot be read. Edit it and enter it again.",
     "tokens_tooltip": "Tokens consumed",
@@ -1063,6 +1065,8 @@
     "zoom_out": "Zoom out"
   },
   "workflows": {
+    "header_title": "Agent workflows",
+    "header_description": "Organize your agents into reusable processes.",
     "tab_agents": "Agents",
     "tab_llm_apis": "LLM APIs",
     "connections_suffix": "connections",
@@ -1762,6 +1766,8 @@
     "next": "Next"
   },
   "llm_orchestrations": {
+    "header_title": "Model orchestrations",
+    "header_description": "Coordinate models and configure their execution steps.",
     "create": "New LLM orchestration",
     "edit": "Edit LLM orchestration",
     "name": "Name",

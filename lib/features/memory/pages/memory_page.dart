@@ -175,11 +175,11 @@ class _MemoryPageState extends State<MemoryPage> with StateMessaging {
 
   Widget _buildContent(BuildContext context) {
     final toolbar = ResourceToolbar(
+      primaryAction: ResourceCreateButton(
+        onPressed: _createFile,
+        label: _tx('memory.new_file_tooltip'),
+      ),
       actions: [
-        ResourceCreateButton(
-          onPressed: _createFile,
-          label: _tx('memory.new_file_tooltip'),
-        ),
         AppIconButton.outlined(
           onPressed: _load,
           icon: const Icon(Icons.refresh),

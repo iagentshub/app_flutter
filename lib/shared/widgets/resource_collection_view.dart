@@ -55,6 +55,8 @@ class ResourceCollectionView extends StatelessWidget {
     required this.itemCount,
     required this.itemBuilder,
     this.header,
+    this.compact = false,
+    this.compactItemBuilder,
     this.onRefresh,
     this.empty,
     this.emptyFillsViewport = false,
@@ -65,7 +67,7 @@ class ResourceCollectionView extends StatelessWidget {
     this.loadingMore = false,
     this.density = ResponsiveCardDensity.detailed,
     this.alignRows = kIsWeb,
-    this.headerPadding = const EdgeInsets.fromLTRB(16, 16, 16, 12),
+    this.headerPadding = const EdgeInsets.fromLTRB(16, 16, 16, 24),
     this.gridPadding = const EdgeInsets.fromLTRB(16, 0, 16, 16),
     this.scrollController,
     super.key,
@@ -74,6 +76,8 @@ class ResourceCollectionView extends StatelessWidget {
   /// Barra de acciones o cabecera de la vista. Sin ella la rejilla empieza
   /// arriba del todo.
   final Widget? header;
+  final bool compact;
+  final IndexedWidgetBuilder? compactItemBuilder;
 
   final int itemCount;
   final IndexedWidgetBuilder itemBuilder;
@@ -160,6 +164,17 @@ class ResourceCollectionView extends StatelessWidget {
                     : empty,
               ),
             )
+        else if (compact && compactItemBuilder != null)
+          SliverPadding(
+            padding: gridPadding,
+            sliver: SliverList.builder(
+              itemCount: itemCount,
+              itemBuilder: (context, index) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: compactItemBuilder!(context, index),
+              ),
+            ),
+          )
         else
           ResourceGridSliver(
             itemCount: itemCount,

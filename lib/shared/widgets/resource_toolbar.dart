@@ -3,106 +3,149 @@ import 'package:flutter/material.dart';
 
 import '../../app/theme/fnc_colors.dart';
 
-/// Composición uniforme para búsquedas, acciones y resumen de colecciones.
-///
-/// Las acciones van sobre una superficie con borde, y no sueltas sobre el
-/// fondo de la página: sin ella los botones de icono quedaban como círculos
-/// flotando sobre el negro y el resumen como una línea de texto suelta debajo,
-/// sin nada que los relacionara entre sí ni con la colección que gobiernan.
-///
-/// El resumen va **dentro del mismo `Wrap`** que las acciones. Estaba en una
-/// fila propia, y como siempre es un contador corto —«Workflows: 0»— gastaba
-/// un renglón entero para tres palabras. En el `Wrap` acompaña a los botones
-/// cuando cabe y baja solo cuando no, sin que nadie mida el ancho.
+/// Cabecera de colección: contexto y acción principal, seguida de filtros.
 class ResourceToolbar extends StatelessWidget {
   const ResourceToolbar({
     required this.actions,
+    this.title,
+    this.description,
+    this.primaryAction,
     this.search,
     this.summary,
-    this.actionSpacing = 6,
-    this.sectionSpacing = 12,
+    this.activeFilters = const [],
+    this.actionSpacing = 8,
+    this.sectionSpacing = 16,
     super.key,
   });
 
+  final String? title;
+  final String? description;
+  final Widget? primaryAction;
   final Widget? search;
   final List<Widget> actions;
   final Widget? summary;
+  final List<Widget> activeFilters;
   final double actionSpacing;
   final double sectionSpacing;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: FncColors.surfaceMuted(context),
-        border: Border.all(color: FncColors.borderSubtle(context)),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          // Se usa el ancho local: una barra dentro de una tarjeta no dispone
-          // de todo el viewport. El texto ampliado necesita volver a apilar.
-          final inline =
-              kIsWeb &&
-              constraints.maxWidth /
-                      MediaQuery.textScalerOf(context).scale(1) >=
-                  760;
-          if (kIsWeb && search != null) {
-            final searchWidth = inline
-                ? (constraints.maxWidth * 0.4).clamp(260.0, 420.0)
-                : constraints.maxWidth;
-            // La búsqueda permanece en la misma rama al redimensionar, para
-            // conservar el texto, la selección y el foco del campo.
-            return Wrap(
-              spacing: sectionSpacing,
-              runSpacing: sectionSpacing,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                SizedBox(width: searchWidth, child: search),
-                SizedBox(
-                  width: inline
-                      ? constraints.maxWidth - searchWidth - sectionSpacing
-                      : constraints.maxWidth,
-                  child: _actionGroup(context, trailing: inline),
+    final theme = Theme.of(context);
+    final hasHeading = title != null || primaryAction != null;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact =
+            constraints.maxWidth / MediaQuery.textScalerOf(context).scale(1) <
+            620;
+        final heading = Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (title != null) Text(title!, style: theme.textTheme.titleLarge),
+            if (description != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                description!,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
-              ],
-            );
-          }
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (search != null) ...[
-                search!,
-                SizedBox(height: sectionSpacing),
-              ],
-              _actionGroup(context),
+              ),
             ],
-          );
-        },
-      ),
+            if (title == null && summary != null) _summary(context),
+          ],
+        );
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (hasHeading) ...[
+              if (compact)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    heading,
+                    if (primaryAction != null) ...[
+                      const SizedBox(height: 16),
+                      primaryAction!,
+                    ],
+                  ],
+                )
+              else
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: heading),
+                    if (primaryAction != null) ...[
+                      const SizedBox(width: 24),
+                      primaryAction!,
+                    ],
+                  ],
+                ),
+              const SizedBox(height: 24),
+            ],
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                border: Border.all(color: FncColors.borderSubtle(context)),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: LayoutBuilder(
+                builder: (context, inner) {
+                  final inline =
+                      kIsWeb &&
+                      inner.maxWidth /
+                              MediaQuery.textScalerOf(context).scale(1) >=
+                          760;
+                  final searchWidth = inline
+                      ? (inner.maxWidth * 0.45).clamp(260.0, 420.0)
+                      : inner.maxWidth;
+                  // Keep the field in the same branch when resizing so focus
+                  // and selection survive desktop/mobile width changes.
+                  return Wrap(
+                    spacing: sectionSpacing,
+                    runSpacing: sectionSpacing,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      if (search != null)
+                        SizedBox(width: searchWidth, child: search),
+                      SizedBox(
+                        width: inline && search != null
+                            ? inner.maxWidth - searchWidth - sectionSpacing
+                            : inner.maxWidth,
+                        child: Wrap(
+                          alignment: inline
+                              ? WrapAlignment.end
+                              : WrapAlignment.start,
+                          spacing: actionSpacing,
+                          runSpacing: actionSpacing,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            ...actions,
+                            if (summary != null &&
+                                (!hasHeading || title != null))
+                              _summary(context),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+            if (activeFilters.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Wrap(spacing: 8, runSpacing: 8, children: activeFilters),
+            ],
+          ],
+        );
+      },
     );
   }
 
-  Widget _actionGroup(BuildContext context, {bool trailing = false}) => Wrap(
-    alignment: trailing ? WrapAlignment.end : WrapAlignment.start,
-    spacing: actionSpacing,
-    runSpacing: actionSpacing,
-    crossAxisAlignment: WrapCrossAlignment.center,
-    children: [
-      ...actions,
-      if (summary != null)
-        Padding(
-          // Separa el contador del último botón lo justo para que no se
-          // lea como uno más de la fila.
-          padding: EdgeInsets.only(
-            left: (sectionSpacing - actionSpacing).clamp(0.0, double.infinity),
-          ),
-          child: DefaultTextStyle.merge(
-            style: TextStyle(color: FncColors.textMuted(context)),
-            child: summary!,
-          ),
-        ),
-    ],
+  Widget _summary(BuildContext context) => DefaultTextStyle.merge(
+    style: Theme.of(context).textTheme.bodySmall
+        ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+    child: summary!,
   );
 }

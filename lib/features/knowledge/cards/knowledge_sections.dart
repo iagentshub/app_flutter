@@ -232,11 +232,11 @@ extension _KnowledgeSections on _KnowledgePageState {
       emptyDescription: tr('knowledge.no_skills_description'),
       emptyIcon: AppIcons.skills,
       toolbar: ResourceToolbar(
+        primaryAction: ResourceCreateButton(
+          onPressed: _openCreateSkillChoiceDialog,
+          label: _tx('knowledge.new_skill_title'),
+        ),
         actions: [
-          ResourceCreateButton(
-            onPressed: _openCreateSkillChoiceDialog,
-            label: _tx('knowledge.new_skill_title'),
-          ),
           AppIconButton.outlined(
             onPressed: _loadSkills,
             icon: const Icon(Icons.refresh),

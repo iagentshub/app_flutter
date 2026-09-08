@@ -494,6 +494,8 @@
     "assistant_title": "Asistente de diseño"
   },
   "connections": {
+    "header_title": "Tus conexiones",
+    "header_description": "Gestiona los modelos y servicios que utilizan tus agentes.",
     "credential_unreadable_badge": "Requiere atención",
     "credential_unreadable_hint": "La credencial guardada no se puede leer. Edítala e introdúcela de nuevo.",
     "tokens_tooltip": "Tokens consumidos",
@@ -1063,6 +1065,8 @@
     "zoom_out": "Alejar"
   },
   "workflows": {
+    "header_title": "Flujos de agentes",
+    "header_description": "Organiza tus agentes en procesos reutilizables.",
     "tab_agents": "Agentes",
     "tab_llm_apis": "APIs LLM",
     "connections_suffix": "conexiones",
@@ -1762,6 +1766,8 @@
     "next": "Siguiente"
   },
   "llm_orchestrations": {
+    "header_title": "Orquestaciones de modelos",
+    "header_description": "Coordina modelos y configura sus pasos de ejecución.",
     "create": "Nueva orquestación LLM",
     "edit": "Editar orquestación LLM",
     "name": "Nombre",

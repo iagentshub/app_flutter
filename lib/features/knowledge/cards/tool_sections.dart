@@ -26,11 +26,11 @@ extension _ToolSections on _KnowledgePageState {
       emptyDescription: _tx('knowledge.no_tools_description'),
       emptyIcon: Icons.build_outlined,
       toolbar: ResourceToolbar(
+        primaryAction: ResourceCreateButton(
+          onPressed: _openCreateToolDialog,
+          label: _tx('knowledge.new_tool'),
+        ),
         actions: [
-          ResourceCreateButton(
-            onPressed: _openCreateToolDialog,
-            label: _tx('knowledge.new_tool'),
-          ),
           AppIconButton.outlined(
             onPressed: _loadTools,
             icon: const Icon(Icons.refresh),

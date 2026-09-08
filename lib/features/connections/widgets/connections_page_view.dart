@@ -35,6 +35,8 @@ extension _ConnectionsPageView on _ConnectionsPageState {
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
                       sliver: SliverToBoxAdapter(
                         child: ResourceToolbar(
+                          title: _tx('connections.header_title'),
+                          description: _tx('connections.header_description'),
                           search: TextField(
                             controller: _controller.queryController,
                             decoration: InputDecoration(
@@ -43,13 +45,13 @@ extension _ConnectionsPageView on _ConnectionsPageState {
                             ),
                             onChanged: _controller.setQuery,
                           ),
+                          primaryAction: ResourceCreateButton(
+                            onPressed: _controller.providers.isEmpty
+                                ? null
+                                : _openCreateDialog,
+                            label: _tx('connections.new'),
+                          ),
                           actions: [
-                            ResourceCreateButton(
-                              onPressed: _controller.providers.isEmpty
-                                  ? null
-                                  : _openCreateDialog,
-                              label: _tx('connections.new'),
-                            ),
                             AppIconButton.outlined(
                               onPressed: _controller.load,
                               icon: const Icon(Icons.refresh),

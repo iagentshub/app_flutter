@@ -195,11 +195,13 @@ class _LlmOrchestrationsPanelState extends State<LlmOrchestrationsPanel>
     return ResourceCollectionView(
       onRefresh: _load,
       header: ResourceToolbar(
+        title: widget.tx('llm_orchestrations.header_title'),
+        description: widget.tx('llm_orchestrations.header_description'),
+        primaryAction: ResourceCreateButton(
+          onPressed: () => _edit(),
+          label: widget.tx('llm_orchestrations.create'),
+        ),
         actions: [
-          ResourceCreateButton(
-            onPressed: () => _edit(),
-            label: widget.tx('llm_orchestrations.create'),
-          ),
           AppIconButton.outlined(
             onPressed: _load,
             icon: const Icon(Icons.refresh),
