@@ -45,7 +45,47 @@ abstract final class FncFonts {
     final base = brightness == Brightness.dark
         ? ThemeData.dark(useMaterial3: true).textTheme
         : ThemeData.light(useMaterial3: true).textTheme;
-    return base.apply(fontFamily: geist);
+    return base
+        .copyWith(
+          headlineSmall: base.headlineSmall?.copyWith(
+            fontSize: size28,
+            fontWeight: FontWeight.w600,
+            height: 1.2,
+            letterSpacing: -0.5,
+          ),
+          titleLarge: base.titleLarge?.copyWith(
+            fontSize: size24,
+            fontWeight: FontWeight.w600,
+            height: 1.25,
+            letterSpacing: -0.3,
+          ),
+          titleMedium: base.titleMedium?.copyWith(
+            fontSize: size16,
+            fontWeight: FontWeight.w600,
+            height: 1.4,
+          ),
+          titleSmall: base.titleSmall?.copyWith(
+            fontSize: size14,
+            fontWeight: FontWeight.w600,
+          ),
+          bodyLarge: base.bodyLarge?.copyWith(fontSize: size16, height: 1.5),
+          bodyMedium: base.bodyMedium?.copyWith(fontSize: size14, height: 1.5),
+          bodySmall: base.bodySmall?.copyWith(fontSize: size12, height: 1.5),
+          labelLarge: base.labelLarge?.copyWith(
+            fontSize: size14,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0,
+          ),
+          labelMedium: base.labelMedium?.copyWith(
+            fontSize: size13,
+            letterSpacing: 0,
+          ),
+          labelSmall: base.labelSmall?.copyWith(
+            fontSize: size12,
+            letterSpacing: 0.1,
+          ),
+        )
+        .apply(fontFamily: geist);
   }
 
   // -----------------------------------------------------------------------

@@ -41,6 +41,15 @@ Future<T?> showAppDialog<T>({
       builder: builder,
       barrierDismissible: barrierDismissible,
       routeSettings: routeSettings,
+      animationStyle: AppMotion.reduced(context)
+          ? const AnimationStyle(
+              duration: Duration.zero,
+              reverseDuration: Duration.zero,
+            )
+          : const AnimationStyle(
+              duration: AppMotion.modal,
+              reverseDuration: AppMotion.modalReverse,
+            ),
     );
   }
   return showModal<T>(

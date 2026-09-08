@@ -29,6 +29,34 @@ void main() {
     expect(AppTheme.mode('marble'), ThemeMode.light);
   });
 
+  test('el texto y los acentos conservan contraste en las capas oscuras', () {
+    for (final id in kThemeIds.where(
+      (id) => AppTheme.mode(id) == ThemeMode.dark,
+    )) {
+      final theme = AppTheme.dark(id);
+      final scheme = theme.colorScheme;
+      final surfaces = [
+        theme.scaffoldBackgroundColor,
+        theme.cardColor,
+        scheme.surfaceContainerHigh,
+      ];
+      expect(surfaces.toSet().length, 3);
+      for (final surface in surfaces) {
+        for (final foreground in [
+          scheme.onSurface,
+          scheme.onSurfaceVariant,
+          scheme.primary,
+        ]) {
+          expect(
+            _contrastRatio(foreground, surface),
+            greaterThanOrEqualTo(4.5),
+            reason: '$id: $foreground on $surface',
+          );
+        }
+      }
+    }
+  });
+
   test('cada familia de color modifica el color principal', () {
     final red = AppTheme.dark('dark-red').colorScheme.primary;
     final blue = AppTheme.dark('dark-blue').colorScheme.primary;

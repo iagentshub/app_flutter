@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../motion/app_motion.dart';
+
 /// Acción principal de una vista o bloque.
 ///
 /// Centraliza el uso de [FilledButton] para que las páginas expresen la
@@ -10,6 +12,8 @@ class PrimaryButton extends StatelessWidget {
     required this.onPressed,
     required Widget this._child,
     this.style,
+    this.busy = false,
+    this.busyLabel,
     super.key,
   }) : _icon = null,
        _label = null,
@@ -20,6 +24,8 @@ class PrimaryButton extends StatelessWidget {
     required Widget this._icon,
     required Widget this._label,
     this.style,
+    this.busy = false,
+    this.busyLabel,
     super.key,
   }) : _child = null,
        _variant = _PrimaryButtonVariant.filled;
@@ -28,6 +34,8 @@ class PrimaryButton extends StatelessWidget {
     required this.onPressed,
     required Widget this._child,
     this.style,
+    this.busy = false,
+    this.busyLabel,
     super.key,
   }) : _icon = null,
        _label = null,
@@ -38,12 +46,16 @@ class PrimaryButton extends StatelessWidget {
     required Widget this._icon,
     required Widget this._label,
     this.style,
+    this.busy = false,
+    this.busyLabel,
     super.key,
   }) : _child = null,
        _variant = _PrimaryButtonVariant.tonalIcon;
 
   final VoidCallback? onPressed;
   final ButtonStyle? style;
+  final bool busy;
+  final String? busyLabel;
   final Widget? _child;
   final Widget? _icon;
   final Widget? _label;
@@ -51,27 +63,55 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (_variant == _PrimaryButtonVariant.elevated) {
-      return ElevatedButton(onPressed: onPressed, style: style, child: _child!);
-    }
-    final icon = _icon;
-    if (icon != null) {
-      return FilledButton.icon(
-        onPressed: onPressed,
+    final callback = busy ? null : onPressed;
+    final content = _icon == null
+        ? _child!
+        : Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _icon,
+              const SizedBox(width: 8),
+              Flexible(child: _label!),
+            ],
+          );
+    final child = Semantics(
+      liveRegion: busy,
+      label: busy ? busyLabel : null,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Opacity(
+            opacity: busy ? 0 : 1,
+            alwaysIncludeSemantics: busyLabel == null,
+            child: content,
+          ),
+          if (busy)
+            SizedBox.square(
+              dimension: 18,
+              child: AppMotion.reduced(context)
+                  ? const Icon(Icons.hourglass_top, size: 18)
+                  : const CircularProgressIndicator(strokeWidth: 2),
+            ),
+        ],
+      ),
+    );
+    return switch (_variant) {
+      _PrimaryButtonVariant.elevated => ElevatedButton(
+        onPressed: callback,
         style: style,
-        icon: icon,
-        label: _label!,
-      );
-    }
-    if (_variant == _PrimaryButtonVariant.tonalIcon) {
-      return FilledButton.tonalIcon(
-        onPressed: onPressed,
+        child: child,
+      ),
+      _PrimaryButtonVariant.tonalIcon => FilledButton.tonal(
+        onPressed: callback,
         style: style,
-        icon: _icon!,
-        label: _label!,
-      );
-    }
-    return FilledButton(onPressed: onPressed, style: style, child: _child!);
+        child: child,
+      ),
+      _PrimaryButtonVariant.filled => FilledButton(
+        onPressed: callback,
+        style: style,
+        child: child,
+      ),
+    };
   }
 }
 
@@ -311,9 +351,14 @@ class AppIconButton extends StatelessWidget {
         onPressed: onPressed,
         tooltip: tooltip,
         style: kIsWeb
-            ? IconButton.styleFrom(
-                side: BorderSide(
-                  color: Theme.of(context).colorScheme.outlineVariant,
+            ? ButtonStyle(
+                side: WidgetStateProperty.resolveWith(
+                  (states) => BorderSide(
+                    color: states.contains(WidgetState.focused)
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.outlineVariant,
+                    width: 2,
+                  ),
                 ),
               ).merge(style)
             : style,

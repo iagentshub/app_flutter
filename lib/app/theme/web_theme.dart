@@ -1,8 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import 'interaction_theme.dart';
+
 /// Ajustes de los controles web sin alterar la paleta ni los temas nativos.
 ThemeData webTheme(ThemeData base) {
+  base = interactionTheme(base);
   if (!kIsWeb) return base;
   const shape = RoundedRectangleBorder(
     borderRadius: BorderRadius.all(Radius.circular(10)),
@@ -17,16 +20,18 @@ ThemeData webTheme(ThemeData base) {
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: false,
-      titleTextStyle: base.textTheme.titleMedium?.copyWith(
+      titleTextStyle: base.textTheme.titleLarge?.copyWith(
         color: scheme.onSurface,
         fontWeight: FontWeight.w600,
       ),
     ),
     iconButtonTheme: IconButtonThemeData(
-      style: IconButton.styleFrom(
-        shape: shape,
-        iconSize: 19,
-        minimumSize: const Size(40, 40),
+      style: base.iconButtonTheme.style?.merge(
+        IconButton.styleFrom(
+          shape: shape,
+          iconSize: 19,
+          minimumSize: const Size(40, 40),
+        ),
       ),
     ),
     filledButtonTheme: FilledButtonThemeData(
@@ -39,7 +44,6 @@ ThemeData webTheme(ThemeData base) {
       style: base.outlinedButtonTheme.style?.copyWith(
         shape: const WidgetStatePropertyAll(shape),
         minimumSize: const WidgetStatePropertyAll(Size(0, 40)),
-        side: WidgetStatePropertyAll(BorderSide(color: scheme.outlineVariant)),
       ),
     ),
     popupMenuTheme: base.popupMenuTheme.copyWith(

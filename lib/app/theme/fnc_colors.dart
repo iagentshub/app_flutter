@@ -143,8 +143,11 @@ abstract final class FncColors {
   static const hintTextLight = Color(0x8A000000);
 
   static const outlineDark = Color(0xFFB8B8B8);
-  static const cardDark = Color(0xFF141414);
-  static const surfaceAltDark = Color(0xFF1C1C1C);
+  static const pageBackgroundDark = Color(0xFF141518);
+  static const textDark = Color(0xFFF1F2F4);
+  static const textSecondaryDark = Color(0xFFADB1BA);
+  static const cardDark = Color(0xFF1C1E22);
+  static const surfaceAltDark = Color(0xFF272A30);
   static const dividerLineDark = Color(0x14FFFFFF);
   static const hintTextDark = Color(0x8AFFFFFF);
 

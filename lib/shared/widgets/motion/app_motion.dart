@@ -10,11 +10,11 @@ abstract final class AppMotion {
   /// Cambio de sección dentro del shell. Corta a propósito: es la transición
   /// que el usuario ve más veces al día y cualquier cosa por encima de ~250 ms
   /// se percibe como que la app tarda en responder al clic del menú.
-  static const Duration section = Duration(milliseconds: 220);
+  static const Duration section = Duration(milliseconds: 180);
 
   /// Apertura de una página completa sobre otra (formularios, editores).
   /// Puede permitirse ser más larga: ocurre una vez por tarea, no por clic.
-  static const Duration page = Duration(milliseconds: 300);
+  static const Duration page = Duration(milliseconds: 220);
 
   /// Diálogos. Material sube el escalado en 150 ms y lo baja en 75: la salida
   /// más rápida que la entrada evita que el diálogo "se resista" al cerrarse.

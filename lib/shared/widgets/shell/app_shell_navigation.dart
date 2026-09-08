@@ -249,24 +249,15 @@ class _ShellTopBar extends StatelessWidget {
         compactPadding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
           children: [
-            Container(
-              width: 4,
-              height: 24,
-              decoration: BoxDecoration(
-                color: scheme.primary,
-                borderRadius: BorderRadius.circular(99),
-              ),
-            ),
-            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.titleLarge?.copyWith(
-                  fontSize: FncFonts.size19,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.2,
+                  fontSize: FncFonts.size24,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -0.3,
                 ),
               ),
             ),
@@ -364,7 +355,9 @@ class _NavItemTile extends StatelessWidget {
           hoverColor: tokens.hover,
           focusColor: tokens.hover,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 160),
+            duration: AppMotion.reduced(context)
+                ? Duration.zero
+                : const Duration(milliseconds: 160),
             curve: Curves.easeOut,
             constraints: const BoxConstraints(minHeight: 44),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

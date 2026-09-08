@@ -51,6 +51,11 @@ abstract final class AppTheme {
       secondary: FncColors.black,
       onSecondary: FncColors.white,
       surface: FncColors.white,
+      surfaceContainerLowest: FncColors.pageBackgroundLight,
+      surfaceContainerLow: FncColors.white,
+      surfaceContainer: FncColors.surfaceAltLight,
+      surfaceContainerHigh: FncColors.white,
+      surfaceContainerHighest: FncColors.surfaceAltLight,
       onSurface: FncColors.black,
       error: FncColors.errorLight,
       onError: FncColors.white,
@@ -61,7 +66,7 @@ abstract final class AppTheme {
       // menú lateral; aquí se corrigen en el origen, con la misma derivación.
       onSurfaceVariant: FncColors.black.withValues(alpha: 0.60),
       outlineVariant: FncColors.black.withValues(alpha: 0.08),
-      surfaceTint: accentColor,
+      surfaceTint: FncColors.transparent,
       inverseSurface: FncColors.black,
       onInverseSurface: FncColors.white,
     );
@@ -115,10 +120,27 @@ abstract final class AppTheme {
           ),
           labelStyle: const TextStyle(color: FncColors.hintTextLight),
         ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: FncColors.black,
-          foregroundColor: FncColors.white,
+        appBarTheme: AppBarTheme(
+          backgroundColor: scheme.surface,
+          foregroundColor: scheme.onSurface,
+          surfaceTintColor: FncColors.transparent,
           elevation: 0,
+          scrolledUnderElevation: 0,
+          centerTitle: false,
+          titleTextStyle: FncFonts.textTheme(scheme.brightness).titleLarge
+              ?.copyWith(color: scheme.onSurface),
+        ),
+        dialogTheme: DialogThemeData(
+          backgroundColor: scheme.surfaceContainerHigh,
+          surfaceTintColor: FncColors.transparent,
+        ),
+        popupMenuTheme: PopupMenuThemeData(
+          color: scheme.surfaceContainerHigh,
+          surfaceTintColor: FncColors.transparent,
+        ),
+        bottomSheetTheme: BottomSheetThemeData(
+          backgroundColor: scheme.surfaceContainerHigh,
+          surfaceTintColor: FncColors.transparent,
         ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
@@ -129,13 +151,13 @@ abstract final class AppTheme {
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
             foregroundColor: FncColors.black,
-            side: const BorderSide(color: FncColors.black),
+            side: BorderSide(color: scheme.onSurface.withValues(alpha: 0.22)),
           ),
         ),
         chipTheme: ChipThemeData(
-          backgroundColor: accentColor.withValues(alpha: 0.08),
+          backgroundColor: surface2,
           selectedColor: accentColor.withValues(alpha: 0.18),
-          side: BorderSide(color: accentColor.withValues(alpha: 0.28)),
+          side: BorderSide(color: scheme.outlineVariant),
           labelStyle: const TextStyle(color: FncColors.black),
           shape: const StadiumBorder(),
         ),
@@ -156,7 +178,7 @@ abstract final class AppTheme {
   static ThemeData dark([String themeId = 'dark-red']) {
     final accentColor = FncColors.accessibleAccent(
       accent(themeId),
-      FncColors.black,
+      FncColors.surfaceAltDark,
     );
     final onAccentColor = FncColors.onAccent(accentColor);
     final scheme = ColorScheme.dark(
@@ -164,15 +186,20 @@ abstract final class AppTheme {
       onPrimary: onAccentColor,
       secondary: FncColors.white,
       onSecondary: FncColors.black,
-      surface: FncColors.black,
-      onSurface: FncColors.white,
+      surface: FncColors.cardDark,
+      surfaceContainerLowest: FncColors.pageBackgroundDark,
+      surfaceContainerLow: FncColors.cardDark,
+      surfaceContainer: FncColors.surfaceAltDark,
+      surfaceContainerHigh: FncColors.surfaceAltDark,
+      surfaceContainerHighest: FncColors.surfaceAltDark,
+      onSurface: FncColors.textDark,
       error: FncColors.errorDark,
       onError: FncColors.black,
       outline: FncColors.outlineDark,
       // Ver la nota del tema claro.
-      onSurfaceVariant: FncColors.white.withValues(alpha: 0.60),
+      onSurfaceVariant: FncColors.textSecondaryDark,
       outlineVariant: FncColors.white.withValues(alpha: 0.08),
-      surfaceTint: accentColor,
+      surfaceTint: FncColors.transparent,
     );
 
     const cardColor = FncColors.cardDark;
@@ -183,7 +210,7 @@ abstract final class AppTheme {
       ThemeData(
         brightness: Brightness.dark,
         colorScheme: scheme,
-        scaffoldBackgroundColor: FncColors.black,
+        scaffoldBackgroundColor: FncColors.pageBackgroundDark,
         cardColor: cardColor,
         useMaterial3: true,
         // Ver la nota del tema claro.
@@ -219,12 +246,31 @@ abstract final class AppTheme {
           ),
           labelStyle: const TextStyle(color: FncColors.hintTextDark),
         ),
-        textTheme: FncFonts.textTheme(Brightness.dark)
-            .apply(bodyColor: FncColors.white, displayColor: FncColors.white),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: FncColors.black,
-          foregroundColor: FncColors.white,
+        textTheme: FncFonts.textTheme(Brightness.dark).apply(
+          bodyColor: FncColors.textDark,
+          displayColor: FncColors.textDark,
+        ),
+        appBarTheme: AppBarTheme(
+          backgroundColor: scheme.surface,
+          foregroundColor: scheme.onSurface,
+          surfaceTintColor: FncColors.transparent,
           elevation: 0,
+          scrolledUnderElevation: 0,
+          centerTitle: false,
+          titleTextStyle: FncFonts.textTheme(scheme.brightness).titleLarge
+              ?.copyWith(color: scheme.onSurface),
+        ),
+        dialogTheme: DialogThemeData(
+          backgroundColor: scheme.surfaceContainerHigh,
+          surfaceTintColor: FncColors.transparent,
+        ),
+        popupMenuTheme: PopupMenuThemeData(
+          color: scheme.surfaceContainerHigh,
+          surfaceTintColor: FncColors.transparent,
+        ),
+        bottomSheetTheme: BottomSheetThemeData(
+          backgroundColor: scheme.surfaceContainerHigh,
+          surfaceTintColor: FncColors.transparent,
         ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
@@ -235,13 +281,13 @@ abstract final class AppTheme {
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
             foregroundColor: FncColors.white,
-            side: const BorderSide(color: FncColors.white),
+            side: BorderSide(color: scheme.onSurface.withValues(alpha: 0.22)),
           ),
         ),
         chipTheme: ChipThemeData(
-          backgroundColor: accentColor.withValues(alpha: 0.12),
+          backgroundColor: surface2,
           selectedColor: accentColor.withValues(alpha: 0.24),
-          side: BorderSide(color: accentColor.withValues(alpha: 0.36)),
+          side: BorderSide(color: scheme.outlineVariant),
           labelStyle: const TextStyle(color: FncColors.white),
           shape: const StadiumBorder(),
         ),

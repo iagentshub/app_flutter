@@ -27,6 +27,7 @@ import '../state/locale_controller.dart';
 import '../state/theme_controller.dart';
 import 'brand_icon.dart';
 import 'motion/app_modal.dart';
+import 'motion/app_motion.dart';
 import 'shell/skip_link.dart';
 import 'user_avatar.dart';
 import 'web_content_frame.dart';
