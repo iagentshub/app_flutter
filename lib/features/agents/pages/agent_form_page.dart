@@ -61,6 +61,7 @@ class AgentFormPage extends StatefulWidget {
 class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
   /// Un único indicador para los seis catálogos: llegan juntos.
   bool _loadingCatalogs = true;
+  bool _submitting = false;
 
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
@@ -247,52 +248,59 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
   }
 
   Future<void> _submit() async {
+    if (_submitting) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    Set<String> dependenciesToPublish = {};
-    if (_scope == 'public') {
-      final options = _publicationOptions();
-      if (options.isNotEmpty) {
-        final selection = await showAgentPublishDependenciesDialog(
-          context: context,
-          options: options,
-          initialSelection: _publishedDependencyKeys,
-          tx: widget.tx,
-        );
-        if (!mounted || selection == null) return;
-        dependenciesToPublish = selection;
-        _publishedDependencyKeys = selection;
+    setState(() => _submitting = true);
+    try {
+      Set<String> dependenciesToPublish = {};
+      if (_scope == 'public') {
+        final options = _publicationOptions();
+        if (options.isNotEmpty) {
+          final selection = await showAgentPublishDependenciesDialog(
+            context: context,
+            options: options,
+            initialSelection: _publishedDependencyKeys,
+            tx: widget.tx,
+          );
+          if (!mounted || selection == null) return;
+          dependenciesToPublish = selection;
+          _publishedDependencyKeys = selection;
+        }
       }
+
+      final payload = <String, dynamic>{
+        'name': _nameController.text.trim(),
+        'description': _descriptionController.text.trim(),
+        'scope': _scope,
+        'agent_type': _agentType,
+        'model': _modelController.text.trim(),
+        'connection_id': _connectionId ?? '',
+        'system_prompt': _promptController.text.trim(),
+        'temperature': _temperature,
+        'labels': _selectedLabels.toList(),
+        'language': _selectedLabels
+            .where(isLanguageLabel)
+            .map(languageCodeFromLabel)
+            .whereType<String>()
+            .firstOrNull,
+        'memory_file':
+            _useMemory && _memoryFileController.text.trim().isNotEmpty
+            ? _memoryFileController.text.trim()
+            : null,
+        'use_memory': _useMemory,
+        'skills': _selectedSkillIds.toList(),
+        'knowledge': _selectedKnowledgeIds.toList(),
+        'knowledge_packs': _selectedKnowledgePackIds.toList(),
+        'prompts': _selectedPromptIds.toList(),
+        'tools': _selectedToolIds.toList(),
+        'publish_dependencies': dependenciesToPublish.toList()..sort(),
+      };
+
+      Navigator.of(context).pop(payload);
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
-
-    final payload = <String, dynamic>{
-      'name': _nameController.text.trim(),
-      'description': _descriptionController.text.trim(),
-      'scope': _scope,
-      'agent_type': _agentType,
-      'model': _modelController.text.trim(),
-      'connection_id': _connectionId ?? '',
-      'system_prompt': _promptController.text.trim(),
-      'temperature': _temperature,
-      'labels': _selectedLabels.toList(),
-      'language': _selectedLabels
-          .where(isLanguageLabel)
-          .map(languageCodeFromLabel)
-          .whereType<String>()
-          .firstOrNull,
-      'memory_file': _useMemory && _memoryFileController.text.trim().isNotEmpty
-          ? _memoryFileController.text.trim()
-          : null,
-      'use_memory': _useMemory,
-      'skills': _selectedSkillIds.toList(),
-      'knowledge': _selectedKnowledgeIds.toList(),
-      'knowledge_packs': _selectedKnowledgePackIds.toList(),
-      'prompts': _selectedPromptIds.toList(),
-      'tools': _selectedToolIds.toList(),
-      'publish_dependencies': dependenciesToPublish.toList()..sort(),
-    };
-
-    Navigator.of(context).pop(payload);
   }
 
   List<AgentPublishDependencyOption> _publicationOptions() {
@@ -473,7 +481,7 @@ class _AgentFormPageState extends State<AgentFormPage> with StateMessaging {
               padding: const EdgeInsets.only(right: 12),
               child: PrimaryButton.icon(
                 key: const ValueKey('agent-form-save'),
-                onPressed: _submit,
+                onPressed: _submitting ? null : _submit,
                 icon: const Icon(Icons.check, size: 18),
                 label: Text(widget.tx('common.save')),
               ),

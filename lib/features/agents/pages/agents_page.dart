@@ -48,6 +48,8 @@ import '../dialogs/agent_directory_import_dialog.dart';
 import '../dialogs/agent_import_preview_dialog.dart';
 import '../repositories/agent_import_repository.dart';
 import '../repositories/agents_repository.dart';
+import '../widgets/agent_compact_tile.dart';
+import '../widgets/agent_list_order.dart';
 import 'agent_builder_page.dart';
 import 'agent_form_page.dart';
 import 'chat_page.dart';
@@ -105,6 +107,8 @@ class _AgentsPageState extends State<AgentsPage>
   String _scope = 'all';
   String _agentType = 'all';
   String _memory = 'all';
+  AgentListOrder _listOrder = AgentListOrder.original;
+  bool _compact = false;
 
   String _tx(String path) => _t.text(path);
 
@@ -119,10 +123,10 @@ class _AgentsPageState extends State<AgentsPage>
   final _filteredAgentsMemo = Memoized<List<AgentItem>>();
 
   List<AgentItem> get _filteredAgents => _filteredAgentsMemo.of(
-    [_agents, _scope, _agentType, _memory, _query],
+    [_agents, _scope, _agentType, _memory, _query, _listOrder],
     () {
       final query = _query.trim().toLowerCase();
-      return _agents.where((item) {
+      final filtered = _agents.where((item) {
         if (_scope != 'all' && item.scope != _scope) return false;
         if (_agentType != 'all' && item.agentType != _agentType) return false;
         if (_memory == 'with' && !item.useMemory) return false;
@@ -132,6 +136,7 @@ class _AgentsPageState extends State<AgentsPage>
             item.agentType.toLowerCase().contains(query) ||
             item.model.toLowerCase().contains(query);
       }).toList();
+      return orderAgents(filtered, _listOrder);
     },
   );
 

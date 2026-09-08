@@ -4,11 +4,28 @@ extension _AgentsPageView on _AgentsPageState {
   Widget _buildPage(BuildContext context) {
     final filteredAgents = _filteredAgents;
     final content = ResourceCollectionView(
+      compact: _compact,
+      compactItemBuilder: (context, index) {
+        final item = filteredAgents[index];
+        final canChat =
+            item.isActive &&
+            item.connectionId.isNotEmpty &&
+            !(_executionState?.isInProgress('agent', item.id) ?? false);
+        return AgentCompactTile(
+          item: item,
+          details: _buildAgentCard(item),
+          chatLabel: _tx('agents.chat_action'),
+          inactiveLabel: _tx('common.inactive'),
+          onChat: canChat ? () => _openChat(item) : null,
+        );
+      },
       onRefresh: _load,
       onLoadMore: _loadMoreAgents,
       hasMore: _hasMoreAgents,
       loadingMore: _loadingMoreAgents,
       header: ResourceToolbar(
+        title: _tx('agents.header_title'),
+        description: _tx('agents.header_description'),
         search: TextField(
           controller: _queryController,
           decoration: InputDecoration(
@@ -22,10 +39,86 @@ extension _AgentsPageView on _AgentsPageState {
             });
           },
         ),
+        primaryAction: ResourceCreateButton(
+          onPressed: _openCreateChoiceDialog,
+          label: _tx('agents.new'),
+        ),
+        activeFilters: [
+          if (_scope != 'all')
+            InputChip(
+              label: Text(
+                _scope == 'public'
+                    ? _tx('agents.scope_public')
+                    : _tx('agents.scope_private'),
+              ),
+              onDeleted: () => refresh(() => _scope = 'all'),
+            ),
+          if (_agentType != 'all')
+            InputChip(
+              label: Text(_agentType),
+              onDeleted: () => refresh(() => _agentType = 'all'),
+            ),
+          if (_memory != 'all')
+            InputChip(
+              label: Text(
+                _tx(
+                  _memory == 'with'
+                      ? 'agents.memory_with'
+                      : 'agents.memory_without',
+                ),
+              ),
+              onDeleted: () => refresh(() => _memory = 'all'),
+            ),
+          if (_query.trim().isNotEmpty)
+            InputChip(
+              label: Text(_query),
+              onDeleted: () {
+                _queryController.clear();
+                refresh(() => _query = '');
+              },
+            ),
+        ],
         actions: [
-          ResourceCreateButton(
-            onPressed: _openCreateChoiceDialog,
-            label: _tx('agents.new'),
+          PopupMenuButton<AgentListOrder>(
+            tooltip: _tx(_hasMoreAgents ? 'agents.sort_loaded' : 'agents.sort'),
+            initialValue: _listOrder,
+            onSelected: (value) => refresh(() => _listOrder = value),
+            itemBuilder: (context) => [
+              for (final order in AgentListOrder.values)
+                CheckedPopupMenuItem(
+                  value: order,
+                  checked: _listOrder == order,
+                  child: Text(_tx('agents.sort_${order.name}')),
+                ),
+            ],
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.sort, size: 20),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      _tx('agents.sort_${_listOrder.name}'),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const Icon(Icons.arrow_drop_down, size: 20),
+                ],
+              ),
+            ),
+          ),
+          AppIconButton.outlined(
+            tooltip: _tx(
+              _compact ? 'agents.view_cards' : 'agents.view_compact',
+            ),
+            isSelected: _compact,
+            icon: Icon(
+              _compact ? Icons.grid_view_outlined : Icons.view_list_outlined,
+            ),
+            onPressed: () => refresh(() => _compact = !_compact),
           ),
           AppIconButton.outlined(
             onPressed: _load,

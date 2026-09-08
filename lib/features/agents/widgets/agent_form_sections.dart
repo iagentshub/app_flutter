@@ -3,10 +3,15 @@ part of '../pages/agent_form_page.dart';
 extension _AgentFormSections on _AgentFormPageState {
   Widget _buildBasicTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            widget.tx('agents.identity_title'),
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 16),
           TextFormField(
             controller: _nameController,
             decoration: InputDecoration(
@@ -26,6 +31,8 @@ extension _AgentFormSections on _AgentFormPageState {
             maxLines: 4,
             decoration: InputDecoration(
               labelText: widget.tx('agents.field_description'),
+              helperText: widget.tx('agents.description_help'),
+              helperMaxLines: 3,
             ),
           ),
           const SizedBox(height: 12),
@@ -40,6 +47,8 @@ extension _AgentFormSections on _AgentFormPageState {
             maxLines: 10,
             decoration: InputDecoration(
               labelText: widget.tx('agents.field_prompt'),
+              helperText: widget.tx('agents.prompt_help'),
+              helperMaxLines: 3,
             ),
             validator: (value) {
               if (!widget.requireQualityPrompt) return null;
@@ -56,8 +65,10 @@ extension _AgentFormSections on _AgentFormPageState {
 
   Widget _buildConnectionTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: WebFormSection(
+        title: widget.tx('agents.tab_connection'),
+        description: widget.tx('agents.connection_help'),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -102,6 +113,12 @@ extension _AgentFormSections on _AgentFormPageState {
               label: _temperature.toStringAsFixed(2),
               onChanged: (value) => refresh(() => _temperature = value),
             ),
+            Text(
+              widget.tx('agents.temperature_help'),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
           ],
         ),
       ),
@@ -110,7 +127,7 @@ extension _AgentFormSections on _AgentFormPageState {
 
   Widget _buildKnowledgeTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -272,10 +289,17 @@ extension _AgentFormSections on _AgentFormPageState {
 
   Widget _buildAdvancedTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            widget.tx('agents.advanced_help'),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 24),
           DropdownButtonFormField<String>(
             initialValue: _agentType,
             decoration: InputDecoration(
