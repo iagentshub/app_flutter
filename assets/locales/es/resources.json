@@ -569,7 +569,7 @@
     "field_required": "Campo obligatorio"
   },
   "providers": {
-    "add_account": "Añadir cuenta",
+    "add_account": "Añadir proveedor",
     "not_linked": "Aún no has vinculado ninguna cuenta",
     "provider_label": "Proveedor",
     "link_action": "Vincular",

@@ -569,7 +569,7 @@
     "field_required": "Required field"
   },
   "providers": {
-    "add_account": "Add account",
+    "add_account": "Add provider",
     "not_linked": "You haven't linked any account yet",
     "provider_label": "Provider",
     "link_action": "Link",

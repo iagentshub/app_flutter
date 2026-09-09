@@ -17,6 +17,7 @@ import '../../../shared/widgets/async_state_panel.dart';
 import '../../../shared/widgets/attention_badge.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
+import '../../../shared/widgets/buttons/resource_create_button.dart';
 import '../../../shared/widgets/confirm_action_dialog.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/resource_toolbar.dart';
@@ -280,13 +281,11 @@ class _ProvidersSectionState extends State<ProvidersSection>
         padding: const EdgeInsets.all(16),
         children: [
           ResourceToolbar(
-            actions: [
-              AppIconButton.filled(
-                onPressed: _openCreateAccountDialog,
-                icon: const Icon(Icons.add),
-                tooltip: _tx('providers.add_account'),
-              ),
-            ],
+            primaryAction: ResourceCreateButton(
+              onPressed: _openCreateAccountDialog,
+              label: _tx('providers.add_account'),
+            ),
+            actions: const [],
           ),
           const SizedBox(height: 16),
           if (_accounts.isEmpty)
