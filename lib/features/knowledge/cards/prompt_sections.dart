@@ -45,7 +45,7 @@ extension _PromptSections on _KnowledgePageState {
           ),
           ..._groupsButtons(),
         ],
-        summary: Text('Prompts: ${filteredPrompts.length}'),
+        summary: Text('${_tx('knowledge.tab_prompts')}: ${filteredPrompts.length}'),
       ),
     );
   }

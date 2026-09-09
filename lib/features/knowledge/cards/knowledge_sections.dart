@@ -245,7 +245,7 @@ extension _KnowledgeSections on _KnowledgePageState {
           ),
           ..._groupsButtons(),
         ],
-        summary: Text('Skills: ${filteredSkills.length}'),
+        summary: Text('${_tx('knowledge.tab_skills')}: ${filteredSkills.length}'),
       ),
     );
   }
