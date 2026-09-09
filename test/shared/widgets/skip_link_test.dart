@@ -120,9 +120,17 @@ Future<void> _tab(WidgetTester tester, {bool back = false}) async {
 
 String _focused() => FocusManager.instance.primaryFocus?.debugLabel ?? '?';
 
+// La opacidad que interesa es la del propio enlace, no la que [PrimaryButton]
+// usa para su estado ocupado: se busca dentro del [SkipLink] y se toma la
+// primera —la de fuera— en lugar de exigir que solo haya una.
 double _opacityOf(WidgetTester tester, String label) => tester
     .widget<Opacity>(
-      find.ancestor(of: find.text(label), matching: find.byType(Opacity)),
+      find
+          .descendant(
+            of: find.widgetWithText(SkipLink, label),
+            matching: find.byType(Opacity),
+          )
+          .first,
     )
     .opacity;
 
