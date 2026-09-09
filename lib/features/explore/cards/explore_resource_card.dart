@@ -32,10 +32,7 @@ extension _ExploreResourceCard on _ExplorePageState {
           children: [
             Text(
               item.name,
-              style: const TextStyle(
-                fontSize: FncFonts.size16,
-                fontWeight: FontWeight.w700,
-              ),
+              style: FncFonts.resourceTitle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -72,6 +69,7 @@ extension _ExploreResourceCard on _ExplorePageState {
               const SizedBox(height: 8),
               Text(
                 item.description,
+                style: FncFonts.resourceDescription(context),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),

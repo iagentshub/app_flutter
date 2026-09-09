@@ -15,10 +15,7 @@ extension _ExploreOfficialPackCard on _ExplorePageState {
           children: [
             Text(
               pack.name,
-              style: const TextStyle(
-                fontSize: FncFonts.size16,
-                fontWeight: FontWeight.w700,
-              ),
+              style: FncFonts.resourceTitle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -52,6 +49,7 @@ extension _ExploreOfficialPackCard on _ExplorePageState {
               const SizedBox(height: 8),
               Text(
                 pack.description,
+                style: FncFonts.resourceDescription(context),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),

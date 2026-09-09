@@ -10,6 +10,7 @@ import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/inactive_badge.dart';
 import '../../../shared/widgets/label_chips_row.dart';
 import '../../../shared/widgets/origin_badge.dart';
+import '../../../shared/widgets/resource_card_body.dart';
 import '../../../shared/widgets/resource_graph_button.dart';
 
 class WorkflowCard extends StatelessWidget {
@@ -118,8 +119,7 @@ class WorkflowCard extends StatelessWidget {
                     item.name,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.w700),
+                    style: FncFonts.resourceTitle,
                   ),
                 ),
                 if (!item.isActive) ...[
@@ -162,8 +162,7 @@ class WorkflowCard extends StatelessWidget {
                 item.description,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyMedium
-                    ?.copyWith(color: colors.onSurfaceVariant, height: 1.35),
+                style: FncFonts.resourceDescription(context),
               ),
             ],
             const SizedBox(height: 14),
@@ -194,7 +193,7 @@ class WorkflowCard extends StatelessWidget {
                     ),
                     minimumSize: const Size(0, 32),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
+                  ).merge(resourceCardActionStyle(context)),
                   icon: const Icon(Icons.play_arrow, size: 16),
                   label: Text(
                     runLabel,

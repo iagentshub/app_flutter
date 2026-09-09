@@ -186,10 +186,7 @@ class _MemoryPageState extends State<MemoryPage> with StateMessaging {
           tooltip: _tx('memory.refresh_tooltip'),
         ),
       ],
-      summary: Text(
-        '${_tx('memory.files_count')}: ${_files.length}',
-        style: Theme.of(context).textTheme.bodyMedium,
-      ),
+      summary: Text('${_tx('memory.files_count')}: ${_files.length}'),
     );
 
     return ResourceCollectionView(

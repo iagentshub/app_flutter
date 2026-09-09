@@ -32,6 +32,19 @@ abstract final class FncFonts {
   static const String geist = 'Geist';
   static const String geistMono = 'Geist Mono';
 
+  /// El nombre destaca sobre la descripción y los metadatos de cada recurso.
+  static const TextStyle resourceTitle = TextStyle(
+    fontSize: size18,
+    fontWeight: FontWeight.w600,
+    height: 1.35,
+  );
+
+  static TextStyle? resourceDescription(BuildContext context) =>
+      Theme.of(context).textTheme.bodyMedium?.copyWith(
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+        height: 1.5,
+      );
+
   /// Peso por el eje `wght` de una fuente variable.
   ///
   /// El sistema público pide pesos que no están en la escala de nueve de

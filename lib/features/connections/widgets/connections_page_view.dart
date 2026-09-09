@@ -100,7 +100,6 @@ extension _ConnectionsPageView on _ConnectionsPageState {
                           ],
                           summary: Text(
                             '${_tx('connections.count_label')}: ${filteredConnections.length} | ${_tx('connections.providers_label')}: ${_controller.providers.length}',
-                            style: Theme.of(context).textTheme.bodyMedium,
                           ),
                         ),
                       ),

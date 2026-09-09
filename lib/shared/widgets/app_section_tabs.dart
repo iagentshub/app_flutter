@@ -34,8 +34,8 @@ class AppSectionTabs extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: colors.surfaceContainerLow,
-          border: Border.all(color: colors.onSurface.withValues(alpha: 0.10)),
+          color: colors.surfaceContainerLow.withValues(alpha: 0.65),
+          border: Border.all(color: colors.outlineVariant),
           borderRadius: BorderRadius.circular(12),
         ),
         child: TabBar(
@@ -44,16 +44,16 @@ class AppSectionTabs extends StatelessWidget {
           tabAlignment: TabAlignment.start,
           dividerHeight: 0,
           indicatorSize: TabBarIndicatorSize.tab,
-          indicatorPadding: const EdgeInsets.all(3),
+          indicatorPadding: const EdgeInsets.all(2),
           indicator: BoxDecoration(
-            color: colors.primary.withValues(alpha: 0.12),
-            border: Border.all(color: colors.primary.withValues(alpha: 0.24)),
+            color: colors.primary.withValues(alpha: 0.16),
+            border: Border.all(color: colors.primary.withValues(alpha: 0.32)),
             borderRadius: BorderRadius.circular(8),
           ),
           labelColor: colors.primary,
           unselectedLabelColor: colors.onSurfaceVariant,
           labelStyle: theme.textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
           ),
           unselectedLabelStyle: theme.textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w500,

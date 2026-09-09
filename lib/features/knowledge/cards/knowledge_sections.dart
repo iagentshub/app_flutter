@@ -107,12 +107,8 @@ extension _KnowledgeSections on _KnowledgePageState {
                 ..._groupsButtons(),
               ],
               summary: Text(
-                // Decía solo el número. Suelto bajo la barra pasaba por un
-                // detalle; dentro de ella, al lado de los botones, un «0» sin
-                // sujeto no se entiende — las otras pestañas sí se nombran.
                 '${_tx('knowledge.tab_documents')}: '
                 '${collection.length}${_hasMoreKnowledge ? '+' : ''}',
-                style: Theme.of(context).textTheme.bodyMedium,
               ),
             ),
           ),
@@ -249,10 +245,7 @@ extension _KnowledgeSections on _KnowledgePageState {
           ),
           ..._groupsButtons(),
         ],
-        summary: Text(
-          'Skills: ${filteredSkills.length}',
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
+        summary: Text('Skills: ${filteredSkills.length}'),
       ),
     );
   }
@@ -271,15 +264,7 @@ extension _KnowledgeSections on _KnowledgePageState {
               children: [
                 Icon(skillCategoryIcon(item.category), size: 20),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    item.name,
-                    style: const TextStyle(
-                      fontSize: FncFonts.size16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
+                Expanded(child: Text(item.name, style: FncFonts.resourceTitle)),
               ],
             ),
             const SizedBox(height: 6),
@@ -288,6 +273,7 @@ extension _KnowledgeSections on _KnowledgePageState {
               const SizedBox(height: 8),
               Text(
                 item.description,
+                style: FncFonts.resourceDescription(context),
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -390,13 +376,7 @@ extension _KnowledgeSections on _KnowledgePageState {
                 Icon(icon, size: 20),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    item.title,
-                    style: const TextStyle(
-                      fontSize: FncFonts.size16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  child: Text(item.title, style: FncFonts.resourceTitle),
                 ),
               ],
             ),

@@ -1,8 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../../app/theme/fnc_colors.dart';
-
 /// Cabecera de colección: contexto y, debajo, una única barra con la búsqueda,
 /// las acciones y el botón de crear.
 class ResourceToolbar extends StatelessWidget {
@@ -15,7 +13,7 @@ class ResourceToolbar extends StatelessWidget {
     this.summary,
     this.activeFilters = const [],
     this.actionSpacing = 8,
-    this.sectionSpacing = 16,
+    this.sectionSpacing = 12,
     super.key,
   });
 
@@ -34,14 +32,24 @@ class ResourceToolbar extends StatelessWidget {
     final theme = Theme.of(context);
     // La acción principal vive dentro de la barra, junto al resto de acciones:
     // una sola fila de controles en todas las pestañas.
-    final hasHeading = title != null || description != null;
+    final hasHeading = title != null || description != null || summary != null;
     final heading = Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (title != null) Text(title!, style: theme.textTheme.titleLarge),
+        if (title != null || summary != null)
+          Wrap(
+            spacing: 12,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              if (title != null)
+                Text(title!, style: theme.textTheme.titleLarge),
+              if (summary != null) _summary(context),
+            ],
+          ),
         if (description != null) ...[
-          if (title != null) const SizedBox(height: 8),
+          if (title != null || summary != null) const SizedBox(height: 6),
           Text(
             description!,
             style: theme.textTheme.bodyMedium?.copyWith(
@@ -55,20 +63,17 @@ class ResourceToolbar extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (hasHeading) ...[heading, const SizedBox(height: 24)],
+        if (hasHeading) ...[heading, const SizedBox(height: 12)],
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            border: Border.all(color: FncColors.borderSubtle(context)),
+            color: theme.colorScheme.surface.withValues(alpha: 0.65),
+            border: Border.all(color: theme.colorScheme.outlineVariant),
             borderRadius: BorderRadius.circular(12),
           ),
           child: LayoutBuilder(
             builder: (context, inner) {
-              final hasActions =
-                  actions.isNotEmpty ||
-                  primaryAction != null ||
-                  summary != null;
+              final hasActions = actions.isNotEmpty || primaryAction != null;
               final inline =
                   kIsWeb &&
                   inner.maxWidth / MediaQuery.textScalerOf(context).scale(1) >=
@@ -92,31 +97,58 @@ class ResourceToolbar extends StatelessWidget {
                       spacing: actionSpacing,
                       runSpacing: actionSpacing,
                       crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        ...actions,
-                        if (summary != null) _summary(context),
-                        ?primaryAction,
-                      ],
+                      children: [?primaryAction, ...actions],
                     ),
                   ),
                   if (search != null)
-                    SizedBox(width: searchWidth, child: search),
+                    SizedBox(
+                      width: searchWidth,
+                      child: Theme(
+                        data: theme.copyWith(
+                          textTheme: theme.textTheme.copyWith(
+                            bodyLarge: theme.textTheme.bodyMedium,
+                          ),
+                          inputDecorationTheme: theme.inputDecorationTheme
+                              .copyWith(
+                                floatingLabelBehavior:
+                                    FloatingLabelBehavior.never,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                                prefixIconConstraints: const BoxConstraints(
+                                  minWidth: 40,
+                                  minHeight: 40,
+                                ),
+                              ),
+                        ),
+                        child: search!,
+                      ),
+                    ),
                 ],
               );
             },
           ),
         ),
         if (activeFilters.isNotEmpty) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Wrap(spacing: 8, runSpacing: 8, children: activeFilters),
         ],
       ],
     );
   }
 
-  Widget _summary(BuildContext context) => DefaultTextStyle.merge(
-    style: Theme.of(context).textTheme.bodySmall
-        ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-    child: summary!,
+  Widget _summary(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+    decoration: BoxDecoration(
+      color: Theme.of(context).colorScheme.surfaceContainerHighest
+          .withValues(alpha: 0.65),
+      borderRadius: BorderRadius.circular(6),
+    ),
+    child: DefaultTextStyle.merge(
+      style: Theme.of(context).textTheme.bodySmall
+          ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+      child: summary!,
+    ),
   );
 }

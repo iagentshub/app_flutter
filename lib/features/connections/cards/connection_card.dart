@@ -133,15 +133,7 @@ class ConnectionCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                 ],
-                Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: FncFonts.size16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
+                Expanded(child: Text(title, style: FncFonts.resourceTitle)),
                 if (item.credentialsUnreadable) ...[
                   const SizedBox(width: 8),
                   AttentionBadge(

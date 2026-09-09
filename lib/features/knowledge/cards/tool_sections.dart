@@ -43,10 +43,7 @@ extension _ToolSections on _KnowledgePageState {
           ),
           ..._groupsButtons(),
         ],
-        summary: Text(
-          '${_tx('knowledge.tab_tools')}: ${filteredTools.length}',
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
+        summary: Text('${_tx('knowledge.tab_tools')}: ${filteredTools.length}'),
       ),
     );
   }
@@ -88,15 +85,7 @@ extension _ToolSections on _KnowledgePageState {
               children: [
                 Icon(item.language.icon, size: 20),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    item.name,
-                    style: const TextStyle(
-                      fontSize: FncFonts.size16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
+                Expanded(child: Text(item.name, style: FncFonts.resourceTitle)),
               ],
             ),
             const SizedBox(height: 6),
@@ -105,6 +94,7 @@ extension _ToolSections on _KnowledgePageState {
               const SizedBox(height: 8),
               Text(
                 item.description,
+                style: FncFonts.resourceDescription(context),
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),

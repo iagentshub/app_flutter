@@ -31,6 +31,7 @@ ThemeData webTheme(ThemeData base) {
           shape: shape,
           iconSize: 19,
           minimumSize: const Size(40, 40),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
       ),
     ),
@@ -38,12 +39,21 @@ ThemeData webTheme(ThemeData base) {
       style: base.filledButtonTheme.style?.copyWith(
         shape: const WidgetStatePropertyAll(shape),
         minimumSize: const WidgetStatePropertyAll(Size(0, 40)),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: base.outlinedButtonTheme.style?.copyWith(
         shape: const WidgetStatePropertyAll(shape),
         minimumSize: const WidgetStatePropertyAll(Size(0, 40)),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: base.textButtonTheme.style?.copyWith(
+        shape: const WidgetStatePropertyAll(shape),
+        minimumSize: const WidgetStatePropertyAll(Size(0, 40)),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
     ),
     popupMenuTheme: base.popupMenuTheme.copyWith(

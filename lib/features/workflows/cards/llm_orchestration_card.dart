@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/theme/fnc_fonts.dart';
 import '../../../models/connections/connection_models.dart';
 import '../../../models/workflows/llm_orchestration_models.dart';
 import '../../../shared/widgets/buttons/action_icon_button.dart';
@@ -51,9 +52,7 @@ class LlmOrchestrationCard extends StatelessWidget {
                     item.name,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: FncFonts.resourceTitle,
                   ),
                 ),
                 if (!item.isActive) ...[
@@ -68,9 +67,7 @@ class LlmOrchestrationCard extends StatelessWidget {
                 item.description,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colors.onSurfaceVariant,
-                ),
+                style: FncFonts.resourceDescription(context),
               ),
             ],
             const SizedBox(height: 12),
@@ -84,9 +81,8 @@ class LlmOrchestrationCard extends StatelessWidget {
                       : tx('llm_orchestrations.stack'),
                 ),
                 _MetadataLabel(
-                  text: tx(
-                    'llm_orchestrations.candidate_count',
-                  ).replaceAll('{{count}}', '${item.candidates.length}'),
+                  text: tx('llm_orchestrations.candidate_count')
+                      .replaceAll('{{count}}', '${item.candidates.length}'),
                 ),
                 if (item.shared)
                   _MetadataLabel(

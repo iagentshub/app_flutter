@@ -12,21 +12,14 @@ extension _KnowledgePackCard on _KnowledgePageState {
               children: [
                 const Icon(Icons.inventory_2_outlined, size: 20),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    pack.name,
-                    style: const TextStyle(
-                      fontSize: FncFonts.size16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
+                Expanded(child: Text(pack.name, style: FncFonts.resourceTitle)),
               ],
             ),
             if (pack.description.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
                 pack.description,
+                style: FncFonts.resourceDescription(context),
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),

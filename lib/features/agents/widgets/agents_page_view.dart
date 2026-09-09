@@ -152,7 +152,6 @@ extension _AgentsPageView on _AgentsPageState {
         summary: Text(
           '${_tx('agents.count_label')}: ${filteredAgents.length}'
           '${_hasMoreAgents ? '+' : ''}',
-          style: Theme.of(context).textTheme.bodyMedium,
         ),
       ),
       // Dos situaciones distintas que antes se veían igual: no haber creado

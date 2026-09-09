@@ -49,10 +49,7 @@ class PublicResourceCard extends StatelessWidget {
                             item.name,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: FncFonts.size16,
-                              fontWeight: FontWeight.w700,
-                            ),
+                            style: FncFonts.resourceTitle,
                           ),
                         ),
                         ActionIconButton(
@@ -68,9 +65,7 @@ class PublicResourceCard extends StatelessWidget {
                         item.description,
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodySmall?.copyWith(height: 1.35),
+                        style: FncFonts.resourceDescription(context),
                       ),
                     ],
                     const SizedBox(height: 10),
@@ -102,9 +97,9 @@ class PublicResourceCard extends StatelessWidget {
                               '#$tag',
                               style: Theme.of(context).textTheme.labelSmall
                                   ?.copyWith(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurfaceVariant,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
                                   ),
                             ),
                         ],
@@ -133,9 +128,8 @@ class _MetaChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: Theme.of(
-          context,
-        ).colorScheme.surfaceContainerHighest.withValues(alpha: .55),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest
+            .withValues(alpha: .55),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(

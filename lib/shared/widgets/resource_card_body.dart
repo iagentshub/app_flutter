@@ -1,6 +1,25 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+/// En las tarjetas el color intenso se reserva para la acción de la página.
+ButtonStyle resourceCardActionStyle(BuildContext context) {
+  final colors = Theme.of(context).colorScheme;
+  return FilledButton.styleFrom(
+    backgroundColor: colors.surfaceContainerHighest,
+    foregroundColor: colors.onSurface,
+    overlayColor: colors.onSurface,
+  ).copyWith(
+    side: WidgetStateProperty.resolveWith(
+      (states) => BorderSide(
+        color: states.contains(WidgetState.focused)
+            ? colors.primary
+            : Colors.transparent,
+        width: 2,
+      ),
+    ),
+  );
+}
+
 /// Mantiene el pie de acciones abajo cuando una fila web iguala las alturas.
 class ResourceCardBody extends StatelessWidget {
   const ResourceCardBody({required this.children, super.key});

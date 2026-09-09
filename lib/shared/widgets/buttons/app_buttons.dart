@@ -357,7 +357,7 @@ class AppIconButton extends StatelessWidget {
                     color: states.contains(WidgetState.focused)
                         ? Theme.of(context).colorScheme.primary
                         : Theme.of(context).colorScheme.outlineVariant,
-                    width: 2,
+                    width: states.contains(WidgetState.focused) ? 2 : 1,
                   ),
                 ),
               ).merge(style)

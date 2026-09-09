@@ -452,7 +452,6 @@ class _WorkflowsPageState extends State<WorkflowsPage> with StateMessaging {
       ],
       summary: Text(
         '${_tx('workflows.count_label')}: ${filteredWorkflows.length}',
-        style: Theme.of(context).textTheme.bodyMedium,
       ),
     );
 

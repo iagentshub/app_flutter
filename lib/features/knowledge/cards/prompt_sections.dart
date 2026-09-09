@@ -45,10 +45,7 @@ extension _PromptSections on _KnowledgePageState {
           ),
           ..._groupsButtons(),
         ],
-        summary: Text(
-          'Prompts: ${filteredPrompts.length}',
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
+        summary: Text('Prompts: ${filteredPrompts.length}'),
       ),
     );
   }
@@ -64,15 +61,7 @@ extension _PromptSections on _KnowledgePageState {
               children: [
                 const Icon(Icons.bolt_outlined, size: 20),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    item.name,
-                    style: const TextStyle(
-                      fontSize: FncFonts.size16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
+                Expanded(child: Text(item.name, style: FncFonts.resourceTitle)),
               ],
             ),
             const SizedBox(height: 6),
@@ -81,6 +70,7 @@ extension _PromptSections on _KnowledgePageState {
               const SizedBox(height: 8),
               Text(
                 item.description,
+                style: FncFonts.resourceDescription(context),
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),

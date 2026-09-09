@@ -165,15 +165,7 @@ class AgentCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Text(
-                    item.name,
-                    style: const TextStyle(
-                      fontSize: FncFonts.size16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
+                Expanded(child: Text(item.name, style: FncFonts.resourceTitle)),
                 if (!item.isActive) ...[
                   const SizedBox(width: 8),
                   InactiveBadge(label: tx('common.inactive')),
@@ -204,6 +196,7 @@ class AgentCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 item.description,
+                style: FncFonts.resourceDescription(context),
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -235,6 +228,7 @@ class AgentCard extends StatelessWidget {
                     ? tx('agents.chat_no_connection')
                     : '',
                 child: PrimaryButton.icon(
+                  style: resourceCardActionStyle(context),
                   onPressed:
                       !item.isActive || item.connectionId.isEmpty || inProgress
                       ? null
