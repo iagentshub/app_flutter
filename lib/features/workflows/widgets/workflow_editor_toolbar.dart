@@ -15,6 +15,9 @@ class WorkflowEditorToolbar extends StatelessWidget {
     this.autoLayoutLabel = '',
     this.onAutoLayout,
     this.onIssuesPressed,
+    this.inspectorVisible = true,
+    this.toggleInspectorLabel = '',
+    this.onToggleInspector,
     super.key,
   });
 
@@ -29,6 +32,9 @@ class WorkflowEditorToolbar extends StatelessWidget {
   final String autoLayoutLabel;
   final VoidCallback? onAutoLayout;
   final VoidCallback? onIssuesPressed;
+  final bool inspectorVisible;
+  final String toggleInspectorLabel;
+  final VoidCallback? onToggleInspector;
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +86,8 @@ class WorkflowEditorToolbar extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final compact = constraints.maxWidth < 560;
+        final compact =
+            constraints.maxWidth < (onToggleInspector == null ? 560 : 720);
         return Padding(
           key: const ValueKey('workflow-editor-toolbar'),
           padding: EdgeInsets.symmetric(
@@ -109,6 +116,20 @@ class WorkflowEditorToolbar extends StatelessWidget {
                 ),
               ] else
                 actions,
+              if (onToggleInspector != null) ...[
+                const SizedBox(width: 8),
+                AppIconButton.outlined(
+                  key: const ValueKey('workflow-toggle-inspector'),
+                  onPressed: onToggleInspector,
+                  tooltip: toggleInspectorLabel,
+                  icon: Icon(
+                    inspectorVisible
+                        ? Icons.view_sidebar
+                        : Icons.view_sidebar_outlined,
+                    size: 19,
+                  ),
+                ),
+              ],
             ],
           ),
         );

@@ -1018,6 +1018,8 @@
     "panel_settings": "Settings",
     "panel_step": "Step",
     "panel_issues": "Problems",
+    "hide_panel": "Hide configuration panel",
+    "show_panel": "Show configuration panel",
     "instruction_label": "Instruction for this step",
     "invalid_connection": "The connection would create a cycle or already exists",
     "issues_suffix": "problems",

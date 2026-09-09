@@ -1018,6 +1018,8 @@
     "panel_settings": "Ajustes",
     "panel_step": "Paso",
     "panel_issues": "Problemas",
+    "hide_panel": "Ocultar panel de configuración",
+    "show_panel": "Mostrar panel de configuración",
     "instruction_label": "Instrucción para este paso",
     "invalid_connection": "La conexión crearía un ciclo o ya existe",
     "issues_suffix": "problemas",

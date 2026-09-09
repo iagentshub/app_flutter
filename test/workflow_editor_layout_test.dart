@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:app_flutter/core/network/api_client.dart';
+import 'package:app_flutter/features/workflows/models/workflow_step_draft.dart';
 import 'package:app_flutter/features/workflows/pages/workflow_editor_page.dart';
 import 'package:app_flutter/models/auth/session_user.dart';
 import 'package:app_flutter/shared/state/backend_controller.dart';
@@ -11,11 +12,100 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vyuh_node_flow/vyuh_node_flow.dart';
 
 import 'support/memory_secure_store.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  for (final width in [1200.0, 800.0]) {
+    testWidgets('pliega el panel sin perder campos ni zoom a $width px', (
+      tester,
+    ) async {
+      tester.view.physicalSize = Size(width, 820);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final harness = await _EditorHarness.create();
+      addTearDown(harness.dispose);
+      await tester.pumpWidget(harness.build());
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: 'al abrir');
+
+      final panel = find.byKey(const ValueKey('workflow-editor-inspector'));
+      final canvas = find.byKey(const ValueKey('workflow-editor-canvas-pane'));
+      final toggle = find.byKey(const ValueKey('workflow-toggle-inspector'));
+      final label = find.widgetWithText(TextFormField, 'Etiqueta (opcional)');
+      await tester.ensureVisible(label);
+      await tester.enterText(label, 'Revisar documentación');
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: 'al editar');
+      final labelState = tester.state(label);
+      final editorFinder = find.byType(
+        NodeFlowEditor<WorkflowStepDraft, String>,
+      );
+      final controller = tester
+          .widget<NodeFlowEditor<WorkflowStepDraft, String>>(editorFinder)
+          .controller;
+      const viewport = GraphViewport(x: 42, y: -24, zoom: .8);
+      controller.setViewport(viewport);
+      await tester.pumpAndSettle();
+      final before = tester.getSize(canvas);
+
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+      expect(panel, findsNothing);
+      expect(find.byTooltip('Mostrar panel de configuración'), findsOneWidget);
+      final expanded = tester.getSize(canvas);
+      if (width >= 980) {
+        expect(expanded.width, greaterThan(before.width + 300));
+      } else {
+        expect(expanded.height, greaterThan(before.height + 200));
+      }
+      expect(
+        tester
+            .widget<NodeFlowEditor<WorkflowStepDraft, String>>(editorFinder)
+            .controller,
+        same(controller),
+      );
+      expect(controller.viewport, viewport);
+      expect(tester.takeException(), isNull, reason: 'al plegar');
+
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+      expect(panel, findsOneWidget);
+      expect(tester.getSize(canvas), before);
+      expect(tester.state(label), same(labelState));
+      expect(find.text('Revisar documentación'), findsWidgets);
+      expect(controller.viewport, viewport);
+
+      await tester.tap(find.text('Ajustes'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull, reason: 'al abrir ajustes');
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<TabBarView>(find.byType(TabBarView)).controller!.index,
+        1,
+      );
+      expect(tester.takeException(), isNull, reason: 'al recuperar ajustes');
+
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Añadir paso'));
+      await tester.pumpAndSettle();
+      expect(panel, findsOneWidget);
+      expect(
+        tester.widget<TabBarView>(find.byType(TabBarView)).controller!.index,
+        0,
+      );
+      expect(controller.nodes, hasLength(2));
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   testWidgets('mantiene el espacio de trabajo estable en escritorio', (
     tester,
@@ -62,6 +152,12 @@ void main() {
     await tester.pumpWidget(harness.build());
     await tester.pumpAndSettle();
 
+    await tester.tap(find.byKey(const ValueKey('workflow-toggle-inspector')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('workflow-editor-inspector')),
+      findsNothing,
+    );
     await tester.tap(find.byKey(const ValueKey('workflow-issues-button')));
     await tester.pumpAndSettle();
     final issues = find.byKey(const ValueKey('workflow-inspector-issues'));

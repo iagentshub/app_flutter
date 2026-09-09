@@ -20,12 +20,14 @@ extension _WorkflowEditorGraphActions on _WorkflowEditorPageState {
       }
       _steps = [..._steps, newStep];
       _selectedStepId = newStep.id;
+      _inspectorVisible = true;
       // Sin esto el nodo nuevo caía en la rejilla por índice y podía aparecer
       // encima de otro que el usuario ya había movido a mano.
       final position = layeredLayout(_steps)[newStep.id];
       newStep.positionX = position?.dx;
       newStep.positionY = position?.dy;
     });
+    _inspectorTabs.animateTo(0);
   }
 
   void _removeStep(int index) {

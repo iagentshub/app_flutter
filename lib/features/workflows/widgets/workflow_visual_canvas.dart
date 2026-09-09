@@ -95,16 +95,21 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
   static const _outputPort = 'output';
 
   late final NodeFlowController<WorkflowStepDraft, String> _controller;
+  final _zoom = ValueNotifier<double>(1);
+  late final VoidCallback _stopObservingViewport;
   bool _syncing = false;
 
   @override
   void initState() {
     super.initState();
     _controller = NodeFlowController<WorkflowStepDraft, String>(
-      config: NodeFlowConfig(showAttribution: false),
+      config: NodeFlowConfig(showAttribution: false, minZoom: .1),
       nodes: widget.steps.map(_nodeForStep).toList(),
       connections: _connectionsFromSteps(widget.steps),
     );
+    _stopObservingViewport = _controller.viewportObservable.observe((_) {
+      _zoom.value = _controller.viewport.zoom;
+    });
   }
 
   @override
@@ -115,8 +120,20 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
 
   @override
   void dispose() {
+    _stopObservingViewport();
+    _zoom.dispose();
     _controller.dispose();
     super.dispose();
+  }
+
+  void _fitToView() {
+    if (!mounted) return;
+    _controller.fitToView();
+    // Encajar puede reducir un flujo grande, pero no debe agrandar uno pequeño.
+    // zoomBy mantiene el centro del lienzo al limitar la ampliación al 100 %.
+    if (_controller.viewport.zoom > 1) {
+      _controller.zoomBy(1 - _controller.viewport.zoom);
+    }
   }
 
   Offset _positionFor(WorkflowStepDraft step) {
@@ -329,7 +346,7 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
           behavior: widget.behavior,
           events: NodeFlowEvents<WorkflowStepDraft, String>(
             onInit: () => WidgetsBinding.instance.addPostFrameCallback(
-              (_) => _controller.fitToView(),
+              (_) => _fitToView(),
             ),
             node: NodeEvents<WorkflowStepDraft>(
               onTap: (node) => widget.onStepSelected(node.id),
@@ -375,7 +392,8 @@ class _WorkflowVisualCanvasState extends State<WorkflowVisualCanvas> {
             fitTooltip: widget.fitTooltip,
             zoomInTooltip: widget.zoomInTooltip,
             zoomOutTooltip: widget.zoomOutTooltip,
-            onFit: _controller.fitToView,
+            zoom: _zoom,
+            onFit: _fitToView,
             onZoomIn: () => _controller.zoomBy(.15),
             onZoomOut: () => _controller.zoomBy(-.15),
           ),
@@ -404,6 +422,7 @@ class _CanvasControls extends StatelessWidget {
     required this.fitTooltip,
     required this.zoomInTooltip,
     required this.zoomOutTooltip,
+    required this.zoom,
     required this.onFit,
     required this.onZoomIn,
     required this.onZoomOut,
@@ -412,6 +431,7 @@ class _CanvasControls extends StatelessWidget {
   final String fitTooltip;
   final String zoomInTooltip;
   final String zoomOutTooltip;
+  final ValueNotifier<double> zoom;
   final VoidCallback onFit;
   final VoidCallback onZoomIn;
   final VoidCallback onZoomOut;
@@ -436,15 +456,26 @@ class _CanvasControls extends StatelessWidget {
               onPressed: onZoomOut,
               icon: const Icon(Icons.remove, size: 19),
             ),
-            AppIconButton(
-              tooltip: fitTooltip,
-              onPressed: onFit,
-              icon: const Icon(Icons.fit_screen_outlined, size: 19),
+            ValueListenableBuilder<double>(
+              valueListenable: zoom,
+              builder: (context, value, _) => SizedBox(
+                width: 48,
+                child: Text(
+                  '${(value * 100).round()}%',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
+              ),
             ),
             AppIconButton(
               tooltip: zoomInTooltip,
               onPressed: onZoomIn,
               icon: const Icon(Icons.add, size: 19),
+            ),
+            AppIconButton(
+              tooltip: fitTooltip,
+              onPressed: onFit,
+              icon: const Icon(Icons.fit_screen_outlined, size: 19),
             ),
           ],
         ),

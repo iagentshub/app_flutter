@@ -91,9 +91,12 @@ extension _WorkflowStepEditorCard on _WorkflowEditorPageState {
           TextFormField(
             initialValue: step.label,
             maxLength: maxLabelLength,
-            buildCounter:
-                (_, {required currentLength, required isFocused, maxLength}) =>
-                    null,
+            buildCounter: (
+              _, {
+              required currentLength,
+              required isFocused,
+              maxLength,
+            }) => null,
             decoration: InputDecoration(
               labelText: _tx('workflow_editor.step_label_field'),
             ),
@@ -133,13 +136,12 @@ extension _WorkflowStepEditorCard on _WorkflowEditorPageState {
             TextFormField(
               initialValue: step.evaluatorCondition,
               maxLength: maxConditionLength,
-              buildCounter:
-                  (
-                    _, {
-                    required currentLength,
-                    required isFocused,
-                    maxLength,
-                  }) => null,
+              buildCounter: (
+                _, {
+                required currentLength,
+                required isFocused,
+                maxLength,
+              }) => null,
               decoration: InputDecoration(
                 labelText: _tx('workflow_editor.evaluator_condition_label'),
               ),
@@ -173,9 +175,8 @@ extension _WorkflowStepEditorCard on _WorkflowEditorPageState {
             const SizedBox(height: 14),
             Text(
               _tx('workflow_editor.continue_to_label'),
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 6),
             Wrap(
@@ -188,6 +189,7 @@ extension _WorkflowStepEditorCard on _WorkflowEditorPageState {
             ),
             const SizedBox(height: 10),
             DropdownButtonFormField<String>(
+              isExpanded: true,
               initialValue: loopTargets.any((item) => item.id == loopTargetId)
                   ? loopTargetId
                   : null,
@@ -209,7 +211,11 @@ extension _WorkflowStepEditorCard on _WorkflowEditorPageState {
                 for (final target in loopTargets)
                   DropdownMenuItem(
                     value: target.id,
-                    child: Text(_stepLabel(_steps.indexOf(target))),
+                    child: Text(
+                      _stepLabel(_steps.indexOf(target)),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
               ],
               onChanged: (value) => _refresh(() => step.loopTargetId = value),

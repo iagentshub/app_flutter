@@ -24,6 +24,7 @@ Offset _connectionPoint(WidgetTester tester, String nodeId, String portId) {
 Widget _testCanvas({
   required List<WorkflowStepDraft> steps,
   void Function(String, Offset)? onStepMoved,
+  NodeFlowBehavior behavior = NodeFlowBehavior.design,
 }) {
   return MaterialApp(
     home: Scaffold(
@@ -31,6 +32,7 @@ Widget _testCanvas({
         width: 900,
         height: 620,
         child: WorkflowVisualCanvas(
+          behavior: behavior,
           steps: steps,
           agents: const [
             AgentItem(raw: {'id': 'agent-1', 'name': 'Recepcionista'}),
@@ -60,6 +62,104 @@ Widget _testCanvas({
 }
 
 void main() {
+  for (final behavior in [NodeFlowBehavior.design, NodeFlowBehavior.inspect]) {
+    testWidgets('encuadra un solo paso sin ampliarlo en modo $behavior', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _testCanvas(
+          steps: [WorkflowStepDraft(id: 'step-1', agentId: 'agent-1')],
+          behavior: behavior,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final editor = tester.widget<NodeFlowEditor<WorkflowStepDraft, String>>(
+        find.byType(NodeFlowEditor<WorkflowStepDraft, String>),
+      );
+      final canvasRect = tester.getRect(find.byType(WorkflowVisualCanvas));
+      final nodeRect = tester.getRect(
+        find.byKey(const ValueKey('workflow-node-step-1')),
+      );
+      expect(editor.controller.viewport.zoom, 1);
+      expect(nodeRect.width, lessThanOrEqualTo(240));
+      expect(nodeRect.center.dx, closeTo(canvasRect.center.dx, 1));
+      expect(nodeRect.center.dy, closeTo(canvasRect.center.dy, 1));
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('encaja un flujo largo por debajo del cincuenta por ciento', (
+    tester,
+  ) async {
+    final steps = [
+      for (var index = 0; index < 10; index++)
+        WorkflowStepDraft(
+          id: 'step-$index',
+          agentId: 'agent-1',
+          positionX: -1200 + index * 340,
+          positionY: -80,
+          nextStepIds: index < 9 ? ['step-${index + 1}'] : [],
+        ),
+    ];
+    await tester.pumpWidget(_testCanvas(steps: steps));
+    await tester.pumpAndSettle();
+
+    final controller = tester
+        .widget<NodeFlowEditor<WorkflowStepDraft, String>>(
+          find.byType(NodeFlowEditor<WorkflowStepDraft, String>),
+        )
+        .controller;
+    final visible = controller.visibleGraphBounds;
+    final bounds = controller.nodesBounds;
+    expect(controller.viewport.zoom, lessThan(.5));
+    expect(visible.contains(bounds.topLeft), isTrue);
+    expect(visible.contains(bounds.bottomRight), isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('muestra el zoom manual y encaja sin perder el centrado', (
+    tester,
+  ) async {
+    final steps = [WorkflowStepDraft(id: 'step-1', agentId: 'agent-1')];
+    await tester.pumpWidget(_testCanvas(steps: steps));
+    await tester.pumpAndSettle();
+    expect(find.text('100%'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Acercar'));
+    await tester.pumpAndSettle();
+    expect(find.text('115%'), findsOneWidget);
+    await tester.tap(find.byTooltip('Alejar'));
+    await tester.pumpAndSettle();
+    expect(find.text('100%'), findsOneWidget);
+
+    final controller = tester
+        .widget<NodeFlowEditor<WorkflowStepDraft, String>>(
+          find.byType(NodeFlowEditor<WorkflowStepDraft, String>),
+        )
+        .controller;
+    controller.setViewport(const GraphViewport(x: -200, y: 80, zoom: 1.7));
+    await tester.pumpAndSettle();
+    expect(find.text('170%'), findsOneWidget);
+
+    // Una actualización del formulario conserva el encuadre elegido.
+    await tester.pumpWidget(_testCanvas(steps: steps));
+    await tester.pumpAndSettle();
+    expect(controller.viewport.zoom, 1.7);
+    expect(controller.viewport.x, -200);
+
+    await tester.tap(find.byTooltip('Encajar'));
+    await tester.pumpAndSettle();
+    expect(find.text('100%'), findsOneWidget);
+    final canvasRect = tester.getRect(find.byType(WorkflowVisualCanvas));
+    final nodeRect = tester.getRect(
+      find.byKey(const ValueKey('workflow-node-step-1')),
+    );
+    expect(nodeRect.center.dx, closeTo(canvasRect.center.dx, 1));
+    expect(nodeRect.center.dy, closeTo(canvasRect.center.dy, 1));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('renderiza nodos y conexiones sin desbordar el lienzo', (
     tester,
   ) async {

@@ -79,6 +79,7 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage>
   int _stepCounter = 0;
   int _mobileSection = 0;
   late final TabController _inspectorTabs;
+  bool _inspectorVisible = true;
 
   List<AgentItem> _agents = const [];
   List<ConnectionItem> _llmOrchestrations = const [];
@@ -381,7 +382,20 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage>
             onAdd: _addStep,
             onIssuesPressed: _issues.isEmpty
                 ? null
-                : () => _inspectorTabs.animateTo(2),
+                : () {
+                    setState(() => _inspectorVisible = true);
+                    _inspectorTabs.animateTo(2);
+                  },
+            inspectorVisible: _inspectorVisible,
+            toggleInspectorLabel: _tx(
+              _inspectorVisible
+                  ? 'workflow_editor.hide_panel'
+                  : 'workflow_editor.show_panel',
+            ),
+            onToggleInspector: () {
+              FocusScope.of(context).unfocus();
+              setState(() => _inspectorVisible = !_inspectorVisible);
+            },
           ),
           Divider(height: 1, color: colors.outlineVariant),
           Expanded(child: canvas),
@@ -412,21 +426,34 @@ class _WorkflowEditorPageState extends State<WorkflowEditorPage>
                   child: canvasPane,
                 ),
               ),
-              VerticalDivider(width: 1, color: colors.outlineVariant),
-              SizedBox(
-                width: kIsWeb
-                    ? (constraints.maxWidth * 0.30).clamp(320.0, 400.0)
-                    : 400,
-                child: inspector,
+              if (_inspectorVisible)
+                VerticalDivider(width: 1, color: colors.outlineVariant),
+              Visibility(
+                visible: _inspectorVisible,
+                maintainState: true,
+                child: SizedBox(
+                  width: kIsWeb
+                      ? (constraints.maxWidth * 0.30).clamp(320.0, 400.0)
+                      : 400,
+                  child: inspector,
+                ),
               ),
             ],
           );
         }
         return Column(
           children: [
-            Expanded(flex: 3, child: canvasPane),
-            Divider(height: 1, color: colors.outlineVariant),
-            Expanded(flex: 2, child: inspector),
+            Expanded(child: canvasPane),
+            if (_inspectorVisible)
+              Divider(height: 1, color: colors.outlineVariant),
+            Visibility(
+              visible: _inspectorVisible,
+              maintainState: true,
+              child: SizedBox(
+                height: (constraints.maxHeight - 1) * .4,
+                child: inspector,
+              ),
+            ),
           ],
         );
       },
