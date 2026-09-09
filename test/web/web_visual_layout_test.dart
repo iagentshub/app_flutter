@@ -143,9 +143,9 @@ void main() {
     final action = tester.getRect(find.byKey(const Key('action')));
     if (kIsWeb) {
       expect(search.center.dy, action.center.dy);
-      expect(action.left, greaterThan(search.right));
+      expect(search.left, greaterThan(action.right));
     } else {
-      expect(action.top, greaterThan(search.bottom));
+      expect(search.top, greaterThan(action.bottom));
     }
   });
 

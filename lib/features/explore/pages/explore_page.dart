@@ -23,6 +23,7 @@ import '../../../shared/widgets/motion/app_modal.dart';
 import '../../../shared/widgets/multi_select_dropdown.dart';
 import '../../../shared/widgets/resource_collection_view.dart';
 import '../../../shared/widgets/resource_preview_dialog.dart';
+import '../../../shared/widgets/resource_toolbar.dart';
 import '../../../shared/widgets/resource_type_badge.dart';
 import '../../../shared/widgets/responsive_masonry_grid.dart';
 import '../../../shared/widgets/state_messaging_mixin.dart';

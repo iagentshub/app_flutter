@@ -293,20 +293,7 @@ class _DashboardPageState extends State<DashboardPage> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                if (_editing)
-                  Expanded(
-                    child: Text(
-                      _tx('dashboard.edit_hint'),
-                      style: const TextStyle(
-                        fontSize: FncFonts.size12,
-                        color: FncColors.materialGrey,
-                      ),
-                    ),
-                  )
-                else
-                  const Spacer(),
                 TertiaryButton.icon(
                   onPressed: _toggleEditing,
                   icon: Icon(_editing ? Icons.check : Icons.tune),
@@ -316,6 +303,18 @@ class _DashboardPageState extends State<DashboardPage> {
                         : _tx('dashboard.customize_btn'),
                   ),
                 ),
+                if (_editing) ...[
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _tx('dashboard.edit_hint'),
+                      style: const TextStyle(
+                        fontSize: FncFonts.size12,
+                        color: FncColors.materialGrey,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

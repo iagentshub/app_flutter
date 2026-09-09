@@ -112,20 +112,17 @@ extension _LogsViews on _LogsPageViewState {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TextField(
-          controller: _queryController,
-          decoration: InputDecoration(
-            labelText: _tx('logs.search_message_label'),
-            prefixIcon: const Icon(Icons.search, size: 20),
+        ResourceToolbar(
+          search: TextField(
+            controller: _queryController,
+            decoration: InputDecoration(
+              labelText: _tx('logs.search_message_label'),
+              prefixIcon: const Icon(Icons.search, size: 20),
+            ),
+            onSubmitted: (_) => _loadViewer(),
           ),
-          onSubmitted: (_) => _loadViewer(),
-        ),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
+          actionSpacing: 6,
+          actions: [
             for (final category in _categories)
               ChoiceChip(
                 label: Text(

@@ -164,13 +164,16 @@ extension _ExploreCollectionViews on _ExplorePageState {
       onRefresh: _controller.loadUsers,
       gridPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       density: ResponsiveCardDensity.compact,
-      header: TextField(
-        controller: _controller.userQueryController,
-        decoration: InputDecoration(
-          labelText: _tx('explore.users_search_hint'),
-          prefixIcon: const Icon(Icons.search, size: 20),
+      header: ResourceToolbar(
+        actions: const [],
+        search: TextField(
+          controller: _controller.userQueryController,
+          decoration: InputDecoration(
+            labelText: _tx('explore.users_search_hint'),
+            prefixIcon: const Icon(Icons.search, size: 20),
+          ),
+          onChanged: (_) => _controller.onUserSearchChanged(),
         ),
-        onChanged: (_) => _controller.onUserSearchChanged(),
       ),
       empty: AsyncStatePanel.empty(
         icon: Icons.person_search_outlined,

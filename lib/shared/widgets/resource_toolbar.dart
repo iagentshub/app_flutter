@@ -65,6 +65,10 @@ class ResourceToolbar extends StatelessWidget {
           ),
           child: LayoutBuilder(
             builder: (context, inner) {
+              final hasActions =
+                  actions.isNotEmpty ||
+                  primaryAction != null ||
+                  summary != null;
               final inline =
                   kIsWeb &&
                   inner.maxWidth / MediaQuery.textScalerOf(context).scale(1) >=
@@ -72,23 +76,19 @@ class ResourceToolbar extends StatelessWidget {
               final searchWidth = inline
                   ? (inner.maxWidth * 0.45).clamp(260.0, 420.0)
                   : inner.maxWidth;
-              // Keep the field in the same branch when resizing so focus
-              // and selection survive desktop/mobile width changes.
+              // El buscador conserva su rama al redimensionar para no perder
+              // el foco ni la selección al pasar de una fila a dos.
               return Wrap(
                 spacing: sectionSpacing,
-                runSpacing: sectionSpacing,
+                runSpacing: hasActions ? sectionSpacing : 0,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  if (search != null)
-                    SizedBox(width: searchWidth, child: search),
                   SizedBox(
                     width: inline && search != null
                         ? inner.maxWidth - searchWidth - sectionSpacing
                         : inner.maxWidth,
                     child: Wrap(
-                      alignment: inline
-                          ? WrapAlignment.end
-                          : WrapAlignment.start,
+                      alignment: WrapAlignment.start,
                       spacing: actionSpacing,
                       runSpacing: actionSpacing,
                       crossAxisAlignment: WrapCrossAlignment.center,
@@ -99,6 +99,8 @@ class ResourceToolbar extends StatelessWidget {
                       ],
                     ),
                   ),
+                  if (search != null)
+                    SizedBox(width: searchWidth, child: search),
                 ],
               );
             },

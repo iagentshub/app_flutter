@@ -10,6 +10,7 @@ import '../../../shared/widgets/animated_iagents_mark.dart';
 import '../../../shared/widgets/app_section_tabs.dart';
 import '../../../shared/widgets/buttons/app_buttons.dart';
 import '../../../shared/widgets/motion/app_modal.dart';
+import '../../../shared/widgets/resource_toolbar.dart';
 import '../../../shared/widgets/wide_table.dart';
 import '../repositories/metadata_repository.dart';
 import 'logs_page.dart';
@@ -234,27 +235,17 @@ class _MetadataPageState extends State<MetadataPage>
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16),
         children: [
-          Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              SizedBox(
-                width: 280,
-                child: TextField(
-                  controller: _tableSearchController,
-                  decoration: InputDecoration(
-                    labelText: _tx('admin.metadata_search_table'),
-                    prefixIcon: const Icon(Icons.search, size: 20),
-                  ),
-                  onChanged: (_) => setState(() {}),
-                ),
+          ResourceToolbar(
+            actions: const [],
+            search: TextField(
+              controller: _tableSearchController,
+              decoration: InputDecoration(
+                labelText: _tx('admin.metadata_search_table'),
+                prefixIcon: const Icon(Icons.search, size: 20),
               ),
-              Text(
-                '${items.length}/${_tables.length}',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ],
+              onChanged: (_) => setState(() {}),
+            ),
+            summary: Text('${items.length}/${_tables.length}'),
           ),
           const SizedBox(height: 12),
           Card(
