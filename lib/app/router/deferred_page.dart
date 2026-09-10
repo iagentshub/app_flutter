@@ -7,6 +7,7 @@ import '../../shared/i18n/translated_texts.dart';
 import '../../shared/state/app_services_scope.dart';
 import '../../shared/widgets/async_state_panel.dart';
 import '../../shared/widgets/page_loading_skeleton.dart';
+import 'stale_build_reload.dart';
 
 /// `prefijo.loadLibrary` de una importación `deferred as`.
 typedef DeferredLibraryLoader = Future<void> Function();
@@ -50,6 +51,13 @@ class DeferredPage extends StatefulWidget {
   final WidgetBuilder builder;
 
   static final Set<String> _loaded = <String>{};
+
+  /// Primer recurso ante un fallo de descarga: recargar la pestaña si aún no se
+  /// hizo, porque el fallo típico en producción es un bundle viejo y no la red
+  /// (ver `stale_build_reload.dart`). Sustituible en tests: la real toca
+  /// `window`.
+  @visibleForTesting
+  static bool Function(String name) reloadOnce = reloadOnceForStaleBuild;
 
   /// Si la parte ya se descargó en esta sesión, la página se monta en el mismo
   /// frame y sin indicador de carga.
@@ -102,11 +110,15 @@ class _DeferredPageState extends State<DeferredPage> {
       if (!mounted || widget.name != name) return;
       setState(() => _loading = false);
     } catch (error, stackTrace) {
-      // La carga de una parte diferida es una petición HTTP: cualquier fallo
-      // de red o de despliegue (parte que ya no existe tras un deploy nuevo)
-      // llega aquí, y todos se resuelven igual — reintentar.
+      // La carga de una parte diferida es una petición HTTP y aquí llegan dos
+      // fallos distintos con la misma excepción: la red, que se arregla
+      // reintentando, y el despliegue —la pestaña corre un main.dart.js
+      // anterior y dart2js rechaza la parte nueva por el hash—, que no se
+      // arregla reintentando jamás. Se recarga una vez primero; si tras
+      // recargar sigue fallando, era la red y se ofrece el reintento.
       AppDiagnostics.report('deferred.$name', error, stackTrace);
       if (!mounted || widget.name != name) return;
+      if (DeferredPage.reloadOnce(name)) return;
       setState(() {
         _loading = false;
         _failed = true;

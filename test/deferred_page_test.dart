@@ -66,6 +66,42 @@ void main() {
     expect(find.byType(IAgentsLoadingMark), findsNothing);
   });
 
+  testWidgets('el primer fallo recarga la pestaña en vez de enseñar error', (
+    tester,
+  ) async {
+    AppDiagnostics.setReporter((_) {});
+    addTearDown(AppDiagnostics.resetReporter);
+
+    // Simula la rama web: la primera vez que falla una parte, el bundle que
+    // corre puede ser anterior al último despliegue y solo recargar lo arregla.
+    final recargas = <String>[];
+    DeferredPage.reloadOnce = (name) {
+      recargas.add(name);
+      return true;
+    };
+    addTearDown(() => DeferredPage.reloadOnce = (_) => false);
+
+    var intentos = 0;
+    await _pump(
+      tester,
+      name: 'admin_page',
+      loader: () async {
+        intentos++;
+        throw StateError('hash de la parte no coincide');
+      },
+    );
+    // El esqueleto anima sin parar, así que `pumpAndSettle` no volvería.
+    await tester.pump();
+    await tester.pump();
+
+    expect(recargas, ['admin_page']);
+    expect(intentos, 1);
+    // Mientras el navegador recarga, se sigue viendo el esqueleto: un panel
+    // de error que desaparece solo sería un parpadeo sin sentido.
+    expect(find.byType(PageLoadingSkeleton), findsOneWidget);
+    expect(find.byType(AsyncStatePanel), findsNothing);
+  });
+
   testWidgets('un fallo de red deja reintentar la descarga', (tester) async {
     // El fallo se registra a propósito en los diagnósticos; sin silenciar el
     // reporter, ese registro tumbaría el propio test.
